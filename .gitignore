@@ -1,0 +1,22 @@
+# Dependencias de Node y Python
+node_modules/
+__pycache__/
+env/
+venv/
+.venv/
+
+# Variables de entorno y secretos
+.env
+.env.local
+.env*.local
+.chatwoot/
+
+# Next.js build
+.next/
+out/
+build/
+*.log
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db

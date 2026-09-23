@@ -1,0 +1,155 @@
+// Multi-tenant SaaS. Toda fila de negocio cuelga de tenants.id.
+// Precios en guaraníes enteros (sin centavos). Instantes en timestamptz UTC.
+// La jornada (staff_schedules) es hora civil, sin zona: se interpreta con tenants.timezone.
+//
+// Prisma no modela EXCLUDE USING gist. Después de `prisma migrate`, aplicar
+// prisma/sql/appointments_exclusion.sql. Ese constraint es el que impide
+// double-booking por (tenant, staff) en rangos semiabiertos [start, end).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum AppointmentStatus {
+  PENDING_ACTION
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  EXPIRED
+  NO_SHOW
+
+  @@map("appointment_status")
+}
+
+model Tenant {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  slug       String   @unique
+  subdomain  String   @unique
+  /// JSON de negocio. Claves: whatsappPhone, slotStepMinutes, maxAdvanceDays,
+  /// chatwootWebsiteToken (opcional, inbox del widget público).
+  settings      Json @default("{}")
+  themeSettings Json @default("{\"primaryColor\":\"#5b31e6\",\"backgroundColor\":\"#f4f2fb\",\"fontFamily\":\"sans\",\"logoUrl\":\"\"}") @map("theme_settings")
+  timezone      String @default("America/Asuncion")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  staff        Staff[]
+  services     Service[]
+  products     Product[]
+  appointments Appointment[]
+
+  @@index([subdomain])
+  @@map("tenants")
+}
+
+model Staff {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  schedules    StaffSchedule[]
+  services     StaffService[]
+  appointments Appointment[]
+
+  @@index([tenantId])
+  @@index([tenantId, active])
+  @@map("staff")
+}
+
+/// Jornada semanal. day_of_week ISO: 1 = lunes … 7 = domingo.
+/// Varias filas el mismo día modelan turno cortado (mañana / tarde).
+model StaffSchedule {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffId   String   @map("staff_id") @db.Uuid
+  dayOfWeek Int      @map("day_of_week") @db.SmallInt
+  startTime DateTime @map("start_time") @db.Time(0)
+  endTime   DateTime @map("end_time") @db.Time(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, dayOfWeek, startTime])
+  @@index([staffId, dayOfWeek])
+  @@map("staff_schedules")
+}
+
+model Service {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  name            String
+  durationMinutes Int      @map("duration_minutes")
+  price           Int
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff        StaffService[]
+  appointments Appointment[]
+
+  @@index([tenantId])
+  @@map("services")
+}
+
+model StaffService {
+  staffId   String   @map("staff_id") @db.Uuid
+  serviceId String   @map("service_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([staffId, serviceId])
+  @@index([serviceId])
+  @@map("staff_services")
+}
+
+model Appointment {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String            @map("tenant_id") @db.Uuid
+  staffId     String            @map("staff_id") @db.Uuid
+  serviceId   String            @map("service_id") @db.Uuid
+  clientName  String            @map("client_name")
+  clientPhone String            @map("client_phone")
+  startTime   DateTime          @map("start_time") @db.Timestamptz(3)
+  endTime     DateTime          @map("end_time") @db.Timestamptz(3)
+  status      AppointmentStatus
+  expiresAt   DateTime?         @map("expires_at") @db.Timestamptz(3)
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, startTime])
+  @@index([tenantId, staffId, startTime])
+  @@index([tenantId, status, startTime])
+  @@map("appointments")
+}
+
+model Product {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  price     Int
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@map("products")
+}
