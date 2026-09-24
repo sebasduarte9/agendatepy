@@ -144,36 +144,57 @@ function PriceCard({
 }) {
   return (
     <motion.article
-      whileHover={{ y: -6 }}
-      className={`relative rounded-3xl border p-7 flex flex-col justify-between transition ${
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 280, damping: 20 }}
+      className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 [transform-style:preserve-3d] ${
         highlighted
-          ? "border-brand bg-white shadow-xl shadow-brand/15 ring-2 ring-brand/20"
-          : "border-slate-200 bg-white shadow-sm"
+          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(91,49,230,0.25)] ring-4 ring-brand/10 backdrop-blur-xl"
+          : "border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:border-brand/40"
       }`}
     >
-      <div>
-        {badge && (
-          <span className="inline-block mb-3 rounded-full bg-brand px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-xs">
-            {badge}
-          </span>
-        )}
-        <h3 className="text-xl font-bold text-slate-900">{name}</h3>
-        <p className="mt-1 text-xs text-slate-500 min-h-[32px]">{description}</p>
+      {highlighted && (
+        <div className="pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-brand via-indigo-500 to-whatsapp opacity-20 blur-xl" />
+      )}
 
-        <div className="my-5 flex items-baseline gap-1">
-          <span className="text-3xl font-black text-slate-900">{price}</span>
+      <div className="relative z-10">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-black text-slate-900 dark:text-white">{name}</h3>
+          {badge && (
+            <span className="rounded-full bg-gradient-to-r from-brand to-indigo-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 min-h-[32px] leading-relaxed">
+          {description}
+        </p>
+
+        <div className="my-5 flex items-baseline gap-1 border-b border-slate-100 dark:border-slate-800 pb-5">
+          <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+            {price}
+          </span>
           <span className="text-xs font-semibold text-slate-400">{period}</span>
         </div>
 
-        <ul className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-5">
+        <ul className="space-y-3 text-xs">
           {features.map((item) => (
-            <li key={item.label} className="flex items-start gap-2">
-              {item.ok ? (
-                <Check className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
-              ) : (
-                <X className="h-4 w-4 shrink-0 text-slate-300 mt-0.5" />
-              )}
-              <span className={item.ok ? "text-slate-800" : "text-slate-400"}>
+            <li key={item.label} className="flex items-start gap-2.5">
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] mt-0.5 ${
+                  item.ok
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                }`}
+              >
+                {item.ok ? <Check className="h-3 w-3 stroke-[3]" /> : <X className="h-3 w-3" />}
+              </span>
+              <span
+                className={
+                  item.ok
+                    ? "font-medium text-slate-700 dark:text-slate-200"
+                    : "text-slate-400 line-through"
+                }
+              >
                 {item.label}
               </span>
             </li>
@@ -181,27 +202,23 @@ function PriceCard({
         </ul>
       </div>
 
-      <div className="pt-8">
+      <div className="relative z-10 pt-8">
         {isExternal ? (
           <a
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className={`block w-full rounded-2xl py-3 text-center text-xs font-bold transition shadow-sm ${
-              highlighted
-                ? "bg-brand text-white shadow-brand/30 hover:bg-brand-dark"
-                : "border border-slate-300 bg-white text-slate-800 hover:border-brand hover:text-brand"
-            }`}
+            className="flex w-full items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-700 py-3.5 text-xs font-bold text-slate-800 dark:text-white shadow-xs hover:border-brand hover:text-brand transition"
           >
             {cta}
           </a>
         ) : (
           <Link
             href={href}
-            className={`block w-full rounded-2xl py-3 text-center text-xs font-bold transition shadow-sm ${
+            className={`flex w-full items-center justify-center rounded-2xl py-3.5 text-xs font-bold transition shadow-md active:scale-95 ${
               highlighted
-                ? "bg-brand text-white shadow-brand/30 hover:bg-brand-dark"
-                : "border border-slate-300 bg-white text-slate-800 hover:border-brand hover:text-brand"
+                ? "bg-gradient-to-r from-brand to-indigo-600 text-white shadow-brand/30 hover:brightness-110"
+                : "border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:border-brand hover:text-brand"
             }`}
           >
             {cta}

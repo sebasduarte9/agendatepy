@@ -19,6 +19,9 @@ import {
   MapPin,
   Calendar,
   Lock,
+  Bell,
+  Landmark,
+  CheckCircle2,
 } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 
@@ -564,9 +567,50 @@ export default function PhoneMockup() {
         </div>
       </motion.div>
 
+      {/* Spatial 3D Floating Widget 1: Top-Left Reminder Alert (Family.co / Revolut style) */}
+      <motion.div
+        initial={{ opacity: 0, x: -20, y: 10 }}
+        animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
+        transition={{
+          y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+          opacity: { duration: 0.8 },
+        }}
+        className="pointer-events-none absolute -left-4 sm:-left-12 top-20 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-3.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)]"
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+          <Bell className="h-5 w-5 animate-pulse" />
+        </div>
+        <div className="text-left text-xs pr-1">
+          <p className="font-bold text-slate-900 dark:text-white">Recordatorio 2h Antes</p>
+          <p className="text-[11px] text-slate-500">Sofía confirmó su turno ✓</p>
+        </div>
+      </motion.div>
+
+      {/* Spatial 3D Floating Widget 2: Bottom-Right Instant SIPAP Verification */}
+      <motion.div
+        initial={{ opacity: 0, x: 20, y: 10 }}
+        animate={{ opacity: 1, x: 0, y: [0, 8, 0] }}
+        transition={{
+          y: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 },
+          opacity: { duration: 0.8, delay: 0.2 },
+        }}
+        className="pointer-events-none absolute -right-4 sm:-right-12 bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-3.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)]"
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
+          <Landmark className="h-5 w-5" />
+        </div>
+        <div className="text-left text-xs pr-1">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-slate-900 dark:text-white">SIPAP Bancario</span>
+            <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.2 text-[9px] font-black text-emerald-600">Verificado</span>
+          </div>
+          <p className="text-[11px] font-bold text-emerald-600">Gs. 120.000 ingresado</p>
+        </div>
+      </motion.div>
+
       {/* Floating Badge below the phone */}
-      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-white/95 px-4 py-1.5 text-xs font-bold text-brand shadow-lg backdrop-blur-md">
+      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap z-40">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-white/95 dark:bg-slate-900/95 px-4 py-1.5 text-xs font-bold text-brand shadow-lg backdrop-blur-md">
           <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Simulador Interactivo de WhatsApp en Vivo
         </span>
       </div>

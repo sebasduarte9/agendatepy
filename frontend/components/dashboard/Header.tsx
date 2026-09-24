@@ -31,31 +31,34 @@ export default function Header() {
   }
 
   return (
-    <header className="header sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/90 dark:bg-slate-900/90 px-4 backdrop-blur transition-colors">
+    <header className="header sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-slate-950/85 px-4 backdrop-blur-2xl transition-all duration-300">
       <div className="flex items-center gap-3">
         <button
           type="button"
-          className="rounded-lg p-2 text-slate-700 dark:text-slate-200 lg:hidden"
+          className="rounded-xl p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
           aria-label="Abrir menú"
           onClick={() => setOpen(true)}
         >
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <p className="profile-name text-sm font-bold text-slate-900 dark:text-slate-100">{business.name}</p>
-          <p className="profile-plan text-xs capitalize text-slate-500 dark:text-slate-400">
-            Plan {business.plan}
-          </p>
+          <p className="profile-name text-sm font-black text-slate-900 dark:text-white">{business.name}</p>
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <p className="profile-plan text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Plan {business.plan}
+            </p>
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-2">
         <Link
           href={`/${business.slug || "barberia"}/reservar`}
           target="_blank"
-          className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:border-primary hover:text-primary transition"
         >
           <span>Ver mi página</span>
-          <span className="text-slate-400">↗</span>
+          <span className="text-primary font-bold">↗</span>
         </Link>
 
         {/* Dark Mode Toggle */}
@@ -83,7 +86,7 @@ export default function Header() {
         >
           <LogOut className="h-4 w-4" />
         </Link>
-        <span className="profile-pic flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-xs font-bold text-white shadow-xs">
+        <span className="profile-pic flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-indigo-600 text-xs font-black text-white shadow-md shadow-primary/25">
           {business.name.slice(0, 2).toUpperCase()}
         </span>
       </div>
