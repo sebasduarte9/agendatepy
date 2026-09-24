@@ -42,9 +42,9 @@ export default function Hero() {
           </div>
 
           <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl leading-[1.08]">
-            Tu agenda online y WhatsApp{" "}
+            El sistema de reservas y gestión{" "}
             <span className="bg-gradient-to-r from-brand via-indigo-600 to-whatsapp bg-clip-text text-transparent">
-              trabajando en piloto automático
+              que hace crecer tu negocio
             </span>
           </h1>
 
@@ -123,7 +123,7 @@ export default function Hero() {
             </div>
             <div>
               <p className="text-2xl font-black text-whatsapp tracking-tight">100%</p>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">WhatsApp Oficial sin bloqueos</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">WhatsApp Cloud API Oficial</p>
             </div>
           </div>
         </div>

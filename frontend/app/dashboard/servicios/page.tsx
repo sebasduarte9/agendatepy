@@ -51,9 +51,9 @@ export default function ServiciosPage() {
                     type="button"
                     className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs"
                     onClick={async () => {
-                      const url = `${window.location.origin}/r/${business.slug}?s=${item.id}`;
+                      const url = `${window.location.origin}/${business.slug || "barberia"}/reservar?service=${item.id}`;
                       await navigator.clipboard.writeText(url);
-                      pushToast("success", "URL copiada");
+                      pushToast("success", "Enlace de reserva copiado al portapapeles");
                     }}
                   >
                     <Copy className="h-3 w-3" /> Compartir

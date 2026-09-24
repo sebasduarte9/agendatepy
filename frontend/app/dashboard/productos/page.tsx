@@ -74,7 +74,7 @@ export default function ProductosPage() {
   const estimatedProfit = totalRetailValue - totalCostValue;
   const lowStockCount = products.filter((p) => p.stock <= 5).length;
 
-  const publicStoreUrl = `/${business.slug}/reservar`;
+  const publicStoreUrl = `/${business.slug || "barberia"}/reservar`;
 
   function openCreateModal() {
     setEditingProduct(null);

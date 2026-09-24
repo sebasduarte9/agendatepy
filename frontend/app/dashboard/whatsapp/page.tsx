@@ -60,7 +60,10 @@ export default function WhatsAppHubPage() {
     whatsappTemplates.find((t) => t.id === selectedTemplateId) ||
     whatsappTemplates[0];
 
-  const bookingUrl = `https://agendate.py/reservar/${business.slug}`;
+  const slug = business.slug || "barberia";
+  const bookingUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/${slug}/reservar`
+    : `https://agendate.py/${slug}/reservar`;
   const whatsappAutoReply = `¡Hola! Gracias por comunicarte con *${business.name}*. Para ver nuestros servicios disponibles y agendar tu turno al instante sin esperar respuesta, accedé al enlace oficial:\n${bookingUrl}`;
 
   function insertTag(tag: string) {

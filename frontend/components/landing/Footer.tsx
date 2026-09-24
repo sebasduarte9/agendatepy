@@ -1,28 +1,52 @@
-import { CalendarCheck } from "lucide-react";
+import Link from "next/link";
+import { CalendarCheck, ExternalLink } from "lucide-react";
 
 const COLUMNS = [
   {
     title: "Producto",
-    links: ["Características", "Cómo funciona", "Precios", "Comisiones", "WhatsApp Bot", "Caja Diaria"],
+    links: [
+      { label: "Características", href: "#caracteristicas" },
+      { label: "Cómo funciona", href: "#como-funciona" },
+      { label: "Precios", href: "#precios" },
+      { label: "Galería de Diseños", href: "/showcase" },
+      { label: "Web de Reservas", href: "/barberia/reservar" },
+      { label: "Panel de Control", href: "/dashboard" },
+    ],
+  },
+  {
+    title: "Módulos",
+    links: [
+      { label: "Caja y Arqueo", href: "/dashboard/caja" },
+      { label: "Comisiones de Equipo", href: "/dashboard/comisiones" },
+      { label: "Club de Fidelización", href: "/dashboard/fidelizacion" },
+      { label: "WhatsApp Cloud API", href: "/dashboard/whatsapp" },
+      { label: "Personalizador de Marca", href: "/dashboard/apariencia" },
+      { label: "Catálogo de Servicios", href: "/dashboard/servicios" },
+    ],
   },
   {
     title: "Rubros en Paraguay",
     links: [
-      "Peluquerías & Barberías",
-      "Centros de Estética & Spas",
-      "Consultorios Médicos",
-      "Odontología",
-      "Veterinarias",
-      "Canchas & Turnos Deportivos",
+      { label: "Peluquerías & Barberías", href: "/barberia/reservar" },
+      { label: "Centros de Estética & Spas", href: "/showcase" },
+      { label: "Consultorios & Salud", href: "/dashboard" },
+      { label: "Odontología & Estética", href: "/dashboard" },
+      { label: "Veterinarias & Pet Shops", href: "/dashboard" },
+      { label: "Canchas & Pádel", href: "/dashboard" },
     ],
   },
   {
-    title: "Ciudades",
-    links: ["Asunción", "Ciudad del Este", "Encarnación", "Luque", "San Lorenzo", "Lambaré"],
-  },
-  {
     title: "Soporte & Legal",
-    links: ["Contacto por WhatsApp", "Facturación con RUC", "Términos y Condiciones", "Privacidad de Datos"],
+    links: [
+      {
+        label: "Contacto por WhatsApp",
+        href: "https://wa.me/595981123456?text=Hola%2C%20quisiera%20consultar%20sobre%20AgendatePY",
+        isExternal: true,
+      },
+      { label: "Configuración del Negocio", href: "/dashboard/configuracion" },
+      { label: "Suscripción & Facturación", href: "/dashboard/suscripcion" },
+      { label: "Preguntas Frecuentes", href: "#faq" },
+    ],
   },
 ];
 
@@ -32,7 +56,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 md:grid-cols-5">
           <div>
-            <div className="flex items-center gap-2 font-bold text-slate-900">
+            <Link href="/" className="flex items-center gap-2 font-bold text-slate-900">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-white shadow-xs">
                 <CalendarCheck className="h-4 w-4" />
               </span>
@@ -40,7 +64,7 @@ export default function Footer() {
               <span className="rounded-full bg-red-100 px-1.5 py-0.2 text-[10px] font-bold text-red-700">
                 PY
               </span>
-            </div>
+            </Link>
             <p className="mt-3 text-xs leading-relaxed text-slate-600">
               La plataforma de agendamiento online, asistente por WhatsApp y control de comisiones preferida por negocios y profesionales en Paraguay.
             </p>
@@ -50,10 +74,32 @@ export default function Footer() {
               <p className="text-xs font-bold uppercase tracking-wider text-slate-900">{column.title}</p>
               <ul className="mt-3 space-y-2">
                 {column.links.map((link) => (
-                  <li key={link}>
-                    <a href="#inicio" className="text-xs text-slate-600 hover:text-brand transition">
-                      {link}
-                    </a>
+                  <li key={link.label}>
+                    {link.isExternal ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-brand transition"
+                      >
+                        <span>{link.label}</span>
+                        <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                      </a>
+                    ) : link.href.startsWith("#") ? (
+                      <a
+                        href={link.href}
+                        className="text-xs text-slate-600 hover:text-brand transition"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-xs text-slate-600 hover:text-brand transition"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -56,7 +56,7 @@ export default function CalendarBoard() {
           <button
             type="button"
             className="rounded-xl border border-border dark:border-slate-800 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            onClick={() => setCalendarDate("2026-09-19")}
+            onClick={() => setCalendarDate(formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"))}
           >
             Hoy
           </button>

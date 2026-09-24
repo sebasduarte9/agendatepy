@@ -100,6 +100,8 @@ export default function Pricing() {
             price={annual ? "Gs. 520.000" : "Gs. 650.000"}
             period="/mes"
             cta="Consultar por Empresa"
+            href="https://wa.me/595981123456?text=Hola%20AgendatePY%2C%20quisiera%20asesoramiento%20sobre%20el%20Plan%20Empresa"
+            isExternal={true}
             features={EMPRESA_FEATURES}
           />
         </div>
@@ -121,6 +123,8 @@ function PriceCard({
   price,
   period,
   cta,
+  href = "/dashboard",
+  isExternal = false,
   features,
   badge,
   highlighted = false,
@@ -130,6 +134,8 @@ function PriceCard({
   price: string;
   period: string;
   cta: string;
+  href?: string;
+  isExternal?: boolean;
   features: { ok: boolean; label: string }[];
   badge?: string;
   highlighted?: boolean;
@@ -174,16 +180,31 @@ function PriceCard({
       </div>
 
       <div className="pt-8">
-        <Link
-          href="/dashboard"
-          className={`block w-full rounded-2xl py-3 text-center text-xs font-bold transition shadow-sm ${
-            highlighted
-              ? "bg-brand text-white shadow-brand/30 hover:bg-brand-dark"
-              : "border border-slate-300 bg-white text-slate-800 hover:border-brand hover:text-brand"
-          }`}
-        >
-          {cta}
-        </Link>
+        {isExternal ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`block w-full rounded-2xl py-3 text-center text-xs font-bold transition shadow-sm ${
+              highlighted
+                ? "bg-brand text-white shadow-brand/30 hover:bg-brand-dark"
+                : "border border-slate-300 bg-white text-slate-800 hover:border-brand hover:text-brand"
+            }`}
+          >
+            {cta}
+          </a>
+        ) : (
+          <Link
+            href={href}
+            className={`block w-full rounded-2xl py-3 text-center text-xs font-bold transition shadow-sm ${
+              highlighted
+                ? "bg-brand text-white shadow-brand/30 hover:bg-brand-dark"
+                : "border border-slate-300 bg-white text-slate-800 hover:border-brand hover:text-brand"
+            }`}
+          >
+            {cta}
+          </Link>
+        )}
       </div>
     </motion.article>
   );

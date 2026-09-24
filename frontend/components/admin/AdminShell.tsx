@@ -83,11 +83,13 @@ export default function AdminShell({
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Administración">
           {LINKS.map(({ href, label, icon: Icon }) => {
+            const isPathBased = pathname.startsWith(`/${slug}`);
+            const resolvedHref = isPathBased ? `/${slug}${href}` : href;
             const current = isCurrent(pathname, slug, href);
             return (
               <Link
                 key={href}
-                href={href}
+                href={resolvedHref}
                 aria-current={current ? "page" : undefined}
                 className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
                   current ? "text-white shadow-lg" : "hover:bg-white/5 hover:text-white"
@@ -102,10 +104,11 @@ export default function AdminShell({
         </nav>
         <div className="p-4">
           <Link
-            href="/reservar"
-            className="flex items-center justify-between rounded-2xl border border-white/10 px-3 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-white"
+            href={pathname.startsWith(`/${slug}`) ? `/${slug}/reservar` : "/reservar"}
+            target="_blank"
+            className="flex items-center justify-between rounded-2xl border border-white/10 px-3 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition"
           >
-            Ver página pública
+            <span>Ver página pública</span>
             <ExternalLink className="h-4 w-4" />
           </Link>
         </div>
