@@ -161,10 +161,10 @@ export default function ProductosPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             Productos, Tienda & Inventario
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
             Catálogo web con pedidos directos a tu WhatsApp y venta rápida al mostrador.
           </p>
         </div>
@@ -173,28 +173,28 @@ export default function ProductosPage() {
           <button
             type="button"
             onClick={copyStoreLink}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition backdrop-blur-xl"
           >
-            {copiedLink ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4 text-slate-400" />}
-            Copiar Enlace de Tienda
+            {copiedLink ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-slate-400" />}
+            <span>Copiar Enlace Tienda</span>
           </button>
 
           <Link
             href={publicStoreUrl}
             target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition backdrop-blur-xl"
           >
             <ExternalLink className="h-4 w-4 text-slate-400" />
-            Ver Tienda Web
+            <span>Ver Tienda Web</span>
           </Link>
 
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_15px_rgba(99,102,241,0.25)] hover:opacity-95 transition"
           >
             <Plus className="h-4 w-4" />
-            Nuevo Producto
+            <span>Nuevo Producto</span>
           </button>
         </div>
       </div>
@@ -234,11 +234,11 @@ export default function ProductosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por producto, categoría o descripción..."
-            className="w-full rounded-2xl border border-border bg-white pl-10 pr-4 py-2.5 text-xs text-slate-900 shadow-xs outline-none focus:border-primary"
+            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs outline-none focus:border-primary backdrop-blur-xl"
           />
         </div>
 
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
@@ -246,8 +246,8 @@ export default function ProductosPage() {
               onClick={() => setSelectedCategory(cat)}
               className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
                 selectedCategory === cat
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "bg-white text-slate-600 border border-border hover:bg-slate-50"
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
+                  : "bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
               {cat}
@@ -323,28 +323,28 @@ export default function ProductosPage() {
                 {/* Body */}
                 <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-slate-900 text-sm line-clamp-1">{p.name}</h3>
-                    <p className="mt-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">{p.name}</h3>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                       {p.description}
                     </p>
                   </div>
 
                   {/* Financials & Stock */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/5">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-base font-black text-slate-900">{formatGs(p.price)}</span>
-                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                      <span className="text-base font-black text-slate-900 dark:text-white">{formatGs(p.price)}</span>
+                      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-500/20">
                         Margen: {marginPercent}%
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Costo compra: {formatGs(p.cost)}</span>
+                      <span className="text-slate-500 dark:text-slate-400">Costo compra: {formatGs(p.cost)}</span>
                       <span
-                        className={`font-bold px-2 py-0.5 rounded-md ${
+                        className={`font-bold px-2 py-0.5 rounded-lg text-[11px] ${
                           isLowStock
-                            ? "bg-rose-50 text-rose-700 border border-rose-200"
-                            : "bg-slate-100 text-slate-700"
+                            ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
                         }`}
                       >
                         Stock: {p.stock} u.
@@ -358,21 +358,21 @@ export default function ProductosPage() {
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, -1)}
-                          className="h-6 w-6 rounded-md border border-slate-200 bg-slate-50 font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center"
+                          className="h-6 w-6 rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition"
                         >
                           -1
                         </button>
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, 1)}
-                          className="h-6 w-6 rounded-md border border-slate-200 bg-slate-50 font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center"
+                          className="h-6 w-6 rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition"
                         >
                           +1
                         </button>
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, 5)}
-                          className="h-6 px-1.5 rounded-md border border-slate-200 bg-slate-50 font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center text-[10px]"
+                          className="h-6 px-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-[10px] transition"
                         >
                           +5
                         </button>

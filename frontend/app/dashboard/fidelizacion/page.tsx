@@ -70,11 +70,11 @@ export default function FidelizacionPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 inline-flex items-center gap-2">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
             <span>Fidelización & Club de Puntos VIP</span>
             <Star className="h-5 w-5 text-amber-500 fill-amber-400" />
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Incentivá la recurrencia premiando a tus clientes con sellos por cada visita a tu salón o barbería.
           </p>
         </div>
@@ -82,7 +82,7 @@ export default function FidelizacionPage() {
         <button
           type="button"
           onClick={() => setEditingSettings(!editingSettings)}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+          className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700 transition"
         >
           <Settings className="h-4 w-4 text-slate-400" />
           {editingSettings ? "Cerrar Ajustes" : "Configurar Recompensas"}
@@ -91,13 +91,13 @@ export default function FidelizacionPage() {
 
       {/* Settings Panel (Collapsible) */}
       {editingSettings && (
-        <Card className="border-2 border-primary/20 bg-primary/5 p-5 space-y-4">
+        <Card className="border-2 border-primary/20 bg-primary/5 dark:bg-primary/10 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              <h2 className="text-sm font-bold text-slate-900">Ajustes del Programa de Fidelidad</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Ajustes del Programa de Fidelidad</h2>
             </div>
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formSettings.enabled}

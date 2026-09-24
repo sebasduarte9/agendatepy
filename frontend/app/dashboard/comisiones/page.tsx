@@ -193,12 +193,12 @@ export default function ComisionesPage() {
 
       {/* Detailed Services Table */}
       <Card>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">
               Desglose de Servicios & Comisiones ({period})
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Registro turno por turno con el cálculo de comisión aplicado a cada profesional.
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function ComisionesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-border text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                 <th className="pb-3 pl-2">Fecha & Hora</th>
                 <th className="pb-3">Cliente</th>
                 <th className="pb-3">Profesional</th>
@@ -217,7 +217,7 @@ export default function ComisionesPage() {
                 <th className="pb-3 pr-2 text-right">Comisión a Pagar</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/60">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {appointments
                 .filter((a) => a.status !== "cancelled")
                 .map((a) => {
@@ -228,13 +228,13 @@ export default function ComisionesPage() {
                   const commission = Math.round((price * rate) / 100);
 
                   return (
-                    <tr key={a.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 pl-2 font-mono text-slate-600">
+                    <tr key={a.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition">
+                      <td className="py-3 pl-2 font-mono text-slate-600 dark:text-slate-300">
                         {formatInTimeZone(a.start, business.timezone, "dd/MM/yyyy HH:mm")}
                       </td>
-                      <td className="py-3 font-medium text-slate-900">{a.clientName}</td>
+                      <td className="py-3 font-medium text-slate-900 dark:text-white">{a.clientName}</td>
                       <td className="py-3">
-                        <span className="inline-flex items-center gap-1.5 font-medium text-slate-700">
+                        <span className="inline-flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-200">
                           <span
                             className="h-2 w-2 rounded-full"
                             style={{ background: staffMember?.color ?? "#4f46e5" }}
@@ -242,12 +242,12 @@ export default function ComisionesPage() {
                           {staffMember?.name ?? "General"}
                         </span>
                       </td>
-                      <td className="py-3 text-slate-600">{service?.name}</td>
-                      <td className="py-3 text-right font-medium text-slate-900">
+                      <td className="py-3 text-slate-600 dark:text-slate-300">{service?.name}</td>
+                      <td className="py-3 text-right font-medium text-slate-900 dark:text-white">
                         {formatGs(price)}
                       </td>
-                      <td className="py-3 text-right text-slate-500 font-mono">{rate}%</td>
-                      <td className="py-3 pr-2 text-right font-bold text-indigo-600">
+                      <td className="py-3 text-right text-slate-500 dark:text-slate-400 font-mono">{rate}%</td>
+                      <td className="py-3 pr-2 text-right font-bold text-primary">
                         {formatGs(commission)}
                       </td>
                     </tr>

@@ -149,10 +149,10 @@ export default function ClientesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             Clientes & Ficha Técnica (CRM)
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Historial de visitas, preferencias, fórmulas de colorimetría y contacto directo por WhatsApp.
           </p>
         </div>
@@ -160,15 +160,15 @@ export default function ClientesPage() {
           <button
             type="button"
             onClick={exportCSV}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs transition hover:bg-slate-50 dark:hover:bg-slate-700"
           >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+            <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             Exportar CSV
           </button>
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 transition hover:brightness-110 active:scale-95"
           >
             <Plus className="h-4 w-4" />
             Nuevo Cliente
@@ -206,7 +206,7 @@ export default function ClientesPage() {
             placeholder="Buscar por nombre, teléfono, notas o fórmula técnica..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-2xl border border-border bg-white py-2 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         <div className="flex gap-1.5 overflow-x-auto">
@@ -215,10 +215,10 @@ export default function ClientesPage() {
               key={tag}
               type="button"
               onClick={() => setSelectedTag(tag)}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold capitalize transition ${
+              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${
                 selectedTag === tag
-                  ? "bg-slate-900 text-white"
-                  : "bg-white border border-border text-slate-600 hover:bg-slate-50"
+                  ? "bg-primary text-white shadow-xs"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
               {tag}
@@ -250,7 +250,7 @@ export default function ClientesPage() {
                       {initials}
                     </span>
                     <div>
-                      <h3 className="font-bold text-slate-900">{client.name}</h3>
+                      <h3 className="font-bold text-slate-900 dark:text-white">{client.name}</h3>
                       <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                         <Phone className="h-3 w-3" />
                         <span>{client.phone}</span>

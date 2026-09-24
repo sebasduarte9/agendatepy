@@ -177,48 +177,49 @@ export default function CajaPage() {
       </div>
 
       {/* Breakdown by Method Cards */}
+      {/* Breakdown by Method Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-l-4 border-l-emerald-500">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Efectivo Físico
           </p>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl font-bold text-slate-900">
+            <span className="text-xl font-black text-slate-900 dark:text-white">
               {formatGs(stats.efectivoEnCajaEsperado)}
             </span>
             <span className="text-xs text-slate-400">
               Apertura: {formatGs(stats.opening)}
             </span>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             Ingresos: +{formatGs(stats.efectivoIngresos)} · Egresos: -{formatGs(stats.egresos)}
           </p>
         </Card>
 
         <Card className="border-l-4 border-l-indigo-500">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             POS / Tarjeta Bancard
           </p>
           <div className="mt-2">
-            <span className="text-xl font-bold text-slate-900">
+            <span className="text-xl font-black text-slate-900 dark:text-white">
               {formatGs(stats.posIngresos)}
             </span>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             Acredita en cuenta bancaria comercial Bancard/uPay
           </p>
         </Card>
 
         <Card className="border-l-4 border-l-amber-500">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Transferencias SIPAP
           </p>
           <div className="mt-2">
-            <span className="text-xl font-bold text-slate-900">
+            <span className="text-xl font-black text-slate-900 dark:text-white">
               {formatGs(stats.transferenciaIngresos)}
             </span>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             Pagos directos vía comprobante bancario validado
           </p>
         </Card>
@@ -228,8 +229,8 @@ export default function CajaPage() {
       <Card>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Movimientos del Día</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-base font-black text-slate-900 dark:text-white">Movimientos del Día</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Registro cronológico de entradas y salidas de dinero.
             </p>
           </div>
@@ -239,10 +240,10 @@ export default function CajaPage() {
                 key={m}
                 type="button"
                 onClick={() => setFilterMethod(m)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-semibold capitalize transition ${
+                className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${
                   filterMethod === m
-                    ? "bg-slate-900 text-white"
-                    : "border border-border bg-white text-slate-600 hover:bg-slate-50"
+                    ? "bg-primary text-white shadow-xs"
+                    : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 {m === "todos" ? "Todos los Medios" : m}

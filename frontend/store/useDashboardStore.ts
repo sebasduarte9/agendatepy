@@ -449,7 +449,12 @@ type DashboardState = {
   removeBlock: (id: string) => void;
   setReceiptStatus: (id: string, status: Receipt["status"]) => void;
   toggleStaff: (id: string) => void;
+  addStaff: (item: Omit<StaffMember, "id">) => void;
+  updateStaff: (id: string, patch: Partial<StaffMember>) => void;
+  deleteStaff: (id: string) => void;
   updateStaffCommission: (id: string, percentage: number) => void;
+  addService: (item: Omit<ServiceItem, "id">) => void;
+  updateService: (id: string, patch: Partial<ServiceItem>) => void;
   removeService: (id: string) => void;
   addProduct: (item: Omit<ProductItem, "id">) => void;
   updateProduct: (id: string, patch: Partial<ProductItem>) => void;
@@ -641,10 +646,32 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         item.id === id ? { ...item, active: !item.active } : item,
       ),
     }),
+  addStaff: (item) => {
+    const id = `st-${Date.now()}`;
+    set({ staff: [...get().staff, { ...item, id }] });
+  },
+  updateStaff: (id, patch) =>
+    set({
+      staff: get().staff.map((item) =>
+        item.id === id ? { ...item, ...patch } : item,
+      ),
+    }),
+  deleteStaff: (id) =>
+    set({ staff: get().staff.filter((item) => item.id !== id) }),
   updateStaffCommission: (id, percentage) =>
     set({
       staff: get().staff.map((item) =>
         item.id === id ? { ...item, commissionPercentage: percentage } : item,
+      ),
+    }),
+  addService: (item) => {
+    const id = `sv-${Date.now()}`;
+    set({ services: [...get().services, { ...item, id }] });
+  },
+  updateService: (id, patch) =>
+    set({
+      services: get().services.map((item) =>
+        item.id === id ? { ...item, ...patch } : item,
       ),
     }),
   removeService: (id) =>

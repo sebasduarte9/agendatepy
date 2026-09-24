@@ -155,14 +155,14 @@ export default function WhatsAppHubPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-border pb-2">
+      <div className="flex gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
         <button
           type="button"
           onClick={() => setActiveTab("plantillas")}
-          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+          className={`flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
             activeTab === "plantillas"
-              ? "bg-primary text-white shadow-xs"
-              : "bg-white text-slate-600 border border-border hover:bg-slate-50"
+              ? "bg-primary text-white shadow-md shadow-primary/25"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <Bell className="h-3.5 w-3.5" />
@@ -172,15 +172,15 @@ export default function WhatsAppHubPage() {
         <button
           type="button"
           onClick={() => setActiveTab("sendwo")}
-          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+          className={`flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
             activeTab === "sendwo"
-              ? "bg-primary text-white shadow-xs"
-              : "bg-white text-slate-600 border border-border hover:bg-slate-50"
+              ? "bg-primary text-white shadow-md shadow-primary/25"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <Sparkles className="h-3.5 w-3.5 text-amber-500" />
           Sendwo Bot API
-          <span className="rounded-full bg-emerald-100 text-emerald-800 px-1.5 py-0.2 text-[9px] font-black">
+          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.2 text-[9px] font-black">
             Recomendado
           </span>
         </button>
@@ -188,10 +188,10 @@ export default function WhatsAppHubPage() {
         <button
           type="button"
           onClick={() => setActiveTab("evolution")}
-          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+          className={`flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
             activeTab === "evolution"
-              ? "bg-primary text-white shadow-xs"
-              : "bg-white text-slate-600 border border-border hover:bg-slate-50"
+              ? "bg-primary text-white shadow-md shadow-primary/25"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <Cpu className="h-3.5 w-3.5" />
