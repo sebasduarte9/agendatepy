@@ -11,12 +11,16 @@ import {
   ArrowRight,
   ShieldCheck,
   Smartphone,
+  CheckCircle2,
+  Clock,
+  User,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import StatCard from "@/components/dashboard/ui/StatCard";
 import Card from "@/components/dashboard/ui/Card";
 import { formatGs } from "@/lib/dashboard-dates";
+import AIFinanceCopilot from "@/components/dashboard/ai/AIFinanceCopilot";
+import AIFinanceMetricsDeck from "@/components/dashboard/finance/AIFinanceMetricsDeck";
 
 export default function DashboardHomePage() {
   const { appointments, services, business } = useDashboardStore();
@@ -45,7 +49,7 @@ export default function DashboardHomePage() {
               ¡Bienvenido a {business.name}!
             </h1>
             <p className="text-xs text-slate-300 sm:text-sm leading-relaxed">
-              Tus clientes pueden agendar turnos las 24hs desde tu enlace personalizado o por WhatsApp.
+              Tus clientes pueden agendar turnos las 24hs desde tu enlace personalizado o por WhatsApp con sincronización de calendario.
             </p>
           </div>
 
@@ -87,34 +91,40 @@ export default function DashboardHomePage() {
             </code>
           </div>
           <span className="text-[11px] text-slate-400 flex items-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> PostgreSQL sincronizado
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> PostgreSQL & Google Sync Activo
           </span>
         </div>
       </div>
 
-      {/* KPI Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard
-          label="Turnos confirmados"
-          value={String(confirmed.length)}
-          icon={CalendarDays}
-          delta={14}
-        />
-        <StatCard label="Ingresos del mes" value={formatGs(revenue)} icon={TrendingUp} delta={22} />
-        <StatCard
-          label="Uso de reservas en el plan"
-          value={`${business.usedBookings} / ${business.freeBookingLimit}`}
-          hint="Plan Pro activo con WhatsApp ilimitado"
-          icon={CalendarPlus}
-        />
-      </div>
+      {/* AI Copilot & Finance Intelligence Widget (Behance AI Finance SaaS UX) */}
+      <AIFinanceCopilot
+        businessName={business.name}
+        monthlyRevenue={revenue}
+        confirmedAppointments={confirmed.length}
+      />
 
-      {/* Upcoming Appointments List */}
+      {/* High-Precision Financial Metrics Deck & Cashflow Forecasting Chart */}
+      <AIFinanceMetricsDeck
+        monthlyRevenue={revenue}
+        confirmedAppointments={confirmed.length}
+        totalClients={new Set(appointments.map((a) => a.clientEmail)).size}
+      />
+
+      {/* Upcoming Appointments Velocity Feed */}
       <Card>
         <div className="mb-4 flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-3">
           <div>
-            <h2 className="font-bold text-slate-900 dark:text-slate-100">Próximos turnos en agenda</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Citas programadas para los próximos días</p>
+            <div className="flex items-center gap-2">
+              <h2 className="font-black text-slate-900 dark:text-slate-100 text-base">
+                Próximos turnos en agenda
+              </h2>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                {confirmed.length} confirmados
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Citas programadas con recordatorios automáticos por WhatsApp y calendario
+            </p>
           </div>
           <Link
             href="/dashboard/calendario"
@@ -129,35 +139,48 @@ export default function DashboardHomePage() {
           {appointments
             .filter((a) => a.status !== "cancelled")
             .slice(0, 5)
-            .map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center justify-between rounded-2xl border border-border dark:border-slate-800 p-3 text-sm bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800/80 transition"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-xs">
-                    {item.clientName.slice(0, 2).toUpperCase()}
+            .map((item) => {
+              const service = services.find((s) => s.id === item.serviceId);
+              return (
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-slate-800 p-3.5 text-sm bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/10 text-primary font-black text-xs shadow-xs">
+                      {item.clientName.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 dark:text-slate-100">
+                          {item.clientName}
+                        </span>
+                        <span className="rounded-full bg-slate-200/70 dark:bg-slate-700/60 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-300">
+                          VIP
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <span>{service?.name || "Servicio"}</span>
+                        <span>•</span>
+                        <span className="font-semibold text-primary">
+                          {formatGs(service?.price ?? 65000)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block font-bold text-slate-900 dark:text-slate-100">
-                      {item.clientName}
-                    </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {services.find((s) => s.id === item.serviceId)?.name || "Servicio"}
-                    </span>
-                  </div>
-                </div>
 
-                <div className="text-right">
-                  <span className="block font-semibold text-xs text-slate-800 dark:text-slate-200">
-                    {formatInTimeZone(item.start, business.timezone, "dd/MM · HH:mm 'hs'")}
-                  </span>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-                    {item.status}
-                  </span>
-                </div>
-              </li>
-            ))}
+                  <div className="text-right">
+                    <span className="block font-bold text-xs text-slate-800 dark:text-slate-200">
+                      {formatInTimeZone(item.start, business.timezone, "dd/MM · HH:mm 'hs'")}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mt-0.5">
+                      <CheckCircle2 className="h-2.5 w-2.5" />
+                      {item.status}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
         </ul>
       </Card>
     </div>

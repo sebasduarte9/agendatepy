@@ -21,6 +21,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
 import { cancelAppointmentAction } from "@/lib/scheduling/actions";
 import { formatGs } from "@/lib/dashboard-dates";
+import SmartCalendarSync from "@/components/booking/SmartCalendarSync";
 
 type Props = {
   appointment: {
@@ -66,23 +67,6 @@ export default function ClientAppointmentManager({ appointment }: Props) {
   );
 
   // Google Calendar URL generation
-  const startUtcFormatted = new Date(appointment.startTime)
-    .toISOString()
-    .replace(/-|:|\.\d+/g, "");
-  const endUtcFormatted = new Date(appointment.endTime)
-    .toISOString()
-    .replace(/-|:|\.\d+/g, "");
-  const gcalTitle = encodeURIComponent(
-    `Turno: ${appointment.service.name} en ${tenant.name}`
-  );
-  const gcalDetails = encodeURIComponent(
-    `Turno agendado con ${appointment.staff.name} para ${appointment.clientName}.\nServicio: ${appointment.service.name} (${formatGs(
-      appointment.service.price
-    )})`
-  );
-  const gcalLocation = encodeURIComponent(tenant.address || tenant.name);
-  const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalTitle}&dates=${startUtcFormatted}/${endUtcFormatted}&details=${gcalDetails}&location=${gcalLocation}`;
-
   // WhatsApp contact link
   const waText = encodeURIComponent(
     `Hola ${tenant.name}, soy ${appointment.clientName}. Te escribo respecto a mi turno de ${appointment.service.name} para el ${dateFormatted} a las ${time} hs.`
@@ -90,32 +74,6 @@ export default function ClientAppointmentManager({ appointment }: Props) {
   const waUrl = tenant.whatsappPhone
     ? `https://wa.me/${tenant.whatsappPhone}?text=${waText}`
     : null;
-
-  function handleDownloadIcs() {
-    const icsContent = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//AgendatePY//Turno Online//ES",
-      "CALSCALE:GREGORIAN",
-      "BEGIN:VEVENT",
-      `SUMMARY:Turno: ${appointment.service.name} - ${tenant.name}`,
-      `DESCRIPTION:Turno con ${appointment.staff.name} para ${appointment.clientName}.`,
-      `DTSTART:${startUtcFormatted}`,
-      `DTEND:${endUtcFormatted}`,
-      `LOCATION:${tenant.address || tenant.name}`,
-      "STATUS:CONFIRMED",
-      "END:VEVENT",
-      "END:VCALENDAR",
-    ].join("\r\n");
-
-    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute("download", `turno_${tenant.subdomain}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
 
   function handleCancel() {
     startTransition(async () => {
@@ -297,31 +255,28 @@ export default function ClientAppointmentManager({ appointment }: Props) {
           </div>
         )}
 
-        {/* Calendar Sync & Actions (if not cancelled) */}
+        {/* Calendar Sync Inteligente (Android Google Calendar / iPhone Apple Reminders) */}
+        {!isCancelled && (
+          <SmartCalendarSync
+            appointment={{
+              serviceName: appointment.service.name,
+              staffName: appointment.staff.name,
+              clientName: appointment.clientName,
+              startTime: appointment.startTime,
+              endTime: appointment.endTime,
+              price: appointment.service.price,
+              durationMinutes: appointment.service.durationMinutes,
+            }}
+            business={{
+              name: tenant.name,
+              address: tenant.address || undefined,
+              timezone: tenant.timezone,
+            }}
+          />
+        )}
+
         {!isCancelled && (
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-              Guardar en tu calendario
-            </p>
-            <div className="grid grid-cols-2 gap-2.5">
-              <a
-                href={googleCalendarUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition"
-              >
-                <CalendarPlus className="h-4 w-4 text-primary" />
-                Google Calendar
-              </a>
-              <button
-                type="button"
-                onClick={handleDownloadIcs}
-                className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition"
-              >
-                <Calendar className="h-4 w-4 text-slate-700" />
-                Apple / Outlook
-              </button>
-            </div>
 
             {waUrl && (
               <a

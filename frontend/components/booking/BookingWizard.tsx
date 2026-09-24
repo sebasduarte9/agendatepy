@@ -414,9 +414,28 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                             isDark ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-slate-200 text-slate-900"
                           }`}
                         />
-                        <p className={`mt-1 text-[11px] ${secondaryTextClass}`}>
-                          Te enviaremos el recordatorio y confirmación oficial por WhatsApp.
-                        </p>
+                        <div
+                          className={`mt-2 rounded-xl p-2.5 text-[11px] leading-relaxed border transition ${
+                            isDark
+                              ? "bg-slate-800/80 border-slate-700/80 text-slate-300"
+                              : "bg-blue-50/70 border-blue-100 text-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                              ✓
+                            </span>
+                            <p className="text-[10.5px]">
+                              <strong className="font-semibold text-slate-900 dark:text-white">
+                                Autorización de avisos y recordatorios:
+                              </strong>{" "}
+                              Al registrar tu número, autorizás expresamente a{" "}
+                              <span className="font-semibold">{tenant.name}</span> y AgendatePY a
+                              enviarte confirmaciones oficiales, recordatorios previos al turno y
+                              actualizaciones del servicio por WhatsApp o SMS.
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
                       <div>

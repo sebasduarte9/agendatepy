@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { whatsappPhoneFromSettings } from "@/lib/scheduling/tenant-settings";
 import { HOLD_MINUTES } from "@/lib/scheduling/types";
 import WhatsAppConfirm from "@/components/booking/WhatsAppConfirm";
+import SmartCalendarSync from "@/components/booking/SmartCalendarSync";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,9 @@ export default async function ReservaListaPage({ params, searchParams }: PagePro
       status: true,
       expiresAt: true,
       startTime: true,
-      service: { select: { name: true } },
+      endTime: true,
+      service: { select: { name: true, price: true, durationMinutes: true } },
+      staff: { select: { name: true } },
       tenant: { select: { name: true, timezone: true, settings: true } },
     },
   });
@@ -63,41 +66,71 @@ export default async function ReservaListaPage({ params, searchParams }: PagePro
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-between px-4 pt-10 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <div>
+      <div className="space-y-4">
         <ol className="flex gap-2">
           {[1, 2, 3, 4].map((item) => (
             <li key={item} className="h-1.5 flex-1 rounded-full bg-primary" />
           ))}
         </ol>
-        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-          {appointment.tenant.name}
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-          {expired ? "Este turno ya se liberó" : "Turno reservado"}
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          {expired
-            ? "Pasaron los 15 minutos sin confirmación. Volvé a elegir un horario."
-            : `${appointment.clientName}, tu lugar para ${appointment.service.name} quedó apartado ${HOLD_MINUTES} minutos. Confirmalo por WhatsApp antes de que se libere.`}
-        </p>
-        <div className="mt-6 rounded-3xl border border-slate-200 bg-white px-4 py-4">
-          <p className="font-semibold text-slate-900">{appointment.service.name}</p>
-          <p className="mt-1 text-sm capitalize text-slate-600">
-            {when} · {time}
+        <div>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+            {appointment.tenant.name}
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+            {expired ? "Este turno ya se liberó" : "¡Turno reservado con éxito!"}
+          </h1>
+          <p className="mt-2 text-xs leading-relaxed text-slate-600">
+            {expired
+              ? "Pasaron los 15 minutos sin confirmación. Volvé a elegir un horario."
+              : `${appointment.clientName}, tu lugar para ${appointment.service.name} quedó apartado. Confirmalo por WhatsApp para asegurar tu cupo.`}
           </p>
         </div>
+
+        {/* Resumen del Turno */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="font-bold text-slate-900">{appointment.service.name}</p>
+          <p className="mt-1 text-xs capitalize text-slate-600">
+            📅 {when} · ⏰ {time} hs
+          </p>
+          {appointment.staff?.name && (
+            <p className="mt-1 text-xs text-slate-500">
+              👤 Profesional: <strong className="text-slate-700">{appointment.staff.name}</strong>
+            </p>
+          )}
+        </div>
+
+        {/* Sincronización Inteligente de Calendario (Google Calendar en Android / Apple Reminders en iPhone) */}
+        {!expired && (
+          <SmartCalendarSync
+            appointment={{
+              serviceName: appointment.service.name,
+              staffName: appointment.staff?.name || "Profesional asignado",
+              clientName: appointment.clientName,
+              startTime: appointment.startTime,
+              endTime: appointment.endTime,
+              price: appointment.service.price,
+              durationMinutes: appointment.service.durationMinutes,
+            }}
+            business={{
+              name: appointment.tenant.name,
+              timezone: appointment.tenant.timezone,
+            }}
+          />
+        )}
       </div>
 
-      {expired ? (
-        <Link
-          href={`/${slug}/reservar`}
-          className="mt-8 flex h-14 items-center justify-center rounded-full bg-primary text-base font-semibold text-white"
-        >
-          Elegir otro horario
-        </Link>
-      ) : (
-        <WhatsAppConfirm href={phone ? href : null} />
-      )}
+      <div className="mt-6 pt-2">
+        {expired ? (
+          <Link
+            href={`/${slug}/reservar`}
+            className="flex h-13 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white shadow-md"
+          >
+            Elegir otro horario
+          </Link>
+        ) : (
+          <WhatsAppConfirm href={phone ? href : null} />
+        )}
+      </div>
     </main>
   );
 }
