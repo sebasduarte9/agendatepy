@@ -28,11 +28,11 @@ const COLUMNS = [
     title: "Rubros en Paraguay",
     links: [
       { label: "Peluquerías & Barberías", href: "/barberia/reservar" },
-      { label: "Centros de Estética & Spas", href: "/showcase" },
-      { label: "Consultorios & Salud", href: "/dashboard" },
-      { label: "Odontología & Estética", href: "/dashboard" },
-      { label: "Veterinarias & Pet Shops", href: "/dashboard" },
-      { label: "Canchas & Pádel", href: "/dashboard" },
+      { label: "Centros de Estética & Spas", href: "/barberia/reservar" },
+      { label: "Consultorios & Salud", href: "/barberia/reservar" },
+      { label: "Odontología & Estética", href: "/barberia/reservar" },
+      { label: "Veterinarias & Pet Shops", href: "/barberia/reservar" },
+      { label: "Canchas & Pádel", href: "/barberia/reservar" },
     ],
   },
   {

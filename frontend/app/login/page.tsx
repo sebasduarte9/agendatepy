@@ -25,6 +25,8 @@ import {
 } from "@/lib/auth/actions";
 import type { UserRole } from "@/lib/auth/types";
 
+import GoogleAuthModal from "@/components/auth/GoogleAuthModal";
+
 export default function LoginPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -36,6 +38,7 @@ export default function LoginPage() {
   const [devDemoCode, setDevDemoCode] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
   // Solicitar OTP
   const handleRequestOtp = (e: React.FormEvent) => {
@@ -85,13 +88,24 @@ export default function LoginPage() {
     });
   };
 
-  // Login con Google
-  const handleGoogleLogin = () => {
+  // Login con Google: Abrir selector de cuenta
+  const handleOpenGoogle = () => {
+    setError(null);
+    setIsGoogleModalOpen(true);
+  };
+
+  // Confirmar cuenta de Google elegida
+  const handleGoogleAccountSelected = (googleEmail: string, googleName: string) => {
     setError(null);
     startTransition(async () => {
-      const res = await googleLoginAction("demo.google@agendate.py", "Usuario Google", optInMarketing);
-      if (res.ok) {
-        router.push("/dashboard");
+      const res = await googleLoginAction(googleEmail, googleName, optInMarketing);
+      if (res.ok && res.user) {
+        setIsGoogleModalOpen(false);
+        if (res.user.role === "SUPERADMIN") {
+          router.push("/superadmin");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         setError(res.error || "Error al iniciar con Google");
       }
@@ -155,7 +169,7 @@ export default function LoginPage() {
           {/* Botón Google Apple-style */}
           <button
             type="button"
-            onClick={handleGoogleLogin}
+            onClick={handleOpenGoogle}
             disabled={isPending}
             className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.99] disabled:opacity-60"
           >
@@ -370,6 +384,14 @@ export default function LoginPage() {
           .
         </p>
       </motion.div>
+
+      {/* Selector de cuenta de Google Modal */}
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSelectAccount={handleGoogleAccountSelected}
+        isLoading={isPending}
+      />
     </div>
   );
 }

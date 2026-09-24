@@ -85,7 +85,7 @@ export default function Hero() {
           {/* CTAs */}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <motion.a
-              href="#precios"
+              href="/onboarding"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-7 py-3.5 text-sm font-bold text-white shadow-xl shadow-brand/30 hover:opacity-95 transition"
               animate={{ scale: [1, 1.02, 1] }}
               transition={{ duration: 2.2, repeat: Infinity }}

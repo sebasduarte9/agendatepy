@@ -143,12 +143,14 @@ export async function googleLoginAction(
       include: { tenant: { select: { slug: true, subdomain: true } } },
     });
 
+    const isSuperAdmin = cleanEmail.includes("admin@agendate.py");
+
     if (!user) {
       user = await prisma.user.create({
         data: {
           email: cleanEmail,
           name,
-          role: "OWNER",
+          role: isSuperAdmin ? "SUPERADMIN" : "OWNER",
           optInMarketing,
         },
         include: { tenant: { select: { slug: true, subdomain: true } } },
@@ -161,7 +163,10 @@ export async function googleLoginAction(
       name: user.name,
       role: user.role as UserRole,
       tenantId: user.tenantId,
-      tenantSlug: user.tenant?.subdomain || user.tenant?.slug || "barberia",
+      tenantSlug:
+        user.tenant?.subdomain ||
+        user.tenant?.slug ||
+        (user.role === "SUPERADMIN" ? null : "barberia"),
       phone: user.phone,
       optInMarketing: user.optInMarketing,
     };

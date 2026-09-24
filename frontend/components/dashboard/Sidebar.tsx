@@ -40,7 +40,6 @@ const PRIMARY_LINKS = [
 
 const SECONDARY_LINKS = [
   { href: "/dashboard/apariencia", label: "Diseño & Marca", icon: Palette },
-  { href: "/showcase", label: "Galería de Diseños", icon: Sparkles, badge: "Lab" },
   { href: "/dashboard/servicios", label: "Servicios & Equipo", icon: Scissors },
   { href: "/dashboard/bloquear-horario", label: "Bloquear Horario", icon: Ban },
   { href: "/dashboard/transferencias", label: "Transferencias SIPAP", icon: Receipt },

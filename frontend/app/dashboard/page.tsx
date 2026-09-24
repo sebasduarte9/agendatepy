@@ -69,11 +69,11 @@ export default function DashboardHomePage() {
             </Link>
 
             <Link
-              href="/showcase"
+              href="/dashboard/nueva-reserva"
               className="inline-flex items-center gap-1.5 rounded-2xl bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-md transition"
             >
-              <Sparkles className="h-4 w-4 text-emerald-300" />
-              <span>Galería de Estilos</span>
+              <CalendarPlus className="h-4 w-4 text-emerald-300" />
+              <span>Nueva Cita</span>
             </Link>
           </div>
         </div>

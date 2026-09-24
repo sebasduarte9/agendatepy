@@ -82,6 +82,7 @@ export default function Pricing() {
             price={annual ? "Gs. 80.000" : "Gs. 100.000"}
             period="/mes"
             cta="Probar 30 Días Gratis"
+            href="/onboarding"
             features={BASIC_FEATURES}
           />
           <PriceCard
@@ -91,6 +92,7 @@ export default function Pricing() {
             price={annual ? "Gs. 200.000" : "Gs. 250.000"}
             period="/mes"
             cta="Comenzar Prueba Gratis"
+            href="/onboarding"
             features={PRO_FEATURES}
             highlighted
           />

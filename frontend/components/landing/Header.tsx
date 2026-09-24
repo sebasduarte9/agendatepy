@@ -9,8 +9,8 @@ const NAV_LINKS = [
   { href: "#caracteristicas", label: "Características" },
   { href: "#como-funciona", label: "Cómo Funciona" },
   { href: "/barberia/reservar", label: "Web de Reservas", isRoute: true, badge: "Demo" },
-  { href: "/showcase", label: "Galería de Diseños", isRoute: true, badge: "Nuevo" },
   { href: "#precios", label: "Precios" },
+  { href: "#faq", label: "Preguntas Frecuentes" },
 ];
 
 export default function Header() {
