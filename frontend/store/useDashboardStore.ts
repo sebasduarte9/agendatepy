@@ -16,6 +16,7 @@ import type {
   LoyaltySettings,
   SipapConfig,
   EvolutionApiConfig,
+  UserRole,
 } from "@/lib/dashboard-types";
 
 const TIMEZONE_NOTE =
@@ -35,6 +36,7 @@ const staff: StaffMember[] = [
     id: "st-marcos",
     name: "Marcos Benítez",
     role: "Master Barber & Estilista",
+    systemRole: "barbero",
     description: "Cortes clásicos, degradé, perfilado de barba y perfilado.",
     avatar: "MB",
     color: "#4f46e5",
@@ -46,6 +48,7 @@ const staff: StaffMember[] = [
     id: "st-sofia",
     name: "Sofía Alcaraz",
     role: "Colorista & Peinados",
+    systemRole: "estilista",
     description: "Especialista en coloración, alisados y tratamientos capilares.",
     avatar: "SA",
     color: "#ec4899",
@@ -57,12 +60,25 @@ const staff: StaffMember[] = [
     id: "st-diego",
     name: "Diego Franco",
     role: "Barbero Profesional",
+    systemRole: "barbero",
     description: "Cortes modernos, fade, diseños y cuidado facial.",
     avatar: "DF",
     color: "#0ea5e9",
     active: true,
     hours: "11:00 – 20:00",
     commissionPercentage: 40,
+  },
+  {
+    id: "st-leticia",
+    name: "Leticia Romero",
+    role: "Cajera & Recepción",
+    systemRole: "cajero",
+    description: "Atención al cliente, cobros en caja, facturación y SIPAP.",
+    avatar: "LR",
+    color: "#10b981",
+    active: true,
+    hours: "08:30 – 19:30",
+    commissionPercentage: 0,
   },
 ];
 
@@ -470,6 +486,10 @@ type DashboardState = {
   updateEvolutionApi: (patch: Partial<EvolutionApiConfig>) => void;
   addCashMovement: (item: Omit<CashMovement, "id">) => void;
   deleteCashMovement: (id: string) => void;
+  currentUserRole: UserRole;
+  currentStaffId?: string;
+  setCurrentUserRole: (role: UserRole, staffId?: string) => void;
+  updateAppointment: (id: string, patch: Partial<Appointment>) => void;
   updateWhatsAppTemplate: (id: string, body: string) => void;
   toggleWhatsAppTemplate: (id: string) => void;
   pushToast: (type: "success" | "error", message: string) => void;
@@ -555,6 +575,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       note: "Comprobante SIPAP Ueno Bank adjunto",
     },
   ],
+  currentUserRole: "admin",
+  currentStaffId: undefined,
+  setCurrentUserRole: (role, staffId) =>
+    set({
+      currentUserRole: role,
+      currentStaffId: staffId,
+      selectedStaffId: role === "barbero" || role === "estilista" ? staffId || "st-marcos" : "all",
+    }),
   calendarDate: "2026-09-19",
   calendarView: "dia",
   selectedStaffId: "all",
@@ -566,6 +594,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setSelectedStaffId: (id) => set({ selectedStaffId: id }),
   updateBusiness: (patch) =>
     set({ business: { ...get().business, ...patch } }),
+  updateAppointment: (id, patch) =>
+    set({
+      appointments: get().appointments.map((a) =>
+        a.id === id ? { ...a, ...patch } : a
+      ),
+    }),
   addAppointment: (item) => {
     const apps = [...get().appointments, item];
     const existing = get().clients.find(

@@ -123,19 +123,19 @@ export default function FidelizacionPage() {
       </div>
 
       {/* Apple & Google Wallet Integration Showcase Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 p-5 text-white shadow-xl">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-amber-500/15 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl border border-amber-300/60 dark:border-amber-500/20 bg-gradient-to-r from-amber-50 via-white to-indigo-50/70 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-5 text-slate-900 dark:text-white shadow-sm transition-all duration-300">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-amber-400/20 dark:bg-amber-500/15 blur-3xl" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1.5 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 border border-amber-400/30 px-3 py-1 text-[11px] font-bold text-amber-300">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 dark:bg-amber-400/20 border border-amber-500/20 dark:border-amber-400/30 px-3 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
               <span>Soporte Oficial Apple Wallet (.pkpass) & Google Wallet</span>
             </div>
-            <h2 className="text-lg font-black tracking-tight text-white sm:text-xl">
+            <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
               Tus clientes llevan tu salón en la pantalla de su celular
             </h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Cada cliente cuenta con un enlace único con su tarjeta digital, sellos en tiempo real y código QR. Al tocar &ldquo;Agregar a Wallet&rdquo;, se instala en su iPhone o Android con notificaciones push al ganar sellos.
             </p>
           </div>

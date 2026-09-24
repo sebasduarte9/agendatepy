@@ -8,6 +8,10 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 export default function Header() {
   const business = useDashboardStore((s) => s.business);
   const setOpen = useDashboardStore((s) => s.setSidebarOpen);
+  const currentUserRole = useDashboardStore((s) => s.currentUserRole);
+  const currentStaffId = useDashboardStore((s) => s.currentStaffId);
+  const setCurrentUserRole = useDashboardStore((s) => s.setCurrentUserRole);
+  const pushToast = useDashboardStore((s) => s.pushToast);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -52,6 +56,36 @@ export default function Header() {
         </div>
       </div>
       <div className="flex items-center gap-2">
+        {/* Role Switcher Pill */}
+        <div className="relative">
+          <select
+            value={`${currentUserRole}:${currentStaffId || ""}`}
+            onChange={(e) => {
+              const [role, staffId] = e.target.value.split(":");
+              setCurrentUserRole(role as any, staffId || undefined);
+              const label =
+                role === "admin"
+                  ? "👑 Dueño / Administrador"
+                  : role === "cajero"
+                  ? "💳 Cajero / Facturación"
+                  : role === "barbero"
+                  ? "✂️ Barbero (Marcos)"
+                  : "💅 Estilista (Sofía)";
+              pushToast("success", `Vista cambiada a rol: ${label}`);
+            }}
+            aria-label="Cambiar rol activo"
+            className="rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-100/90 dark:bg-slate-900/90 py-1.5 pl-3 pr-7 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-primary/50 transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary appearance-none"
+          >
+            <option value="admin:">👑 Admin (Dueño)</option>
+            <option value="cajero:st-leticia">💳 Cajera (Leticia)</option>
+            <option value="barbero:st-marcos">✂️ Barbero (Marcos)</option>
+            <option value="estilista:st-sofia">💅 Estilista (Sofía)</option>
+          </select>
+          <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
+            ▼
+          </div>
+        </div>
+
         <Link
           href={`/${business.slug || "barberia"}/reservar`}
           target="_blank"

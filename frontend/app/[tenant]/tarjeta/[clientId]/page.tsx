@@ -19,6 +19,7 @@ import {
   Award,
   Smartphone,
   Info,
+  Download,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { formatGs } from "@/lib/dashboard-dates";
@@ -339,43 +340,64 @@ export default function TarjetaDigitalClientePage({
             </div>
 
             <div className="space-y-3 text-xs text-slate-300">
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-1.5">
+              <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-2">
                 <span className="font-bold text-amber-400 block">
-                  Beneficios del Pase Nativo en Celular:
+                  ¿Cómo probar en tu iPhone? (2 opciones fáciles):
                 </span>
-                <p>• Notificación instantánea en pantalla de bloqueo al sumar sellos.</p>
-                <p>• Geofencing: Aviso automático cuando estés cerca del local en Asunción.</p>
-                <p>• Acceso sin internet al código QR del cliente.</p>
-              </div>
+                <div className="space-y-2 text-[11.5px] leading-relaxed">
+                  <div className="rounded-xl bg-black/30 p-2.5 border border-white/5">
+                    <p className="font-bold text-white flex items-center gap-1.5">
+                      <span>📲 Opción 1: Guardar en Pantalla de Inicio (Recomendado)</span>
+                    </p>
+                    <p className="text-slate-300 mt-1">
+                      En Safari de tu iPhone, tocá el botón de Compartir (<strong className="text-white">el ícono ⎋</strong> abajo) y elegí <strong className="text-amber-300">&ldquo;Añadir a pantalla de inicio&rdquo;</strong>. ¡Tendrás tu tarjeta con tus sellos en vivo, QR y diseño espacial listo como app nativa!
+                    </p>
+                  </div>
 
-              <p className="text-[11px] text-slate-400">
-                Al activar el pase, se descarga el archivo oficial firmado con el identificador del local.
-              </p>
+                  <div className="rounded-xl bg-black/30 p-2.5 border border-white/5">
+                    <p className="font-bold text-white flex items-center gap-1.5">
+                      <span>🎫 Opción 2: Archivo .pkpass para Apple Wallet</span>
+                    </p>
+                    <p className="text-slate-300 mt-1">
+                      Tocá <strong className="text-amber-400">&ldquo;Descargar .pkpass&rdquo;</strong>. Para abrir pases personalizados en iOS sin certificado de desarrollador Apple de $99/año, podés abrirlo con la app gratuita <strong className="text-white">Pass2U Wallet</strong> (App Store) o importarlo directo si tu iPhone tiene perfil beta habilitado.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setWalletModalOpen(null)}
-                className="flex-1 rounded-xl border border-white/15 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/10 transition"
+                className="rounded-xl border border-white/15 py-2.5 px-4 text-xs font-semibold text-slate-300 hover:bg-white/10 transition"
               >
                 Cerrar
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pushToast(
-                    "success",
-                    walletModalOpen === "apple"
-                      ? "Pase Apple Wallet descargado exitosamente"
-                      : "Pase Google Wallet vinculado exitosamente"
-                  );
-                  setWalletModalOpen(null);
-                }}
-                className="flex-1 rounded-xl bg-amber-400 py-2.5 text-xs font-bold text-slate-950 shadow-md hover:bg-amber-300 transition"
-              >
-                Descargar Pase
-              </button>
+              {walletModalOpen === "apple" ? (
+                <a
+                  href={`/api/wallet/apple/${client.id}?name=${encodeURIComponent(client.name)}&business=${encodeURIComponent(business.name)}&points=${points}&threshold=${threshold}&reward=${encodeURIComponent(loyalty.rewardDescription)}`}
+                  download={`tarjeta-${client.id}.pkpass`}
+                  onClick={() => {
+                    pushToast("success", "Descargando archivo .pkpass para Apple Wallet / Pass2U...");
+                  }}
+                  className="flex-1 text-center inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-400 py-2.5 px-3 text-xs font-bold text-slate-950 shadow-md hover:bg-amber-300 transition"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Descargar .pkpass</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pushToast("success", "Pase Google Wallet vinculado a tu cuenta Google Pay");
+                    setWalletModalOpen(null);
+                  }}
+                  className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-slate-950 shadow-md hover:bg-emerald-400 transition"
+                >
+                  Guardar en Google
+                </button>
+              )}
             </div>
           </div>
         </div>

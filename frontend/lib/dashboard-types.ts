@@ -2,11 +2,13 @@ export type PaymentMethod = "efectivo" | "sipap" | "pos_bancard" | "billetera_py
 export type AppointmentStatus = "confirmed" | "pending" | "cancelled" | "completed";
 export type PlanId = "basico" | "pro" | "premium" | "empresa";
 export type CalendarView = "dia" | "semana" | "mes";
+export type UserRole = "admin" | "cajero" | "barbero" | "estilista";
 
 export type StaffMember = {
   id: string;
   name: string;
   role: string;
+  systemRole?: UserRole;
   description: string;
   avatar: string;
   color: string;
