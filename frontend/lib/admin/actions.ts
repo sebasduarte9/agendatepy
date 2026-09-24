@@ -78,7 +78,9 @@ export async function cancelAppointment(
 }
 
 async function tenantFromHost() {
-  const slug = (await headers()).get("x-tenant-slug");
+  const slug =
+    (await headers()).get("x-tenant-slug") ||
+    (process.env.NODE_ENV !== "production" ? "barberia" : null);
   if (!slug) notFound();
   return requireHostTenant(slug);
 }

@@ -247,18 +247,22 @@ export default function PhoneMockup() {
           rotateY,
           transformStyle: "preserve-3d",
         }}
-        className="relative w-[340px] sm:w-[360px] rounded-[52px] p-[10px] bg-gradient-to-b from-[#2e2f33] via-[#1a1b1e] to-[#0f1012] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.14)]"
+        className="relative w-[340px] sm:w-[360px] rounded-[50px] p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
       >
-        {/* Metallic Bezel Layer & Button Accents */}
-        {/* Left Side Buttons (Action Button + Volume Up + Down) */}
-        <div className="absolute -left-[14px] top-24 h-7 w-[4px] rounded-l-md bg-gradient-to-b from-[#404247] to-[#1c1d20]" />
-        <div className="absolute -left-[14px] top-36 h-12 w-[4px] rounded-l-md bg-gradient-to-b from-[#404247] to-[#1c1d20]" />
-        <div className="absolute -left-[14px] top-52 h-12 w-[4px] rounded-l-md bg-gradient-to-b from-[#404247] to-[#1c1d20]" />
-        {/* Right Side Power Button */}
-        <div className="absolute -right-[14px] top-32 h-16 w-[4px] rounded-r-md bg-gradient-to-b from-[#404247] to-[#1c1d20]" />
+        {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel) */}
+        {/* Left Side: Action Button */}
+        <div className="absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        {/* Left Side: Volume Up */}
+        <div className="absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        {/* Left Side: Volume Down */}
+        <div className="absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        {/* Right Side: Power Button */}
+        <div className="absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e] shadow-[1px_0_2px_rgba(0,0,0,0.4)]" />
+        {/* Right Side: Camera Control Sensor (iPhone 16 Pro style) */}
+        <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
         {/* Outer Glass Bezel */}
-        <div className="relative overflow-hidden rounded-[44px] bg-black p-[2px] shadow-inner">
+        <div className="relative overflow-hidden rounded-[42px] bg-black p-[2.5px] shadow-inner">
           {/* Inner Display Canvas */}
           <div className="relative flex h-[660px] flex-col overflow-hidden rounded-[42px] bg-[#efeae2]">
             {/* WhatsApp Authentic Doodle Wallpaper Pattern Overlay */}

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import ToastProvider from "./ui/ToastProvider";
+import GuidedTour from "./GuidedTour";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
@@ -19,6 +20,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <Header />
         <main className="main-content flex-1 p-4 sm:p-6">{children}</main>
       </div>
+      <GuidedTour />
       <ToastProvider />
     </div>
   );

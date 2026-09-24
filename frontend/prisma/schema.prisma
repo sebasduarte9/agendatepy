@@ -1,10 +1,6 @@
 // Multi-tenant SaaS. Toda fila de negocio cuelga de tenants.id.
 // Precios en guaraníes enteros (sin centavos). Instantes en timestamptz UTC.
 // La jornada (staff_schedules) es hora civil, sin zona: se interpreta con tenants.timezone.
-//
-// Prisma no modela EXCLUDE USING gist. Después de `prisma migrate`, aplicar
-// prisma/sql/appointments_exclusion.sql. Ese constraint es el que impide
-// double-booking por (tenant, staff) en rangos semiabiertos [start, end).
 
 generator client {
   provider = "prisma-client-js"
@@ -27,40 +23,177 @@ enum AppointmentStatus {
   @@map("appointment_status")
 }
 
-model Tenant {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  slug       String   @unique
-  subdomain  String   @unique
-  /// JSON de negocio. Claves: whatsappPhone, slotStepMinutes, maxAdvanceDays,
-  /// chatwootWebsiteToken (opcional, inbox del widget público).
-  settings      Json @default("{}")
-  themeSettings Json @default("{\"primaryColor\":\"#5b31e6\",\"backgroundColor\":\"#f4f2fb\",\"fontFamily\":\"sans\",\"logoUrl\":\"\"}") @map("theme_settings")
-  timezone      String @default("America/Asuncion")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+enum UserRole {
+  SUPERADMIN
+  OWNER
+  STAFF
 
-  staff        Staff[]
-  services     Service[]
-  products     Product[]
-  appointments Appointment[]
+  @@map("user_role")
+}
+
+enum CashMovementType {
+  INCOME
+  EXPENSE
+
+  @@map("cash_movement_type")
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+
+  @@map("commission_status")
+}
+
+model Tenant {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  slug          String   @unique
+  subdomain     String   @unique
+  plan          String   @default("PROFESIONAL") // BASICO, PROFESIONAL, EMPRESA
+  status        String   @default("ACTIVE")      // ACTIVE, PAUSED, SUSPENDED
+  /// JSON de negocio. Claves: whatsappPhone, slotStepMinutes, maxAdvanceDays,
+  /// chatwootWebsiteToken (opcional, inbox del widget público), sendwoConfig, upayConfig.
+  settings      Json     @default("{}")
+  themeSettings Json     @default("{\"primaryColor\":\"#5b31e6\",\"backgroundColor\":\"#f4f2fb\",\"fontFamily\":\"sans\",\"logoUrl\":\"\"}") @map("theme_settings")
+  timezone      String   @default("America/Asuncion")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  staff          Staff[]
+  services       Service[]
+  products       Product[]
+  appointments   Appointment[]
+  users          User[]
+  clients        Client[]
+  cashMovements  CashMovement[]
+  commissions    Commission[]
+  loyaltyRewards LoyaltyReward[]
 
   @@index([subdomain])
   @@map("tenants")
 }
 
-model Staff {
+model User {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String    @unique
+  name           String
+  role           UserRole  @default(OWNER)
+  tenantId       String?   @map("tenant_id") @db.Uuid
+  avatarUrl      String?   @map("avatar_url")
+  phone          String?
+  optInMarketing Boolean   @default(false) @map("opt_in_marketing")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant         Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff          Staff?    @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  staffId        String?   @unique @map("staff_id") @db.Uuid
+
+  @@index([tenantId])
+  @@index([email])
+  @@map("users")
+}
+
+model OtpCode {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  name      String
-  active    Boolean  @default(true)
+  email     String
+  code      String
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  used      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([email, code])
+  @@map("otp_codes")
+}
+
+model Client {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  name       String
+  phone      String
+  email      String?
+  notes      String?
+  points     Int       @default(0)
+  totalSpent Int       @default(0) @map("total_spent")
+  lastVisit  DateTime? @map("last_visit") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, phone])
+  @@map("clients")
+}
+
+model CashMovement {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String           @map("tenant_id") @db.Uuid
+  type          CashMovementType
+  amount        Int
+  category      String
+  description   String
+  paymentMethod String           @default("Efectivo") @map("payment_method")
+  createdBy     String?          @map("created_by")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@map("cash_movements")
+}
+
+model Commission {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String           @map("tenant_id") @db.Uuid
+  staffId       String           @map("staff_id") @db.Uuid
+  appointmentId String?          @map("appointment_id") @db.Uuid
+  amount        Int
+  percentage    Int              @default(50)
+  status        CommissionStatus @default(PENDING)
+  paidAt        DateTime?        @map("paid_at") @db.Timestamptz(3)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff         Staff            @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  appointment   Appointment?     @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, staffId])
+  @@index([tenantId, status])
+  @@map("commissions")
+}
+
+model LoyaltyReward {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  name              String
+  pointsRequired    Int      @map("points_required")
+  discountGuaranies Int      @map("discount_guaranies")
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("loyalty_rewards")
+}
+
+model Staff {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  name                 String
+  active               Boolean  @default(true)
+  commissionPercentage Int      @default(50) @map("commission_percentage")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   schedules    StaffSchedule[]
   services     StaffService[]
   appointments Appointment[]
+  commissions  Commission[]
+  user         User?
 
   @@index([tenantId])
   @@index([tenantId, active])
@@ -68,7 +201,6 @@ model Staff {
 }
 
 /// Jornada semanal. day_of_week ISO: 1 = lunes … 7 = domingo.
-/// Varias filas el mismo día modelan turno cortado (mañana / tarde).
 model StaffSchedule {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   staffId   String   @map("staff_id") @db.Uuid
@@ -128,9 +260,10 @@ model Appointment {
   createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Restrict)
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  staff       Staff             @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  service     Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  commissions Commission[]
 
   @@index([tenantId, startTime])
   @@index([tenantId, staffId, startTime])

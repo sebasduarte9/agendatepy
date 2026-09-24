@@ -68,19 +68,24 @@ export default function Header() {
         {/* Action Buttons */}
         <div className="hidden items-center gap-2.5 md:flex">
           <Link
-            href="/barberia/reservar"
-            target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:border-brand hover:text-brand transition"
+            href="/login"
+            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-brand transition"
           >
-            <Smartphone className="h-3.5 w-3.5 text-emerald-600" />
-            <span>Ver Web de Turnos</span>
+            <span>Iniciar Sesión</span>
+          </Link>
+          <Link
+            href="/onboarding"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:border-brand hover:text-brand transition"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            <span>Crear Negocio</span>
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2 text-xs font-bold text-white shadow-md shadow-brand/25 transition hover:bg-brand-dark"
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white shadow-md shadow-brand/25 transition hover:bg-brand-dark"
           >
             <LayoutDashboard className="h-3.5 w-3.5" />
-            <span>Panel de Control</span>
+            <span>Panel</span>
           </Link>
         </div>
 
@@ -132,12 +137,19 @@ export default function Header() {
 
               <div className="mt-3 flex flex-col gap-2 pt-3 border-t border-slate-100">
                 <Link
-                  href="/barberia/reservar"
+                  href="/login"
                   onClick={() => setOpen(false)}
                   className="flex items-center justify-center gap-2 rounded-full border border-slate-200 py-2.5 text-center text-xs font-bold text-slate-800"
                 >
-                  <Smartphone className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Ver Web de Reservas (Demo)</span>
+                  <span>Iniciar Sesión</span>
+                </Link>
+                <Link
+                  href="/onboarding"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-center gap-2 rounded-full border border-brand/30 bg-brand/5 py-2.5 text-center text-xs font-bold text-brand"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Crear Nuevo Negocio</span>
                 </Link>
                 <Link
                   href="/dashboard"

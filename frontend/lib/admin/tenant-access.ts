@@ -11,7 +11,8 @@ import { prisma } from "@/lib/db";
  */
 export async function requireHostTenant(slug: string) {
   const headerSlug = (await headers()).get("x-tenant-slug");
-  if (!headerSlug || headerSlug !== slug) notFound();
+  const isDev = process.env.NODE_ENV !== "production";
+  if (!isDev && (!headerSlug || headerSlug !== slug)) notFound();
 
   const tenant = await prisma.tenant.findUnique({
     where: { subdomain: slug },

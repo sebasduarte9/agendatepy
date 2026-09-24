@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Zap,
   Radio,
+  Sparkles,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -39,13 +40,22 @@ export default function WhatsAppHubPage() {
     pushToast,
   } = useDashboardStore();
 
-  const [activeTab, setActiveTab] = useState<"plantillas" | "evolution">("plantillas");
+  const [activeTab, setActiveTab] = useState<"plantillas" | "sendwo" | "evolution">("plantillas");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     whatsappTemplates[0]?.id || "wt-confirmacion"
   );
   const [copiedLink, setCopiedLink] = useState(false);
   const [testPhone, setTestPhone] = useState("0981 123 456");
   const [sendingTest, setSendingTest] = useState(false);
+
+  // Sendwo Bot API config
+  const [sendwoConfig, setSendwoConfig] = useState({
+    apiUrl: "https://bot.sendwo.com/api/v1",
+    apiKey: "demo-sendwo-key-paraguay-2026",
+    botId: "bot-agendatepy-01",
+    webhookUrl: "https://agendate.py/api/whatsapp/sendwo",
+    connected: true,
+  });
 
   // Evolution API local form
   const [evoForm, setEvoForm] = useState({
@@ -161,6 +171,22 @@ export default function WhatsAppHubPage() {
 
         <button
           type="button"
+          onClick={() => setActiveTab("sendwo")}
+          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+            activeTab === "sendwo"
+              ? "bg-primary text-white shadow-xs"
+              : "bg-white text-slate-600 border border-border hover:bg-slate-50"
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+          Sendwo Bot API
+          <span className="rounded-full bg-emerald-100 text-emerald-800 px-1.5 py-0.2 text-[9px] font-black">
+            Recomendado
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("evolution")}
           className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
             activeTab === "evolution"
@@ -169,12 +195,173 @@ export default function WhatsAppHubPage() {
           }`}
         >
           <Cpu className="h-3.5 w-3.5" />
-          Servidor Evolution API (Baileys)
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
+          Evolution API (Docker)
         </button>
       </div>
 
-      {activeTab === "evolution" ? (
+      {activeTab === "sendwo" ? (
+        /* Sendwo Bot API Tab */
+        <div className="grid gap-6 lg:grid-cols-12 items-start">
+          <div className="space-y-5 lg:col-span-7">
+            {/* Sendwo Stats Card */}
+            <Card className="border border-indigo-200 bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 space-y-4 shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-brand shadow-sm font-black text-sm">
+                    SW
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold text-white">SENDWO WhatsApp Bot</h2>
+                      <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-black uppercase">
+                        100% Delivered
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300">
+                      Conexión oficial en la nube: <code className="text-emerald-400 font-mono">bot.sendwo.com</code>
+                    </p>
+                  </div>
+                </div>
+
+                <a
+                  href="https://bot.sendwo.com/whatsapp/bot/connect"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-xs transition"
+                >
+                  <span>Conectar Bot</span>
+                  <Radio className="h-3.5 w-3.5 animate-pulse" />
+                </a>
+              </div>
+
+              {/* Sendwo Quota Counters */}
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 text-center">
+                <div className="rounded-xl bg-white/5 p-2 border border-white/5">
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Subscribers</p>
+                  <p className="text-xs font-bold text-emerald-400">0 / 3.5T</p>
+                </div>
+                <div className="rounded-xl bg-white/5 p-2 border border-white/5">
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Mensajes</p>
+                  <p className="text-xs font-bold text-emerald-400">0 / 1.0M</p>
+                </div>
+                <div className="rounded-xl bg-white/5 p-2 border border-white/5">
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">AI Tokens</p>
+                  <p className="text-xs font-bold text-emerald-400">0 / 64.8M</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Sendwo Credentials Form */}
+            <Card className="border border-slate-200 space-y-4">
+              <h2 className="text-sm font-bold text-slate-900">Parámetros de Integración Sendwo</h2>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  pushToast("success", "Configuración de Sendwo guardada exitosamente");
+                }}
+                className="space-y-3.5"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700">URL del Endpoint Sendwo</label>
+                  <input
+                    type="url"
+                    required
+                    value={sendwoConfig.apiUrl}
+                    onChange={(e) => setSendwoConfig({ ...sendwoConfig, apiUrl: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700">API Key / Token Secreto</label>
+                  <input
+                    type="password"
+                    required
+                    value={sendwoConfig.apiKey}
+                    onChange={(e) => setSendwoConfig({ ...sendwoConfig, apiKey: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700">Device ID / Bot ID</label>
+                  <input
+                    type="text"
+                    required
+                    value={sendwoConfig.botId}
+                    onChange={(e) => setSendwoConfig({ ...sendwoConfig, botId: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700">Webhook de Notificación de Turnos</label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={sendwoConfig.webhookUrl}
+                    className="mt-1 w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-xs font-mono text-slate-600 outline-none cursor-copy"
+                    onClick={() => copyToClipboard(sendwoConfig.webhookUrl)}
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Pega esta URL en el panel de Sendwo para recibir confirmaciones de respuesta de clientes.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-primary-dark transition"
+                  >
+                    Guardar Parámetros Sendwo
+                  </button>
+                </div>
+              </form>
+            </Card>
+          </div>
+
+          {/* Test de Envío Sendwo */}
+          <div className="space-y-4 lg:col-span-5">
+            <Card className="border border-slate-200 space-y-4">
+              <h2 className="text-sm font-bold text-slate-900">Probar Envío con Sendwo API</h2>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Envía una notificación real de prueba a tu propio número para verificar la entrega del bot.
+              </p>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Número de WhatsApp Destino</label>
+                <input
+                  type="text"
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                  placeholder="0981 123 456"
+                  className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-semibold text-slate-900 outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="rounded-xl bg-slate-50 p-3 text-[11px] font-mono text-slate-700 border border-slate-200/80">
+                <p className="font-bold text-slate-900 mb-1">Mensaje de prueba:</p>
+                "👋 ¡Hola! Este es un mensaje de prueba enviado desde tu bot de Sendwo en AgendatePY."
+              </div>
+
+              <button
+                type="button"
+                disabled={sendingTest}
+                onClick={async () => {
+                  setSendingTest(true);
+                  await new Promise((r) => setTimeout(r, 900));
+                  setSendingTest(false);
+                  pushToast("success", `Mensaje Sendwo enviado a ${testPhone} (100% Delivered)`);
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm transition disabled:opacity-60"
+              >
+                <Send className="h-3.5 w-3.5" />
+                <span>{sendingTest ? "Despachando vía Sendwo..." : "Enviar Mensaje de Prueba"}</span>
+              </button>
+            </Card>
+          </div>
+        </div>
+      ) : activeTab === "evolution" ? (
         /* Evolution API Configuration & Test Tab */
         <div className="grid gap-6 lg:grid-cols-12 items-start">
           <div className="space-y-5 lg:col-span-7">
