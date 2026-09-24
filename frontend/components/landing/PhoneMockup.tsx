@@ -39,6 +39,21 @@ type Message = {
   };
 };
 
+function renderWhatsAppText(text?: string) {
+  if (!text) return null;
+  const parts = text.split(/(\*[^*]+\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return (
+        <strong key={index} className="font-bold text-[#111b21]">
+          {part.slice(1, -1)}
+        </strong>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
 export default function PhoneMockup() {
   const { category } = useCategory();
   const [step, setStep] = useState<number>(0);
@@ -400,7 +415,7 @@ export default function PhoneMockup() {
                             : "rounded-tr-xs bg-[#d9fdd3] text-[#111b21]"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                        <p className="whitespace-pre-wrap">{renderWhatsAppText(msg.text)}</p>
                         <div className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#667781]">
                           <span>{msg.time}</span>
                           {!msg.incoming && <CheckCheck className="h-3 w-3 text-[#53bdeb]" />}

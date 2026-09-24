@@ -11,7 +11,6 @@ import { addDaysIso, phoneWa } from "@/lib/dashboard-dates";
 import Modal from "./ui/Modal";
 import Card from "./ui/Card";
 
-const HOUR_PX = 52;
 
 export default function CalendarBoard() {
   const {
@@ -215,6 +214,10 @@ export default function CalendarBoard() {
   );
 }
 
+const START_HOUR = 7;
+const END_HOUR = 21;
+const HOUR_PX = 46;
+
 function DayView({
   date,
   timezone,
@@ -232,50 +235,66 @@ function DayView({
   const layout = useMemo(() => layoutOverlaps(dayItems, timezone), [dayItems, timezone]);
   const { staff, services } = useDashboardStore();
 
+  const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
+
   return (
-    <Card className="day-view overflow-x-auto p-0">
+    <Card className="day-view overflow-x-auto p-0 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl bg-white dark:bg-slate-900">
       <div className="relative min-w-[640px]">
-        {Array.from({ length: 24 }, (_, hour) => (
+        {hours.map((hour) => (
           <div
             key={hour}
-            className="flex border-b border-slate-100 dark:border-slate-800"
+            className="flex items-start border-b border-slate-100 dark:border-slate-800/80"
             style={{ height: HOUR_PX }}
           >
-            <span className="w-16 shrink-0 px-2 py-1 text-xs text-slate-400 dark:text-slate-500">
+            <span className="w-16 shrink-0 px-3 py-1 font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500">
               {String(hour).padStart(2, "0")}:00
             </span>
-            <div className="flex-1" />
+            <div className="flex-1 border-l border-slate-100 dark:border-slate-800/80 h-full" />
           </div>
         ))}
+
         {layout.map((item) => {
           const startH = Number(formatInTimeZone(item.start, timezone, "H"));
           const startM = Number(formatInTimeZone(item.start, timezone, "m"));
           const endH = Number(formatInTimeZone(item.end, timezone, "H"));
           const endM = Number(formatInTimeZone(item.end, timezone, "m"));
-          const top = ((startH * 60 + startM) / 60) * HOUR_PX;
-          const height = Math.max(
-            28,
-            (((endH * 60 + endM) - (startH * 60 + startM)) / 60) * HOUR_PX,
-          );
+
+          // Calculate offset relative to START_HOUR
+          const startMinutesFromBase = (startH - START_HOUR) * 60 + startM;
+          const durationMinutes = Math.max(30, (endH * 60 + endM) - (startH * 60 + startM));
+
+          if (startMinutesFromBase < 0 && startMinutesFromBase + durationMinutes <= 0) {
+            return null; // Appointment is before visible window
+          }
+
+          const top = Math.max(0, (startMinutesFromBase / 60) * HOUR_PX);
+          const height = Math.max(32, (durationMinutes / 60) * HOUR_PX - 2);
+
           const person = staff.find((s) => s.id === item.staffId);
           const service = services.find((s) => s.id === item.serviceId);
+
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => onSelect(item)}
-              className="absolute overflow-hidden rounded-lg px-2.5 py-1 text-left text-xs text-white shadow-md hover:brightness-110 transition"
+              className="group absolute overflow-hidden rounded-xl px-3 py-1.5 text-left text-xs text-white shadow-sm hover:shadow-md hover:brightness-105 transition-all duration-200 border border-white/20"
               style={{
                 top,
                 height,
-                left: `calc(4.5rem + ${item.col * 30}%)`,
-                width: `${Math.max(20, 30)}%`,
-                background: person?.color ?? "#6366f1",
+                left: `calc(4.5rem + ${item.col * 28}%)`,
+                width: `${Math.max(22, 28)}%`,
+                background: person?.color ?? "#5b31e6",
               }}
             >
-              <strong className="block truncate">{item.clientName}</strong>
-              <p className="truncate opacity-90">
-                {formatInTimeZone(item.start, timezone, "HH:mm")} · {service?.name}
+              <div className="flex items-center justify-between">
+                <strong className="block truncate font-bold">{item.clientName}</strong>
+                <span className="text-[10px] opacity-80 font-mono">
+                  {formatInTimeZone(item.start, timezone, "HH:mm")}
+                </span>
+              </div>
+              <p className="truncate text-[11px] opacity-90">
+                {service?.name || "Servicio"} · {person?.name.split(" ")[0]}
               </p>
             </button>
           );
@@ -298,34 +317,75 @@ function WeekView({
 }) {
   const start = parseISO(`${date}T12:00:00`);
   const days = Array.from({ length: 7 }, (_, i) => addDaysIso(date, i - start.getDay()));
+  const today = formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
 
   return (
-    <div className="grid grid-cols-1 gap-3 overflow-x-auto md:grid-cols-7">
-      {days.map((day) => {
-        const items = appointments.filter(
-          (item) => formatInTimeZone(item.start, timezone, "yyyy-MM-dd") === day,
-        );
-        return (
-          <Card key={day} className="min-w-[140px] p-3">
-            <p className="text-xs font-semibold capitalize text-slate-500 dark:text-slate-400">
-              {format(parseISO(`${day}T12:00:00`), "EEE d", { locale: es })}
-            </p>
-            <div className="mt-2 space-y-1.5">
-              {items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onSelect(item)}
-                  className="w-full rounded-lg bg-primary/10 border border-primary/20 p-1.5 text-left text-[11px] text-primary hover:bg-primary/20 transition truncate block"
+    <div className="overflow-x-auto pb-2">
+      <div className="grid min-w-[780px] grid-cols-7 gap-2.5">
+        {days.map((day) => {
+          const isToday = day === today;
+          const isSelectedDay = day === date;
+          const items = appointments.filter(
+            (item) => formatInTimeZone(item.start, timezone, "yyyy-MM-dd") === day,
+          );
+          return (
+            <Card
+              key={day}
+              className={`rounded-2xl border p-3 min-h-[460px] flex flex-col transition-all duration-200 ${
+                isToday
+                  ? "border-primary/50 bg-primary/[0.02] shadow-sm ring-1 ring-primary/20"
+                  : isSelectedDay
+                  ? "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                  : "border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/60"
+              }`}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <p
+                  className={`text-xs font-bold capitalize ${
+                    isToday ? "text-primary" : "text-slate-700 dark:text-slate-300"
+                  }`}
                 >
-                  <span className="font-bold">{formatInTimeZone(item.start, timezone, "HH:mm")}</span>{" "}
-                  {item.clientName}
-                </button>
-              ))}
-            </div>
-          </Card>
-        );
-      })}
+                  {format(parseISO(`${day}T12:00:00`), "EEE d", { locale: es })}
+                </p>
+                {items.length > 0 && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                    {items.length}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-2.5 flex-1 space-y-1.5 overflow-y-auto">
+                {items.length === 0 ? (
+                  <p className="pt-6 text-center text-[10px] text-slate-300 dark:text-slate-600 italic">
+                    Sin turnos
+                  </p>
+                ) : (
+                  items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => onSelect(item)}
+                      className="w-full rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60 p-2 text-left text-xs shadow-2xs hover:border-primary/40 hover:bg-primary/[0.04] transition-all block group"
+                    >
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-bold text-primary font-mono">
+                          {formatInTimeZone(item.start, timezone, "HH:mm")}
+                        </span>
+                        <span className="text-[9px] uppercase font-semibold text-slate-400">
+                          {item.status}
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                        {item.clientName}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
