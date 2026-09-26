@@ -120,7 +120,7 @@ export default function NuevaReservaPage() {
     if (!client.phone || !service) return "#";
     const phoneClean = client.phone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `¡Hola ${client.name}! Tu turno para *${service.name}* con *${selectedStaff?.name || "nuestro equipo"}* en *${business.name}* está agendado para el *${civilDate} a las ${time} hs*.\n\n📍 Ubicación: ${business.address}\n¡Te esperamos!`
+      `¡Hola ${client.name}! Tu turno para *${service.name}* con *${selectedStaff?.name || "nuestro equipo"}* en *${business.name}* está agendado para el *${civilDate} a las ${time} hs*.\n\nUbicación: ${business.address}\n¡Te esperamos!`
     );
     return `https://wa.me/${phoneClean}?text=${msg}`;
   }, [client, service, selectedStaff, business, civilDate, time]);

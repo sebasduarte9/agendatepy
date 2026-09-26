@@ -33,28 +33,28 @@ const ROLE_DEFINITIONS: {
 }[] = [
   {
     role: "admin",
-    title: "👑 Dueño / Administrador",
+    title: "Dueño / Administrador",
     badgeColor: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
     icon: Crown,
     desc: "Acceso total a finanzas, configuración, payouts de comisiones y métricas sensibles del negocio.",
   },
   {
     role: "cajero",
-    title: "💳 Cajero / Facturación",
+    title: "Cajero / Facturación",
     badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
     icon: Banknote,
     desc: "Gestión de cobros en mostrador, confirmación de transferencias SIPAP, arqueo de caja y fidelización.",
   },
   {
     role: "barbero",
-    title: "✂️ Barbero Profesional",
+    title: "Barbero Profesional",
     badgeColor: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
     icon: Scissors,
     desc: "Visualización de su agenda personal, bloqueo de descansos, fichas de clientes y sus propias comisiones.",
   },
   {
     role: "estilista",
-    title: "💅 Estilista / Colorista",
+    title: "Estilista / Colorista",
     badgeColor: "bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/20",
     icon: Sparkles,
     desc: "Gestión de turnos de peluquería, fórmulas técnicas capilares y cálculo automático de comisiones ganadas.",
@@ -382,10 +382,10 @@ export default function EquipoRolesPage() {
             <thead>
               <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400">
                 <th className="py-2.5 font-bold">Módulo o Acción</th>
-                <th className="py-2.5 font-bold text-center">👑 Dueño</th>
-                <th className="py-2.5 font-bold text-center">💳 Cajero</th>
-                <th className="py-2.5 font-bold text-center">✂️ Barbero</th>
-                <th className="py-2.5 font-bold text-center">💅 Estilista</th>
+                <th className="py-2.5 font-bold text-center">Dueño</th>
+                <th className="py-2.5 font-bold text-center">Cajero</th>
+                <th className="py-2.5 font-bold text-center">Barbero</th>
+                <th className="py-2.5 font-bold text-center">Estilista</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/10">
@@ -461,10 +461,10 @@ export default function EquipoRolesPage() {
                 onChange={(e) => setFormData({ ...formData, systemRole: e.target.value as UserRole })}
                 className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               >
-                <option value="admin">👑 Administrador (Dueño)</option>
-                <option value="cajero">💳 Cajero / Facturación</option>
-                <option value="barbero">✂️ Barbero</option>
-                <option value="estilista">💅 Estilista / Peluquera</option>
+                <option value="admin">Administrador (Dueño)</option>
+                <option value="cajero">Cajero / Facturación</option>
+                <option value="barbero">Barbero</option>
+                <option value="estilista">Estilista / Peluquera</option>
               </select>
             </div>
 

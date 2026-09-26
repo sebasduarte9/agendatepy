@@ -17,14 +17,17 @@ import {
   Clock,
   Coins,
   ShieldCheck,
+  Stethoscope,
+  Activity,
+  Heart,
 } from "lucide-react";
 
 const CATEGORIES = [
-  { id: "barberia", label: "Barbería / Peluquería", icon: "💈" },
-  { id: "estetica", label: "Centro de Estética / Spa", icon: "✨" },
-  { id: "salud", label: "Consultorio / Salud / Odontología", icon: "🩺" },
-  { id: "padel", label: "Canchas / Deportes", icon: "🎾" },
-  { id: "veterinaria", label: "Veterinaria / Pet Shop", icon: "🐾" },
+  { id: "barberia", label: "Barbería / Peluquería", icon: Scissors },
+  { id: "estetica", label: "Centro de Estética / Spa", icon: Sparkles },
+  { id: "salud", label: "Consultorio / Salud / Odontología", icon: Stethoscope },
+  { id: "padel", label: "Canchas / Deportes", icon: Activity },
+  { id: "veterinaria", label: "Veterinaria / Pet Shop", icon: Heart },
 ];
 
 export default function OnboardingPage() {
@@ -40,6 +43,7 @@ export default function OnboardingPage() {
   const [price, setPrice] = useState("90000");
   const [whatsapp, setWhatsapp] = useState("0981 123 456");
   const [isFinishing, setIsFinishing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSlugify = (name: string) => {
     setBusinessName(name);
@@ -51,12 +55,27 @@ export default function OnboardingPage() {
     setSlug(generated);
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     setIsFinishing(true);
-    // Simular guardado y redirigir con tour activo
-    setTimeout(() => {
+    setErrorMessage(null);
+
+    const { createTenantOnboardingAction } = await import("@/lib/tenant/actions");
+    const res = await createTenantOnboardingAction({
+      businessName,
+      category,
+      slug,
+      serviceName,
+      duration: Number(duration) || 45,
+      price: Number(price) || 80000,
+      whatsapp,
+    });
+
+    if (res.ok) {
       router.push("/dashboard?onboarding=completed&tour=start");
-    }, 900);
+    } else {
+      setIsFinishing(false);
+      setErrorMessage(res.error || "Ocurrió un error al registrar el negocio.");
+    }
   };
 
   return (
@@ -135,21 +154,26 @@ export default function OnboardingPage() {
                     Selecciona tu Rubro
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => setCategory(cat.id)}
-                        className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left transition ${
-                          category === cat.id
-                            ? "border-brand bg-brand/5 shadow-xs"
-                            : "border-slate-200 hover:border-slate-300 bg-white"
-                        }`}
-                      >
-                        <span className="text-xl">{cat.icon}</span>
-                        <span className="text-xs font-semibold text-slate-800">{cat.label}</span>
-                      </button>
-                    ))}
+                    {CATEGORIES.map((cat) => {
+                      const Icon = cat.icon;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setCategory(cat.id)}
+                          className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left transition ${
+                            category === cat.id
+                              ? "border-brand bg-brand/5 shadow-xs"
+                              : "border-slate-200 hover:border-slate-300 bg-white"
+                          }`}
+                        >
+                          <span className="p-2 rounded-xl bg-slate-100 text-slate-700">
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="text-xs font-semibold text-slate-800">{cat.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -367,7 +391,7 @@ export default function OnboardingPage() {
                   </label>
                   <div className="relative mt-1.5">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                      🇵🇾 +595
+                      PY +595
                     </span>
                     <input
                       id="whatsapp-input"
@@ -389,6 +413,12 @@ export default function OnboardingPage() {
                     Podrás conectar tu instancia de Sendwo Bot o escanear el código QR directamente en el panel de WhatsApp de tu dashboard.
                   </p>
                 </div>
+
+                {errorMessage && (
+                  <p className="rounded-xl bg-red-50 p-3 text-center text-xs font-semibold text-red-700">
+                    {errorMessage}
+                  </p>
+                )}
 
                 <div className="pt-4 flex justify-between">
                   <button

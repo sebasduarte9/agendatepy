@@ -74,7 +74,7 @@ export default function Features() {
           {/* Interactive Simulated WhatsApp snippet */}
           <div className="mt-6 rounded-2xl bg-[#efeae2] dark:bg-slate-950 p-4 border border-black/5 dark:border-white/10 space-y-2.5 max-w-md shadow-inner">
             <div className="rounded-2xl rounded-tl-xs bg-white dark:bg-slate-800 p-3 text-xs text-slate-900 dark:text-slate-100 shadow-xs space-y-1">
-              <p className="font-bold text-[#008069]">Agendate Assistant 🤖</p>
+              <p className="font-bold text-[#008069]">Agendate Assistant</p>
               <p>¡Hola! Tenemos estos horarios hoy con Marcos Benítez:</p>
               <div className="flex gap-2 pt-1">
                 <span className="rounded-lg bg-emerald-100 dark:bg-emerald-900/60 px-2 py-1 font-bold text-emerald-800 dark:text-emerald-300 text-[11px]">
@@ -88,7 +88,7 @@ export default function Features() {
 
             <div className="flex justify-end">
               <div className="rounded-2xl rounded-tr-xs bg-[#d9fdd3] dark:bg-emerald-900/70 p-2.5 text-xs text-slate-900 dark:text-slate-100 shadow-xs">
-                <span>Quiero las 16:30 hs, gracias! 🙌</span>
+                <span>Quiero las 16:30 hs, gracias!</span>
               </div>
             </div>
           </div>

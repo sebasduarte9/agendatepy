@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, Menu, Settings, Sun, Moon } from "lucide-react";
+import { LogOut, Menu, Settings, Sun, Moon, ChevronDown, ExternalLink } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 export default function Header() {
@@ -65,24 +65,24 @@ export default function Header() {
               setCurrentUserRole(role as any, staffId || undefined);
               const label =
                 role === "admin"
-                  ? "👑 Dueño / Administrador"
+                  ? "Admin / Dueño"
                   : role === "cajero"
-                  ? "💳 Cajero / Facturación"
+                  ? "Cajero / Facturación"
                   : role === "barbero"
-                  ? "✂️ Barbero (Marcos)"
-                  : "💅 Estilista (Sofía)";
+                  ? "Barbero (Marcos)"
+                  : "Estilista (Sofía)";
               pushToast("success", `Vista cambiada a rol: ${label}`);
             }}
             aria-label="Cambiar rol activo"
             className="rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-100/90 dark:bg-slate-900/90 py-1.5 pl-3 pr-7 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-primary/50 transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary appearance-none"
           >
-            <option value="admin:">👑 Admin (Dueño)</option>
-            <option value="cajero:st-leticia">💳 Cajera (Leticia)</option>
-            <option value="barbero:st-marcos">✂️ Barbero (Marcos)</option>
-            <option value="estilista:st-sofia">💅 Estilista (Sofía)</option>
+            <option value="admin:">Admin (Dueño)</option>
+            <option value="cajero:st-leticia">Cajera (Leticia)</option>
+            <option value="barbero:st-marcos">Barbero (Marcos)</option>
+            <option value="estilista:st-sofia">Estilista (Sofía)</option>
           </select>
-          <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
-            ▼
+          <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <ChevronDown className="h-3.5 w-3.5" />
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function Header() {
           className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:border-primary hover:text-primary transition"
         >
           <span>Ver mi página</span>
-          <span className="text-primary font-bold">↗</span>
+          <ExternalLink className="h-3.5 w-3.5 text-primary" />
         </Link>
 
         {/* Dark Mode Toggle */}

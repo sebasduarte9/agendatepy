@@ -10,12 +10,14 @@ export default function Modal({
   onClose,
   children,
   id,
+  maxWidth = "max-w-lg",
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
   id?: string;
+  maxWidth?: string;
 }) {
   return (
     <AnimatePresence>
@@ -34,7 +36,7 @@ export default function Modal({
             exit={{ y: 20, opacity: 0, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             onClick={(event) => event.stopPropagation()}
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 p-6 text-slate-900 dark:text-white shadow-2xl backdrop-blur-2xl transition-colors"
+            className={`max-h-[90vh] w-full ${maxWidth} overflow-y-auto rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 p-6 text-slate-900 dark:text-white shadow-2xl backdrop-blur-2xl transition-colors`}
           >
             <div className="mb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
               <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">{title}</h3>

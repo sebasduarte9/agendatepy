@@ -105,14 +105,14 @@ export function formatAppointmentConfirmationMessage({
 }): string {
   const priceFormatted = new Intl.NumberFormat("es-PY").format(price);
   return (
-    `👋 *¡Hola ${clientName}! Tu turno está confirmado.*\n\n` +
-    `📍 *${businessName}*\n` +
-    `✂️ *Servicio:* ${serviceName}\n` +
-    `💈 *Profesional:* ${staffName}\n` +
-    `🗓 *Fecha:* ${dateFormatted}\n` +
-    `⏰ *Hora:* ${timeFormatted} hs\n` +
-    `💰 *Total:* Gs. ${priceFormatted}\n\n` +
-    (bookingUrl ? `📱 Para consultar o reprogramar tu cita: ${bookingUrl}\n\n` : "") +
+    `*¡Hola ${clientName}! Tu turno está confirmado.*\n\n` +
+    `*${businessName}*\n` +
+    `*Servicio:* ${serviceName}\n` +
+    `*Profesional:* ${staffName}\n` +
+    `*Fecha:* ${dateFormatted}\n` +
+    `*Hora:* ${timeFormatted} hs\n` +
+    `*Total:* Gs. ${priceFormatted}\n\n` +
+    (bookingUrl ? `Para consultar o reprogramar tu cita: ${bookingUrl}\n\n` : "") +
     `¡Te esperamos con gusto!`
   );
 }

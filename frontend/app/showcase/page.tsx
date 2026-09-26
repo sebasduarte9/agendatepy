@@ -34,82 +34,171 @@ import {
   LayoutTemplate,
   Columns,
   BookOpen,
+  Loader2,
+  Info,
+  CheckCircle2,
 } from "lucide-react";
-import { GOOGLE_FONTS, googleFontHref, fontStack } from "@/lib/theme";
+import {
+  GOOGLE_FONTS,
+  googleFontHref,
+  fontStack,
+  THEME_PRESETS,
+  type ThemePreset,
+  type LayoutStyle,
+  type ButtonRadius,
+} from "@/lib/theme";
 
 type ShowcasePalette = {
   id: string;
+  presetKey: ThemePreset;
   name: string;
+  category: "Barberías" | "Salones & Estética" | "Spas & Wellness" | "Modern Tech" | "Urbano & Trend" | "Lujo & VIP" | "General";
   icon: any;
   primary: string;
   bgLight: string;
   bgDark: string;
   font: string;
+  description: string;
+  bestFor: string;
+  contrastTarget: string;
+  badge?: string;
+  layout: LayoutStyle;
+  buttonRadius: ButtonRadius;
 };
 
-const PALETTES: ShowcasePalette[] = [
+const SHOWCASE_PALETTES: ShowcasePalette[] = [
   {
-    id: "violet",
-    name: "Electric Violet",
-    icon: Zap,
-    primary: "#5b31e6",
-    bgLight: "#f4f2fb",
-    bgDark: "#090d16",
-    font: "plus-jakarta-sans",
-  },
-  {
-    id: "amber",
+    id: "barber-dark",
+    presetKey: "barber-dark",
     name: "Barber Dark Luxe",
+    category: "Barberías",
     icon: Scissors,
     primary: "#d97706",
     bgLight: "#fffbeb",
     bgDark: "#090d16",
     font: "outfit",
+    description: "Negro obsidiana con acentos dorados y ámbar cálido para barberías de élite",
+    bestFor: "Barberías de autor, salones masculinos VIP y grooming premium",
+    contrastTarget: "WCAG AAA (7.2:1)",
+    badge: "Más Elegido",
+    layout: "split-gallery",
+    buttonRadius: "lg",
   },
   {
-    id: "gold",
-    name: "Obsidian Gold VIP",
-    icon: Crown,
-    primary: "#eab308",
-    bgLight: "#fefce8",
-    bgDark: "#0a0a0c",
-    font: "cinzel",
+    id: "bento-modern",
+    presetKey: "bento-modern",
+    name: "Bento Box Moderno",
+    category: "Modern Tech",
+    icon: LayoutTemplate,
+    primary: "#4f46e5",
+    bgLight: "#f8fafc",
+    bgDark: "#0f172a",
+    font: "space-grotesk",
+    description: "Estilo Apple & Stripe con tarjetas modulares, acento índigo y alto contraste",
+    bestFor: "Centros integrales de estética, clínicas y salones de vanguardia",
+    contrastTarget: "WCAG AAA (8.1:1)",
+    badge: "UI Pro Max",
+    layout: "split-gallery",
+    buttonRadius: "lg",
   },
   {
-    id: "emerald",
-    name: "Zen Emerald Spa",
+    id: "soft-evolution",
+    presetKey: "soft-evolution",
+    name: "Soft UI Evolution",
+    category: "Salones & Estética",
+    icon: Flower2,
+    primary: "#8b5cf6",
+    bgLight: "#faf5ff",
+    bgDark: "#180d2b",
+    font: "playfair-display",
+    description: "Blanco perla, acento lavanda y sombras difusas para salones de belleza y estética",
+    bestFor: "Salones de belleza, estilistas, coloristas, lash & nail bars",
+    contrastTarget: "WCAG AA (5.4:1)",
+    badge: "Tendencia",
+    layout: "floating-card",
+    buttonRadius: "full",
+  },
+  {
+    id: "organic-biophilic",
+    presetKey: "organic-biophilic",
+    name: "Organic Biophilic & Sage",
+    category: "Spas & Wellness",
     icon: Leaf,
     primary: "#059669",
-    bgLight: "#ecfdf5",
-    bgDark: "#022c22",
+    bgLight: "#f7f5f0",
+    bgDark: "#042017",
     font: "cormorant-garamond",
+    description: "Verde salvia botánico, arena suave y serenidad zen para spas y bienestar",
+    bestFor: "Spas, centros de masaje, bienestar holístico y dermatología estética",
+    contrastTarget: "WCAG AAA (7.6:1)",
+    badge: "Eco Zen",
+    layout: "split-gallery",
+    buttonRadius: "full",
   },
   {
-    id: "rose",
-    name: "Rose Salon Aesthetic",
-    icon: Flower2,
-    primary: "#e11d48",
-    bgLight: "#fff1f2",
-    bgDark: "#1a080c",
-    font: "playfair-display",
-  },
-  {
-    id: "cyber",
-    name: "Cyber Cyan",
-    icon: Sparkles,
-    primary: "#06b6d4",
-    bgLight: "#ecfeff",
-    bgDark: "#030712",
+    id: "neubrutalism-urban",
+    presetKey: "neubrutalism-urban",
+    name: "Neubrutalism Urbano",
+    category: "Urbano & Trend",
+    icon: Zap,
+    primary: "#facc15",
+    bgLight: "#fef9c3",
+    bgDark: "#18181b",
     font: "syne",
+    description: "Bordes negros de 2px, sombras sólidas y amarillo de alto impacto para estudios urbanos",
+    bestFor: "Barberías streetwear, estudios de tatuaje y salones con actitud propia",
+    contrastTarget: "WCAG AAA (9.2:1)",
+    badge: "Vanguardia",
+    layout: "panoramic",
+    buttonRadius: "md",
+  },
+  {
+    id: "champagne-velvet",
+    presetKey: "champagne-velvet",
+    name: "Champagne & Velvet VIP",
+    category: "Lujo & VIP",
+    icon: Crown,
+    primary: "#f59e0b",
+    bgLight: "#fffbeb",
+    bgDark: "#0a0b10",
+    font: "cinzel",
+    description: "Fondo ónix nocturno con acentos oro rosado metálico para experiencias de lujo",
+    bestFor: "Peluquerías de alta gama, barberías VIP y suites privadas",
+    contrastTarget: "WCAG AAA (8.4:1)",
+    badge: "Exclusivo",
+    layout: "floating-card",
+    buttonRadius: "lg",
+  },
+  {
+    id: "default",
+    presetKey: "default",
+    name: "Agendate Violet",
+    category: "General",
+    icon: Sparkles,
+    primary: "#5b31e6",
+    bgLight: "#f4f2fb",
+    bgDark: "#090d16",
+    font: "plus-jakarta-sans",
+    description: "Equilibrado, moderno y vibrante en violeta eléctrico institucional",
+    bestFor: "Cualquier rubro de citas y reservas online",
+    contrastTarget: "WCAG AAA (7.5:1)",
+    badge: "Oficial",
+    layout: "panoramic",
+    buttonRadius: "full",
   },
 ];
 
 export default function ShowcasePage() {
-  const [selectedPalette, setSelectedPalette] = useState<ShowcasePalette>(PALETTES[0]);
-  const [isDark, setIsDark] = useState<boolean>(false);
+  const [selectedPalette, setSelectedPalette] = useState<ShowcasePalette>(SHOWCASE_PALETTES[0]);
+  const [isDark, setIsDark] = useState<boolean>(true);
   const [selectedLayout, setSelectedLayout] = useState<string>("split-gallery");
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string>("Todos");
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
+  const [applyingToTenant, setApplyingToTenant] = useState(false);
+  const [appliedSuccess, setAppliedSuccess] = useState(false);
+
+  // Audio simulator state
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const currentBg = isDark ? selectedPalette.bgDark : selectedPalette.bgLight;
 
@@ -118,6 +207,41 @@ export default function ShowcasePage() {
     setCopiedColor(hex);
     setTimeout(() => setCopiedColor(null), 2000);
   }
+
+  async function handleApplyToMyTenant() {
+    setApplyingToTenant(true);
+    try {
+      const res = await fetch("/api/tenant/theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: "barberia",
+          theme: {
+            primaryColor: selectedPalette.primary,
+            backgroundColor: isDark ? selectedPalette.bgDark : selectedPalette.bgLight,
+            fontFamily: selectedPalette.font,
+            themeMode: isDark ? "dark" : "light",
+            layoutStyle: selectedLayout,
+            buttonRadius: selectedPalette.buttonRadius,
+            themePreset: selectedPalette.presetKey,
+          },
+        }),
+      });
+      if (res.ok) {
+        setAppliedSuccess(true);
+        setTimeout(() => setAppliedSuccess(false), 3500);
+      }
+    } catch (err) {
+      console.error("Error al aplicar tema a PostgreSQL:", err);
+    } finally {
+      setApplyingToTenant(false);
+    }
+  }
+
+  const filteredPalettes = SHOWCASE_PALETTES.filter((p) => {
+    if (categoryFilter === "Todos") return true;
+    return p.category === categoryFilter;
+  });
 
   return (
     <div
@@ -128,27 +252,34 @@ export default function ShowcasePage() {
         ["--primary" as string]: selectedPalette.primary,
       }}
     >
-      {/* Inject Google Font dynamically */}
+      {/* Dynamic Google Font link for active theme */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={googleFontHref(selectedPalette.font)} />
 
       {/* Top Navbar */}
-      <header className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
-        isDark ? "bg-slate-950/80 border-slate-800" : "bg-white/80 border-slate-200"
-      }`}>
+      <header
+        className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
+          isDark ? "bg-slate-950/85 border-slate-800" : "bg-white/85 border-slate-200"
+        }`}
+      >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-md"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-md transition-colors"
               style={{ backgroundColor: selectedPalette.primary }}
             >
               <Sparkles className="h-4 w-4" />
             </span>
-            <span>AgendatePY <span className="opacity-60 text-xs font-mono uppercase tracking-wider">Design Lab</span></span>
+            <span>
+              AgendatePY{" "}
+              <span className="opacity-60 text-xs font-mono uppercase tracking-wider font-semibold">
+                UI/UX Pro Max Lab
+              </span>
+            </span>
           </Link>
 
           {/* Quick theme actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => setIsDark(!isDark)}
@@ -162,13 +293,32 @@ export default function ShowcasePage() {
               <span>{isDark ? "Modo Claro" : "Modo Oscuro"}</span>
             </button>
 
+            {/* Direct Apply to PostgreSQL */}
+            <button
+              type="button"
+              onClick={handleApplyToMyTenant}
+              disabled={applyingToTenant}
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:opacity-95 disabled:opacity-50"
+              style={{ backgroundColor: selectedPalette.primary }}
+              title="Guardar este diseño en la base de datos de tu local"
+            >
+              {applyingToTenant ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : appliedSuccess ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Palette className="h-3.5 w-3.5" />
+              )}
+              <span>{appliedSuccess ? "¡Guardado en tu Web!" : "Aplicar a mi Enlace"}</span>
+            </button>
+
             <Link
               href="/dashboard/apariencia"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-sm transition hover:opacity-95"
-              style={{ backgroundColor: selectedPalette.primary }}
+              className={`hidden md:inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold border transition ${
+                isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-300 text-slate-700 hover:bg-slate-100"
+              }`}
             >
-              <Palette className="h-3.5 w-3.5" />
-              <span>Aplicar a mi Local</span>
+              <span>Editor de Enlace</span>
             </Link>
 
             <Link
@@ -178,7 +328,7 @@ export default function ShowcasePage() {
                 isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-300 text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <span>Ver Cita Real</span>
+              <span>Ver Web en Vivo</span>
               <ExternalLink className="h-3 w-3 opacity-60" />
             </Link>
           </div>
@@ -186,48 +336,168 @@ export default function ShowcasePage() {
       </header>
 
       {/* Hero Showcase Title */}
-      <section className="mx-auto max-w-7xl px-4 pt-12 pb-8 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 pt-12 pb-6 sm:px-6">
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Laboratorio de Estilos, Componentes & Experiencia de Usuario</span>
+            <span>Laboratorio de Diseño & UX Intelligence · Paraguay</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
-            Catálogo Interactivo de Diseño para tu Negocio
+            Propuestas de Diseño de Alta Conversión
           </h1>
           <p className="text-sm opacity-75 max-w-2xl mx-auto leading-relaxed">
-            Experimentá en vivo con diferentes paletas de color, tipografías de Google, widgets de reserva,
-            componentes de WhatsApp y métricas diseñadas para peluquerías, barberías y spas en Paraguay.
+            Explorá los estilos visuales generados con la inteligencia de <strong>ui-ux-pro-max</strong>. 
+            Probá tipografías de Google, contrastes WCAG AAA y distribuciones de agendamiento en tiempo real.
           </p>
         </div>
 
+        {/* Category Filter Pills */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-1.5">
+          {["Todos", "Barberías", "Salones & Estética", "Spas & Wellness", "Modern Tech", "Urbano & Trend", "Lujo & VIP"].map(
+            (cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setCategoryFilter(cat)}
+                className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                  categoryFilter === cat
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                    : isDark
+                    ? "bg-slate-900/60 text-slate-400 hover:text-white"
+                    : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                }`}
+              >
+                {cat}
+              </button>
+            )
+          )}
+        </div>
+
         {/* Live Palette Selector Pills */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
-          {PALETTES.map((pal) => {
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+          {filteredPalettes.map((pal) => {
             const active = selectedPalette.id === pal.id;
             const PalIcon = pal.icon;
             return (
               <button
                 key={pal.id}
                 type="button"
-                onClick={() => setSelectedPalette(pal)}
-                className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-bold transition shadow-xs ${
+                onClick={() => {
+                  setSelectedPalette(pal);
+                  setSelectedLayout(pal.layout);
+                  if (pal.id === "barber-dark" || pal.id === "champagne-velvet") setIsDark(true);
+                  if (pal.id === "bento-modern" || pal.id === "soft-evolution" || pal.id === "organic-biophilic") setIsDark(false);
+                }}
+                className={`flex items-center gap-2.5 rounded-2xl border px-4 py-2.5 text-xs font-bold transition shadow-xs ${
                   active
-                    ? "border-primary bg-primary text-white shadow-md scale-105"
+                    ? "border-primary bg-primary text-white shadow-lg scale-105"
                     : isDark
                     ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700"
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                 }`}
               >
-                <PalIcon className="h-3.5 w-3.5" />
-                <span>{pal.name}</span>
+                <PalIcon className="h-4 w-4" />
+                <div className="text-left">
+                  <span>{pal.name}</span>
+                  {pal.badge && (
+                    <span
+                      className={`ml-1.5 rounded-full px-1.5 py-0.2 text-[9px] font-bold ${
+                        active
+                          ? "bg-white/20 text-white"
+                          : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                      }`}
+                    >
+                      {pal.badge}
+                    </span>
+                  )}
+                </div>
                 <span
-                  className="h-3.5 w-3.5 rounded-full border border-white/20"
+                  className="h-3.5 w-3.5 rounded-full border border-white/20 shrink-0"
                   style={{ backgroundColor: pal.primary }}
                 />
               </button>
             );
           })}
+        </div>
+
+        {/* Active Style Intelligence Spec Deck (From UI UX Pro Max) */}
+        <div
+          className={`mt-8 max-w-4xl mx-auto rounded-3xl border p-5 shadow-lg backdrop-blur-xl transition ${
+            isDark ? "bg-slate-900/90 border-slate-800" : "bg-white/95 border-slate-200"
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/10 dark:border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <span
+                className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-md"
+                style={{ backgroundColor: selectedPalette.primary }}
+              >
+                <selectedPalette.icon className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-black text-lg">{selectedPalette.name}</h3>
+                  <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold">
+                    {selectedPalette.contrastTarget}
+                  </span>
+                </div>
+                <p className="text-xs opacity-75">{selectedPalette.description}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleApplyToMyTenant}
+              disabled={applyingToTenant}
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:opacity-95 self-start sm:self-auto shrink-0"
+              style={{ backgroundColor: selectedPalette.primary }}
+            >
+              {appliedSuccess ? <Check className="h-3.5 w-3.5" /> : <Palette className="h-3.5 w-3.5" />}
+              <span>{appliedSuccess ? "¡Aplicado a tu Local!" : "Aplicar este Estilo"}</span>
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-4 text-xs">
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-bold opacity-60">Ideal Para</span>
+              <p className="font-semibold">{selectedPalette.bestFor}</p>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-bold opacity-60">Tipografía Display</span>
+              <p className="font-mono font-bold capitalize">{selectedPalette.font.replace(/-/g, " ")}</p>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-bold opacity-60">Color Acento (HEX)</span>
+              <div className="flex items-center gap-2">
+                <code className="font-mono font-bold">{selectedPalette.primary}</code>
+                <button
+                  type="button"
+                  onClick={() => copyColor(selectedPalette.primary)}
+                  className="rounded p-1 opacity-70 hover:opacity-100"
+                  title="Copiar color"
+                >
+                  {copiedColor === selectedPalette.primary ? (
+                    <Check className="h-3 w-3 text-emerald-500" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-bold opacity-60">Bordes & Radio</span>
+              <p className="font-semibold capitalize">
+                {selectedPalette.buttonRadius === "full"
+                  ? "Pill Suave (9999px)"
+                  : selectedPalette.buttonRadius === "lg"
+                  ? "Redondeado Moderno (16px)"
+                  : "Cuadrado Minimalista (8px)"}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -240,8 +510,8 @@ export default function ShowcasePage() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 border-b border-black/10 dark:border-white/10 pb-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-primary">Componente 01</span>
-              <h2 className="text-2xl font-bold tracking-tight">Estilos de la Página de Reserva</h2>
-              <p className="text-xs opacity-75">Probá las diferentes distribuciones de fotos y tarjetas de agendamiento.</p>
+              <h2 className="text-2xl font-bold tracking-tight">Simulador Interactivo de la Página de Reservas</h2>
+              <p className="text-xs opacity-75">Visualizá cómo interactúa el cliente con tus fotos, servicios y calendario.</p>
             </div>
 
             {/* Layout switch buttons */}
@@ -275,9 +545,11 @@ export default function ShowcasePage() {
           {/* Interactive Card Preview */}
           <div className="grid gap-6 lg:grid-cols-12 items-start">
             {/* Visual Preview Left */}
-            <div className={`lg:col-span-8 rounded-3xl border p-6 transition-all duration-300 shadow-xl ${
-              isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200"
-            }`}>
+            <div
+              className={`lg:col-span-8 rounded-3xl border p-6 transition-all duration-300 shadow-xl ${
+                isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200"
+              }`}
+            >
               {selectedLayout === "split-gallery" && (
                 <div className="grid gap-6 sm:grid-cols-2 items-center">
                   <div className="space-y-3">
@@ -285,12 +557,12 @@ export default function ShowcasePage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop&q=80"
-                        alt="Barber"
+                        alt="Local"
                         className="h-full w-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                       <div className="absolute bottom-3 left-3 text-white">
-                        <p className="font-bold text-sm">Barbería Los Muchachos</p>
+                        <p className="font-bold text-sm">Barbería & Salón Los Muchachos</p>
                         <p className="text-[11px] opacity-80">Asunción · Abierto hoy hasta las 20:00</p>
                       </div>
                     </div>
@@ -310,12 +582,12 @@ export default function ShowcasePage() {
                   </div>
 
                   <div className="space-y-3">
-                    <p className="text-xs font-bold uppercase tracking-wider text-primary">Servicios Populares</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-primary">Servicios Disponibles</p>
                     <div className="space-y-2">
                       {[
-                        { name: "Corte Degradé Clásico", time: "30 min", price: "Gs. 80.000" },
-                        { name: "Barba a Navaja Tradicional", time: "25 min", price: "Gs. 50.000" },
-                        { name: "Combo Pelo & Barba VIP", time: "55 min", price: "Gs. 120.000" },
+                        { name: "Corte Degradé Clásico", time: "35 min", price: "Gs. 80.000" },
+                        { name: "Ritual de Barba con Toalla", time: "30 min", price: "Gs. 50.000" },
+                        { name: "Combo Pelo & Barba VIP", time: "60 min", price: "Gs. 120.000" },
                       ].map((item, idx) => (
                         <div
                           key={idx}
@@ -364,7 +636,7 @@ export default function ShowcasePage() {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold">{selectedPalette.name}</h3>
-                      <p className="text-xs opacity-75 mt-0.5">Atención premium personalizada</p>
+                      <p className="text-xs opacity-75 mt-0.5">Atención premium y personalizada</p>
                     </div>
 
                     {/* Stories highlights */}
@@ -374,17 +646,17 @@ export default function ShowcasePage() {
                           <div className="h-12 w-12 rounded-full p-0.5 ring-2 ring-primary">
                             <div className="h-full w-full rounded-full bg-slate-700" />
                           </div>
-                          <span className="text-[9px] opacity-60">Trabajo #{i}</span>
+                          <span className="text-[9px] opacity-60">Look #{i}</span>
                         </div>
                       ))}
                     </div>
 
                     <div className="rounded-2xl border border-black/10 dark:border-white/10 p-4 text-left space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold">Corte Clásico + Lavado</span>
-                        <span className="font-black text-primary">Gs. 90.000</span>
+                        <span className="font-bold">Mechas Balayage & Styling</span>
+                        <span className="font-black text-primary">Gs. 320.000</span>
                       </div>
-                      <p className="text-[11px] opacity-70">Incluye asesoría visagista y styling final.</p>
+                      <p className="text-[11px] opacity-70">Incluye nutrición profunda y peinado profesional.</p>
                     </div>
 
                     <button
@@ -453,158 +725,164 @@ export default function ShowcasePage() {
               )}
             </div>
 
-            {/* Layout Info Card Right */}
-            <div className={`lg:col-span-4 rounded-3xl border p-5 space-y-4 ${
-              isDark ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200"
-            }`}>
-              <div className="flex items-center gap-2">
-                <Layers className="h-5 w-5 text-primary" />
-                <h3 className="font-bold text-sm">Detalles del Layout</h3>
+            {/* Live Interactive Date & Slot Selector Right */}
+            <div
+              className={`lg:col-span-4 rounded-3xl border p-5 space-y-4 shadow-md ${
+                isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+              }`}
+            >
+              <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span className="font-bold text-xs">Horarios Disponibles</span>
+                </div>
+                <span className="rounded-full bg-emerald-500/10 text-emerald-600 px-2 py-0.5 text-[9px] font-black uppercase">
+                  En Vivo
+                </span>
               </div>
 
-              <div className="space-y-2 text-xs opacity-80 leading-relaxed">
-                <p>
-                  <strong>Distribución activa:</strong> {selectedLayout}
-                </p>
-                <p>
-                  <strong>Tipografía:</strong> {GOOGLE_FONTS.find((f) => f.id === selectedPalette.font)?.name}
-                </p>
-                <p>
-                  <strong>Color de marca:</strong> {selectedPalette.primary}
-                </p>
+              <div className="grid grid-cols-3 gap-1.5 text-xs">
+                {["10:00", "10:30", "11:00", "14:30", "15:00", "16:30"].map((time, idx) => (
+                  <button
+                    key={time}
+                    type="button"
+                    className={`rounded-xl py-2 font-bold text-center border transition ${
+                      idx === 0
+                        ? "bg-primary text-white border-primary shadow-xs"
+                        : "border-black/10 dark:border-white/10 hover:border-primary/50"
+                    }`}
+                  >
+                    {time}
+                  </button>
+                ))}
               </div>
 
-              <div className="pt-2 border-t border-black/5 dark:border-white/5 space-y-2">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Copiar Código HEX</p>
+              <div className="rounded-2xl border border-black/10 dark:border-white/10 p-3 space-y-2 text-xs">
+                <span className="text-[10px] font-bold uppercase opacity-60">Profesional Asignado</span>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-white font-bold text-xs"
+                    style={{ backgroundColor: selectedPalette.primary }}
+                  >
+                    MB
+                  </div>
+                  <div>
+                    <p className="font-bold">Marcos Benítez</p>
+                    <p className="text-[10px] opacity-60">Master Barber & Colorista</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
                 <button
                   type="button"
-                  onClick={() => copyColor(selectedPalette.primary)}
-                  className="flex w-full items-center justify-between rounded-xl border border-black/10 dark:border-white/10 p-2.5 font-mono text-xs hover:border-primary transition"
+                  onClick={handleApplyToMyTenant}
+                  disabled={applyingToTenant}
+                  className="w-full rounded-2xl py-3 text-xs font-bold text-white shadow-md transition hover:opacity-95"
+                  style={{ backgroundColor: selectedPalette.primary }}
                 >
-                  <span>{selectedPalette.primary}</span>
-                  {copiedColor === selectedPalette.primary ? (
-                    <span className="text-emerald-500 font-bold flex items-center gap-1">
-                      <Check className="h-3.5 w-3.5" /> Copiado
-                    </span>
-                  ) : (
-                    <Copy className="h-3.5 w-3.5 opacity-60" />
-                  )}
+                  {appliedSuccess ? "¡Estilo Guardado en tu Web!" : "Aplicar este Estilo a mi Local"}
                 </button>
               </div>
-
-              <Link
-                href="/dashboard/apariencia"
-                className="block w-full text-center rounded-2xl py-2.5 text-xs font-bold text-white shadow-sm transition hover:opacity-95"
-                style={{ backgroundColor: selectedPalette.primary }}
-              >
-                Configurar este diseño en mi local
-              </Link>
             </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 2: WHATSAPP BOT COMPONENT HIGHLIGHT */}
+        {/* SECTION 2: WHATSAPP BOT & NOTIFICATIONS MOCKUP */}
         {/* ========================================================================= */}
         <section className="space-y-6">
           <div className="border-b border-black/10 dark:border-white/10 pb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-whatsapp">Componente 02</span>
-            <h2 className="text-2xl font-bold tracking-tight">Componentes Nativos de WhatsApp Cloud API</h2>
-            <p className="text-xs opacity-75">Burbujas idénticas con doble tilde azul, notas de voz interactivas y botones de acción rápida.</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Componente 02</span>
+            <h2 className="text-2xl font-bold tracking-tight">Experiencia de WhatsApp Automatizada para Paraguay</h2>
+            <p className="text-xs opacity-75">Simulación de confirmación instantánea, recordatorio 2h antes y cancelación.</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* Bubble 1: Confirmación Inmediata */}
-            <div className={`rounded-3xl border p-5 space-y-3 ${
-              isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#008069]">Burbuja de Confirmación</span>
-                <span className="text-[10px] opacity-60">Entrante</span>
-              </div>
-              <div className="rounded-2xl rounded-tl-xs bg-[#ffffff] dark:bg-slate-800 border p-3 text-xs leading-relaxed shadow-sm">
-                <p className="text-[#111b21] dark:text-slate-100">
-                  ¡Hola Juan! Tu turno para <strong>Corte Degradé</strong> quedó confirmado para hoy a las <strong>16:30 hs</strong> con Marcos Benítez.
-                </p>
-                <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 border-t pt-1.5">
-                  <span className="text-[#008069] font-bold">agendate.py/turno</span>
-                  <span>14:22 hs</span>
+          <div className="grid gap-6 md:grid-cols-2 items-center">
+            {/* WhatsApp Chat Balloon Mockup */}
+            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-[#0b141a] p-5 text-white shadow-2xl max-w-md mx-auto w-full font-sans">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                <div className="h-10 w-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold">
+                  AP
+                </div>
+                <div>
+                  <p className="font-bold text-sm">AgendatePY Bot</p>
+                  <p className="text-[10px] text-emerald-400">En línea · Cuenta oficial de empresa</p>
                 </div>
               </div>
-              <p className="text-[11px] opacity-75">Enviado automáticamente 1 segundo después de reservar en la web.</p>
-            </div>
 
-            {/* Bubble 2: Nota de Voz Simulada */}
-            <div className={`rounded-3xl border p-5 space-y-3 ${
-              isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#008069]">Nota de Voz (Audio)</span>
-                <span className="text-[10px] opacity-60">Interactiva</span>
-              </div>
-              <div className="rounded-2xl rounded-tl-xs bg-[#ffffff] dark:bg-slate-800 border p-3 text-xs shadow-sm flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#008069] text-white shadow-xs"
-                >
-                  {isPlayingAudio ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-                </button>
-                <div className="flex-1">
-                  <div className="flex items-center gap-[2.5px] h-4">
-                    {[6, 12, 16, 8, 14, 18, 10, 6, 14, 16, 8, 12].map((h, i) => (
-                      <span
-                        key={i}
-                        className={`w-[2px] rounded-full transition-all duration-150 ${
-                          isPlayingAudio ? "bg-[#008069] animate-pulse" : "bg-slate-400"
-                        }`}
-                        style={{ height: `${h}px` }}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-[9px] text-slate-400">
-                    <span>0:14</span>
-                    <span>14:23 hs</span>
+              <div className="py-4 space-y-3">
+                {/* Incoming bubble */}
+                <div className="rounded-2xl rounded-tl-none bg-[#202c33] p-3 text-xs space-y-1.5 shadow-sm max-w-[85%]">
+                  <p className="font-bold text-emerald-400">¡Hola Lucas Benítez!</p>
+                  <p className="leading-relaxed">
+                    Tu turno para <strong>Corte Clásico / Fade</strong> quedó apartado para el <strong>Sábado a las 10:00 hs</strong> con Marcos Benítez.
+                  </p>
+                  <p className="text-[10px] text-slate-400 pt-1">Local: Barbería Los Muchachos (Asunción)</p>
+                  <div className="text-right text-[9px] text-slate-400">10:02</div>
+                </div>
+
+                {/* Voice note pill */}
+                <div className="rounded-2xl rounded-tl-none bg-[#202c33] p-2.5 text-xs flex items-center gap-3 max-w-[85%]">
+                  <button
+                    type="button"
+                    onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shrink-0"
+                  >
+                    {isPlayingAudio ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+                  </button>
+                  <div className="flex-1 space-y-1">
+                    <div className="h-1 bg-emerald-500/40 rounded-full overflow-hidden">
+                      <div className={`h-full bg-emerald-400 ${isPlayingAudio ? "w-2/3 animate-pulse" : "w-1/4"}`} />
+                    </div>
+                    <span className="text-[9px] text-slate-400">Nota de voz: Indicaciones de llegada (0:18)</span>
                   </div>
                 </div>
+
+                {/* Quick actions buttons */}
+                <div className="space-y-1.5 pt-1">
+                  <button
+                    type="button"
+                    className="w-full rounded-xl bg-[#202c33] py-2 text-xs font-bold text-emerald-400 border border-white/5 hover:bg-[#2a3942] transition"
+                  >
+                    Confirmar Asistencia
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full rounded-xl bg-[#202c33] py-2 text-xs font-semibold text-slate-300 border border-white/5 hover:bg-[#2a3942] transition"
+                  >
+                    Reprogramar Turno
+                  </button>
+                </div>
               </div>
-              <p className="text-[11px] opacity-75">Tus clientes pueden recibir audios personalizados para confirmar su asistencia.</p>
             </div>
 
-            {/* Bubble 3: Botones de Respuesta Rápida */}
-            <div className={`rounded-3xl border p-5 space-y-3 ${
-              isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#008069]">Botones de 1 Clic</span>
-                <span className="text-[10px] opacity-60">Quick Replies</span>
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-600 px-3 py-1 text-xs font-bold">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Zero Fricción en WhatsApp</span>
               </div>
-              <div className="space-y-1.5">
-                <div className="rounded-2xl rounded-tl-xs bg-white dark:bg-slate-800 border p-2.5 text-xs text-[#111b21] dark:text-slate-100">
-                  ¿Confirmás tu asistencia para hoy?
+              <h3 className="text-2xl font-bold tracking-tight">El cliente no necesita descargar ninguna App</h3>
+              <p className="text-xs leading-relaxed opacity-75">
+                En Paraguay, WhatsApp es el canal preferido. Cada turno agendado envía automáticamente recordatorios 
+                con el link de cancelación autogestionable, reduciendo el ausentismo sin sobrecargar a tu equipo.
+              </p>
+              <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="rounded-2xl border border-black/10 dark:border-white/10 p-3 space-y-1">
+                  <span className="font-bold block text-emerald-500">-85% Ausentismo</span>
+                  <span className="text-[11px] opacity-70">Con recordatorios 2 horas antes</span>
                 </div>
-                <button
-                  type="button"
-                  className="w-full rounded-xl border border-[#008069]/40 bg-[#e7f8f5] dark:bg-emerald-950/40 p-2 text-xs font-bold text-[#008069] dark:text-emerald-300 transition hover:scale-[1.02] flex items-center justify-center gap-1.5"
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  <span>Sí, confirmo asistencia</span>
-                </button>
-                <button
-                  type="button"
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-xs font-semibold text-slate-600 dark:text-slate-300 transition hover:bg-slate-50 flex items-center justify-center gap-1.5"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Reprogramar para otro día</span>
-                </button>
+                <div className="rounded-2xl border border-black/10 dark:border-white/10 p-3 space-y-1">
+                  <span className="font-bold block text-primary">Sincronización Total</span>
+                  <span className="text-[11px] opacity-70">Google Calendar & Apple Wallet</span>
+                </div>
               </div>
-              <p className="text-[11px] opacity-75">Reduce hasta un 85% las inasistencias sin intervención humana.</p>
             </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 3: ANALYTICS & DASHBOARD KPI WIDGETS */}
+        {/* SECTION 3: KPI WIDGETS & PERFORMANCE */}
         {/* ========================================================================= */}
         <section className="space-y-6">
           <div className="border-b border-black/10 dark:border-white/10 pb-4">
@@ -630,7 +908,10 @@ export default function ShowcasePage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs opacity-60 font-semibold">{stat.label}</span>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <span
+                      className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs"
+                      style={{ backgroundColor: selectedPalette.primary }}
+                    >
                       <Icon className="h-4 w-4" />
                     </span>
                   </div>
@@ -642,30 +923,31 @@ export default function ShowcasePage() {
           </div>
         </section>
 
-        {/* Bottom CTA to Action */}
+        {/* Bottom CTA Card */}
         <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 sm:p-12 text-white text-center space-y-5 shadow-2xl">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-emerald-400">
-            <Zap className="h-3.5 w-3.5" /> Todo listo para usar
+            <Zap className="h-3.5 w-3.5" /> Todo listo para producción
           </span>
           <h2 className="text-3xl font-black sm:text-4xl">¿Querés que tu negocio se vea así de bien?</h2>
           <p className="text-sm opacity-80 max-w-xl mx-auto">
             Configurá tu logo, portada, servicios y empezá a recibir reservas automáticas hoy mismo.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Link
-              href="/dashboard/apariencia"
+            <button
+              type="button"
+              onClick={handleApplyToMyTenant}
+              disabled={applyingToTenant}
               className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-xs font-bold text-white shadow-lg transition hover:scale-105"
               style={{ backgroundColor: selectedPalette.primary }}
             >
-              <span>Ir a Personalizar mi Local</span>
+              <span>{appliedSuccess ? "¡Estilo Guardado!" : "Aplicar este Estilo a mi Local"}</span>
               <Palette className="h-4 w-4" />
-            </Link>
+            </button>
             <Link
-              href="/barberia/reservar"
-              target="_blank"
+              href="/dashboard/apariencia"
               className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 text-xs font-bold text-white transition"
             >
-              <span>Probar Reserva como Cliente</span>
+              <span>Editor de Enlace Completo</span>
               <Smartphone className="h-4 w-4" />
             </Link>
           </div>

@@ -582,7 +582,7 @@ export default function PhoneMockup() {
         </div>
         <div className="text-left text-xs pr-1">
           <p className="font-bold text-slate-900 dark:text-white">Recordatorio 2h Antes</p>
-          <p className="text-[11px] text-slate-500">Sofía confirmó su turno ✓</p>
+          <p className="text-[11px] text-slate-500">Sofía confirmó su turno</p>
         </div>
       </motion.div>
 

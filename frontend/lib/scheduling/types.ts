@@ -1,4 +1,22 @@
-import type { LayoutStyle, ThemeMode } from "@/lib/theme";
+import type {
+  LayoutStyle,
+  ThemeMode,
+  ButtonRadius,
+  ButtonStyleVariant,
+  ButtonShadowType,
+  ButtonTextSizeType,
+  TitleSizeType,
+  BackgroundEffectType,
+  ButtonBorderWidth,
+  ButtonHeight,
+  ButtonAlignment,
+  ButtonTextTransform,
+  ButtonFontWeight,
+  SectionOrder,
+  AvatarShape,
+  AvatarBorder,
+  CustomLinkItem,
+} from "@/lib/theme";
 
 export type AvailableSlot = {
   start: string;
@@ -30,12 +48,30 @@ export type PublicTenant = {
   googleMapsUrl?: string;
   bookingNotice?: string;
   themePreset?: string;
-  buttonRadius?: string;
+  buttonRadius?: ButtonRadius;
+  buttonStyle?: ButtonStyleVariant;
+  buttonShadow?: ButtonShadowType;
+  buttonTextSize?: ButtonTextSizeType;
+  buttonFontFamily?: string;
+  titleSize?: TitleSizeType;
+  backgroundEffect?: BackgroundEffectType;
+  customLinks?: CustomLinkItem[];
   primaryColor?: string;
   backgroundColor?: string;
   fontFamily?: string;
   layoutStyle?: LayoutStyle;
   themeMode?: ThemeMode;
+  buttonCustomBg?: string;
+  buttonCustomText?: string;
+  buttonCustomBorder?: string;
+  buttonBorderWidth?: ButtonBorderWidth;
+  buttonHeight?: ButtonHeight;
+  buttonAlignment?: ButtonAlignment;
+  buttonTextTransform?: ButtonTextTransform;
+  buttonFontWeight?: ButtonFontWeight;
+  sectionOrder?: SectionOrder;
+  avatarShape?: AvatarShape;
+  avatarBorder?: AvatarBorder;
 };
 
 export const HOLD_MINUTES = 15;

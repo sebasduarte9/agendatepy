@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: agendatepy_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agendatepy
+      POSTGRES_USER: agendate
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-agendatepy2026secure}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agendate -d agendatepy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agendatepy_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://agendate:${DB_PASSWORD:-agendatepy2026secure}@postgres:5432/agendatepy?schema=public
+      DIRECT_URL: postgresql://agendate:${DB_PASSWORD:-agendatepy2026secure}@postgres:5432/agendatepy?schema=public
+      AGENDATE_ROOT_DOMAIN: agendatepy.com
+      NEXT_PUBLIC_ROOT_DOMAIN: agendatepy.com
+      NEXT_PUBLIC_APP_URL: https://agendatepy.com
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
+      RESEND_API_KEY: "${RESEND_API_KEY}"
+      EMAIL_FROM: "${EMAIL_FROM:-AgendatePY <seguridad@agendatepy.com>}"
+      SESSION_SECRET: "${SESSION_SECRET:-agendatepy-super-secure-production-secret-key-2026}"
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  nginx:
+    image: nginx:alpine
+    container_name: agendatepy_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  pgdata:

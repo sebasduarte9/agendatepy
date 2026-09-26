@@ -90,11 +90,11 @@ export default async function ReservaListaPage({ params, searchParams }: PagePro
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="font-bold text-slate-900">{appointment.service.name}</p>
           <p className="mt-1 text-xs capitalize text-slate-600">
-            📅 {when} · ⏰ {time} hs
+            {when} · {time} hs
           </p>
           {appointment.staff?.name && (
             <p className="mt-1 text-xs text-slate-500">
-              👤 Profesional: <strong className="text-slate-700">{appointment.staff.name}</strong>
+              Profesional: <strong className="text-slate-700">{appointment.staff.name}</strong>
             </p>
           )}
         </div>

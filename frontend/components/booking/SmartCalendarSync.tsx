@@ -62,10 +62,10 @@ export default function SmartCalendarSync({
 
   const title = encodeURIComponent(`Turno: ${appointment.serviceName} en ${business.name}`);
   const details = encodeURIComponent(
-    `💈 Cita agendada en ${business.name}\n` +
-      `✂️ Servicio: ${appointment.serviceName} (${formatGs(appointment.price)})\n` +
-      `👤 Profesional: ${appointment.staffName}\n` +
-      `📌 Cliente: ${appointment.clientName}\n\n` +
+    `Cita agendada en ${business.name}\n` +
+      `Servicio: ${appointment.serviceName} (${formatGs(appointment.price)})\n` +
+      `Profesional: ${appointment.staffName}\n` +
+      `Cliente: ${appointment.clientName}\n\n` +
       `Recordatorio automático gestionado por AgendatePY.`
   );
   const location = encodeURIComponent(business.address || business.name);

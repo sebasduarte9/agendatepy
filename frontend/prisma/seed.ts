@@ -81,21 +81,21 @@ async function main() {
     });
 
     // 3. Crear Servicios
-    const [corte, barba, combo] = await Promise.all([
+    const [corte, barba, combo, color, keratina, express] = await Promise.all([
       tx.service.create({
         data: {
           tenantId: tenant.id,
-          name: "Corte Clásico",
-          durationMinutes: 30,
+          name: "Corte Clásico / Fade",
+          durationMinutes: 35,
           price: 80_000,
         },
       }),
       tx.service.create({
         data: {
           tenantId: tenant.id,
-          name: "Perfilado de Barba",
-          durationMinutes: 30,
-          price: 50_000,
+          name: "Corte + Ritual de Barba",
+          durationMinutes: 55,
+          price: 130_000,
         },
       }),
       tx.service.create({
@@ -106,16 +106,56 @@ async function main() {
           price: 120_000,
         },
       }),
+      tx.service.create({
+        data: {
+          tenantId: tenant.id,
+          name: "Colorimetría / Mechas Balayage",
+          durationMinutes: 120,
+          price: 320_000,
+        },
+      }),
+      tx.service.create({
+        data: {
+          tenantId: tenant.id,
+          name: "Tratamiento de Keratina / Alisado",
+          durationMinutes: 90,
+          price: 250_000,
+        },
+      }),
+      tx.service.create({
+        data: {
+          tenantId: tenant.id,
+          name: "Perfilado de Cejas y Barba Express",
+          durationMinutes: 20,
+          price: 45_000,
+        },
+      }),
     ]);
 
-    // 4. Crear Staff
-    const [marcos, luis] = await Promise.all([
+    // 4. Crear Staff Completo
+    const [marcos, sofia, diego, luis] = await Promise.all([
       tx.staff.create({
         data: {
           tenantId: tenant.id,
           name: "Marcos Benítez",
           active: true,
           commissionPercentage: 50,
+        },
+      }),
+      tx.staff.create({
+        data: {
+          tenantId: tenant.id,
+          name: "Sofía Alcaraz",
+          active: true,
+          commissionPercentage: 45,
+        },
+      }),
+      tx.staff.create({
+        data: {
+          tenantId: tenant.id,
+          name: "Diego Franco",
+          active: true,
+          commissionPercentage: 40,
         },
       }),
       tx.staff.create({
@@ -134,35 +174,59 @@ async function main() {
       data: { staffId: marcos.id },
     });
 
-    // Staff user
-    await tx.user.create({
-      data: {
-        email: "luis@barberia.py",
-        name: "Luis Ayala",
-        role: UserRole.STAFF,
-        tenantId: tenant.id,
-        staffId: luis.id,
-        phone: "595982333444",
-        optInMarketing: false,
-      },
-    });
+    // Staff users
+    await Promise.all([
+      tx.user.create({
+        data: {
+          email: "sofia@barberia.py",
+          name: "Sofía Alcaraz",
+          role: UserRole.STAFF,
+          tenantId: tenant.id,
+          staffId: sofia.id,
+          phone: "595981555666",
+          optInMarketing: false,
+        },
+      }),
+      tx.user.create({
+        data: {
+          email: "diego@barberia.py",
+          name: "Diego Franco",
+          role: UserRole.STAFF,
+          tenantId: tenant.id,
+          staffId: diego.id,
+          phone: "595981777888",
+          optInMarketing: false,
+        },
+      }),
+      tx.user.create({
+        data: {
+          email: "luis@barberia.py",
+          name: "Luis Ayala",
+          role: UserRole.STAFF,
+          tenantId: tenant.id,
+          staffId: luis.id,
+          phone: "595982333444",
+          optInMarketing: false,
+        },
+      }),
+    ]);
 
     // 5. Vincular Staff con Servicios
-    const staff = [marcos, luis];
-    const services = [corte, barba, combo];
+    const allStaff = [marcos, sofia, diego, luis];
+    const allServices = [corte, barba, combo, color, keratina, express];
 
     await tx.staffService.createMany({
-      data: staff.flatMap((member) =>
-        services.map((service) => ({
+      data: allStaff.flatMap((member) =>
+        allServices.map((service) => ({
           staffId: member.id,
           serviceId: service.id,
         })),
       ),
     });
 
-    // 6. Horarios de Staff
+    // 6. Horarios de Staff (Lunes a Sábado 08:30 - 19:30)
     await tx.staffSchedule.createMany({
-      data: staff.flatMap((member) =>
+      data: allStaff.flatMap((member) =>
         WEEKDAYS.map((dayOfWeek) => ({
           staffId: member.id,
           dayOfWeek,
@@ -172,7 +236,7 @@ async function main() {
       ),
     });
 
-    // 7. Citas
+    // 7. Citas para Hoy (Fecha civil de Paraguay)
     const apt1 = await tx.appointment.create({
       data: {
         tenantId: tenant.id,
@@ -186,7 +250,20 @@ async function main() {
       },
     });
 
-    await tx.appointment.create({
+    const apt2 = await tx.appointment.create({
+      data: {
+        tenantId: tenant.id,
+        staffId: sofia.id,
+        serviceId: color.id,
+        clientName: "María Ferreira",
+        clientPhone: "+595981111222",
+        startTime: zoned(today, "11:30"),
+        endTime: new Date(zoned(today, "11:30").getTime() + color.durationMinutes * 60_000),
+        status: "CONFIRMED",
+      },
+    });
+
+    const apt3 = await tx.appointment.create({
       data: {
         tenantId: tenant.id,
         staffId: luis.id,
@@ -197,6 +274,19 @@ async function main() {
         endTime: new Date(barbaStart.getTime() + barba.durationMinutes * 60_000),
         status: "PENDING_ACTION",
         expiresAt: new Date(Date.now() + 30 * 60_000),
+      },
+    });
+
+    const apt4 = await tx.appointment.create({
+      data: {
+        tenantId: tenant.id,
+        staffId: diego.id,
+        serviceId: corte.id,
+        clientName: "José Insfrán",
+        clientPhone: "+595982333444",
+        startTime: zoned(today, "16:30"),
+        endTime: new Date(zoned(today, "16:30").getTime() + corte.durationMinutes * 60_000),
+        status: "CONFIRMED",
       },
     });
 

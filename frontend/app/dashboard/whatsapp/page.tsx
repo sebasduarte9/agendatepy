@@ -341,7 +341,7 @@ export default function WhatsAppHubPage() {
 
               <div className="rounded-xl bg-slate-50 p-3 text-[11px] font-mono text-slate-700 border border-slate-200/80">
                 <p className="font-bold text-slate-900 mb-1">Mensaje de prueba:</p>
-                "👋 ¡Hola! Este es un mensaje de prueba enviado desde tu bot de Sendwo en AgendatePY."
+                "¡Hola! Este es un mensaje de prueba enviado desde tu bot de Sendwo en AgendatePY."
               </div>
 
               <button

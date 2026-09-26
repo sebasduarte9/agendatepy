@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarCheck,
   Mail,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
-  Sparkles,
   KeyRound,
   RotateCcw,
   UserCheck,
@@ -20,15 +18,13 @@ import {
 import {
   requestOtpAction,
   verifyOtpAction,
-  googleLoginAction,
   switchRoleDemoAction,
 } from "@/lib/auth/actions";
 import type { UserRole } from "@/lib/auth/types";
 
-import GoogleAuthModal from "@/components/auth/GoogleAuthModal";
-
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
   const [email, setEmail] = useState("");
@@ -38,7 +34,18 @@ export default function LoginPage() {
   const [devDemoCode, setDevDemoCode] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
+  // Detectar errores en redirección de OAuth
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError === "oauth_cancelled") {
+      setError("Inicio de sesión con Google cancelado.");
+    } else if (oauthError === "oauth_failed") {
+      setError("No se pudo autenticar con Google. Por favor, intenta de nuevo.");
+    } else if (oauthError === "no_email") {
+      setError("Tu cuenta de Google no tiene un correo verificado.");
+    }
+  }, [searchParams]);
 
   // Solicitar OTP
   const handleRequestOtp = (e: React.FormEvent) => {
@@ -55,9 +62,9 @@ export default function LoginPage() {
       if (res.ok) {
         setStep("OTP");
         setMessage(res.message || "Código enviado a tu casilla.");
-        if (res.code) {
+        if (res.code && process.env.NODE_ENV !== "production") {
           setDevDemoCode(res.code);
-          setOtpCode(res.code); // Prellenar para comodidad del test
+          setOtpCode(res.code);
         }
       } else {
         setError(res.error || "No se pudo enviar el código.");
@@ -88,31 +95,7 @@ export default function LoginPage() {
     });
   };
 
-  // Login con Google: Abrir selector de cuenta
-  const handleOpenGoogle = () => {
-    setError(null);
-    setIsGoogleModalOpen(true);
-  };
-
-  // Confirmar cuenta de Google elegida
-  const handleGoogleAccountSelected = (googleEmail: string, googleName: string) => {
-    setError(null);
-    startTransition(async () => {
-      const res = await googleLoginAction(googleEmail, googleName, optInMarketing);
-      if (res.ok && res.user) {
-        setIsGoogleModalOpen(false);
-        if (res.user.role === "SUPERADMIN") {
-          router.push("/superadmin");
-        } else {
-          router.push("/dashboard");
-        }
-      } else {
-        setError(res.error || "Error al iniciar con Google");
-      }
-    });
-  };
-
-  // Selector rápido de Roles de Prueba
+  // Selector rápido de Roles de Prueba (solo visible en desarrollo)
   const handleFastRoleLogin = (role: UserRole) => {
     setError(null);
     startTransition(async () => {
@@ -166,12 +149,10 @@ export default function LoginPage() {
 
         {/* Tarjeta Glassmorphic */}
         <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-7 shadow-[0_12px_40px_rgb(0,0,0,0.06)] backdrop-blur-xl sm:p-9">
-          {/* Botón Google Apple-style */}
-          <button
-            type="button"
-            onClick={handleOpenGoogle}
-            disabled={isPending}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.99] disabled:opacity-60"
+          {/* Botón Google OAuth 2.0 Real */}
+          <a
+            href="/api/auth/google"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.99]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
@@ -191,8 +172,8 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            Continuar con Google
-          </button>
+            <span>Continuar con Google</span>
+          </a>
 
           <div className="relative my-6 text-center">
             <div className="absolute inset-0 flex items-center">
@@ -297,7 +278,7 @@ export default function LoginPage() {
 
                 {devDemoCode && (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5 text-center text-xs font-semibold text-emerald-800">
-                    Código de acceso rápido: <span className="underline tracking-widest">{devDemoCode}</span>
+                    Código de acceso rápido (dev): <span className="underline tracking-widest">{devDemoCode}</span>
                   </div>
                 )}
 
@@ -337,38 +318,40 @@ export default function LoginPage() {
             </p>
           )}
 
-          {/* Selector de Roles Rápidos para Pruebas / Switcher */}
-          <div className="mt-8 border-t border-slate-100 pt-5">
-            <p className="text-center text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-2.5">
-              Acceso Rápido por Rol (Demostración)
-            </p>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleFastRoleLogin("SUPERADMIN")}
-                className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-purple-300 hover:shadow-xs"
-              >
-                <Crown className="h-3.5 w-3.5 text-purple-600 mb-0.5" />
-                <span className="text-[10px] font-bold text-slate-800">Superadmin</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFastRoleLogin("OWNER")}
-                className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-brand/40 hover:shadow-xs"
-              >
-                <Store className="h-3.5 w-3.5 text-brand mb-0.5" />
-                <span className="text-[10px] font-bold text-slate-800">Dueño Local</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFastRoleLogin("STAFF")}
-                className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-pink-300 hover:shadow-xs"
-              >
-                <UserCheck className="h-3.5 w-3.5 text-pink-600 mb-0.5" />
-                <span className="text-[10px] font-bold text-slate-800">Colaborador</span>
-              </button>
+          {/* Acceso rápido de pruebas solo en entorno de desarrollo */}
+          {process.env.NODE_ENV !== "production" && (
+            <div className="mt-8 border-t border-slate-100 pt-5">
+              <p className="text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+                Acceso Rápido por Rol (Solo Dev)
+              </p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleFastRoleLogin("SUPERADMIN")}
+                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-purple-300 hover:shadow-xs"
+                >
+                  <Crown className="h-3.5 w-3.5 text-purple-600 mb-0.5" />
+                  <span className="text-[10px] font-bold text-slate-800">Superadmin</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFastRoleLogin("OWNER")}
+                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-brand/40 hover:shadow-xs"
+                >
+                  <Store className="h-3.5 w-3.5 text-brand mb-0.5" />
+                  <span className="text-[10px] font-bold text-slate-800">Dueño Local</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFastRoleLogin("STAFF")}
+                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-pink-300 hover:shadow-xs"
+                >
+                  <UserCheck className="h-3.5 w-3.5 text-pink-600 mb-0.5" />
+                  <span className="text-[10px] font-bold text-slate-800">Colaborador</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer legal */}
@@ -384,14 +367,14 @@ export default function LoginPage() {
           .
         </p>
       </motion.div>
-
-      {/* Selector de cuenta de Google Modal */}
-      <GoogleAuthModal
-        isOpen={isGoogleModalOpen}
-        onClose={() => setIsGoogleModalOpen(false)}
-        onSelectAccount={handleGoogleAccountSelected}
-        isLoading={isPending}
-      />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#fbfbfd]" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

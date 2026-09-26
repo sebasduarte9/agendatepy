@@ -15,12 +15,14 @@ import {
   Trash2,
   UserCheck,
   Star,
+  MessagesSquare,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import StatCard from "@/components/dashboard/ui/StatCard";
+import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { Client } from "@/lib/dashboard-types";
 
@@ -33,11 +35,18 @@ export default function ClientesPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
 
+  const activeFichaClient = useMemo(
+    () => clients.find((c) => c.id === selectedClient?.id) || selectedClient,
+    [clients, selectedClient]
+  );
+
   // Form state for creating / editing
   const [form, setForm] = useState({
     name: "",
     phone: "",
     email: "",
+    instagram: "",
+    messengerId: "",
     notes: "",
     formula: "",
     tags: "Frecuente",
@@ -69,6 +78,8 @@ export default function ClientesPage() {
       name: "",
       phone: "+595",
       email: "",
+      instagram: "",
+      messengerId: "",
       notes: "",
       formula: "",
       tags: "Nuevo",
@@ -82,6 +93,8 @@ export default function ClientesPage() {
       name: c.name,
       phone: c.phone,
       email: c.email,
+      instagram: c.instagram || "",
+      messengerId: c.messengerId || "",
       notes: c.notes,
       formula: c.formula || "",
       tags: c.tags[0] || "Frecuente",
@@ -100,6 +113,8 @@ export default function ClientesPage() {
         name: form.name.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
+        instagram: form.instagram.trim() || undefined,
+        messengerId: form.messengerId.trim() || undefined,
         notes: form.notes.trim(),
         formula: form.formula.trim(),
         tags: [form.tags],
@@ -110,6 +125,8 @@ export default function ClientesPage() {
         name: form.name.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
+        instagram: form.instagram.trim() || undefined,
+        messengerId: form.messengerId.trim() || undefined,
         notes: form.notes.trim(),
         formula: form.formula.trim(),
         totalVisits: 0,
@@ -277,6 +294,34 @@ export default function ClientesPage() {
                   </div>
                 </div>
 
+                {/* Multi-channel handles bar */}
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-white/5 text-[11px]">
+                  {/* WhatsApp badge */}
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 font-mono text-emerald-700 dark:text-emerald-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    WA: {cleanPhone.slice(-4)}
+                  </span>
+
+                  {/* Instagram badge */}
+                  {client.instagram && (
+                    <a
+                      href={`https://instagram.com/${client.instagram.replace("@", "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-pink-50 dark:bg-pink-950/60 border border-pink-200 dark:border-pink-800/40 px-2 py-0.5 font-mono text-pink-700 dark:text-pink-300 hover:underline"
+                    >
+                      IG: {client.instagram}
+                    </a>
+                  )}
+
+                  {/* Messenger badge */}
+                  {client.messengerId && (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/40 px-2 py-0.5 font-mono text-blue-700 dark:text-blue-400">
+                      FB: {client.messengerId}
+                    </span>
+                  )}
+                </div>
+
                 {/* Technical formula badge / alert */}
                 {client.formula && (
                   <div className="mt-3.5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 text-xs text-indigo-950">
@@ -317,6 +362,13 @@ export default function ClientesPage() {
                     WhatsApp
                   </a>
                   <Link
+                    href="/dashboard/crm"
+                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-primary hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                    title="Abrir chat en CRM Omnicanal (WhatsApp, IG, Messenger)"
+                  >
+                    <MessagesSquare className="h-3.5 w-3.5" />
+                  </Link>
+                  <Link
                     href={`/${business.slug || "barberia"}/tarjeta/${client.id}`}
                     target="_blank"
                     className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-amber-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
@@ -356,99 +408,12 @@ export default function ClientesPage() {
         </Card>
       )}
 
-      {/* Modal: Client Details & Appointment History */}
-      <Modal
-        open={Boolean(selectedClient)}
-        title={selectedClient ? `Ficha: ${selectedClient.name}` : ""}
+      {/* Modal: Client Details, Visit History, Media Gallery & Formulas */}
+      <ClientFichaModal
+        client={activeFichaClient}
         onClose={() => setSelectedClient(null)}
-      >
-        {selectedClient && (
-          <div className="space-y-4 text-sm">
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-slate-400">Teléfono:</span>
-                  <p className="font-semibold text-slate-800">{selectedClient.phone}</p>
-                </div>
-                <div>
-                  <span className="text-slate-400">Email:</span>
-                  <p className="font-semibold text-slate-800">{selectedClient.email || "No registrado"}</p>
-                </div>
-                <div>
-                  <span className="text-slate-400">Total Visitas:</span>
-                  <p className="font-bold text-slate-800">{selectedClient.totalVisits} turnos</p>
-                </div>
-                <div>
-                  <span className="text-slate-400">Gasto Total:</span>
-                  <p className="font-bold text-primary">{formatGs(selectedClient.totalSpent)}</p>
-                </div>
-              </div>
-            </div>
-
-            {selectedClient.formula && (
-              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
-                <h4 className="font-bold text-indigo-900 flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-indigo-600" /> Ficha Técnica & Preferencias
-                </h4>
-                <p className="mt-2 text-xs leading-relaxed text-indigo-950 whitespace-pre-wrap">
-                  {selectedClient.formula}
-                </p>
-              </div>
-            )}
-
-            <div>
-              <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-                <Calendar className="h-4 w-4 text-slate-500" /> Historial de Turnos
-              </h4>
-              <ul className="space-y-2 max-h-48 overflow-y-auto">
-                {appointments
-                  .filter((a) => a.clientPhone === selectedClient.phone || a.clientName.toLowerCase() === selectedClient.name.toLowerCase())
-                  .map((a) => {
-                    const service = services.find((s) => s.id === a.serviceId);
-                    return (
-                      <li
-                        key={a.id}
-                        className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-xs"
-                      >
-                        <div>
-                          <p className="font-medium text-slate-900">{service?.name || "Servicio"}</p>
-                          <p className="text-[11px] text-slate-400">
-                            {formatInTimeZone(a.start, business.timezone, "dd/MM/yyyy HH:mm")}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-bold text-primary">{formatGs(service?.price ?? 0)}</span>
-                          <span className="block text-[10px] capitalize text-slate-500">{a.status}</span>
-                        </div>
-                      </li>
-                    );
-                  })}
-              </ul>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const toEdit = selectedClient;
-                  setSelectedClient(null);
-                  openEditModal(toEdit);
-                }}
-                className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Editar Ficha
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedClient(null)}
-                className="flex-1 rounded-xl bg-slate-900 py-2.5 text-xs font-semibold text-white"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+        onOpenEdit={openEditModal}
+      />
 
       {/* Modal: Create / Edit Client */}
       <Modal
@@ -490,6 +455,29 @@ export default function ClientesPage() {
                 <option value="Frecuente">Frecuente</option>
                 <option value="VIP">VIP</option>
               </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700">Instagram Handle (opcional)</label>
+              <input
+                type="text"
+                className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                placeholder="@usuario_py"
+                value={form.instagram}
+                onChange={(e) => setForm({ ...form, instagram: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700">Facebook Messenger (opcional)</label>
+              <input
+                type="text"
+                className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                placeholder="Usuario o ID Facebook"
+                value={form.messengerId}
+                onChange={(e) => setForm({ ...form, messengerId: e.target.value })}
+              />
             </div>
           </div>
 

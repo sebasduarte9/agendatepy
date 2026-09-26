@@ -347,16 +347,16 @@ export default function TarjetaDigitalClientePage({
                 <div className="space-y-2 text-[11.5px] leading-relaxed">
                   <div className="rounded-xl bg-black/30 p-2.5 border border-white/5">
                     <p className="font-bold text-white flex items-center gap-1.5">
-                      <span>📲 Opción 1: Guardar en Pantalla de Inicio (Recomendado)</span>
+                      <span>Opción 1: Guardar en Pantalla de Inicio (Recomendado)</span>
                     </p>
                     <p className="text-slate-300 mt-1">
-                      En Safari de tu iPhone, tocá el botón de Compartir (<strong className="text-white">el ícono ⎋</strong> abajo) y elegí <strong className="text-amber-300">&ldquo;Añadir a pantalla de inicio&rdquo;</strong>. ¡Tendrás tu tarjeta con tus sellos en vivo, QR y diseño espacial listo como app nativa!
+                      En Safari de tu iPhone, tocá el botón de Compartir (<strong className="text-white">Compartir</strong> abajo) y elegí <strong className="text-amber-300">&ldquo;Añadir a pantalla de inicio&rdquo;</strong>. ¡Tendrás tu tarjeta con tus sellos en vivo, QR y diseño espacial listo como app nativa!
                     </p>
                   </div>
 
                   <div className="rounded-xl bg-black/30 p-2.5 border border-white/5">
                     <p className="font-bold text-white flex items-center gap-1.5">
-                      <span>🎫 Opción 2: Archivo .pkpass para Apple Wallet</span>
+                      <span>Opción 2: Archivo .pkpass para Apple Wallet</span>
                     </p>
                     <p className="text-slate-300 mt-1">
                       Tocá <strong className="text-amber-400">&ldquo;Descargar .pkpass&rdquo;</strong>. Para abrir pases personalizados en iOS sin certificado de desarrollador Apple de $99/año, podés abrirlo con la app gratuita <strong className="text-white">Pass2U Wallet</strong> (App Store) o importarlo directo si tu iPhone tiene perfil beta habilitado.

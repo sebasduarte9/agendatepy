@@ -93,7 +93,7 @@ export default function FidelizacionPage() {
     const cardUrl = getCardUrl(clientId);
     const cleanPhone = clientPhone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `¡Hola ${clientName}! 🎉 Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n${cardUrl}\n\nPodés guardarla directamente en tu *Apple Wallet* (iPhone) o *Google Wallet* (Android). ¡Acumulás sellos en cada visita para canjear tu premio de ${loyalty.rewardDescription}! ⭐`
+      `¡Hola ${clientName}! Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n${cardUrl}\n\nPodés guardarla directamente en tu *Apple Wallet* (iPhone) o *Google Wallet* (Android). ¡Acumulás sellos en cada visita para canjear tu premio de ${loyalty.rewardDescription}!`
     );
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   }

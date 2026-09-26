@@ -76,11 +76,29 @@ export type Receipt = {
   note: string;
 };
 
+export type ClientMediaType = "image" | "video";
+
+export type ClientMediaTag = "Antes" | "Después" | "Proceso" | "Resultado" | "Fórmula";
+
+export type ClientMedia = {
+  id: string;
+  type: ClientMediaType;
+  url: string; // URL o Base64 optimizado
+  thumbnailUrl?: string;
+  title: string;
+  tag: ClientMediaTag;
+  createdAt: string; // ISO date
+  sizeKb?: number; // Tamaño optimizado en KB
+  originalSizeKb?: number; // Tamaño original para métrica de ahorro
+};
+
 export type Client = {
   id: string;
   name: string;
   phone: string;
   email: string;
+  instagram?: string; // Ej: @mariaferreirapy
+  messengerId?: string; // Ej: maria.ferreira.py o ID de Facebook
   notes: string;
   formula?: string; // Ficha técnica: tinte, corte o preferencia médica/estética
   totalVisits: number;
@@ -89,6 +107,32 @@ export type Client = {
   tags: string[]; // "VIP", "Frecuente", "Nuevo"
   loyaltyPoints: number; // Sellos / puntos de fidelización acumulados
   loyaltyRedeemed: number; // Recompensas canjeadas
+  gallery?: ClientMedia[]; // Fotos y videos optimizados (Antes / Después / Resultados)
+};
+
+export type CrmChannel = "whatsapp" | "instagram" | "messenger";
+
+export type CrmMessage = {
+  id: string;
+  sender: "client" | "agent" | "bot";
+  text: string;
+  timestamp: string; // ISO
+  status?: "sent" | "delivered" | "read";
+};
+
+export type CrmConversation = {
+  id: string;
+  clientId?: string;
+  clientName: string;
+  clientAvatar?: string;
+  channel: CrmChannel;
+  channelIdentifier: string; // Número WA (+595...), @usuario IG, o Nombre FB
+  lastMessage: string;
+  lastMessageTime: string; // ISO
+  unreadCount: number;
+  status: "open" | "pending" | "resolved";
+  assignedStaff?: string;
+  messages: CrmMessage[];
 };
 
 export type CashMovement = {

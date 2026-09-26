@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { formatInTimeZone } from "date-fns-tz";
 import type {
   Appointment,
   BusinessProfile,
@@ -17,6 +18,12 @@ import type {
   SipapConfig,
   EvolutionApiConfig,
   UserRole,
+  CrmConversation,
+  CrmChannel,
+  CrmMessage,
+  ClientMedia,
+  ClientMediaType,
+  ClientMediaTag,
 } from "@/lib/dashboard-types";
 
 const TIMEZONE_NOTE =
@@ -30,6 +37,14 @@ export const TIMEZONES = [
   "America/Mexico_City",
   "Europe/Madrid",
 ];
+
+export const defaultCivilDate = (() => {
+  try {
+    return formatInTimeZone(new Date(), "America/Asuncion", "yyyy-MM-dd");
+  } catch {
+    return "2026-09-25";
+  }
+})();
 
 const staff: StaffMember[] = [
   {
@@ -124,7 +139,7 @@ const services: ServiceItem[] = [
     name: "Perfilado de Cejas y Barba Express",
     category: "Barbería",
     durationMin: 20,
-    price: 450000,
+    price: 45000,
     description: "Mantenimiento rápido de barba y cejas para el fin de semana.",
     image: "sparkles",
   },
@@ -136,6 +151,8 @@ const initialClients: Client[] = [
     name: "María Ferreira",
     phone: "+595981111222",
     email: "maria.ferreira@gmail.com",
+    instagram: "@mariaferreirapy",
+    messengerId: "maria.ferreira.py",
     notes: "Prefiere café con leche al llegar. Muy puntual.",
     formula: "Balayage miel: Tono 8.3 con oxidante 20 vol + matizador plata.",
     totalVisits: 8,
@@ -144,12 +161,47 @@ const initialClients: Client[] = [
     tags: ["VIP", "Frecuente"],
     loyaltyPoints: 4,
     loyaltyRedeemed: 1,
+    gallery: [
+      {
+        id: "med-1-1",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1560869713-7d0a29430803?w=800&auto=format&fit=crop&q=80",
+        title: "Balayage Miel Iluminado (Tono 8.3)",
+        tag: "Resultado",
+        createdAt: "2026-09-19T14:00:00.000Z",
+        sizeKb: 84,
+        originalSizeKb: 4320,
+      },
+      {
+        id: "med-1-2",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80",
+        title: "Diagnóstico inicial antes de decoloración",
+        tag: "Antes",
+        createdAt: "2026-09-19T12:10:00.000Z",
+        sizeKb: 72,
+        originalSizeKb: 3950,
+      },
+      {
+        id: "med-1-3",
+        type: "video",
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        thumbnailUrl: "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&auto=format&fit=crop&q=80",
+        title: "Video Reel: Movimiento y Brillo en Cámara Lenta",
+        tag: "Resultado",
+        createdAt: "2026-09-19T14:15:00.000Z",
+        sizeKb: 1420,
+        originalSizeKb: 18400,
+      },
+    ],
   },
   {
     id: "cl-2",
     name: "José Insfrán",
     phone: "+595982333444",
     email: "jose.insfran@hotmail.com",
+    instagram: "@joseinsfran",
+    messengerId: "jose.insfran.5",
     notes: "Piel sensible en cuello, usar bálsamo mentolado.",
     formula: "Fade medio con navaja, textura arriba con cera mate.",
     totalVisits: 14,
@@ -158,12 +210,47 @@ const initialClients: Client[] = [
     tags: ["Frecuente"],
     loyaltyPoints: 3,
     loyaltyRedeemed: 2,
+    gallery: [
+      {
+        id: "med-2-1",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&auto=format&fit=crop&q=80",
+        title: "Fade Alto con Navaja y Ritual de Barba",
+        tag: "Resultado",
+        createdAt: "2026-09-19T15:25:00.000Z",
+        sizeKb: 78,
+        originalSizeKb: 3600,
+      },
+      {
+        id: "med-2-2",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop&q=80",
+        title: "Aplicación de Bálsamo y Toalla Caliente",
+        tag: "Proceso",
+        createdAt: "2026-09-19T15:00:00.000Z",
+        sizeKb: 65,
+        originalSizeKb: 3100,
+      },
+      {
+        id: "med-2-3",
+        type: "video",
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+        thumbnailUrl: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&auto=format&fit=crop&q=80",
+        title: "Video 360° del degradé final con máquina",
+        tag: "Resultado",
+        createdAt: "2026-09-19T15:30:00.000Z",
+        sizeKb: 1250,
+        originalSizeKb: 15200,
+      },
+    ],
   },
   {
     id: "cl-3",
     name: "Carla Duarte",
     phone: "+595983555666",
     email: "carla.duarte@pymail.com",
+    instagram: "@carladuarte_style",
+    messengerId: "carla.duarte.beauty",
     notes: "Le gusta agendar con Sofía los sábados.",
     formula: "Alisado brasileño con keratina termoactiva.",
     totalVisits: 4,
@@ -172,12 +259,36 @@ const initialClients: Client[] = [
     tags: ["Frecuente"],
     loyaltyPoints: 4,
     loyaltyRedeemed: 0,
+    gallery: [
+      {
+        id: "med-3-1",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=800&auto=format&fit=crop&q=80",
+        title: "Efecto Lacio Espejo Post-Keratina",
+        tag: "Resultado",
+        createdAt: "2026-09-19T17:30:00.000Z",
+        sizeKb: 89,
+        originalSizeKb: 4800,
+      },
+      {
+        id: "med-3-2",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80",
+        title: "Estado del cabello antes del alisado",
+        tag: "Antes",
+        createdAt: "2026-09-19T16:05:00.000Z",
+        sizeKb: 82,
+        originalSizeKb: 3900,
+      },
+    ],
   },
   {
     id: "cl-4",
     name: "Pedro Gómez",
     phone: "+595984777888",
     email: "pedro.gomez@gmail.com",
+    instagram: "@pedrogomez_py",
+    messengerId: "pedro.gomez.asuncion",
     notes: "Cliente nuevo derivado de Instagram Bio.",
     formula: "Corte clásico tijera lados 3.",
     totalVisits: 1,
@@ -186,12 +297,26 @@ const initialClients: Client[] = [
     tags: ["Nuevo"],
     loyaltyPoints: 1,
     loyaltyRedeemed: 0,
+    gallery: [
+      {
+        id: "med-4-1",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&auto=format&fit=crop&q=80",
+        title: "Corte Clásico Texturizado",
+        tag: "Resultado",
+        createdAt: "2026-09-20T11:35:00.000Z",
+        sizeKb: 70,
+        originalSizeKb: 3400,
+      },
+    ],
   },
   {
     id: "cl-5",
     name: "Luis Vera",
     phone: "+595986999000",
     email: "luis.vera@outlook.com",
+    instagram: "@luisverapy",
+    messengerId: "luis.vera.barber",
     notes: "Siempre paga por transferencia SIPAP Banco Itaú.",
     formula: "Barba completa degrade 1 a 3 con contorno definido.",
     totalVisits: 6,
@@ -200,6 +325,169 @@ const initialClients: Client[] = [
     tags: ["Frecuente"],
     loyaltyPoints: 2,
     loyaltyRedeemed: 1,
+    gallery: [
+      {
+        id: "med-5-1",
+        type: "image",
+        url: "https://images.unsplash.com/photo-1517832606589-715753d4f323?w=800&auto=format&fit=crop&q=80",
+        title: "Perfilado de Barba Completa con Navaja",
+        tag: "Resultado",
+        createdAt: "2026-09-21T16:55:00.000Z",
+        sizeKb: 75,
+        originalSizeKb: 3700,
+      },
+    ],
+  },
+];
+
+const initialCrmConversations: CrmConversation[] = [
+  {
+    id: "conv-1",
+    clientId: "cl-1",
+    clientName: "María Ferreira",
+    channel: "whatsapp",
+    channelIdentifier: "+595 981 111 222",
+    lastMessage: "¿Hola! ¿Tienen disponibilidad para mañana a las 16hs para corte y colorimetría?",
+    lastMessageTime: "2026-09-24T17:15:00.000Z",
+    unreadCount: 1,
+    status: "open",
+    messages: [
+      {
+        id: "msg-1-1",
+        sender: "agent",
+        text: "¡Hola María! Qué gusto saludarte de vuelta en AgendatePY. ¿En qué podemos ayudarte hoy?",
+        timestamp: "2026-09-24T17:10:00.000Z",
+        status: "read",
+      },
+      {
+        id: "msg-1-2",
+        sender: "client",
+        text: "¿Hola! ¿Tienen disponibilidad para mañana a las 16hs para corte y colorimetría?",
+        timestamp: "2026-09-24T17:15:00.000Z",
+        status: "delivered",
+      },
+    ],
+  },
+  {
+    id: "conv-2",
+    clientId: "cl-3",
+    clientName: "Carla Duarte",
+    channel: "instagram",
+    channelIdentifier: "@carladuarte_style",
+    lastMessage: "¡Hola! ¿Qué precio tiene el alisado con keratina y cuánto tiempo dura el turno aprox?",
+    lastMessageTime: "2026-09-24T16:40:00.000Z",
+    unreadCount: 2,
+    status: "open",
+    messages: [
+      {
+        id: "msg-2-1",
+        sender: "client",
+        text: "¡Hola chicos! Vi sus reels de los tratamientos capilares, hermosos trabajos.",
+        timestamp: "2026-09-24T16:38:00.000Z",
+      },
+      {
+        id: "msg-2-2",
+        sender: "client",
+        text: "¡Hola! ¿Qué precio tiene el alisado con keratina y cuánto tiempo dura el turno aprox?",
+        timestamp: "2026-09-24T16:40:00.000Z",
+      },
+    ],
+  },
+  {
+    id: "conv-3",
+    clientId: "cl-2",
+    clientName: "José Insfrán",
+    channel: "messenger",
+    channelIdentifier: "Jose Insfran FB",
+    lastMessage: "Buenas tardes, ¿atienden este sábado por la tarde y tienen estacionamiento?",
+    lastMessageTime: "2026-09-24T15:20:00.000Z",
+    unreadCount: 0,
+    status: "pending",
+    messages: [
+      {
+        id: "msg-3-1",
+        sender: "client",
+        text: "Buenas tardes, ¿atienden este sábado por la tarde y tienen estacionamiento?",
+        timestamp: "2026-09-24T15:20:00.000Z",
+      },
+      {
+        id: "msg-3-2",
+        sender: "agent",
+        text: "¡Hola José! Sí, atendemos de 09:00 a 20:00 hs los sábados y contamos con estacionamiento propio gratuito para clientes.",
+        timestamp: "2026-09-24T15:25:00.000Z",
+        status: "read",
+      },
+    ],
+  },
+  {
+    id: "conv-4",
+    clientId: "cl-5",
+    clientName: "Luis Vera",
+    channel: "whatsapp",
+    channelIdentifier: "+595 986 999 000",
+    lastMessage: "Te adjunto el comprobante de transferencia SIPAP para mi turno de las 18hs.",
+    lastMessageTime: "2026-09-24T14:10:00.000Z",
+    unreadCount: 0,
+    status: "resolved",
+    messages: [
+      {
+        id: "msg-4-1",
+        sender: "client",
+        text: "Te adjunto el comprobante de transferencia SIPAP para mi turno de las 18hs.",
+        timestamp: "2026-09-24T14:10:00.000Z",
+        status: "read",
+      },
+      {
+        id: "msg-4-2",
+        sender: "agent",
+        text: "¡Comprobante verificado con éxito Luis! Tu turno quedó confirmado al 100%. Te esperamos.",
+        timestamp: "2026-09-24T14:15:00.000Z",
+        status: "read",
+      },
+    ],
+  },
+  {
+    id: "conv-5",
+    clientName: "Esteban Alonso",
+    channel: "instagram",
+    channelIdentifier: "@esteban_alonso.py",
+    lastMessage: "¿Tienen turno libre hoy con Marcos para corte degradé?",
+    lastMessageTime: "2026-09-24T13:05:00.000Z",
+    unreadCount: 1,
+    status: "open",
+    messages: [
+      {
+        id: "msg-5-1",
+        sender: "client",
+        text: "¿Tienen turno libre hoy con Marcos para corte degradé?",
+        timestamp: "2026-09-24T13:05:00.000Z",
+      },
+    ],
+  },
+  {
+    id: "conv-6",
+    clientName: "Rocío Galeano",
+    channel: "messenger",
+    channelIdentifier: "Rocio Galeano",
+    lastMessage: "Hola, ¿cómo puedo regalar un voucher o gift card de spa?",
+    lastMessageTime: "2026-09-24T11:45:00.000Z",
+    unreadCount: 0,
+    status: "resolved",
+    messages: [
+      {
+        id: "msg-6-1",
+        sender: "client",
+        text: "Hola, ¿cómo puedo regalar un voucher o gift card de spa?",
+        timestamp: "2026-09-24T11:45:00.000Z",
+      },
+      {
+        id: "msg-6-2",
+        sender: "agent",
+        text: "¡Hola Rocío! Podés adquirir gift cards personalizadas desde nuestra web oficial de reservas o abonar vía SIPAP y te enviamos la tarjeta digital de regalo.",
+        timestamp: "2026-09-24T11:50:00.000Z",
+        status: "read",
+      },
+    ],
   },
 ];
 
@@ -286,8 +574,9 @@ export const initialEvolutionApi: EvolutionApiConfig = {
   connected: true,
 };
 
-/** Turnos de demo en Guaraníes (Asunción, UTC-3). */
+/** Turnos de demo y visitas históricas en Guaraníes (Asunción, UTC-3). */
 const appointments: Appointment[] = [
+  // Visitas de María Ferreira
   {
     id: "ap-1",
     clientName: "María Ferreira",
@@ -295,11 +584,40 @@ const appointments: Appointment[] = [
     clientPhone: "+595981111222",
     serviceId: "sv-color",
     staffId: "st-sofia",
-    start: "2026-09-19T12:00:00.000Z",
-    end: "2026-09-19T14:00:00.000Z",
+    start: `${defaultCivilDate}T11:30:00.000-03:00`,
+    end: `${defaultCivilDate}T13:30:00.000-03:00`,
     paymentMethod: "pos_bancard",
     status: "confirmed",
+    notes: "Balayage miel: Tono 8.3 con oxidante 20 vol + matizador plata. Quedó encantada con el matiz.",
   },
+  {
+    id: "ap-1b",
+    clientName: "María Ferreira",
+    clientEmail: "maria.ferreira@gmail.com",
+    clientPhone: "+595981111222",
+    serviceId: "sv-tratamiento",
+    staffId: "st-sofia",
+    start: "2026-08-22T13:00:00.000Z",
+    end: "2026-08-22T14:30:00.000Z",
+    paymentMethod: "pos_bancard",
+    status: "confirmed",
+    notes: "Tratamiento intensivo con botox capilar y baño de brillo. Corte de puntas abiertas (2 cm).",
+  },
+  {
+    id: "ap-1c",
+    clientName: "María Ferreira",
+    clientEmail: "maria.ferreira@gmail.com",
+    clientPhone: "+595981111222",
+    serviceId: "sv-lavado",
+    staffId: "st-sofia",
+    start: "2026-07-28T16:00:00.000Z",
+    end: "2026-07-28T16:45:00.000Z",
+    paymentMethod: "efectivo",
+    status: "confirmed",
+    notes: "Lavado premium con mascarilla reconstructora y peinado con ondas suaves.",
+  },
+
+  // Visitas de José Insfrán
   {
     id: "ap-2",
     clientName: "José Insfrán",
@@ -307,12 +625,41 @@ const appointments: Appointment[] = [
     clientPhone: "+595982333444",
     serviceId: "sv-barba",
     staffId: "st-marcos",
-    start: "2026-09-19T14:30:00.000Z",
-    end: "2026-09-19T15:25:00.000Z",
+    start: `${defaultCivilDate}T15:00:00.000-03:00`,
+    end: `${defaultCivilDate}T15:55:00.000-03:00`,
     paymentMethod: "sipap",
-    status: "pending",
+    status: "confirmed",
     receiptUrl: "/comprobante-jose.png",
+    notes: "Corte fade medio con navaja + perfilado de barba con toalla caliente. Piel sensible: aplicar bálsamo mentolado sin alcohol.",
   },
+  {
+    id: "ap-2b",
+    clientName: "José Insfrán",
+    clientEmail: "jose.insfran@hotmail.com",
+    clientPhone: "+595982333444",
+    serviceId: "sv-corte",
+    staffId: "st-marcos",
+    start: "2026-09-02T15:00:00.000Z",
+    end: "2026-09-02T15:35:00.000Z",
+    paymentMethod: "efectivo",
+    status: "confirmed",
+    notes: "Degradé lateral 0 a 1.5, textura con tijera de entresacar en la cúspide. Peinado con cera mate.",
+  },
+  {
+    id: "ap-2c",
+    clientName: "José Insfrán",
+    clientEmail: "jose.insfran@hotmail.com",
+    clientPhone: "+595982333444",
+    serviceId: "sv-barba",
+    staffId: "st-marcos",
+    start: "2026-08-16T14:00:00.000Z",
+    end: "2026-08-16T14:50:00.000Z",
+    paymentMethod: "pos_bancard",
+    status: "confirmed",
+    notes: "Alineación de bigote y desvanecido de patillas.",
+  },
+
+  // Visitas de Carla Duarte
   {
     id: "ap-3",
     clientName: "Carla Duarte",
@@ -324,7 +671,23 @@ const appointments: Appointment[] = [
     end: "2026-09-19T17:30:00.000Z",
     paymentMethod: "efectivo",
     status: "confirmed",
+    notes: "Alisado de keratina termoactiva brasileña. Planchado en mechones finos a 210°C. Cero frizz.",
   },
+  {
+    id: "ap-3b",
+    clientName: "Carla Duarte",
+    clientEmail: "carla.duarte@pymail.com",
+    clientPhone: "+595983555666",
+    serviceId: "sv-corte",
+    staffId: "st-sofia",
+    start: "2026-08-10T17:00:00.000Z",
+    end: "2026-08-10T17:40:00.000Z",
+    paymentMethod: "pos_bancard",
+    status: "confirmed",
+    notes: "Corte desfilado en capas para dar ligereza antes del tratamiento.",
+  },
+
+  // Pedro Gómez
   {
     id: "ap-4",
     clientName: "Pedro Gómez",
@@ -336,7 +699,10 @@ const appointments: Appointment[] = [
     end: "2026-09-20T11:35:00.000Z",
     paymentMethod: "efectivo",
     status: "confirmed",
+    notes: "Corte clásico a tijera en laterales, número 3 en nuca. Primera visita recomendada por Instagram.",
   },
+
+  // Ana Torres
   {
     id: "ap-5",
     clientName: "Ana Torres",
@@ -348,7 +714,10 @@ const appointments: Appointment[] = [
     end: "2026-09-18T14:35:00.000Z",
     paymentMethod: "pos_bancard",
     status: "cancelled",
+    notes: "Cancelado con aviso previo de 2 horas por motivo laboral.",
   },
+
+  // Luis Vera
   {
     id: "ap-6",
     clientName: "Luis Vera",
@@ -359,8 +728,22 @@ const appointments: Appointment[] = [
     start: "2026-09-21T16:00:00.000Z",
     end: "2026-09-21T16:55:00.000Z",
     paymentMethod: "sipap",
-    status: "pending",
+    status: "confirmed",
     receiptUrl: "/comprobante-luis.png",
+    notes: "Barba completa degrade 1 a 3 con contorno definido a navaja. Abono confirmado por SIPAP.",
+  },
+  {
+    id: "ap-6b",
+    clientName: "Luis Vera",
+    clientEmail: "luis.vera@outlook.com",
+    clientPhone: "+595986999000",
+    serviceId: "sv-corte",
+    staffId: "st-marcos",
+    start: "2026-08-25T16:30:00.000Z",
+    end: "2026-08-25T17:10:00.000Z",
+    paymentMethod: "sipap",
+    status: "confirmed",
+    notes: "Fade bajo tradicional y rebaje de volumen superior.",
   },
 ];
 
@@ -494,6 +877,13 @@ type DashboardState = {
   toggleWhatsAppTemplate: (id: string) => void;
   pushToast: (type: "success" | "error", message: string) => void;
   dismissToast: (id: string) => void;
+  crmConversations: CrmConversation[];
+  sendCrmMessage: (conversationId: string, text: string) => void;
+  resolveCrmConversation: (conversationId: string) => void;
+  reopenCrmConversation: (conversationId: string) => void;
+  addClientMedia: (clientId: string, media: Omit<ClientMedia, "id" | "createdAt">) => void;
+  deleteClientMedia: (clientId: string, mediaId: string) => void;
+  syncFromDatabase: (tenantSlug?: string) => Promise<void>;
 };
 
 function splitOvernightBlock(block: Omit<TimeBlock, "id">): Omit<TimeBlock, "id">[] {
@@ -517,7 +907,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   splitComment: "Si un bloque cruza medianoche en TZ de Asunción, se parte en dos fechas civiles.",
   business: {
     name: "Barbería & Studio AgendatePY",
-    slug: "studio-agendate",
+    slug: "barberia",
     email: "hola@agendate.com.py",
     phone: "+595 981 700 800",
     address: "Av. Mariscal López 1420 c/ San Martín, Asunción",
@@ -583,7 +973,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       currentStaffId: staffId,
       selectedStaffId: role === "barbero" || role === "estilista" ? staffId || "st-marcos" : "all",
     }),
-  calendarDate: "2026-09-19",
+  calendarDate: defaultCivilDate,
   calendarView: "dia",
   selectedStaffId: "all",
   sidebarOpen: false,
@@ -594,12 +984,41 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setSelectedStaffId: (id) => set({ selectedStaffId: id }),
   updateBusiness: (patch) =>
     set({ business: { ...get().business, ...patch } }),
-  updateAppointment: (id, patch) =>
+  syncFromDatabase: async (tenantSlug = "barberia") => {
+    try {
+      const res = await fetch(`/api/dashboard/sync?tenant=${tenantSlug}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.appointments)) {
+        set((state) => {
+          const map = new Map<string, Appointment>();
+          state.appointments.forEach((a) => map.set(a.id, a));
+          data.appointments.forEach((a: Appointment) => map.set(a.id, a));
+          return { appointments: Array.from(map.values()) };
+        });
+      }
+    } catch (err) {
+      console.error("Error al sincronizar con PostgreSQL:", err);
+    }
+  },
+  updateAppointment: (id, patch) => {
     set({
       appointments: get().appointments.map((a) =>
         a.id === id ? { ...a, ...patch } : a
       ),
-    }),
+    });
+    if (patch.status) {
+      fetch("/api/dashboard/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_status",
+          tenantSlug: get().business.slug || "barberia",
+          data: { appointmentId: id, status: patch.status },
+        }),
+      }).catch((e) => console.error("Error updating appointment status in DB:", e));
+    }
+  },
   addAppointment: (item) => {
     const apps = [...get().appointments, item];
     const existing = get().clients.find(
@@ -608,6 +1027,17 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     const service = get().services.find((s) => s.id === item.serviceId);
     const price = service?.price ?? 0;
     const addPoints = get().loyalty.enabled ? get().loyalty.pointsPerVisit : 0;
+
+    // Asynchronously sync with PostgreSQL
+    fetch("/api/dashboard/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "create_appointment",
+        tenantSlug: get().business.slug || "barberia",
+        data: item,
+      }),
+    }).catch((e) => console.error("Error syncing new appointment to DB:", e));
 
     if (existing) {
       set({
@@ -644,12 +1074,22 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     }
   },
-  cancelAppointment: (id) =>
+  cancelAppointment: (id) => {
     set({
       appointments: get().appointments.map((item) =>
         item.id === id ? { ...item, status: "cancelled" } : item,
       ),
-    }),
+    });
+    fetch("/api/dashboard/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_status",
+        tenantSlug: get().business.slug || "barberia",
+        data: { appointmentId: id, status: "cancelled" },
+      }),
+    }).catch((e) => console.error("Error cancelling appointment in DB:", e));
+  },
   addBlock: (block) => {
     const parts = splitOvernightBlock(block);
     const created = parts.map((part, index) => ({
@@ -787,6 +1227,79 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       ),
     }),
 
+  crmConversations: initialCrmConversations,
+  sendCrmMessage: (conversationId, text) => {
+    if (!text.trim()) return;
+    const newMsg: CrmMessage = {
+      id: `msg-${Date.now()}`,
+      sender: "agent",
+      text: text.trim(),
+      timestamp: new Date().toISOString(),
+      status: "delivered",
+    };
+    set({
+      crmConversations: get().crmConversations.map((c) =>
+        c.id === conversationId
+          ? {
+              ...c,
+              lastMessage: text.trim(),
+              lastMessageTime: new Date().toISOString(),
+              messages: [...c.messages, newMsg],
+            }
+          : c
+      ),
+    });
+  },
+  resolveCrmConversation: (conversationId) => {
+    set({
+      crmConversations: get().crmConversations.map((c) =>
+        c.id === conversationId ? { ...c, status: "resolved", unreadCount: 0 } : c
+      ),
+    });
+    get().pushToast("success", "Conversación archivada como resuelta.");
+  },
+  reopenCrmConversation: (conversationId) => {
+    set({
+      crmConversations: get().crmConversations.map((c) =>
+        c.id === conversationId ? { ...c, status: "open" } : c
+      ),
+    });
+    get().pushToast("success", "Conversación reabierta.");
+  },
+  addClientMedia: (clientId, media) => {
+    const newMediaItem: ClientMedia = {
+      ...media,
+      id: `med-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: new Date().toISOString(),
+    };
+    set({
+      clients: get().clients.map((c) =>
+        c.id === clientId
+          ? {
+              ...c,
+              gallery: [newMediaItem, ...(c.gallery || [])],
+            }
+          : c
+      ),
+    });
+    get().pushToast(
+      "success",
+      `${media.type === "video" ? "Video" : "Foto"} agregado con éxito a la ficha.`
+    );
+  },
+  deleteClientMedia: (clientId, mediaId) => {
+    set({
+      clients: get().clients.map((c) =>
+        c.id === clientId
+          ? {
+              ...c,
+              gallery: (c.gallery || []).filter((m) => m.id !== mediaId),
+            }
+          : c
+      ),
+    });
+    get().pushToast("success", "Archivo eliminado de la galería.");
+  },
   pushToast: (type, message) => {
     const id = `t-${Date.now()}`;
     set({ toasts: [...get().toasts, { id, type, message }] });

@@ -33,11 +33,19 @@ export async function requestOtpAction(email: string): Promise<AuthResponse> {
       },
     });
 
-    // En desarrollo se retorna el código en la respuesta para prueba inmediata
+    // Enviar correo real vía Resend
+    const { sendOtpEmail } = await import("@/lib/email");
+    const emailResult = await sendOtpEmail(cleanEmail, code);
+
+    if (!emailResult.ok) {
+      console.warn("Aviso: Falló envío de correo Resend:", emailResult.error);
+    }
+
+    // En desarrollo se puede retornar el código para agilidad, en producción va por correo
     return {
       ok: true,
       message: `Código de seguridad enviado a ${cleanEmail}`,
-      code,
+      code: process.env.NODE_ENV !== "production" ? code : undefined,
     };
   } catch (error) {
     console.error("Error al generar OTP:", error);

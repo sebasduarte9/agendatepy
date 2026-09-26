@@ -26,6 +26,12 @@ import {
   CreditCard,
   Landmark,
   Smartphone,
+  Car,
+  FileText,
+  Gift,
+  Phone,
+  Globe,
+  Star,
 } from "lucide-react";
 
 function InstagramIcon({ className = "h-4 w-4" }: { className?: string }) {
@@ -38,12 +44,42 @@ function InstagramIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+function renderCustomLinkIcon(iconName: string, className = "h-4 w-4") {
+  switch (iconName) {
+    case "whatsapp":
+      return <MessageCircle className={className} />;
+    case "maps":
+      return <MapPin className={className} />;
+    case "car":
+      return <Car className={className} />;
+    case "star":
+      return <Star className={className} />;
+    case "file-text":
+      return <FileText className={className} />;
+    case "gift":
+      return <Gift className={className} />;
+    case "phone":
+      return <Phone className={className} />;
+    case "instagram":
+      return <InstagramIcon className={className} />;
+    case "globe":
+    default:
+      return <Globe className={className} />;
+  }
+}
+
 import {
   createPendingAppointment,
   getAvailableSlotsAction,
 } from "@/lib/scheduling/actions";
 import type { AvailableSlot, PublicService, PublicTenant } from "@/lib/scheduling/types";
-import { fontStack, DEFAULT_GALLERY_PHOTOS } from "@/lib/theme";
+import {
+  fontStack,
+  DEFAULT_GALLERY_PHOTOS,
+  getButtonClasses,
+  getCustomButtonClasses,
+  getCustomButtonStyles,
+} from "@/lib/theme";
 import { initialProducts } from "@/store/useDashboardStore";
 import type { ProductItem } from "@/lib/dashboard-types";
 import BookingCalendar from "./BookingCalendar";
@@ -80,6 +116,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
 
   // Selected photo for quick zoom/preview
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [showBioBooking, setShowBioBooking] = useState(false);
 
   const service = services.find((item) => item.id === serviceId) ?? null;
   const canContinue =
@@ -175,14 +212,33 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
     });
   }
 
-  const radiusClass =
-    tenant.buttonRadius === "none"
-      ? "rounded-none"
-      : tenant.buttonRadius === "md"
-      ? "rounded-xl"
-      : tenant.buttonRadius === "lg"
-      ? "rounded-2xl"
-      : "rounded-full";
+  const avatarShapeClass =
+    tenant.avatarShape === "circle"
+      ? "rounded-full"
+      : tenant.avatarShape === "square"
+      ? "rounded-sm"
+      : "rounded-2xl";
+
+  const avatarBorderClass =
+    tenant.avatarBorder === "none"
+      ? "border-0 shadow-sm"
+      : tenant.avatarBorder === "thick"
+      ? "border-4 border-white shadow-xl"
+      : tenant.avatarBorder === "glow"
+      ? "border-2 border-white ring-4 ring-primary/40 shadow-xl"
+      : "border-2 border-white shadow-md";
+
+  const customBtnClasses = getCustomButtonClasses(tenant as any);
+  const customBtnStyles = getCustomButtonStyles(tenant as any);
+
+  const titleSizeClass =
+    tenant.titleSize === "sm"
+      ? "text-lg font-bold"
+      : tenant.titleSize === "base"
+      ? "text-xl font-extrabold"
+      : tenant.titleSize === "xl"
+      ? "text-3xl sm:text-4xl font-black tracking-tight"
+      : "text-2xl font-black tracking-tight";
 
   // Card theme classes
   const cardThemeClass = isDark
@@ -193,6 +249,44 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
   const itemBgClass = isDark
     ? "bg-slate-800/80 border-slate-700/80 text-slate-100 hover:border-slate-600"
     : "bg-white border-slate-200 text-slate-900 hover:border-slate-300";
+
+  // Renders the Linktree / Bio-links custom action buttons
+  const renderLinktreeCustomLinks = () => {
+    const activeLinks = (tenant.customLinks || []).filter((l) => l.enabled);
+    if (activeLinks.length === 0) return null;
+
+    return (
+      <div className="space-y-2.5 my-4">
+        {activeLinks.map((link) => {
+          const isHighlight = link.style === "highlight";
+          const isOutline = link.style === "outline";
+
+          return (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex items-center w-full transition-all duration-200 cursor-pointer ${customBtnClasses} ${
+                isHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-slate-900 animate-pulse" : ""
+              }`}
+              style={getCustomButtonStyles(tenant as any, isOutline, isHighlight)}
+            >
+              <div className="flex items-center gap-2.5 truncate">
+                <span className="shrink-0 text-current opacity-95">
+                  {renderCustomLinkIcon(link.icon, "h-4 w-4")}
+                </span>
+                <span className="truncate">{link.title}</span>
+              </div>
+              {tenant.buttonAlignment === "spread" && (
+                <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform ml-2" />
+              )}
+            </a>
+          );
+        })}
+      </div>
+    );
+  };
 
   // Renders the main booking card content
   const renderBookingWizardCard = () => (
@@ -422,8 +516,8 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                           }`}
                         >
                           <div className="flex items-start gap-2">
-                            <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                              ✓
+                            <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
                             </span>
                             <p className="text-[10.5px]">
                               <strong className="font-semibold text-slate-900 dark:text-white">
@@ -498,7 +592,8 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                 type="button"
                 disabled={!canContinue}
                 onClick={() => setStep((s) => (s + 1) as 2 | 3)}
-                className={`inline-flex items-center gap-1.5 bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:opacity-95 disabled:opacity-40 ${radiusClass}`}
+                className={`inline-flex items-center gap-1.5 transition hover:opacity-95 disabled:opacity-40 ${customBtnClasses}`}
+                style={customBtnStyles}
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4" />
@@ -508,7 +603,8 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                 type="button"
                 disabled={!canContinue || pending}
                 onClick={confirm}
-                className={`inline-flex items-center gap-1.5 bg-primary px-6 py-3 text-xs font-bold text-white shadow-md transition hover:opacity-95 disabled:opacity-40 ${radiusClass}`}
+                className={`inline-flex items-center gap-1.5 transition hover:opacity-95 disabled:opacity-40 ${customBtnClasses}`}
+                style={customBtnStyles}
               >
                 {pending ? "Guardando tu cita..." : "Confirmar Cita Ahora"}
               </button>
@@ -599,12 +695,45 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
 
   return (
     <div
-      className={`min-h-dvh w-full px-4 pt-4 pb-12 transition-colors duration-300`}
+      className={`relative min-h-dvh w-full px-4 pt-4 pb-12 transition-colors duration-300`}
       style={{
         fontFamily: fontStack(tenant.fontFamily || "plus-jakarta-sans"),
         ["--primary" as string]: tenant.primaryColor || "#5b31e6",
       }}
     >
+      {/* Background Effects (UI/UX Pro Max) */}
+      {tenant.backgroundEffect === "mesh" && (
+        <div className="pointer-events-none fixed inset-0 overflow-hidden opacity-20">
+          <div
+            className="absolute -top-32 -left-32 h-80 w-80 rounded-full blur-3xl"
+            style={{ backgroundColor: tenant.primaryColor || "#5b31e6" }}
+          />
+          <div
+            className="absolute top-1/2 -right-32 h-80 w-80 rounded-full blur-3xl"
+            style={{ backgroundColor: tenant.primaryColor || "#5b31e6" }}
+          />
+        </div>
+      )}
+      {tenant.backgroundEffect === "dots" && (
+        <div
+          className="pointer-events-none fixed inset-0 opacity-[0.06] dark:opacity-[0.08]"
+          style={{
+            backgroundImage: "radial-gradient(currentColor 1.5px, transparent 1.5px)",
+            backgroundSize: "20px 20px",
+          }}
+        />
+      )}
+      {tenant.backgroundEffect === "grid" && (
+        <div
+          className="pointer-events-none fixed inset-0 opacity-[0.05] dark:opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+      )}
+
       {/* Lightbox / Quick photo preview modal */}
       {selectedPhoto && (
         <div
@@ -623,7 +752,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
       {/* LAYOUT 1: SPLIT GALLERY (Mosaico de fotos a la izquierda, Reservas a la derecha) */}
       {/* ========================================================================= */}
       {layout === "split-gallery" ? (
-        <div className="mx-auto max-w-5xl">
+        <div className="relative mx-auto max-w-5xl">
           <div className="grid items-start gap-8 lg:grid-cols-12">
             {/* Left Column: Business Bio & Photo Mosaic */}
             <div className="space-y-6 lg:col-span-5">
@@ -673,7 +802,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                 </div>
 
                 <div className="mt-3">
-                  <h1 className="text-xl font-black">{tenant.name}</h1>
+                  <h1 className={titleSizeClass}>{tenant.name}</h1>
                   {tenant.slogan && <p className="text-xs font-semibold text-primary">{tenant.slogan}</p>}
                   {tenant.bio && <p className={`mt-1 text-xs leading-relaxed ${secondaryTextClass}`}>{tenant.bio}</p>}
                 </div>
@@ -684,6 +813,9 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                     <p className="text-[11px] leading-tight">{tenant.bookingNotice}</p>
                   </div>
                 )}
+
+                {/* Linktree / Custom Bio Buttons */}
+                {renderLinktreeCustomLinks()}
               </div>
 
               {/* Photo Gallery Mosaic */}
@@ -749,7 +881,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                 <Store className="h-10 w-10 text-primary" />
               )}
             </div>
-            <h1 className="mt-3 text-2xl font-black">{tenant.name}</h1>
+            <h1 className={`mt-3 ${titleSizeClass}`}>{tenant.name}</h1>
             {tenant.slogan && <p className="text-xs font-semibold text-primary">{tenant.slogan}</p>}
             {tenant.bio && <p className={`mt-1 text-xs max-w-sm mx-auto ${secondaryTextClass}`}>{tenant.bio}</p>}
 
@@ -770,6 +902,9 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                 </button>
               ))}
             </div>
+
+            {/* Linktree / Custom Bio Buttons */}
+            {renderLinktreeCustomLinks()}
           </div>
 
           {renderBookingWizardCard()}
@@ -778,14 +913,17 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
         /* ========================================================================= */
         /* LAYOUT 3: MINIMAL EDITORIAL (Estilo Lookbook contemporáneo) */
         /* ========================================================================= */
-        <div className="mx-auto max-w-md">
+        <div className="relative mx-auto max-w-md">
           <header className="mb-6 border-b border-black/10 dark:border-white/10 pb-4 text-center">
             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">
               Citas Online Oficiales
             </span>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-tight">{tenant.name}</h1>
+            <h1 className={`mt-1 tracking-tight ${titleSizeClass}`}>{tenant.name}</h1>
             {tenant.slogan && <p className="mt-0.5 text-xs italic opacity-75">{tenant.slogan}</p>}
           </header>
+
+          {/* Linktree / Custom Bio Buttons */}
+          {renderLinktreeCustomLinks()}
 
           {renderBookingWizardCard()}
 
@@ -807,7 +945,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
         /* ========================================================================= */
         /* LAYOUT 4: PANORAMIC (Clásico con banner ancho y tarjeta centrada) */
         /* ========================================================================= */
-        <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col">
+        <main className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col">
           {/* Header Banner & Profile Branding */}
           <header className={`overflow-hidden rounded-3xl border ${cardThemeClass} shadow-xs mb-4`}>
             {/* Panoramic Banner */}
@@ -828,7 +966,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
             {/* Profile Details */}
             <div className="relative px-5 pb-5 pt-3">
               <div className="flex items-end justify-between -mt-12 mb-3">
-                <div className="relative h-20 w-20 rounded-2xl border-4 border-white bg-white shadow-md overflow-hidden flex items-center justify-center font-bold text-slate-800 text-2xl">
+                <div className={`relative h-20 w-20 overflow-hidden flex items-center justify-center font-bold text-slate-800 text-2xl transition-all ${avatarShapeClass} ${avatarBorderClass} bg-white`}>
                   {tenant.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -884,7 +1022,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
               </div>
 
               <div>
-                <h1 className="text-xl font-black tracking-tight">{tenant.name}</h1>
+                <h1 className={`tracking-tight ${titleSizeClass}`}>{tenant.name}</h1>
                 {tenant.slogan && (
                   <p className="mt-0.5 text-xs font-semibold text-primary">{tenant.slogan}</p>
                 )}
@@ -900,6 +1038,9 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                   <p className="text-[11px] leading-tight">{tenant.bookingNotice}</p>
                 </div>
               )}
+
+              {/* Linktree / Custom Bio Buttons when links-first */}
+              {tenant.sectionOrder === "links-first" && renderLinktreeCustomLinks()}
 
               {/* Gallery Mini-Strip */}
               {gallery.length > 0 && (
@@ -919,7 +1060,38 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
             </div>
           </header>
 
-          {renderBookingWizardCard()}
+          {/* Body Section: Respects sectionOrder */}
+          {tenant.sectionOrder === "links-only" ? (
+            <div className="space-y-4">
+              {renderLinktreeCustomLinks()}
+              <div className={`overflow-hidden rounded-3xl border ${cardThemeClass} p-5`}>
+                <button
+                  type="button"
+                  onClick={() => setShowBioBooking(!showBioBooking)}
+                  className={`w-full flex items-center justify-between transition ${customBtnClasses}`}
+                  style={customBtnStyles}
+                >
+                  <span className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    {showBioBooking ? "Ocultar Sistema de Turnos" : "Agendar Turno Online"}
+                  </span>
+                  <ChevronRight className={`h-4 w-4 transition-transform ${showBioBooking ? "rotate-90" : ""}`} />
+                </button>
+                {showBioBooking && (
+                  <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
+                    {renderBookingWizardCard()}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : tenant.sectionOrder === "links-first" ? (
+            renderBookingWizardCard()
+          ) : (
+            <>
+              {renderBookingWizardCard()}
+              {renderLinktreeCustomLinks()}
+            </>
+          )}
         </main>
       )}
     </div>

@@ -332,7 +332,7 @@ export default function CalendarBoard() {
           <div className="rounded-2xl bg-primary/5 border border-primary/20 p-3 space-y-1">
             <span className="font-bold text-primary block">Horario seleccionado en Google Calendar:</span>
             <p className="text-slate-700 dark:text-slate-300">
-              📅 Fecha: <strong className="text-slate-900 dark:text-white">{newSlotData.date}</strong> a las{" "}
+              Fecha: <strong className="text-slate-900 dark:text-white">{newSlotData.date}</strong> a las{" "}
               <strong className="text-slate-900 dark:text-white">{newSlotData.time} hs</strong>
             </p>
           </div>
@@ -422,10 +422,10 @@ export default function CalendarBoard() {
                 onChange={(e) => setNewPaymentMethod(e.target.value as PaymentMethod)}
                 className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               >
-                <option value="efectivo">💵 Efectivo en Local</option>
-                <option value="sipap">🏦 Transferencia SIPAP</option>
-                <option value="pos_bancard">💳 Tarjeta / POS Bancard</option>
-                <option value="billetera_py">📱 Billetera Móvil</option>
+                <option value="efectivo">Efectivo en Local</option>
+                <option value="sipap">Transferencia SIPAP</option>
+                <option value="pos_bancard">Tarjeta / POS Bancard</option>
+                <option value="billetera_py">Billetera Móvil</option>
               </select>
             </div>
           </div>
@@ -871,7 +871,7 @@ function RescheduleEditModal({
   const assignedService = services.find((s) => s.id === serviceId);
   const waPhone = appointment.clientPhone.replace(/[^0-9]/g, "");
   const waMsg = encodeURIComponent(
-    `¡Hola ${appointment.clientName}! 👋 Te confirmamos que tu cita para *${assignedService?.name || "Servicio"}* en *${businessName}* ha sido reprogramada con éxito para el día *${date}* a las *${time} hs* con ${assignedPerson?.name || "nuestro equipo"}. ¡Te esperamos con gusto!`
+    `¡Hola ${appointment.clientName}! Te confirmamos que tu cita para *${assignedService?.name || "Servicio"}* en *${businessName}* ha sido reprogramada con éxito para el día *${date}* a las *${time} hs* con ${assignedPerson?.name || "nuestro equipo"}. ¡Te esperamos con gusto!`
   );
   const waLink = `https://wa.me/${waPhone}?text=${waMsg}`;
 
@@ -1015,10 +1015,10 @@ function RescheduleEditModal({
             onChange={(e) => setStatus(e.target.value as AppointmentStatus)}
             className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
           >
-            <option value="confirmed">✅ Confirmada</option>
-            <option value="completed">🎉 Completada / Atendida</option>
-            <option value="pending">⏳ Pendiente de Aprobación</option>
-            <option value="cancelled">❌ Cancelada</option>
+            <option value="confirmed">Confirmada</option>
+            <option value="completed">Completada / Atendida</option>
+            <option value="pending">Pendiente de Aprobación</option>
+            <option value="cancelled">Cancelada</option>
           </select>
         </div>
 

@@ -123,7 +123,7 @@ export async function GET(
         {
           key: "stamps",
           label: "SELLOS VIP",
-          value: `${points} de ${threshold} ★`,
+          value: `${points} / ${threshold}`,
         },
       ],
       secondaryFields: [

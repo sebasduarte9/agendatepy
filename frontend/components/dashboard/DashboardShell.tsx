@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Suspense, useEffect, type ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import ToastProvider from "./ui/ToastProvider";
@@ -9,6 +9,12 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
   const color = useDashboardStore((s) => s.business.primaryColor);
+  const slug = useDashboardStore((s) => s.business.slug);
+  const syncFromDatabase = useDashboardStore((s) => s.syncFromDatabase);
+
+  useEffect(() => {
+    syncFromDatabase(slug || "barberia");
+  }, [slug, syncFromDatabase]);
 
   return (
     <div
@@ -20,7 +26,9 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <Header />
         <main className="main-content flex-1 p-4 sm:p-6">{children}</main>
       </div>
-      <GuidedTour />
+      <Suspense fallback={null}>
+        <GuidedTour />
+      </Suspense>
       <ToastProvider />
     </div>
   );

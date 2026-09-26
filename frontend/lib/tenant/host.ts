@@ -28,7 +28,7 @@ export function hostnameFromHeaders(
 
 export function tenantSlugFromHostname(
   hostname: string,
-  rootDomain = process.env.AGENDATE_ROOT_DOMAIN ?? "agendate.py",
+  rootDomain = process.env.AGENDATE_ROOT_DOMAIN || process.env.NEXT_PUBLIC_ROOT_DOMAIN || "agendatepy.com",
 ): string | null {
   if (!hostname || hostname === "localhost" || hostname === "127.0.0.1") {
     return null;

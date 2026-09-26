@@ -45,7 +45,6 @@ const COLUMNS = [
       },
       { label: "Términos y Condiciones", href: "/terminos" },
       { label: "Política de Privacidad", href: "/privacidad" },
-      { label: "Portal Superadmin", href: "/superadmin" },
       { label: "Preguntas Frecuentes", href: "#faq" },
     ],
   },
