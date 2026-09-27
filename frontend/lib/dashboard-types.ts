@@ -26,6 +26,7 @@ export type ServiceItem = {
   price: number;
   description: string;
   image: string;
+  active?: boolean;
   // Promociones y Ofertas limitadas
   hasPromo?: boolean;
   promoPrice?: number;
@@ -151,6 +152,7 @@ export type CashMovement = {
   date: string; // ISO o YYYY-MM-DD
   appointmentId?: string;
   voucherNumber?: string;
+  category?: string;
 };
 
 export type WhatsAppTemplate = {

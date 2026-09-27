@@ -72,31 +72,35 @@ export default async function ReservarPage({ params }: PageProps) {
     console.warn(`[ReservarPage] Base de datos no disponible para "${slug}", usando demo fallback.`);
   }
 
-  // Fallback demo tenant si no está en la base de datos o si PostgreSQL está fuera de línea
+  // Fallback demo tenant SOLO para la ruta explícita "barberia"
   if (!tenant) {
-    tenant = {
-      name: slug === "barberia" ? "Barbería Los Muchachos" : slug.charAt(0).toUpperCase() + slug.slice(1),
-      subdomain: slug,
-      timezone: "America/Asuncion",
-      settings: {
-        whatsappPhone: "595981700800",
-        slotStepMinutes: 30,
-        maxAdvanceDays: 30,
-      },
-      themeSettings: {
-        primaryColor: "#FF4F2B",
-        backgroundColor: "#090d16",
-        fontFamily: "outfit",
-        themePreset: "barber-dark",
-        themeMode: "dark",
-        bio: "Cortes clásicos, degradados modernos, perfilado de barba con toalla caliente y atención de primera en Asunción.",
-        slogan: "Estilo y distinción para el hombre moderno",
-        instagram: "barberia_losmuchachos",
-        whatsapp: "595981700800",
-        logoUrl: "",
-      },
-      services: DEMO_SERVICES,
-    };
+    if (slug === "barberia") {
+      tenant = {
+        name: "Barbería Los Muchachos (Demo)",
+        subdomain: "barberia",
+        timezone: "America/Asuncion",
+        settings: {
+          whatsappPhone: "595981700800",
+          slotStepMinutes: 30,
+          maxAdvanceDays: 30,
+        },
+        themeSettings: {
+          primaryColor: "#FF4F2B",
+          backgroundColor: "#090d16",
+          fontFamily: "outfit",
+          themePreset: "barber-dark",
+          themeMode: "dark",
+          bio: "Cortes clásicos, degradados modernos, perfilado de barba con toalla caliente y atención de primera en Asunción.",
+          slogan: "Estilo y distinción para el hombre moderno",
+          instagram: "barberia_losmuchachos",
+          whatsapp: "595981700800",
+          logoUrl: "",
+        },
+        services: DEMO_SERVICES,
+      };
+    } else {
+      notFound();
+    }
   }
 
   const theme = parseTheme(tenant.themeSettings);

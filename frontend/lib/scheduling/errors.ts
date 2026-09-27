@@ -2,7 +2,9 @@ export type SchedulingErrorCode =
   | "INVALID_INPUT"
   | "TENANT_NOT_FOUND"
   | "SERVICE_NOT_FOUND"
-  | "TENANT_CONTEXT_MISSING";
+  | "TENANT_CONTEXT_MISSING"
+  | "DB_UNAVAILABLE"
+  | "SLOT_TAKEN";
 
 export class SchedulingError extends Error {
   readonly code: SchedulingErrorCode;

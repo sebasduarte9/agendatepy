@@ -2,69 +2,97 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Sparkles } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
+
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 export default function WhatsAppFloatingButton() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [hasDismissedTooltip, setHasDismissedTooltip] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
-  const whatsappUrl =
-    "https://wa.me/595981123456?text=Hola%2C%20quisiera%20asesoramiento%20sobre%20AgendatePY%20para%20mi%20negocio";
+  const whatsappUrl = getCommercialWhatsAppUrl(
+    "Hola, quisiera asesoramiento sobre AgendatePY para mi negocio"
+  );
 
   return (
-    <aside aria-label="Contacto por WhatsApp" className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
-      {/* Tooltip / Badge de ayuda flotante */}
-      <AnimatePresence>
-        {!hasDismissedTooltip && (
+    <aside
+      aria-label="Contacto por WhatsApp"
+      className="fixed bottom-18 sm:bottom-6 right-4 sm:right-6 z-40 max-w-[calc(100vw-2rem)] select-none"
+    >
+      <AnimatePresence mode="wait">
+        {!isDismissed ? (
+          /* Estado 1: Widget unificado integrado (Icono WhatsApp + Textos + Botón Cerrar) */
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            key="widget-expanded"
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, y: 5 }}
-            transition={{ duration: 0.3 }}
-            className="mb-2.5 flex items-center gap-2 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 p-3 pr-2 shadow-2xl backdrop-blur-xl text-xs max-w-[270px]"
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="group relative flex items-center gap-3 rounded-2xl sm:rounded-full border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 py-2 pl-2 pr-3.5 shadow-[0_12px_36px_-6px_rgba(15,23,42,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-300 hover:border-emerald-500/40 hover:shadow-[0_16px_40px_-6px_rgba(37,211,102,0.22)]"
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold text-slate-900 dark:text-white leading-tight">
-                ¿Dudas para tu local?
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                Chateá con un asesor en Asunción ahora mismo.
-              </p>
-            </div>
+            {/* Enlace envolvente al chat de WhatsApp */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 min-w-0 flex-1 text-left"
+              aria-label="Chatear con un asesor de AgendatePY en Asunción por WhatsApp"
+            >
+              {/* Botón circular verde integrado en el componente */}
+              <div className="relative flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md shadow-[#25D366]/30 transition-transform duration-200 group-hover:scale-105 active:scale-95">
+                <span className="absolute -inset-0.5 rounded-full bg-[#25D366]/40 animate-ping opacity-60" />
+                <MessageCircle className="relative z-10 h-5 w-5 sm:h-6 sm:w-6 fill-white stroke-none" />
+                <span className="absolute top-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-300" />
+              </div>
+
+              {/* Textos integrados exactos solicitados */}
+              <div className="min-w-0 pr-1">
+                <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  ¿Dudas para tu local?
+                </p>
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-2">
+                  Chateá con un asesor en Asunción ahora mismo.
+                </p>
+              </div>
+            </a>
+
+            {/* Botón cerrar discreto */}
             <button
               type="button"
-              onClick={() => setHasDismissedTooltip(true)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDismissed(true);
+              }}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               aria-label="Cerrar mensaje"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </motion.div>
+        ) : (
+          /* Estado 2: Botón circular verde único cuando el usuario cerró el mensaje */
+          <motion.div
+            key="widget-collapsed"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.94 }}
+              className="group relative flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_30px_rgb(37,211,102,0.4)] transition-all duration-300"
+              aria-label="Chatear por WhatsApp con AgendatePY"
+            >
+              <span className="absolute -inset-1 rounded-full bg-[#25D366]/40 animate-ping opacity-75" />
+              <MessageCircle className="relative z-10 h-6 w-6 sm:h-7 sm:w-7 fill-white stroke-none" />
+              <span className="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-400" />
+            </motion.a>
+          </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Botón Principal Flotante con efecto Ping */}
-      <motion.a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.94 }}
-        className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_30px_rgb(37,211,102,0.4)] transition-all duration-300"
-        aria-label="Chatear por WhatsApp con AgendatePY"
-      >
-        {/* Anillo de pulso sutil */}
-        <span className="absolute -inset-1 rounded-full bg-[#25D366]/40 animate-ping opacity-75" />
-
-        {/* Ícono de WhatsApp SVG oficial */}
-        <MessageCircle className="relative z-10 h-7 w-7 fill-white stroke-none" />
-
-        {/* Indicador de operador en línea */}
-        <span className="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-400" />
-      </motion.a>
     </aside>
   );
 }

@@ -1,26 +1,66 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { AppointmentStatus, CashMovementType } from "@prisma/client";
+import { getSession } from "@/lib/auth/session";
+import { AppointmentStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const slug = searchParams.get("tenant") || "barberia";
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { ok: false, error: "No autorizado. Inicie sesión para sincronizar datos." },
+        { status: 401 }
+      );
+    }
 
-    const tenant = await prisma.tenant.findFirst({
+    const { searchParams } = new URL(request.url);
+    const requestedSlug = searchParams.get("tenant");
+
+    let tenantIdToQuery = session.tenantId;
+
+    // Solo un SUPERADMIN puede solicitar ver un tenant diferente al de su sesión
+    if (session.role === "SUPERADMIN" && requestedSlug) {
+      const targetTenant = await prisma.tenant.findFirst({
+        where: {
+          OR: [{ subdomain: requestedSlug }, { slug: requestedSlug }],
+        },
+        select: { id: true },
+      });
+      if (targetTenant) {
+        tenantIdToQuery = targetTenant.id;
+      }
+    } else if (requestedSlug && session.tenantSlug && requestedSlug !== session.tenantSlug) {
+      // Bloqueo estricto de intento cross-tenant
+      return NextResponse.json(
+        { ok: false, error: "Acceso denegado: no tienes permisos para acceder a los datos de este negocio." },
+        { status: 403 }
+      );
+    }
+
+    if (!tenantIdToQuery) {
+      return NextResponse.json(
+        { ok: false, error: "Usuario sin negocio asignado." },
+        { status: 404 }
+      );
+    }
+
+    const tenant = await prisma.tenant.findUnique({
       where: {
-        OR: [{ subdomain: slug }, { slug: slug }],
+        id: tenantIdToQuery,
       },
       include: {
         services: true,
         staff: true,
         clients: true,
         products: true,
+        scheduleBlocks: {
+          orderBy: { startTime: "asc" },
+        },
         cashMovements: {
           orderBy: { createdAt: "desc" },
-          take: 50,
+          take: 100,
         },
         appointments: {
           include: {
@@ -34,10 +74,12 @@ export async function GET(request: NextRequest) {
 
     if (!tenant) {
       return NextResponse.json(
-        { ok: false, error: `Tenant "${slug}" no encontrado` },
+        { ok: false, error: "Negocio no encontrado." },
         { status: 404 }
       );
     }
+
+    const tenantSettings = (tenant.settings as Record<string, any>) || {};
 
     // Convert Prisma appointments to dashboard-compatible Appointment type
     const formattedAppointments = tenant.appointments.map((a) => {
@@ -65,9 +107,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       tenant: {
+        id: tenant.id,
         name: tenant.name,
         slug: tenant.slug,
         timezone: tenant.timezone,
+        phone: tenantSettings.phone || tenantSettings.whatsappPhone || "",
+        whatsappNumber: tenantSettings.whatsappPhone || "",
+        address: tenantSettings.address || "",
+        openingCash: tenantSettings.openingCash ?? 300000,
+        settings: tenantSettings,
       },
       appointments: formattedAppointments,
       services: tenant.services.map((s) => ({
@@ -75,12 +123,44 @@ export async function GET(request: NextRequest) {
         name: s.name,
         durationMin: s.durationMinutes,
         price: s.price,
+        active: s.active,
       })),
       staff: tenant.staff.map((m) => ({
         id: m.id,
         name: m.name,
         commissionPercentage: m.commissionPercentage,
         active: m.active,
+      })),
+      clients: tenant.clients.map((c) => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email || "",
+        notes: c.notes || "",
+        formula: c.formula || "",
+        tags: c.tags && c.tags.length > 0 ? c.tags : ["Nuevo"],
+        instagram: c.instagram || "",
+        totalVisits: 0,
+        totalSpent: c.totalSpent,
+        lastVisit: c.lastVisit ? c.lastVisit.toISOString() : c.createdAt.toISOString(),
+        loyaltyPoints: c.points,
+        loyaltyRedeemed: 0,
+      })),
+      cashMovements: tenant.cashMovements.map((cm) => ({
+        id: cm.id,
+        type: cm.type === "INCOME" ? ("ingreso" as const) : ("egreso" as const),
+        amount: cm.amount,
+        method: (cm.paymentMethod.toLowerCase() || "efectivo") as any,
+        concept: cm.description,
+        date: cm.createdAt.toISOString(),
+        category: cm.category,
+      })),
+      scheduleBlocks: tenant.scheduleBlocks.map((b) => ({
+        id: b.id,
+        staffId: b.staffId,
+        startTime: b.startTime.toISOString(),
+        endTime: b.endTime.toISOString(),
+        reason: b.reason || "Bloqueo operativo",
       })),
       products: tenant.products.map((p) => ({
         id: p.id,
@@ -106,24 +186,55 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { action, tenantSlug = "barberia", data } = body;
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { ok: false, error: "No autorizado. Inicie sesión para realizar modificaciones." },
+        { status: 401 }
+      );
+    }
 
-    const tenant = await prisma.tenant.findFirst({
-      where: {
-        OR: [{ subdomain: tenantSlug }, { slug: tenantSlug }],
-      },
+    const body = await request.json();
+    const { action, tenantSlug, data } = body;
+
+    let tenantIdToMutate = session.tenantId;
+
+    if (session.role === "SUPERADMIN" && tenantSlug) {
+      const targetTenant = await prisma.tenant.findFirst({
+        where: {
+          OR: [{ subdomain: tenantSlug }, { slug: tenantSlug }],
+        },
+        select: { id: true },
+      });
+      if (targetTenant) {
+        tenantIdToMutate = targetTenant.id;
+      }
+    } else if (tenantSlug && session.tenantSlug && tenantSlug !== session.tenantSlug) {
+      return NextResponse.json(
+        { ok: false, error: "Acceso denegado: no puedes modificar datos de otro negocio." },
+        { status: 403 }
+      );
+    }
+
+    if (!tenantIdToMutate) {
+      return NextResponse.json(
+        { ok: false, error: "Negocio no autorizado." },
+        { status: 403 }
+      );
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantIdToMutate },
     });
 
     if (!tenant) {
       return NextResponse.json(
-        { ok: false, error: `Tenant "${tenantSlug}" no encontrado` },
+        { ok: false, error: "Negocio no encontrado." },
         { status: 404 }
       );
     }
 
     if (action === "create_appointment") {
-      // Find or pick valid service and staff IDs in PostgreSQL
       let serviceId = data.serviceId;
       let staffId = data.staffId;
 
@@ -170,7 +281,6 @@ export async function POST(request: NextRequest) {
       else if (status === "completed") prismaStatus = AppointmentStatus.COMPLETED;
       else if (status === "pending") prismaStatus = AppointmentStatus.PENDING_ACTION;
 
-      // Update if it's a valid UUID matching an existing record
       const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (UUID_REGEX.test(appointmentId)) {
         await prisma.appointment.updateMany({

@@ -58,7 +58,7 @@ export default function RoiCalculator() {
   return (
     <section
       id="calculadora"
-      className="relative overflow-hidden py-12 sm:py-16 lg:py-20 scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+      className="relative overflow-hidden py-14 sm:py-20 lg:py-24 scroll-mt-24"
     >
       {/* Luces y orbes ambientales decorativos */}
       <div className="pointer-events-none absolute left-1/4 top-1/2 -translate-y-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-brand/10 blur-[120px] dark:bg-brand/20" />

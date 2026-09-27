@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, MessageCircle, ArrowRight } from "lucide-react";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 export default function StickyMobileCta() {
   const [isVisible, setIsVisible] = useState(false);
@@ -54,7 +55,7 @@ export default function StickyMobileCta() {
             <div className="flex items-center gap-2 shrink-0">
               {/* Botón WhatsApp de consulta rápida */}
               <a
-                href="https://wa.me/595981123456?text=Hola%20AgendatePY%2C%20quiero%20informaci%C3%B3n%20para%20activar%20mi%20agenda%20online"
+                href={getCommercialWhatsAppUrl("Hola AgendatePY, quiero información para activar mi agenda online")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 active:scale-95 transition"

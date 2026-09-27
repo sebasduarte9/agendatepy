@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, X, Shield, Sparkles, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 const BASIC_FEATURES = [
   { ok: true, label: "1 profesional / agenda" },
@@ -44,7 +45,7 @@ export default function Pricing() {
   return (
     <section
       id="precios"
-      className="relative overflow-hidden bg-slate-50/80 dark:bg-slate-950 py-12 sm:py-16 lg:py-20 border-t border-slate-200/80 dark:border-white/10 transition-colors scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+      className="relative overflow-hidden bg-slate-50/80 dark:bg-slate-950 py-14 sm:py-20 lg:py-24 border-t border-slate-200/80 dark:border-white/10 transition-colors scroll-mt-24"
     >
       {/* Luces y resplandores ambientales de fondo */}
       <div className="pointer-events-none absolute -top-40 right-1/4 h-[500px] w-[500px] rounded-full bg-brand/10 blur-[130px] dark:bg-brand/20" />
@@ -173,7 +174,7 @@ export default function Pricing() {
               savings="Ahorrás Gs. 1.560.000 al año (2 meses gratis)"
               billedDetail="Gs. 6.240.000 facturado anual"
               cta="Consultar por Empresa"
-              href="https://wa.me/595981123456?text=Hola%20AgendatePY%2C%20quisiera%20asesoramiento%20sobre%20el%20Plan%20Empresa"
+              href={getCommercialWhatsAppUrl("Hola AgendatePY, quisiera asesoramiento sobre el Plan Empresa")}
               isExternal={true}
               features={EMPRESA_FEATURES}
             />
@@ -236,7 +237,7 @@ function PriceCard({
       )}
 
       <div className="relative z-10">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between min-h-[28px]">
           <h3 className="text-xl font-black text-slate-900 dark:text-white">{name}</h3>
           {badge && (
             <span className="rounded-full bg-gradient-to-r from-brand to-[#FF6B4A] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
@@ -248,7 +249,7 @@ function PriceCard({
           {description}
         </p>
 
-        {/* Precio y desglose de ahorro */}
+        {/* Precio y desglose de ahorro con altura reservada estable */}
         <div className="my-5 border-b border-slate-100 dark:border-slate-800 pb-5">
           <div className="flex items-baseline gap-1">
             <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
@@ -257,26 +258,45 @@ function PriceCard({
             <span className="text-xs font-semibold text-slate-400">{period}</span>
           </div>
 
-          <AnimatePresence>
-            {annual && savings && (
+          {/* Zona de altura fija y estable reservada para el ahorro y facturación */}
+          <div className="mt-2.5 h-[52px] flex flex-col justify-center">
+            {annual && savings ? (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-2.5 space-y-1"
+                key="annual-savings"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-1"
               >
                 <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand/10 border border-brand/25 px-2.5 py-1 text-[11px] font-bold text-brand dark:text-[#FF6B4A]">
                   <Zap className="h-3 w-3 fill-brand text-brand" />
                   <span>{savings}</span>
                 </div>
                 {billedDetail && (
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-400 font-medium leading-none">
                     {billedDetail}
                   </p>
                 )}
               </motion.div>
+            ) : (
+              <motion.div
+                key="monthly-info"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-1"
+              >
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  Facturación mensual estándar · Sin permanencia
+                </p>
+                <p className="text-[10px] text-slate-400/70 dark:text-slate-500/70">
+                  Activación inmediata sin contrato a plazo
+                </p>
+              </motion.div>
             )}
-          </AnimatePresence>
+          </div>
         </div>
 
         {/* Lista de características */}

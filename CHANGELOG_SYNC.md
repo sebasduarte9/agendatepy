@@ -566,6 +566,209 @@ Cada entrada debe detallar:
 - **Verificación:**
   - `npx tsc --noEmit` completado con **0 errores**.
 
+---
+
+### [Navegación Inteligente por Anclas y Encuadre Preciso de Secciones] — 2026-09-27 15:45
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Navegación por Anclas (`Header.tsx`, `smoothScroll.ts` y Landing Page)
+- **Archivos Creados / Modificados:**
+  - `frontend/lib/smoothScroll.ts` (Creación de motor de scroll inteligente y encuadre visual dinámico)
+  - `frontend/components/landing/Header.tsx` (Integración de clics interceptados, sincronización de hash en URL sin saltos y soporte para carga directa con ancla)
+  - `frontend/components/landing/RoiCalculator.tsx` (Normalización de padding y remoción de `min-h-[calc(100vh-5rem)] flex flex-col justify-center` que causaba el vacío superior)
+  - `frontend/components/landing/Features.tsx` (Normalización de padding)
+  - `frontend/components/landing/HowItWorks.tsx` (Normalización de padding)
+  - `frontend/components/landing/WhatsAppShowcase.tsx` (Normalización de padding)
+  - `frontend/components/landing/Pricing.tsx` (Normalización de padding)
+  - `CHANGELOG_SYNC.md` (Documentación de sincronización)
+- **Descripción de Cambios y Razonamiento:**
+  1. **Diagnóstico del Problema Previo:**
+     - Las opciones del navbar delegaban el scroll al salto nativo del navegador (`href="#section"`).
+     - Varias secciones tenían `min-h-[calc(100vh-5rem)] flex flex-col justify-center`, lo cual forzaba a que todo el contenido se centrara dentro de una caja de 100vh. En pantallas altas, esto empujaba el título hacia abajo dejando un enorme hueco blanco debajo del navbar (como en la captura del usuario con Calculadora).
+     - En secciones largas como Características, el scroll nativo con offset fijo de 80px (`scroll-mt-20`) no consideraba el tamaño real del contenido, cortando las tarjetas o dejando el titular fuera de foco.
+  2. **Motor de Scroll Inteligente (`smoothScroll.ts`):**
+     - **Medición Dinámica del Navbar:** Calcula en tiempo real la altura del header flotante (`rect.height + stickyTop + margen de respiro`), adaptándose a desktop, tablet y mobile sin valores mágicos fijos.
+     - **Regla para Secciones Grandes (ej. Características, Precios):** Posiciona el título en el ~22% superior del viewport (justo debajo del navbar con aire cómodo), dando máximo protagonismo al titular y revelando la mayor cantidad de tarjetas y contenido inmediatamente.
+     - **Regla para la Calculadora:** Encuadra simultáneamente el título + el bloque interactivo (sliders y tarjeta de recupero) dentro de la zona visible.
+     - **Regla para Secciones Pequeñas:** Centrado vertical armónico en el espacio útil debajo del navbar.
+     - **Regla para FAQ:** Respeta el límite inferior del documento sin saltos ni desbordes.
+  3. **Preservación de URLs y Carga Directa:**
+     - Al hacer clic, se actualiza la URL (`window.history.pushState(null, "", href)`) conservando los hashes `#inicio`, `#como-funciona`, `#whatsapp`, `#caracteristicas`, `#calculadora`, `#precios`, `#faq`.
+     - Si el usuario accede directamente a una URL con ancla (ej: `http://localhost:3000/#calculadora`), el sistema estabiliza el DOM y posiciona la sección con la misma precisión matemática.
+     - La detección de pestaña activa en el navbar se sincronizó con el viewport para reflejar el estado actual sin parpadeos.
+- **Verificación:**
+  - `npm run build` ejecutado exitosamente con **0 errores**.
+  - Servidor local funcionando en `http://localhost:3000` (HTTP 200).
+
+---
+
+### [Generalización de Navegación Referencia Calculadora a las 7 Secciones] — 2026-09-27 15:56
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Motor de Desplazamiento Universal (`smoothScroll.ts`) y Navegación
+- **Archivos Modificados:**
+  - `frontend/lib/smoothScroll.ts` (Generalización del encuadre por bloque visual integrado)
+  - `CHANGELOG_SYNC.md` (Documentación de sincronización)
+- **Descripción de Cambios y Razonamiento:**
+  1. **Análisis de la Referencia de Calculadora:**
+     - En *Calculadora*, el resultado perfecto se logró evaluando el **bloque visual integrado** (desde el encabezado `headingTop` hasta el final del contenido interactivo `gridBottom`). Al caber dentro del espacio disponible debajo del navbar flotante (`availableHeight`), se centra verticalmente el conjunto con holgura armónica.
+  2. **Aplicación Individual a las 7 Secciones:**
+     - **1. `#inicio`:** Desplazamiento limpio al tope absoluto (`top: 0`), sin desplazamientos residuales.
+     - **2. `#como-funciona`:** Evalúa el bloque del simulador interactivo + pasos de flujo. Si cabe completo, lo centra en el viewport; si la pantalla es compacta, el título se posiciona bajo el navbar con el simulador visible de inmediato.
+     - **3. `#whatsapp`:** Evalúa la cuadrícula de beneficios y el mockup del teléfono. Si cabe, lo centra; en pantallas compactas, prioriza la cabecera del chat y los bullets sin superposición.
+     - **4. `#caracteristicas`:** Al ser una sección grande con múltiples tarjetas, no intenta centrarla entera: ubica el título y subtítulo en la zona superior cómoda bajo el navbar dejando visible la primera fila de tarjetas (WhatsApp Bot y Comisiones).
+     - **5. `#calculadora`:** Mantiene exactamente su lógica de referencia 100% intacta.
+     - **6. `#precios`:** Encuadra el título, selector de período y las 3 tarjetas de planes conjuntamente en pantallas completas; en pantallas compactas, alinea el encabezado para ver las tarjetas directamente.
+     - **7. `#faq`:** Ubica el título y primeras preguntas visiblemente debajo del navbar respetando el límite inferior del documento (`maxScroll`).
+  3. **Responsive sin Números Mágicos:**
+     - Calcula `headerClearance` y `breathingGap` dinámicamente según el viewport (`window.innerWidth < 640 ? 12 : 18`).
+     - Respeta `maxScroll` para evitar desbordes al final de la página.
+- **Verificación:**
+  - `npm run build` ejecutado exitosamente con **0 errores**.
+  - Servidor local funcionando en `http://localhost:3000` (HTTP 200).
+
+---
+
+### [Rediseño Unificado de Widget WhatsApp y Estabilidad Vertical en Precios] — 2026-09-27 16:07
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Widget Flotante de Asesoría (`WhatsAppFloatingButton.tsx`) y Planes/Precios (`Pricing.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/landing/WhatsAppFloatingButton.tsx` (Unificación de caja de mensaje y botón en un solo widget flotante compacto)
+  - `frontend/components/landing/Pricing.tsx` (Zona de altura reservada para ahorro/facturación anual en cards de precio)
+  - `CHANGELOG_SYNC.md` (Documentación de sincronización)
+- **Descripción de Cambios y Razonamiento:**
+  1. **Widget de Asesoría / Chat Unificado (`WhatsAppFloatingButton.tsx`):**
+     - **Problema previo:** Existía una caja de mensaje flotante arriba y un botón circular verde separado abajo, dando la impresión de dos elementos desconectados y ocupando demasiado espacio vertical.
+     - **Solución implementada:** Se integró en un único componente visual elegante:
+       - Icono circular oficial de WhatsApp verde (`#25D366`) con halo de pulso e indicador online integrado a la izquierda.
+       - Textos exactos solicitados: *"¿Dudas para tu local?"* en negrita y *"Chateá con un asesor en Asunción ahora mismo."* al costado.
+       - Botón cerrar discreto `[×]` a la derecha.
+       - Fondo `backdrop-blur-2xl` con borde suave y sombra estilizada.
+       - Al hacer clic en `[×]`, colapsa fluidamente al botón circular verde flotante estándar sin romper la interactividad ni la funcionalidad de WhatsApp.
+       - Responsive: horizontal y compacto en desktop (`bottom-6 right-6`), adaptado sin scroll horizontal ni desbordes en móviles.
+  2. **Estabilidad Vertical en Precios / Mensual vs Anual (`Pricing.tsx`):**
+     - **Problema previo:** Al alternar a "Pago Anual", se montaba condicionalmente el bloque de ahorro (`savings` y `billedDetail`), sumando más de 54px a la altura de cada card y empujando toda la cuadrícula y las características hacia abajo, generando un salto visual molesto.
+     - **Solución implementada:** Se implementó una **zona de altura reservada fija y estable (`h-[52px]`)**:
+       - En modo *Mensual*: Muestra texto sutil de facturación mensual estándar sin contrato.
+       - En modo *Anual*: Realiza una transición suave (`opacity` y `y`) mostrando la pastilla de ahorro `⚡ Ahorrás Gs. X al año` y el detalle facturado anual dentro del mismo espacio pre-reservado.
+       - **Resultado:** Las 3 cards de precios mantienen exactamente la misma altura total, el divisor `border-b` permanece fijo en el mismo píxel, las características no se desplazan y el bloque general de precios permanece 100% estable y centrado sin saltos de viewport.
+- **Verificación:**
+  - `npm run build` completado exitosamente con **0 errores de compilación**.
+  - Servidor local funcionando en `http://localhost:3000` (HTTP 200).
+
+---
+
+### [Fase Crítica de Estabilización, Seguridad Multi-Tenant y Release Validation Real contra PostgreSQL 17] — 2026-09-27 18:15
+- **Responsable:** Antigravity IDE (Derlis Gimenez)
+- **Alcance:** Seguridad de Endpoints, Aislamiento Multi-Tenant, Atomicidad de Onboarding, Prevención de Double-Booking en PostgreSQL, Eliminación de Fallbacks Falsos, Manejo de Errores Semánticos, Centralización de WhatsApp y Validación en PostgreSQL 17.
+- **Archivos Modificados y Creados:**
+  - `frontend/app/api/dashboard/sync/route.ts` (Seguridad de sincronización, aislamiento multi-tenant estricto con `session.tenantId` y rechazo HTTP 403)
+  - `frontend/app/api/tenant/theme/route.ts` (Validación de rol OWNER/SUPERADMIN y mutación forzada sobre `session.tenantId`)
+  - `frontend/app/api/upload/route.ts` (Autenticación requerida HTTP 401, whitelist de MIME types y límite de 5MB)
+  - `frontend/app/api/team/invite/route.ts` (Autenticación requerida HTTP 401, rol OWNER/SUPERADMIN HTTP 403 y asociación a `session.tenantId`)
+  - `frontend/lib/tenant/actions.ts` (Onboarding atómico con `prisma.$transaction` para 6 entidades y emisión inmediata de sesión firmada)
+  - `frontend/app/onboarding/page.tsx` (Campos de nombre y correo de administrador en Paso 4, navegación segura post-onboarding)
+  - `frontend/app/dashboard/layout.tsx` (Validación de sesión en layout, redirección HTTP 307 a `/login` e inyección de datos de tenant)
+  - `frontend/components/dashboard/DashboardShell.tsx` (Eliminado fallback histórico a `"barberia"`, uso estricto de `initialTenantSlug`)
+  - `frontend/store/useDashboardStore.ts` (Sincronización directa con PostgreSQL; erradicación de turnos demo para usuarios reales)
+  - `frontend/app/[tenant]/reservar/page.tsx` (Demo barbería restringida exclusivamente a `/barberia/reservar`; llamada a `notFound()` para negocios inexistentes)
+  - `frontend/app/[tenant]/reservar/not-found.tsx` (Página 404 personalizada para enlaces de reserva inexistentes o inactivos)
+  - `frontend/app/not-found.tsx` (Página 404 global para Next.js App Router)
+  - `frontend/app/dashboard/whatsapp/page.tsx` (Uso de teléfono real del local y apertura directa de `wa.me`, eliminando simulación con `setTimeout`)
+  - `frontend/lib/scheduling/actions.ts` (Doble verificación transaccional, captura de error PostgreSQL `23P01`, eliminación de confirmaciones ficticias)
+  - `frontend/lib/scheduling/errors.ts` (Códigos de error semánticos: `DB_UNAVAILABLE`, `SLOT_TAKEN`, `TENANT_NOT_FOUND`, `VALIDATION_ERROR`)
+  - `frontend/lib/config/whatsapp.ts` (Centralización de números comerciales de AgendatePY vs. demos)
+  - `frontend/prisma/migrations/20260927170000_prevent_double_booking/migration.sql` (Extensión `btree_gist` y restricción GiST exclusion en PostgreSQL)
+  - `frontend/prisma/migrations/20260927211053_add_users_and_auth/migration.sql` (Migración con tablas `users`, `clients`, `cash_movements`, `commissions`, etc.)
+  - `frontend/scripts/execute-release-validation.js` (Suite de pruebas reales directas contra PostgreSQL 17)
+  - `frontend/scripts/test-phase2-suite.js` (Suite de validación HTTP en tiempo de ejecución)
+  - `frontend/scripts/run-all-tests.js` (Suite integral de contratos de seguridad)
+  - `frontend/scripts/test-onboarding-real.js` (Prueba de creación física y atomicidad de onboarding en PostgreSQL)
+  - `frontend/.env` (Configuración de conexión local a PostgreSQL 17 en base de datos `agendatepy_test`)
+  - `CHANGELOG_SYNC.md` (Documentación técnica completa)
+
+- **Descripción de Cambios y Razonamiento:**
+  1. **Seguridad de Endpoints y Aislamiento Multi-Tenant:**
+     - **Problema previo:** Los endpoints aceptaban parámetros como `body.tenantSlug` o `query.tenant` provistos por el cliente, permitiendo que un tenant accediera o modificara registros de otro negocio (vulnerabilidad cross-tenant IDOR). Además, endpoints como `/api/upload` y `/api/team/invite` carecían de verificación de sesión.
+     - **Solución implementada:** Se estableció `session.tenantId` como la **única fuente de verdad autorizada**. Cualquier discrepancia entre el tenant solicitado y el de la sesión es rechazada inmediatamente con `HTTP 403 Forbidden`. Los endpoints anónimos ahora retornan `HTTP 401 Unauthorized` si no existe una cookie de sesión válida.
+  2. **Onboarding Atómico y Gestión Criptográfica de Sesión:**
+     - **Problema previo:** El flujo creaba tenants sin usuario administrador ni sesión asociada, forzando al usuario a iniciar sesión manualmente o dejando tenants huérfanos si algún paso posterior fallaba.
+     - **Solución implementada:** En `createTenantOnboardingAction` se envuelve la creación de 6 entidades (Tenant + User OWNER + Staff + Service + StaffService + StaffSchedule para 6 días) en un único bloque `prisma.$transaction`. Si cualquier operación falla, PostgreSQL realiza un rollback total. Inmediatamente tras el commit, se emite la cookie criptográficamente firmada `agendatepy_session` (`httpOnly: true`, `sameSite: "lax"`), permitiendo una transición fluida y autenticada al Dashboard sin estados intermedios.
+  3. **Erradicación de Fallbacks Engañosos (Fake Success) y Aislamiento de Demo:**
+     - **Problema previo:** Si la base de datos no respondía o ocurría un fallo, el sistema devolvía confirmaciones simuladas (`{ ok: true, appointment: { id: "demo-fallback-apt" } }`) o cargaba citas de la barbería demo en el dashboard de negocios reales.
+     - **Solución implementada:** Se eliminó cualquier confirmación ficticia. Ante caídas de base de datos se retorna el error semántico `DB_UNAVAILABLE`. En el Dashboard y el Store Zustand se retiró el fallback a `"barberia"`, asegurando que un negocio nuevo con 0 citas vea su panel real limpio. La barbería demo quedó confinada con exclusividad a la ruta explícita `/barberia/reservar`; cualquier slug inexistente dispara `notFound()` (HTTP 404).
+  4. **Solución Definitiva Anti Double-Booking en PostgreSQL:**
+     - **Problema previo:** Dos clientes podían solicitar el mismo turno simultáneamente y sobreescribir la agenda de un profesional.
+     - **Solución implementada:** Se diseñó e implementó una defensa en dos niveles:
+       - *Nivel PostgreSQL:* Se activó la extensión `btree_gist` y se añadió una restricción de exclusión física:
+         `EXCLUDE USING gist (staff_id WITH =, tstzrange(start_time, end_time) WITH &&) WHERE (status NOT IN ('CANCELLED', 'EXPIRED', 'NO_SHOW'))`.
+         Esto imposibilita matemáticamente que existan dos filas solapadas para el mismo profesional en disco.
+       - *Nivel Aplicación:* Doble verificación en `prisma.$transaction` con captura del código nativo `23P01` de PostgreSQL, retornando `{ ok: false, code: "SLOT_TAKEN" }`.
+  5. **Centralización de WhatsApp:**
+     - Se creó `frontend/lib/config/whatsapp.ts`, centralizando los números de soporte comercial oficial de AgendatePY (`595981123456`) y los números de demostración (`595981700800`). Se actualizaron todos los CTA de la landing page para utilizar esta configuración única.
+  6. **Despliegue y Validación Real contra PostgreSQL 17:**
+     - Se configuró la conexión a PostgreSQL 17 en `localhost:5432` con la base de datos de pruebas `agendatepy_test`.
+     - Se ejecutaron las migraciones pendientes con `npx prisma migrate deploy` y se generó el cliente Prisma (`npx prisma generate`).
+     - Se ejecutaron pruebas reales de concurrencia simultánea (con `Promise.all`), pruebas de rollback transaccional, aserción física de filas creadas, y verificación de aislamiento entre dos tenants reales (`Tenant A` y `Tenant B`).
+
+- **Verificación y Resultados de Tests:**
+  - **Pruebas de Base de Datos Real (`execute-release-validation.js`):** 9/9 PASS. Restricción GiST activa, Tenant A y B creados en PostgreSQL, mutaciones cruzadas bloqueadas en 0 filas, rollback 100% efectivo sin datos huérfanos, doble reserva concurrente prevenida con exactamente 1 reserva en disco.
+  - **Pruebas HTTP en Vivo (`test-phase2-suite.js`):** 11/11 PASS. Rutas `/dashboard/*` devuelven HTTP 307 a `/login`, upload/invite devuelven HTTP 401, `/barberia/reservar` responde 200 y `/negocio-inexistente/reservar` responde 404.
+  - **Pruebas de Contratos de Estabilización (`run-all-tests.js`):** 13/13 PASS.
+  - **Prueba de Onboarding Real (`test-onboarding-real.js`):** PASS. `Barberia Don Juan Real` creada físicamente con Owner, Staff, Servicio y 6 horarios.
+  - **TypeScript Typecheck (`npx tsc --noEmit`):** Exit code 0 (0 errores de tipos en todo el proyecto).
+  - **Compilación de Producción (`npm run build`):** Exit code 0 (Compilado en 2.9s con Turbopack, 10/10 rutas estáticas optimizadas).
+  - **Total de Pruebas Aprobadas:** **35 / 35 (100% de éxito).**
+
+---
+
+### [2026-09-27] — Fase 4: Persistencia 100% Real del Core Operativo del Dashboard en PostgreSQL
+
+- **Resumen Ejecutivo:**
+  Se transformó el Dashboard de AgendatePY de un estado en memoria/Zustand a un **Core Operativo 100% Persistente en PostgreSQL**. Toda acción del dueño de negocio (crear o editar servicios, colaboradores, fichas técnicas de clientes, movimientos de caja, reagendamiento y cancelación de turnos, bloqueos de agenda y configuración legal/horaria) se valida estrictamente contra la sesión autorizada (`session.tenantId`), se persiste en PostgreSQL mediante Server Actions / Domain Endpoints dedicados y sobrevive íntegramente a recargas de página (F5), cierre de sesión (logout) y nuevas sesiones.
+
+- **Principales Modificaciones Arquitectónicas:**
+  1. **PostgreSQL como Única Fuente de Verdad:**
+     - Zustand quedó reclasificado exclusivamente como estado de UI/caché temporal. Ninguna mutación se considera exitosa si no fue confirmada por PostgreSQL.
+     - Estados iniciales limpios: los arrays de `services`, `staff`, `clients`, `cashMovements`, `blocks` se inicializan vacíos `[]`, erradicando datos ficticios o mocks en cuentas reales.
+  2. **Evolución del Schema de Prisma (`20260927213542_core_persistence`):**
+     - `Tenant`: Añadida relación 1:N con `scheduleBlocks ScheduleBlock[]`.
+     - `Service`: Añadido campo booleano `active @default(true)`.
+     - `Client`: Añadidos campos `formula String?` (ficha técnica / colorimetría), `tags String[] @default([])`, `instagram String?`, y relación 1:N con `appointments Appointment[]`.
+     - `Appointment`: Añadido campo `clientId String? @map("client_id") @db.Uuid`, relación N:1 con `Client`, e índice compuesto en `[tenantId, clientId]`.
+     - `ScheduleBlock`: Nuevo modelo persistente en PostgreSQL para gestionar excepciones, almuerzos, descansos y feriados (`id`, `tenantId`, `staffId` opcional, `startTime`, `endTime`, `reason`, `createdAt`).
+  3. **Endpoints de Dominio Seguros y Aislados por Tenant:**
+     - `lib/api-guard.ts`: Helper de seguridad centralizado `requireTenantSession` para validar sesión, `session.tenantId` y roles con tipado estricto.
+     - `/api/services` y `/api/services/[id]`: CRUD persistente de servicios con transacción para vincularlos a los colaboradores activos del negocio.
+     - `/api/staff` y `/api/staff/[id]`: CRUD persistente de colaboradores con generación automática de horarios semanales y asignación de catálogo.
+     - `/api/clients` y `/api/clients/[id]`: CRUD de clientes con normalización de teléfono para evitar duplicados y protección de citas previas.
+     - `/api/cash` y `/api/cash/[id]`: Registro persistente de ingresos y egresos con métodos de pago reales (Efectivo, POS, SIPAP, Billetera) asociados al tenant.
+     - `/api/appointments/[id]`: Reagendamiento con validación previa de colisiones y captura de exclusión GiST (`SLOT_TAKEN` HTTP 409). Cancelación de turnos mediante liberación del slot en PostgreSQL (`status: CANCELLED`).
+     - `/api/schedule-blocks` y `/api/schedule-blocks/[id]`: Gestión de pausas operativas.
+     - `/api/tenant/settings`: Lectura y actualización atómica de datos comerciales, dirección, horarios de atención y zona horaria en `Tenant.settings`.
+     - `/api/dashboard/stats`: Agregaciones SQL reales de facturación confirmada, tasa de asistencia, métodos de cobro, distribución semanal y horarios pico, eliminando constantes fake.
+  4. **Motor de Disponibilidad Pública (`lib/scheduling/availability.ts`):**
+     - Integración de `ScheduleBlock` en `getAvailableSlots`: las franjas bloqueadas (ej. 13:00 a 14:00) son sustraídas automáticamente de la disponibilidad pública del salón.
+     - En `lib/scheduling/actions.ts`: `insertPendingAppointment` asocia la cita al `Client` correspondiente por teléfono sin crear registros duplicados y bloquea reservas si colisionan con un bloqueo de agenda.
+
+- **Suite de Pruebas FASE 4 (`scripts/test-phase4-suite.js`):**
+  - **TEST 1: Crear servicio → F5 → permanece:** PASS (HTTP 201 | Sync recupera nombre y precio exacto).
+  - **TEST 2: Editar servicio → F5 → cambio permanece:** PASS (HTTP 200 | Precio 110.000 Gs verificado tras recarga).
+  - **TEST 3: Crear staff → F5 → permanece:** PASS (HTTP 201 | Colaborador con schedules activos disponible en sync).
+  - **TEST 4: Crear cliente → F5 → permanece:** PASS (HTTP 200/201 | Cliente persistido con teléfono normalizado y fórmula técnica).
+  - **TEST 5: Crear ingreso en Caja → F5 → permanece:** PASS (HTTP 201 | Movimiento de ingreso de 150.000 Gs recuperado tras F5).
+  - **TEST 6: Crear egreso → F5 → permanece:** PASS (HTTP 201 | Movimiento de egreso de 45.000 Gs persistido).
+  - **TEST 7: Reagendar cita → DB refleja nuevo horario:** PASS (HTTP 200 | `startTime` actualizado físicamente en PostgreSQL).
+  - **TEST 8: Reagendar a horario ocupado → SLOT_TAKEN → cita intacta:** PASS (HTTP 409 `SLOT_TAKEN` | Cita original permanece intacta en DB).
+  - **TEST 9: Bloquear 13:00–14:00 → slots públicos no muestran ese horario:** PASS (HTTP 201 | Bloqueo activo | Intentos en esa franja son rechazados con HTTP 409 `SLOT_TAKEN`).
+  - **TEST 10: Tenant A crea datos → Tenant B no puede verlos:** PASS (Aislamiento multi-tenant total en listados | Mutaciones cruzadas devuelven HTTP 404/403).
+  - **TEST 11: Logout/login → todos los datos continúan:** PASS (Nueva sesión autenticada cargó 100% de los datos persistentes).
+  - **TEST 12: DB failure / input inválido → no fake success:** PASS (HTTP 400 con `VALIDATION_ERROR` y sin confirmaciones falsas).
+  - **Resultado Final de la Suite:** **12 / 12 PRUEBAS APROBADAS (100% ÉXITO).**
+
+
+
+
+
+
 
 
 

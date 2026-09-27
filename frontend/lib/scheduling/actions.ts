@@ -44,22 +44,31 @@ export async function getAvailableSlotsAction(
     const now = Date.now();
     return slots.filter((slot) => new Date(slot.start).getTime() > now);
   } catch (error) {
-    console.warn(`[getAvailableSlotsAction] Generando slots demo para "${tenantSlug}":`, error);
-    const demoTimes = [
-      "09:00", "09:45", "10:30", "11:15", "14:00", "14:45", "15:30", "16:15", "17:00", "17:45", "18:30"
-    ];
-    const now = Date.now();
-    return demoTimes
-      .map((t) => {
-        const start = new Date(`${date}T${t}:00-04:00`);
-        const end = new Date(start.getTime() + 45 * 60_000);
-        return {
-          start: start.toISOString(),
-          end: end.toISOString(),
-          staffIds: ["a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"],
-        };
-      })
-      .filter((slot) => new Date(slot.start).getTime() > now);
+    if (tenantSlug === "barberia") {
+      console.warn(`[getAvailableSlotsAction] Generando slots demo para "${tenantSlug}":`, error);
+      const demoTimes = [
+        "09:00", "09:45", "10:30", "11:15", "14:00", "14:45", "15:30", "16:15", "17:00", "17:45", "18:30"
+      ];
+      const now = Date.now();
+      return demoTimes
+        .map((t) => {
+          const start = new Date(`${date}T${t}:00-04:00`);
+          const end = new Date(start.getTime() + 45 * 60_000);
+          return {
+            start: start.toISOString(),
+            end: end.toISOString(),
+            staffIds: ["a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"],
+          };
+        })
+        .filter((slot) => new Date(slot.start).getTime() > now);
+    }
+
+    console.error(`[getAvailableSlotsAction] Error al consultar disponibilidad para "${tenantSlug}":`, error);
+    throw new SchedulingError(
+      "DB_UNAVAILABLE",
+      "No pudimos consultar los horarios disponibles en este momento. Por favor intentá más tarde.",
+      503
+    );
   }
 }
 
@@ -97,8 +106,15 @@ export async function createPendingAppointment(
     if (error instanceof SchedulingError) {
       return { ok: false, message: error.message };
     }
-    console.warn("[createPendingAppointment] Base de datos no disponible, generando confirmación demo:", error);
-    return { ok: true, appointmentId: "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d" };
+    if (input.tenantSlug === "barberia") {
+      console.warn("[createPendingAppointment] Base de datos no disponible para demo, usando confirmación demo");
+      return { ok: true, appointmentId: "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d" };
+    }
+    console.error("[createPendingAppointment] Error persistiendo cita en DB:", error);
+    return {
+      ok: false,
+      message: "No se pudo registrar la reserva en la base de datos. Por favor intentá nuevamente.",
+    };
   }
 }
 
@@ -154,6 +170,33 @@ async function insertPendingAppointment(
   for (const staffId of match.staffIds) {
     try {
       const created = await prisma.$transaction(async (tx) => {
+        // Doble verificación dentro de la transacción para descartar colisiones activas
+        const existingOverlap = await tx.appointment.findFirst({
+          where: {
+            staffId,
+            status: { notIn: ["CANCELLED", "EXPIRED", "NO_SHOW"] },
+            startTime: { lt: end },
+            endTime: { gt: start },
+          },
+        });
+
+        if (existingOverlap) {
+          throw new SchedulingError("SLOT_TAKEN", "appointments_no_staff_overlap", 409);
+        }
+
+        // Verificar si el horario colisiona con un bloqueo operativo
+        const existingBlock = await tx.scheduleBlock.findFirst({
+          where: {
+            tenantId: tenant.id,
+            OR: [{ staffId }, { staffId: null }],
+            startTime: { lt: end },
+            endTime: { gt: start },
+          },
+        });
+        if (existingBlock) {
+          throw new SchedulingError("SLOT_TAKEN", "Horario bloqueado", 409);
+        }
+
         await tx.appointment.updateMany({
           where: {
             tenantId: tenant.id,
@@ -165,13 +208,39 @@ async function insertPendingAppointment(
           },
           data: { status: "EXPIRED" },
         });
+
+        // Buscar o crear cliente del tenant por teléfono para evitar duplicados
+        let client = await tx.client.findFirst({
+          where: { tenantId: tenant.id, phone: phoneDigits },
+        });
+        if (!client) {
+          client = await tx.client.create({
+            data: {
+              tenantId: tenant.id,
+              name: clientName,
+              phone: phoneDigits,
+              lastVisit: start,
+              tags: ["Nuevo"],
+            },
+          });
+        } else {
+          await tx.client.update({
+            where: { id: client.id },
+            data: {
+              lastVisit: start,
+              name: client.name || clientName,
+            },
+          });
+        }
+
         return tx.appointment.create({
           data: {
             tenantId: tenant.id,
             staffId,
             serviceId: service.id,
+            clientId: client.id,
             clientName,
-            clientPhone,
+            clientPhone: phoneDigits,
             startTime: start,
             endTime: end,
             status: "PENDING_ACTION",
@@ -218,6 +287,9 @@ async function resolveTenant(tenantSlug: string) {
 function isStaffOverlap(error: unknown): boolean {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     return error.code === "P2002" || error.code === "P2034";
+  }
+  if (error instanceof SchedulingError && error.message.includes("appointments_no_staff_overlap")) {
+    return true;
   }
   const message = error instanceof Error ? error.message : "";
   return message.includes("23P01") || message.includes("appointments_no_staff_overlap");

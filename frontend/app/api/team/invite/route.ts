@@ -1,13 +1,48 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { ok: false, error: "No autorizado. Inicie sesión para enviar invitaciones." },
+        { status: 401 }
+      );
+    }
+
+    if (session.role !== "OWNER" && session.role !== "SUPERADMIN") {
+      return NextResponse.json(
+        { ok: false, error: "Permisos insuficientes. Solo administradores pueden invitar colaboradores." },
+        { status: 403 }
+      );
+    }
+
+    if (!session.tenantId) {
+      return NextResponse.json(
+        { ok: false, error: "No tienes un negocio vinculado a tu cuenta." },
+        { status: 400 }
+      );
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { id: true, name: true, subdomain: true },
+    });
+
+    if (!tenant) {
+      return NextResponse.json(
+        { ok: false, error: "Negocio no encontrado." },
+        { status: 404 }
+      );
+    }
+
     const body = await request.json();
-    const { email, name, role, permissions, businessName, slug } = body;
+    const { email, name, role } = body;
 
     if (!email || !email.includes("@")) {
       return NextResponse.json(
@@ -25,12 +60,13 @@ export async function POST(request: NextRequest) {
     const proto = isLocal ? "http" : "https";
     const appUrl = `${proto}://${host}`;
 
+    // La URL de login se asocia exclusivamente al slug real del tenant verificado
     const loginUrl = `${appUrl}/login?email=${encodeURIComponent(
       email
-    )}&invite=team&tenant=${encodeURIComponent(slug || "barberia")}`;
+    )}&invite=team&tenant=${encodeURIComponent(tenant.subdomain)}`;
 
     const roleName = role || "Colaborador";
-    const localName = businessName || "AgendatePY";
+    const localName = tenant.name;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -62,10 +98,10 @@ export async function POST(request: NextRequest) {
             <strong>Correo autorizado:</strong> ${email}
           </div>
 
-          <p>Para ingresar a ver tu agenda, citas y turnos asignados, iniciá sesión directamente con tu cuenta de Google:</p>
+          <p>Para ingresar a ver tu agenda, citas y turnos asignados, iniciá sesión directamente:</p>
 
           <div style="text-align: center; margin: 28px 0;">
-            <a href="${loginUrl}" class="btn-google">Iniciar Sesión con Google</a>
+            <a href="${loginUrl}" class="btn-google">Acceder a mi Cuenta</a>
           </div>
 
           <p style="font-size: 12px; color: #64748b;">

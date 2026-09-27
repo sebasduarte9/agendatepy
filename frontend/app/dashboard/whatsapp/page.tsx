@@ -96,11 +96,11 @@ export default function WhatsAppHubPage() {
       pushToast("error", "Ingresá un número de teléfono");
       return;
     }
-    setSendingTest(true);
-    setTimeout(() => {
-      setSendingTest(false);
-      pushToast("success", `¡Mensaje de prueba enviado exitosamente a ${testPhone}!`);
-    }, 1000);
+    const cleanPhone = testPhone.replace(/\D/g, "");
+    const previewMessage = currentTemplate ? getPreviewText(currentTemplate.body) : "";
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(previewMessage)}`;
+    window.open(waUrl, "_blank");
+    pushToast("success", "Abriendo WhatsApp para despachar mensaje de prueba");
   }
 
   return (
@@ -401,7 +401,7 @@ export default function WhatsAppHubPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Número asociado:</span>
                     <strong className="text-slate-900 dark:text-white font-mono text-sm">
-                      +595 981 123 456
+                      {business.whatsappNumber || business.phone || "Sin vincular"}
                     </strong>
                   </div>
                   <div className="flex items-center justify-between">

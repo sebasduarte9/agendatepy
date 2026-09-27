@@ -43,7 +43,7 @@ export default function Features() {
   return (
     <section
       id="caracteristicas"
-      className="relative mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20 scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+      className="relative mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:py-24 scroll-mt-24"
     >
       {/* Background glow halos */}
       <div className="pointer-events-none absolute left-1/2 top-10 -translate-x-1/2 h-96 w-96 rounded-full bg-brand/10 blur-3xl opacity-70" />

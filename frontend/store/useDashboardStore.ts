@@ -841,38 +841,38 @@ type DashboardState = {
   setCalendarDate: (isoDate: string) => void;
   setCalendarView: (view: CalendarView) => void;
   setSelectedStaffId: (id: string | "all") => void;
-  updateBusiness: (patch: Partial<BusinessProfile>) => void;
-  addAppointment: (item: Appointment) => void;
-  cancelAppointment: (id: string) => void;
-  addBlock: (block: Omit<TimeBlock, "id">) => void;
-  removeBlock: (id: string) => void;
+  updateBusiness: (patch: Partial<BusinessProfile>) => Promise<any> | void;
+  addAppointment: (item: Appointment) => Promise<any> | void;
+  cancelAppointment: (id: string) => Promise<any> | void;
+  addBlock: (block: Omit<TimeBlock, "id">) => Promise<any> | void;
+  removeBlock: (id: string) => Promise<any> | void;
   setReceiptStatus: (id: string, status: Receipt["status"]) => void;
-  toggleStaff: (id: string) => void;
-  addStaff: (item: Omit<StaffMember, "id">) => void;
-  updateStaff: (id: string, patch: Partial<StaffMember>) => void;
-  deleteStaff: (id: string) => void;
-  updateStaffCommission: (id: string, percentage: number) => void;
-  addService: (item: Omit<ServiceItem, "id">) => void;
-  updateService: (id: string, patch: Partial<ServiceItem>) => void;
-  removeService: (id: string) => void;
+  toggleStaff: (id: string) => Promise<any> | void;
+  addStaff: (item: Omit<StaffMember, "id">) => Promise<any> | void;
+  updateStaff: (id: string, patch: Partial<StaffMember>) => Promise<any> | void;
+  deleteStaff: (id: string) => Promise<any> | void;
+  updateStaffCommission: (id: string, percentage: number) => Promise<any> | void;
+  addService: (item: Omit<ServiceItem, "id">) => Promise<any> | void;
+  updateService: (id: string, patch: Partial<ServiceItem>) => Promise<any> | void;
+  removeService: (id: string) => Promise<any> | void;
   addProduct: (item: Omit<ProductItem, "id">) => void;
   updateProduct: (id: string, patch: Partial<ProductItem>) => void;
   deleteProduct: (id: string) => void;
   updateProductStock: (id: string, delta: number) => void;
-  addClient: (client: Omit<Client, "id">) => void;
-  updateClient: (id: string, patch: Partial<Client>) => void;
-  deleteClient: (id: string) => void;
+  addClient: (client: Omit<Client, "id">) => Promise<any> | void;
+  updateClient: (id: string, patch: Partial<Client>) => Promise<any> | void;
+  deleteClient: (id: string) => Promise<any> | void;
   updateLoyalty: (patch: Partial<LoyaltySettings>) => void;
   addClientLoyaltyPoint: (clientId: string) => void;
   redeemClientReward: (clientId: string) => void;
   updateSipap: (patch: Partial<SipapConfig>) => void;
   updateEvolutionApi: (patch: Partial<EvolutionApiConfig>) => void;
-  addCashMovement: (item: Omit<CashMovement, "id">) => void;
-  deleteCashMovement: (id: string) => void;
+  addCashMovement: (item: Omit<CashMovement, "id">) => Promise<any> | void;
+  deleteCashMovement: (id: string) => Promise<any> | void;
   currentUserRole: UserRole;
   currentStaffId?: string;
   setCurrentUserRole: (role: UserRole, staffId?: string) => void;
-  updateAppointment: (id: string, patch: Partial<Appointment>) => void;
+  updateAppointment: (id: string, patch: Partial<Appointment>) => Promise<any> | void;
   updateWhatsAppTemplate: (id: string, body: string) => void;
   toggleWhatsAppTemplate: (id: string) => void;
   pushToast: (type: "success" | "error", message: string) => void;
@@ -929,26 +929,17 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     tiktokPixel: "",
     openingCash: 300000,
   },
-  staff,
-  services,
+  staff: [],
+  services: [],
   products: initialProducts,
-  appointments,
-  clients: initialClients,
-  cashMovements: initialCashMovements,
+  appointments: [],
+  clients: [],
+  cashMovements: [],
   whatsappTemplates: initialWhatsAppTemplates,
   loyalty: initialLoyalty,
   sipap: initialSipap,
   evolutionApi: initialEvolutionApi,
-  blocks: [
-    {
-      id: "bl-1",
-      staffId: "st-marcos",
-      date: "2026-09-23",
-      start: "13:00",
-      end: "14:30",
-      reason: "Almuerzo y descanso",
-    },
-  ],
+  blocks: [],
   receipts: [
     {
       id: "rc-1",
@@ -986,44 +977,171 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setCalendarDate: (isoDate) => set({ calendarDate: isoDate }),
   setCalendarView: (view) => set({ calendarView: view }),
   setSelectedStaffId: (id) => set({ selectedStaffId: id }),
-  updateBusiness: (patch) =>
-    set({ business: { ...get().business, ...patch } }),
-  syncFromDatabase: async (tenantSlug = "barberia") => {
+  updateBusiness: async (patch) => {
+    set({ business: { ...get().business, ...patch } });
     try {
-      const res = await fetch(`/api/dashboard/sync?tenant=${tenantSlug}`);
+      const res = await fetch("/api/tenant/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      return data.ok;
+    } catch (err) {
+      console.error("Error syncing business settings to DB:", err);
+      return false;
+    }
+  },
+  syncFromDatabase: async (tenantSlug?: string) => {
+    try {
+      const url = tenantSlug
+        ? `/api/dashboard/sync?tenant=${encodeURIComponent(tenantSlug)}`
+        : `/api/dashboard/sync`;
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
-      if (data.ok && Array.isArray(data.appointments)) {
-        set((state) => {
-          const map = new Map<string, Appointment>();
-          state.appointments.forEach((a) => map.set(a.id, a));
-          data.appointments.forEach((a: Appointment) => map.set(a.id, a));
-          return { appointments: Array.from(map.values()) };
-        });
-      }
-      if (data.ok && Array.isArray(data.products) && data.products.length > 0) {
-        set({ products: data.products });
-      }
+      if (!data.ok) return;
+
+      set((state) => {
+        const nextState: Partial<DashboardState> = {};
+
+        if (data.tenant) {
+          const t = data.tenant;
+          nextState.business = {
+            ...state.business,
+            name: t.name || state.business.name,
+            slug: t.slug || state.business.slug,
+            timezone: t.timezone || state.business.timezone,
+            phone: t.phone || state.business.phone,
+            whatsappNumber: t.whatsappNumber || state.business.whatsappNumber,
+            address: t.address || state.business.address,
+            openingCash: t.openingCash ?? state.business.openingCash,
+          };
+        }
+
+        if (Array.isArray(data.services)) {
+          nextState.services = data.services.map((s: { id: string; name: string; durationMin?: number; price?: number; active?: boolean }) => ({
+            id: s.id,
+            name: s.name,
+            category: "Peluquería",
+            durationMin: s.durationMin ?? 45,
+            price: s.price ?? 80000,
+            description: "",
+            image: "scissors",
+            active: s.active ?? true,
+          }));
+        }
+
+        if (Array.isArray(data.staff)) {
+          nextState.staff = data.staff.map((st: { id: string; name: string; active?: boolean; commissionPercentage?: number }) => ({
+            id: st.id,
+            name: st.name,
+            role: "Colaborador",
+            systemRole: "barbero",
+            description: "",
+            avatar: st.name.slice(0, 2).toUpperCase(),
+            color: "#4f46e5",
+            active: st.active ?? true,
+            hours: "08:00 – 20:00",
+            commissionPercentage: st.commissionPercentage ?? 50,
+          }));
+        }
+
+        if (Array.isArray(data.clients)) {
+          nextState.clients = data.clients.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            email: c.email || "",
+            notes: c.notes || "",
+            formula: c.formula || "",
+            tags: Array.isArray(c.tags) && c.tags.length > 0 ? c.tags : ["Nuevo"],
+            instagram: c.instagram || "",
+            totalVisits: c.totalVisits ?? 0,
+            totalSpent: c.totalSpent ?? 0,
+            lastVisit: c.lastVisit || new Date().toISOString(),
+            loyaltyPoints: c.loyaltyPoints ?? 0,
+            loyaltyRedeemed: 0,
+          }));
+        }
+
+        if (Array.isArray(data.cashMovements)) {
+          nextState.cashMovements = data.cashMovements.map((cm: any) => ({
+            id: cm.id,
+            type: cm.type,
+            amount: cm.amount,
+            method: cm.method,
+            concept: cm.concept,
+            date: cm.date,
+            category: cm.category,
+          }));
+        }
+
+        if (Array.isArray(data.scheduleBlocks)) {
+          const tz = (nextState.business?.timezone || state.business.timezone || "America/Asuncion");
+          nextState.blocks = data.scheduleBlocks.map((b: any) => {
+            const bDate = formatInTimeZone(b.startTime, tz, "yyyy-MM-dd");
+            const bStart = formatInTimeZone(b.startTime, tz, "HH:mm");
+            const bEnd = formatInTimeZone(b.endTime, tz, "HH:mm");
+            return {
+              id: b.id,
+              staffId: b.staffId || undefined,
+              date: bDate,
+              start: bStart,
+              end: bEnd,
+              reason: b.reason || "Bloqueo operativo",
+            };
+          });
+        }
+
+        if (Array.isArray(data.appointments)) {
+          nextState.appointments = data.appointments;
+        }
+
+        if (Array.isArray(data.products)) {
+          nextState.products = data.products;
+        }
+
+        return nextState;
+      });
     } catch (err) {
       console.error("Error al sincronizar con PostgreSQL:", err);
     }
   },
-  updateAppointment: (id, patch) => {
-    set({
-      appointments: get().appointments.map((a) =>
-        a.id === id ? { ...a, ...patch } : a
-      ),
-    });
-    if (patch.status) {
-      fetch("/api/dashboard/sync", {
-        method: "POST",
+  updateAppointment: async (id, patch) => {
+    const prev = get().appointments;
+    const existing = prev.find((a) => a.id === id);
+    if (!existing) return false;
+
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "update_status",
-          tenantSlug: get().business.slug || "barberia",
-          data: { appointmentId: id, status: patch.status },
+          startTime: patch.start,
+          endTime: patch.end,
+          staffId: patch.staffId,
+          status: patch.status,
         }),
-      }).catch((e) => console.error("Error updating appointment status in DB:", e));
+      });
+      const data = await res.json();
+      if (res.status === 409 || data.error === "SLOT_TAKEN") {
+        get().pushToast("error", data.message || "Horario ocupado. El profesional ya tiene un turno en ese intervalo.");
+        return false;
+      }
+      if (!data.ok) {
+        get().pushToast("error", data.message || "Error al reprogramar la cita.");
+        return false;
+      }
+
+      set({
+        appointments: prev.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+      });
+      return true;
+    } catch (err) {
+      console.error("Error updating appointment:", err);
+      get().pushToast("error", "Error de comunicación con el servidor al reprogramar.");
+      return false;
     }
   },
   addAppointment: (item) => {
@@ -1081,32 +1199,89 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     }
   },
-  cancelAppointment: (id) => {
+  cancelAppointment: async (id) => {
+    const prev = get().appointments;
     set({
-      appointments: get().appointments.map((item) =>
+      appointments: prev.map((item) =>
         item.id === id ? { ...item, status: "cancelled" } : item,
       ),
     });
-    fetch("/api/dashboard/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "update_status",
-        tenantSlug: get().business.slug || "barberia",
-        data: { appointmentId: id, status: "cancelled" },
-      }),
-    }).catch((e) => console.error("Error cancelling appointment in DB:", e));
+    try {
+      const res = await fetch(`/api/appointments/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ appointments: prev });
+        get().pushToast("error", data.message || "Error al cancelar turno en PostgreSQL.");
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error("Error cancelling appointment in DB:", e);
+      return false;
+    }
   },
-  addBlock: (block) => {
-    const parts = splitOvernightBlock(block);
-    const created = parts.map((part, index) => ({
-      ...part,
-      id: `bl-${Date.now()}-${index}`,
-    }));
-    set({ blocks: [...get().blocks, ...created] });
+  addBlock: async (block) => {
+    try {
+      const res = await fetch("/api/schedule-blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staffId: block.staffId === "all" ? null : block.staffId,
+          date: block.date,
+          start: block.start,
+          end: block.end,
+          reason: block.reason,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.block) {
+        const tz = get().business.timezone || "America/Asuncion";
+        const b = data.block;
+        const bDate = formatInTimeZone(b.startTime, tz, "yyyy-MM-dd");
+        const bStart = formatInTimeZone(b.startTime, tz, "HH:mm");
+        const bEnd = formatInTimeZone(b.endTime, tz, "HH:mm");
+        set({
+          blocks: [
+            ...get().blocks,
+            {
+              id: b.id,
+              staffId: b.staffId || undefined,
+              date: bDate,
+              start: bStart,
+              end: bEnd,
+              reason: b.reason,
+            },
+          ],
+        });
+        return true;
+      } else {
+        get().pushToast("error", data.message || "Error al guardar bloqueo de horario.");
+        return false;
+      }
+    } catch (err) {
+      console.error("Error creating block in DB:", err);
+      get().pushToast("error", "Error de conexión al guardar bloqueo.");
+      return false;
+    }
   },
-  removeBlock: (id) =>
-    set({ blocks: get().blocks.filter((item) => item.id !== id) }),
+  removeBlock: async (id) => {
+    const prev = get().blocks;
+    set({ blocks: prev.filter((item) => item.id !== id) });
+    try {
+      const res = await fetch(`/api/schedule-blocks/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ blocks: prev });
+        get().pushToast("error", data.message || "Error al eliminar bloqueo en PostgreSQL.");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ blocks: prev });
+      get().pushToast("error", "Error de conexión al eliminar bloqueo.");
+      return false;
+    }
+  },
   setReceiptStatus: (id, status) => {
     const receipts = get().receipts.map((item) =>
       item.id === id ? { ...item, status } : item,
@@ -1121,42 +1296,182 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     });
     set({ receipts, appointments });
   },
-  toggleStaff: (id) =>
-    set({
-      staff: get().staff.map((item) =>
-        item.id === id ? { ...item, active: !item.active } : item,
-      ),
-    }),
-  addStaff: (item) => {
-    const id = `st-${Date.now()}`;
-    set({ staff: [...get().staff, { ...item, id }] });
+  toggleStaff: async (id) => {
+    const target = get().staff.find((s) => s.id === id);
+    if (!target) return;
+    return get().updateStaff(id, { active: !target.active });
   },
-  updateStaff: (id, patch) =>
+  addStaff: async (item) => {
+    try {
+      const res = await fetch("/api/staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: item.name,
+          role: item.role,
+          commissionPercentage: item.commissionPercentage,
+          color: item.color,
+          active: item.active,
+          email: (item as any).email,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.staff) {
+        set({
+          staff: [
+            ...get().staff,
+            {
+              id: data.staff.id,
+              name: data.staff.name,
+              role: data.staff.role || item.role,
+              systemRole: item.systemRole || "barbero",
+              description: item.description || "",
+              avatar: item.avatar || data.staff.name.slice(0, 2).toUpperCase(),
+              color: data.staff.color || item.color || "#4f46e5",
+              active: data.staff.active ?? true,
+              hours: item.hours || "08:00 – 20:00",
+              commissionPercentage: data.staff.commissionPercentage ?? 50,
+            },
+          ],
+        });
+        return true;
+      } else {
+        get().pushToast("error", data.message || "Error al crear colaborador");
+        return false;
+      }
+    } catch (err) {
+      console.error("Error adding staff to DB:", err);
+      get().pushToast("error", "Error de conexión al agregar colaborador");
+      return false;
+    }
+  },
+  updateStaff: async (id, patch) => {
+    const prev = get().staff;
     set({
-      staff: get().staff.map((item) =>
-        item.id === id ? { ...item, ...patch } : item,
-      ),
-    }),
-  deleteStaff: (id) =>
-    set({ staff: get().staff.filter((item) => item.id !== id) }),
+      staff: prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    });
+    try {
+      const res = await fetch(`/api/staff/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ staff: prev });
+        get().pushToast("error", data.message || "Error al actualizar colaborador");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ staff: prev });
+      get().pushToast("error", "Error de conexión al actualizar colaborador");
+      return false;
+    }
+  },
+  deleteStaff: async (id) => {
+    const prev = get().staff;
+    set({ staff: prev.filter((item) => item.id !== id) });
+    try {
+      const res = await fetch(`/api/staff/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ staff: prev });
+        get().pushToast("error", data.message || "Error al eliminar colaborador");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ staff: prev });
+      get().pushToast("error", "Error de conexión al eliminar colaborador");
+      return false;
+    }
+  },
   updateStaffCommission: (id, percentage) =>
-    set({
-      staff: get().staff.map((item) =>
-        item.id === id ? { ...item, commissionPercentage: percentage } : item,
-      ),
-    }),
-  addService: (item) => {
-    const id = `sv-${Date.now()}`;
-    set({ services: [...get().services, { ...item, id }] });
+    get().updateStaff(id, { commissionPercentage: percentage }),
+  addService: async (item) => {
+    try {
+      const res = await fetch("/api/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: item.name,
+          category: item.category,
+          durationMin: item.durationMin,
+          price: item.price,
+          description: item.description,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.service) {
+        set({
+          services: [
+            ...get().services,
+            {
+              id: data.service.id,
+              name: data.service.name,
+              category: data.service.category || item.category || "Peluquería",
+              durationMin: data.service.durationMin,
+              price: data.service.price,
+              description: data.service.description || item.description || "",
+              image: item.image || "scissors",
+              active: data.service.active ?? true,
+            },
+          ],
+        });
+        return true;
+      } else {
+        get().pushToast("error", data.message || "Error al crear servicio");
+        return false;
+      }
+    } catch (err) {
+      console.error("Error adding service to DB:", err);
+      get().pushToast("error", "Error de conexión al agregar servicio");
+      return false;
+    }
   },
-  updateService: (id, patch) =>
+  updateService: async (id, patch) => {
+    const prev = get().services;
     set({
-      services: get().services.map((item) =>
-        item.id === id ? { ...item, ...patch } : item,
-      ),
-    }),
-  removeService: (id) =>
-    set({ services: get().services.filter((item) => item.id !== id) }),
+      services: prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    });
+    try {
+      const res = await fetch(`/api/services/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ services: prev });
+        get().pushToast("error", data.message || "Error al actualizar servicio");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ services: prev });
+      get().pushToast("error", "Error de conexión al actualizar servicio");
+      return false;
+    }
+  },
+  removeService: async (id) => {
+    const prev = get().services;
+    set({ services: prev.filter((item) => item.id !== id) });
+    try {
+      const res = await fetch(`/api/services/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ services: prev });
+        get().pushToast("error", data.message || "Error al eliminar servicio");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ services: prev });
+      get().pushToast("error", "Error de conexión al eliminar servicio");
+      return false;
+    }
+  },
 
   addProduct: (item) => {
     const id = `pr-${Date.now()}`;
@@ -1216,16 +1531,89 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  addClient: (item) => {
-    const id = `cl-${Date.now()}`;
-    set({ clients: [{ ...item, id }, ...get().clients] });
+  addClient: async (item) => {
+    try {
+      const res = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item),
+      });
+      const data = await res.json();
+      if (data.ok && data.client) {
+        const c = data.client;
+        set({
+          clients: [
+            {
+              id: c.id,
+              name: c.name,
+              phone: c.phone,
+              email: c.email || item.email || "",
+              notes: c.notes || item.notes || "",
+              formula: c.formula || item.formula || "",
+              tags: Array.isArray(c.tags) && c.tags.length > 0 ? c.tags : ["Nuevo"],
+              instagram: c.instagram || item.instagram || "",
+              totalVisits: c.totalVisits ?? 0,
+              totalSpent: c.totalSpent ?? 0,
+              lastVisit: c.lastVisit || new Date().toISOString(),
+              loyaltyPoints: c.points ?? 0,
+              loyaltyRedeemed: 0,
+            },
+            ...get().clients.filter((cl) => cl.id !== c.id),
+          ],
+        });
+        return true;
+      } else {
+        get().pushToast("error", data.message || "Error al crear cliente");
+        return false;
+      }
+    } catch (err) {
+      console.error("Error adding client to DB:", err);
+      get().pushToast("error", "Error de conexión al crear cliente");
+      return false;
+    }
   },
-  updateClient: (id, patch) =>
+  updateClient: async (id, patch) => {
+    const prev = get().clients;
     set({
-      clients: get().clients.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-    }),
-  deleteClient: (id) =>
-    set({ clients: get().clients.filter((c) => c.id !== id) }),
+      clients: prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    });
+    try {
+      const res = await fetch(`/api/clients/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ clients: prev });
+        get().pushToast("error", data.message || "Error al actualizar cliente");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ clients: prev });
+      get().pushToast("error", "Error de conexión al actualizar cliente");
+      return false;
+    }
+  },
+  deleteClient: async (id) => {
+    const prev = get().clients;
+    set({ clients: prev.filter((c) => c.id !== id) });
+    try {
+      const res = await fetch(`/api/clients/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ clients: prev });
+        get().pushToast("error", data.message || "Error al eliminar cliente");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ clients: prev });
+      get().pushToast("error", "Error de conexión al eliminar cliente");
+      return false;
+    }
+  },
 
   updateLoyalty: (patch) =>
     set({ loyalty: { ...get().loyalty, ...patch } }),
@@ -1255,12 +1643,67 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   updateEvolutionApi: (patch) =>
     set({ evolutionApi: { ...get().evolutionApi, ...patch } }),
 
-  addCashMovement: (item) => {
-    const id = `cm-${Date.now()}`;
-    set({ cashMovements: [{ ...item, id }, ...get().cashMovements] });
+  addCashMovement: async (item) => {
+    try {
+      const res = await fetch("/api/cash", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: item.type === "ingreso" ? "INCOME" : "EXPENSE",
+          amount: item.amount,
+          paymentMethod: item.method,
+          description: item.concept,
+          category: (item as any).category || (item.type === "ingreso" ? "Cobro Servicio" : "Gasto Operativo"),
+          createdAt: item.date,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.movement) {
+        const m = data.movement;
+        set({
+          cashMovements: [
+            {
+              id: m.id,
+              type: m.type === "INCOME" ? "ingreso" : "egreso",
+              amount: m.amount,
+              method: (m.paymentMethod.toLowerCase() || "efectivo") as any,
+              concept: m.description,
+              date: m.createdAt,
+              category: m.category,
+              voucherNumber: item.voucherNumber,
+            },
+            ...get().cashMovements,
+          ],
+        });
+        return true;
+      } else {
+        get().pushToast("error", data.message || "Error al registrar movimiento en caja");
+        return false;
+      }
+    } catch (err) {
+      console.error("Error creating cash movement in DB:", err);
+      get().pushToast("error", "Error de conexión al registrar movimiento");
+      return false;
+    }
   },
-  deleteCashMovement: (id) =>
-    set({ cashMovements: get().cashMovements.filter((m) => m.id !== id) }),
+  deleteCashMovement: async (id) => {
+    const prev = get().cashMovements;
+    set({ cashMovements: prev.filter((m) => m.id !== id) });
+    try {
+      const res = await fetch(`/api/cash/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.ok) {
+        set({ cashMovements: prev });
+        get().pushToast("error", data.message || "Error al anular movimiento");
+        return false;
+      }
+      return true;
+    } catch (err) {
+      set({ cashMovements: prev });
+      get().pushToast("error", "Error de conexión al anular movimiento");
+      return false;
+    }
+  },
 
   updateWhatsAppTemplate: (id, body) =>
     set({

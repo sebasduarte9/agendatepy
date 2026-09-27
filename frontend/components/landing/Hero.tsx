@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { CATEGORIES, type CategoryId } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import PhoneMockup from "./PhoneMockup";
 
 const ICONS: Record<CategoryId, typeof Scissors> = {
@@ -107,7 +108,7 @@ export default function Hero() {
 
             {/* Direct WhatsApp Sales / Fast Track CTA */}
             <a
-              href={`https://wa.me/595981123456?text=Hola%2C%20quiero%20probar%20AgendatePY%20gratuitamente%20para%20mi%20negocio%20(${category.label})`}
+              href={getCommercialWhatsAppUrl(`Hola, quiero probar AgendatePY gratuitamente para mi negocio (${category.label})`)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 px-5 py-3.5 text-sm font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-xs transition"

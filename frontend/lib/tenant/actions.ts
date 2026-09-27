@@ -12,6 +12,8 @@ export interface OnboardingInput {
   duration: number;
   price: number;
   whatsapp: string;
+  ownerEmail?: string;
+  ownerName?: string;
 }
 
 export async function createTenantOnboardingAction(input: OnboardingInput) {
@@ -28,7 +30,7 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
       cleanSlug = `negocio-${Date.now().toString().slice(-4)}`;
     }
 
-    // Comprobar si el slug ya existe, si existe agregar sufijo
+    // Comprobar si el slug ya existe, si existe agregar sufijo aleatorio
     const existing = await prisma.tenant.findUnique({
       where: { subdomain: cleanSlug },
     });
@@ -36,8 +38,20 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
       cleanSlug = `${cleanSlug}-${Math.floor(100 + Math.random() * 900)}`;
     }
 
-    // Crear tenant, servicio y staff en transacción
+    // Resolver datos del usuario administrador
+    const cleanEmail = session?.email || (input.ownerEmail || "").trim().toLowerCase();
+    const cleanName = session?.name || (input.ownerName || input.businessName || "Encargado General").trim();
+
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      return {
+        ok: false,
+        error: "Por favor ingresa un correo electrónico válido para tu cuenta de administrador.",
+      };
+    }
+
+    // Crear tenant, user, staff, servicio y horarios en una sola transacción atómica
     const result = await prisma.$transaction(async (tx) => {
+      // 1. Crear Tenant
       const tenant = await tx.tenant.create({
         data: {
           name: input.businessName.trim(),
@@ -62,30 +76,57 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
         },
       });
 
-      // Si el usuario actual está logueado, vincularlo al tenant
-      let ownerName = "Encargado General";
+      // 2. Crear o vincular usuario administrador (OWNER)
+      let userRecord;
       if (session?.id) {
-        await tx.user.update({
+        userRecord = await tx.user.update({
           where: { id: session.id },
           data: {
             tenantId: tenant.id,
             role: "OWNER",
           },
+          select: { id: true, email: true, name: true, role: true },
         });
-        ownerName = session.name || ownerName;
+      } else {
+        const existingUser = await tx.user.findUnique({
+          where: { email: cleanEmail },
+        });
+
+        if (existingUser) {
+          userRecord = await tx.user.update({
+            where: { id: existingUser.id },
+            data: {
+              tenantId: tenant.id,
+              role: "OWNER",
+              name: existingUser.name || cleanName,
+            },
+            select: { id: true, email: true, name: true, role: true },
+          });
+        } else {
+          userRecord = await tx.user.create({
+            data: {
+              email: cleanEmail,
+              name: cleanName,
+              role: "OWNER",
+              tenantId: tenant.id,
+              phone: input.whatsapp.replace(/\D/g, ""),
+            },
+            select: { id: true, email: true, name: true, role: true },
+          });
+        }
       }
 
-      // Crear primer miembro del equipo
+      // 3. Crear primer miembro del equipo (Staff)
       const staffMember = await tx.staff.create({
         data: {
           tenantId: tenant.id,
-          name: ownerName,
+          name: cleanName,
           active: true,
           commissionPercentage: 100,
         },
       });
 
-      // Crear servicio inicial
+      // 4. Crear servicio inicial
       const service = await tx.service.create({
         data: {
           tenantId: tenant.id,
@@ -95,7 +136,7 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
         },
       });
 
-      // Vincular staff con el servicio
+      // 5. Vincular staff con el servicio
       await tx.staffService.create({
         data: {
           staffId: staffMember.id,
@@ -103,7 +144,7 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
         },
       });
 
-      // Crear horarios estándar de lunes a sábado (días 1 al 6)
+      // 6. Crear horarios estándar de lunes a sábado (días 1 al 6)
       const baseDate = new Date("2026-01-01T00:00:00Z");
       const startTime = new Date(baseDate);
       startTime.setUTCHours(8, 0, 0, 0);
@@ -122,20 +163,22 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
         });
       }
 
-      return tenant;
+      return { tenant, user: userRecord };
     });
 
-    // Actualizar la sesión para que tenga el nuevo tenantSlug
-    if (session) {
-      const updatedSession: SessionUser = {
-        ...session,
-        tenantId: result.id,
-        tenantSlug: result.subdomain,
-      };
-      await setSession(updatedSession);
-    }
+    // 7. Emitir inmediatamente la cookie de sesión firmada criptográficamente
+    const sessionUser: SessionUser = {
+      id: result.user.id,
+      email: result.user.email,
+      name: result.user.name,
+      role: "OWNER",
+      tenantId: result.tenant.id,
+      tenantSlug: result.tenant.subdomain,
+      phone: input.whatsapp,
+    };
+    await setSession(sessionUser);
 
-    return { ok: true, slug: result.subdomain };
+    return { ok: true, slug: result.tenant.subdomain };
   } catch (error) {
     console.error("Error al crear tenant en onboarding:", error);
     return { ok: false, error: "No se pudo registrar el negocio en la base de datos." };
