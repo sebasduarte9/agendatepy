@@ -551,6 +551,21 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` completado exitosamente con **0 errores**.
   - Capturas y pruebas confirman visibilidad completa del encabezado del negocio, auto-scroll fluido del chat y renderizado de la notificación.
 
+---
+
+### [Remoción de Casos de Éxito / Testimonios] — 2026-09-27 15:20
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Landing Page Principal (`/`) y Navegación
+- **Archivos Modificados / Eliminados:**
+  - `frontend/components/landing/LandingPage.tsx` (removido import y renderizado de `Testimonials`)
+  - `frontend/components/landing/Header.tsx` (removido `testimonios` de `sectionIds` y de `navItems`)
+  - `frontend/components/landing/Testimonials.tsx` (eliminado archivo)
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  - Se eliminó la sección de Casos de Éxito / Testimonios a petición directa del usuario para mantener la landing concisa, enfocada en la propuesta de valor, simuladores en vivo, calculadora de ROI, precios y conversión.
+- **Verificación:**
+  - `npx tsc --noEmit` completado con **0 errores**.
+
 
 
 

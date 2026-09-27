@@ -11,7 +11,6 @@ import RoiCalculator from "./RoiCalculator";
 import Pricing from "./Pricing";
 import Integrations from "./Integrations";
 import Differentiators from "./Differentiators";
-import Testimonials from "./Testimonials";
 import FAQ from "./FAQ";
 import Footer from "./Footer";
 import WhatsAppFloatingButton from "./WhatsAppFloatingButton";
@@ -31,7 +30,6 @@ export default function LandingPage() {
         <Pricing />
         <Integrations />
         <Differentiators />
-        <Testimonials />
         <FAQ />
       </main>
       <Footer />
