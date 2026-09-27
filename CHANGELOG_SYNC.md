@@ -294,3 +294,26 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` completado exitosamente con **0 errores**.
   - Servidor de desarrollo respondiendo activamente en `http://localhost:3000` (HTTP 200).
 
+---
+
+### [Restauración de Flujo Interactivo Paso a Paso en WhatsApp Mockup] — 2026-09-27 06:53
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Simulador de WhatsApp (`PhoneMockup.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/landing/PhoneMockup.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  - Se restauró la secuencia interactiva original paso a paso en el simulador de WhatsApp (`PhoneMockup.tsx`):
+    1. Selección interactiva de servicio con opciones.
+    2. Consulta de horarios disponibles para el día (`16:30 hs`, `18:00 hs`).
+    3. Confirmación con tarjeta interactiva de turno y botón para nota de voz.
+    4. Reproducción simulada de audio con forma de onda dinámica.
+    5. Mensaje de recordatorio automático 2h antes.
+  - Se mantuvieron intactos los puntos aprobados:
+    - **Logo:** Sin la píldora/badge "PY" externa.
+    - **Simulador:** Sin la etiqueta de texto flotante inferior `"Simulador Interactivo de WhatsApp en Vivo"`.
+    - **UI/UX:** Paleta oficial en tonos del logo `#FF4F2B`, vermellón, coral cálido y acentos ambarinos en toda la landing page.
+- **Verificación:**
+  - `npx tsc --noEmit` completado con **0 errores**.
+  - Servidor local funcionando en `http://localhost:3000` (HTTP 200).
+
