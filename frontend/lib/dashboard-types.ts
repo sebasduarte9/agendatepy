@@ -26,6 +26,13 @@ export type ServiceItem = {
   price: number;
   description: string;
   image: string;
+  // Promociones y Ofertas limitadas
+  hasPromo?: boolean;
+  promoPrice?: number;
+  promoBadge?: string; // ej: "-20% OFF", "2x1", "Promo Flash"
+  promoType?: "quantity" | "time"; // por cantidad de cupos o por tiempo limitado
+  promoLimitQuantity?: number; // ej: 5 cupos
+  promoLimitHours?: number; // ej: 24 horas
 };
 
 export type ProductItem = {

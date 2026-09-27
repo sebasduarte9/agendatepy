@@ -56,6 +56,12 @@ export default function ServiciosPage() {
     price: 85000,
     description: "",
     image: "scissors",
+    hasPromo: false,
+    promoPrice: 65000,
+    promoBadge: "-20% OFF",
+    promoType: "quantity" as "quantity" | "time",
+    promoLimitQuantity: 5,
+    promoLimitHours: 24,
   });
 
   // Staff Modal state
@@ -113,11 +119,17 @@ export default function ServiciosPage() {
       price: 80000,
       description: "",
       image: "scissors",
+      hasPromo: false,
+      promoPrice: 65000,
+      promoBadge: "-20% OFF",
+      promoType: "quantity",
+      promoLimitQuantity: 5,
+      promoLimitHours: 24,
     });
     setServiceModalOpen(true);
   }
 
-  function handleOpenEditService(s: ServiceItem) {
+  function handleOpenEditService(s: ServiceItem, openForPromo = false) {
     setEditingService(s);
     setServiceForm({
       name: s.name,
@@ -126,6 +138,12 @@ export default function ServiciosPage() {
       price: s.price,
       description: s.description,
       image: s.image,
+      hasPromo: openForPromo ? true : !!s.hasPromo,
+      promoPrice: s.promoPrice || Math.round(s.price * 0.8),
+      promoBadge: s.promoBadge || "-20% OFF",
+      promoType: s.promoType || "quantity",
+      promoLimitQuantity: s.promoLimitQuantity || 5,
+      promoLimitHours: s.promoLimitHours || 24,
     });
     setServiceModalOpen(true);
   }
@@ -137,6 +155,15 @@ export default function ServiciosPage() {
       return;
     }
 
+    const promoPayload = {
+      hasPromo: serviceForm.hasPromo,
+      promoPrice: serviceForm.hasPromo ? Number(serviceForm.promoPrice) || 0 : undefined,
+      promoBadge: serviceForm.hasPromo ? serviceForm.promoBadge : undefined,
+      promoType: serviceForm.hasPromo ? serviceForm.promoType : undefined,
+      promoLimitQuantity: serviceForm.hasPromo ? Number(serviceForm.promoLimitQuantity) || 5 : undefined,
+      promoLimitHours: serviceForm.hasPromo ? Number(serviceForm.promoLimitHours) || 24 : undefined,
+    };
+
     if (editingService) {
       updateService(editingService.id, {
         name: serviceForm.name.trim(),
@@ -145,6 +172,7 @@ export default function ServiciosPage() {
         price: Number(serviceForm.price) || 0,
         description: serviceForm.description.trim(),
         image: serviceForm.image,
+        ...promoPayload,
       });
       pushToast("success", `Servicio "${serviceForm.name}" actualizado`);
     } else {
@@ -155,6 +183,7 @@ export default function ServiciosPage() {
         price: Number(serviceForm.price) || 0,
         description: serviceForm.description.trim(),
         image: serviceForm.image,
+        ...promoPayload,
       });
       pushToast("success", `Servicio "${serviceForm.name}" creado con éxito`);
     }
@@ -384,11 +413,19 @@ export default function ServiciosPage() {
                       <Sparkles className="h-5 w-5" />
                     )}
                   </div>
-                  {item.category && (
-                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
-                      {item.category}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {item.hasPromo && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 dark:bg-rose-500/20 px-2.5 py-0.5 text-[11px] font-black text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                        <Sparkles className="h-3 w-3" />
+                        {item.promoBadge || "PROMO"}
+                      </span>
+                    )}
+                    {item.category && (
+                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
+                        {item.category}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-3.5">
@@ -401,16 +438,61 @@ export default function ServiciosPage() {
                 </div>
               </div>
 
-              <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-white/5 space-y-3.5">
+              <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-white/5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200/40 dark:border-white/5">
                     <Clock className="h-3.5 w-3.5 text-slate-400" />
                     {item.durationMin} min
                   </span>
-                  <strong className="text-lg font-black tracking-tight text-primary">
-                    {formatGs(item.price)}
-                  </strong>
+                  <div className="text-right">
+                    {item.hasPromo && item.promoPrice ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs text-slate-400 line-through font-semibold">
+                          {formatGs(item.price)}
+                        </span>
+                        <strong className="text-lg font-black tracking-tight text-rose-600 dark:text-rose-400">
+                          {formatGs(item.promoPrice)}
+                        </strong>
+                      </div>
+                    ) : (
+                      <strong className="text-lg font-black tracking-tight text-primary">
+                        {formatGs(item.price)}
+                      </strong>
+                    )}
+                  </div>
                 </div>
+
+                {item.hasPromo && (
+                  <div className="flex items-center justify-between text-[11px] font-medium text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1.5 rounded-xl">
+                    <span className="flex items-center gap-1.5">
+                      <Tag className="h-3 w-3 text-amber-500" />
+                      {item.promoType === "quantity"
+                        ? `Quedan ${item.promoLimitQuantity || 5} cupos`
+                        : `Por tiempo limitado (${item.promoLimitHours || 24}hs)`}
+                    </span>
+                    <span className="font-extrabold text-[9px] uppercase tracking-wider bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-800 dark:text-amber-200">
+                      Activa
+                    </span>
+                  </div>
+                )}
+
+                {/* Botón directo para configurar o activar promo */}
+                <button
+                  type="button"
+                  onClick={() => handleOpenEditService(item, !item.hasPromo)}
+                  className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
+                    item.hasPromo
+                      ? "border border-amber-500/40 bg-amber-500/15 text-amber-800 dark:text-amber-200 hover:bg-amber-500/25"
+                      : "border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:border-amber-500/40 hover:text-amber-600 dark:hover:text-amber-300"
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  <span>
+                    {item.hasPromo
+                      ? `Promo Configurada: ${item.promoBadge || "-20% OFF"}`
+                      : "+ Activar Promoción / Descuento"}
+                  </span>
+                </button>
 
                 <div className="flex items-center gap-2">
                   <button
@@ -663,6 +745,124 @@ export default function ServiciosPage() {
               onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
               className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
             />
+          </div>
+
+          {/* Sección de Promociones / Descuento */}
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-xs">
+                    ¿Activar Oferta o Promoción Especial?
+                  </h4>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Destacá este servicio con descuento por cupos limitados o tiempo
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={serviceForm.hasPromo}
+                  onChange={(e) => setServiceForm({ ...serviceForm, hasPromo: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+
+            {serviceForm.hasPromo && (
+              <div className="pt-2 border-t border-amber-500/20 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                      Precio Promocional (Gs.)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="5000"
+                      value={serviceForm.promoPrice}
+                      onChange={(e) =>
+                        setServiceForm({ ...serviceForm, promoPrice: Number(e.target.value) })
+                      }
+                      className="w-full rounded-xl border border-amber-500/30 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 font-bold focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                      Texto de la Etiqueta
+                    </label>
+                    <select
+                      value={serviceForm.promoBadge}
+                      onChange={(e) => setServiceForm({ ...serviceForm, promoBadge: e.target.value })}
+                      className="w-full rounded-xl border border-amber-500/30 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                    >
+                      <option value="-20% OFF">-20% OFF</option>
+                      <option value="-30% OFF">-30% OFF</option>
+                      <option value="-50% OFF">-50% OFF (Mitad de precio)</option>
+                      <option value="2x1 Promo">2x1 Promo</option>
+                      <option value="Flash Sale">Flash Sale</option>
+                      <option value="Lanzamiento">Lanzamiento</option>
+                      <option value="Cupos Limitados">Cupos Limitados</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                      Tipo de Límite
+                    </label>
+                    <select
+                      value={serviceForm.promoType}
+                      onChange={(e) =>
+                        setServiceForm({
+                          ...serviceForm,
+                          promoType: e.target.value as "quantity" | "time",
+                        })
+                      }
+                      className="w-full rounded-xl border border-amber-500/30 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                    >
+                      <option value="quantity">Por Cantidad de Turnos/Cupos</option>
+                      <option value="time">Por Tiempo Límite (Horas)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                      {serviceForm.promoType === "quantity" ? "Cantidad de Cupos" : "Duración de la Promo"}
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min="1"
+                        value={
+                          serviceForm.promoType === "quantity"
+                            ? serviceForm.promoLimitQuantity
+                            : serviceForm.promoLimitHours
+                        }
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (serviceForm.promoType === "quantity") {
+                            setServiceForm({ ...serviceForm, promoLimitQuantity: val });
+                          } else {
+                            setServiceForm({ ...serviceForm, promoLimitHours: val });
+                          }
+                        }}
+                        className="w-full rounded-xl border border-amber-500/30 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                      />
+                      <span className="text-slate-400 text-xs whitespace-nowrap font-medium">
+                        {serviceForm.promoType === "quantity" ? "turnos" : "horas"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">

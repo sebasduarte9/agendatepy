@@ -881,21 +881,54 @@ export default function GuidedTour() {
     );
   }, [searchFilter]);
 
-  // Card geometry calculations relative to targetRect
-  const cardWidth = Math.min(windowDimensions.width - 32, 460);
-  const cardLeft = targetRect
-    ? Math.max(16, Math.min(windowDimensions.width - cardWidth - 16, targetRect.left + targetRect.width / 2 - cardWidth / 2))
-    : undefined;
+  // Smart Card positioning: Find a truly unobstructed zone outside targetRect
+  const cardWidth = Math.min(windowDimensions.width - 32, 440);
+  const cardHeightEstimate = 320;
 
-  const placeAbove = targetRect
-    ? targetRect.bottom + 360 > windowDimensions.height && targetRect.top > 350
-    : false;
+  let cardLeft: number | undefined = undefined;
+  let cardTop: number | undefined = undefined;
 
-  const cardTop = targetRect
-    ? placeAbove
-      ? Math.max(16, targetRect.top - 360)
-      : Math.min(windowDimensions.height - 380, targetRect.bottom + 16)
-    : undefined;
+  if (targetRect) {
+    const spaceRight = windowDimensions.width - targetRect.right;
+    const spaceLeft = targetRect.left;
+    const spaceBelow = windowDimensions.height - targetRect.bottom;
+    const spaceAbove = targetRect.top;
+
+    // 1. Try placing to the right of targetRect if there's enough room (e.g. next to settings on wide screens)
+    if (spaceRight >= cardWidth + 24) {
+      cardLeft = targetRect.right + 16;
+      cardTop = Math.max(20, Math.min(windowDimensions.height - cardHeightEstimate - 20, targetRect.top));
+    }
+    // 2. Try placing to the left of targetRect
+    else if (spaceLeft >= cardWidth + 24) {
+      cardLeft = targetRect.left - cardWidth - 16;
+      cardTop = Math.max(20, Math.min(windowDimensions.height - cardHeightEstimate - 20, targetRect.top));
+    }
+    // 3. Try placing below targetRect
+    else if (spaceBelow >= cardHeightEstimate + 24) {
+      cardLeft = Math.max(16, Math.min(windowDimensions.width - cardWidth - 16, targetRect.left));
+      cardTop = targetRect.bottom + 16;
+    }
+    // 4. Try placing above targetRect
+    else if (spaceAbove >= cardHeightEstimate + 24) {
+      cardLeft = Math.max(16, Math.min(windowDimensions.width - cardWidth - 16, targetRect.left));
+      cardTop = Math.max(16, targetRect.top - cardHeightEstimate - 16);
+    }
+    // 5. If targetRect is large and covers most of the viewport, dock in an unobtrusive corner:
+    else {
+      if (targetRect.left > windowDimensions.width / 2) {
+        cardLeft = 24;
+      } else {
+        cardLeft = Math.max(16, windowDimensions.width - cardWidth - 24);
+      }
+      cardTop = Math.max(16, windowDimensions.height - cardHeightEstimate - 24);
+    }
+
+    if (cardLeft !== undefined && cardTop !== undefined) {
+      cardLeft = Math.max(16, Math.min(windowDimensions.width - cardWidth - 16, cardLeft));
+      cardTop = Math.max(16, Math.min(windowDimensions.height - cardHeightEstimate - 16, cardTop));
+    }
+  }
 
   return (
     <>
@@ -908,18 +941,30 @@ export default function GuidedTour() {
             setCurrentStepIndex(0);
             openTour(detectedSectionKey);
           }}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-full border border-primary/30 bg-white/95 dark:bg-slate-900/95 px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-white shadow-[0_10px_35px_rgba(79,70,229,0.18)] backdrop-blur-md transition-all hover:scale-105 hover:border-primary active:scale-95 group cursor-pointer"
+          className={`fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-full px-4 py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 group cursor-pointer ${
+            completedSections.includes(detectedSectionKey)
+              ? "border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-white shadow-md hover:border-primary"
+              : "border-2 border-amber-400/80 bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/25 text-amber-950 dark:text-amber-100 shadow-[0_0_30px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/30 animate-pulse"
+          }`}
           title="Abrir guía paso a paso y tutoriales de esta sección"
         >
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition">
+          <div
+            className={`flex h-5 w-5 items-center justify-center rounded-full transition ${
+              completedSections.includes(detectedSectionKey)
+                ? "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white"
+                : "bg-amber-500 text-white shadow-xs"
+            }`}
+          >
             <Sparkles className="h-3 w-3" />
           </div>
           <span>Visita Guiada</span>
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-            {currentSection.badge}
-          </span>
-          {completedSections.includes(detectedSectionKey) && (
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+          {completedSections.includes(detectedSectionKey) ? (
+            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+          ) : (
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
           )}
         </button>
       )}
@@ -927,9 +972,9 @@ export default function GuidedTour() {
       {/* Interactive Guided Tour Spotlight & Walkthrough */}
       <AnimatePresence>
         {isTourOpen && (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-[100]">
             {/* SVG Mask: Dims the whole screen and cuts out the spotlight hole */}
-            <svg className="fixed inset-0 h-full w-full pointer-events-none z-50">
+            <svg className="fixed inset-0 h-full w-full pointer-events-none z-[102]">
               <defs>
                 <mask id="tour-spotlight-mask">
                   <rect width="100%" height="100%" fill="white" />
@@ -941,6 +986,7 @@ export default function GuidedTour() {
                       height={targetRect.height + 16}
                       rx="16"
                       fill="black"
+                      style={{ transition: "all 250ms cubic-bezier(0.16, 1, 0.3, 1)" }}
                     />
                   )}
                 </mask>
@@ -948,18 +994,18 @@ export default function GuidedTour() {
               <rect
                 width="100%"
                 height="100%"
-                fill="rgba(3, 7, 18, 0.78)"
+                fill="rgba(3, 7, 18, 0.82)"
                 mask="url(#tour-spotlight-mask)"
               />
             </svg>
 
-            {/* Click backdrop to close */}
+            {/* Click backdrop to close (Underneath card, above page) */}
             <div
-              className="fixed inset-0 z-50 pointer-events-auto"
+              className="fixed inset-0 z-[101] pointer-events-auto"
               onClick={() => closeTour()}
             />
 
-            {/* Glowing animated ring over highlighted element */}
+            {/* Glowing animated ring over highlighted element (Synchronized with mask) */}
             {targetRect && (
               <div
                 style={{
@@ -968,8 +1014,9 @@ export default function GuidedTour() {
                   top: Math.max(0, targetRect.top - 8),
                   width: targetRect.width + 16,
                   height: targetRect.height + 16,
+                  transition: "all 250ms cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
-                className="pointer-events-none z-50 rounded-2xl ring-4 ring-primary shadow-[0_0_40px_rgba(99,102,241,0.85)] animate-pulse transition-all duration-300"
+                className="pointer-events-none z-[103] rounded-2xl ring-4 ring-primary shadow-[0_0_35px_rgba(99,102,241,0.85)] animate-pulse"
               />
             )}
 
@@ -979,33 +1026,36 @@ export default function GuidedTour() {
                 style={{
                   position: "fixed",
                   left: Math.min(
-                    Math.max(16, targetRect.left + targetRect.width / 2 - 70),
+                    Math.max(16, targetRect.left + 24),
                     windowDimensions.width - 160
                   ),
-                  top: targetRect.top > 70 ? targetRect.top - 36 : targetRect.bottom + 10,
+                  top: targetRect.top > 60 ? targetRect.top - 34 : targetRect.bottom + 8,
+                  transition: "all 250ms cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
-                className="pointer-events-none z-50 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-indigo-600 px-3.5 py-1 text-xs font-black text-white shadow-2xl animate-bounce"
+                className="pointer-events-none z-[104] flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-indigo-600 px-3.5 py-1 text-xs font-black text-white shadow-2xl animate-bounce"
               >
-                <span>👉 Apretá acá</span>
+                <span>👉 Elemento enfocado</span>
               </div>
             )}
 
-            {/* Floating Popover / Tooltip Card */}
+            {/* Floating Popover / Tooltip Card positioned in a free, non-overlapping zone (Always on top: z-[110]) */}
             <div
               style={
-                targetRect
+                targetRect && cardLeft !== undefined && cardTop !== undefined
                   ? {
                       position: "fixed",
                       left: cardLeft,
                       top: cardTop,
                       width: cardWidth,
+                      zIndex: 110,
+                      transition: "left 250ms cubic-bezier(0.16, 1, 0.3, 1), top 250ms cubic-bezier(0.16, 1, 0.3, 1)",
                     }
                   : undefined
               }
               className={
-                targetRect
-                  ? "z-50 pointer-events-auto"
-                  : "fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto"
+                targetRect && cardLeft !== undefined && cardTop !== undefined
+                  ? "z-[110] pointer-events-auto"
+                  : "fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-auto"
               }
             >
               <motion.div

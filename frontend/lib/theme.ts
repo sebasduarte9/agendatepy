@@ -10,7 +10,7 @@ export type GoogleFontDef = {
 };
 
 export const GOOGLE_FONTS: GoogleFontDef[] = [
-  // Sans-Serif Modernas
+  // Sans-Serif Modernas & Geométricas
   {
     id: "plus-jakarta-sans",
     name: "Plus Jakarta Sans",
@@ -18,6 +18,14 @@ export const GOOGLE_FONTS: GoogleFontDef[] = [
     query: "family=Plus+Jakarta+Sans:wght@400;500;600;700;800",
     cssFamily: '"Plus Jakarta Sans", sans-serif',
     description: "Moderna, equilibrada y ultra nítida en pantallas.",
+  },
+  {
+    id: "inter",
+    name: "Inter",
+    category: "sans",
+    query: "family=Inter:wght@400;500;600;700;800",
+    cssFamily: '"Inter", sans-serif',
+    description: "El estándar de legibilidad y minimalismo internacional.",
   },
   {
     id: "outfit",
@@ -28,18 +36,10 @@ export const GOOGLE_FONTS: GoogleFontDef[] = [
     description: "Geométrica, moderna y de alta gama.",
   },
   {
-    id: "inter",
-    name: "Inter",
-    category: "sans",
-    query: "family=Inter:wght@400;500;600;700",
-    cssFamily: '"Inter", sans-serif',
-    description: "El estándar de legibilidad minimalista internacional.",
-  },
-  {
     id: "poppins",
     name: "Poppins",
     category: "sans",
-    query: "family=Poppins:wght@400;500;600;700",
+    query: "family=Poppins:wght@400;500;600;700;800",
     cssFamily: '"Poppins", sans-serif',
     description: "Cálida, amigable y muy atractiva visualmente.",
   },
@@ -58,6 +58,190 @@ export const GOOGLE_FONTS: GoogleFontDef[] = [
     query: "family=DM+Sans:wght@400;500;700",
     cssFamily: '"DM Sans", sans-serif',
     description: "Sutil, ejecutiva y elegante.",
+  },
+  {
+    id: "manrope",
+    name: "Manrope",
+    category: "sans",
+    query: "family=Manrope:wght@400;500;600;700;800",
+    cssFamily: '"Manrope", sans-serif',
+    description: "Semigeométrica, balance perfecto entre tecnología y calidez.",
+  },
+  {
+    id: "figtree",
+    name: "Figtree",
+    category: "sans",
+    query: "family=Figtree:wght@400;500;600;700;800",
+    cssFamily: '"Figtree", sans-serif',
+    description: "Limpia, contemporánea y sumamente amigable.",
+  },
+  {
+    id: "urbanist",
+    name: "Urbanist",
+    category: "sans",
+    query: "family=Urbanist:wght@400;500;600;700;800",
+    cssFamily: '"Urbanist", sans-serif',
+    description: "Geometría digital de vanguardia, gran sofisticación.",
+  },
+  {
+    id: "space-grotesk",
+    name: "Space Grotesk",
+    category: "sans",
+    query: "family=Space+Grotesk:wght@400;500;600;700",
+    cssFamily: '"Space Grotesk", sans-serif',
+    description: "Brutalista tecnológica, estilizada y moderna.",
+  },
+  {
+    id: "roboto",
+    name: "Roboto",
+    category: "sans",
+    query: "family=Roboto:wght@400;500;700",
+    cssFamily: '"Roboto", sans-serif',
+    description: "Sólida, natural y universalmente legible.",
+  },
+  {
+    id: "work-sans",
+    name: "Work Sans",
+    category: "sans",
+    query: "family=Work+Sans:wght@400;500;600;700",
+    cssFamily: '"Work Sans", sans-serif',
+    description: "Optimizada para interfaces limpias y fluidas.",
+  },
+  {
+    id: "lato",
+    name: "Lato",
+    category: "sans",
+    query: "family=Lato:wght@400;700;900",
+    cssFamily: '"Lato", sans-serif',
+    description: "Cálida y clásica con detalles semirredondeados.",
+  },
+  {
+    id: "open-sans",
+    name: "Open Sans",
+    category: "sans",
+    query: "family=Open+Sans:wght@400;600;700;800",
+    cssFamily: '"Open Sans", sans-serif',
+    description: "Neutral, clara y armónica en todo tipo de pantallas.",
+  },
+  {
+    id: "nunito",
+    name: "Nunito",
+    category: "sans",
+    query: "family=Nunito:wght@400;600;700;800",
+    cssFamily: '"Nunito", sans-serif',
+    description: "Bordes redondeados, suave y muy cercana al usuario.",
+  },
+  {
+    id: "raleway",
+    name: "Raleway",
+    category: "sans",
+    query: "family=Raleway:wght@400;500;600;700;800",
+    cssFamily: '"Raleway", sans-serif',
+    description: "Elegante y estética con detalles refinados.",
+  },
+  {
+    id: "rubik",
+    name: "Rubik",
+    category: "sans",
+    query: "family=Rubik:wght@400;500;600;700",
+    cssFamily: '"Rubik", sans-serif',
+    description: "Esquinas suaves, moderna y con presencia sólida.",
+  },
+  {
+    id: "sora",
+    name: "Sora",
+    category: "sans",
+    query: "family=Sora:wght@400;600;700;800",
+    cssFamily: '"Sora", sans-serif',
+    description: "Inspirada en estética visual de alta tecnología.",
+  },
+  {
+    id: "epilogue",
+    name: "Epilogue",
+    category: "sans",
+    query: "family=Epilogue:wght@400;600;700;800",
+    cssFamily: '"Epilogue", sans-serif',
+    description: "Tipografía sans con carácter distintivo y audaz.",
+  },
+  {
+    id: "albert-sans",
+    name: "Albert Sans",
+    category: "sans",
+    query: "family=Albert+Sans:wght@400;500;600;700;800",
+    cssFamily: '"Albert Sans", sans-serif',
+    description: "Moderna inspirada en la tipografía nórdica.",
+  },
+  {
+    id: "red-hat-display",
+    name: "Red Hat Display",
+    category: "sans",
+    query: "family=Red+Hat+Display:wght@400;600;700;800",
+    cssFamily: '"Red Hat Display", sans-serif',
+    description: "Fresca, geométrica y con un toque editorial contemporáneo.",
+  },
+  {
+    id: "lexend",
+    name: "Lexend",
+    category: "sans",
+    query: "family=Lexend:wght@400;500;600;700",
+    cssFamily: '"Lexend", sans-serif',
+    description: "Diseñada científicamente para máxima velocidad de lectura.",
+  },
+  {
+    id: "onest",
+    name: "Onest",
+    category: "sans",
+    query: "family=Onest:wght@400;500;600;700;800",
+    cssFamily: '"Onest", sans-serif',
+    description: "Súper neutral, balanceada y con excelente jerarquía.",
+  },
+  {
+    id: "archivo",
+    name: "Archivo",
+    category: "sans",
+    query: "family=Archivo:wght@400;500;600;700;800",
+    cssFamily: '"Archivo", sans-serif',
+    description: "Imponente y diseñada para cartelería e identidades fuertes.",
+  },
+  {
+    id: "barlow",
+    name: "Barlow",
+    category: "sans",
+    query: "family=Barlow:wght@400;500;600;700",
+    cssFamily: '"Barlow", sans-serif',
+    description: "Limpia, condensada ligeramente, sobria y ejecutiva.",
+  },
+  {
+    id: "cabin",
+    name: "Cabin",
+    category: "sans",
+    query: "family=Cabin:wght@400;500;600;700",
+    cssFamily: '"Cabin", sans-serif',
+    description: "Humanista con un toque retro moderno muy estilizado.",
+  },
+  {
+    id: "karla",
+    name: "Karla",
+    category: "sans",
+    query: "family=Karla:wght@400;500;600;700",
+    cssFamily: '"Karla", sans-serif',
+    description: "Grotesque excéntrica de gran legibilidad y encanto.",
+  },
+  {
+    id: "quicksand",
+    name: "Quicksand",
+    category: "sans",
+    query: "family=Quicksand:wght@400;500;600;700",
+    cssFamily: '"Quicksand", sans-serif',
+    description: "Amable, redondeada e ideal para spas, bienestar y estética.",
+  },
+  {
+    id: "public-sans",
+    name: "Public Sans",
+    category: "sans",
+    query: "family=Public+Sans:wght@400;500;600;700",
+    cssFamily: '"Public Sans", sans-serif',
+    description: "Neutral, rigurosa y de presencia institucional confiable.",
   },
 
   // Serif & Clásicas de Lujo
@@ -93,6 +277,102 @@ export const GOOGLE_FONTS: GoogleFontDef[] = [
     cssFamily: '"Lora", serif',
     description: "Cálida con contraste contemporáneo en párrafos.",
   },
+  {
+    id: "merriweather",
+    name: "Merriweather",
+    category: "serif",
+    query: "family=Merriweather:ital,wght@0,400;0,700;1,400",
+    cssFamily: '"Merriweather", Georgia, serif',
+    description: "Robusta, editorial y excepcionalmente legible.",
+  },
+  {
+    id: "bodoni-moda",
+    name: "Bodoni Moda",
+    category: "serif",
+    query: "family=Bodoni+Moda:ital,wght@0,500;0,700;0,900;1,400",
+    cssFamily: '"Bodoni Moda", serif',
+    description: "Moda de alta costura (Haute Couture) y glamour italiano.",
+  },
+  {
+    id: "prata",
+    name: "Prata",
+    category: "serif",
+    query: "family=Prata&display=swap",
+    cssFamily: '"Prata", serif',
+    description: "Lágrimas elegantes y proporciones de láminas clásicas.",
+  },
+  {
+    id: "newsreader",
+    name: "Newsreader",
+    category: "serif",
+    query: "family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,700;1,6..72,400",
+    cssFamily: '"Newsreader", serif',
+    description: "Tradición editorial neoyorquina de alto calibre.",
+  },
+  {
+    id: "libre-baskerville",
+    name: "Libre Baskerville",
+    category: "serif",
+    query: "family=Libre+Baskerville:ital,wght@0,400;0,700;1,400",
+    cssFamily: '"Libre Baskerville", serif',
+    description: "Tradicional, respetada y con presencia académica.",
+  },
+  {
+    id: "eb-garamond",
+    name: "EB Garamond",
+    category: "serif",
+    query: "family=EB+Garamond:ital,wght@0,500;0,700;1,400",
+    cssFamily: '"EB Garamond", serif',
+    description: "La cumbre del diseño renacentista europeo clásico.",
+  },
+  {
+    id: "fraunces",
+    name: "Fraunces",
+    category: "serif",
+    query: "family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,400",
+    cssFamily: '"Fraunces", serif',
+    description: "Orgánica, cálida y de gran personalidad 'Wonky vintage'.",
+  },
+  {
+    id: "spectral",
+    name: "Spectral",
+    category: "serif",
+    query: "family=Spectral:ital,wght@0,500;0,700;1,400",
+    cssFamily: '"Spectral", serif',
+    description: "Serif nítida diseñada exclusivamente para lectura en pantalla.",
+  },
+  {
+    id: "dm-serif-display",
+    name: "DM Serif Display",
+    category: "serif",
+    query: "family=DM+Serif+Display:ital@0;1",
+    cssFamily: '"DM Serif Display", serif',
+    description: "Títulos con volumen, curvas voluptuosas y gran impacto.",
+  },
+  {
+    id: "marcellus",
+    name: "Marcellus",
+    category: "serif",
+    query: "family=Marcellus&display=swap",
+    cssFamily: '"Marcellus", serif',
+    description: "Inspirada en letras romanas talladas en piedra, pura distinción.",
+  },
+  {
+    id: "castoro",
+    name: "Castoro",
+    category: "serif",
+    query: "family=Castoro:ital@0;1",
+    cssFamily: '"Castoro", serif',
+    description: "Elegancia sutil y trazo artesanal equilibrado.",
+  },
+  {
+    id: "alice",
+    name: "Alice",
+    category: "serif",
+    query: "family=Alice&display=swap",
+    cssFamily: '"Alice", serif',
+    description: "Mágica, curvilínea y con estilo de cuento refinado.",
+  },
 
   // Display & Vanguardistas
   {
@@ -104,20 +384,76 @@ export const GOOGLE_FONTS: GoogleFontDef[] = [
     description: "Artística, audaz y en tendencia en diseño contemporáneo.",
   },
   {
-    id: "space-grotesk",
-    name: "Space Grotesk",
-    category: "display",
-    query: "family=Space+Grotesk:wght@500;700",
-    cssFamily: '"Space Grotesk", sans-serif',
-    description: "Brutalista tecnológica, estilizada y moderna.",
-  },
-  {
     id: "bricolage-grotesque",
     name: "Bricolage Grotesque",
     category: "display",
     query: "family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800",
     cssFamily: '"Bricolage Grotesque", sans-serif',
     description: "Audaz y excéntrica para marcas con actitud propia.",
+  },
+  {
+    id: "oswald",
+    name: "Oswald",
+    category: "display",
+    query: "family=Oswald:wght@500;600;700",
+    cssFamily: '"Oswald", sans-serif',
+    description: "Condensada, deportiva e impactante para títulos fuertes.",
+  },
+  {
+    id: "bebas-neue",
+    name: "Bebas Neue",
+    category: "display",
+    query: "family=Bebas+Neue&display=swap",
+    cssFamily: '"Bebas Neue", sans-serif',
+    description: "Titulares en mayúsculas de alto impacto visual.",
+  },
+  {
+    id: "righteous",
+    name: "Righteous",
+    category: "display",
+    query: "family=Righteous&display=swap",
+    cssFamily: '"Righteous", sans-serif',
+    description: "Retro-futurista de los años 80 con curvas geométricas.",
+  },
+  {
+    id: "abril-fatface",
+    name: "Abril Fatface",
+    category: "display",
+    query: "family=Abril+Fatface&display=swap",
+    cssFamily: '"Abril Fatface", serif',
+    description: "Contraste extremo estilo pósters publicitarios del siglo XIX.",
+  },
+  {
+    id: "italiana",
+    name: "Italiana",
+    category: "display",
+    query: "family=Italiana&display=swap",
+    cssFamily: '"Italiana", serif',
+    description: "Inspirada en la caligrafía italiana para boutiques de lujo.",
+  },
+  {
+    id: "tenor-sans",
+    name: "Tenor Sans",
+    category: "display",
+    query: "family=Tenor+Sans&display=swap",
+    cssFamily: '"Tenor Sans", sans-serif',
+    description: "Esculpida y espaciosa para moda y alta joyería.",
+  },
+  {
+    id: "yeseva-one",
+    name: "Yeseva One",
+    category: "display",
+    query: "family=Yeseva+One&display=swap",
+    cssFamily: '"Yeseva One", serif',
+    description: "Serif monumental y romántica con gracia curvilínea.",
+  },
+  {
+    id: "anton",
+    name: "Anton",
+    category: "display",
+    query: "family=Anton&display=swap",
+    cssFamily: '"Anton", sans-serif',
+    description: "Muy gruesa y condensada para carteles de barbería urbana.",
   },
 ];
 
@@ -127,7 +463,9 @@ export type LayoutStyle =
   | "panoramic"
   | "split-gallery"
   | "floating-card"
-  | "minimal-editorial";
+  | "minimal-editorial"
+  | "bento-grid"
+  | "full-immersive";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -143,7 +481,15 @@ export type ThemePreset =
   | "soft-evolution"
   | "organic-biophilic"
   | "neubrutalism-urban"
-  | "champagne-velvet";
+  | "champagne-velvet"
+  | "tokyo-cyber"
+  | "nordic-slate"
+  | "matcha-studio"
+  | "sunset-bronze"
+  | "latte-minimal"
+  | "deep-forest"
+  | "ruby-luxury"
+  | "lavender-dream";
 
 export type ButtonRadius = "full" | "lg" | "md" | "none";
 export type ButtonStyleVariant =
@@ -158,13 +504,27 @@ export type ButtonStyleVariant =
 export type ButtonShadowType = "none" | "soft" | "medium" | "hard" | "glow";
 export type ButtonTextSizeType = "sm" | "base" | "lg";
 export type TitleSizeType = "sm" | "base" | "lg" | "xl";
-export type BackgroundEffectType = "none" | "mesh" | "dots" | "grid";
+export type BackgroundEffectType =
+  | "none"
+  | "mesh"
+  | "mesh-soft"
+  | "floating-orbs"
+  | "radial-glow"
+  | "dots"
+  | "grid"
+  | "frosted-glass"
+  | "aurora-wave"
+  | "floating-shapes"
+  | "particle-stars"
+  | "ambient-mesh"
+  | "soft-grid"
+  | "glass-morphism";
 export type ButtonBorderWidth = "0px" | "1px" | "2px" | "3px";
 export type ButtonHeight = "compact" | "medium" | "tall";
 export type ButtonAlignment = "center" | "spread" | "left";
 export type ButtonTextTransform = "none" | "uppercase" | "capitalize";
 export type ButtonFontWeight = "normal" | "medium" | "semibold" | "bold" | "black";
-export type SectionOrder = "links-first" | "booking-first" | "links-only";
+export type SectionOrder = "links-first" | "booking-first" | "links-only" | "services-only";
 export type AvatarShape = "circle" | "rounded" | "square";
 export type AvatarBorder = "none" | "subtle" | "thick" | "glow";
 
@@ -227,6 +587,7 @@ export type ThemeSettings = {
   sectionOrder: SectionOrder;
   avatarShape: AvatarShape;
   avatarBorder: AvatarBorder;
+  bannerPosY?: number;
 };
 
 export type ThemePresetItem = {
@@ -412,6 +773,110 @@ export const THEME_PRESETS: Record<ThemePreset, ThemePresetItem> = {
     themePreset: "cyber-noir",
     buttonRadius: "full",
   },
+  "tokyo-cyber": {
+    name: "Tokyo Cyberpunk",
+    description: "Neón cian eléctrico con fondo noche profundo para estudios modernos",
+    category: "Urbano & Trend",
+    primaryColor: "#06b6d4",
+    backgroundColor: "#080c14",
+    fontFamily: "space-grotesk",
+    themeMode: "dark",
+    layoutStyle: "panoramic",
+    themePreset: "tokyo-cyber",
+    buttonRadius: "md",
+    badge: "Neón",
+  },
+  "nordic-slate": {
+    name: "Nordic Minimal Slate",
+    description: "Gris escandinavo pulcro y zafiro corporativo impecable",
+    category: "Modern Tech",
+    primaryColor: "#2563eb",
+    backgroundColor: "#f1f5f9",
+    fontFamily: "albert-sans",
+    themeMode: "light",
+    layoutStyle: "minimal-editorial",
+    themePreset: "nordic-slate",
+    buttonRadius: "lg",
+    badge: "Escandinavo",
+  },
+  "matcha-studio": {
+    name: "Matcha Studio Zen",
+    category: "Spas & Wellness",
+    description: "Verde té matcha sereno y crema suave para espacios de armonía",
+    primaryColor: "#15803d",
+    backgroundColor: "#f7fee7",
+    fontFamily: "figtree",
+    themeMode: "light",
+    layoutStyle: "floating-card",
+    themePreset: "matcha-studio",
+    buttonRadius: "full",
+    badge: "Relajante",
+  },
+  "sunset-bronze": {
+    name: "Sunset Bronze & Wood",
+    category: "Barberías",
+    description: "Cobre ámbar cálido y café ébano para barberías tradicionales de autor",
+    primaryColor: "#b45309",
+    backgroundColor: "#181310",
+    fontFamily: "montserrat",
+    themeMode: "dark",
+    layoutStyle: "split-gallery",
+    themePreset: "sunset-bronze",
+    buttonRadius: "lg",
+    badge: "Madera & Cobre",
+  },
+  "latte-minimal": {
+    name: "Café Latte & Marfil",
+    category: "Salones & Estética",
+    description: "Café latte suave y fondo marfil artesanal para estilistas de autor",
+    primaryColor: "#78350f",
+    backgroundColor: "#faf5ef",
+    fontFamily: "dm-sans",
+    themeMode: "light",
+    layoutStyle: "minimal-editorial",
+    themePreset: "latte-minimal",
+    buttonRadius: "full",
+    badge: "Artesanal",
+  },
+  "deep-forest": {
+    name: "Deep Forest & Gold",
+    category: "Lujo & VIP",
+    description: "Verde esmeralda selva nocturna con acentos de oro cepillado",
+    primaryColor: "#10b981",
+    backgroundColor: "#051610",
+    fontFamily: "marcellus",
+    themeMode: "dark",
+    layoutStyle: "panoramic",
+    themePreset: "deep-forest",
+    buttonRadius: "lg",
+    badge: "Esmeralda",
+  },
+  "ruby-luxury": {
+    name: "Ruby Noir & Borgoña",
+    category: "Lujo & VIP",
+    description: "Rojo rubí sedoso sobre terciopelo negro para experiencias premium",
+    primaryColor: "#e11d48",
+    backgroundColor: "#0d0407",
+    fontFamily: "playfair-display",
+    themeMode: "dark",
+    layoutStyle: "floating-card",
+    themePreset: "ruby-luxury",
+    buttonRadius: "md",
+    badge: "Terciopelo",
+  },
+  "lavender-dream": {
+    name: "Lavender Dream Chic",
+    category: "Salones & Estética",
+    description: "Púrpura etéreo, lavanda suave y luz sutil para uñas y belleza",
+    primaryColor: "#a855f7",
+    backgroundColor: "#faf5ff",
+    fontFamily: "quicksand",
+    themeMode: "light",
+    layoutStyle: "floating-card",
+    themePreset: "lavender-dream",
+    buttonRadius: "full",
+    badge: "Pastel Chic",
+  },
 };
 
 export const DEFAULT_GALLERY_PHOTOS = [
@@ -527,7 +992,9 @@ export function parseTheme(value: unknown): ThemeSettings {
     raw.layoutStyle === "panoramic" ||
     raw.layoutStyle === "split-gallery" ||
     raw.layoutStyle === "floating-card" ||
-    raw.layoutStyle === "minimal-editorial"
+    raw.layoutStyle === "minimal-editorial" ||
+    raw.layoutStyle === "bento-grid" ||
+    raw.layoutStyle === "full-immersive"
       ? raw.layoutStyle
       : DEFAULT_THEME.layoutStyle;
 
@@ -577,8 +1044,15 @@ export function parseTheme(value: unknown): ThemeSettings {
   const backgroundEffect: BackgroundEffectType =
     raw.backgroundEffect === "none" ||
     raw.backgroundEffect === "mesh" ||
+    raw.backgroundEffect === "mesh-soft" ||
+    raw.backgroundEffect === "floating-orbs" ||
+    raw.backgroundEffect === "radial-glow" ||
     raw.backgroundEffect === "dots" ||
-    raw.backgroundEffect === "grid"
+    raw.backgroundEffect === "grid" ||
+    raw.backgroundEffect === "frosted-glass" ||
+    raw.backgroundEffect === "aurora-wave" ||
+    raw.backgroundEffect === "floating-shapes" ||
+    raw.backgroundEffect === "particle-stars"
       ? raw.backgroundEffect
       : DEFAULT_THEME.backgroundEffect;
 
@@ -907,7 +1381,11 @@ export function themeStyle(theme: ThemeSettings): CSSProperties {
     theme.themePreset === "barber-dark" ||
     theme.themePreset === "obsidian-gold" ||
     theme.themePreset === "cyber-noir" ||
-    theme.themePreset === "champagne-velvet";
+    theme.themePreset === "champagne-velvet" ||
+    theme.themePreset === "tokyo-cyber" ||
+    theme.themePreset === "sunset-bronze" ||
+    theme.themePreset === "deep-forest" ||
+    theme.themePreset === "ruby-luxury";
 
   return {
     ["--primary" as string]: theme.primaryColor,
@@ -931,7 +1409,15 @@ function isPreset(value: unknown): value is ThemePreset {
     value === "soft-evolution" ||
     value === "organic-biophilic" ||
     value === "neubrutalism-urban" ||
-    value === "champagne-velvet"
+    value === "champagne-velvet" ||
+    value === "tokyo-cyber" ||
+    value === "nordic-slate" ||
+    value === "matcha-studio" ||
+    value === "sunset-bronze" ||
+    value === "latte-minimal" ||
+    value === "deep-forest" ||
+    value === "ruby-luxury" ||
+    value === "lavender-dream"
   );
 }
 
