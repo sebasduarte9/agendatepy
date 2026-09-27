@@ -156,5 +156,5 @@ export const TICKER_ITEMS = [
 ];
 
 export function getCategory(id: CategoryId): CategoryContent {
-  return CATEGORIES.find((item) => item.id === id) ?? CATEGORIES[1];
+  return CATEGORIES.find((item) => item.id === id) ?? CATEGORIES[0];
 }

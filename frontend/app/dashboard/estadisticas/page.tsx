@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -37,44 +37,76 @@ const FILTERS = ["Hoy", "Esta Semana", "Este Mes", "Últimos 90 Días"] as const
 export default function EstadisticasPage() {
   const { appointments, services, business } = useDashboardStore();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("Esta Semana");
+  const [dbStats, setDbStats] = useState<any>(null);
 
-  const confirmed = appointments.filter((a) => a.status === "confirmed");
+  useEffect(() => {
+    fetch("/api/dashboard/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok && data.stats) {
+          setDbStats(data.stats);
+        }
+      })
+      .catch((err) => console.error("Error fetching stats:", err));
+  }, []);
+
+  const confirmed = appointments.filter((a) => a.status === "confirmed" || a.status === "completed");
   const cancelled = appointments.filter((a) => a.status === "cancelled");
-  const total = appointments.length || 1;
-  const attendanceRate = Math.round((confirmed.length / total) * 100);
+  const total = appointments.length;
+  const attendanceRate = dbStats?.attendanceRate ?? (total > 0 ? Math.round((confirmed.length / total) * 100) : 100);
 
-  const revenue = confirmed.reduce(
+  const revenue = dbStats?.confirmedRevenue ?? confirmed.reduce(
     (sum, item) => sum + (services.find((s) => s.id === item.serviceId)?.price ?? 0),
     0,
   );
-  const uniqueClients = new Set(appointments.map((a) => a.clientEmail)).size;
+  const uniqueClients = new Set(appointments.map((a) => a.clientEmail || a.clientPhone)).size;
 
-  const areaData = useMemo(() => [
-    { name: "Lun", ingresos: 480000, turnos: 6 },
-    { name: "Mar", ingresos: 620000, turnos: 8 },
-    { name: "Mié", ingresos: 390000, turnos: 5 },
-    { name: "Jue", ingresos: 750000, turnos: 10 },
-    { name: "Vie", ingresos: 1100000, turnos: 14 },
-    { name: "Sáb", ingresos: 1450000, turnos: 18 },
-    { name: "Dom", ingresos: 320000, turnos: 4 },
-  ], []);
+  const areaData = useMemo(() => {
+    if (dbStats?.areaData && dbStats.areaData.length > 0) {
+      return dbStats.areaData;
+    }
+    return [
+      { name: "Lun", ingresos: 0, turnos: 0 },
+      { name: "Mar", ingresos: 0, turnos: 0 },
+      { name: "Mié", ingresos: 0, turnos: 0 },
+      { name: "Jue", ingresos: 0, turnos: 0 },
+      { name: "Vie", ingresos: 0, turnos: 0 },
+      { name: "Sáb", ingresos: 0, turnos: 0 },
+      { name: "Dom", ingresos: 0, turnos: 0 },
+    ];
+  }, [dbStats]);
 
-  const paymentData = [
-    { name: "Transferencia SIPAP", value: 45, color: "#10b981" },
-    { name: "POS Bancard (Tarjetas)", value: 30, color: "#6366f1" },
-    { name: "Efectivo", value: 18, color: "#f59e0b" },
-    { name: "Billeteras Móviles", value: 7, color: "#ec4899" },
-  ];
+  const paymentData: Array<{ name: string; value: number; color: string }> = useMemo(() => {
+    if (dbStats?.paymentMethodsData && dbStats.paymentMethodsData.length > 0) {
+      const colors = ["#10b981", "#6366f1", "#f59e0b", "#ec4899", "#0ea5e9"];
+      const totalAmount = dbStats.paymentMethodsData.reduce((acc: number, cur: any) => acc + cur.value, 0) || 1;
+      return dbStats.paymentMethodsData.map((item: any, idx: number) => ({
+        name: item.name,
+        value: Math.round((item.value / totalAmount) * 100),
+        color: colors[idx % colors.length],
+      }));
+    }
+    return [
+      { name: "Efectivo", value: 0, color: "#f59e0b" },
+      { name: "POS Bancard", value: 0, color: "#6366f1" },
+      { name: "SIPAP", value: 0, color: "#10b981" },
+    ];
+  }, [dbStats]);
 
-  const hourlyDistribution = [
-    { hour: "08:00", citas: 2 },
-    { hour: "10:00", citas: 5 },
-    { hour: "12:00", citas: 4 },
-    { hour: "14:00", citas: 7 },
-    { hour: "16:00", citas: 9 },
-    { hour: "18:00", citas: 11 },
-    { hour: "20:00", citas: 3 },
-  ];
+  const hourlyDistribution: Array<{ hour: string; citas: number }> = useMemo(() => {
+    if (dbStats?.hourlyDistribution && dbStats.hourlyDistribution.length > 0) {
+      return dbStats.hourlyDistribution;
+    }
+    return [
+      { hour: "08:00", citas: 0 },
+      { hour: "10:00", citas: 0 },
+      { hour: "12:00", citas: 0 },
+      { hour: "14:00", citas: 0 },
+      { hour: "16:00", citas: 0 },
+      { hour: "18:00", citas: 0 },
+      { hour: "20:00", citas: 0 },
+    ];
+  }, [dbStats]);
 
   return (
     <div className="space-y-6">

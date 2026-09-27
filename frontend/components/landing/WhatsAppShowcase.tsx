@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { CheckCircle2, Clock, Bell, Sparkles, ArrowRight, MessageCircle, Calendar, CheckCheck, MapPin } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 export default function WhatsAppShowcase() {
   const { category } = useCategory();
@@ -12,7 +13,7 @@ export default function WhatsAppShowcase() {
   return (
     <section
       id="whatsapp"
-      className="relative bg-white dark:bg-slate-950 py-12 sm:py-16 lg:py-20 border-t border-slate-100 dark:border-slate-800/80 scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+      className="relative bg-white dark:bg-slate-950 py-14 sm:py-20 lg:py-24 border-t border-slate-100 dark:border-slate-800/80 scroll-mt-24"
     >
       <div className="mx-auto grid max-w-6xl items-center gap-8 sm:gap-12 px-4 sm:px-6 lg:grid-cols-12">
         {/* Left Column: Value Prop & Bullets */}
@@ -61,7 +62,7 @@ export default function WhatsAppShowcase() {
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <a
-              href="https://wa.me/595981123456?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funcionan%20los%20recordatorios%20por%20WhatsApp"
+              href={getCommercialWhatsAppUrl("Hola, quiero ver cómo funcionan los recordatorios por WhatsApp")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:underline px-3 py-2"

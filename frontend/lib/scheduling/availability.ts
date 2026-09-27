@@ -93,6 +93,33 @@ export async function getAvailableSlots(
     busyByStaff.set(appointment.staffId, list);
   }
 
+  // Considerar excepciones y descansos operativos (ScheduleBlock)
+  const blocks = await db.scheduleBlock.findMany({
+    where: {
+      tenantId,
+      OR: [{ staffId: { in: staffIds } }, { staffId: null }],
+      startTime: { lt: dayEnd },
+      endTime: { gt: dayStart },
+    },
+    select: { staffId: true, startTime: true, endTime: true },
+  });
+
+  for (const block of blocks) {
+    const startMs = block.startTime.getTime();
+    const endMs = block.endTime.getTime();
+    if (block.staffId) {
+      const list = busyByStaff.get(block.staffId) ?? [];
+      list.push({ startMs, endMs });
+      busyByStaff.set(block.staffId, list);
+    } else {
+      for (const sId of staffIds) {
+        const list = busyByStaff.get(sId) ?? [];
+        list.push({ startMs, endMs });
+        busyByStaff.set(sId, list);
+      }
+    }
+  }
+
   const durationMs = service.durationMinutes * 60_000;
   const stepMs = slotStepMs(tenant.settings, service.durationMinutes);
   const byStart = new Map<string, AvailableSlot>();

@@ -7,14 +7,31 @@ import ToastProvider from "./ui/ToastProvider";
 import GuidedTour from "./GuidedTour";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
-export default function DashboardShell({ children }: { children: ReactNode }) {
+interface DashboardShellProps {
+  children: ReactNode;
+  initialTenantSlug?: string;
+  initialTenantId?: string;
+  userName?: string;
+}
+
+export default function DashboardShell({
+  children,
+  initialTenantSlug,
+  initialTenantId,
+  userName,
+}: DashboardShellProps) {
   const color = useDashboardStore((s) => s.business.primaryColor);
-  const slug = useDashboardStore((s) => s.business.slug);
   const syncFromDatabase = useDashboardStore((s) => s.syncFromDatabase);
+  const updateBusiness = useDashboardStore((s) => s.updateBusiness);
 
   useEffect(() => {
-    syncFromDatabase(slug || "barberia");
-  }, [slug, syncFromDatabase]);
+    if (initialTenantSlug) {
+      updateBusiness({ slug: initialTenantSlug });
+      syncFromDatabase(initialTenantSlug);
+    } else {
+      syncFromDatabase();
+    }
+  }, [initialTenantSlug, syncFromDatabase, updateBusiness]);
 
   return (
     <div

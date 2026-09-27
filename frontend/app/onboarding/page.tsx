@@ -20,6 +20,8 @@ import {
   Stethoscope,
   Activity,
   Heart,
+  Mail,
+  User,
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -42,6 +44,8 @@ export default function OnboardingPage() {
   const [duration, setDuration] = useState("45");
   const [price, setPrice] = useState("90000");
   const [whatsapp, setWhatsapp] = useState("0981 123 456");
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
   const [isFinishing, setIsFinishing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -56,6 +60,11 @@ export default function OnboardingPage() {
   };
 
   const handleFinish = async () => {
+    if (!ownerEmail || !ownerEmail.includes("@")) {
+      setErrorMessage("Por favor ingresa un correo electrónico válido para tu cuenta de administrador.");
+      return;
+    }
+
     setIsFinishing(true);
     setErrorMessage(null);
 
@@ -68,10 +77,12 @@ export default function OnboardingPage() {
       duration: Number(duration) || 45,
       price: Number(price) || 80000,
       whatsapp,
+      ownerName: ownerName.trim() || businessName,
+      ownerEmail: ownerEmail.trim().toLowerCase(),
     });
 
     if (res.ok) {
-      router.push("/dashboard?onboarding=completed&tour=start");
+      window.location.href = "/dashboard?onboarding=completed&tour=start";
     } else {
       setIsFinishing(false);
       setErrorMessage(res.error || "Ocurrió un error al registrar el negocio.");
@@ -385,6 +396,43 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="owner-name-input" className="block text-xs font-semibold text-slate-700">
+                      Tu Nombre (Dueño/a o Encargado/a)
+                    </label>
+                    <div className="relative mt-1.5">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input
+                        id="owner-name-input"
+                        type="text"
+                        value={ownerName}
+                        onChange={(e) => setOwnerName(e.target.value)}
+                        placeholder="Ej: Marcos Benítez"
+                        className="w-full rounded-2xl border border-slate-200/90 bg-white py-3 pl-10 pr-4 text-sm font-semibold text-slate-900 focus:border-brand focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="owner-email-input" className="block text-xs font-semibold text-slate-700">
+                      Tu Correo de Acceso al Panel *
+                    </label>
+                    <div className="relative mt-1.5">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input
+                        id="owner-email-input"
+                        type="email"
+                        required
+                        value={ownerEmail}
+                        onChange={(e) => setOwnerEmail(e.target.value)}
+                        placeholder="tu@email.com"
+                        className="w-full rounded-2xl border border-slate-200/90 bg-white py-3 pl-10 pr-4 text-sm font-semibold text-slate-900 focus:border-brand focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label htmlFor="whatsapp-input" className="block text-xs font-semibold text-slate-700">
                     Número de WhatsApp del Negocio

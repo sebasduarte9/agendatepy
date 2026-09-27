@@ -26,9 +26,28 @@ export default function ConfiguracionPage() {
   const [weekendClosing, setWeekendClosing] = useState("21:00");
   const [sundayOpen, setSundayOpen] = useState(false);
 
-  function handleSaveAll(e: React.FormEvent) {
+  async function handleSaveAll(e: React.FormEvent) {
     e.preventDefault();
-    pushToast("success", "¡Configuración general del local actualizada correctamente!");
+    try {
+      await updateBusiness({
+        name: business.name,
+        slug: business.slug,
+        phone: business.phone,
+        whatsappNumber: business.whatsappNumber || business.phone,
+        address: business.address,
+        timezone: business.timezone,
+        primaryColor: business.primaryColor,
+        ...({
+          openingTime,
+          closingTime,
+          weekendClosing,
+          sundayOpen,
+        } as any),
+      });
+      pushToast("success", "¡Configuración general del local guardada en la base de datos!");
+    } catch {
+      pushToast("error", "Error de conexión al guardar configuración");
+    }
   }
 
   return (

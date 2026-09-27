@@ -20,7 +20,7 @@ export default function HowItWorks() {
   return (
     <section
       id="como-funciona"
-      className="relative overflow-hidden mx-auto max-w-6xl px-4 py-10 sm:py-16 lg:py-20 sm:px-6 scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+      className="relative overflow-hidden mx-auto max-w-6xl px-4 py-14 sm:py-20 lg:py-24 sm:px-6 scroll-mt-24"
     >
       {/* Luces y orbes ambientales de fondo */}
       <div className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-brand/10 blur-[100px] dark:bg-brand/15" />

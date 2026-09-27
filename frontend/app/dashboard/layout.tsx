@@ -8,9 +8,17 @@ export const dynamic = "force-dynamic";
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
 
-  if (process.env.NODE_ENV === "production" && !session) {
+  if (!session) {
     redirect("/login");
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  return (
+    <DashboardShell
+      initialTenantSlug={session.tenantSlug || undefined}
+      initialTenantId={session.tenantId || undefined}
+      userName={session.name}
+    >
+      {children}
+    </DashboardShell>
+  );
 }

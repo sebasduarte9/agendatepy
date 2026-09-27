@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 const COLUMNS = [
   {
@@ -42,7 +43,7 @@ const COLUMNS = [
     links: [
       {
         label: "Contacto por WhatsApp",
-        href: "https://wa.me/595981123456?text=Hola%2C%20quisiera%20consultar%20sobre%20AgendatePY",
+        href: getCommercialWhatsAppUrl("Hola, quisiera consultar sobre AgendatePY"),
         isExternal: true,
       },
       { label: "Términos y Condiciones", href: "/terminos" },

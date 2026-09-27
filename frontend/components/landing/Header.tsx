@@ -13,45 +13,48 @@ import {
   ExternalLink,
 } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
+import { scrollToSection } from "@/lib/smoothScroll";
 
 export default function Header() {
   const [activeTab, setActiveTab] = useState("inicio");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    const sectionIds = [
-      "inicio",
-      "como-funciona",
-      "whatsapp",
-      "caracteristicas",
-      "calculadora",
-      "precios",
-      "faq",
-    ];
+  const sectionIds = [
+    "inicio",
+    "como-funciona",
+    "whatsapp",
+    "caracteristicas",
+    "calculadora",
+    "precios",
+    "faq",
+  ];
 
+  // Sincronización con el scroll para marcar la pestaña activa
+  useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
 
-      if (window.scrollY < 100) {
+      if (window.scrollY < 120) {
         setActiveTab("inicio");
         return;
       }
 
       const atBottom =
         window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 80;
+        document.documentElement.scrollHeight - 90;
       if (atBottom) {
         setActiveTab("faq");
         return;
       }
 
-      // Detect active section based on bounding client rect
+      // Detectar sección activa en base a la zona de enfoque del viewport
+      const threshold = window.innerHeight * 0.38;
       for (let i = sectionIds.length - 1; i >= 0; i--) {
         const el = document.getElementById(sectionIds[i]);
         if (el) {
           const rect = el.getBoundingClientRect();
-          if (rect.top <= 260) {
+          if (rect.top <= threshold && rect.bottom > 100) {
             setActiveTab(sectionIds[i]);
             break;
           }
@@ -63,6 +66,56 @@ export default function Header() {
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Manejo de carga inicial directa con hash en URL (ej: /#calculadora, /#caracteristicas)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      const initialHash = window.location.hash.replace("#", "");
+      if (initialHash && sectionIds.includes(initialHash)) {
+        setActiveTab(initialHash);
+        // Pequeño retardo para permitir que el DOM y el layout se estabilicen
+        const timer = setTimeout(() => {
+          scrollToSection(initialHash, "smooth");
+        }, 150);
+        return () => clearTimeout(timer);
+      }
+    }
+
+    const onHashChange = () => {
+      const currentHash = window.location.hash.replace("#", "");
+      if (currentHash && sectionIds.includes(currentHash)) {
+        setActiveTab(currentHash);
+        scrollToSection(currentHash, "smooth");
+      }
+    };
+
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // Función de clic en opciones del menú
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    itemId: string,
+    href: string
+  ) => {
+    e.preventDefault();
+    setActiveTab(itemId);
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+
+    // Actualizar hash en la URL sin salto tosco del navegador
+    if (typeof window !== "undefined") {
+      if (window.history.pushState) {
+        window.history.pushState(null, "", href);
+      } else {
+        window.location.hash = href;
+      }
+    }
+
+    scrollToSection(itemId, "smooth");
+  };
 
   const navItems = [
     { id: "inicio", label: "Inicio", href: "#inicio" },
@@ -101,7 +154,7 @@ export default function Header() {
                     <a
                       key={item.id}
                       href={item.href}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={(e) => handleNavClick(e, item.id, item.href)}
                       className={`relative h-7 whitespace-nowrap rounded-full px-3 text-xs font-semibold transition-all duration-200 flex items-center ${
                         isActive
                           ? "bg-white dark:bg-slate-800 text-brand dark:text-white shadow-xs font-bold"
@@ -175,10 +228,7 @@ export default function Header() {
                 <a
                   key={item.id}
                   href={item.href}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={(e) => handleNavClick(e, item.id, item.href)}
                   className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
                 >
                   <span>{item.label}</span>

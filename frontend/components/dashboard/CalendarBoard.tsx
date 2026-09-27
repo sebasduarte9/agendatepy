@@ -306,15 +306,19 @@ export default function CalendarBoard() {
           timezone={business.timezone}
           businessName={business.name}
           onClose={() => setSelectedApp(null)}
-          onUpdate={(patch) => {
-            updateAppointment(selectedApp.id, patch);
-            setSelectedApp(null);
-            pushToast("success", "Cita reprogramada y actualizada correctamente");
+          onUpdate={async (patch) => {
+            const ok = await updateAppointment(selectedApp.id, patch);
+            if (ok) {
+              setSelectedApp(null);
+              pushToast("success", "Cita reprogramada y actualizada correctamente");
+            }
           }}
-          onCancel={() => {
-            cancelAppointment(selectedApp.id);
-            setSelectedApp(null);
-            pushToast("success", "Cita cancelada");
+          onCancel={async () => {
+            const ok = await cancelAppointment(selectedApp.id);
+            if (ok) {
+              setSelectedApp(null);
+              pushToast("success", "Cita cancelada con éxito");
+            }
           }}
         />
       )}
