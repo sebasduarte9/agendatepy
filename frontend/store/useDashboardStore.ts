@@ -1001,6 +1001,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           return { appointments: Array.from(map.values()) };
         });
       }
+      if (data.ok && Array.isArray(data.products) && data.products.length > 0) {
+        set({ products: data.products });
+      }
     } catch (err) {
       console.error("Error al sincronizar con PostgreSQL:", err);
     }
@@ -1158,19 +1161,60 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   addProduct: (item) => {
     const id = `pr-${Date.now()}`;
     set({ products: [{ ...item, id }, ...get().products] });
+    fetch("/api/dashboard/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "create_product",
+        tenantSlug: get().business.slug || "barberia",
+        data: item,
+      }),
+    }).catch((e) => console.error("Error creating product in DB:", e));
   },
-  updateProduct: (id, patch) =>
+  updateProduct: (id, patch) => {
     set({
       products: get().products.map((p) => (p.id === id ? { ...p, ...patch } : p)),
-    }),
-  deleteProduct: (id) =>
-    set({ products: get().products.filter((p) => p.id !== id) }),
-  updateProductStock: (id, delta) =>
-    set({
-      products: get().products.map((p) =>
-        p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p,
-      ),
-    }),
+    });
+    fetch("/api/dashboard/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_product",
+        tenantSlug: get().business.slug || "barberia",
+        data: { id, patch },
+      }),
+    }).catch((e) => console.error("Error updating product in DB:", e));
+  },
+  deleteProduct: (id) => {
+    set({ products: get().products.filter((p) => p.id !== id) });
+    fetch("/api/dashboard/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "delete_product",
+        tenantSlug: get().business.slug || "barberia",
+        data: { id },
+      }),
+    }).catch((e) => console.error("Error deleting product in DB:", e));
+  },
+  updateProductStock: (id, delta) => {
+    const updated = get().products.map((p) =>
+      p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p,
+    );
+    set({ products: updated });
+    const target = updated.find((p) => p.id === id);
+    if (target) {
+      fetch("/api/dashboard/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_product",
+          tenantSlug: get().business.slug || "barberia",
+          data: { id, patch: { price: target.price, active: target.active } },
+        }),
+      }).catch((e) => console.error("Error syncing stock update in DB:", e));
+    }
+  },
 
   addClient: (item) => {
     const id = `cl-${Date.now()}`;

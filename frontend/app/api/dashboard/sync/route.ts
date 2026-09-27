@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         services: true,
         staff: true,
         clients: true,
+        products: true,
         cashMovements: {
           orderBy: { createdAt: "desc" },
           take: 50,
@@ -80,6 +81,17 @@ export async function GET(request: NextRequest) {
         name: m.name,
         commissionPercentage: m.commissionPercentage,
         active: m.active,
+      })),
+      products: tenant.products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: "",
+        price: p.price,
+        cost: Math.round(p.price * 0.5),
+        imageUrl: "",
+        category: "General",
+        stock: 10,
+        active: p.isActive,
       })),
       cashMovementsCount: tenant.cashMovements.length,
     });
@@ -168,6 +180,45 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({ ok: true, status: prismaStatus });
+    }
+
+    if (action === "create_product") {
+      const created = await prisma.product.create({
+        data: {
+          tenantId: tenant.id,
+          name: data.name || "Producto sin nombre",
+          price: Number(data.price) || 0,
+          isActive: data.active !== false,
+        },
+      });
+      return NextResponse.json({ ok: true, product: created });
+    }
+
+    if (action === "update_product") {
+      const { id, patch } = data;
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (UUID_REGEX.test(id)) {
+        await prisma.product.updateMany({
+          where: { id, tenantId: tenant.id },
+          data: {
+            ...(patch.name ? { name: patch.name } : {}),
+            ...(patch.price !== undefined ? { price: Number(patch.price) } : {}),
+            ...(patch.active !== undefined ? { isActive: Boolean(patch.active) } : {}),
+          },
+        });
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "delete_product") {
+      const { id } = data;
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (UUID_REGEX.test(id)) {
+        await prisma.product.deleteMany({
+          where: { id, tenantId: tenant.id },
+        });
+      }
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ ok: false, error: "Acción no reconocida" }, { status: 400 });

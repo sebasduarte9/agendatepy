@@ -34,7 +34,12 @@ import type { PaymentMethod } from "@/lib/dashboard-types";
 const TIMES = ["08:30", "09:30", "10:30", "11:30", "14:00", "15:00", "16:30", "17:30", "18:30"];
 
 export default function NuevaReservaPage() {
-  const { services, staff, business, addAppointment, pushToast } = useDashboardStore();
+  const services = useDashboardStore((s) => s.services);
+  const staff = useDashboardStore((s) => s.staff);
+  const business = useDashboardStore((s) => s.business);
+  const appointments = useDashboardStore((s) => s.appointments);
+  const addAppointment = useDashboardStore((s) => s.addAppointment);
+  const pushToast = useDashboardStore((s) => s.pushToast);
   const activeStaff = staff.filter((s) => s.active);
   const skipStaff = activeStaff.length === 1;
 
@@ -59,6 +64,21 @@ export default function NuevaReservaPage() {
   const civilDate = date
     ? formatInTimeZone(date.toISOString(), business.timezone, "yyyy-MM-dd")
     : "";
+
+  const occupiedSlots = useMemo(() => {
+    if (!staffId || !civilDate) return new Set<string>();
+    const occupied = new Set<string>();
+    appointments.forEach((a) => {
+      if (a.staffId === staffId && a.status !== "cancelled") {
+        const aDate = a.start.slice(0, 10);
+        if (aDate === civilDate) {
+          const aTime = formatInTimeZone(a.start, business.timezone || "America/Asuncion", "HH:mm");
+          occupied.add(aTime);
+        }
+      }
+    });
+    return occupied;
+  }, [appointments, staffId, civilDate, business.timezone]);
 
   const canConfirm = client.name.trim() && client.phone.trim() && payment && consentWa;
 
@@ -333,18 +353,22 @@ export default function NuevaReservaPage() {
               <div className="grid grid-cols-3 gap-2">
                 {TIMES.map((slot) => {
                   const isSelected = time === slot;
+                  const isOccupied = occupiedSlots.has(slot);
                   return (
                     <button
                       key={slot}
                       type="button"
+                      disabled={isOccupied}
                       onClick={() => setTime(slot)}
                       className={`rounded-2xl border py-2.5 text-xs font-bold transition duration-150 ${
-                        isSelected
-                          ? "border-primary bg-primary text-white shadow-md shadow-primary/25"
-                          : "border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 hover:border-primary"
+                        isOccupied
+                          ? "border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-slate-800/20 text-slate-400 dark:text-slate-600 cursor-not-allowed line-through"
+                          : isSelected
+                            ? "border-primary bg-primary text-white shadow-md shadow-primary/25"
+                            : "border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 hover:border-primary"
                       }`}
                     >
-                      {slot} hs
+                      {slot} hs {isOccupied ? "(Ocupado)" : ""}
                     </button>
                   );
                 })}

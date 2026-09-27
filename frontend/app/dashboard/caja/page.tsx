@@ -19,11 +19,16 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
+import DataTable from "@/components/dashboard/ui/DataTable";
 import { formatGs } from "@/lib/dashboard-dates";
 
 export default function CajaPage() {
-  const { cashMovements, business, products, updateProductStock, addCashMovement, pushToast } =
-    useDashboardStore();
+  const cashMovements = useDashboardStore((s) => s.cashMovements);
+  const business = useDashboardStore((s) => s.business);
+  const products = useDashboardStore((s) => s.products);
+  const updateProductStock = useDashboardStore((s) => s.updateProductStock);
+  const addCashMovement = useDashboardStore((s) => s.addCashMovement);
+  const pushToast = useDashboardStore((s) => s.pushToast);
   const [modalOpen, setModalOpen] = useState(false);
   const [arqueoOpen, setArqueoOpen] = useState(false);
   const [filterMethod, setFilterMethod] = useState<string>("todos");
@@ -252,60 +257,78 @@ export default function CajaPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-border text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                <th className="pb-3 pl-2">Hora</th>
-                <th className="pb-3">Tipo</th>
-                <th className="pb-3">Concepto</th>
-                <th className="pb-3">Medio de Pago</th>
-                <th className="pb-3">Comprobante / Ref</th>
-                <th className="pb-3 pr-2 text-right">Monto</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filteredMovements.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50/70 transition">
-                  <td className="py-3 pl-2 font-mono text-slate-500">
-                    {formatInTimeZone(item.date, business.timezone, "HH:mm")}
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        item.type === "ingreso"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-rose-50 text-rose-700"
-                      }`}
-                    >
-                      {item.type === "ingreso" ? (
-                        <ArrowDownLeft className="h-3 w-3" />
-                      ) : (
-                        <ArrowUpRight className="h-3 w-3" />
-                      )}
-                      {item.type === "ingreso" ? "Ingreso" : "Egreso"}
-                    </span>
-                  </td>
-                  <td className="py-3 font-medium text-slate-900">{item.concept}</td>
-                  <td className="py-3 capitalize text-slate-600 font-medium">
-                    {item.method === "pos" ? "POS Bancard" : item.method}
-                  </td>
-                  <td className="py-3 text-slate-400 font-mono text-[11px]">
-                    {item.voucherNumber || "—"}
-                  </td>
-                  <td
-                    className={`py-3 pr-2 text-right font-bold ${
-                      item.type === "ingreso" ? "text-emerald-600" : "text-rose-600"
-                    }`}
-                  >
-                    {item.type === "ingreso" ? "+" : "-"}
-                    {formatGs(item.amount)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={filteredMovements}
+          columns={[
+            {
+              key: "time",
+              header: "Hora",
+              render: (item) => (
+                <span className="font-mono text-slate-500">
+                  {formatInTimeZone(item.date, business.timezone, "HH:mm")}
+                </span>
+              ),
+            },
+            {
+              key: "type",
+              header: "Tipo",
+              render: (item) => (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    item.type === "ingreso"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-rose-50 text-rose-700"
+                  }`}
+                >
+                  {item.type === "ingreso" ? (
+                    <ArrowDownLeft className="h-3 w-3" />
+                  ) : (
+                    <ArrowUpRight className="h-3 w-3" />
+                  )}
+                  {item.type === "ingreso" ? "Ingreso" : "Egreso"}
+                </span>
+              ),
+            },
+            {
+              key: "concept",
+              header: "Concepto",
+              render: (item) => <span className="font-medium text-slate-900">{item.concept}</span>,
+            },
+            {
+              key: "method",
+              header: "Medio de Pago",
+              render: (item) => (
+                <span className="capitalize text-slate-600 font-medium">
+                  {item.method === "pos" ? "POS Bancard" : item.method}
+                </span>
+              ),
+            },
+            {
+              key: "voucher",
+              header: "Comprobante / Ref",
+              render: (item) => (
+                <span className="text-slate-400 font-mono text-[11px]">
+                  {item.voucherNumber || "—"}
+                </span>
+              ),
+            },
+            {
+              key: "amount",
+              header: "Monto",
+              render: (item) => (
+                <span
+                  className={`font-bold ${
+                    item.type === "ingreso" ? "text-emerald-600" : "text-rose-600"
+                  }`}
+                >
+                  {item.type === "ingreso" ? "+" : "-"}
+                  {formatGs(item.amount)}
+                </span>
+              ),
+            },
+          ]}
+          pageSize={8}
+        />
       </Card>
 
       {/* Modal: New Movement */}

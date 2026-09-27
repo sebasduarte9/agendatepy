@@ -32,25 +32,23 @@ const END_HOUR = 20;
 const HOUR_PX = 56;
 
 export default function CalendarBoard() {
-  const {
-    appointments,
-    staff,
-    services,
-    business,
-    calendarDate,
-    calendarView,
-    selectedStaffId,
-    setCalendarDate,
-    setCalendarView,
-    setSelectedStaffId,
-    cancelAppointment,
-    updateAppointment,
-    addAppointment,
-    currentUserRole,
-    currentStaffId,
-    pushToast,
-    timezoneNote,
-  } = useDashboardStore();
+  const appointments = useDashboardStore((s) => s.appointments);
+  const staff = useDashboardStore((s) => s.staff);
+  const services = useDashboardStore((s) => s.services);
+  const business = useDashboardStore((s) => s.business);
+  const calendarDate = useDashboardStore((s) => s.calendarDate);
+  const calendarView = useDashboardStore((s) => s.calendarView);
+  const selectedStaffId = useDashboardStore((s) => s.selectedStaffId);
+  const setCalendarDate = useDashboardStore((s) => s.setCalendarDate);
+  const setCalendarView = useDashboardStore((s) => s.setCalendarView);
+  const setSelectedStaffId = useDashboardStore((s) => s.setSelectedStaffId);
+  const cancelAppointment = useDashboardStore((s) => s.cancelAppointment);
+  const updateAppointment = useDashboardStore((s) => s.updateAppointment);
+  const addAppointment = useDashboardStore((s) => s.addAppointment);
+  const currentUserRole = useDashboardStore((s) => s.currentUserRole);
+  const currentStaffId = useDashboardStore((s) => s.currentStaffId);
+  const pushToast = useDashboardStore((s) => s.pushToast);
+  const timezoneNote = useDashboardStore((s) => s.timezoneNote);
 
   // If user is a professional (barbero / estilista), enforce viewing their own agenda
   useEffect(() => {
@@ -469,7 +467,7 @@ function GoogleCalendarDayView({
   onSelectAppointment: (app: Appointment) => void;
   onEmptySlotClick: (dateStr: string, hour: number, staffId: string) => void;
 }) {
-  const { services } = useDashboardStore();
+  const services = useDashboardStore((s) => s.services);
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
 
   // Current time position in minutes
@@ -643,7 +641,7 @@ function GoogleCalendarWeekView({
   onSelectAppointment: (app: Appointment) => void;
   onEmptySlotClick: (dateStr: string, hour: number, staffId: string) => void;
 }) {
-  const { staff } = useDashboardStore();
+  const staff = useDashboardStore((s) => s.staff);
   const start = parseISO(`${date}T12:00:00`);
   const days = Array.from({ length: 7 }, (_, i) => addDaysIso(date, i - start.getDay()));
   const today = formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");

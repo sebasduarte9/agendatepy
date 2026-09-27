@@ -34,18 +34,16 @@ import { formatGs, phoneWa } from "@/lib/dashboard-dates";
 import type { Appointment } from "@/lib/dashboard-types";
 
 export default function DashboardHomePage() {
-  const {
-    appointments,
-    services,
-    staff,
-    business,
-    clients,
-    cashMovements,
-    crmConversations,
-    updateAppointment,
-    addCashMovement,
-    pushToast,
-  } = useDashboardStore();
+  const appointments = useDashboardStore((s) => s.appointments);
+  const services = useDashboardStore((s) => s.services);
+  const staff = useDashboardStore((s) => s.staff);
+  const business = useDashboardStore((s) => s.business);
+  const clients = useDashboardStore((s) => s.clients);
+  const cashMovements = useDashboardStore((s) => s.cashMovements);
+  const crmConversations = useDashboardStore((s) => s.crmConversations);
+  const updateAppointment = useDashboardStore((s) => s.updateAppointment);
+  const addCashMovement = useDashboardStore((s) => s.addCashMovement);
+  const pushToast = useDashboardStore((s) => s.pushToast);
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [filterTab, setFilterTab] = useState<"hoy" | "pendientes" | "todos">("hoy");

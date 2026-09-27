@@ -13,14 +13,19 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
+import DataTable from "@/components/dashboard/ui/DataTable";
 import { formatGs } from "@/lib/dashboard-dates";
-import type { StaffMember } from "@/lib/dashboard-types";
+import type { StaffMember, Appointment } from "@/lib/dashboard-types";
 
 const PERIODS = ["Hoy", "Esta Semana", "Este Mes", "Todo el Historial"] as const;
 
 export default function ComisionesPage() {
-  const { staff, appointments, services, business, updateStaffCommission, pushToast } =
-    useDashboardStore();
+  const staff = useDashboardStore((s) => s.staff);
+  const appointments = useDashboardStore((s) => s.appointments);
+  const services = useDashboardStore((s) => s.services);
+  const business = useDashboardStore((s) => s.business);
+  const updateStaffCommission = useDashboardStore((s) => s.updateStaffCommission);
+  const pushToast = useDashboardStore((s) => s.pushToast);
   const [period, setPeriod] = useState<(typeof PERIODS)[number]>("Esta Semana");
   const [selectedStaffForSettlement, setSelectedStaffForSettlement] = useState<StaffMember | null>(null);
 
@@ -204,58 +209,88 @@ export default function ComisionesPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                <th className="pb-3 pl-2">Fecha & Hora</th>
-                <th className="pb-3">Cliente</th>
-                <th className="pb-3">Profesional</th>
-                <th className="pb-3">Servicio</th>
-                <th className="pb-3 text-right">Precio Turno</th>
-                <th className="pb-3 text-right">% Com.</th>
-                <th className="pb-3 pr-2 text-right">Comisión a Pagar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {appointments
-                .filter((a) => a.status !== "cancelled")
-                .map((a) => {
-                  const service = services.find((s) => s.id === a.serviceId);
-                  const staffMember = staff.find((st) => st.id === a.staffId);
-                  const price = service?.price ?? 0;
-                  const rate = staffMember?.commissionPercentage ?? 50;
-                  const commission = Math.round((price * rate) / 100);
-
-                  return (
-                    <tr key={a.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition">
-                      <td className="py-3 pl-2 font-mono text-slate-600 dark:text-slate-300">
-                        {formatInTimeZone(a.start, business.timezone, "dd/MM/yyyy HH:mm")}
-                      </td>
-                      <td className="py-3 font-medium text-slate-900 dark:text-white">{a.clientName}</td>
-                      <td className="py-3">
-                        <span className="inline-flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-200">
-                          <span
-                            className="h-2 w-2 rounded-full"
-                            style={{ background: staffMember?.color ?? "#4f46e5" }}
-                          />
-                          {staffMember?.name ?? "General"}
-                        </span>
-                      </td>
-                      <td className="py-3 text-slate-600 dark:text-slate-300">{service?.name}</td>
-                      <td className="py-3 text-right font-medium text-slate-900 dark:text-white">
-                        {formatGs(price)}
-                      </td>
-                      <td className="py-3 text-right text-slate-500 dark:text-slate-400 font-mono">{rate}%</td>
-                      <td className="py-3 pr-2 text-right font-bold text-primary">
-                        {formatGs(commission)}
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={appointments
+            .filter((a) => a.status !== "cancelled")
+            .map((a) => {
+              const service = services.find((s) => s.id === a.serviceId);
+              const staffMember = staff.find((st) => st.id === a.staffId);
+              const price = service?.price ?? 0;
+              const rate = staffMember?.commissionPercentage ?? 50;
+              const commission = Math.round((price * rate) / 100);
+              return {
+                ...a,
+                serviceName: service?.name || "Servicio",
+                staffName: staffMember?.name || "General",
+                staffColor: staffMember?.color ?? "#4f46e5",
+                price,
+                rate,
+                commission,
+              };
+            })}
+          columns={[
+            {
+              key: "date",
+              header: "Fecha & Hora",
+              render: (row) => (
+                <span className="font-mono text-slate-600 dark:text-slate-300">
+                  {formatInTimeZone(row.start, business.timezone, "dd/MM/yyyy HH:mm")}
+                </span>
+              ),
+            },
+            {
+              key: "client",
+              header: "Cliente",
+              render: (row) => (
+                <span className="font-medium text-slate-900 dark:text-white">{row.clientName}</span>
+              ),
+            },
+            {
+              key: "staff",
+              header: "Profesional",
+              render: (row) => (
+                <span className="inline-flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-200">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: row.staffColor }}
+                  />
+                  {row.staffName}
+                </span>
+              ),
+            },
+            {
+              key: "service",
+              header: "Servicio",
+              render: (row) => (
+                <span className="text-slate-600 dark:text-slate-300">{row.serviceName}</span>
+              ),
+            },
+            {
+              key: "price",
+              header: "Precio Turno",
+              render: (row) => (
+                <span className="font-medium text-slate-900 dark:text-white">
+                  {formatGs(row.price)}
+                </span>
+              ),
+            },
+            {
+              key: "rate",
+              header: "% Com.",
+              render: (row) => (
+                <span className="text-slate-500 dark:text-slate-400 font-mono">{row.rate}%</span>
+              ),
+            },
+            {
+              key: "commission",
+              header: "Comisión a Pagar",
+              render: (row) => (
+                <span className="font-bold text-primary">{formatGs(row.commission)}</span>
+              ),
+            },
+          ]}
+          pageSize={8}
+        />
       </Card>
 
       {/* Settlement Confirmation Modal */}

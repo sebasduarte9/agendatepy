@@ -39,15 +39,13 @@ function ProductImageFallback({ category, name }: { category: string; name: stri
 }
 
 export default function ProductosPage() {
-  const {
-    products,
-    business,
-    addProduct,
-    updateProduct,
-    deleteProduct,
-    updateProductStock,
-    pushToast,
-  } = useDashboardStore();
+  const products = useDashboardStore((s) => s.products);
+  const business = useDashboardStore((s) => s.business);
+  const addProduct = useDashboardStore((s) => s.addProduct);
+  const updateProduct = useDashboardStore((s) => s.updateProduct);
+  const deleteProduct = useDashboardStore((s) => s.deleteProduct);
+  const updateProductStock = useDashboardStore((s) => s.updateProductStock);
+  const pushToast = useDashboardStore((s) => s.pushToast);
 
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
