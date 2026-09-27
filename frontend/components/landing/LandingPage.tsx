@@ -4,14 +4,14 @@ import { CategoryProvider } from "@/context/CategoryContext";
 import Header from "./Header";
 import Hero from "./Hero";
 import Ticker from "./Ticker";
-import Features from "./Features";
-import WhatsAppShowcase from "./WhatsAppShowcase";
 import HowItWorks from "./HowItWorks";
+import WhatsAppShowcase from "./WhatsAppShowcase";
+import Features from "./Features";
+import RoiCalculator from "./RoiCalculator";
+import Pricing from "./Pricing";
 import Integrations from "./Integrations";
 import Differentiators from "./Differentiators";
 import Testimonials from "./Testimonials";
-import RoiCalculator from "./RoiCalculator";
-import Pricing from "./Pricing";
 import FAQ from "./FAQ";
 import Footer from "./Footer";
 import WhatsAppFloatingButton from "./WhatsAppFloatingButton";
@@ -24,14 +24,14 @@ export default function LandingPage() {
       <main>
         <Hero />
         <Ticker />
-        <Features />
-        <WhatsAppShowcase />
         <HowItWorks />
+        <WhatsAppShowcase />
+        <Features />
+        <RoiCalculator />
+        <Pricing />
         <Integrations />
         <Differentiators />
         <Testimonials />
-        <RoiCalculator />
-        <Pricing />
         <FAQ />
       </main>
       <Footer />

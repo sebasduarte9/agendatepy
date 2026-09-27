@@ -20,21 +20,59 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    const sectionIds = [
+      "inicio",
+      "como-funciona",
+      "whatsapp",
+      "caracteristicas",
+      "calculadora",
+      "precios",
+      "testimonios",
+      "faq",
+    ];
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
+
+      if (window.scrollY < 100) {
+        setActiveTab("inicio");
+        return;
+      }
+
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 80;
+      if (atBottom) {
+        setActiveTab("faq");
+        return;
+      }
+
+      // Detect active section based on bounding client rect
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 260) {
+            setActiveTab(sectionIds[i]);
+            break;
+          }
+        }
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navItems = [
     { id: "inicio", label: "Inicio", href: "#inicio" },
-    { id: "caracteristicas", label: "Características", href: "#caracteristicas" },
-    { id: "whatsapp", label: "WhatsApp", href: "#whatsapp" },
     { id: "como-funciona", label: "Cómo Funciona", href: "#como-funciona" },
-    { id: "testimonios", label: "Casos de Éxito", href: "#testimonios" },
+    { id: "whatsapp", label: "WhatsApp", href: "#whatsapp" },
+    { id: "caracteristicas", label: "Características", href: "#caracteristicas" },
     { id: "calculadora", label: "Calculadora", href: "#calculadora" },
     { id: "precios", label: "Precios", href: "#precios" },
+    { id: "testimonios", label: "Casos de Éxito", href: "#testimonios" },
     { id: "faq", label: "FAQ", href: "#faq" },
   ];
 

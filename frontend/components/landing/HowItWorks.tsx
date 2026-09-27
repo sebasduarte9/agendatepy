@@ -3,32 +3,41 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Shield, Zap, Settings2, Check, Sparkles } from "lucide-react";
+import { Shield, Zap, Settings2, Check, Sparkles, MessageSquareCheck, WalletCards } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 import MiniCalendar from "./MiniCalendar";
 
 const TIMES = ["09:00", "10:30", "14:00", "16:30"];
 const PAYMENTS = [
-  { id: "sipap", label: "Transferencia SIPAP (Todos los Bancos)" },
-  { id: "bancard", label: "QR Bancard & POS" },
-  { id: "presencial", label: "Efectivo o POS en el local" },
+  { id: "presencial", label: "Pago en el local (Efectivo / POS)" },
+  { id: "transferencia", label: "Transferencia bancaria directa" },
+  { id: "billetera", label: "Billetera digital (Tigo / Personal / Zimple)" },
 ] as const;
 
 export default function HowItWorks() {
   const { category } = useCategory();
 
   return (
-    <section id="como-funciona" className="relative overflow-hidden mx-auto max-w-6xl px-4 py-20 sm:py-28 sm:px-6">
+    <section
+      id="como-funciona"
+      className="relative overflow-hidden mx-auto max-w-6xl px-4 py-10 sm:py-16 lg:py-20 sm:px-6 scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+    >
       {/* Luces y orbes ambientales de fondo */}
       <div className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-brand/10 blur-[100px] dark:bg-brand/15" />
       <div className="pointer-events-none absolute -right-20 top-1/4 h-80 w-80 rounded-full bg-orange-500/10 blur-[100px] dark:bg-orange-500/15" />
 
-      <div className="max-w-2xl mb-10 space-y-2">
+      <motion.div
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-2xl mb-6 sm:mb-8 space-y-2"
+      >
         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
           <Sparkles className="h-3.5 w-3.5" /> Flujo Ágil y Sin Fricción
         </span>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
-          De la reserva al cobro,{" "}
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+          De la reserva a la atención,{" "}
           <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
             en segundos
           </span>
@@ -36,28 +45,47 @@ export default function HowItWorks() {
         <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
           Probá la experiencia en vivo tal como la vivirán tus clientes al agendar en tu negocio.
         </p>
-      </div>
+      </motion.div>
 
-      <div className="grid items-start gap-10 lg:grid-cols-2">
-        <BookingWidget key={category.id} />
+      <div className="grid items-center gap-6 sm:gap-8 lg:grid-cols-12">
+        {/* Left: Interactive Booking Simulator Widget (7 cols) */}
+        <motion.div
+          initial={{ opacity: 0, x: -60 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:col-span-7"
+        >
+          <BookingWidget key={category.id} />
+        </motion.div>
 
-        <div className="space-y-4">
-          <Benefit
-            icon={<Shield className="h-5 w-5" />}
-            title="Adiós a las inasistencias"
-            text="Señas y confirmaciones automáticas por WhatsApp para cuidar tu agenda y tu tiempo."
+        {/* Right: 3 Reorganized Workflow Benefits (5 cols) */}
+        <motion.div
+          initial={{ opacity: 0, x: 60 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:col-span-5 space-y-3"
+        >
+          <WorkflowStep
+            step="1"
+            icon={<Zap className="h-4.5 w-4.5 text-brand" />}
+            title="Reserva en 30 Segundos"
+            text="Tu cliente elige el servicio, día y horario disponible sin crear contraseñas ni descargar aplicaciones pesadas."
           />
-          <Benefit
-            icon={<Zap className="h-5 w-5" />}
-            title="Cobro directo a tu cuenta bancaria"
-            text="El dinero entra por transferencia SIPAP 24/7 o POS Bancard sin intermediarios ni demoras."
+          <WorkflowStep
+            step="2"
+            icon={<MessageSquareCheck className="h-4.5 w-4.5 text-emerald-600" />}
+            title="Aviso y Recordatorio WhatsApp"
+            text="Confirmación al instante y recordatorio 24h antes con botones interactivos que reducen ausencias hasta un 80%."
           />
-          <Benefit
-            icon={<Settings2 className="h-5 w-5" />}
-            title="Libertad total de medios de pago"
-            text="Transferencia SIPAP, QR Bancard, Billetera Tigo/Personal o efectivo al atender. Vos decidís."
+          <WorkflowStep
+            step="3"
+            icon={<WalletCards className="h-4.5 w-4.5 text-brand" />}
+            title="Caja y Comisiones Cuadradas"
+            text="Al finalizar el turno, el monto ingresa al arqueo del día y la comisión del colaborador queda calculada automáticamente."
           />
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -74,19 +102,19 @@ function BookingWidget() {
   const service = category.services.find((item) => item.id === serviceId);
 
   return (
-    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-5 sm:p-7 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl transition-all">
+    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-5 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl transition-all">
       {/* Pasos / Indicador superior */}
-      <div className="mb-6 flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+      <div className="mb-4 flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
           Simulador de Reserva en Vivo
         </span>
-        <div className="flex items-center gap-2 text-xs font-semibold">
+        <div className="flex items-center gap-1.5 text-xs font-semibold">
           {[1, 2, 3, 4].map((item) => (
             <span
               key={item}
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold transition-all ${
                 step >= item
-                  ? "bg-brand text-white shadow-sm shadow-brand/30 scale-105"
+                  ? "bg-brand text-white shadow-xs scale-105"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
               }`}
             >
@@ -98,23 +126,23 @@ function BookingWidget() {
 
       {step === 1 && (
         <Step key="s1" title={`1. Elegí el servicio · ${category.label}`}>
-          <div className="space-y-2">
+          <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
             {category.services.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setServiceId(item.id)}
-                className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition active:scale-99 ${
+                className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-xs transition cursor-pointer ${
                   serviceId === item.id
                     ? "border-brand bg-brand/5 dark:bg-brand/10 shadow-xs"
                     : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/60 hover:border-brand/40"
                 }`}
               >
                 <span>
-                  <strong className="text-slate-900 dark:text-white">{item.name}</strong>
-                  <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">{item.duration}</span>
+                  <strong className="text-slate-900 dark:text-white block">{item.name}</strong>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{item.duration}</span>
                 </span>
-                <span className="font-bold text-brand font-mono">{item.price}</span>
+                <span className="font-bold text-brand font-mono text-xs">{item.price}</span>
               </button>
             ))}
           </div>
@@ -122,36 +150,36 @@ function BookingWidget() {
             type="button"
             onClick={() => setStep(2)}
             disabled={!serviceId}
-            className="mt-5 w-full rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3 text-sm font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition active:scale-98 disabled:opacity-40"
+            className="mt-4 w-full rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] py-2.5 text-xs font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition active:scale-98 disabled:opacity-40 cursor-pointer"
           >
-            Siguiente
+            Continuar a Fecha
           </button>
         </Step>
       )}
 
       {step === 2 && (
-        <Step key="s2" title="2. Elegí la fecha">
-          <div className="p-2 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex justify-center">
+        <Step key="s2" title="2. Elegí la fecha de atención">
+          <div className="p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex justify-center">
             <MiniCalendar selected={date} onSelect={setDate} />
           </div>
-          <div className="mt-5 flex gap-2">
+          <div className="mt-4 flex gap-2">
             <Back onClick={() => setStep(1)} />
-            <Next onClick={() => setStep(3)} disabled={!date} />
+            <Next onClick={() => setStep(3)} disabled={!date} label="Continuar a Horario" />
           </div>
         </Step>
       )}
 
       {step === 3 && (
-        <Step key="s3" title="3. Elegí el horario">
-          <div className="grid grid-cols-2 gap-2.5">
+        <Step key="s3" title="3. Elegí el horario disponible">
+          <div className="grid grid-cols-2 gap-2">
             {TIMES.map((slot) => (
               <button
                 key={slot}
                 type="button"
                 onClick={() => setTime(slot)}
-                className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition active:scale-98 ${
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition active:scale-98 cursor-pointer ${
                   time === slot
-                    ? "border-brand bg-brand text-white shadow-md shadow-brand/30 font-bold"
+                    ? "border-brand bg-brand text-white shadow-sm font-bold"
                     : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 hover:border-brand/40"
                 }`}
               >
@@ -159,22 +187,22 @@ function BookingWidget() {
               </button>
             ))}
           </div>
-          <div className="mt-5 flex gap-2">
+          <div className="mt-4 flex gap-2">
             <Back onClick={() => setStep(2)} />
-            <Next onClick={() => setStep(4)} disabled={!time} />
+            <Next onClick={() => setStep(4)} disabled={!time} label="Continuar a Cobro" />
           </div>
         </Step>
       )}
 
       {step === 4 && (
-        <Step key="s4" title="4. Método de pago">
+        <Step key="s4" title="4. Preferencia de cobro en el local">
           <div className="grid gap-2">
             {PAYMENTS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setPayment(item.id)}
-                className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-99 ${
+                className={`rounded-xl border px-3.5 py-2.5 text-left text-xs font-semibold transition cursor-pointer ${
                   payment === item.id
                     ? "border-brand bg-brand/5 dark:bg-brand/10 text-brand dark:text-white font-bold"
                     : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 hover:border-brand/40"
@@ -184,9 +212,9 @@ function BookingWidget() {
               </button>
             ))}
           </div>
-          <div className="mt-5 flex gap-2">
+          <div className="mt-4 flex gap-2">
             <Back onClick={() => setStep(3)} />
-            <Next onClick={() => setStep(5)} disabled={!payment} label="Confirmar Turno" />
+            <Next onClick={() => setStep(5)} disabled={!payment} label="Confirmar Turno Demo" />
           </div>
         </Step>
       )}
@@ -196,30 +224,30 @@ function BookingWidget() {
           key="ok"
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-500/20 p-6 text-center"
+          className="rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-500/20 p-5 text-center"
         >
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md shadow-emerald-500/30">
-            <Check className="h-6 w-6 stroke-[3]" />
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md shadow-emerald-500/30">
+            <Check className="h-5 w-5 stroke-[3]" />
           </div>
-          <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">¡Turno confirmado!</h3>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <h3 className="mt-2.5 text-base font-bold text-slate-900 dark:text-white">¡Turno Confirmado!</h3>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
             {service?.name} · {date?.toLocaleDateString("es-PY")} · {time} hs
             <br />
             en <strong className="text-slate-900 dark:text-white">{category.businessName}</strong>
           </p>
-          <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-2">
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
             <Link
               href="/onboarding"
-              className="w-full sm:w-auto inline-flex items-center justify-center rounded-full bg-brand py-2.5 px-5 text-xs font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-brand py-2 px-4 text-xs font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition"
             >
-              Prueba gratuitamente en tu local
+              Probalo en tu local gratis
             </Link>
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="w-full sm:w-auto text-xs font-semibold text-slate-500 hover:text-brand dark:hover:text-white py-2 px-3 transition-colors"
+              className="w-full sm:w-auto text-xs font-semibold text-slate-500 hover:text-brand dark:hover:text-white py-1.5 px-3 transition-colors cursor-pointer"
             >
-              Simular otro turno
+              Simular de nuevo
             </button>
           </div>
         </motion.div>
@@ -230,8 +258,8 @@ function BookingWidget() {
 
 function Step({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}>
-      <h3 className="mb-4 text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
+    <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}>
+      <h3 className="mb-3 text-xs font-bold text-slate-900 dark:text-white">{title}</h3>
       {children}
     </motion.div>
   );
@@ -251,7 +279,7 @@ function Next({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex-1 rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3 text-sm font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition active:scale-98 disabled:opacity-40"
+      className="flex-1 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] py-2 text-xs font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition active:scale-98 disabled:opacity-40 cursor-pointer"
     >
       {label}
     </button>
@@ -263,29 +291,36 @@ function Back({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex-1 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+      className="flex-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
     >
       Atrás
     </button>
   );
 }
 
-function Benefit({
+function WorkflowStep({
+  step,
   icon,
   title,
   text,
 }: {
+  step: string;
   icon: ReactNode;
   title: string;
   text: string;
 }) {
   return (
-    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-5 sm:p-6 shadow-xs backdrop-blur-xl hover:border-brand/40 transition">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-        {icon}
+    <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 p-4 shadow-xs backdrop-blur-xl hover:border-brand/40 transition">
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-900 dark:text-white">
+          {step}
+        </div>
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10">
+          {icon}
+        </div>
+        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{title}</h3>
       </div>
-      <h3 className="mt-3.5 font-bold text-slate-900 dark:text-white">{title}</h3>
-      <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{text}</p>
+      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-1">{text}</p>
     </div>
   );
 }

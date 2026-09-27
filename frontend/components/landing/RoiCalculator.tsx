@@ -56,14 +56,23 @@ export default function RoiCalculator() {
   };
 
   return (
-    <section id="calculadora" className="relative overflow-hidden py-20 sm:py-28">
+    <section
+      id="calculadora"
+      className="relative overflow-hidden py-12 sm:py-16 lg:py-20 scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+    >
       {/* Luces y orbes ambientales decorativos */}
       <div className="pointer-events-none absolute left-1/4 top-1/2 -translate-y-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-brand/10 blur-[120px] dark:bg-brand/20" />
       <div className="pointer-events-none absolute right-10 top-1/3 h-80 w-80 rounded-full bg-orange-500/10 blur-[100px] dark:bg-orange-500/15" />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         {/* Cabecera de la sección */}
-        <div className="mx-auto max-w-3xl text-center space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.6 }}
+          className="mx-auto max-w-3xl text-center space-y-3"
+        >
           <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/5 dark:bg-brand/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand backdrop-blur-md">
             <Calculator className="h-3.5 w-3.5" />
             <span>Calculadora Interactiva de Recupero</span>
@@ -79,12 +88,18 @@ export default function RoiCalculator() {
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
             En salones, clínicas y centros de estética de Paraguay, el 20% de las citas se pierden por olvido o falta de aviso. Mirá en tiempo real cuánto recuperás con recordatorios de WhatsApp.
           </p>
-        </div>
+        </motion.div>
 
         {/* Contenedor Principal: Calculadora */}
         <div className="mt-12 grid gap-8 lg:grid-cols-12 items-stretch">
-          {/* Columna Izquierda: Sliders interactivos (Col 7) */}
-          <div className="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-6 sm:p-9 shadow-xl shadow-slate-200/40 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between space-y-7">
+          {/* Columna Izquierda: Sliders interactivos (Col 7 - entra por la izquierda) */}
+          <motion.div
+            initial={{ opacity: 0, x: -60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-6 sm:p-9 shadow-xl shadow-slate-200/40 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between space-y-7"
+          >
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -169,10 +184,16 @@ export default function RoiCalculator() {
                 Tasa estimada de ausentismo: 20%
               </span>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Columna Derecha: Tarjeta de Impacto Financiero y ROI (Col 5) */}
-          <div className="lg:col-span-5 relative rounded-3xl p-6 sm:p-8 bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between overflow-hidden">
+          {/* Columna Derecha: Tarjeta de Impacto Financiero y ROI (Col 5 - entra por la derecha) */}
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-5 relative rounded-3xl p-6 sm:p-8 bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between overflow-hidden"
+          >
             {/* Resplandor ambiental interno suave */}
             <div className="pointer-events-none absolute -top-20 -right-20 h-52 w-52 rounded-full bg-brand/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 rounded-full bg-amber-500/10 blur-3xl" />
@@ -246,7 +267,7 @@ export default function RoiCalculator() {
                 14 días de prueba gratuita · Activación en 3 minutos sin tarjeta
               </p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

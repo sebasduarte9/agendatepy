@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   CheckCheck,
@@ -21,6 +22,9 @@ import {
   Lock,
   Bell,
   Landmark,
+  MessageSquare,
+  ArrowRight,
+  X,
 } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 
@@ -56,11 +60,67 @@ function renderWhatsAppText(text?: string) {
   });
 }
 
+function playiOSChime() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+    const now = ctx.currentTime;
+    // Note 1: E6 (1318.5 Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(1318.5, now);
+    gain1.gain.setValueAtTime(0.12, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Note 2: B6 (1975.5 Hz)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(1975.5, now + 0.12);
+    gain2.gain.setValueAtTime(0.15, now + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.55);
+  } catch {
+    // Ignore audio autoplay restrictions gracefully
+  }
+}
+
 export default function PhoneMockup() {
   const { category } = useCategory();
   const [step, setStep] = useState<number>(0);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [showNotification, setShowNotification] = useState<boolean>(false);
+
+  // Chat auto-scroll refs
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
 
   // 3D tilt tracking for mouse over phone
   const cardRef = useRef<HTMLDivElement>(null);
@@ -109,6 +169,13 @@ export default function PhoneMockup() {
   ];
 
   const [chat, setChat] = useState<Message[]>(initialMessages);
+
+  // Auto-scroll chat whenever messages change or typing status updates
+  useEffect(() => {
+    scrollToBottom();
+    const timer = setTimeout(scrollToBottom, 120);
+    return () => clearTimeout(timer);
+  }, [chat, isTyping]);
 
   // Restart chat when category changes
   useEffect(() => {
@@ -179,7 +246,13 @@ export default function PhoneMockup() {
         ],
       };
       setChat((prev) => [...prev, confirmationCard]);
-    }, 1000);
+
+      // Notificación push estilo iMessage al iPhone tras registrar el turno con éxito
+      setTimeout(() => {
+        setShowNotification(true);
+        playiOSChime();
+      }, 700);
+    }, 700);
   }
 
   function handlePlayAudioNote() {
@@ -218,10 +291,15 @@ export default function PhoneMockup() {
         time: "14:30",
       };
       setChat((prev) => [...prev, reminderMsg]);
-    }, 800);
+      setTimeout(() => {
+        setShowNotification(true);
+        playiOSChime();
+      }, 500);
+    }, 700);
   }
 
   function handleReset() {
+    setShowNotification(false);
     setStep(0);
     setIsTyping(false);
     setIsPlayingAudio(false);
@@ -282,6 +360,62 @@ export default function PhoneMockup() {
         <div className="relative overflow-hidden rounded-[42px] bg-black p-[2.5px] shadow-inner">
           {/* Inner Display Canvas */}
           <div className="relative flex h-[660px] flex-col overflow-hidden rounded-[42px] bg-[#efeae2]">
+            {/* ========================================================= */}
+            {/* iOS iMessage Push Notification Banner */}
+            {/* ========================================================= */}
+            <AnimatePresence>
+              {showNotification && (
+                <motion.div
+                  initial={{ opacity: 0, y: -90, scale: 0.92 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -80, scale: 0.94 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 28 }}
+                  className="absolute top-2.5 left-2.5 right-2.5 z-50 rounded-[24px] border border-black/10 dark:border-white/20 bg-white/95 dark:bg-[#1c1c1e]/95 p-3.5 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.35)] backdrop-blur-2xl text-slate-900 dark:text-white"
+                >
+                  {/* App header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-gradient-to-b from-[#34c759] to-[#28a745] text-white shadow-xs">
+                        <MessageSquare className="h-3 w-3 fill-white text-white" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        MENSAJES
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">· ahora</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowNotification(false)}
+                      className="rounded-full p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition cursor-pointer"
+                      title="Cerrar notificación"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Sender and message */}
+                  <div className="mt-2 text-left">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-black text-slate-900 dark:text-white">AgendatePY</p>
+                      <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                    </div>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200 leading-snug">
+                      ¿Y vos? ¿Qué esperás para usarlo en tu negocio?
+                    </p>
+                  </div>
+
+                  {/* Call to action */}
+                  <Link
+                    href="/onboarding"
+                    className="mt-2.5 flex items-center justify-between rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-3.5 py-2 text-[11px] font-black text-white shadow-sm hover:brightness-110 active:scale-98 transition group"
+                  >
+                    <span>Empezar gratis en 3 minutos</span>
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* WhatsApp Authentic Doodle Wallpaper Pattern Overlay */}
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-multiply"
@@ -385,7 +519,10 @@ export default function PhoneMockup() {
             {/* ========================================================= */}
             {/* 3. CHAT MESSAGE STREAM */}
             {/* ========================================================= */}
-            <div className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5">
+            <div
+              ref={chatScrollRef}
+              className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {/* Date Badge */}
               <div className="text-center my-1">
                 <span className="rounded-lg bg-[#ffffff]/80 px-2.5 py-0.8 text-[10px] font-semibold text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wider">
@@ -531,6 +668,7 @@ export default function PhoneMockup() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              <div ref={messagesEndRef} className="h-1 w-full shrink-0" />
             </div>
 
             {/* ========================================================= */}
@@ -574,7 +712,7 @@ export default function PhoneMockup() {
           y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           opacity: { duration: 0.8 },
         }}
-        className="pointer-events-none absolute -left-4 sm:-left-10 lg:-left-14 top-16 sm:top-20 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
+        className="pointer-events-none absolute -left-4 sm:-left-10 lg:-left-14 top-32 sm:top-40 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
           <Bell className="h-5 w-5 animate-pulse" />

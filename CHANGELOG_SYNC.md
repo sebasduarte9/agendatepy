@@ -448,6 +448,109 @@ Cada entrada debe detallar:
   - `npm run build` ejecutado exitosamente con **0 errores de TypeScript**.
   - Servidor de desarrollo Next.js respondiendo activamente en `http://localhost:3000`.
 
+---
+
+### [Auto-Scroll Entre Secciones (#), Reorganización de Cards, Módulo Caja/Arqueo y Reposicionamiento de Planes] — 2026-09-27 08:35
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Landing Page Principal (`/`) y Componentes de Landing
+- **Archivos Modificados / Creados:**
+  - `frontend/components/landing/SectionAutoScroll.tsx` (creación de controlador de desplazamiento suave entre hashes)
+  - `frontend/components/landing/Features.tsx`
+  - `frontend/components/landing/WhatsAppShowcase.tsx`
+  - `frontend/components/landing/HowItWorks.tsx`
+  - `frontend/components/landing/LandingPage.tsx`
+  - `frontend/components/landing/Header.tsx`
+  - `frontend/components/landing/Hero.tsx`
+  - `frontend/components/landing/RoiCalculator.tsx`
+  - `frontend/components/landing/Pricing.tsx`
+  - `frontend/components/landing/Integrations.tsx`
+  - `frontend/components/landing/FAQ.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Navegación Fluida con Auto-Scroll por Hash (`SectionAutoScroll.tsx`):**
+     - Se implementó un controlador de desplazamiento inteligente que, ante el movimiento de la rueda del mouse o trackpad, transiciona suavemente hacia el siguiente `#` de la landing (`#inicio` -> `#como-funciona` -> `#whatsapp` -> `#caracteristicas` -> `#calculadora` -> `#precios` -> `#faq`), actualizando el hash del navegador y sincronizando la pestaña activa del header con un periodo de cooldown de 750ms para evitar saltos descontrolados.
+     - Permite lectura libre y desplazamiento natural si una sección es más alta que la ventana del navegador.
+     - Se configuró `scroll-mt-20` en todas las secciones para que el navbar flotante nunca tape títulos.
+  2. **Refactorización de Titular y Subtítulo en Características (`Features.tsx`):**
+     - Titular principal actualizado con `UN SOLO LUGAR` en mayúsculas y texto degradado oficial.
+     - Subtítulo limpio sin mención a transferencias SIPAP ni recordatorios a clientes: *"Diseñado para la realidad comercial en Paraguay: turnos por WhatsApp y comisiones automáticas de tu equipo."*
+  3. **Reemplazo de SIPAP por Módulo de "Control de Caja y Arqueo":**
+     - Se retiró la tarjeta de transferencias SIPAP y se introdujo la tarjeta interactiva de **Control de Caja y Arqueo Diario**, con desglose visual de Efectivo en Caja, Transferencias bancarias y Total ingresado con indicador de balance cuadrado.
+  4. **Tarjetas de Comisiones y Calendarios Oficiales:**
+     - En Comisiones de Equipo, se eliminaron los nombres personales y se adoptó la nomenclatura **Colaborador 1 (50%)** y **Colaborador 2 (45%)**.
+     - En Google & Apple Calendar, se crearon e integraron los **logotipos vectoriales SVG oficiales de Google Calendar** (icono 31 multicolor) y de **Apple**.
+     - Se optimizaron las alturas de las tarjetas y el padding de `#caracteristicas` para encajar con elegancia en la pantalla.
+  5. **WhatsApp Showcase Realista (Formato Evolution API):**
+     - Se eliminó el texto *"WhatsApp Cloud API Oficial"*, sustituyéndolo por *"Mensajería Automatizada por WhatsApp"*, sin mención a tecnologías.
+     - La tarjeta de chat simula con total fidelidad el formato de mensaje de Evolution API en Paraguay: tarjeta estructurada de confirmación con servicio/profesional/horario/lugar, recordatorio interactivo con botones táctiles *"✅ Sí, confirmo"* y *"🔄 Reprogramar"*, y aviso 2h antes con doble check azul.
+  6. **Mejora de "Flujo Ágil y Sin Fricción" (`HowItWorks.tsx`):**
+     - Se rediseñaron los beneficios en 3 pasos secuenciales claros: *1. Reserva en 30 Segundos*, *2. Aviso y Recordatorio WhatsApp*, y *3. Caja y Comisiones Cuadradas*.
+     - Se ajustó la altura y el simulador de reserva para una experiencia ágil y compacta.
+  7. **Subida Estratégica de la Sección de Planes y Precios (`Pricing.tsx`):**
+     - Se reordenó la estructura de la landing para posicionar los Planes **inmediatamente después de la Calculadora de ROI**, logrando el momento óptimo de conversión: el cliente calcula cuánto ahorra/recupera y de inmediato ve las opciones de suscripción mensual/anual.
+- **Verificación:**
+  - `npx tsc --noEmit` completado exitosamente con **0 errores**.
+  - Servidor local funcionando en `http://localhost:3000` (HTTP 200).
+
+---
+
+### [Desplazamiento Natural Libre, Detección Dinámica de Pestañas en Header y Animaciones Direccionales de Scroll] — 2026-09-27 13:58
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Landing Page Principal (`/`) y Componentes de Landing
+- **Archivos Modificados / Eliminados:**
+  - `frontend/components/landing/LandingPage.tsx` (removido componente `SectionAutoScroll`)
+  - `frontend/components/landing/SectionAutoScroll.tsx` (eliminado archivo para suprimir el secuestro de scroll / scroll hijacking)
+  - `frontend/components/landing/Header.tsx` (detección pasiva de scroll con `getBoundingClientRect` para actualizar la pastilla activa dinámicamente)
+  - `frontend/components/landing/Hero.tsx` (animaciones de entrada direccionales: columna izquierda x: -60, mockup celular x: 60)
+  - `frontend/components/landing/HowItWorks.tsx` (simulador entra por la izquierda x: -60, pasos de flujo por la derecha x: 60)
+  - `frontend/components/landing/WhatsAppShowcase.tsx` (texto entra desde x: -60, preview de WhatsApp desde x: 60)
+  - `frontend/components/landing/Features.tsx` (módulos alternados de izquierda y derecha según su cuadrícula)
+  - `frontend/components/landing/RoiCalculator.tsx` (sliders interactivos desde x: -60, tarjeta de impacto financiero desde x: 60)
+  - `frontend/components/landing/Pricing.tsx` (plan básico x: -60, plan pro escala central, plan empresa x: 60)
+  - `frontend/components/landing/Integrations.tsx` (canales de captura x: -60, cobros y calendarios x: 60)
+  - `frontend/components/landing/Differentiators.tsx` (tarjetas alternadas desde los extremos x: -50 y x: 50)
+  - `frontend/components/landing/FAQ.tsx` & `Footer.tsx` (permanecen estáticos sin animaciones de entrada ni distorsión, cumpliendo el requerimiento estricto)
+- **Descripción de Cambios y Razonamiento:**
+  1. **Eliminación del Auto-Centrado / Hijacking de Scroll:**
+     - Se eliminó el interceptor de rueda y teclas que forzaba el salto automático entre secciones hash. Ahora el usuario tiene control total, suave y natural del scroll en su navegador sin tirones forzados.
+  2. **Actualización Automática y Fluida del Menú Superior (`Header.tsx`):**
+     - Se integró un listener pasivo que evalúa las coordenadas de las secciones (`getBoundingClientRect`) y la posición de scroll en tiempo real.
+     - A medida que el usuario baja o sube por la página, la pastilla activa del menú superior se actualiza de manera fluida entre *Inicio*, *Cómo Funciona*, *WhatsApp*, *Características*, *Calculadora*, *Precios* y *FAQ*.
+  3. **Animaciones de Scroll Direccionales (Entrada desde los costados):**
+     - Se implementaron animaciones de entrada con `framer-motion` (`whileInView`, `viewport={{ once: true, amount: 0.2 }}`, curvas elásticas `[0.16, 1, 0.3, 1]`):
+       - Los componentes principales y tarjetas entran de forma alternada desde la izquierda (`x: -60`) y desde la derecha (`x: 60`), creando una experiencia visual interactiva de alto impacto al hacer scroll.
+  4. **Exclusión Estricta de FAQ y Footer:**
+     - Siguiendo la instrucción explícita (*"menos la parte de abajo de preguntas frecuentes y el footer"*), las secciones de FAQ y Footer se mantuvieron 100% estáticas en su entrada, preservando únicamente la interacción nativa del acordeón de preguntas frecuentes y los enlaces del pie de página.
+- **Verificación:**
+  - `npx tsc --noEmit` completado exitosamente con **0 errores**.
+  - Sesión con subagente de navegador verificó el desplazamiento completo por todas las secciones, la actualización en tiempo real de cada tab del menú y la animación de cada bloque sin saltos ni errores de consola.
+
+---
+
+### [Teléfono Interactivo Landing: Reubicación de Card, Auto-Scroll de Chat y Notificación iMessage de AgendatePY] — 2026-09-27 15:08
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Mockup 3D de iPhone en Hero (`frontend/components/landing/PhoneMockup.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/landing/PhoneMockup.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Reubicación de la Card de Recordatorio Flotante:**
+     - La tarjeta flotante 3D *"Recordatorio 2h Antes | Confirmado"* se desplazó verticalmente de `top-16 sm:top-20` hacia abajo a `top-32 sm:top-40`.
+     - Esto despeja totalmente la cabecera verde de WhatsApp Business, permitiendo leer con total claridad el nombre del comercio (`Clínica Dental Sonrisa`, `Barbería Capital`, etc.), el avatar y el estado *"en línea · Cuenta Comercial"*.
+  2. **Auto-Scroll Automático del Chat:**
+     - Se integró `chatScrollRef` y un ancla `messagesEndRef` con `useEffect` que escucha tanto el array de mensajes (`chat`) como el indicador de escritura (`isTyping`).
+     - Al tocar un servicio o un horario, el contenedor del chat se desplaza automáticamente hacia abajo con suavidad (`scroll-smooth`), manteniendo siempre a la vista la última respuesta del bot y la tarjeta de confirmación del turno.
+  3. **Notificación Push estilo iMessage de iOS al Confirmar/Registrar el Turno:**
+     - Al completar la selección de horario y emitirse la tarjeta de *"TURNO CONFIRMADO"*, se dispara una notificación estilo push de iOS que se desliza desde la parte superior del iPhone (bajo la Dynamic Island):
+       - **App Header:** Icono verde oficial de Mensajes, etiqueta *"MENSAJES · ahora"* y botón de cierre `X`.
+       - **Remitente:** **AgendatePY** con indicador de verificación.
+       - **Mensaje:** *"¿Y vos? ¿Qué esperás para usarlo en tu negocio?"*.
+       - **CTA:** Botón interactivo *"Empezar gratis en 3 minutos"* con enlace a `/onboarding`.
+       - **Audio Chime:** Síntesis sutil de tono doble de campana de iOS (1318Hz -> 1975Hz) vía Web Audio API sin dependencias de archivos de sonido externos.
+- **Verificación:**
+  - `npx tsc --noEmit` completado exitosamente con **0 errores**.
+  - Capturas y pruebas confirman visibilidad completa del encabezado del negocio, auto-scroll fluido del chat y renderizado de la notificación.
+
 
 
 

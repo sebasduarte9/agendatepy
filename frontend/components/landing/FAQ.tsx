@@ -35,7 +35,7 @@ export default function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
+    <section id="faq" className="mx-auto max-w-3xl px-4 py-20 sm:px-6 scroll-mt-20">
       <div className="text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
           <HelpCircle className="h-3.5 w-3.5" /> Resolvemos tus Dudas

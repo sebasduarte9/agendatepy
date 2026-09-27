@@ -33,14 +33,19 @@ export default function Hero() {
   const { selectedCategory, setSelectedCategory, category } = useCategory();
 
   return (
-    <section id="inicio" className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24">
+    <section id="inicio" className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 scroll-mt-20">
       {/* Background ambient lighting */}
       <div className="pointer-events-none absolute -top-40 right-0 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-brand/20 via-orange-500/10 to-transparent blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 left-0 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-emerald-500/15 via-brand/10 to-transparent blur-3xl" />
 
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-12">
         {/* Left Column: High-Converting Value Proposition */}
-        <div className="lg:col-span-7 flex flex-col justify-center">
+        <motion.div
+          initial={{ opacity: 0, x: -60 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:col-span-7 flex flex-col justify-center"
+        >
           {/* Geolocation & Validation Pill */}
           <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/90 dark:bg-slate-900/90 px-3.5 py-1.5 text-xs font-bold text-brand shadow-xs backdrop-blur-sm w-fit">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
@@ -165,12 +170,17 @@ export default function Hero() {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right Column: Interactive Phone Mockup with WhatsApp UI */}
-        <div className="lg:col-span-5 flex justify-center mt-6 lg:mt-0">
+        <motion.div
+          initial={{ opacity: 0, x: 60 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:col-span-5 flex justify-center mt-6 lg:mt-0"
+        >
           <PhoneMockup />
-        </div>
+        </motion.div>
       </div>
     </section>
   );

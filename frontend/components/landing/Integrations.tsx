@@ -1,5 +1,4 @@
-"use client";
-
+import { motion } from "framer-motion";
 import { MessageSquare, Share2, MapPin, QrCode, Landmark, CreditCard, Calendar, Smartphone } from "lucide-react";
 
 const CHANNELS = [
@@ -18,20 +17,32 @@ const PAYMENTS_AND_CAL = [
 
 export default function Integrations() {
   return (
-    <section id="integraciones" className="bg-slate-50/70 dark:bg-slate-950 py-16 sm:py-20 border-y border-slate-200/60 dark:border-white/10">
+    <section id="integraciones" className="bg-slate-50/70 dark:bg-slate-950 py-16 sm:py-20 border-y border-slate-200/60 dark:border-white/10 scroll-mt-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="max-w-2xl mb-8 sm:mb-10">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-2xl mb-8 sm:mb-10"
+        >
           <span className="rounded-full bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
             Conectividad & Canales
           </span>
           <h2 className="mt-3 text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
             Conectado a las herramientas que tus clientes ya usan en Paraguay
           </h2>
-        </div>
+        </motion.div>
 
         <div className="grid gap-5 sm:gap-6 md:grid-cols-2">
-          {/* Card 1: Canales de Captura */}
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs">
+          {/* Card 1: Canales de Captura (entra por la izquierda) */}
+          <motion.div
+            initial={{ opacity: 0, x: -60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs"
+          >
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
               Canales de Captura de Clientes
             </h3>
@@ -49,10 +60,16 @@ export default function Integrations() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          {/* Card 2: Pagos y Calendario */}
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs">
+          {/* Card 2: Pagos y Calendario (entra por la derecha) */}
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs"
+          >
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
               Cobros Locales & Calendarios
             </h3>
@@ -70,7 +87,7 @@ export default function Integrations() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

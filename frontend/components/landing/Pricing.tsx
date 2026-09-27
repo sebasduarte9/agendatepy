@@ -42,13 +42,22 @@ export default function Pricing() {
   const [annual, setAnnual] = useState(false);
 
   return (
-    <section id="precios" className="relative overflow-hidden bg-slate-50/80 dark:bg-slate-950 py-20 sm:py-28 border-t border-slate-200/80 dark:border-white/10 transition-colors">
+    <section
+      id="precios"
+      className="relative overflow-hidden bg-slate-50/80 dark:bg-slate-950 py-12 sm:py-16 lg:py-20 border-t border-slate-200/80 dark:border-white/10 transition-colors scroll-mt-20 min-h-[calc(100vh-5rem)] flex flex-col justify-center"
+    >
       {/* Luces y resplandores ambientales de fondo */}
       <div className="pointer-events-none absolute -top-40 right-1/4 h-[500px] w-[500px] rounded-full bg-brand/10 blur-[130px] dark:bg-brand/20" />
       <div className="pointer-events-none absolute bottom-0 left-10 h-96 w-96 rounded-full bg-orange-500/10 blur-[120px] dark:bg-orange-500/15" />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-2xl mx-auto space-y-3"
+        >
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-4 py-1 text-xs font-bold uppercase tracking-wider text-brand">
             <Sparkles className="h-3.5 w-3.5" /> Precios Transparentes en Guaraníes (PYG)
           </span>
@@ -61,7 +70,7 @@ export default function Pricing() {
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
             Cobramos una suscripción fija en guaraníes. Todo lo que facturás en tu negocio es 100% tuyo.
           </p>
-        </div>
+        </motion.div>
 
         {/* Toggle Switch Facturación Mensual vs Anual */}
         <div className="mt-8 flex items-center justify-center gap-3.5 text-sm font-semibold">
@@ -102,47 +111,73 @@ export default function Pricing() {
           </button>
         </div>
 
-        {/* Grilla de Planes */}
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          <PriceCard
-            name="Plan Básico"
-            description="Ideal para trabajar solo o empezar a digitalizarte."
-            price={annual ? "Gs. 80.000" : "Gs. 100.000"}
-            period="/mes"
-            annual={annual}
-            savings="Ahorrás Gs. 240.000 al año (2 meses gratis)"
-            billedDetail="Gs. 960.000 facturado anual"
-            cta="Prueba gratuitamente"
-            href="/onboarding"
-            features={BASIC_FEATURES}
-          />
-          <PriceCard
-            name="Plan Pro"
-            badge="Más Popular en Paraguay"
-            description="Para equipos de salón, peluquería o estética."
-            price={annual ? "Gs. 200.000" : "Gs. 250.000"}
-            period="/mes"
-            annual={annual}
-            savings="Ahorrás Gs. 600.000 al año (2 meses gratis)"
-            billedDetail="Gs. 2.400.000 facturado anual"
-            cta="Prueba gratuitamente"
-            href="/onboarding"
-            features={PRO_FEATURES}
-            highlighted
-          />
-          <PriceCard
-            name="Plan Empresa"
-            description="Para franquicias, sucursales y centros médicos."
-            price={annual ? "Gs. 520.000" : "Gs. 650.000"}
-            period="/mes"
-            annual={annual}
-            savings="Ahorrás Gs. 1.560.000 al año (2 meses gratis)"
-            billedDetail="Gs. 6.240.000 facturado anual"
-            cta="Consultar por Empresa"
-            href="https://wa.me/595981123456?text=Hola%20AgendatePY%2C%20quisiera%20asesoramiento%20sobre%20el%20Plan%20Empresa"
-            isExternal={true}
-            features={EMPRESA_FEATURES}
-          />
+        {/* Grilla de Planes con animaciones direccionales */}
+        <div className="mt-12 grid gap-6 lg:grid-cols-3 items-stretch">
+          <motion.div
+            initial={{ opacity: 0, x: -60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col h-full"
+          >
+            <PriceCard
+              name="Plan Básico"
+              description="Ideal para trabajar solo o empezar a digitalizarte."
+              price={annual ? "Gs. 80.000" : "Gs. 100.000"}
+              period="/mes"
+              annual={annual}
+              savings="Ahorrás Gs. 240.000 al año (2 meses gratis)"
+              billedDetail="Gs. 960.000 facturado anual"
+              cta="Prueba gratuitamente"
+              href="/onboarding"
+              features={BASIC_FEATURES}
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col h-full"
+          >
+            <PriceCard
+              name="Plan Pro"
+              badge="Más Popular en Paraguay"
+              description="Para equipos de salón, peluquería o estética."
+              price={annual ? "Gs. 200.000" : "Gs. 250.000"}
+              period="/mes"
+              annual={annual}
+              savings="Ahorrás Gs. 600.000 al año (2 meses gratis)"
+              billedDetail="Gs. 2.400.000 facturado anual"
+              cta="Prueba gratuitamente"
+              href="/onboarding"
+              features={PRO_FEATURES}
+              highlighted
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col h-full"
+          >
+            <PriceCard
+              name="Plan Empresa"
+              description="Para franquicias, sucursales y centros médicos."
+              price={annual ? "Gs. 520.000" : "Gs. 650.000"}
+              period="/mes"
+              annual={annual}
+              savings="Ahorrás Gs. 1.560.000 al año (2 meses gratis)"
+              billedDetail="Gs. 6.240.000 facturado anual"
+              cta="Consultar por Empresa"
+              href="https://wa.me/595981123456?text=Hola%20AgendatePY%2C%20quisiera%20asesoramiento%20sobre%20el%20Plan%20Empresa"
+              isExternal={true}
+              features={EMPRESA_FEATURES}
+            />
+          </motion.div>
         </div>
 
         {/* Garantía y Formas de Pago */}
