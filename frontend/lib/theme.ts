@@ -146,7 +146,15 @@ export type ThemePreset =
   | "champagne-velvet";
 
 export type ButtonRadius = "full" | "lg" | "md" | "none";
-export type ButtonStyleVariant = "solid" | "outline" | "glass" | "neubrutalism" | "glow";
+export type ButtonStyleVariant =
+  | "solid"
+  | "outline"
+  | "glass"
+  | "neubrutalism"
+  | "glow"
+  | "gradient"
+  | "double-border"
+  | "soft-elevated";
 export type ButtonShadowType = "none" | "soft" | "medium" | "hard" | "glow";
 export type ButtonTextSizeType = "sm" | "base" | "lg";
 export type TitleSizeType = "sm" | "base" | "lg" | "xl";
@@ -533,7 +541,10 @@ export function parseTheme(value: unknown): ThemeSettings {
     raw.buttonStyle === "outline" ||
     raw.buttonStyle === "glass" ||
     raw.buttonStyle === "neubrutalism" ||
-    raw.buttonStyle === "glow"
+    raw.buttonStyle === "glow" ||
+    raw.buttonStyle === "gradient" ||
+    raw.buttonStyle === "double-border" ||
+    raw.buttonStyle === "soft-elevated"
       ? raw.buttonStyle
       : raw.themePreset === "neubrutalism-urban"
       ? "neubrutalism"
@@ -734,6 +745,18 @@ export function getButtonClasses(
       variantClass =
         "bg-primary text-white ring-2 ring-primary/40 hover:ring-primary/80 transition-all";
       break;
+    case "gradient":
+      variantClass =
+        "bg-gradient-to-r from-primary via-indigo-600 to-purple-600 text-white hover:brightness-110 shadow-md shadow-primary/25 transition-all";
+      break;
+    case "double-border":
+      variantClass =
+        "bg-primary text-white border-2 border-white ring-2 ring-primary hover:opacity-95 transition-all";
+      break;
+    case "soft-elevated":
+      variantClass =
+        "bg-primary text-white shadow-xl shadow-primary/30 hover:-translate-y-0.5 transition-transform";
+      break;
     case "solid":
     default:
       variantClass = "bg-primary text-white hover:opacity-95 transition-opacity";
@@ -820,6 +843,39 @@ export function getCustomButtonStyles(
   const borderCol = customBorder || theme.primaryColor;
   const bWidth = borderWidth !== "0px" ? borderWidth : (isOutline || theme.buttonStyle === "outline" || theme.buttonStyle === "neubrutalism" ? "2px" : "0px");
 
+  let extraStyles: CSSProperties = {};
+  if (theme.buttonStyle === "glass") {
+    extraStyles = {
+      backgroundColor: theme.buttonCustomBg || (theme.themeMode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.65)"),
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      borderColor: theme.buttonCustomBorder || (theme.themeMode === "dark" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.8)"),
+    };
+  } else if (theme.buttonStyle === "gradient") {
+    extraStyles = {
+      backgroundImage: `linear-gradient(135deg, ${theme.buttonCustomBg || theme.primaryColor}, #6366f1)`,
+    };
+  } else if (theme.buttonStyle === "neubrutalism") {
+    extraStyles = {
+      boxShadow: "3px 3px 0px 0px #0f172a",
+      borderColor: "#0f172a",
+      borderWidth: "2px",
+    };
+  } else if (theme.buttonStyle === "glow") {
+    extraStyles = {
+      boxShadow: `0 0 20px ${theme.buttonCustomBg || theme.primaryColor}66`,
+    };
+  } else if (theme.buttonStyle === "double-border") {
+    extraStyles = {
+      outline: `2px solid ${theme.buttonCustomBorder || theme.primaryColor}`,
+      outlineOffset: "2px",
+    };
+  } else if (theme.buttonStyle === "soft-elevated") {
+    extraStyles = {
+      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+    };
+  }
+
   return {
     backgroundColor: bg,
     color: text,
@@ -830,6 +886,7 @@ export function getCustomButtonStyles(
       theme.buttonFontFamily && theme.buttonFontFamily !== "inherit"
         ? fontStack(theme.buttonFontFamily)
         : fontStack(theme.fontFamily),
+    ...extraStyles,
   };
 }
 

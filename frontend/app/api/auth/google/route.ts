@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
     request.headers.get("host") ||
     "localhost:3000";
 
-  const proto =
-    request.headers.get("x-forwarded-proto") ||
-    (host.includes("localhost") ? "http" : "https");
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+  // For any production domain like agendatepy.com, Google OAuth strictly requires HTTPS
+  const proto = isLocal ? "http" : "https";
 
   const redirectUri = `${proto}://${host}/api/auth/callback/google`;
 

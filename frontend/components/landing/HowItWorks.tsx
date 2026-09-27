@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Shield, Zap, Settings2, Check } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
@@ -179,13 +180,21 @@ function BookingWidget() {
               <br />
               en {category.businessName}
             </p>
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="mt-4 text-sm font-semibold text-brand"
-            >
-              Reservar otro turno
-            </button>
+            <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-2">
+              <Link
+                href="/onboarding"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-full bg-brand py-2.5 px-5 text-xs font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition"
+              >
+                Prueba gratuitamente en tu local
+              </Link>
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="w-full sm:w-auto text-xs font-semibold text-slate-500 hover:text-brand py-2 px-3"
+              >
+                Simular otro turno
+              </button>
+            </div>
           </motion.div>
         )}
     </div>

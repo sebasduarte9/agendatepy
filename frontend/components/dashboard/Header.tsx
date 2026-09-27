@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, Menu, Settings, Sun, Moon, ChevronDown, ExternalLink } from "lucide-react";
+import { LogOut, Menu, Settings, Sun, Moon, ChevronDown, ExternalLink, Sparkles } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 export default function Header() {
@@ -12,6 +12,7 @@ export default function Header() {
   const currentStaffId = useDashboardStore((s) => s.currentStaffId);
   const setCurrentUserRole = useDashboardStore((s) => s.setCurrentUserRole);
   const pushToast = useDashboardStore((s) => s.pushToast);
+  const openTour = useDashboardStore((s) => s.openTour);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -85,6 +86,17 @@ export default function Header() {
             <ChevronDown className="h-3.5 w-3.5" />
           </div>
         </div>
+
+        {/* Visita Guiada Interactive Button */}
+        <button
+          type="button"
+          onClick={() => openTour()}
+          className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary px-3 py-1.5 text-xs font-bold transition shadow-xs group"
+          title="Abrir Visita Guiada y Tutoriales de cada sección"
+        >
+          <Sparkles className="h-3.5 w-3.5 text-primary group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">Visita Guiada</span>
+        </button>
 
         <Link
           href={`/${business.slug || "barberia"}/reservar`}

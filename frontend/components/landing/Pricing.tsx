@@ -81,7 +81,7 @@ export default function Pricing() {
             description="Ideal para trabajar solo o empezar a digitalizarte."
             price={annual ? "Gs. 80.000" : "Gs. 100.000"}
             period="/mes"
-            cta="Probar 30 Días Gratis"
+            cta="Prueba gratuitamente"
             href="/onboarding"
             features={BASIC_FEATURES}
           />
@@ -91,7 +91,7 @@ export default function Pricing() {
             description="Para equipos de salón, peluquería o estética."
             price={annual ? "Gs. 200.000" : "Gs. 250.000"}
             period="/mes"
-            cta="Comenzar Prueba Gratis"
+            cta="Prueba gratuitamente"
             href="/onboarding"
             features={PRO_FEATURES}
             highlighted
@@ -111,7 +111,7 @@ export default function Pricing() {
         <div className="mt-12 text-center text-xs text-slate-500">
           <p className="flex items-center justify-center gap-2 font-medium">
             <Shield className="h-4 w-4 text-emerald-600" />
-            30 días de prueba sin ingresar tarjeta de crédito · Pagá después con QR Bancard, SIPAP o Tigo Money.
+            14 días de prueba sin ingresar tarjeta de crédito · Pagá después con QR Bancard, SIPAP o Tigo Money.
           </p>
         </div>
       </div>

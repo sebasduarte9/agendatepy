@@ -884,6 +884,10 @@ type DashboardState = {
   addClientMedia: (clientId: string, media: Omit<ClientMedia, "id" | "createdAt">) => void;
   deleteClientMedia: (clientId: string, mediaId: string) => void;
   syncFromDatabase: (tenantSlug?: string) => Promise<void>;
+  isTourOpen: boolean;
+  tourSectionKey: string;
+  openTour: (sectionKey?: string) => void;
+  closeTour: () => void;
 };
 
 function splitOvernightBlock(block: Omit<TimeBlock, "id">): Omit<TimeBlock, "id">[] {
@@ -1307,4 +1311,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
   dismissToast: (id) =>
     set({ toasts: get().toasts.filter((item) => item.id !== id) }),
+  isTourOpen: false,
+  tourSectionKey: "inicio",
+  openTour: (sectionKey?: string) => {
+    set({
+      isTourOpen: true,
+      ...(sectionKey ? { tourSectionKey: sectionKey } : {}),
+    });
+  },
+  closeTour: () => set({ isTourOpen: false }),
 }));

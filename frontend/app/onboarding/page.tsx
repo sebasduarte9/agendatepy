@@ -407,10 +407,10 @@ export default function OnboardingPage() {
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-emerald-700" />
-                    <span className="text-xs font-bold text-emerald-900">Compatible con Sendwo y Cloud API</span>
+                    <span className="text-xs font-bold text-emerald-900">WhatsApp Oficial Automático</span>
                   </div>
                   <p className="mt-1 text-[11px] text-emerald-800">
-                    Podrás conectar tu instancia de Sendwo Bot o escanear el código QR directamente en el panel de WhatsApp de tu dashboard.
+                    Podrás vincular tu número de WhatsApp escaneando el código QR directamente en tu panel de control.
                   </p>
                 </div>
 

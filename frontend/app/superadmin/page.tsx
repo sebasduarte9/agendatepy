@@ -189,17 +189,17 @@ export default function SuperadminPage() {
               Panel Maestro de AgendatePY
             </h1>
             <p className="mt-1 text-xs text-purple-200/80 max-w-xl">
-              Monitoreo en tiempo real de todos los negocios suscriptos, volumen de turnos en Paraguay y consumo de la API de Sendwo WhatsApp.
+              Monitoreo en tiempo real de todos los negocios suscriptos, volumen de turnos en Paraguay y entregas de WhatsApp.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <div className="rounded-2xl bg-white/10 px-4 py-2.5 backdrop-blur-md border border-white/10 text-center">
-              <p className="text-[10px] font-semibold text-purple-200 uppercase">Sendwo API</p>
+              <p className="text-[10px] font-semibold text-purple-200 uppercase">WhatsApp Motor</p>
               <p className="text-xs font-bold text-emerald-300">Conectado (100% Deliv.)</p>
             </div>
             <div className="rounded-2xl bg-white/10 px-4 py-2.5 backdrop-blur-md border border-white/10 text-center">
-              <p className="text-[10px] font-semibold text-purple-200 uppercase">PostgreSQL</p>
+              <p className="text-[10px] font-semibold text-purple-200 uppercase">Base de Datos</p>
               <p className="text-xs font-bold text-emerald-300">Activo (14 Tablas)</p>
             </div>
             <div className="rounded-2xl bg-white/10 px-4 py-2.5 backdrop-blur-md border border-white/10 text-center">
@@ -265,7 +265,7 @@ export default function SuperadminPage() {
           <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Mensajes Sendwo
+                Mensajes WhatsApp
               </span>
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-whatsapp/10 text-whatsapp">
                 <MessageSquare className="h-4 w-4" />

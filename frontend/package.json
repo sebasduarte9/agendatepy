@@ -25,6 +25,7 @@
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
+    "usertour.js": "^0.0.24",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

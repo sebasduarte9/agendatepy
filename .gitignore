@@ -12,6 +12,7 @@ venv/
 .env*.local
 .env.production
 .chatwoot/
+nginx/certs/
 
 # Next.js build
 .next/
@@ -22,3 +23,7 @@ build/
 # Archivos del Sistema Operativo
 .DS_Store
 Thumbs.db
+
+# Subidas de usuarios (uploads dinámicos)
+frontend/public/uploads/*
+!frontend/public/uploads/.gitkeep

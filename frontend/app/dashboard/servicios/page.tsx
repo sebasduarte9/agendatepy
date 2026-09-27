@@ -373,63 +373,63 @@ export default function ServiciosPage() {
           {filteredServices.map((item) => (
             <Card
               key={item.id}
-              className="flex flex-col justify-between hover:-translate-y-1 transition-all duration-300"
+              className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-5 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-300"
             >
               <div>
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5 text-primary shadow-xs">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs group-hover:scale-105 transition-transform">
                     {item.image === "scissors" ? (
-                      <Scissors className="h-6 w-6" />
+                      <Scissors className="h-5 w-5" />
                     ) : (
-                      <Sparkles className="h-6 w-6" />
+                      <Sparkles className="h-5 w-5" />
                     )}
                   </div>
                   {item.category && (
-                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
                       {item.category}
                     </span>
                   )}
                 </div>
 
-                <div className="mt-3">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                <div className="mt-3.5">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">
                     {item.name}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    {item.description || "Servicio profesional en cabina o sillón."}
+                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {item.description || "Servicio profesional en cabina o sillón con productos de primera calidad."}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+              <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-white/5 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200/40 dark:border-white/5">
                     <Clock className="h-3.5 w-3.5 text-slate-400" />
-                    {item.durationMin} minutos
+                    {item.durationMin} min
                   </span>
-                  <strong className="text-base font-black text-primary">
+                  <strong className="text-lg font-black tracking-tight text-primary">
                     {formatGs(item.price)}
                   </strong>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={async () => {
                       const url = `${window.location.origin}/${business.slug || "barberia"}/reservar?service=${item.id}`;
                       await navigator.clipboard.writeText(url);
-                      pushToast("success", `Enlace directo de "${item.name}" copiado`);
+                      pushToast("success", `Enlace de "${item.name}" copiado`);
                     }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-slate-800/60 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 py-2 px-3 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white hover:border-primary transition duration-200"
                   >
-                    <Copy className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Compartir</span>
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Compartir Link</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleOpenEditService(item)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 hover:text-primary transition"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-primary hover:border-primary/50 transition"
                     title="Editar servicio"
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -438,7 +438,7 @@ export default function ServiciosPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteService(item.id, item.name)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
                     title="Eliminar servicio"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -453,96 +453,115 @@ export default function ServiciosPage() {
       {/* Staff Grid */}
       {tab === "personal" && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredStaff.map((person) => (
-            <Card
-              key={person.id}
-              className="flex flex-col justify-between hover:-translate-y-1 transition-all duration-300"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-black text-white shadow-md"
-                      style={{ background: person.color }}
+          {filteredStaff.map((person) => {
+            const bookingStaffUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${business.slug || "barberia"}/reservar?staff=${person.id}`;
+
+            return (
+              <Card
+                key={person.id}
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-5 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-300"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-800"
+                        style={{ background: person.color }}
+                      >
+                        {person.avatar}
+                      </span>
+                      <div>
+                        <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                          {person.name}
+                        </h3>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          {person.role}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleStaff(person.id);
+                        pushToast(
+                          "success",
+                          person.active
+                            ? `${person.name} puesto en pausa`
+                            : `${person.name} activado para reservas`
+                        );
+                      }}
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase transition ${
+                        person.active
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                          : "bg-slate-200/60 dark:bg-slate-800 text-slate-500 border border-slate-300/40"
+                      }`}
                     >
-                      {person.avatar}
-                    </span>
-                    <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white text-base">
-                        {person.name}
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {person.role}
-                      </p>
+                      {person.active ? "Activo" : "En pausa"}
+                    </button>
+                  </div>
+
+                  <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {person.description || "Profesional calificado y con alta satisfacción de clientes."}
+                  </p>
+
+                  <div className="mt-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/60 p-3 space-y-2 text-xs border border-slate-100 dark:border-white/5">
+                    <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                      <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        Horario de Atención:
+                      </span>
+                      <strong className="font-semibold text-slate-900 dark:text-white">
+                        {person.hours}
+                      </strong>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                      <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                        <Percent className="h-3.5 w-3.5 text-slate-400" />
+                        Comisión por Servicio:
+                      </span>
+                      <span className="rounded-md bg-primary/10 px-2 py-0.5 font-bold text-primary">
+                        {person.commissionPercentage}%
+                      </span>
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-white/5 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(bookingStaffUrl);
+                      pushToast("success", `Enlace de turnos para ${person.name} copiado`);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 py-2 px-3 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white hover:border-primary transition duration-200"
+                    title="Copiar enlace de reservas para este profesional"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Link de Turnos</span>
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      toggleStaff(person.id);
-                      pushToast(
-                        "success",
-                        person.active
-                          ? `${person.name} puesto en pausa`
-                          : `${person.name} activado para reservas`,
-                      );
-                    }}
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase transition ${
-                      person.active
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : "bg-slate-200/60 dark:bg-slate-800 text-slate-500 border border-slate-300/40"
-                    }`}
+                    onClick={() => handleOpenEditStaff(person)}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-primary hover:border-primary/50 transition"
+                    title="Editar datos del profesional"
                   >
-                    {person.active ? "Activo" : "En pausa"}
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteStaff(person.id, person.name)}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
+                    title="Eliminar profesional"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
-
-                <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                  {person.description || "Profesional certificado."}
-                </p>
-
-                <div className="mt-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 p-3 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                    <span className="flex items-center gap-1 text-slate-400">
-                      <Clock className="h-3.5 w-3.5" /> Horario:
-                    </span>
-                    <strong className="font-semibold text-slate-800 dark:text-slate-200">
-                      {person.hours}
-                    </strong>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                    <span className="flex items-center gap-1 text-slate-400">
-                      <Percent className="h-3.5 w-3.5" /> Comisión:
-                    </span>
-                    <strong className="font-semibold text-primary">
-                      {person.commissionPercentage}%
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleOpenEditStaff(person)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-slate-800/60 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                >
-                  <Pencil className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Editar Perfil</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDeleteStaff(person.id, person.name)}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition"
-                  title="Eliminar profesional"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 

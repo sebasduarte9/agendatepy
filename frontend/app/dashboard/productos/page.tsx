@@ -14,6 +14,8 @@ import {
   Trash2,
   Check,
   Copy,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -23,6 +25,18 @@ import { formatGs } from "@/lib/dashboard-dates";
 import type { ProductItem } from "@/lib/dashboard-types";
 
 const CATEGORIES = ["Todas", "Peinado", "Cuidado Barba", "Lavado & Cuidado", "Fragancias", "Accesorios"] as const;
+
+function ProductImageFallback({ category, name }: { category: string; name: string }) {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-tr from-slate-100 to-indigo-50/50 dark:from-slate-800 dark:to-slate-700/60 p-4 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-brand shadow-sm">
+        <Package className="h-6 w-6" />
+      </div>
+      <p className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{name}</p>
+      <span className="text-[10px] text-slate-400 font-medium">{category}</span>
+    </div>
+  );
+}
 
 export default function ProductosPage() {
   const {
@@ -40,6 +54,7 @@ export default function ProductosPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   // Form state
   const [form, setForm] = useState({
@@ -164,7 +179,7 @@ export default function ProductosPage() {
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             Productos, Tienda & Inventario
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Catálogo web con pedidos directos a tu WhatsApp y venta rápida al mostrador.
           </p>
         </div>
@@ -173,7 +188,7 @@ export default function ProductosPage() {
           <button
             type="button"
             onClick={copyStoreLink}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition backdrop-blur-xl"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
             {copiedLink ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-slate-400" />}
             <span>Copiar Enlace Tienda</span>
@@ -182,7 +197,7 @@ export default function ProductosPage() {
           <Link
             href={publicStoreUrl}
             target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition backdrop-blur-xl"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
             <ExternalLink className="h-4 w-4 text-slate-400" />
             <span>Ver Tienda Web</span>
@@ -191,7 +206,7 @@ export default function ProductosPage() {
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_15px_rgba(99,102,241,0.25)] hover:opacity-95 transition"
+            className="inline-flex items-center gap-2 rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition"
           >
             <Plus className="h-4 w-4" />
             <span>Nuevo Producto</span>
@@ -234,7 +249,7 @@ export default function ProductosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por producto, categoría o descripción..."
-            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs outline-none focus:border-primary backdrop-blur-xl"
+            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs outline-none focus:border-brand"
           />
         </div>
 
@@ -247,7 +262,7 @@ export default function ProductosPage() {
               className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
                 selectedCategory === cat
                   ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
-                  : "bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
               {cat}
@@ -260,14 +275,14 @@ export default function ProductosPage() {
       {filteredProducts.length === 0 ? (
         <Card className="py-12 text-center">
           <ShoppingBag className="mx-auto h-12 w-12 text-slate-300" />
-          <h3 className="mt-3 text-sm font-semibold text-slate-800">No se encontraron productos</h3>
+          <h3 className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-200">No se encontraron productos</h3>
           <p className="mt-1 text-xs text-slate-500">
             Ajustá el término de búsqueda o agregá un nuevo producto al catálogo.
           </p>
           <button
             type="button"
             onClick={openCreateModal}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-xs"
           >
             <Plus className="h-4 w-4" />
             Crear Producto
@@ -278,23 +293,30 @@ export default function ProductosPage() {
           {filteredProducts.map((p) => {
             const isLowStock = p.stock <= 5;
             const marginPercent = Math.round(((p.price - p.cost) / p.price) * 100);
+            const isBroken = brokenImages[p.id] || !p.imageUrl;
 
             return (
-              <Card key={p.id} className="flex flex-col justify-between overflow-hidden p-0 border border-slate-200">
+              <Card key={p.id} className="flex flex-col justify-between overflow-hidden p-0 border border-slate-200/90 dark:border-white/10 shadow-xs hover:border-brand/40 transition">
                 {/* Image and badges */}
-                <div className="relative h-44 w-full bg-slate-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.imageUrl}
-                    alt={p.name}
-                    className="h-full w-full object-cover"
-                  />
+                <div className="relative h-44 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  {isBroken ? (
+                    <ProductImageFallback category={p.category} name={p.name} />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      onError={() => setBrokenImages((prev) => ({ ...prev, [p.id]: true }))}
+                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                  )}
+
                   <div className="absolute top-3 left-3 flex gap-1.5">
-                    <span className="rounded-lg bg-black/65 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-xs">
+                    <span className="rounded-lg bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md">
                       {p.category}
                     </span>
                     {!p.active && (
-                      <span className="rounded-lg bg-rose-500/90 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-xs">
+                      <span className="rounded-lg bg-rose-500/90 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
                         Pausado
                       </span>
                     )}
@@ -305,7 +327,7 @@ export default function ProductosPage() {
                       type="button"
                       onClick={() => openEditModal(p)}
                       aria-label="Editar producto"
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-slate-700 shadow-sm hover:bg-white hover:text-primary transition"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 shadow-sm hover:text-brand transition"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
@@ -313,7 +335,7 @@ export default function ProductosPage() {
                       type="button"
                       onClick={() => handleDelete(p.id, p.name)}
                       aria-label="Eliminar producto"
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-rose-600 shadow-sm hover:bg-white transition"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/95 dark:bg-slate-900/95 text-rose-600 shadow-sm hover:bg-rose-50 transition"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -332,7 +354,7 @@ export default function ProductosPage() {
                   {/* Financials & Stock */}
                   <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/5">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-base font-black text-slate-900 dark:text-white">{formatGs(p.price)}</span>
+                      <span className="text-base font-black text-slate-900 dark:text-white font-mono">{formatGs(p.price)}</span>
                       <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-500/20">
                         Margen: {marginPercent}%
                       </span>
@@ -354,25 +376,25 @@ export default function ProductosPage() {
                     {/* Stock quick adjuster */}
                     <div className="flex items-center justify-between pt-1 text-xs">
                       <span className="text-slate-400 text-[11px]">Ajustar stock:</span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, -1)}
-                          className="h-6 w-6 rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition"
+                          className="h-7 w-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition active:scale-95"
                         >
                           -1
                         </button>
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, 1)}
-                          className="h-6 w-6 rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition"
+                          className="h-7 w-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition active:scale-95"
                         >
                           +1
                         </button>
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, 5)}
-                          className="h-6 px-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-[10px] transition"
+                          className="h-7 px-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-xs transition active:scale-95"
                         >
                           +5
                         </button>
@@ -394,24 +416,24 @@ export default function ProductosPage() {
       >
         <form onSubmit={handleSaveProduct} className="space-y-4 pt-2">
           <div>
-            <label className="block text-xs font-semibold text-slate-700">Nombre del Producto *</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Nombre del Producto *</label>
             <input
               type="text"
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Ej. Cera Capilar Mate 100ml"
-              className="mt-1 w-full rounded-xl border border-border px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-primary"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700">Categoría</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Categoría</label>
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-primary"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
               >
                 {CATEGORIES.filter((c) => c !== "Todas").map((cat) => (
                   <option key={cat} value={cat}>
@@ -420,89 +442,79 @@ export default function ProductosPage() {
                 ))}
               </select>
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-slate-700">Stock Inicial (unidades)</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Stock Inicial (unidades)</label>
               <input
                 type="number"
-                min="0"
+                min={0}
+                required
                 value={form.stock}
                 onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-primary"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700">Precio de Venta (Gs.) *</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Precio Venta (Gs.) *</label>
               <input
                 type="number"
-                min="0"
-                step="5000"
+                step={5000}
                 required
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-bold text-slate-900 outline-none focus:border-primary"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-slate-700">Costo de Compra (Gs.)</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Costo de Compra (Gs.)</label>
               <input
                 type="number"
-                min="0"
-                step="5000"
+                step={5000}
                 value={form.cost}
                 onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs text-slate-600 outline-none focus:border-primary"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">URL de Imagen del Producto</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">URL Imagen del Producto</label>
             <input
               type="url"
               value={form.imageUrl}
               onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
               placeholder="https://..."
-              className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-primary"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">Descripción / Modo de uso</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Descripción Breve</label>
             <textarea
               rows={2}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Beneficios, ingredientes o fijación..."
-              className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-primary resize-none"
+              placeholder="Fijación mate, aroma a menta, para todo tipo de cabello..."
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-3 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
             />
           </div>
 
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer pt-1">
-            <input
-              type="checkbox"
-              checked={form.active}
-              onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              className="h-4 w-4 rounded text-primary focus:ring-primary"
-            />
-            <span>Publicar y hacer visible en la tienda web</span>
-          </label>
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.active}
+                onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                className="h-4 w-4 rounded text-brand focus:ring-brand"
+              />
+              <span>Producto Activo en Catálogo</span>
+            </label>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setModalOpen(false)}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              Cancelar
-            </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95"
+              className="rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition"
             >
               {editingProduct ? "Guardar Cambios" : "Crear Producto"}
             </button>

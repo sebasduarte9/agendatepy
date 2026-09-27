@@ -52,26 +52,26 @@ const COLUMNS = [
 
 export default function Footer() {
   return (
-    <footer id="contacto" className="border-t border-slate-200 bg-white">
+    <footer id="contacto" className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 transition-colors">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 md:grid-cols-5">
           <div>
-            <Link href="/" className="flex items-center gap-2 font-bold text-slate-900">
+            <Link href="/" className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-white shadow-xs">
                 <CalendarCheck className="h-4 w-4" />
               </span>
               <span>AgendatePY</span>
-              <span className="rounded-full bg-red-100 px-1.5 py-0.2 text-[10px] font-bold text-red-700">
+              <span className="rounded-full bg-red-100 dark:bg-red-950/80 px-1.5 py-0.2 text-[10px] font-bold text-red-700 dark:text-red-400">
                 PY
               </span>
             </Link>
-            <p className="mt-3 text-xs leading-relaxed text-slate-600">
+            <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
               La plataforma de agendamiento online, asistente por WhatsApp y control de comisiones preferida por negocios y profesionales en Paraguay.
             </p>
           </div>
           {COLUMNS.map((column) => (
             <div key={column.title}>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-900">{column.title}</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">{column.title}</p>
               <ul className="mt-3 space-y-2">
                 {column.links.map((link) => (
                   <li key={link.label}>
@@ -80,7 +80,7 @@ export default function Footer() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-brand transition"
+                        className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
                       >
                         <span>{link.label}</span>
                         <ExternalLink className="h-2.5 w-2.5 opacity-60" />
@@ -88,14 +88,14 @@ export default function Footer() {
                     ) : link.href.startsWith("#") ? (
                       <a
                         href={link.href}
-                        className="text-xs text-slate-600 hover:text-brand transition"
+                        className="text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-xs text-slate-600 hover:text-brand transition"
+                        className="text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
                       >
                         {link.label}
                       </Link>
@@ -106,9 +106,14 @@ export default function Footer() {
             </div>
           ))}
         </div>
-        <div className="mt-10 border-t border-slate-100 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
-          <p>© 2026 AgendatePY. Hecho en Paraguay para el crecimiento de tu negocio.</p>
-          <p>Facturación oficial en Guaraníes (PYG)</p>
+
+        <div className="mt-12 flex flex-col items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-6 text-xs text-slate-400 dark:text-slate-500 sm:flex-row gap-2">
+          <p>© 2026 AgendatePY. Hecho en Asunción, Paraguay.</p>
+          <div className="flex items-center gap-4">
+            <span>Soporte local SIPAP</span>
+            <span>·</span>
+            <span>Precios en Guaraníes</span>
+          </div>
         </div>
       </div>
     </footer>

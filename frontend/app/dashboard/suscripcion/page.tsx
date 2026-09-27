@@ -64,7 +64,7 @@ const PLANS = [
       "Profesionales ilimitados",
       "Múltiples sucursales y ubicaciones",
       "WhatsApp desde el número propio del local",
-      "Integración API & Webhooks a medida",
+      "Integraciones y automatizaciones a medida",
       "Facturación legal con RUC e-Kuatia",
       "Capacitación presencial al equipo",
       "Gerente de cuenta dedicado",

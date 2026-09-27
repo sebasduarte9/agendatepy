@@ -16,9 +16,8 @@ export async function GET(request: NextRequest) {
     request.headers.get("host") ||
     "localhost:3000";
 
-  const proto =
-    request.headers.get("x-forwarded-proto") ||
-    (host.includes("localhost") ? "http" : "https");
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+  const proto = isLocal ? "http" : "https";
 
   const baseUrl = `${proto}://${host}`;
   const redirectUri = `${baseUrl}/api/auth/callback/google`;

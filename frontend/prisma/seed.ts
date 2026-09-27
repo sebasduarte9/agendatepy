@@ -237,58 +237,49 @@ async function main() {
     });
 
     // 7. Citas para Hoy (Fecha civil de Paraguay)
-    const apt1 = await tx.appointment.create({
-      data: {
-        tenantId: tenant.id,
-        staffId: marcos.id,
-        serviceId: combo.id,
-        clientName: "Carlos Giménez",
-        clientPhone: "595981444333",
-        startTime: corteStart,
-        endTime: new Date(corteStart.getTime() + combo.durationMinutes * 60_000),
-        status: "CONFIRMED",
-      },
-    });
+    // 7. Citas para la Semana (Fecha civil de Paraguay)
+    const appointmentsData = [
+      // Marcos Benítez (Master Barber)
+      { staffId: marcos.id, serviceId: combo.id, clientName: "Carlos Giménez", clientPhone: "+595981444333", startTime: corteStart, endTime: new Date(corteStart.getTime() + combo.durationMinutes * 60_000), status: "COMPLETED" as const },
+      { staffId: marcos.id, serviceId: corte.id, clientName: "Federico Baez", clientPhone: "+595981222111", startTime: zoned(today, "11:00"), endTime: new Date(zoned(today, "11:00").getTime() + corte.durationMinutes * 60_000), status: "COMPLETED" as const },
+      { staffId: marcos.id, serviceId: barba.id, clientName: "Gustavo Rivas", clientPhone: "+595981555444", startTime: zoned(today, "14:00"), endTime: new Date(zoned(today, "14:00").getTime() + barba.durationMinutes * 60_000), status: "CONFIRMED" as const },
+      { staffId: marcos.id, serviceId: combo.id, clientName: "Matías Galeano", clientPhone: "+595981777999", startTime: zoned(today, "16:00"), endTime: new Date(zoned(today, "16:00").getTime() + combo.durationMinutes * 60_000), status: "CONFIRMED" as const },
+      { staffId: marcos.id, serviceId: corte.id, clientName: "Iván Benítez", clientPhone: "+595981888111", startTime: zoned(today, "17:30"), endTime: new Date(zoned(today, "17:30").getTime() + corte.durationMinutes * 60_000), status: "CONFIRMED" as const },
 
-    const apt2 = await tx.appointment.create({
-      data: {
-        tenantId: tenant.id,
-        staffId: sofia.id,
-        serviceId: color.id,
-        clientName: "María Ferreira",
-        clientPhone: "+595981111222",
-        startTime: zoned(today, "11:30"),
-        endTime: new Date(zoned(today, "11:30").getTime() + color.durationMinutes * 60_000),
-        status: "CONFIRMED",
-      },
-    });
+      // Sofía Alcaraz (Color & Estética)
+      { staffId: sofia.id, serviceId: color.id, clientName: "María Ferreira", clientPhone: "+595981111222", startTime: zoned(today, "10:30"), endTime: new Date(zoned(today, "10:30").getTime() + color.durationMinutes * 60_000), status: "COMPLETED" as const },
+      { staffId: sofia.id, serviceId: keratina.id, clientName: "Andrea Samaniego", clientPhone: "+595982444555", startTime: zoned(today, "13:30"), endTime: new Date(zoned(today, "13:30").getTime() + keratina.durationMinutes * 60_000), status: "COMPLETED" as const },
+      { staffId: sofia.id, serviceId: express.id, clientName: "Camila Rojas", clientPhone: "+595983666777", startTime: zoned(today, "16:30"), endTime: new Date(zoned(today, "16:30").getTime() + express.durationMinutes * 60_000), status: "CONFIRMED" as const },
+      { staffId: sofia.id, serviceId: color.id, clientName: "Patricia Bogado", clientPhone: "+595984111333", startTime: zoned(today, "17:30"), endTime: new Date(zoned(today, "17:30").getTime() + color.durationMinutes * 60_000), status: "CONFIRMED" as const },
 
-    const apt3 = await tx.appointment.create({
-      data: {
-        tenantId: tenant.id,
-        staffId: luis.id,
-        serviceId: barba.id,
-        clientName: "Pedro Ramírez",
-        clientPhone: "595982222222",
-        startTime: barbaStart,
-        endTime: new Date(barbaStart.getTime() + barba.durationMinutes * 60_000),
-        status: "PENDING_ACTION",
-        expiresAt: new Date(Date.now() + 30 * 60_000),
-      },
-    });
+      // Diego Franco (Estilo & Barbería)
+      { staffId: diego.id, serviceId: corte.id, clientName: "José Insfrán", clientPhone: "+595982333444", startTime: zoned(today, "11:30"), endTime: new Date(zoned(today, "11:30").getTime() + corte.durationMinutes * 60_000), status: "COMPLETED" as const },
+      { staffId: diego.id, serviceId: barba.id, clientName: "Oscar Peralta", clientPhone: "+595981999888", startTime: zoned(today, "14:30"), endTime: new Date(zoned(today, "14:30").getTime() + barba.durationMinutes * 60_000), status: "COMPLETED" as const },
+      { staffId: diego.id, serviceId: combo.id, clientName: "Fabricio Gómez", clientPhone: "+595982888777", startTime: zoned(today, "16:00"), endTime: new Date(zoned(today, "16:00").getTime() + combo.durationMinutes * 60_000), status: "CONFIRMED" as const },
 
-    const apt4 = await tx.appointment.create({
-      data: {
-        tenantId: tenant.id,
-        staffId: diego.id,
-        serviceId: corte.id,
-        clientName: "José Insfrán",
-        clientPhone: "+595982333444",
-        startTime: zoned(today, "16:30"),
-        endTime: new Date(zoned(today, "16:30").getTime() + corte.durationMinutes * 60_000),
-        status: "CONFIRMED",
-      },
-    });
+      // Luis Ayala (Cortes & Barba)
+      { staffId: luis.id, serviceId: barba.id, clientName: "Pedro Ramírez", clientPhone: "+595982222222", startTime: barbaStart, endTime: new Date(barbaStart.getTime() + barba.durationMinutes * 60_000), status: "COMPLETED" as const },
+      { staffId: luis.id, serviceId: corte.id, clientName: "Esteban Cantero", clientPhone: "+595983111222", startTime: zoned(today, "16:30"), endTime: new Date(zoned(today, "16:30").getTime() + corte.durationMinutes * 60_000), status: "CONFIRMED" as const },
+      { staffId: luis.id, serviceId: express.id, clientName: "Daniel Vera", clientPhone: "+595984555666", startTime: zoned(today, "17:45"), endTime: new Date(zoned(today, "17:45").getTime() + express.durationMinutes * 60_000), status: "CONFIRMED" as const },
+    ];
+
+    const createdApts = await Promise.all(
+      appointmentsData.map((data) =>
+        tx.appointment.create({
+          data: {
+            tenantId: tenant.id,
+            staffId: data.staffId,
+            serviceId: data.serviceId,
+            clientName: data.clientName,
+            clientPhone: data.clientPhone,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            status: data.status,
+          },
+        }),
+      ),
+    );
+    const apt1 = createdApts[0];
 
     // 8. Clientes CRM con puntos de fidelización
     await tx.client.createMany({

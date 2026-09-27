@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Copy,
   Check,
@@ -8,11 +8,11 @@ import {
   Bell,
   CheckCheck,
   Smartphone,
-  Cpu,
-  RefreshCw,
-  Zap,
-  Radio,
   Sparkles,
+  QrCode,
+  ShieldCheck,
+  RefreshCw,
+  MessageCircle,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -32,48 +32,34 @@ export default function WhatsAppHubPage() {
   const {
     business,
     whatsappTemplates,
-    evolutionApi,
     updateWhatsAppTemplate,
     toggleWhatsAppTemplate,
-    updateEvolutionApi,
     updateBusiness,
     pushToast,
   } = useDashboardStore();
 
-  const [activeTab, setActiveTab] = useState<"plantillas" | "sendwo" | "evolution">("plantillas");
+  const [activeTab, setActiveTab] = useState<"plantillas" | "conexion">("plantillas");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     whatsappTemplates[0]?.id || "wt-confirmacion"
   );
   const [copiedLink, setCopiedLink] = useState(false);
-  const [testPhone, setTestPhone] = useState("0981 123 456");
+  const [testPhone, setTestPhone] = useState("+595 981 123 456");
   const [sendingTest, setSendingTest] = useState(false);
-
-  // Sendwo Bot API config
-  const [sendwoConfig, setSendwoConfig] = useState({
-    apiUrl: "https://bot.sendwo.com/api/v1",
-    apiKey: "demo-sendwo-key-paraguay-2026",
-    botId: "bot-agendatepy-01",
-    webhookUrl: "https://agendate.py/api/whatsapp/sendwo",
-    connected: true,
-  });
-
-  // Evolution API local form
-  const [evoForm, setEvoForm] = useState({
-    baseUrl: evolutionApi.baseUrl,
-    apiKey: evolutionApi.apiKey,
-    instanceName: evolutionApi.instanceName,
-    autoSendOnBooking: evolutionApi.autoSendOnBooking,
-    autoSendOnCancel: evolutionApi.autoSendOnCancel,
-  });
+  const [connectingQr, setConnectingQr] = useState(false);
 
   const currentTemplate =
     whatsappTemplates.find((t) => t.id === selectedTemplateId) ||
     whatsappTemplates[0];
 
   const slug = business.slug || "barberia";
-  const bookingUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/${slug}/reservar`
-    : `https://agendate.py/${slug}/reservar`;
+  const [origin, setOrigin] = useState("https://agendatepy.com");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
+  const bookingUrl = `${origin}/${slug}/reservar`;
   const whatsappAutoReply = `¡Hola! Gracias por comunicarte con *${business.name}*. Para ver nuestros servicios disponibles y agendar tu turno al instante sin esperar respuesta, accedé al enlace oficial:\n${bookingUrl}`;
 
   function insertTag(tag: string) {
@@ -105,12 +91,6 @@ export default function WhatsAppHubPage() {
     setTimeout(() => setCopiedLink(false), 2000);
   }
 
-  function handleSaveEvo(e: React.FormEvent) {
-    e.preventDefault();
-    updateEvolutionApi(evoForm);
-    pushToast("success", "Configuración de Evolution API guardada");
-  }
-
   function handleSendTest() {
     if (!testPhone.trim()) {
       pushToast("error", "Ingresá un número de teléfono");
@@ -128,15 +108,15 @@ export default function WhatsAppHubPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            WhatsApp Hub & Automatización de Recordatorios
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            WhatsApp & Recordatorios Automáticos
           </h1>
-          <p className="text-sm text-slate-500">
-            Confirmaciones instantáneas, recordatorios 24h y 2h antes para reducir inasistencias hasta en un 80%.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            Confirmaciones inmediatas y recordatorios automáticos por WhatsApp para reducir ausencias hasta en un 80%.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white border border-border px-3.5 py-2 rounded-xl shadow-sm cursor-pointer">
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 px-3.5 py-2 rounded-xl shadow-xs cursor-pointer">
             <span>WhatsApp Activo</span>
             <input
               type="checkbox"
@@ -148,555 +128,393 @@ export default function WhatsAppHubPage() {
                   `WhatsApp automático ${e.target.checked ? "activado" : "pausado"}`
                 );
               }}
-              className="h-4 w-4 rounded text-primary focus:ring-primary"
+              className="h-4 w-4 rounded text-brand focus:ring-brand"
             />
           </label>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Simplified, User-Friendly Tabs (Zero Technical Jargon) */}
       <div className="flex gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
         <button
           type="button"
           onClick={() => setActiveTab("plantillas")}
-          className={`flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
             activeTab === "plantillas"
-              ? "bg-primary text-white shadow-md shadow-primary/25"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+              ? "bg-brand text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           <Bell className="h-3.5 w-3.5" />
-          Plantillas & Recordatorios (24h / 2h)
+          <span>Plantillas de Mensajes</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab("sendwo")}
-          className={`flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
-            activeTab === "sendwo"
-              ? "bg-primary text-white shadow-md shadow-primary/25"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+          onClick={() => setActiveTab("conexion")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+            activeTab === "conexion"
+              ? "bg-brand text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-          Sendwo Bot API
-          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.2 text-[9px] font-black">
-            Recomendado
+          <Smartphone className="h-3.5 w-3.5" />
+          <span>Conexión de WhatsApp</span>
+          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+            Conectado
           </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("evolution")}
-          className={`flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
-            activeTab === "evolution"
-              ? "bg-primary text-white shadow-md shadow-primary/25"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
-          }`}
-        >
-          <Cpu className="h-3.5 w-3.5" />
-          Evolution API (Docker)
         </button>
       </div>
 
-      {activeTab === "sendwo" ? (
-        /* Sendwo Bot API Tab */
-        <div className="grid gap-6 lg:grid-cols-12 items-start">
-          <div className="space-y-5 lg:col-span-7">
-            {/* Sendwo Stats Card */}
-            <Card className="border border-indigo-200 bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 space-y-4 shadow-md">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-brand shadow-sm font-black text-sm">
-                    SW
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-bold text-white">SENDWO WhatsApp Bot</h2>
-                      <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-black uppercase">
-                        100% Delivered
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300">
-                      Conexión oficial en la nube: <code className="text-emerald-400 font-mono">bot.sendwo.com</code>
-                    </p>
-                  </div>
-                </div>
-
-                <a
-                  href="https://bot.sendwo.com/whatsapp/bot/connect"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-xs transition"
-                >
-                  <span>Conectar Bot</span>
-                  <Radio className="h-3.5 w-3.5 animate-pulse" />
-                </a>
-              </div>
-
-              {/* Sendwo Quota Counters */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 text-center">
-                <div className="rounded-xl bg-white/5 p-2 border border-white/5">
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Subscribers</p>
-                  <p className="text-xs font-bold text-emerald-400">0 / 3.5T</p>
-                </div>
-                <div className="rounded-xl bg-white/5 p-2 border border-white/5">
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Mensajes</p>
-                  <p className="text-xs font-bold text-emerald-400">0 / 1.0M</p>
-                </div>
-                <div className="rounded-xl bg-white/5 p-2 border border-white/5">
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold">AI Tokens</p>
-                  <p className="text-xs font-bold text-emerald-400">0 / 64.8M</p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Sendwo Credentials Form */}
-            <Card className="border border-slate-200 space-y-4">
-              <h2 className="text-sm font-bold text-slate-900">Parámetros de Integración Sendwo</h2>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  pushToast("success", "Configuración de Sendwo guardada exitosamente");
-                }}
-                className="space-y-3.5"
-              >
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">URL del Endpoint Sendwo</label>
-                  <input
-                    type="url"
-                    required
-                    value={sendwoConfig.apiUrl}
-                    onChange={(e) => setSendwoConfig({ ...sendwoConfig, apiUrl: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">API Key / Token Secreto</label>
-                  <input
-                    type="password"
-                    required
-                    value={sendwoConfig.apiKey}
-                    onChange={(e) => setSendwoConfig({ ...sendwoConfig, apiKey: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">Device ID / Bot ID</label>
-                  <input
-                    type="text"
-                    required
-                    value={sendwoConfig.botId}
-                    onChange={(e) => setSendwoConfig({ ...sendwoConfig, botId: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">Webhook de Notificación de Turnos</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={sendwoConfig.webhookUrl}
-                    className="mt-1 w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-xs font-mono text-slate-600 outline-none cursor-copy"
-                    onClick={() => copyToClipboard(sendwoConfig.webhookUrl)}
-                  />
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Pega esta URL en el panel de Sendwo para recibir confirmaciones de respuesta de clientes.
-                  </p>
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-primary-dark transition"
-                  >
-                    Guardar Parámetros Sendwo
-                  </button>
-                </div>
-              </form>
-            </Card>
-          </div>
-
-          {/* Test de Envío Sendwo */}
-          <div className="space-y-4 lg:col-span-5">
-            <Card className="border border-slate-200 space-y-4">
-              <h2 className="text-sm font-bold text-slate-900">Probar Envío con Sendwo API</h2>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Envía una notificación real de prueba a tu propio número para verificar la entrega del bot.
-              </p>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700">Número de WhatsApp Destino</label>
-                <input
-                  type="text"
-                  value={testPhone}
-                  onChange={(e) => setTestPhone(e.target.value)}
-                  placeholder="0981 123 456"
-                  className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-semibold text-slate-900 outline-none focus:border-primary"
-                />
-              </div>
-
-              <div className="rounded-xl bg-slate-50 p-3 text-[11px] font-mono text-slate-700 border border-slate-200/80">
-                <p className="font-bold text-slate-900 mb-1">Mensaje de prueba:</p>
-                "¡Hola! Este es un mensaje de prueba enviado desde tu bot de Sendwo en AgendatePY."
-              </div>
-
+      {activeTab === "plantillas" ? (
+        /* Tab 1: Plantillas & Vista previa */
+        <div>
+          {/* Sub-selector de tipo de mensaje */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {whatsappTemplates.map((template) => (
               <button
+                key={template.id}
                 type="button"
-                disabled={sendingTest}
-                onClick={async () => {
-                  setSendingTest(true);
-                  await new Promise((r) => setTimeout(r, 900));
-                  setSendingTest(false);
-                  pushToast("success", `Mensaje Sendwo enviado a ${testPhone} (100% Delivered)`);
-                }}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm transition disabled:opacity-60"
-              >
-                <Send className="h-3.5 w-3.5" />
-                <span>{sendingTest ? "Despachando vía Sendwo..." : "Enviar Mensaje de Prueba"}</span>
-              </button>
-            </Card>
-          </div>
-        </div>
-      ) : activeTab === "evolution" ? (
-        /* Evolution API Configuration & Test Tab */
-        <div className="grid gap-6 lg:grid-cols-12 items-start">
-          <div className="space-y-5 lg:col-span-7">
-            {/* Status Card */}
-            <Card className="border border-emerald-200 bg-emerald-50/50 p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-                    <Radio className="h-5 w-5 animate-pulse" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900">
-                      Instancia Conectada · Evolution API v2
-                    </h2>
-                    <p className="text-xs text-emerald-700">
-                      Sesión activa: <strong>{evolutionApi.instanceName}</strong> (Socket WhatsApp Web)
-                    </p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow-xs">
-                  En línea
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Los mensajes automáticos se despachan de forma asíncrona mediante el runtime de Next.js sin demorar la respuesta de reserva de tus clientes.
-              </p>
-            </Card>
-
-            {/* Credentials Form */}
-            <Card className="border border-slate-200 space-y-4">
-              <h2 className="text-sm font-bold text-slate-900">Parámetros del Servidor Evolution API</h2>
-              <form onSubmit={handleSaveEvo} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">Evolution API URL</label>
-                  <input
-                    type="url"
-                    required
-                    value={evoForm.baseUrl}
-                    onChange={(e) => setEvoForm({ ...evoForm, baseUrl: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">Global API Key / Token</label>
-                  <input
-                    type="password"
-                    required
-                    value={evoForm.apiKey}
-                    onChange={(e) => setEvoForm({ ...evoForm, apiKey: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">Instance Name (Instancia)</label>
-                  <input
-                    type="text"
-                    required
-                    value={evoForm.instanceName}
-                    onChange={(e) => setEvoForm({ ...evoForm, instanceName: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-border px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div className="pt-2 space-y-2 border-t border-slate-100">
-                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={evoForm.autoSendOnBooking}
-                      onChange={(e) => setEvoForm({ ...evoForm, autoSendOnBooking: e.target.checked })}
-                      className="h-4 w-4 rounded text-primary focus:ring-primary"
-                    />
-                    <span>Despachar automáticamente al confirmar nueva reserva</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={evoForm.autoSendOnCancel}
-                      onChange={(e) => setEvoForm({ ...evoForm, autoSendOnCancel: e.target.checked })}
-                      className="h-4 w-4 rounded text-primary focus:ring-primary"
-                    />
-                    <span>Despachar automáticamente al cancelar turno</span>
-                  </label>
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-sm hover:opacity-95 transition"
-                  >
-                    Guardar Configuración
-                  </button>
-                </div>
-              </form>
-            </Card>
-          </div>
-
-          {/* Right Column: Send Test Message */}
-          <div className="space-y-4 lg:col-span-5">
-            <Card className="border border-slate-200 p-5 space-y-4">
-              <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-500" />
-                <h2 className="text-sm font-bold text-slate-900">Enviar Mensaje de Prueba</h2>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Verificá que tu instancia de Evolution API responda correctamente enviando un mensaje directo a tu celular.
-              </p>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700">Número de Celular</label>
-                <input
-                  type="text"
-                  value={testPhone}
-                  onChange={(e) => setTestPhone(e.target.value)}
-                  placeholder="Ej. 0981 123 456"
-                  className="mt-1 w-full rounded-xl border border-border px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-primary"
-                />
-              </div>
-
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-xs text-slate-700 space-y-1">
-                <p className="font-bold text-slate-800">Mensaje que se enviará:</p>
-                <p className="italic text-[11px] text-slate-600">
-                  &ldquo;¡Hola! Este es un mensaje de prueba exitoso desde tu servidor Evolution API en AgendatePY.&rdquo;
-                </p>
-              </div>
-
-              <button
-                type="button"
-                disabled={sendingTest}
-                onClick={handleSendTest}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition"
-              >
-                {sendingTest ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {sendingTest ? "Enviando prueba..." : "Enviar WhatsApp de Prueba"}
-              </button>
-            </Card>
-          </div>
-        </div>
-      ) : (
-        /* Templates Tab */
-        <div className="grid gap-6 lg:grid-cols-12 items-start">
-        {/* Left Column: Template Selection & Editing */}
-        <div className="space-y-5 lg:col-span-7">
-          {/* Template Selector Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {whatsappTemplates.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setSelectedTemplateId(t.id)}
-                className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition ${
-                  selectedTemplateId === t.id
-                    ? "bg-primary text-white shadow-sm"
-                    : "border border-border bg-white text-slate-600 hover:bg-slate-50"
+                onClick={() => setSelectedTemplateId(template.id)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
+                  selectedTemplateId === template.id
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs font-bold"
+                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50"
                 }`}
               >
                 <Bell className="h-3 w-3" />
-                <span>{t.name}</span>
+                <span>{template.name}</span>
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    template.enabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                  }`}
+                />
               </button>
             ))}
           </div>
 
-          {currentTemplate && (
-            <Card className="space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <div>
-                  <h3 className="font-bold text-slate-900">{currentTemplate.name}</h3>
-                  <p className="text-xs text-slate-500">
-                    Disparador automático cuando ocurre la acción en la agenda.
-                  </p>
+          <div className="grid gap-6 lg:grid-cols-12 items-start">
+            {/* Editor de Mensaje */}
+            <div className="lg:col-span-7 space-y-4">
+              <Card>
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                      {currentTemplate?.name}
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Disparador automático cuando ocurre la acción en la agenda.
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <span>Habilitado</span>
+                    <input
+                      type="checkbox"
+                      checked={currentTemplate?.enabled}
+                      onChange={() =>
+                        currentTemplate && toggleWhatsAppTemplate(currentTemplate.id)
+                      }
+                      className="h-4 w-4 rounded text-brand focus:ring-brand"
+                    />
+                  </label>
                 </div>
-                <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                  <span>Habilitado</span>
-                  <input
-                    type="checkbox"
-                    checked={currentTemplate.enabled}
-                    onChange={() => toggleWhatsAppTemplate(currentTemplate.id)}
-                    className="h-4 w-4 rounded text-primary focus:ring-primary"
-                  />
-                </label>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Variables dinámicas (tocá para insertar):
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {AVAILABLE_TAGS.map(({ tag, label }) => (
+                <div className="space-y-4 pt-3">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      Datos automáticos (tocá para insertar):
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {AVAILABLE_TAGS.map((item) => (
+                        <button
+                          key={item.tag}
+                          type="button"
+                          onClick={() => insertTag(item.tag)}
+                          className="rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:border-brand hover:text-brand transition"
+                        >
+                          +{item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Mensaje a enviar:
+                    </label>
+                    <textarea
+                      rows={8}
+                      value={currentTemplate?.body || ""}
+                      onChange={(e) =>
+                        currentTemplate &&
+                        updateWhatsAppTemplate(currentTemplate.id, e.target.value)
+                      }
+                      className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/50 p-3.5 text-xs text-slate-900 dark:text-white focus:border-brand focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition leading-relaxed font-sans"
+                    />
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      Consejo: Podés usar formato de WhatsApp como *negrita* o _cursiva_.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                      <Check className="h-3.5 w-3.5" /> Cambios guardados automáticamente
+                    </span>
                     <button
-                      key={tag}
                       type="button"
-                      onClick={() => insertTag(tag)}
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-mono text-slate-700 hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition"
+                      onClick={() => pushToast("success", "Plantilla guardada")}
+                      className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-xs font-bold shadow-xs hover:opacity-90"
                     >
-                      +{label}
+                      Guardar Plantilla
                     </button>
-                  ))}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Respuesta Automática para WhatsApp Business */}
+              <Card className="border border-emerald-200/80 dark:border-emerald-800/40 bg-emerald-50/30 dark:bg-emerald-950/20">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Mensaje de Bienvenida para tu WhatsApp Business
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      Copiá este mensaje en tu mensaje de bienvenida o respuesta rápida para que tus clientes agenden solos:
+                    </p>
+                    <div className="relative rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-white dark:bg-slate-900 p-3 text-xs text-slate-800 dark:text-slate-200 font-mono">
+                      <p className="whitespace-pre-wrap">{whatsappAutoReply}</p>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(whatsappAutoReply)}
+                        className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700 transition"
+                      >
+                        {copiedLink ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        <span>{copiedLink ? "¡Copiado!" : "Copiar Mensaje"}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Vista previa en Celular en Tiempo Real */}
+            <div className="lg:col-span-5 flex flex-col items-center">
+              <div className="w-[310px] sm:w-[330px] rounded-[42px] border-[6px] border-slate-900 dark:border-slate-800 bg-slate-900 p-2.5 shadow-2xl shadow-slate-900/30">
+                {/* Notch */}
+                <div className="mx-auto h-4 w-28 rounded-full bg-slate-900 mb-1" />
+
+                {/* WhatsApp Screen */}
+                <div className="overflow-hidden rounded-[30px] bg-[#efeae2] flex flex-col h-[520px]">
+                  {/* WhatsApp Top Bar */}
+                  <div className="flex items-center gap-2.5 bg-[#008069] px-3.5 py-3 text-white">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
+                      AG
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate leading-tight">{business.name}</p>
+                      <p className="text-[10px] opacity-80">en línea</p>
+                    </div>
+                  </div>
+
+                  {/* WhatsApp Chat Area */}
+                  <div className="flex-1 p-3 space-y-2.5 overflow-y-auto text-xs">
+                    <div className="text-center">
+                      <span className="rounded-md bg-white/80 px-2 py-0.5 text-[9px] font-semibold text-slate-500 uppercase shadow-2xs">
+                        HOY
+                      </span>
+                    </div>
+
+                    {/* Mensaje enviado al cliente */}
+                    <div className="flex justify-start">
+                      <div className="max-w-[85%] rounded-2xl rounded-tl-xs bg-white p-3 text-slate-900 shadow-xs space-y-1">
+                        <p className="whitespace-pre-wrap leading-relaxed">
+                          {currentTemplate ? getPreviewText(currentTemplate.body) : ""}
+                        </p>
+                        <div className="flex justify-end gap-1 text-[9px] text-slate-400">
+                          <span>14:30</span>
+                          <CheckCheck className="h-3 w-3 text-blue-500" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Respuesta típica del cliente */}
+                    <div className="flex justify-end">
+                      <div className="max-w-[80%] rounded-2xl rounded-tr-xs bg-[#d9fdd3] p-2.5 text-slate-900 shadow-xs">
+                        <p className="leading-snug text-xs">¡Muchas gracias! Ya tengo agendado el turno.</p>
+                        <div className="flex justify-end gap-1 text-[9px] text-slate-500 mt-0.5">
+                          <span>14:32</span>
+                          <CheckCheck className="h-3 w-3 text-blue-500" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Input bar */}
+                  <div className="flex items-center gap-2 bg-[#f0f2f5] p-2 border-t border-slate-200">
+                    <input
+                      type="text"
+                      disabled
+                      placeholder="Escribir un mensaje..."
+                      className="flex-1 rounded-full bg-white px-3.5 py-1.5 text-xs text-slate-500 outline-none"
+                    />
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#008069] text-white">
+                      <Send className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Mensaje a enviar:
-                </label>
-                <textarea
-                  rows={6}
-                  value={currentTemplate.body}
-                  onChange={(e) =>
-                    updateWhatsAppTemplate(currentTemplate.id, e.target.value)
-                  }
-                  className="w-full rounded-2xl border border-border p-3.5 text-sm font-sans text-slate-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <p className="mt-1 text-[11px] text-slate-400">
-                  Tip: Podés usar formato de WhatsApp como *negrita* o _cursiva_.
-                </p>
+              <p className="mt-3 text-xs text-slate-400 text-center">
+                Vista previa en tiempo real de cómo recibe el mensaje tu cliente en su teléfono celular.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Tab 2: Conexión de tu WhatsApp (Sencillo y sin tecnicismos) */
+        <div className="grid gap-6 lg:grid-cols-12">
+          {/* Card Estado de Conexión */}
+          <div className="lg:col-span-7 space-y-4">
+            <Card>
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+                    <MessageCircle className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                      WhatsApp Oficial de tu Negocio
+                    </h2>
+                    <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1.5 mt-0.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Línea conectada y despachando recordatorios
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                  <Check className="h-3.5 w-3.5" /> Cambios guardados automáticamente
-                </span>
+              <div className="pt-4 space-y-4">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-4 text-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Número asociado:</span>
+                    <strong className="text-slate-900 dark:text-white font-mono text-sm">
+                      +595 981 123 456
+                    </strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Estado del servicio:</span>
+                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 font-bold text-emerald-800 dark:text-emerald-300">
+                      Activo 24/7
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Tiempo de entrega promedio:</span>
+                    <strong className="text-slate-700 dark:text-slate-300">
+                      Menos de 3 segundos
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConnectingQr(true);
+                      setTimeout(() => {
+                        setConnectingQr(false);
+                        pushToast("success", "Línea de WhatsApp sincronizada correctamente");
+                      }, 1500);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 text-xs font-bold shadow-xs hover:opacity-95 transition"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    <span>{connectingQr ? "Sincronizando..." : "Reconectar o Cambiar Número (QR)"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => pushToast("success", "Verificación de línea completada. Todo en orden.")}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    <span>Verificar Estado</span>
+                  </button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Test de Envío Directo */}
+            <Card>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                Probar Envío a tu Teléfono
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Enviá un mensaje de prueba a tu propio número para verificar cómo lo reciben tus clientes.
+              </p>
+
+              <div className="mt-4 flex gap-2">
+                <input
+                  type="text"
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                  placeholder="+595 981 123 456"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand"
+                />
                 <button
                   type="button"
-                  onClick={() => pushToast("success", "Plantilla guardada")}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition"
+                  onClick={handleSendTest}
+                  disabled={sendingTest}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50 transition"
                 >
-                  Guardar Plantilla
+                  <Send className="h-3.5 w-3.5" />
+                  <span>{sendingTest ? "Enviando..." : "Enviar Prueba"}</span>
                 </button>
               </div>
             </Card>
-          )}
+          </div>
 
-          {/* WhatsApp Business Greeting helper */}
-          <Card className="border-emerald-100 bg-emerald-50/40 space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
-                <Smartphone className="h-5 w-5" />
-              </span>
-              <div>
-                <h4 className="font-bold text-slate-900">
-                  Respuesta Automática para tu WhatsApp Business
-                </h4>
-                <p className="text-xs text-slate-600">
-                  Copiá este mensaje en tu bienvenida de WhatsApp Business para que tus clientes reciban tu link solos.
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-white border border-emerald-200/80 p-3 text-xs text-slate-800 font-mono whitespace-pre-wrap">
-              {whatsappAutoReply}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => copyToClipboard(whatsappAutoReply)}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
-            >
-              {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copiedLink ? "¡Copiado!" : "Copiar Respuesta Automática"}
-            </button>
-          </Card>
-        </div>
-
-        {/* Right Column: WhatsApp Live Phone Preview */}
-        <div className="lg:col-span-5 sticky top-6">
-          <div className="mx-auto max-w-[320px] rounded-[44px] border-[6px] border-slate-900 bg-slate-900 p-2 shadow-2xl">
-            {/* Phone Screen */}
-            <div className="overflow-hidden rounded-[36px] bg-[#EFE7DE] text-slate-900">
-              {/* WhatsApp Header */}
-              <div className="flex items-center justify-between bg-[#008069] px-4 py-3 text-white">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 font-bold text-xs">
-                    AG
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold leading-tight">{business.name}</p>
-                    <p className="text-[10px] text-white/80">en línea</p>
-                  </div>
-                </div>
+          {/* Card Explicativa para Dueños */}
+          <div className="lg:col-span-5 space-y-4">
+            <Card className="bg-gradient-to-br from-indigo-50/50 to-white dark:from-slate-900 dark:to-slate-800 border-indigo-100 dark:border-white/10">
+              <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 font-bold text-xs uppercase tracking-wider">
+                <ShieldCheck className="h-4 w-4" />
+                <span>¿Cómo funciona para tu negocio?</span>
               </div>
 
-              {/* Chat Canvas with Wallpaper */}
-              <div className="p-3.5 min-h-[360px] flex flex-col justify-end space-y-3">
-                <div className="text-center">
-                  <span className="rounded-md bg-white/80 px-2.5 py-0.5 text-[10px] font-semibold text-slate-500 shadow-xs">
-                    HOY
+              <div className="mt-4 space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <div className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
+                    1
                   </span>
+                  <p>
+                    <strong>Cero configuración técnica:</strong> Todo el despacho de mensajes corre por nuestra infraestructura sin que tengas que instalar nada raro.
+                  </p>
                 </div>
 
-                {/* Received Bubble */}
-                <div className="flex justify-start">
-                  <div className="max-w-[90%] rounded-2xl rounded-tl-xs bg-white p-3 text-xs shadow-sm">
-                    <p className="whitespace-pre-wrap leading-relaxed text-slate-800">
-                      {currentTemplate ? getPreviewText(currentTemplate.body) : ""}
-                    </p>
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-slate-400">
-                      <span>14:30</span>
-                      <CheckCheck className="h-3 w-3 text-sky-500" />
-                    </div>
-                  </div>
+                <div className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
+                    2
+                  </span>
+                  <p>
+                    <strong>Confirmación inmediata:</strong> Cada vez que un cliente reserva desde tu web, recibe su comprobante en menos de 3 segundos.
+                  </p>
                 </div>
 
-                {/* Mock Client Response */}
-                <div className="flex justify-end">
-                  <div className="max-w-[80%] rounded-2xl rounded-tr-xs bg-[#D9FDD3] p-2.5 text-xs text-slate-800 shadow-sm">
-                    <p>¡Muchas gracias! Ya tengo agendado el turno.</p>
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-slate-400">
-                      <span>14:32</span>
-                      <CheckCheck className="h-3 w-3 text-sky-500" />
-                    </div>
-                  </div>
+                <div className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
+                    3
+                  </span>
+                  <p>
+                    <strong>Sin ausencias:</strong> Los recordatorios 24h y 2h antes le permiten al cliente confirmar o liberar el turno a tiempo.
+                  </p>
                 </div>
               </div>
-
-              {/* WhatsApp Footer Input Mock */}
-              <div className="bg-[#f0f2f5] p-2 flex items-center gap-2 border-t border-slate-200">
-                <div className="flex-1 rounded-full bg-white px-3 py-1.5 text-[11px] text-slate-400">
-                  Escribir un mensaje...
-                </div>
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#008069] text-white">
-                  <Send className="h-3.5 w-3.5" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 text-center">
-            <p className="text-xs text-slate-400">
-              Vista previa en tiempo real de cómo recibe el mensaje tu cliente en su teléfono celular.
-            </p>
+            </Card>
           </div>
         </div>
-      </div>
       )}
     </div>
   );
