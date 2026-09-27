@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import type { UserRole } from "@/lib/dashboard-types";
 import { useDashboardStore } from "@/store/useDashboardStore";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 type SidebarLink = {
   href: string;
@@ -169,8 +170,8 @@ export default function Sidebar() {
         {/* Brand header */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 dark:border-white/10 px-3.5 overflow-hidden">
           <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 text-white shadow-md shadow-primary/25">
-              <CalendarCheck className="h-5 w-5" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+              <BrandLogo variant="icon" iconClassName="h-7 w-7" />
             </div>
             <div
               className="overflow-hidden whitespace-nowrap transition-all duration-300 ease-out min-w-0"
@@ -180,9 +181,9 @@ export default function Sidebar() {
                 transform: expanded ? "translateX(0)" : "translateX(-6px)",
               }}
             >
-              <div className="flex items-center gap-1.5 font-black tracking-tight text-slate-900 dark:text-white">
-                <span className="truncate">AgendatePY</span>
-                <span className="rounded-full bg-red-100 dark:bg-red-950/60 px-1.5 py-0.5 text-[9px] font-extrabold text-red-700 dark:text-red-400 shrink-0">
+              <div className="flex items-center gap-1.5 font-extrabold tracking-tight text-slate-900 dark:text-white">
+                <span className="truncate">agendate<span className="text-[#FF4F2B]">py</span></span>
+                <span className="rounded-full bg-orange-100 dark:bg-orange-950/60 border border-orange-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-[#FF4F2B] shrink-0">
                   PRO
                 </span>
               </div>

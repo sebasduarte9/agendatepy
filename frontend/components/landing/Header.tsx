@@ -12,6 +12,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export default function Header() {
   const [activeTab, setActiveTab] = useState("inicio");
@@ -43,22 +44,13 @@ export default function Header() {
         className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 rounded-full border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 px-4 sm:px-6 shadow-[0_12px_32px_-10px_rgba(0,0,0,0.08)] backdrop-blur-xl"
       >
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 font-semibold tracking-tight">
+        <Link href="/" className="flex items-center shrink-0">
           <motion.div
-            className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand to-indigo-600 text-white shadow-md shadow-brand/30"
-            whileHover={{ scale: 1.05, rotate: -3 }}
+            whileHover={{ scale: 1.04 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <CalendarCheck className="h-4.5 w-4.5" />
+            <BrandLogo variant="horizontal" iconClassName="h-9 w-9" badge="PY" />
           </motion.div>
-          <div className="flex items-center gap-1.5 font-bold tracking-tight">
-            <span className="text-lg font-black text-slate-900 dark:text-white">
-              Agendate<span className="text-brand">PY</span>
-            </span>
-            <span className="rounded-full bg-red-100 dark:bg-red-950/80 px-1.5 py-0.5 text-[9px] font-extrabold text-red-700 dark:text-red-400">
-              PY
-            </span>
-          </div>
         </Link>
 
         {/* Floating Pill Nav Rail (Desktop) */}

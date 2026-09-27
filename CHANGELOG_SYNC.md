@@ -232,3 +232,28 @@ Cada entrada debe detallar:
   - Compatible al 100% con los cambios de tema y esquemas existentes.
 - **Verificación:**
   - `npx tsc --noEmit` completado con **0 errores**.
+
+---
+
+### [Branding Oficial: Integración de Isotipo y Logotipo Agendatepy] — 2026-09-27 06:25
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Identidad Visual & Branding Global
+- **Archivos Modificados / Creados:**
+  - `frontend/components/ui/BrandLogo.tsx` (creación de componente oficial de marca)
+  - `frontend/public/logo.svg` (recurso SVG vectorial oficial)
+  - `frontend/components/landing/Header.tsx`
+  - `frontend/components/landing/Footer.tsx`
+  - `frontend/components/dashboard/Sidebar.tsx`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Componente Vectorial Oficial (`BrandLogo.tsx`):**
+     - Se codificó fielmente el SVG de branding provisto: letra **A** redondeada en tono enérgico `#FF4F2B`, corte triangular superior blanco y switch/toggle de automatización en el travesaño (`rx="56"` con disco blanco).
+     - Soporta 3 variantes optimizadas:
+       - `icon`: Únicamente el isotipo A con toggle para avatares, favicons o sidebar colapsado.
+       - `horizontal`: Isotipo a la izquierda + wordmark tipográfico *"agendatepy"* con badge opcional (ideal para headers y footers).
+       - `full`: SVG apilado completo (1200x1000) con texto centrado.
+  2. **Aplicación en Navegación y Pie de Página:**
+     - En [Header.tsx](file:///c:/Users/acer/Documents/agenopy/agendatepy-main%20%281%29/agendatepy-main/frontend/components/landing/Header.tsx) y [Footer.tsx](file:///c:/Users/acer/Documents/agenopy/agendatepy-main%20%281%29/agendatepy-main/frontend/components/landing/Footer.tsx), se reemplazó el icono genérico de calendario por el nuevo `BrandLogo` horizontal interactivo con badge PY.
+  3. **Aplicación en Panel de Control:**
+     - En [Sidebar.tsx](file:///c:/Users/acer/Documents/agenopy/agendatepy-main%20%281%29/agendatepy-main/frontend/components/dashboard/Sidebar.tsx), se actualizó la cabecera del panel con el isotipo oficial `#FF4F2B` y el wordmark en minúsculas con badge PRO.
+- **Verificación:**
+  - `npx tsc --noEmit` completado con **0 errores**.
