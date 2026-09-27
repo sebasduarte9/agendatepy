@@ -87,24 +87,18 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Visita Guiada Interactive Button */}
-        <button
-          type="button"
-          onClick={() => openTour()}
-          className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary px-3 py-1.5 text-xs font-bold transition shadow-xs group"
-          title="Abrir Visita Guiada y Tutoriales de cada sección"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-primary group-hover:rotate-12 transition-transform" />
-          <span className="hidden sm:inline">Visita Guiada</span>
-        </button>
-
         <Link
           href={`/${business.slug || "barberia"}/reservar`}
           target="_blank"
-          className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:border-primary hover:text-primary transition"
+          className="group relative inline-flex items-center gap-2 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-indigo-500/10 hover:from-primary/20 hover:to-indigo-500/20 px-4 py-2 text-xs font-extrabold text-primary shadow-xs hover:shadow-md hover:shadow-primary/15 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+          title="Abrir tu portal público de reservas en una nueva pestaña"
         >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          </span>
           <span>Ver mi página</span>
-          <ExternalLink className="h-3.5 w-3.5 text-primary" />
+          <ExternalLink className="h-3.5 w-3.5 text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
 
         {/* Dark Mode Toggle */}
