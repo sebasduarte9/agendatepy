@@ -317,3 +317,29 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` completado con **0 errores**.
   - Servidor local funcionando en `http://localhost:3000` (HTTP 200).
 
+---
+
+### [Integración de Notificaciones dentro del Celular & "Pago recibido"] — 2026-09-27 07:05
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Hero / Simulador de WhatsApp (`PhoneMockup.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/landing/PhoneMockup.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Notificación de Recordatorio Integrada en la Pantalla del Celular:**
+     - Se eliminó la tarjeta flotante exterior que sobresalía del bisel de titanio.
+     - Se integró un banner de notificación estilo **iOS auténtico** en la parte superior de la pantalla del celular (debajo de la barra de WhatsApp), con isotipo de WhatsApp, pill de categoría `WhatsApp · recordatorio`, hora `ahora`, título destacado `Recordatorio 2h Antes`, detalle `Sofía confirmó su turno para las 16:30 hs` y badge de estado `✓ Confirmado`.
+     - Se aplicó diseño de squircle iOS con `rounded-[20px]`, fondo de cristal esmerilado translúcido (`bg-white/95 backdrop-blur-xl`) y manija sutil de deslizamiento inferior.
+  2. **Notificación de "Pago recibido" Integrada dentro del Celular:**
+     - Se renombró el widget de "SIPAP Bancario" a `"Pago recibido"` como fue solicitado.
+     - Se reubicó completamente **dentro del menú/pantalla del celular**, justo sobre la barra inferior de entrada de texto de WhatsApp, sin sobresalir ni cortar el marco del teléfono.
+     - Se estilizó con icono de entidad bancaria en verde esmeralda suave, etiqueta `SIPAP`, monto destacado `Gs. 120.000 ingresado` y píldora `● Verificado` con punto pulsante.
+  3. **Experiencia General Amigable y Agradable:**
+     - Eliminación total de barras de scroll grises del navegador mediante utilidades personalizadas `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`.
+     - Inclusión de scroll automático fluido (`chatEndRef`) al interactuar con las opciones de servicio y horario.
+     - Se preservó la secuencia interactiva multi-paso original del chat de WhatsApp.
+- **Verificación:**
+  - `npx tsc --noEmit` completado exitosamente con **0 errores**.
+  - Servidor en desarrollo ejecutándose y respondiendo con HTTP 200 en `http://localhost:3000`.
+
+
