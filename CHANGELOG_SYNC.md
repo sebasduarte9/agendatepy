@@ -341,4 +341,28 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` completado con **0 errores**.
   - Servidor local respondiendo en `http://localhost:3000` (HTTP 200).
 
+---
+
+### [Refinamiento de Notificaciones Flotantes: Tarjetas Limpias y Sin Títulos Artificiales] — 2026-09-27 07:16
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Notificaciones Flotantes del Simulador (`PhoneMockup.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/landing/PhoneMockup.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Eliminación de Títulos Artificiales y "WhatsApp Bot":**
+     - Se removió por completo la cabecera/etiqueta `"WHATSAPP BOT"` y `"SIPAP BANCARIO · AHORA"`.
+     - La notificación superior ahora es una tarjeta limpia y natural: Icono de campana + `"Recordatorio 2h Antes"` con badge `[Confirmado]` + `"Sofía confirmó su turno"`.
+  2. **Reemplazo Directo de "SIPAP Bancario" por "Transferencia recibida":**
+     - Tal como lo solicitó el usuario, el texto *"Transferencia recibida"* sustituye directamente al texto *"SIPAP Bancario"* en el cuerpo principal de la tarjeta, sin agregarse como título externo ni barra adicional.
+     - Incluye el badge `[Verificado]` y monto `"Gs. 120.000 ingresado"` en verde esmeralda.
+  3. **Visual Limpio sin Truncamiento:**
+     - Se eliminó el truncamiento de texto (`truncate`), garantizando lectura fluida y completa con `whitespace-nowrap` y padding equilibrado.
+  4. **Aislamiento Total:**
+     - Modificación aplicada exclusivamente en las dos tarjetas flotantes de `PhoneMockup.tsx`, preservando el resto de la landing page intacto.
+- **Verificación:**
+  - `npx tsc --noEmit` completado con **0 errores**.
+  - Servidor de desarrollo respondiendo activamente en `http://localhost:3000` (HTTP 200).
+
+
 

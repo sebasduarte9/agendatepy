@@ -566,84 +566,47 @@ export default function PhoneMockup() {
         </div>
       </motion.div>
 
-      {/* Spatial 3D Floating Widget 1: Top-Left Reminder Alert (Natural Offset & Dynamic iOS Push Design) */}
+      {/* Spatial 3D Floating Widget 1: Top-Left Reminder Alert */}
       <motion.div
-        initial={{ opacity: 0, x: -30, y: 10 }}
-        animate={{ opacity: 1, x: 0, y: [0, -7, 0] }}
+        initial={{ opacity: 0, x: -20, y: 10 }}
+        animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
         transition={{
-          y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
+          y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           opacity: { duration: 0.8 },
         }}
-        whileHover={{ scale: 1.05, y: -10 }}
-        className="absolute -left-6 sm:-left-20 md:-left-24 lg:-left-28 top-12 sm:top-14 z-40 hidden sm:flex flex-col gap-1.5 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 p-3 sm:p-3.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.03)] backdrop-blur-2xl [transform:translateZ(65px)] w-[230px] sm:w-[245px] select-none transition-transform"
+        className="pointer-events-none absolute -left-4 sm:-left-10 lg:-left-14 top-16 sm:top-20 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
       >
-        {/* Micro-header: Source & Timestamp */}
-        <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-          <span className="flex items-center gap-1 text-[#008069] dark:text-emerald-400 font-bold">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-pulse" />
-            WhatsApp Bot
-          </span>
-          <span>Hace 2 min</span>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+          <Bell className="h-5 w-5 animate-pulse" />
         </div>
-
-        {/* Notification Content */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shadow-inner">
-            <Bell className="h-4 w-4 animate-bounce [animation-duration:3s]" />
+        <div className="text-left text-xs pr-1">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-slate-900 dark:text-white">Recordatorio 2h Antes</span>
+            <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.2 text-[9px] font-black text-emerald-600">Confirmado</span>
           </div>
-          <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-xs font-bold text-slate-900 dark:text-white leading-tight">
-              Recordatorio 2h Antes
-            </p>
-            <p className="truncate text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Sofía confirmó su turno
-            </p>
-          </div>
-          <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-black text-emerald-600 dark:text-emerald-400">
-            100%
-          </span>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Sofía confirmó su turno</p>
         </div>
       </motion.div>
 
-      {/* Spatial 3D Floating Widget 2: Bottom-Right Instant Transfer (Natural Offset & Dynamic SIPAP Status) */}
+      {/* Spatial 3D Floating Widget 2: Bottom-Right Instant Transfer */}
       <motion.div
-        initial={{ opacity: 0, x: 30, y: 10 }}
-        animate={{ opacity: 1, x: 0, y: [0, 7, 0] }}
+        initial={{ opacity: 0, x: 20, y: 10 }}
+        animate={{ opacity: 1, x: 0, y: [0, 8, 0] }}
         transition={{
-          y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 },
+          y: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 },
           opacity: { duration: 0.8, delay: 0.2 },
         }}
-        whileHover={{ scale: 1.05, y: -10 }}
-        className="absolute -right-6 sm:-right-20 md:-right-24 lg:-right-28 bottom-20 sm:bottom-24 z-40 hidden sm:flex flex-col gap-1.5 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 p-3 sm:p-3.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.03)] backdrop-blur-2xl [transform:translateZ(65px)] w-[240px] sm:w-[255px] select-none transition-transform"
+        className="pointer-events-none absolute -right-4 sm:-right-10 lg:-right-14 bottom-24 sm:bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
       >
-        {/* Micro-header: Source & Live Status */}
-        <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-          <span className="flex items-center gap-1.5 text-brand dark:text-[#FF6B4A] font-bold">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
-            </span>
-            SIPAP Bancario
-          </span>
-          <span>Ahora</span>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand dark:text-[#FF6B4A]">
+          <Landmark className="h-5 w-5" />
         </div>
-
-        {/* Notification Content */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand dark:text-[#FF6B4A] shadow-inner">
-            <Landmark className="h-4 w-4" />
+        <div className="text-left text-xs pr-1">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-slate-900 dark:text-white">Transferencia recibida</span>
+            <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.2 text-[9px] font-black text-emerald-600">Verificado</span>
           </div>
-          <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-xs font-bold text-slate-900 dark:text-white leading-tight">
-              Transferencia recibida
-            </p>
-            <p className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
-              Gs. 120.000 ingresado
-            </p>
-          </div>
-          <span className="shrink-0 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-black text-emerald-600 dark:text-emerald-400">
-            Verificado
-          </span>
+          <p className="text-[11px] font-bold text-emerald-600">Gs. 120.000 ingresado</p>
         </div>
       </motion.div>
     </div>
