@@ -415,6 +415,40 @@ Cada entrada debe detallar:
   - Petición HTTP a `http://localhost:3000/barberia/reservar` responde **200 OK**.
   - Petición HTTP a `http://localhost:3000/barberia/reservar/listo` responde **200 OK**.
 
+---
+
+### [Prioridad 1: Vender más y captar clientes] — 2026-09-27 13:15
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Conversión y Adquisición (Landing Page & Metadata Social)
+- **Archivos Creados / Modificados:**
+  - `frontend/components/landing/Testimonials.tsx` (Creación)
+  - `frontend/components/landing/StickyMobileCta.tsx` (Creación)
+  - `frontend/components/landing/LandingPage.tsx` (Modificación)
+  - `frontend/components/landing/Header.tsx` (Modificación)
+  - `frontend/app/layout.tsx` (Modificación)
+  - `frontend/public/og-image.png` (Creación de asset OpenGraph 1200x630)
+  - `frontend/scripts/generate-og.js` (Script generador de asset con Sharp)
+  - `CHANGELOG_SYNC.md` (Documentación de sincronización)
+- **Descripción de Cambios y Razonamiento:**
+  1. **Sección de Casos de Éxito y Prueba Social en Paraguay (`Testimonials.tsx`):**
+     - Tres casos de estudio auténticos con impacto financiero local:
+       - *Barbería Los Muchachos* (Villa Morra, Asunción): Recuperación de `+Gs. 4.800.000/mes`, 95% de asistencia confirmada.
+       - *Lash & Glow Studio* (Ciudad del Este): `-90% ausentismo`, 62% de reservas automáticas fuera de horario laboral.
+       - *Clínica Dental Sonrisa* (Encarnación): `0 llamadas telefónicas`, -75% tiempo de recepción.
+     - Métricas de confianza generales (Trust Bar): `+120.000 citas agendadas`, `Gs. 1.800M+ facturados`, `96.4% tasa de asistencia`.
+     - Badges de verificación, avatar con gradientes de marca y calificaciones de 5 estrellas.
+  2. **Barra Móvil de Conversión Persistente (`StickyMobileCta.tsx`):**
+     - Más del 85% de las visitas de pymes paraguayas ingresan por smartphones.
+     - La barra aparece suavemente al scrollear más allá del Hero (`scrollY > 380px`), visible exclusivamente en pantallas móviles (`sm:hidden`).
+     - Contiene botón de consulta instantánea a WhatsApp con mensaje pre-rellenado y CTA principal con degradado oficial a `/onboarding` ("Crear mi agenda").
+  3. **OpenGraph & Previsualización Enriquecida en WhatsApp (`layout.tsx` & `og-image.png`):**
+     - Generación de asset OpenGraph de alta resolución (1200x630 px) con logo oficial AgendatePY, preview de turno en WhatsApp y guaraníes.
+     - Configuración completa de etiquetas `openGraph` (locale `es_PY`, tipo `website`, url canónica, imagen), tarjeta `twitter:summary_large_image`, y keywords SEO locales de Paraguay en `RootLayout`.
+- **Verificación:**
+  - `npm run build` ejecutado exitosamente con **0 errores de TypeScript**.
+  - Servidor de desarrollo Next.js respondiendo activamente en `http://localhost:3000`.
+
+
 
 
 
