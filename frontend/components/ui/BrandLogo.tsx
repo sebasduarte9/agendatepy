@@ -157,15 +157,10 @@ export default function BrandLogo({
         {renderIsotype()}
       </div>
 
-      <div className="flex items-center gap-1.5 font-bold tracking-tight">
+      <div className="flex items-center font-bold tracking-tight">
         <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">
           agendate<span className="text-[#FF4F2B]">py</span>
         </span>
-        {badge && (
-          <span className="rounded-full bg-orange-100 dark:bg-orange-950/80 border border-orange-500/20 px-1.5 py-0.5 text-[9px] font-black text-[#FF4F2B] uppercase">
-            {badge}
-          </span>
-        )}
       </div>
     </div>
   );

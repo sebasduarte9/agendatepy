@@ -59,7 +59,7 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-5">
           <div>
             <Link href="/" className="inline-block">
-              <BrandLogo variant="horizontal" iconClassName="h-8 w-8" badge="PY" />
+              <BrandLogo variant="horizontal" iconClassName="h-8 w-8" />
             </Link>
             <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
               La plataforma de agendamiento online, asistente por WhatsApp y control de comisiones preferida por negocios y profesionales en Paraguay.

@@ -49,7 +49,7 @@ export default function Header() {
             whileHover={{ scale: 1.04 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <BrandLogo variant="horizontal" iconClassName="h-9 w-9" badge="PY" />
+            <BrandLogo variant="horizontal" iconClassName="h-9 w-9" />
           </motion.div>
         </Link>
 
@@ -103,7 +103,7 @@ export default function Header() {
           {/* High-Converting Primary CTA: Prueba gratuitamente */}
           <Link
             href="/onboarding"
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-indigo-600 text-white h-9 px-4 sm:px-5 rounded-full shadow-md shadow-brand/25"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-9 px-4 sm:px-5 rounded-full shadow-md shadow-brand/25"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-300" />
             <span>Prueba gratuitamente</span>
@@ -151,7 +151,7 @@ export default function Header() {
                 <Link
                   href="/onboarding"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand to-indigo-600 py-3 text-center text-sm font-bold text-white shadow-md shadow-brand/25"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3 text-center text-sm font-bold text-white shadow-md shadow-brand/25"
                 >
                   <Sparkles className="h-4 w-4 text-amber-300" />
                   <span>Prueba gratuitamente</span>

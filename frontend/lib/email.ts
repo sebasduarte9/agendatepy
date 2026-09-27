@@ -92,8 +92,8 @@ export async function sendOtpEmail(email: string, code: string) {
           <!-- Encabezado con Logo -->
           <tr>
             <td style="padding: 32px 32px 20px 32px; text-align: center; border-bottom: 1px solid #f1f5f9;">
-              <div style="display: inline-block; background-color: #5b31e6; color: #ffffff; font-weight: 900; font-size: 16px; padding: 8px 16px; border-radius: 12px; letter-spacing: -0.5px;">
-                Agendate<span style="color: #c4b5fd;">PY</span>
+              <div style="display: inline-block; background-color: #FF4F2B; color: #ffffff; font-weight: 900; font-size: 16px; padding: 8px 16px; border-radius: 12px; letter-spacing: -0.5px;">
+                agendate<span style="color: #ffffff;">py</span>
               </div>
               <h2 style="margin: 20px 0 6px 0; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">
                 Código de Inicio de Sesión
@@ -110,7 +110,7 @@ export async function sendOtpEmail(email: string, code: string) {
               <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b;">
                 Tu código de verificación
               </p>
-              <div style="display: inline-block; background-color: #ffffff; border: 2px dashed #5b31e6; border-radius: 16px; padding: 14px 28px; font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #5b31e6; font-family: monospace;">
+              <div style="display: inline-block; background-color: #ffffff; border: 2px dashed #FF4F2B; border-radius: 16px; padding: 14px 28px; font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #FF4F2B; font-family: monospace;">
                 ${code}
               </div>
               <p style="margin: 16px 0 0 0; font-size: 12px; color: #94a3b8;">
@@ -127,7 +127,7 @@ export async function sendOtpEmail(email: string, code: string) {
               </p>
               <p style="margin: 0; color: #94a3b8; font-size: 11px;">
                 AgendatePY · Sistema de Agendamiento & Gestión para Negocios en Paraguay.<br>
-                <a href="https://agendatepy.com" style="color: #5b31e6; text-decoration: none;">agendatepy.com</a>
+                <a href="https://agendatepy.com" style="color: #FF4F2B; text-decoration: none;">agendatepy.com</a>
               </p>
             </td>
           </tr>

@@ -5,14 +5,14 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
-  --primary: #6366f1;
+  --primary: #FF4F2B;
   --border-color: #e2e8f0;
 }
 
 .dark {
   --background: #090d16;
   --foreground: #f8fafc;
-  --primary: #6366f1;
+  --primary: #FF4F2B;
   --border-color: #1e293b;
 }
 
@@ -21,8 +21,8 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-border: var(--border-color);
-  --color-brand: #5b31e6;
-  --color-brand-dark: #4724c4;
+  --color-brand: #FF4F2B;
+  --color-brand-dark: #E03E1D;
   --color-whatsapp: #128c7e;
   --font-sans: var(--font-plus-jakarta);
 }

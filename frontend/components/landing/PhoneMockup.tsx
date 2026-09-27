@@ -11,8 +11,6 @@ import {
   Plus,
   Camera,
   Mic,
-  Play,
-  Pause,
   BadgeCheck,
   Wifi,
   Sparkles,
@@ -21,18 +19,16 @@ import {
   Lock,
   Bell,
   Landmark,
-  CheckCircle2,
 } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 
 type Message = {
   id: string;
   incoming: boolean;
-  type?: "text" | "audio" | "card";
+  type?: "text" | "card";
   text?: string;
   time: string;
   options?: { label: string; action: () => void }[];
-  audioDuration?: string;
   cardData?: {
     service: string;
     staff: string;
@@ -61,7 +57,6 @@ export default function PhoneMockup() {
   const { category } = useCategory();
   const [step, setStep] = useState<number>(0);
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
 
   // 3D tilt tracking for mouse over phone
   const cardRef = useRef<HTMLDivElement>(null);
@@ -88,6 +83,9 @@ export default function PhoneMockup() {
     mouseY.set(0);
   }
 
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const initialMessages: Message[] = [
     {
       id: "m1",
@@ -103,8 +101,14 @@ export default function PhoneMockup() {
       text: `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción.\n\nSoy el asistente virtual de AgendatePY. Seleccioná el servicio que deseás agendar:`,
       time: "14:20",
       options: [
-        { label: `${category.services[0]?.name || "Corte Clásico"} · Gs. 80.000`, action: () => handleSelectService() },
-        { label: `${category.services[1]?.name || "Servicio Completo"} · Gs. 120.000`, action: () => handleSelectService() },
+        {
+          label: `${category.services[0]?.name || "Servicio Principal"} · ${category.services[0]?.price || "Gs. 80.000"}`,
+          action: () => handleSelectService(0),
+        },
+        {
+          label: `${category.services[1]?.name || "Servicio Completo"} · ${category.services[1]?.price || "Gs. 120.000"}`,
+          action: () => handleSelectService(1),
+        },
       ],
     },
   ];
@@ -117,14 +121,24 @@ export default function PhoneMockup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category.id]);
 
-  function handleSelectService() {
+  // Auto-scroll when chat messages or typing indicator update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat, isTyping]);
+
+  function handleSelectService(serviceIndex: number = 0) {
+    if (step > 0) return;
     setStep(1);
-    const serviceName = category.services[0]?.name || "Corte Clásico";
+
+    const selectedService = category.services[serviceIndex] || category.services[0];
+    const serviceName = selectedService?.name || "Consulta Dental";
+    const servicePrice = selectedService?.price || "Gs. 80.000";
+
     const userMsg: Message = {
       id: "u-service",
       incoming: false,
       type: "text",
-      text: serviceName,
+      text: `${serviceName} (${servicePrice})`,
       time: "14:21",
     };
 
@@ -133,99 +147,42 @@ export default function PhoneMockup() {
 
     setTimeout(() => {
       setIsTyping(false);
-      const botMsg: Message = {
-        id: "b-service",
-        incoming: true,
-        type: "text",
-        text: `Excelente. Tenemos estos horarios disponibles para hoy con *Marcos Benítez*:\n\n• 15:30 hs\n• 16:30 hs\n• 18:00 hs\n\n¿Cuál te queda más cómodo?`,
-        time: "14:21",
-        options: [
-          { label: "16:30 hs (Hoy)", action: () => handleSelectTime() },
-          { label: "18:00 hs (Hoy)", action: () => handleSelectTime() },
-        ],
-      };
-      setChat((prev) => [...prev, botMsg]);
-    }, 900);
-  }
 
-  function handleSelectTime() {
-    setStep(2);
-    const userMsg: Message = {
-      id: "u-time",
-      incoming: false,
-      type: "text",
-      text: "16:30 hs",
-      time: "14:22",
-    };
-
-    setChat((prev) => [...prev, userMsg]);
-    setIsTyping(true);
-
-    setTimeout(() => {
-      setIsTyping(false);
+      // Rich confirmation card (Turno Confirmado)
       const confirmationCard: Message = {
         id: "b-card",
         incoming: true,
         type: "card",
-        time: "14:22",
+        time: "14:21",
         cardData: {
-          service: category.services[0]?.name || "Corte Clásico",
-          staff: "Marcos Benítez",
+          service: serviceName,
+          staff: "Especialista Asignado",
           datetime: "Hoy a las 16:30 hs",
           location: `${category.businessName} · Asunción`,
-          price: "Gs. 80.000",
+          price: servicePrice,
         },
-        options: [
-          { label: "Escuchar audio de confirmación", action: () => handlePlayAudioNote() },
-        ],
       };
-      setChat((prev) => [...prev, confirmationCard]);
-    }, 1000);
-  }
 
-  function handlePlayAudioNote() {
-    setStep(3);
-    setIsTyping(true);
-
-    setTimeout(() => {
-      setIsTyping(false);
-      const audioMsg: Message = {
-        id: "b-audio",
-        incoming: true,
-        type: "audio",
-        time: "14:23",
-        audioDuration: "0:12",
-        options: [
-          { label: "Ver recordatorio previo", action: () => handleShowReminder() },
-        ],
-      };
-      setChat((prev) => [...prev, audioMsg]);
-      setIsPlayingAudio(true);
-      setTimeout(() => setIsPlayingAudio(false), 3500);
-    }, 800);
-  }
-
-  function handleShowReminder() {
-    setStep(4);
-    setIsTyping(true);
-
-    setTimeout(() => {
-      setIsTyping(false);
+      // Final automated 2-hour WhatsApp reminder message
       const reminderMsg: Message = {
         id: "r-reminder",
         incoming: true,
         type: "text",
-        text: `*Recordatorio de Turno*\n\n¡Hola Martín! Tu turno para *${category.services[0]?.name || "Corte"}* en *${category.businessName}* es en 2 horas (16:30 hs).\n\nDirección: Avda. España 1420 c/ San Rafael\n\n¿Nos confirmás tu asistencia? Respondé *SI* o reprogramá desde tu enlace de autogestión.`,
-        time: "14:30",
+        text: `🔔 *Recordatorio Automático (2h antes)*\n\n¡Hola! Tu turno para *${serviceName}* en *${category.businessName}* está 100% confirmado para hoy a las *16:30 hs*.\n\n📍 Avda. España 1420 c/ San Rafael\n\n¿Nos confirmás tu asistencia? Respondé *SI* para confirmar o reprogramá desde tu enlace.`,
+        time: "14:22",
+        options: [
+          { label: "🔄 Simular de nuevo", action: () => handleReset() },
+        ],
       };
-      setChat((prev) => [...prev, reminderMsg]);
-    }, 800);
+
+      setChat((prev) => [...prev, confirmationCard, reminderMsg]);
+      setStep(2);
+    }, 600);
   }
 
   function handleReset() {
     setStep(0);
     setIsTyping(false);
-    setIsPlayingAudio(false);
     setChat([
       {
         id: "m1",
@@ -241,8 +198,14 @@ export default function PhoneMockup() {
         text: `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción.\n\nSoy el asistente virtual de AgendatePY. Seleccioná el servicio que deseás agendar:`,
         time: "14:20",
         options: [
-          { label: `${category.services[0]?.name || "Corte Clásico"} · Gs. 80.000`, action: () => handleSelectService() },
-          { label: `${category.services[1]?.name || "Servicio Completo"} · Gs. 120.000`, action: () => handleSelectService() },
+          {
+            label: `${category.services[0]?.name || "Servicio Principal"} · ${category.services[0]?.price || "Gs. 80.000"}`,
+            action: () => handleSelectService(0),
+          },
+          {
+            label: `${category.services[1]?.name || "Servicio Completo"} · ${category.services[1]?.price || "Gs. 120.000"}`,
+            action: () => handleSelectService(1),
+          },
         ],
       },
     ]);
@@ -256,7 +219,7 @@ export default function PhoneMockup() {
       className="relative mx-auto flex items-center justify-center p-4 [perspective:1400px]"
     >
       {/* Ambient Halo behind iPhone */}
-      <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/20 via-whatsapp/20 to-indigo-500/20 blur-3xl opacity-60" />
+      <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/30 via-orange-500/20 to-emerald-500/20 blur-3xl opacity-75" />
 
       {/* 3D Tiltable iPhone 16 Pro Container */}
       <motion.div
@@ -386,7 +349,10 @@ export default function PhoneMockup() {
             {/* ========================================================= */}
             {/* 3. CHAT MESSAGE STREAM */}
             {/* ========================================================= */}
-            <div className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5">
+            <div
+              ref={chatContainerRef}
+              className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {/* Date Badge */}
               <div className="text-center my-1">
                 <span className="rounded-lg bg-[#ffffff]/80 px-2.5 py-0.8 text-[10px] font-semibold text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wider">
@@ -412,7 +378,12 @@ export default function PhoneMockup() {
                     {/* Standard Text Bubble */}
                     {msg.type === "text" && (
                       <div
-                        className={`relative max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] ${
+                        onClick={() => {
+                          if (step === 0) handleSelectService(0);
+                        }}
+                        className={`relative max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] transition ${
+                          step === 0 ? "cursor-pointer hover:brightness-95" : ""
+                        } ${
                           msg.incoming
                             ? "rounded-tl-xs bg-white text-[#111b21]"
                             : "rounded-tr-xs bg-[#d9fdd3] text-[#111b21]"
@@ -464,42 +435,6 @@ export default function PhoneMockup() {
                       </div>
                     )}
 
-                    {/* Simulated Voice Message Note */}
-                    {msg.type === "audio" && (
-                      <div className="relative max-w-[85%] rounded-2xl bg-white p-3 shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] rounded-tl-xs flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#008069] text-white shadow-xs"
-                        >
-                          {isPlayingAudio ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="h-4 w-4 ml-0.5" />
-                          )}
-                        </button>
-
-                        <div className="flex-1">
-                          {/* Animated Voice Waveform bars */}
-                          <div className="flex items-center gap-[2px] h-5">
-                            {[4, 8, 14, 18, 12, 6, 16, 20, 10, 15, 8, 12, 18, 9, 6, 14].map((h, i) => (
-                              <span
-                                key={i}
-                                className={`w-[2.5px] rounded-full transition-all duration-200 ${
-                                  isPlayingAudio ? "bg-[#008069] animate-pulse" : "bg-[#8696a0]"
-                                }`}
-                                style={{ height: `${h}px` }}
-                              />
-                            ))}
-                          </div>
-                          <div className="mt-1 flex items-center justify-between text-[9px] text-[#667781]">
-                            <span>{msg.audioDuration}</span>
-                            <span>{msg.time}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {/* WhatsApp Interactive Action Buttons (Cloud API Native Style) */}
                     {msg.options && (
                       <div className="mt-1.5 flex flex-col gap-1 w-full max-w-[86%]">
@@ -508,7 +443,7 @@ export default function PhoneMockup() {
                             key={opt.label}
                             type="button"
                             onClick={opt.action}
-                            className="w-full rounded-xl border border-[#008069]/30 bg-white py-2 px-3 text-[11px] font-bold text-[#008069] shadow-[0_1px_1px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1.5"
+                            className="w-full rounded-xl border border-[#008069]/30 bg-white py-2 px-3 text-[11px] font-bold text-[#008069] shadow-[0_1px_1px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <span>{opt.label}</span>
                           </button>
@@ -532,6 +467,9 @@ export default function PhoneMockup() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* End anchor for smooth scrolling */}
+              <div ref={messagesEndRef} className="h-1" />
             </div>
 
             {/* ========================================================= */}
@@ -545,12 +483,29 @@ export default function PhoneMockup() {
                 <Plus className="h-5 w-5" />
               </button>
 
-              <div className="flex flex-1 items-center justify-between rounded-full bg-white px-3.5 py-1.5 shadow-xs border border-black/5">
-                <span className="text-[11px] text-[#8696a0]">
-                  {step >= 3 ? "Simulación completada" : "Tocá una opción arriba..."}
-                </span>
-                <Camera className="h-4 w-4 text-[#54656f]" />
-              </div>
+              {step >= 2 ? (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex flex-1 items-center justify-between rounded-full bg-white px-3.5 py-1.5 shadow-xs border border-emerald-500/30 hover:bg-emerald-50/50 transition cursor-pointer text-left"
+                >
+                  <span className="text-[11px] font-bold text-emerald-700">
+                    Simulación lista · Tocá para reiniciar
+                  </span>
+                  <RotateCcw className="h-3.5 w-3.5 text-emerald-600" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSelectService(0)}
+                  className="flex flex-1 items-center justify-between rounded-full bg-white px-3.5 py-1.5 shadow-xs border border-black/5 hover:bg-slate-50 transition cursor-pointer text-left"
+                >
+                  <span className="text-[11px] text-[#8696a0]">
+                    Tocá un mensaje u opción arriba...
+                  </span>
+                  <Camera className="h-4 w-4 text-[#54656f]" />
+                </button>
+              )}
 
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#008069] text-white shadow-xs">
                 <Mic className="h-4 w-4" />
@@ -567,7 +522,7 @@ export default function PhoneMockup() {
         </div>
       </motion.div>
 
-      {/* Spatial 3D Floating Widget 1: Top-Left Reminder Alert (Family.co / Revolut style) */}
+      {/* Spatial 3D Floating Widget 1: Top-Left Reminder Alert */}
       <motion.div
         initial={{ opacity: 0, x: -20, y: 10 }}
         animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
@@ -586,7 +541,7 @@ export default function PhoneMockup() {
         </div>
       </motion.div>
 
-      {/* Spatial 3D Floating Widget 2: Bottom-Right Instant SIPAP Verification */}
+      {/* Spatial 3D Floating Widget 2: Bottom-Right Instant SIPAP Verification (Styled in Logo & Local Tones) */}
       <motion.div
         initial={{ opacity: 0, x: 20, y: 10 }}
         animate={{ opacity: 1, x: 0, y: [0, 8, 0] }}
@@ -596,7 +551,7 @@ export default function PhoneMockup() {
         }}
         className="pointer-events-none absolute -right-4 sm:-right-12 bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-3.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)]"
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand dark:text-[#FF6B4A]">
           <Landmark className="h-5 w-5" />
         </div>
         <div className="text-left text-xs pr-1">
@@ -607,13 +562,6 @@ export default function PhoneMockup() {
           <p className="text-[11px] font-bold text-emerald-600">Gs. 120.000 ingresado</p>
         </div>
       </motion.div>
-
-      {/* Floating Badge below the phone */}
-      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap z-40">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-white/95 dark:bg-slate-900/95 px-4 py-1.5 text-xs font-bold text-brand shadow-lg backdrop-blur-md">
-          <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Simulador Interactivo de WhatsApp en Vivo
-        </span>
-      </div>
     </div>
   );
 }

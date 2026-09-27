@@ -54,7 +54,7 @@ export default function Pricing() {
           </span>
           <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
             Planes a tu medida,{" "}
-            <span className="bg-gradient-to-r from-brand via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
               sin comisiones ocultas
             </span>
           </h2>
@@ -192,19 +192,19 @@ function PriceCard({
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
       className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
         highlighted
-          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(91,49,230,0.25)] ring-4 ring-brand/10 dark:ring-brand/20"
+          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(255,79,43,0.3)] ring-4 ring-brand/10 dark:ring-brand/20"
           : "border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:border-brand/40"
       }`}
     >
       {highlighted && (
-        <div className="pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-brand via-indigo-500 to-emerald-500 opacity-20 blur-xl" />
+        <div className="pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-brand via-orange-500 to-amber-500 opacity-20 blur-xl" />
       )}
 
       <div className="relative z-10">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-black text-slate-900 dark:text-white">{name}</h3>
           {badge && (
-            <span className="rounded-full bg-gradient-to-r from-brand to-indigo-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+            <span className="rounded-full bg-gradient-to-r from-brand to-[#FF6B4A] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
               {badge}
             </span>
           )}
@@ -286,7 +286,7 @@ function PriceCard({
             href={href}
             className={`flex w-full items-center justify-center rounded-2xl py-3.5 text-xs font-bold transition shadow-md active:scale-95 ${
               highlighted
-                ? "bg-gradient-to-r from-brand to-indigo-600 text-white shadow-brand/30 hover:brightness-110"
+                ? "bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-brand/30 hover:brightness-110"
                 : "border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:border-brand hover:text-brand"
             }`}
           >

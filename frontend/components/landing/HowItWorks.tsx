@@ -21,7 +21,7 @@ export default function HowItWorks() {
     <section id="como-funciona" className="relative overflow-hidden mx-auto max-w-6xl px-4 py-20 sm:py-28 sm:px-6">
       {/* Luces y orbes ambientales de fondo */}
       <div className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-brand/10 blur-[100px] dark:bg-brand/15" />
-      <div className="pointer-events-none absolute -right-20 top-1/4 h-80 w-80 rounded-full bg-indigo-500/10 blur-[100px] dark:bg-indigo-500/15" />
+      <div className="pointer-events-none absolute -right-20 top-1/4 h-80 w-80 rounded-full bg-orange-500/10 blur-[100px] dark:bg-orange-500/15" />
 
       <div className="max-w-2xl mb-10 space-y-2">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
@@ -29,7 +29,7 @@ export default function HowItWorks() {
         </span>
         <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
           De la reserva al cobro,{" "}
-          <span className="bg-gradient-to-r from-brand via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
             en segundos
           </span>
         </h2>
@@ -122,7 +122,7 @@ function BookingWidget() {
             type="button"
             onClick={() => setStep(2)}
             disabled={!serviceId}
-            className="mt-5 w-full rounded-2xl bg-gradient-to-r from-brand to-indigo-600 py-3 text-sm font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition active:scale-98 disabled:opacity-40"
+            className="mt-5 w-full rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3 text-sm font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition active:scale-98 disabled:opacity-40"
           >
             Siguiente
           </button>
@@ -251,7 +251,7 @@ function Next({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex-1 rounded-2xl bg-gradient-to-r from-brand to-indigo-600 py-3 text-sm font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition active:scale-98 disabled:opacity-40"
+      className="flex-1 rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3 text-sm font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition active:scale-98 disabled:opacity-40"
     >
       {label}
     </button>

@@ -36,7 +36,7 @@ export default function WhatsAppShowcase() {
               <strong className="text-slate-900 dark:text-white block">Recordatorio 24 horas antes:</strong>
               Botones de respuesta rápida para confirmar asistencia o avisar con tiempo para reprogramar.
             </Bullet>
-            <Bullet icon={<Bell className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />}>
+            <Bullet icon={<Bell className="h-5 w-5 text-brand shrink-0 mt-0.5" />}>
               <strong className="text-slate-900 dark:text-white block">Aviso 2 horas previas:</strong>
               Hasta 80% menos ausencias comprobadas en salones y consultorios locales en Paraguay.
             </Bullet>
@@ -45,7 +45,7 @@ export default function WhatsAppShowcase() {
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/onboarding"
-              className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition active:scale-95"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-brand to-[#FF6B4A] px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition active:scale-95"
             >
               <span>Prueba gratuitamente</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -103,7 +103,7 @@ export default function WhatsAppShowcase() {
 
             {/* Bubble 2: 24h Reminder */}
             <div className="rounded-2xl rounded-tl-xs bg-white dark:bg-slate-800 p-3.5 text-xs text-slate-800 dark:text-slate-200 shadow-xs space-y-1.5">
-              <p className="font-bold text-indigo-600 dark:text-indigo-400 text-[11px]">Aviso 24 Horas Antes</p>
+              <p className="font-bold text-brand dark:text-[#FF6B4A] text-[11px]">Aviso 24 Horas Antes</p>
               <p className="leading-relaxed">
                 Recordatorio: Mañana te esperamos para tu cita de <strong>{category.heroExample}</strong> en {category.businessName}.
               </p>

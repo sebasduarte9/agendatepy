@@ -257,3 +257,40 @@ Cada entrada debe detallar:
      - En [Sidebar.tsx](file:///c:/Users/acer/Documents/agenopy/agendatepy-main%20%281%29/agendatepy-main/frontend/components/dashboard/Sidebar.tsx), se actualizó la cabecera del panel con el isotipo oficial `#FF4F2B` y el wordmark en minúsculas con badge PRO.
 - **Verificación:**
   - `npx tsc --noEmit` completado con **0 errores**.
+
+---
+
+### [Ajustes de UI/UX, Simulador de WhatsApp y Armonización en Tonos del Logo] — 2026-09-27 06:48
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Branding, UI/UX Landing & Simulador de WhatsApp
+- **Archivos Modificados:**
+  - `frontend/components/ui/BrandLogo.tsx`
+  - `frontend/components/landing/PhoneMockup.tsx`
+  - `frontend/components/landing/Hero.tsx`
+  - `frontend/components/landing/Header.tsx`
+  - `frontend/components/landing/Features.tsx`
+  - `frontend/components/landing/WhatsAppShowcase.tsx`
+  - `frontend/components/landing/HowItWorks.tsx`
+  - `frontend/components/landing/RoiCalculator.tsx`
+  - `frontend/components/landing/Pricing.tsx`
+  - `frontend/lib/email.ts`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Eliminación del badge/pill "PY" externo:** Se removió la píldora externa que envolvía "PY" al costado de `agendatepy` en `BrandLogo.tsx`. Ahora el isotipo "A" con toggle y el wordmark en minúsculas `agendatepy` se despliegan de forma limpia y continua idéntica al logo vectorial oficial.
+  2. **Eliminación del texto del simulador:** Se eliminó la etiqueta flotante inferior `"✨ Simulador Interactivo de WhatsApp en Vivo"` debajo del mockup del iPhone en `PhoneMockup.tsx`.
+  3. **Flujo de Respuesta Directa en 1 Toque (WhatsApp Interactivo):**
+     - Se refactorizó la interacción del chat: al tocar cualquier opción de servicio (o hacer clic en el mensaje de bienvenida), se envía la selección del usuario, se activa brevemente el estado `"escribiendo..."` (600ms) y el bot responde inmediatamente con el resultado final:
+       - **Tarjeta de Turno Confirmado** (servicio, fecha/hora, profesional, local y precio en Gs.).
+       - **Mensaje de Recordatorio Automático 2h Antes** (con botón rápido para simular de nuevo si el usuario lo desea).
+     - Se eliminaron los pasos intermedios forzados (elección múltiple de horarios, reproductor de audio previo).
+     - Se ocultaron las barras de desplazamiento del navegador dentro del marco del iPhone (`[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`) y se agregó auto-scroll suave hacia el mensaje final.
+  4. **Armonización Visual en Tonos del Logo (`#FF4F2B`, Vermellón & Coral Cálido):**
+     - Se sustituyeron todos los degradados residuales morados/índigo (`indigo-500`, `indigo-600`, `violet-500`, `purple`) por la paleta armónica del logo:
+       - Gradientes de titulares y botones: `from-brand to-[#FF6B4A]` y `from-brand via-[#FF6B4A] to-amber-500`.
+       - Halo ambiental del iPhone: luz cálida vermellón y esmeralda.
+       - Widgets flotantes (SIPAP y Recordatorios) y acentos de control adaptados a los tonos oficiales.
+       - Plantilla de correo electrónico OTP sincronizada con `#FF4F2B`.
+- **Verificación:**
+  - `npx tsc --noEmit` completado exitosamente con **0 errores**.
+  - Servidor de desarrollo respondiendo activamente en `http://localhost:3000` (HTTP 200).
+

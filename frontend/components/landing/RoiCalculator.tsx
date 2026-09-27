@@ -151,7 +151,7 @@ export default function RoiCalculator() {
                 step={1}
                 value={diasPorMes}
                 onChange={(e) => setDiasPorMes(Number(e.target.value))}
-                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 transition-all"
+                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand transition-all"
               />
               <div className="flex justify-between text-[11px] text-slate-400 mt-1 font-medium">
                 <span>16 días (medio tiempo)</span>
@@ -172,7 +172,7 @@ export default function RoiCalculator() {
           </div>
 
           {/* Columna Derecha: Tarjeta de Impacto Financiero y ROI (Col 5) */}
-          <div className="lg:col-span-5 relative rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 text-white shadow-2xl shadow-brand/20 border border-brand/30 flex flex-col justify-between overflow-hidden">
+          <div className="lg:col-span-5 relative rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-slate-900 via-slate-900 to-[#1c0f0a] text-white shadow-2xl shadow-brand/20 border border-brand/30 flex flex-col justify-between overflow-hidden">
             {/* Resplandor interno */}
             <div className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-brand/30 blur-3xl" />
@@ -236,7 +236,7 @@ export default function RoiCalculator() {
             <div className="relative z-10 mt-7 pt-4 border-t border-white/10">
               <Link
                 href="/onboarding"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 via-brand to-indigo-600 py-3.5 text-center text-sm font-extrabold text-white shadow-lg shadow-brand/40 hover:brightness-110 transition active:scale-98"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3.5 text-center text-sm font-extrabold text-white shadow-lg shadow-brand/35 hover:brightness-110 transition active:scale-98"
               >
                 <Sparkles className="h-4 w-4 text-amber-300" />
                 <span>Empezar a recuperar turnos hoy</span>

@@ -30,7 +30,7 @@ export default function Features() {
         </span>
         <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
           Todo lo que tu negocio necesita en{" "}
-          <span className="bg-gradient-to-r from-brand via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
             un solo lugar
           </span>
         </h2>
@@ -85,7 +85,7 @@ export default function Features() {
         {/* Module 2: SIPAP & Finanzas (Col 5) */}
         <div className="md:col-span-5 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm flex flex-col justify-between">
           <div>
-            <span className="flex items-center gap-2 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-bold text-violet-700 dark:text-violet-400 w-fit">
+            <span className="flex items-center gap-2 rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand dark:text-[#FF6B4A] w-fit">
               <Landmark className="h-4 w-4" /> Cobros & Caja Local
             </span>
 
@@ -196,7 +196,7 @@ export default function Features() {
         {/* Module 5: Liquidación de Comisiones (Col 4) */}
         <div className="md:col-span-4 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand dark:text-[#FF6B4A]">
               <Users className="h-5 w-5" />
             </div>
             <h3 className="mt-4 text-base sm:text-lg font-black text-slate-900 dark:text-white">

@@ -35,7 +35,7 @@ export default function Hero() {
   return (
     <section id="inicio" className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24">
       {/* Background ambient lighting */}
-      <div className="pointer-events-none absolute -top-40 right-0 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-brand/15 via-indigo-500/10 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute -top-40 right-0 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-brand/20 via-orange-500/10 to-transparent blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 left-0 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-emerald-500/15 via-brand/10 to-transparent blur-3xl" />
 
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-12">
@@ -50,7 +50,7 @@ export default function Hero() {
           {/* Hard-Hitting Pain & Benefit Headline */}
           <h1 className="mt-5 text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.08]">
             Llená tu agenda en automático y reducí 80% las cancelaciones{" "}
-            <span className="bg-gradient-to-r from-brand via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
               por WhatsApp.
             </span>
           </h1>
@@ -92,7 +92,7 @@ export default function Hero() {
             {/* Primary Action Button */}
             <motion.a
               href="/onboarding"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand to-indigo-600 px-7 py-3.5 text-sm sm:text-base font-bold text-white shadow-xl shadow-brand/30 hover:brightness-110 transition active:scale-98"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand to-[#FF6B4A] px-7 py-3.5 text-sm sm:text-base font-bold text-white shadow-xl shadow-brand/35 hover:brightness-110 transition active:scale-98"
               animate={{ scale: [1, 1.015, 1] }}
               transition={{ duration: 2.5, repeat: Infinity }}
             >
