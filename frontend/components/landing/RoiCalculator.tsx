@@ -59,7 +59,7 @@ export default function RoiCalculator() {
     <section id="calculadora" className="relative overflow-hidden py-20 sm:py-28">
       {/* Luces y orbes ambientales decorativos */}
       <div className="pointer-events-none absolute left-1/4 top-1/2 -translate-y-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-brand/10 blur-[120px] dark:bg-brand/20" />
-      <div className="pointer-events-none absolute right-10 top-1/3 h-80 w-80 rounded-full bg-emerald-500/10 blur-[100px] dark:bg-emerald-500/15" />
+      <div className="pointer-events-none absolute right-10 top-1/3 h-80 w-80 rounded-full bg-orange-500/10 blur-[100px] dark:bg-orange-500/15" />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         {/* Cabecera de la sección */}
@@ -71,7 +71,7 @@ export default function RoiCalculator() {
 
           <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
             ¿Cuánto dinero estás perdiendo por{" "}
-            <span className="bg-gradient-to-r from-red-500 via-amber-500 to-brand bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
               turnos vacíos?
             </span>
           </h2>
@@ -82,9 +82,9 @@ export default function RoiCalculator() {
         </div>
 
         {/* Contenedor Principal: Calculadora */}
-        <div className="mt-12 grid gap-8 lg:grid-cols-12 items-center">
+        <div className="mt-12 grid gap-8 lg:grid-cols-12 items-stretch">
           {/* Columna Izquierda: Sliders interactivos (Col 7) */}
-          <div className="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-6 sm:p-9 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl space-y-7">
+          <div className="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-6 sm:p-9 shadow-xl shadow-slate-200/40 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between space-y-7">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -115,7 +115,7 @@ export default function RoiCalculator() {
                 <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                   Precio promedio por servicio o consulta
                 </label>
-                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                <span className="rounded-full bg-brand/10 dark:bg-brand/20 px-3 py-1 text-sm font-black text-brand font-mono">
                   {formatGs(precioPromedio)}
                 </span>
               </div>
@@ -126,7 +126,7 @@ export default function RoiCalculator() {
                 step={5000}
                 value={precioPromedio}
                 onChange={(e) => setPrecioPromedio(Number(e.target.value))}
-                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 transition-all"
+                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand transition-all"
               />
               <div className="flex justify-between text-[11px] text-slate-400 mt-1 font-medium">
                 <span>Gs. 25.000</span>
@@ -140,7 +140,7 @@ export default function RoiCalculator() {
                 <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                   Días de atención al mes
                 </label>
-                <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-sm font-black text-slate-700 dark:text-slate-300">
+                <span className="rounded-full bg-brand/10 dark:bg-brand/20 px-3 py-1 text-sm font-black text-brand">
                   {diasPorMes} días / mes
                 </span>
               </div>
@@ -160,9 +160,9 @@ export default function RoiCalculator() {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1.5 font-medium">
-                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                <ShieldCheck className="h-4 w-4 text-brand" />
                 Turnos totales estimados: <strong>{turnosMensuales} citas/mes</strong>
               </span>
               <span className="text-[11px] text-slate-400">
@@ -172,73 +172,73 @@ export default function RoiCalculator() {
           </div>
 
           {/* Columna Derecha: Tarjeta de Impacto Financiero y ROI (Col 5) */}
-          <div className="lg:col-span-5 relative rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-slate-900 via-slate-900 to-[#1c0f0a] text-white shadow-2xl shadow-brand/20 border border-brand/30 flex flex-col justify-between overflow-hidden">
-            {/* Resplandor interno */}
-            <div className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-brand/30 blur-3xl" />
+          <div className="lg:col-span-5 relative rounded-3xl p-6 sm:p-8 bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between overflow-hidden">
+            {/* Resplandor ambiental interno suave */}
+            <div className="pointer-events-none absolute -top-20 -right-20 h-52 w-52 rounded-full bg-brand/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 rounded-full bg-amber-500/10 blur-3xl" />
 
-            <div className="relative z-10 space-y-6">
+            <div className="relative z-10 space-y-4">
               {/* Tarjeta de Pérdida Actual */}
-              <div className="rounded-2xl border border-red-500/30 bg-red-950/40 p-4 backdrop-blur-md">
-                <div className="flex items-center gap-2 text-xs font-bold text-red-400 uppercase tracking-wider">
+              <div className="rounded-2xl border border-red-200/80 dark:border-red-500/20 bg-red-50/70 dark:bg-red-950/20 p-4 backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
                   <AlertTriangle className="h-4 w-4" />
                   <span>Dinero que hoy se pierde en turnos vacíos</span>
                 </div>
-                <p className="mt-2 text-2xl sm:text-3xl font-black text-red-200 tracking-tight font-mono">
+                <p className="mt-2 text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400 tracking-tight font-mono">
                   {formatGs(perdidaTotal)}
-                  <span className="text-xs font-normal text-red-400 ml-1.5 font-sans">/ mes</span>
+                  <span className="text-xs font-normal text-red-500/80 ml-1.5 font-sans">/ mes</span>
                 </p>
-                <p className="text-[11px] text-red-300/80 mt-1">
-                  Equivale a aprox. <strong>{turnosPerdidos} turnos cancelados o no asistidos</strong> sin aviso.
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  Equivale a aprox. <strong className="text-slate-700 dark:text-slate-200">{turnosPerdidos} turnos cancelados o no asistidos</strong> sin aviso.
                 </p>
               </div>
 
-              {/* Tarjeta de Recupero con AgendatePY */}
-              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-950/50 p-4.5 backdrop-blur-md shadow-lg shadow-emerald-950/50">
+              {/* Tarjeta de Recupero con AgendatePY (Hero Feature en tonos oficiales del logo) */}
+              <div className="rounded-2xl bg-gradient-to-br from-brand via-[#FF623D] to-orange-500 text-white p-5 shadow-lg shadow-brand/25 relative overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                    <TrendingUp className="h-4 w-4 text-emerald-400" />
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-white uppercase tracking-wider">
+                    <TrendingUp className="h-4 w-4 text-white" />
                     <span>Recuperás con AgendatePY</span>
                   </span>
-                  <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-black text-emerald-300">
+                  <span className="rounded-full bg-white/20 border border-white/30 px-2.5 py-0.5 text-[10px] font-black text-white">
                     +80% Éxito
                   </span>
                 </div>
-                <p className="mt-2 text-3xl sm:text-4xl font-black text-emerald-300 tracking-tight font-mono">
+                <p className="mt-2 text-3xl sm:text-4xl font-black text-white tracking-tight font-mono">
                   {formatGs(dineroRecuperado)}
-                  <span className="text-xs font-normal text-emerald-400/90 ml-1.5 font-sans">/ mes</span>
+                  <span className="text-xs font-normal text-white/80 ml-1.5 font-sans">/ mes</span>
                 </p>
-                <p className="text-xs text-emerald-200/90 mt-1 flex items-center gap-1">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <p className="text-xs text-white/95 mt-1.5 flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="h-4 w-4 text-white shrink-0" />
                   <span>
-                    Salvas aprox. <strong>{turnosRecuperados} citas</strong> con confirmaciones automáticas.
+                    Salvas aprox. <strong className="text-white font-bold">{turnosRecuperados} citas</strong> con confirmaciones automáticas.
                   </span>
                 </p>
               </div>
 
               {/* Medidor de Payback */}
-              <div className="rounded-xl bg-white/5 border border-white/10 p-3.5 text-xs text-slate-300 space-y-1">
-                <div className="flex items-center justify-between font-semibold">
-                  <span className="text-amber-300 flex items-center gap-1">
-                    <Zap className="h-3.5 w-3.5 fill-amber-300" /> Retorno Inmediato:
+              <div className="rounded-xl bg-orange-500/10 dark:bg-orange-950/20 border border-brand/20 p-3.5 text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-brand dark:text-[#FF6B4A] flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5 fill-brand text-brand" /> Retorno Inmediato:
                   </span>
-                  <strong className="text-white">
+                  <span className="text-slate-900 dark:text-white font-extrabold">
                     El Plan Pro se paga solo en {diasParaPagarPlan} {diasParaPagarPlan === 1 ? "día" : "días"}
-                  </strong>
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-tight">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                   Invertís Gs. 250.000/mes y recuperás {formatGs(dineroRecuperado)}. El software se autofinancia desde la primera semana.
                 </p>
               </div>
             </div>
 
             {/* CTA Final de la calculadora */}
-            <div className="relative z-10 mt-7 pt-4 border-t border-white/10">
+            <div className="relative z-10 mt-6 pt-4 border-t border-slate-100 dark:border-white/10">
               <Link
                 href="/onboarding"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3.5 text-center text-sm font-extrabold text-white shadow-lg shadow-brand/35 hover:brightness-110 transition active:scale-98"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3.5 text-center text-sm font-extrabold text-white shadow-lg shadow-brand/25 hover:brightness-110 transition active:scale-98"
               >
-                <Sparkles className="h-4 w-4 text-amber-300" />
+                <Sparkles className="h-4 w-4 text-amber-200" />
                 <span>Empezar a recuperar turnos hoy</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>

@@ -364,5 +364,31 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` completado con **0 errores**.
   - Servidor de desarrollo respondiendo activamente en `http://localhost:3000` (HTTP 200).
 
+---
+
+### [Armonización UI/UX: Calculadora de Recupero & Planes a Tu Medida en Tonos Naranjas] — 2026-09-27 07:23
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Calculadora ROI (`RoiCalculator.tsx`) y Tabla de Precios (`Pricing.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/landing/RoiCalculator.tsx`
+  - `frontend/components/landing/Pricing.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Calculadora Interactiva de Recupero (`RoiCalculator.tsx`):**
+     - **Integración con la Paleta de la Página:** Se eliminó la caja oscura y pesada del panel derecho que desentonaba con el tema claro y cálido de la landing. Ahora ambas columnas comparten tarjetas de vidrio esmerilado con bordes sutiles y sombras suaves (`bg-white/95 dark:bg-slate-900/95`).
+     - **Sliders y Badges Unificados:** Se removió el pulgar verde del slider de precio (`accent-emerald-500`) y la píldora verde; ahora los tres controles usan de manera consistente el color de marca naranja `#FF4F2B` (`accent-brand`, píldoras `bg-brand/10 text-brand`).
+     - **Tarjeta Hero en Tonos del Logo:** El bloque "Recuperás con AgendatePY" se convirtió en una tarjeta destacada con degradado cálido oficial (`from-brand via-[#FF623D] to-orange-500 text-white`), dando máximo protagonismo al valor monetario recuperado en Guaraníes.
+     - **Tarjeta de Pérdida y Payback:** Pérdida en tono coral suave (`bg-red-50/70 border-red-200/80`) y payback en tono ámbar/naranja cálido.
+  2. **Planes a tu Medida (`Pricing.tsx`):**
+     - **Eliminación Total del Color Verde:** Se retiraron todos los elementos verdes para adoptar la identidad naranja de la marca:
+       - Toggle "Pago Anual": Píldora *"2 Meses Gratis"* y degradado activo cambiados de esmeralda a `brand` naranja (`from-brand to-[#FF6B4A]`, texto `text-brand`).
+       - Badges de Ahorro: `⚡ Ahorrás Gs. X al año` ahora en caja suave `bg-brand/10 text-brand` con icono naranja.
+       - Iconos de Checkmark (✓): Todos los checks de características incluidas cambiaron de verde a naranja oficial (`bg-brand/15 text-brand dark:text-[#FF6B4A]`).
+       - Icono de escudo de garantía en pie de sección cambiado a `text-brand`.
+- **Verificación:**
+  - `npx tsc --noEmit` completado con **0 errores**.
+  - Servidor de desarrollo Next.js respondiendo activamente en `http://localhost:3000` (HTTP 200).
+
+
 
 

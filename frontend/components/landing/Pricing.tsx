@@ -45,7 +45,7 @@ export default function Pricing() {
     <section id="precios" className="relative overflow-hidden bg-slate-50/80 dark:bg-slate-950 py-20 sm:py-28 border-t border-slate-200/80 dark:border-white/10 transition-colors">
       {/* Luces y resplandores ambientales de fondo */}
       <div className="pointer-events-none absolute -top-40 right-1/4 h-[500px] w-[500px] rounded-full bg-brand/10 blur-[130px] dark:bg-brand/20" />
-      <div className="pointer-events-none absolute bottom-0 left-10 h-96 w-96 rounded-full bg-emerald-500/10 blur-[120px] dark:bg-emerald-500/15" />
+      <div className="pointer-events-none absolute bottom-0 left-10 h-96 w-96 rounded-full bg-orange-500/10 blur-[120px] dark:bg-orange-500/15" />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -77,7 +77,7 @@ export default function Pricing() {
             type="button"
             onClick={() => setAnnual((value) => !value)}
             className={`relative h-8 w-15 rounded-full p-1 transition-all duration-300 shadow-inner ${
-              annual ? "bg-gradient-to-r from-brand to-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+              annual ? "bg-gradient-to-r from-brand to-[#FF6B4A]" : "bg-slate-300 dark:bg-slate-700"
             }`}
             aria-label="Cambiar facturación mensual o anual"
           >
@@ -92,11 +92,11 @@ export default function Pricing() {
             type="button"
             onClick={() => setAnnual(true)}
             className={`flex items-center gap-1.5 transition-colors ${
-              annual ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              annual ? "text-brand dark:text-[#FF6B4A] font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <span>Pago Anual</span>
-            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 shadow-2xs">
+            <span className="rounded-full bg-brand/10 dark:bg-brand/20 border border-brand/30 px-2 py-0.5 text-[10px] font-black text-brand dark:text-[#FF6B4A] shadow-2xs">
               2 Meses Gratis
             </span>
           </button>
@@ -148,7 +148,7 @@ export default function Pricing() {
         {/* Garantía y Formas de Pago */}
         <div className="mt-12 text-center text-xs text-slate-500 dark:text-slate-400">
           <p className="flex items-center justify-center gap-2 font-medium">
-            <Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <Shield className="h-4 w-4 text-brand dark:text-[#FF6B4A]" />
             14 días de prueba sin ingresar tarjeta de crédito · Pagá después con QR Bancard, SIPAP o Tigo Money.
           </p>
         </div>
@@ -230,8 +230,8 @@ function PriceCard({
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-2.5 space-y-1"
               >
-                <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                  <Zap className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand/10 border border-brand/25 px-2.5 py-1 text-[11px] font-bold text-brand dark:text-[#FF6B4A]">
+                  <Zap className="h-3 w-3 fill-brand text-brand" />
                   <span>{savings}</span>
                 </div>
                 {billedDetail && (
@@ -251,7 +251,7 @@ function PriceCard({
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] mt-0.5 ${
                   item.ok
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold"
+                    ? "bg-brand/15 text-brand dark:text-[#FF6B4A] font-bold"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                 }`}
               >
