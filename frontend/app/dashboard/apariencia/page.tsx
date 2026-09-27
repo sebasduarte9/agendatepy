@@ -333,8 +333,18 @@ const BACKGROUND_EFFECTS_LIST: {
   },
 ];
 
+const LAYOUT_SPANISH_NAMES: Record<string, string> = {
+  panoramic: "Panorámica",
+  "split-gallery": "Mosaico",
+  "floating-card": "Flotante",
+  "minimal-editorial": "Editorial",
+  "bento-grid": "Bento Grid",
+  "full-immersive": "Inmersivo",
+};
+
 export default function AparienciaPage() {
   const { business, services, updateBusiness, pushToast } = useDashboardStore();
+  const isTourOpen = useDashboardStore((s) => s.isTourOpen);
 
   const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
   const [, setLoadingInitial] = useState(true);
@@ -350,20 +360,24 @@ export default function AparienciaPage() {
 
   function handleTabClick(newTab: "estilos" | "fotos" | "botones" | "textos") {
     if (activeTab === newTab) return;
-    if (hasUnsavedChanges) {
-      setPendingTab(newTab);
-      setShowUnsavedModal(true);
-    } else {
-      setActiveTab(newTab);
+    setActiveTab(newTab);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("agendate-user-selected-tab", { detail: { tab: newTab } }));
     }
   }
 
   // Listen to tab switch event from GuidedTour
   useEffect(() => {
     function handleTourTabSwitch(e: Event) {
-      const customEvt = e as CustomEvent<{ tab: "estilos" | "fotos" | "botones" | "textos" }>;
+      const customEvt = e as CustomEvent<{
+        tab: "estilos" | "fotos" | "botones" | "textos";
+        subTab?: "links" | "styles";
+      }>;
       if (customEvt.detail?.tab) {
         setActiveTab(customEvt.detail.tab);
+        if (customEvt.detail.tab === "botones" && customEvt.detail.subTab) {
+          setButtonSubTab(customEvt.detail.subTab);
+        }
       }
     }
     window.addEventListener("agendate-switch-tab", handleTourTabSwitch);
@@ -746,10 +760,10 @@ export default function AparienciaPage() {
       {/* Tabs Navigation */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 gap-1 overflow-x-auto pb-px">
         {[
-          { id: "estilos", label: "1. Estilos & Paletas", icon: Palette },
-          { id: "fotos", label: "2. Portada & Fotos", icon: ImageIcon },
-          { id: "botones", label: "3. Botones & Links", icon: Sliders },
-          { id: "textos", label: "4. Textos & Políticas", icon: Type },
+          { id: "estilos", label: "Estilos & Paletas", icon: Palette },
+          { id: "fotos", label: "Portada & Fotos", icon: ImageIcon },
+          { id: "botones", label: "Botones & Links", icon: Sliders },
+          { id: "textos", label: "Textos & Políticas", icon: Type },
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -757,6 +771,7 @@ export default function AparienciaPage() {
             <button
               key={tab.id}
               type="button"
+              data-tour={`tab-${tab.id}`}
               onClick={() => handleTabClick(tab.id as any)}
               className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 active
@@ -870,7 +885,9 @@ export default function AparienciaPage() {
                               <span className="font-semibold text-slate-600 dark:text-slate-300 capitalize truncate">
                                 {p.fontFamily.replace(/-/g, " ")}
                               </span>
-                              <span className="capitalize">{p.layoutStyle.replace(/-/g, " ")}</span>
+                              <span className="capitalize">
+                                {LAYOUT_SPANISH_NAMES[p.layoutStyle] || p.layoutStyle.replace(/-/g, " ")}
+                              </span>
                             </div>
                           </button>
                         );
@@ -1277,14 +1294,15 @@ export default function AparienciaPage() {
           {/* TAB 2: PORTADA & FOTOS */}
           {activeTab === "fotos" && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <Card className="space-y-4 border border-slate-200 dark:border-slate-800">
+              <div data-tour="tour-cover-logo">
+                <Card className="space-y-4 border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2.5">
                   <div>
                     <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                       Editor Visual de Portada & Logo
                     </h2>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Adaptado automáticamente a tu layout ({theme.layoutStyle.replace(/-/g, " ")}).
+                      Adaptado automáticamente a tu layout ({LAYOUT_SPANISH_NAMES[theme.layoutStyle] || theme.layoutStyle.replace(/-/g, " ")}).
                     </p>
                   </div>
                 </div>
@@ -1517,9 +1535,10 @@ export default function AparienciaPage() {
                   </div>
                 </div>
               </Card>
+              </div>
 
               {/* Galería de Fotos de Trabajos del Local */}
-              <div data-tour="tour-photos">
+              <div data-tour="tour-gallery">
                 <Card className="space-y-4 border border-slate-200 dark:border-slate-800">
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2.5">
                     <div className="flex items-center gap-2">
@@ -1906,7 +1925,7 @@ export default function AparienciaPage() {
 
           {/* TAB 4: TEXTOS & POLÍTICAS */}
           {activeTab === "textos" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 animate-in fade-in duration-200" data-tour="tour-texts">
               <Card className="space-y-4 border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2.5">
                   <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -2097,7 +2116,7 @@ export default function AparienciaPage() {
         </div>
 
         {/* Live Phone Preview Column */}
-        <div className="lg:col-span-5 lg:sticky lg:top-6 space-y-2">
+        <div className="lg:col-span-5 lg:sticky lg:top-6 space-y-2" id="apariencia-phone-preview">
           {/* Top Bar above phone */}
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -2772,8 +2791,8 @@ export default function AparienciaPage() {
         </div>
       )}
 
-      {/* Floating Save Alert Bar when hasUnsavedChanges is true */}
-      {hasUnsavedChanges && !showUnsavedModal && (
+      {/* Floating Save Alert Bar when hasUnsavedChanges is true (hidden during Guided Tour) */}
+      {hasUnsavedChanges && !showUnsavedModal && !isTourOpen && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-amber-500/40 bg-slate-900/95 text-white px-5 py-2.5 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom duration-300">
           <span className="flex h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
           <span className="text-xs font-bold text-slate-200 whitespace-nowrap">

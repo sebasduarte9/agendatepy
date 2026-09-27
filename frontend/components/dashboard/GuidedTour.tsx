@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -34,6 +34,7 @@ import {
   RotateCcw,
   Target,
   BookmarkCheck,
+  LogOut,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
@@ -417,44 +418,86 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Personalización",
     icon: Palette,
     summary:
-      "Elegí el estilo visual, colores de marca, fotos y enlaces de contacto para que tu página de reservas luzca profesional y única.",
+      "Configurá el estilo visual, colores de marca, fotos reales, tipografías y enlaces directos para que tu portal de reservas luzca impecable.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Elegir un estilo listo en 1 clic",
+        taskTitle: "Estilos Profesionales",
         instruction:
-          "En la pestaña 'Estilos Listos', seleccioná entre los 12 diseños profesionales (Barbería Clásica, Salón & Estética, Lujo VIP o Moderno). Al hacer clic, colores, fuentes y fondos se configuran solos.",
-        tip: "Mirá el celular a la derecha para ver cómo queda en tiempo real antes de guardar.",
+          "Elegí uno de los 20 estilos preconfigurados para aplicar colores, fuentes y diseño en 1 clic.",
+        tip: "Mirá el celular a la derecha para ver cómo cambia en tiempo real.",
         targetSelector: '[data-tour="tour-presets"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Ajustar colores y modo Claro/Oscuro",
+        taskTitle: "Colores y Tipografía",
         instruction:
-          "Podés alternar entre modo Claro (ideal para salones luminosos y estéticas) u Oscuro (ideal para barberías premium), y afinar tu color primario exacto.",
+          "Ajustá tu color de marca exacto, fondo animado y tipografía de Google Fonts.",
+        tip: "Podés alternar entre modo Claro u Oscuro según la identidad de tu local.",
         targetSelector: '[data-tour="tour-colors"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Cargar logo y fotos de portada",
+        taskTitle: "Portada & Fotos",
         instruction:
-          "En la sección de fotos podés ingresar el logo de tu local, foto de portada y fotos reales de cortes o trabajos para tu galería.",
-        tip: "Podés usar los botones de fotos de ejemplo para probar cómo queda de inmediato.",
-        targetSelector: '[data-tour="tour-photos"]',
+          "Tocá esta pestaña o en Siguiente para ir a configurar la portada y logo de tu local.",
+        tip: "Tamaño sugerido: Portada 1200 × 400 px y Logo 500 × 500 px.",
+        targetSelector: '[data-tour="tab-fotos"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Agregar botones directos (Uber, Waze, WhatsApp)",
+        taskTitle: "Foto de Portada y Logo",
         instruction:
-          "En 'Botones & Enlaces' podés agregar accesos rápidos estilo Linktree para que tus clientes pidan un Uber directo al local, abran el mapa o te escriban.",
-        targetSelector: '[data-tour="tour-buttons"]',
+          "Cargá la portada de tu negocio, regulá el encuadre vertical y subí tu logo oficial.",
+        tip: "Tamaño sugerido: Portada 1200 × 400 px (3:1) y Logo 500 × 500 px (1:1 fondo transparente).",
+        targetSelector: '[data-tour="tour-cover-logo"]',
       },
       {
         stepNumber: 5,
-        taskTitle: "CRÍTICO: Tocar 'Guardar Cambios'",
+        taskTitle: "Galería de Trabajos",
         instruction:
-          "Cuando estés conforme con la previsualización del celular, tocá el botón verde 'Guardar Cambios' arriba a la derecha. Tus clientes verán la nueva imagen al instante.",
-        tip: "Si no tocás 'Guardar Cambios', los cambios solo quedarán en borrador y no se verán en tu link público.",
+          "Subí fotos reales de tus cortes y trabajos para inspirar confianza y generar más reservas.",
+        tip: "Las fotos reales de trabajos aumentan hasta un 40% las reservas de clientes nuevos.",
+        targetSelector: '[data-tour="tour-gallery"]',
+      },
+      {
+        stepNumber: 6,
+        taskTitle: "Botones & Links",
+        instruction:
+          "Tocá esta pestaña o en Siguiente para ir a configurar tus botones y enlaces.",
+        tip: "Podés conectar WhatsApp, Waze, Uber y redes sociales con 1 clic.",
+        targetSelector: '[data-tour="tab-botones"]',
+      },
+      {
+        stepNumber: 7,
+        taskTitle: "Botones Personalizados Extras",
+        instruction:
+          "Configurá botones personalizados extras y enlaces directos para tus clientes.",
+        tip: "En 'Estilo & Jerarquía' podés ordenar si mostrar primero los servicios o los enlaces.",
+        targetSelector: '[data-tour="tour-buttons"]',
+      },
+      {
+        stepNumber: 8,
+        taskTitle: "Textos & Políticas",
+        instruction:
+          "Tocá esta pestaña o en Siguiente para ir a redactar tus textos y políticas.",
+        tip: "Podés definir reglas claras de cancelación y anticipación de citas.",
+        targetSelector: '[data-tour="tab-textos"]',
+      },
+      {
+        stepNumber: 9,
+        taskTitle: "Textos y Políticas Extras",
+        instruction:
+          "Configurá textos personalizados extras, slogan, redes y políticas de tu negocio.",
+        tip: "Podés usar las políticas sugeridas para insertar reglas frecuentes con 1 clic.",
+        targetSelector: '[data-tour="tour-texts"]',
+      },
+      {
+        stepNumber: 10,
+        taskTitle: "Guardar Cambios",
+        instruction:
+          "Tocá el botón verde arriba a la derecha para que los cambios se publiquen en tu enlace público.",
+        tip: "Los cambios se aplican de inmediato en tu enlace público para todos los clientes.",
         targetSelector: '[data-tour="tour-save"]',
       },
     ],
@@ -643,6 +686,7 @@ export default function GuidedTour() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selectedSectionKey, setSelectedSectionKey] = useState<string>("inicio");
   const [showSectionPicker, setShowSectionPicker] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [completedSections, setCompletedSections] = useState<string[]>([]);
 
@@ -736,38 +780,70 @@ export default function GuidedTour() {
     }
   }, []);
 
-  // Update target rect with automatic tab switching
+  const isTransitioningRef = useRef(false);
+
+  // Helper to determine the tab required for any step
+  const getTabForStep = useCallback((step?: SectionStep): "estilos" | "fotos" | "botones" | "textos" | null => {
+    if (!step?.targetSelector) return null;
+    const sel = step.targetSelector;
+    if (sel.includes("tab-fotos") || sel.includes("tour-presets") || sel.includes("tour-colors")) return "estilos";
+    if (sel.includes("tab-botones") || sel.includes("tour-cover-logo") || sel.includes("tour-gallery")) return "fotos";
+    if (sel.includes("tab-textos") || sel.includes("tour-buttons")) return "botones";
+    if (sel.includes("tour-texts")) return "textos";
+    return null;
+  }, []);
+
+  // Update target rect with automatic tab switching and dimension verification
   const updateTargetRect = useCallback(() => {
     if (!currentStep?.targetSelector) {
       setTargetRect(null);
       return;
     }
 
-    // Auto-switch tabs if needed on /dashboard/apariencia
-    if (currentStep.targetSelector.includes("tour-photos")) {
-      window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "fotos" } }));
-    } else if (currentStep.targetSelector.includes("tour-buttons")) {
-      window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "botones" } }));
-    } else if (
-      currentStep.targetSelector.includes("tour-presets") ||
-      currentStep.targetSelector.includes("tour-colors")
-    ) {
-      window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "estilos" } }));
-    } else if (currentStep.targetSelector.includes("tour-texts")) {
-      window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "textos" } }));
+    // Auto-switch tabs if required for this step
+    const neededTab = getTabForStep(currentStep);
+    if (neededTab && typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("agendate-switch-tab", {
+          detail: {
+            tab: neededTab,
+            subTab: currentStep.targetSelector.includes("tour-buttons") ? "links" : undefined,
+          },
+        })
+      );
     }
 
-    const checkElement = (retries = 4) => {
+    let retriesLeft = 20;
+    const checkElement = () => {
       try {
         const el = document.querySelector(currentStep.targetSelector!) as HTMLElement | null;
         if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          setTimeout(() => {
-            const rect = el.getBoundingClientRect();
-            setTargetRect(rect);
-          }, 150);
-        } else if (retries > 0) {
-          setTimeout(() => checkElement(retries - 1), 150);
+          const rect = el.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            const HEADER_OFFSET = 84;
+            const inViewport = rect.top >= HEADER_OFFSET && rect.bottom <= (window.innerHeight - 30);
+            if (!inViewport) {
+              const targetScrollY = Math.max(0, window.scrollY + rect.top - HEADER_OFFSET - 20);
+              window.scrollTo({ top: targetScrollY, behavior: "smooth" });
+            }
+            const syncRect = () => {
+              const fresh = el.getBoundingClientRect();
+              if (fresh.width > 0 && fresh.height > 0) {
+                setTargetRect(fresh);
+              }
+            };
+            syncRect();
+            setTimeout(syncRect, 60);
+            setTimeout(syncRect, 150);
+            setTimeout(syncRect, 300);
+            setTimeout(syncRect, 500);
+            setTimeout(syncRect, 750);
+            return;
+          }
+        }
+        if (retriesLeft > 0) {
+          retriesLeft--;
+          setTimeout(checkElement, 50);
         } else {
           setTargetRect(null);
         }
@@ -776,10 +852,10 @@ export default function GuidedTour() {
       }
     };
 
-    setTimeout(() => checkElement(), 80);
-  }, [currentStep]);
+    setTimeout(checkElement, 30);
+  }, [currentStep, getTabForStep]);
 
-  // Recalculate spotlight whenever tour opens or step changes
+  // Recalculate spotlight whenever tour opens or step changes (60fps requestAnimationFrame tracking on scroll)
   useEffect(() => {
     if (!isTourOpen) {
       setTargetRect(null);
@@ -788,19 +864,28 @@ export default function GuidedTour() {
 
     updateTargetRect();
 
+    let animationFrameId: number | null = null;
     const handleReposition = () => {
-      if (!currentStep?.targetSelector) return;
-      try {
-        const el = document.querySelector(currentStep.targetSelector) as HTMLElement | null;
-        if (el) {
-          setTargetRect(el.getBoundingClientRect());
-        }
-      } catch {}
+      if (animationFrameId !== null) return;
+      animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        if (!currentStep?.targetSelector) return;
+        try {
+          const el = document.querySelector(currentStep.targetSelector) as HTMLElement | null;
+          if (el) {
+            const r = el.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+              setTargetRect(r);
+            }
+          }
+        } catch {}
+      });
     };
 
     window.addEventListener("resize", handleReposition);
     window.addEventListener("scroll", handleReposition, { passive: true });
     return () => {
+      if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleReposition);
       window.removeEventListener("scroll", handleReposition);
     };
@@ -812,9 +897,12 @@ export default function GuidedTour() {
     try {
       const el = document.querySelector(selector) as HTMLElement | null;
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
         setTimeout(() => {
-          setTargetRect(el.getBoundingClientRect());
+          const rect = el.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            setTargetRect(rect);
+          }
         }, 150);
       }
     } catch {
@@ -822,23 +910,7 @@ export default function GuidedTour() {
     }
   }, []);
 
-  // Keyboard navigation
-  useEffect(() => {
-    if (!isTourOpen) return;
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        closeTour();
-      } else if (e.key === "ArrowRight") {
-        handleNext();
-      } else if (e.key === "ArrowLeft") {
-        handlePrev();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  });
-
-  const markSectionCompleted = (secId: string) => {
+  const markSectionCompleted = useCallback((secId: string) => {
     if (!completedSections.includes(secId)) {
       const updated = [...completedSections, secId];
       setCompletedSections(updated);
@@ -848,23 +920,132 @@ export default function GuidedTour() {
         // ignore
       }
     }
-  };
+  }, [completedSections]);
 
-  const handleNext = () => {
+  // Reset tab to first tab ('estilos') on finish or close so user starts customizing fresh
+  const handleClose = useCallback(() => {
+    setShowExitConfirm(false);
+    if (selectedSectionKey === "apariencia" && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "estilos" } }));
+    }
+    closeTour();
+  }, [selectedSectionKey, closeTour]);
+
+  // Debounced navigation to prevent rapid-click / enter spam glitches
+  const handleNext = useCallback(() => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    setTimeout(() => {
+      isTransitioningRef.current = false;
+    }, 220);
+
     if (currentStepIndex < currentSection.steps.length - 1) {
       const nextIdx = currentStepIndex + 1;
+      const nextStep = currentSection.steps[nextIdx];
+      const targetTab = getTabForStep(nextStep);
+      if (targetTab && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: targetTab } }));
+      }
       setCurrentStepIndex(nextIdx);
     } else {
       markSectionCompleted(currentSection.id);
-      closeTour();
+      handleClose();
     }
-  };
+  }, [currentStepIndex, currentSection, getTabForStep, handleClose, markSectionCompleted]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    setTimeout(() => {
+      isTransitioningRef.current = false;
+    }, 220);
+
     if (currentStepIndex > 0) {
-      setCurrentStepIndex((prev) => prev - 1);
+      const prevIdx = currentStepIndex - 1;
+      const prevStep = currentSection.steps[prevIdx];
+      const targetTab = getTabForStep(prevStep);
+      if (targetTab && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: targetTab } }));
+      }
+      setCurrentStepIndex(prevIdx);
     }
-  };
+  }, [currentStepIndex, currentSection, getTabForStep]);
+
+  // Keyboard navigation: Enter and ArrowRight advance, ArrowLeft goes back, Escape opens exit confirm
+  useEffect(() => {
+    if (!isTourOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setShowExitConfirm((prev) => !prev);
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
+        if (!showExitConfirm) {
+          e.preventDefault();
+          handleNext();
+        }
+      } else if (e.key === "ArrowLeft") {
+        if (!showExitConfirm) {
+          e.preventDefault();
+          handlePrev();
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isTourOpen, showExitConfirm, handleNext, handlePrev]);
+
+  // Elevate active targeted tab button ONLY when the current step explicitly targets it
+  useEffect(() => {
+    if (!isTourOpen || !currentStep?.targetSelector) return;
+    if (!currentStep.targetSelector.startsWith('[data-tour="tab-')) return;
+
+    try {
+      const el = document.querySelector(currentStep.targetSelector) as HTMLElement | null;
+      if (el) {
+        const prevZIndex = el.style.zIndex;
+        const prevPosition = el.style.position;
+        const prevPointerEvents = el.style.pointerEvents;
+        const prevBg = el.style.backgroundColor;
+        const prevRadius = el.style.borderRadius;
+        const prevShadow = el.style.boxShadow;
+
+        if (!el.style.position || el.style.position === "static") {
+          el.style.position = "relative";
+        }
+        el.style.zIndex = "99995";
+        el.style.pointerEvents = "auto";
+        const isDark = document.documentElement.classList.contains("dark");
+        el.style.backgroundColor = isDark ? "#0f172a" : "#ffffff";
+        el.style.borderRadius = "12px";
+        el.style.boxShadow = "0 4px 20px rgba(0,0,0,0.18)";
+
+        const handleTabClick = () => {
+          let tabToSwitch: "fotos" | "botones" | "textos" | null = null;
+          if (currentStep.targetSelector?.includes("tab-fotos")) tabToSwitch = "fotos";
+          else if (currentStep.targetSelector?.includes("tab-botones")) tabToSwitch = "botones";
+          else if (currentStep.targetSelector?.includes("tab-textos")) tabToSwitch = "textos";
+
+          if (tabToSwitch && typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: tabToSwitch } }));
+          }
+
+          setTimeout(() => {
+            handleNext();
+          }, 100);
+        };
+        el.addEventListener("click", handleTabClick);
+
+        return () => {
+          el.style.zIndex = prevZIndex;
+          el.style.position = prevPosition;
+          el.style.pointerEvents = prevPointerEvents;
+          el.style.backgroundColor = prevBg;
+          el.style.borderRadius = prevRadius;
+          el.style.boxShadow = prevShadow;
+          el.removeEventListener("click", handleTabClick);
+        };
+      }
+    } catch {}
+  }, [isTourOpen, currentStepIndex, currentStep, handleNext]);
 
   const handleSelectSection = (key: string) => {
     setSelectedSectionKey(key);
@@ -881,59 +1062,121 @@ export default function GuidedTour() {
     );
   }, [searchFilter]);
 
-  // Smart Card positioning: Find a truly unobstructed zone outside targetRect
-  const cardWidth = Math.min(windowDimensions.width - 32, 440);
-  const cardHeightEstimate = 320;
+  // Smart Card positioning: Keep the card directly adjacent ("pegado") to the illuminated target
+  const cardWidth = Math.min(windowDimensions.width - 32, 370);
+  const cardHeightEstimate = 185;
 
-  let cardLeft: number | undefined = undefined;
-  let cardTop: number | undefined = undefined;
+  let cardStyle: React.CSSProperties = {};
 
-  if (targetRect) {
-    const spaceRight = windowDimensions.width - targetRect.right;
-    const spaceLeft = targetRect.left;
-    const spaceBelow = windowDimensions.height - targetRect.bottom;
-    const spaceAbove = targetRect.top;
+  if (!targetRect) {
+    cardStyle = {
+      position: "fixed",
+      left: Math.max(16, (windowDimensions.width - cardWidth) / 2),
+      bottom: 24,
+      width: cardWidth,
+      zIndex: 99999,
+    };
+  } else {
+    const W = windowDimensions.width;
+    const H = windowDimensions.height;
+    const isMobile = W < 768;
 
-    // 1. Try placing to the right of targetRect if there's enough room (e.g. next to settings on wide screens)
-    if (spaceRight >= cardWidth + 24) {
-      cardLeft = targetRect.right + 16;
-      cardTop = Math.max(20, Math.min(windowDimensions.height - cardHeightEstimate - 20, targetRect.top));
-    }
-    // 2. Try placing to the left of targetRect
-    else if (spaceLeft >= cardWidth + 24) {
-      cardLeft = targetRect.left - cardWidth - 16;
-      cardTop = Math.max(20, Math.min(windowDimensions.height - cardHeightEstimate - 20, targetRect.top));
-    }
-    // 3. Try placing below targetRect
-    else if (spaceBelow >= cardHeightEstimate + 24) {
-      cardLeft = Math.max(16, Math.min(windowDimensions.width - cardWidth - 16, targetRect.left));
-      cardTop = targetRect.bottom + 16;
-    }
-    // 4. Try placing above targetRect
-    else if (spaceAbove >= cardHeightEstimate + 24) {
-      cardLeft = Math.max(16, Math.min(windowDimensions.width - cardWidth - 16, targetRect.left));
-      cardTop = Math.max(16, targetRect.top - cardHeightEstimate - 16);
-    }
-    // 5. If targetRect is large and covers most of the viewport, dock in an unobtrusive corner:
-    else {
-      if (targetRect.left > windowDimensions.width / 2) {
-        cardLeft = 24;
-      } else {
-        cardLeft = Math.max(16, windowDimensions.width - cardWidth - 24);
+    if (isMobile) {
+      cardStyle = {
+        position: "fixed",
+        left: 16,
+        right: 16,
+        bottom: 16,
+        width: "auto",
+        maxWidth: "calc(100vw - 32px)",
+        zIndex: 99999,
+      };
+    } else {
+      const gap = 16;
+
+      // 4 adjacent candidate directions relative to targetRect:
+      const candRight = {
+        l: targetRect.right + gap,
+        t: Math.max(84, Math.min(H - cardHeightEstimate - 20, targetRect.top)),
+        fits: targetRect.right + gap + cardWidth <= W - 20,
+      };
+
+      const candBelow = {
+        l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.left)),
+        t: targetRect.bottom + gap,
+        fits: targetRect.bottom + gap + cardHeightEstimate <= H - 20,
+      };
+
+      const candLeft = {
+        l: targetRect.left - cardWidth - gap,
+        t: Math.max(84, Math.min(H - cardHeightEstimate - 20, targetRect.top)),
+        fits: targetRect.left - cardWidth - gap >= 20,
+      };
+
+      const candAbove = {
+        l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.left)),
+        t: targetRect.top - cardHeightEstimate - gap,
+        fits: targetRect.top - cardHeightEstimate - gap >= 84,
+      };
+
+      let chosen: { l: number; t: number };
+
+      // 1. If target is on the far right (like Save button in top-right):
+      if (targetRect.left > W * 0.6) {
+        if (candBelow.fits) {
+          chosen = {
+            l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.right - cardWidth)),
+            t: candBelow.t,
+          };
+        } else if (candLeft.fits) {
+          chosen = { l: candLeft.l, t: candLeft.t };
+        } else {
+          chosen = { l: candBelow.l, t: candBelow.t };
+        }
       }
-      cardTop = Math.max(16, windowDimensions.height - cardHeightEstimate - 24);
-    }
+      // 2. Main content and tab bar on the left: prioritize right-adjacent placement (candRight)
+      else if (candRight.fits) {
+        chosen = { l: candRight.l, t: candRight.t };
+      }
+      // 3. Otherwise try below with comfortable margin
+      else if (candBelow.fits) {
+        chosen = { l: candBelow.l, t: candBelow.t };
+      }
+      // 4. Try left
+      else if (candLeft.fits) {
+        chosen = { l: candLeft.l, t: candLeft.t };
+      }
+      // 5. Try above
+      else if (candAbove.fits) {
+        chosen = { l: candAbove.l, t: candAbove.t };
+      }
+      // 6. Safe fallback: right of target or clamped safely
+      else {
+        chosen = {
+          l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.right + gap)),
+          t: Math.max(84, Math.min(H - cardHeightEstimate - 20, targetRect.top)),
+        };
+      }
 
-    if (cardLeft !== undefined && cardTop !== undefined) {
-      cardLeft = Math.max(16, Math.min(windowDimensions.width - cardWidth - 16, cardLeft));
-      cardTop = Math.max(16, Math.min(windowDimensions.height - cardHeightEstimate - 16, cardTop));
+      cardStyle = {
+        position: "fixed",
+        left: chosen.l,
+        top: chosen.t,
+        width: cardWidth,
+        maxWidth: "calc(100vw - 32px)",
+        maxHeight: "calc(100vh - 32px)",
+        zIndex: 99999,
+        transition: "left 300ms cubic-bezier(0.25, 1, 0.5, 1), top 300ms cubic-bezier(0.25, 1, 0.5, 1)",
+      };
     }
   }
 
   return (
     <>
-      {/* Floating launcher button in bottom right (Always accessible) */}
-      {!isTourOpen && (
+      {/* Floating launcher button in bottom right:
+          When tour is NOT active: "Visita Guiada" button.
+          When tour IS active: "Salir de Visita Guiada" button with confirmation. */}
+      {!isTourOpen ? (
         <button
           type="button"
           onClick={() => {
@@ -967,26 +1210,35 @@ export default function GuidedTour() {
             </span>
           )}
         </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowExitConfirm(true)}
+          className="fixed bottom-5 right-5 z-[99999] flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer border border-rose-500/50 bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-950/40"
+          title="Salir de la visita guiada"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span>Salir de Visita Guiada</span>
+        </button>
       )}
 
       {/* Interactive Guided Tour Spotlight & Walkthrough */}
       <AnimatePresence>
         {isTourOpen && (
-          <div className="fixed inset-0 z-[100]">
-            {/* SVG Mask: Dims the whole screen and cuts out the spotlight hole */}
-            <svg className="fixed inset-0 h-full w-full pointer-events-none z-[102]">
+          <div className="fixed inset-0 z-[99990]">
+            {/* SVG Mask: Dims the screen and cuts out ONLY the specific target zone without lagging transitions on scroll */}
+            <svg className="fixed inset-0 h-full w-full pointer-events-none z-[99991]">
               <defs>
                 <mask id="tour-spotlight-mask">
                   <rect width="100%" height="100%" fill="white" />
                   {targetRect && (
                     <rect
                       x={Math.max(0, targetRect.left - 8)}
-                      y={Math.max(0, targetRect.top - 8)}
+                      y={Math.max(0, targetRect.top - 6)}
                       width={targetRect.width + 16}
-                      height={targetRect.height + 16}
+                      height={targetRect.height + 12}
                       rx="16"
                       fill="black"
-                      style={{ transition: "all 250ms cubic-bezier(0.16, 1, 0.3, 1)" }}
                     />
                   )}
                 </mask>
@@ -994,258 +1246,253 @@ export default function GuidedTour() {
               <rect
                 width="100%"
                 height="100%"
-                fill="rgba(3, 7, 18, 0.82)"
+                fill="rgba(3, 7, 18, 0.78)"
                 mask="url(#tour-spotlight-mask)"
               />
             </svg>
 
-            {/* Click backdrop to close (Underneath card, above page) */}
+            {/* Dark blocking backdrop: Blocks all background clicking; does NOT close the tour on click */}
             <div
-              className="fixed inset-0 z-[101] pointer-events-auto"
-              onClick={() => closeTour()}
+              className="fixed inset-0 z-[99992] pointer-events-auto cursor-default"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
             />
 
-            {/* Glowing animated ring over highlighted element (Synchronized with mask) */}
+            {/* Clean, sharp spotlight ring over highlighted element (Zero blurry glow, crisp border) */}
             {targetRect && (
               <div
                 style={{
                   position: "fixed",
                   left: Math.max(0, targetRect.left - 8),
-                  top: Math.max(0, targetRect.top - 8),
+                  top: Math.max(0, targetRect.top - 6),
                   width: targetRect.width + 16,
-                  height: targetRect.height + 16,
-                  transition: "all 250ms cubic-bezier(0.16, 1, 0.3, 1)",
+                  height: targetRect.height + 12,
                 }}
-                className="pointer-events-none z-[103] rounded-2xl ring-4 ring-primary shadow-[0_0_35px_rgba(99,102,241,0.85)] animate-pulse"
+                className="pointer-events-none z-[99993] rounded-2xl ring-2 ring-white/90 dark:ring-primary/80"
               />
             )}
 
-            {/* Directional Beacon Pointer pointing directly to element */}
-            {targetRect && (
-              <div
-                style={{
-                  position: "fixed",
-                  left: Math.min(
-                    Math.max(16, targetRect.left + 24),
-                    windowDimensions.width - 160
-                  ),
-                  top: targetRect.top > 60 ? targetRect.top - 34 : targetRect.bottom + 8,
-                  transition: "all 250ms cubic-bezier(0.16, 1, 0.3, 1)",
-                }}
-                className="pointer-events-none z-[104] flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-indigo-600 px-3.5 py-1 text-xs font-black text-white shadow-2xl animate-bounce"
-              >
-                <span>👉 Elemento enfocado</span>
-              </div>
-            )}
-
-            {/* Floating Popover / Tooltip Card positioned in a free, non-overlapping zone (Always on top: z-[110]) */}
+            {/* Floating Popover / Tooltip Card positioned in a free, non-overlapping zone (Always on top: z-[99999]) */}
             <div
-              style={
-                targetRect && cardLeft !== undefined && cardTop !== undefined
-                  ? {
-                      position: "fixed",
-                      left: cardLeft,
-                      top: cardTop,
-                      width: cardWidth,
-                      zIndex: 110,
-                      transition: "left 250ms cubic-bezier(0.16, 1, 0.3, 1), top 250ms cubic-bezier(0.16, 1, 0.3, 1)",
-                    }
-                  : undefined
-              }
-              className={
-                targetRect && cardLeft !== undefined && cardTop !== undefined
-                  ? "z-[110] pointer-events-auto"
-                  : "fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-auto"
-              }
+              style={cardStyle}
+              className="z-[99999] pointer-events-auto"
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-2xl flex flex-col max-h-[85vh] ring-1 ring-black/5 dark:ring-white/10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="relative w-full overflow-visible rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-4 sm:p-5 shadow-2xl flex flex-col ring-1 ring-black/5 dark:ring-white/10"
               >
-                {/* Header: Section Selector Dropdown + Close Button */}
-                <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-3">
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowSectionPicker(!showSectionPicker)}
-                      className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-                    >
-                      <IconComponent className="h-4 w-4 text-primary shrink-0" />
-                      <span className="truncate max-w-[190px] sm:max-w-xs">{currentSection.title}</span>
-                      <ChevronDown
-                        className={`h-3.5 w-3.5 text-slate-400 transition-transform ${
-                          showSectionPicker ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {/* Dropdown to switch sections across ALL 18 pages */}
-                    {showSectionPicker && (
-                      <div className="absolute left-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-2xl z-30 space-y-1">
-                        <div className="relative mb-2">
-                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                          <input
-                            type="text"
-                            placeholder="Buscar sección..."
-                            value={searchFilter}
-                            onChange={(e) => setSearchFilter(e.target.value)}
-                            className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs outline-none focus:border-primary"
-                          />
-                        </div>
-
-                        <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Elegí qué sección querés aprender:
-                        </div>
-
-                        {filteredSections.map((sec) => {
-                          const SecIcon = sec.icon;
-                          const isSelected = sec.id === selectedSectionKey;
-                          const isDone = completedSections.includes(sec.id);
-                          return (
-                            <button
-                              key={sec.id}
-                              type="button"
-                              onClick={() => handleSelectSection(sec.id)}
-                              className={`w-full flex items-center justify-between rounded-xl px-2.5 py-1.5 text-left text-xs font-semibold transition cursor-pointer ${
-                                isSelected
-                                  ? "bg-primary text-white"
-                                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 truncate">
-                                <SecIcon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">{sec.title}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {isDone && !isSelected && (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                                )}
-                                {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary">
-                      Paso {currentStepIndex + 1} de {currentSection.steps.length}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => closeTour()}
-                      className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 transition cursor-pointer"
-                      title="Cerrar guía (Escape)"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Section Summary */}
-                <p className="mt-2.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {currentSection.summary}
-                </p>
-
-                {/* Step Progress Indicators */}
-                <div className="flex items-center gap-1.5 my-3">
-                  {currentSection.steps.map((s, idx) => (
-                    <button
-                      key={s.stepNumber}
-                      type="button"
-                      onClick={() => setCurrentStepIndex(idx)}
-                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                        idx === currentStepIndex
-                          ? "w-8 bg-primary"
-                          : idx < currentStepIndex
-                          ? "w-3 bg-primary/50"
-                          : "w-2 bg-slate-200 dark:bg-slate-800"
-                      }`}
-                      title={`Paso ${idx + 1}: ${s.taskTitle}`}
-                    />
-                  ))}
-                </div>
-
-                {/* Task Content Card */}
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-slate-800/50 p-4 space-y-2.5 overflow-y-auto">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary text-white text-xs font-black shadow-xs">
-                      {currentStep.stepNumber}
+                {showExitConfirm ? (
+                  <div className="py-2 px-1 text-center space-y-3">
+                    <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-500 ring-1 ring-rose-500/20">
+                      <LogOut className="h-5 w-5" />
                     </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
-                        {currentStep.taskTitle}
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                        ¿Seguro que querés salir de la visita guiada?
                       </h4>
-                      <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Podés retomarla en cualquier momento desde el botón inferior derecho.
+                      </p>
+                    </div>
+                    <div className="pt-2 flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowExitConfirm(false)}
+                        className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                      >
+                        Continuar guía
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleClose()}
+                        className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-rose-900/20 transition cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        <span>Sí, salir</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Header: Section Selector Dropdown + Simplified Step Counter (1/8) + Close Button */}
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-3">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowSectionPicker(!showSectionPicker)}
+                          className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                        >
+                          <IconComponent className="h-4 w-4 text-primary shrink-0" />
+                          <span className="truncate max-w-[190px] sm:max-w-xs">{currentSection.title}</span>
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 text-slate-400 transition-transform ${
+                              showSectionPicker ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+
+                        {/* Dropdown to switch sections across ALL 18 pages */}
+                        {showSectionPicker && (
+                          <div className="absolute left-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-2xl z-30 space-y-1">
+                            <div className="relative mb-2">
+                              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                              <input
+                                type="text"
+                                placeholder="Buscar sección..."
+                                value={searchFilter}
+                                onChange={(e) => setSearchFilter(e.target.value)}
+                                className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs outline-none focus:border-primary"
+                              />
+                            </div>
+
+                            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Elegí qué sección querés aprender:
+                            </div>
+
+                            {filteredSections.map((sec) => {
+                              const SecIcon = sec.icon;
+                              const isSelected = sec.id === selectedSectionKey;
+                              const isDone = completedSections.includes(sec.id);
+                              return (
+                                <button
+                                  key={sec.id}
+                                  type="button"
+                                  onClick={() => handleSelectSection(sec.id)}
+                                  className={`w-full flex items-center justify-between rounded-xl px-2.5 py-1.5 text-left text-xs font-semibold transition cursor-pointer ${
+                                    isSelected
+                                      ? "bg-primary text-white"
+                                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 truncate">
+                                    <SecIcon className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="truncate">{sec.title}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {isDone && !isSelected && (
+                                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                    )}
+                                    {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-primary/10 dark:bg-primary/20 px-2.5 py-0.5 text-xs font-black text-primary">
+                          {currentStepIndex + 1}/{currentSection.steps.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Step Progress Indicators */}
+                    <div className="flex items-center gap-1.5 my-3">
+                      {currentSection.steps.map((s, idx) => (
+                        <button
+                          key={s.stepNumber}
+                          type="button"
+                          onClick={() => setCurrentStepIndex(idx)}
+                          className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                            idx === currentStepIndex
+                              ? "w-8 bg-primary"
+                              : idx < currentStepIndex
+                              ? "w-3 bg-primary/50"
+                              : "w-2 bg-slate-200 dark:bg-slate-800"
+                          }`}
+                          title={`Paso ${idx + 1}: ${s.taskTitle}`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Task Content Card */}
+                    <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-slate-800/50 p-3.5 space-y-2 overflow-visible">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                          {currentStep.taskTitle}
+                        </h4>
+
+                        {/* Practical Tip Icon with Pure Hover Tooltip (Zero space wasted, strictly on hover) */}
+                        {currentStep.tip && (
+                          <div className="relative group/tip shrink-0">
+                            <button
+                              type="button"
+                              className="flex items-center justify-center h-6 w-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-all cursor-pointer shadow-2xs"
+                              aria-label="Ver consejo práctico"
+                            >
+                              <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+                            </button>
+
+                            {/* Floating Tooltip: ONLY visible on hover */}
+                            <div className="pointer-events-none absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl bg-slate-950 text-white p-3 text-xs shadow-2xl opacity-0 scale-95 group-hover/tip:opacity-100 group-hover/tip:scale-100 transition-all duration-150 ease-out z-[100000] border border-amber-400/50">
+                              <div className="flex items-start gap-2.5">
+                                <Lightbulb className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="font-bold text-amber-300 text-[11px] block mb-0.5">
+                                    Consejo práctico:
+                                  </span>
+                                  <p className="text-slate-200 leading-relaxed text-[11.5px] font-medium">
+                                    {currentStep.tip}
+                                  </p>
+                                </div>
+                              </div>
+                              {/* Triangle arrow pointing down */}
+                              <div className="absolute top-full right-2.5 -mt-1 border-4 border-transparent border-t-slate-950" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         {currentStep.instruction}
                       </p>
                     </div>
-                  </div>
 
-                  {/* Practical Tip */}
-                  {currentStep.tip && (
-                    <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-900 dark:text-amber-300">
-                      <Lightbulb className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
-                      <span>
-                        <strong>Consejo práctico:</strong> {currentStep.tip}
-                      </span>
+                    {/* Footer navigation */}
+                    <div className="mt-4 flex items-center justify-between pt-1">
+                      {currentStepIndex > 0 ? (
+                        <button
+                          type="button"
+                          onClick={handlePrev}
+                          className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                        >
+                          <ArrowLeft className="h-3.5 w-3.5" />
+                          <span>Anterior</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowExitConfirm(true)}
+                          className="text-xs font-semibold text-rose-500 hover:text-rose-600 hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <LogOut className="h-3 w-3" />
+                          <span>Salir de la guía</span>
+                        </button>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleNext}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:brightness-110 active:scale-95 transition cursor-pointer"
+                        >
+                          <span>
+                            {currentStepIndex === currentSection.steps.length - 1
+                              ? "¡Entendido, tarea completada!"
+                              : "Siguiente tarea"}
+                          </span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Focus / Spotlight button if active on this page */}
-                  {currentStep.targetSelector && (
-                    <button
-                      type="button"
-                      onClick={() => scrollToTarget(currentStep.targetSelector)}
-                      className="inline-flex items-center gap-1.5 text-[11px] font-bold text-primary hover:underline pt-0.5 cursor-pointer"
-                    >
-                      <Target className="h-3.5 w-3.5" />
-                      <span>Volver a enfocar elemento en pantalla</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Footer navigation */}
-                <div className="mt-4 flex items-center justify-between pt-1">
-                  {currentStepIndex > 0 ? (
-                    <button
-                      type="button"
-                      onClick={handlePrev}
-                      className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                    >
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                      <span>Anterior</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => closeTour()}
-                      className="text-xs font-medium text-slate-400 hover:text-slate-600 cursor-pointer"
-                    >
-                      Cerrar guía
-                    </button>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:brightness-110 active:scale-95 transition cursor-pointer"
-                    >
-                      <span>
-                        {currentStepIndex === currentSection.steps.length - 1
-                          ? "¡Entendido, tarea completada!"
-                          : "Siguiente tarea"}
-                      </span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
+                  </>
+                )}
               </motion.div>
             </div>
           </div>

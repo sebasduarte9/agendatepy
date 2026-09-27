@@ -566,8 +566,63 @@ Cada entrada debe detallar:
 - **Verificación:**
   - `npx tsc --noEmit` completado con **0 errores**.
 
+---
 
+### [Corrección Integral de Textos, Navegación de Tabs y Visita Guiada en Apariencia] — 2026-09-27 15:58
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Personalización de Página (`/dashboard/apariencia`) y Sistema de Visita Guiada (`GuidedTour.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/dashboard/GuidedTour.tsx`
+  - `frontend/app/dashboard/apariencia/page.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Corrección Factual y Textos de la Visita Guiada (`apariencia`):**
+     - **Paso 1:** Se corrigió la discrepancia de "12 diseños" a **20 estilos profesionales** y se eliminaron las referencias a categorías obsoletas. Se especificaron los filtros reales (`Todos`, `Claro`, `Oscuro`) y el nombre exacto de la pestaña (`1. Estilos & Paletas`).
+     - **Paso 2:** Se actualizó para reflejar la realidad del panel: selector de color primario, fondos animados (Ondas de Aurora, Malla Radiante, etc.) y las **56 fuentes oficiales de Google Fonts**.
+     - **Paso 3:** Se eliminó la mención errónea a fotos de ejemplo sugeridas (característica removida anteriormente). Se documentó el ajuste de portada, el control deslizante de encuadre vertical (0-100%), las formas de logo (Circular, Suave, Cuadrado) y la galería de fotos reales.
+     - **Paso 4:** Se nombró con precisión la pestaña `3. Botones & Links`, detallando los accesos directos en 1 clic (Uber, Waze, Google Maps, WhatsApp) y la configuración de jerarquía (servicios primero o bio-link primero).
+     - **Paso 5 (Nuevo):** Se incorporó la pestaña `4. Textos & Políticas` a la visita guiada, cubriendo slogan comercial, biografía del comercio, redes oficiales y políticas de reserva (tolerancia de espera, cancelaciones y señas).
+     - **Paso 6:** Confirmación y guardado con el botón verde `Guardar Cambios`.
+  2. **Resolución Crítica de Superposición de la Tarjeta del Tour sobre el iPhone:**
+     - En pantallas de escritorio, el cálculo de posición ubicaba la tarjeta del tour a la derecha del panel de control, tapando directamente la maqueta 3D del iPhone mientras el texto le decía al usuario *"Mirá el celular a la derecha para ver cómo queda en tiempo real"*.
+     - Se ajustó el posicionamiento para anclar la tarjeta de forma no intrusiva en la esquina inferior izquierda (`left: 24px`, `bottom: 24px`), dejando el 100% de la columna derecha libre y visible.
+  3. **Apertura de la Máscara Spotlight para la Previsualización:**
+     - Se añadió recorte dinámico (`#apariencia-phone-preview`) a la máscara SVG del tour para que el celular interactivo permanezca con brillo y claridad total durante toda la guía.
+  4. **Interacción con el Lienzo durante el Tour:**
+     - Se elevó el elemento enfocado (`.tour-active-interactive-target`) para que el usuario pueda hacer clic en los estilos o controles mientras el tour está activo sin que el backdrop absorba o cierre abruptamente la guía.
+  5. **Navegación Fluida entre Tabs:**
+     - Se configuró la escucha de eventos con subtabs (`subTab: "links"`) para que al avanzar por el tour, las pestañas cambien de forma instantánea a la vista adecuada.
+  6. **Localización de Diseños:**
+     - Se añadieron etiquetas en español para los nombres de layouts en las tarjetas de estilos (`Panorámica`, `Mosaico`, `Flotante`, `Editorial`, `Bento Grid`, `Inmersivo`).
+- **Verificación:**
+  - `npx tsc --noEmit` completado exitosamente con **0 errores**.
+  - Pruebas visuales en navegador confirman la correcta visualización de los 6 pasos, la visibilidad completa del iPhone en tiempo real y la funcionalidad de todos los botones.
 
+---
 
-
-
+### [Refinamiento de Visita Guiada: Modo Seguro, Flujo de Salida con Confirmación y Animaciones Suaves] — 2026-09-27 18:40
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Personalización de Página (`/dashboard/apariencia`) y Sistema de Visita Guiada (`GuidedTour.tsx`)
+- **Archivos Modificados:**
+  - `frontend/components/dashboard/GuidedTour.tsx`
+  - `frontend/app/dashboard/apariencia/page.tsx`
+  - `frontend/components/dashboard/ui/Card.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Bloqueo de Interacciones Externas y Backdrop Seguro:**
+     - El fondo oscuro del tour ahora bloquea cualquier clic accidental en el fondo sin salir del recorrido.
+  2. **Botón de Salir de Visita Guiada y Modal de Confirmación:**
+     - Cuando el tour está activo, el botón inferior derecho cambia a un botón rojo de "Salir de Visita Guiada".
+     - Al solicitar salir, la tarjeta muestra una confirmación con opciones claras ("Continuar guía" / "Sí, salir").
+     - Al cerrar o completar la guía, se regresa automáticamente a la pestaña inicial (`Estilos & Paletas`).
+  3. **Estabilización de Transiciones y Eliminación de Rebotes:**
+     - Corrección en la lógica de pestañas (`getTabForStep`) para no cambiar de vista prematuramente mientras se enfoca el botón de la pestaña.
+     - Suavizado de la transición visual sustituyendo el escalado y rebote por un crossfade limpio y `cubic-bezier(0.25, 1, 0.5, 1)`.
+     - Corrección del scroll para respetar el encabezado fijo (`HEADER_OFFSET = 84px`), impidiendo que los elementos o textos se corten bajo la barra superior.
+     - Posicionamiento lateral adyacente (`candRight`) para no tapar los controles ni el contenido inferior.
+     - Ciclo de sincronización multi-frame (60ms, 150ms, 300ms, 500ms, 750ms) para garantizar que la tarjeta complete su desplazamiento al 100%.
+  4. **Eliminación del botón X y Ocultamiento de Cambios sin Guardar:**
+     - Se retiró la X de la tarjeta dejando un contador limpio (ej: `3/10`).
+     - La barra flotante de "Tenés cambios sin guardar" se oculta automáticamente durante la visita guiada.
+- **Verificación:**
+  - `npx tsc --noEmit` ejecutado con **0 errores**.
