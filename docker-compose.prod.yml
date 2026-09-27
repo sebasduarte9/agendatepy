@@ -30,6 +30,7 @@ services:
       AGENDATE_ROOT_DOMAIN: agendatepy.com
       NEXT_PUBLIC_ROOT_DOMAIN: agendatepy.com
       NEXT_PUBLIC_APP_URL: https://agendatepy.com
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-https://agendatepy.com}"
       GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
       RESEND_API_KEY: "${RESEND_API_KEY}"

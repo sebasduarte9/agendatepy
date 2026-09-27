@@ -3,6 +3,43 @@ import "server-only";
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 
+export const authOptions = {
+  trustHost: true,
+  providers: [
+    {
+      id: "google",
+      name: "Google",
+      clientId: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
+    },
+  ],
+};
+
+/**
+ * Retorna la URL base para el flujo de autenticación, priorizando NEXTAUTH_URL (https://agendatepy.com).
+ * En producción fuerza HTTPS para evitar redirect_uri_mismatch en Google OAuth.
+ */
+export function getAuthBaseUrl(request?: Request): string {
+  // 1. Prioridad absoluta: NEXTAUTH_URL o NEXT_PUBLIC_APP_URL de variables de entorno
+  const envUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (envUrl && envUrl.trim().length > 0) {
+    return envUrl.trim().replace(/\/+$/, "");
+  }
+
+  if (!request) return "https://agendatepy.com";
+
+  // 2. Si no hay variable definida, derivar desde encabezados
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "agendatepy.com";
+
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+  const proto = isLocal ? "http" : "https";
+
+  return `${proto}://${host}`;
+}
+
 export interface GoogleUserInfo {
   sub: string;
   email: string;

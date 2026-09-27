@@ -1,25 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { exchangeCodeForTokens, getGoogleUserInfo } from "@/lib/auth/google";
+import { exchangeCodeForTokens, getGoogleUserInfo, getAuthBaseUrl } from "@/lib/auth/google";
 import { setSession } from "@/lib/auth/session";
 import type { SessionUser, UserRole } from "@/lib/auth/types";
 
 export const dynamic = "force-dynamic";
+
+export const authOptions = {
+  trustHost: true,
+};
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const error = searchParams.get("error");
 
-  const host =
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host") ||
-    "localhost:3000";
-
-  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
-  const proto = isLocal ? "http" : "https";
-
-  const baseUrl = `${proto}://${host}`;
+  const baseUrl = getAuthBaseUrl(request);
   const redirectUri = `${baseUrl}/api/auth/callback/google`;
 
   if (error || !code) {
