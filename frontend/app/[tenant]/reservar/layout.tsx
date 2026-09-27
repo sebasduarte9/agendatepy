@@ -12,10 +12,15 @@ export default async function ReservarLayout({
   params: Promise<{ tenant: string }>;
 }) {
   const { tenant: slug } = await params;
-  const tenant = await prisma.tenant.findUnique({
-    where: { subdomain: slug },
-    select: { themeSettings: true, settings: true },
-  });
+  let tenant: { themeSettings: any; settings: any } | null = null;
+  try {
+    tenant = await prisma.tenant.findUnique({
+      where: { subdomain: slug },
+      select: { themeSettings: true, settings: true },
+    });
+  } catch (error) {
+    console.warn(`[ReservarLayout] Base de datos no disponible para "${slug}", usando tema por defecto.`);
+  }
   const theme = parseTheme(tenant?.themeSettings);
   const chatwootToken = chatwootWebsiteTokenFromSettings(tenant?.settings);
   const fontLink = googleFontHref(theme.fontFamily);

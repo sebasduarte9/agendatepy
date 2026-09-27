@@ -389,6 +389,33 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` completado con **0 errores**.
   - Servidor de desarrollo Next.js respondiendo activamente en `http://localhost:3000` (HTTP 200).
 
+---
+
+### [Corrección de Error Prisma en /barberia/reservar & Enlace de Demo] — 2026-09-27 07:38
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Portal de Reservas Público (`/[tenant]/reservar`) y Header (`Header.tsx`)
+- **Archivos Modificados:**
+  - `frontend/app/[tenant]/reservar/layout.tsx`
+  - `frontend/app/[tenant]/reservar/page.tsx`
+  - `frontend/app/[tenant]/reservar/listo/page.tsx`
+  - `frontend/lib/scheduling/actions.ts`
+  - `frontend/components/landing/Header.tsx`
+  - `CHANGELOG_SYNC.md`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Resolución de `PrismaClientInitializationError` en `/barberia/reservar`:**
+     - Al no estar PostgreSQL conectado o en entornos de prueba locales sin la base de datos levantada, las consultas `prisma.tenant.findUnique` en `layout.tsx` y `page.tsx` provocaban un error fatal no capturado.
+     - Se encapsularon las llamadas en bloques `try / catch` con un **fallback demo robusto** que suministra automáticamente los datos de *Barbería Los Muchachos* con catálogo de servicios reales en Guaraníes (Cortes, Fade, Combo Barba VIP, Colorimetría, Tratamientos).
+  2. **Resiliencia en el Flujo de Agendamiento:**
+     - En `lib/scheduling/actions.ts`, se blindó `getAvailableSlotsAction` y `createPendingAppointment` para generar horarios comerciales realistas y reservas demo confirmadas en caso de desconexión con la base de datos.
+     - En `app/[tenant]/reservar/listo/page.tsx`, se aseguró la pantalla de confirmación exitosa del turno sin arrojar 404 ni errores de Prisma.
+  3. **Botón "Ver Demo" en Header:**
+     - Se configuró con `target="_blank"` y `rel="noopener noreferrer"` tanto en versión desktop como móvil, permitiendo abrir la demo web interactiva sin perder la navegación en la landing page principal.
+- **Verificación:**
+  - `npx tsc --noEmit` completado con **0 errores**.
+  - Petición HTTP a `http://localhost:3000/barberia/reservar` responde **200 OK**.
+  - Petición HTTP a `http://localhost:3000/barberia/reservar/listo` responde **200 OK**.
+
+
 
 
 
