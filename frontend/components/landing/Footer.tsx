@@ -7,6 +7,7 @@ const COLUMNS = [
     links: [
       { label: "Características", href: "#caracteristicas" },
       { label: "Cómo funciona", href: "#como-funciona" },
+      { label: "Calculadora de Ahorro", href: "#calculadora" },
       { label: "Precios", href: "#precios" },
       { label: "Galería de Diseños", href: "/showcase" },
       { label: "Web de Reservas", href: "/barberia/reservar" },

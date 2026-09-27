@@ -30,15 +30,15 @@ export default function MiniCalendar({
 
   return (
     <div className={compact ? "w-full" : "w-full max-w-xs"}>
-      <p className="mb-2 text-center text-xs font-semibold capitalize text-slate-600">
+      <p className="mb-2.5 text-center text-xs font-bold capitalize text-slate-700 dark:text-slate-200">
         {monthLabel}
       </p>
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-slate-400">
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 dark:text-slate-500">
         {WEEKDAYS.map((day, index) => (
           <span key={`${day}-${index}`}>{day}</span>
         ))}
       </div>
-      <div className="mt-1 grid grid-cols-7 gap-1">
+      <div className="mt-1.5 grid grid-cols-7 gap-1">
         {cells.map((day, index) => {
           if (!day) {
             return <span key={`empty-${index}`} />;
@@ -58,13 +58,13 @@ export default function MiniCalendar({
               type="button"
               disabled={isPast || !onSelect}
               onClick={() => onSelect?.(new Date(year, month, day))}
-              className={`h-7 rounded-md text-[11px] font-medium transition ${
+              className={`h-7.5 rounded-lg text-[11px] font-medium transition-all ${
                 isSelected
-                  ? "bg-brand text-white shadow-sm"
+                  ? "bg-brand text-white shadow-md shadow-brand/30 font-bold scale-105"
                   : isToday
-                    ? "bg-brand/10 text-brand"
-                    : "text-slate-700 hover:bg-slate-100"
-              } ${isPast ? "cursor-not-allowed opacity-30" : ""}`}
+                    ? "bg-brand/10 dark:bg-brand/20 text-brand font-bold"
+                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              } ${isPast ? "cursor-not-allowed opacity-25 dark:opacity-20" : ""}`}
             >
               {day}
             </button>

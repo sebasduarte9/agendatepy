@@ -201,3 +201,34 @@ Cada entrada debe detallar:
      - Delimitación y clamp de coordenadas de pantalla (`cardLeft`, `cardTop`) para asegurar que la tarjeta explicativa siempre permanezca visible y centrada en cualquier resolución.
   5. **Verificación de Compilación:**
      - `npm run build` verificado exitosamente con **0 errores**.
+
+---
+
+### [Landing Page CRO: Calculadora ROI, Ahorro Anual, Botón WhatsApp & Glassmorphism] — 2026-09-27 06:14
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Landing Page Principal (`/`)
+- **Archivos Modificados / Creados:**
+  - `frontend/components/landing/RoiCalculator.tsx` (creación)
+  - `frontend/components/landing/WhatsAppFloatingButton.tsx` (creación)
+  - `frontend/components/landing/Pricing.tsx`
+  - `frontend/components/landing/HowItWorks.tsx`
+  - `frontend/components/landing/MiniCalendar.tsx`
+  - `frontend/components/landing/Ticker.tsx`
+  - `frontend/components/landing/LandingPage.tsx`
+  - `frontend/components/landing/Header.tsx`
+  - `frontend/components/landing/Footer.tsx`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Calculadora Interactiva de Pérdida por Inasistencias (ROI Calculator):** Se creó el componente `RoiCalculator.tsx` con sliders táctiles para turnos diarios, precio promedio y días de atención. Muestra en tiempo real el dinero perdido por ausentismo y el ingreso recuperado con AgendatePY (+80% efectividad), calculando en cuántos días el Plan Pro se autofinancia.
+  2. **Claridad en Ahorro de Planes Anuales:** En `Pricing.tsx`, al conmutar a "Pago Anual", se incorporaron etiquetas y badges que desglosan el ahorro exacto en Guaraníes (ej. *"Ahorrás Gs. 600.000 al año (2 meses gratis) · Gs. 2.400.000 facturado anual"*).
+  3. **Botón Flotante de WhatsApp:** Se implementó `WhatsAppFloatingButton.tsx` en la esquina inferior con animación de pulso, indicador de operador en línea y mensaje contextual de asesoría comercial inmediata para Asunción/Paraguay.
+  4. **Acabado Visual Premium (Glassmorphism & Soporte Dark Mode Completo):**
+     - `HowItWorks.tsx`: Integración de fondos `backdrop-blur-2xl`, iluminación ambiental, bordes sutiles y soporte total para modo oscuro en botones y tarjetas de beneficios.
+     - `MiniCalendar.tsx`: Días, números y estados adaptados para modo claro y oscuro con alto contraste.
+     - `Ticker.tsx`: Fondo y bordes con soporte `dark:bg-slate-950`.
+     - `Pricing.tsx`: Tarjetas glassmorphic con orbes ambientales y estilos dark mode impecables.
+  5. **Navegación:** Se incorporó el acceso directo a la "Calculadora" en la barra de navegación superior ([Header.tsx](file:///c:/Users/acer/Documents/agenopy/agendatepy-main%20%281%29/agendatepy-main/frontend/components/landing/Header.tsx)) y en el pie de página ([Footer.tsx](file:///c:/Users/acer/Documents/agenopy/agendatepy-main%20%281%29/agendatepy-main/frontend/components/landing/Footer.tsx)).
+- **Impacto / Dependencias compartidas:**
+  - No afecta rutas del dashboard ni archivos vetados de Apariencia.
+  - Compatible al 100% con los cambios de tema y esquemas existentes.
+- **Verificación:**
+  - `npx tsc --noEmit` completado con **0 errores**.

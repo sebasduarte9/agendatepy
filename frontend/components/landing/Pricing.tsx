@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, X, Shield } from "lucide-react";
-import { motion } from "framer-motion";
+import { Check, X, Shield, Sparkles, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const BASIC_FEATURES = [
   { ok: true, label: "1 profesional / agenda" },
@@ -42,45 +42,76 @@ export default function Pricing() {
   const [annual, setAnnual] = useState(false);
 
   return (
-    <section id="precios" className="bg-slate-50/70 py-20 border-t border-slate-200/60">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="text-center max-w-2xl mx-auto">
-          <span className="rounded-full bg-brand/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
-            Precios en Guaraníes (PYG)
+    <section id="precios" className="relative overflow-hidden bg-slate-50/80 dark:bg-slate-950 py-20 sm:py-28 border-t border-slate-200/80 dark:border-white/10 transition-colors">
+      {/* Luces y resplandores ambientales de fondo */}
+      <div className="pointer-events-none absolute -top-40 right-1/4 h-[500px] w-[500px] rounded-full bg-brand/10 blur-[130px] dark:bg-brand/20" />
+      <div className="pointer-events-none absolute bottom-0 left-10 h-96 w-96 rounded-full bg-emerald-500/10 blur-[120px] dark:bg-emerald-500/15" />
+
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-4 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+            <Sparkles className="h-3.5 w-3.5" /> Precios Transparentes en Guaraníes (PYG)
           </span>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Planes transparentes, sin comisiones ocultas
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+            Planes a tu medida,{" "}
+            <span className="bg-gradient-to-r from-brand via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
+              sin comisiones ocultas
+            </span>
           </h2>
-          <p className="mt-3 text-slate-600 text-sm">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
             Cobramos una suscripción fija en guaraníes. Todo lo que facturás en tu negocio es 100% tuyo.
           </p>
         </div>
 
-        <div className="mt-6 flex items-center justify-center gap-3 text-sm font-semibold">
-          <span className={!annual ? "text-brand" : "text-slate-500"}>Facturación Mensual</span>
+        {/* Toggle Switch Facturación Mensual vs Anual */}
+        <div className="mt-8 flex items-center justify-center gap-3.5 text-sm font-semibold">
+          <button
+            type="button"
+            onClick={() => setAnnual(false)}
+            className={`transition-colors ${!annual ? "text-brand dark:text-white font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"}`}
+          >
+            Facturación Mensual
+          </button>
+
           <button
             type="button"
             onClick={() => setAnnual((value) => !value)}
-            className={`relative h-8 w-14 rounded-full transition ${annual ? "bg-brand" : "bg-slate-300"}`}
+            className={`relative h-8 w-15 rounded-full p-1 transition-all duration-300 shadow-inner ${
+              annual ? "bg-gradient-to-r from-brand to-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+            }`}
             aria-label="Cambiar facturación mensual o anual"
           >
-            <span
-              className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-xs transition-all ${
-                annual ? "left-7" : "left-1"
-              }`}
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className={`h-6 w-6 rounded-full bg-white shadow-md ${annual ? "ml-auto" : "mr-auto"}`}
             />
           </button>
-          <span className={annual ? "text-brand font-semibold" : "text-slate-500"}>
-            Pago Anual (2 meses bonificados)
-          </span>
+
+          <button
+            type="button"
+            onClick={() => setAnnual(true)}
+            className={`flex items-center gap-1.5 transition-colors ${
+              annual ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+            }`}
+          >
+            <span>Pago Anual</span>
+            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 shadow-2xs">
+              2 Meses Gratis
+            </span>
+          </button>
         </div>
 
+        {/* Grilla de Planes */}
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <PriceCard
             name="Plan Básico"
             description="Ideal para trabajar solo o empezar a digitalizarte."
             price={annual ? "Gs. 80.000" : "Gs. 100.000"}
             period="/mes"
+            annual={annual}
+            savings="Ahorrás Gs. 240.000 al año (2 meses gratis)"
+            billedDetail="Gs. 960.000 facturado anual"
             cta="Prueba gratuitamente"
             href="/onboarding"
             features={BASIC_FEATURES}
@@ -91,6 +122,9 @@ export default function Pricing() {
             description="Para equipos de salón, peluquería o estética."
             price={annual ? "Gs. 200.000" : "Gs. 250.000"}
             period="/mes"
+            annual={annual}
+            savings="Ahorrás Gs. 600.000 al año (2 meses gratis)"
+            billedDetail="Gs. 2.400.000 facturado anual"
             cta="Prueba gratuitamente"
             href="/onboarding"
             features={PRO_FEATURES}
@@ -101,6 +135,9 @@ export default function Pricing() {
             description="Para franquicias, sucursales y centros médicos."
             price={annual ? "Gs. 520.000" : "Gs. 650.000"}
             period="/mes"
+            annual={annual}
+            savings="Ahorrás Gs. 1.560.000 al año (2 meses gratis)"
+            billedDetail="Gs. 6.240.000 facturado anual"
             cta="Consultar por Empresa"
             href="https://wa.me/595981123456?text=Hola%20AgendatePY%2C%20quisiera%20asesoramiento%20sobre%20el%20Plan%20Empresa"
             isExternal={true}
@@ -108,9 +145,10 @@ export default function Pricing() {
           />
         </div>
 
-        <div className="mt-12 text-center text-xs text-slate-500">
+        {/* Garantía y Formas de Pago */}
+        <div className="mt-12 text-center text-xs text-slate-500 dark:text-slate-400">
           <p className="flex items-center justify-center gap-2 font-medium">
-            <Shield className="h-4 w-4 text-emerald-600" />
+            <Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             14 días de prueba sin ingresar tarjeta de crédito · Pagá después con QR Bancard, SIPAP o Tigo Money.
           </p>
         </div>
@@ -124,6 +162,9 @@ function PriceCard({
   description,
   price,
   period,
+  annual = false,
+  savings,
+  billedDetail,
   cta,
   href = "/dashboard",
   isExternal = false,
@@ -135,6 +176,9 @@ function PriceCard({
   description: string;
   price: string;
   period: string;
+  annual?: boolean;
+  savings?: string;
+  billedDetail?: string;
   cta: string;
   href?: string;
   isExternal?: boolean;
@@ -146,14 +190,14 @@ function PriceCard({
     <motion.article
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
-      className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 [transform-style:preserve-3d] ${
+      className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
         highlighted
-          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(91,49,230,0.25)] ring-4 ring-brand/10 backdrop-blur-xl"
-          : "border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:border-brand/40"
+          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(91,49,230,0.25)] ring-4 ring-brand/10 dark:ring-brand/20"
+          : "border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:border-brand/40"
       }`}
     >
       {highlighted && (
-        <div className="pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-brand via-indigo-500 to-whatsapp opacity-20 blur-xl" />
+        <div className="pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-brand via-indigo-500 to-emerald-500 opacity-20 blur-xl" />
       )}
 
       <div className="relative z-10">
@@ -169,13 +213,38 @@ function PriceCard({
           {description}
         </p>
 
-        <div className="my-5 flex items-baseline gap-1 border-b border-slate-100 dark:border-slate-800 pb-5">
-          <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
-            {price}
-          </span>
-          <span className="text-xs font-semibold text-slate-400">{period}</span>
+        {/* Precio y desglose de ahorro */}
+        <div className="my-5 border-b border-slate-100 dark:border-slate-800 pb-5">
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
+              {price}
+            </span>
+            <span className="text-xs font-semibold text-slate-400">{period}</span>
+          </div>
+
+          <AnimatePresence>
+            {annual && savings && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-2.5 space-y-1"
+              >
+                <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                  <Zap className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                  <span>{savings}</span>
+                </div>
+                {billedDetail && (
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    {billedDetail}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
+        {/* Lista de características */}
         <ul className="space-y-3 text-xs">
           {features.map((item) => (
             <li key={item.label} className="flex items-start gap-2.5">

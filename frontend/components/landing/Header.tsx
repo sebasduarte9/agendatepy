@@ -31,6 +31,7 @@ export default function Header() {
     { id: "caracteristicas", label: "Características", href: "#caracteristicas" },
     { id: "whatsapp", label: "WhatsApp", href: "#whatsapp" },
     { id: "como-funciona", label: "Cómo Funciona", href: "#como-funciona" },
+    { id: "calculadora", label: "Calculadora", href: "#calculadora" },
     { id: "precios", label: "Precios", href: "#precios" },
     { id: "faq", label: "FAQ", href: "#faq" },
   ];
