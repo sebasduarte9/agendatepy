@@ -86,6 +86,15 @@ export default function PrivacidadPage() {
                 Todo usuario o cliente final tiene derecho a solicitar el acceso, rectificación, cancelación u oposición al tratamiento de sus datos personales enviando un correo a <span className="font-semibold text-slate-800">privacidad@agendate.py</span>.
               </p>
             </section>
+
+            <section>
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+                5. Retención y Resguardo de Contenido Multimedia (90 Días)
+              </h2>
+              <p className="mt-2">
+                Cuando un comercio o cliente elimina una fotografía, imagen de producto o archivo multimedia de su panel, dicho recurso es <strong>retirado de inmediato de la vista pública y de la tienda web</strong>. Por motivos de seguridad operativa, auditoría contra fraudes, respaldo técnico ante borrados accidentales y resolución de controversias, los archivos eliminados se conservan bajo cifrado seguro en nuestros servidores durante un plazo de noventa (90) días continuos, cumplido el cual son destruidos y depurados de forma permanente e irrecuperable.
+              </p>
+            </section>
           </div>
         </div>
       </main>

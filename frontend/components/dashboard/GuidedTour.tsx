@@ -995,13 +995,17 @@ export default function GuidedTour() {
       );
     }
 
-    // Auto-open product creation modal if needed for product tour steps
-    if (
-      typeof window !== "undefined" &&
-      (currentStep.actionPath === "open-product-modal" ||
-        (currentSection?.id === "productos" && [2, 3, 4].includes(currentStep.stepNumber)))
-    ) {
-      window.dispatchEvent(new CustomEvent("agendate-open-product-modal"));
+    // Auto-open or auto-close product creation modal for product tour steps
+    if (typeof window !== "undefined") {
+      const isProductModalStep =
+        currentStep.actionPath === "open-product-modal" ||
+        (currentSection?.id === "productos" && [2, 3, 4].includes(currentStep.stepNumber));
+
+      if (isProductModalStep) {
+        window.dispatchEvent(new CustomEvent("agendate-open-product-modal"));
+      } else {
+        window.dispatchEvent(new CustomEvent("agendate-close-product-modal"));
+      }
     }
 
     let retriesLeft = 20;
@@ -1118,14 +1122,26 @@ export default function GuidedTour() {
     }
   }, [completedSections]);
 
-  // Reset tab to first tab ('estilos') on finish or close so user starts customizing fresh
+  // Reset tab to first tab ('estilos') on finish or close, and ensure open modal closes
   const handleClose = useCallback(() => {
     setShowExitConfirm(false);
-    if (selectedSectionKey === "apariencia" && typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "estilos" } }));
+    if (typeof window !== "undefined") {
+      if (selectedSectionKey === "apariencia") {
+        window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "estilos" } }));
+      }
+      window.dispatchEvent(new CustomEvent("agendate-close-product-modal"));
     }
     closeTour();
   }, [selectedSectionKey, closeTour]);
+
+  // Ensure modal closes if component unmounts
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("agendate-close-product-modal"));
+      }
+    };
+  }, []);
 
   // Debounced navigation to prevent rapid-click / enter spam glitches
   const handleNext = useCallback(() => {
@@ -1481,7 +1497,7 @@ export default function GuidedTour() {
               }}
             />
 
-            {/* Clean, sharp spotlight ring over highlighted element (Zero blurry glow, crisp border) */}
+            {/* Clean, sharp spotlight ring over highlighted element with animated action beacon */}
             {targetRect && (
               <div
                 style={{
@@ -1491,8 +1507,18 @@ export default function GuidedTour() {
                   width: targetRect.width + 16,
                   height: targetRect.height + 12,
                 }}
-                className="pointer-events-none z-[99993] rounded-2xl ring-2 ring-white/90 dark:ring-primary/80"
-              />
+                className="pointer-events-none z-[99993] rounded-2xl ring-2 ring-primary dark:ring-primary shadow-[0_0_20px_rgba(99,102,241,0.4)]"
+              >
+                {/* Animated action beacon tag: shows exactly what to press */}
+                <div className="absolute -top-3.5 left-3 sm:left-4 flex items-center gap-1.5 bg-slate-950 text-white dark:bg-white dark:text-slate-950 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide shadow-xl ring-1 ring-white/20 animate-bounce">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                  </span>
+                  <span>Apretá acá</span>
+                  <span className="text-xs select-none">👇</span>
+                </div>
+              </div>
             )}
 
             {/* Floating Popover / Tooltip Card positioned in a free, non-overlapping zone (Always on top: z-[99999]) */}

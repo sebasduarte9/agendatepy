@@ -129,13 +129,20 @@ export default function ProductosPage() {
     pushToast("success", `Categoría "${cat}" eliminada.`);
   };
 
-  // Listen to Guided Tour event to open product creation modal automatically
+  // Listen to Guided Tour events to open or close product creation modal automatically
   useEffect(() => {
     const handleOpenFromTour = () => {
       openCreateModal();
     };
+    const handleCloseFromTour = () => {
+      setModalOpen(false);
+    };
     window.addEventListener("agendate-open-product-modal", handleOpenFromTour);
-    return () => window.removeEventListener("agendate-open-product-modal", handleOpenFromTour);
+    window.addEventListener("agendate-close-product-modal", handleCloseFromTour);
+    return () => {
+      window.removeEventListener("agendate-open-product-modal", handleOpenFromTour);
+      window.removeEventListener("agendate-close-product-modal", handleCloseFromTour);
+    };
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -168,8 +175,8 @@ export default function ProductosPage() {
       description: "",
       price: 65000,
       cost: 30000,
-      imageUrl: "https://images.unsplash.com/photo-1597354984706-aec992b7d0d1?w=500&auto=format&fit=crop&q=80",
-      category: "Peinado",
+      imageUrl: "",
+      category: allCategories[0] || "General",
       stock: 15,
       active: true,
     });
@@ -232,6 +239,14 @@ export default function ProductosPage() {
 
   function handleConfirmDeleteProduct() {
     if (!productToDelete) return;
+    const prod = products.find((p) => p.id === productToDelete.id);
+    if (prod?.imageUrl && prod.imageUrl.startsWith("/uploads/")) {
+      fetch("/api/upload", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: prod.imageUrl }),
+      }).catch((err) => console.error("Error al registrar retención de imagen:", err));
+    }
     deleteProduct(productToDelete.id);
     pushToast("success", `Producto "${productToDelete.name}" eliminado`);
     setProductToDelete(null);
@@ -735,6 +750,10 @@ export default function ProductosPage() {
               </p>
             </div>
           </div>
+
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
+            🔒 <strong>Política de Privacidad & Retención:</strong> Las imágenes asociadas se quitan de inmediato de la tienda pública y se conservan de forma segura durante 90 días como respaldo y prevención de fraude antes de su eliminación definitiva.
+          </p>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
             <button

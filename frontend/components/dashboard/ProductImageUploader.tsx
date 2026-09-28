@@ -11,6 +11,7 @@ import {
   Loader2,
   Trash2,
   Server,
+  ShieldCheck,
 } from "lucide-react";
 
 interface ProductImageUploaderProps {
@@ -18,22 +19,6 @@ interface ProductImageUploaderProps {
   onChange: (url: string) => void;
   categoryHint?: string;
 }
-
-// Preset product test photos with studio backgrounds
-const SAMPLE_TEST_PHOTOS = [
-  {
-    name: "Cera Capilar",
-    url: "https://images.unsplash.com/photo-1597354984706-aec992b7d0d1?w=600&auto=format&fit=crop&q=80",
-  },
-  {
-    name: "Aceite de Barba",
-    url: "https://images.unsplash.com/photo-1621607512214-68297480165e?w=600&auto=format&fit=crop&q=80",
-  },
-  {
-    name: "Pomada Mate",
-    url: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80",
-  },
-];
 
 /**
  * Optimizes an image (file or dataURL) into a clean, max 800px DataURL
@@ -89,7 +74,7 @@ async function compressImageToDataUrl(imageSrc: string | File, maxWidth = 800): 
 }
 
 /**
- * Uploads a base64 DataURL or File to our server (/api/upload)
+ * Uploads a base64 DataURL to our server (/api/upload)
  * Returns the public URL (e.g. /uploads/1727546000000-xyz.png)
  */
 async function uploadImageToServer(dataUrl: string): Promise<string> {
@@ -99,104 +84,15 @@ async function uploadImageToServer(dataUrl: string): Promise<string> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ dataUrl }),
     });
-
-    if (!res.ok) {
-      throw new Error("Error en servidor al guardar archivo");
+    const data = await res.json();
+    if (!res.ok || !data.url) {
+      throw new Error(data.error || "Error al subir la imagen al servidor");
     }
-
-    const json = await res.json();
-    if (json.ok && json.url) {
-      return json.url;
-    }
-    return dataUrl;
+    return data.url;
   } catch (err) {
-    console.warn("Fallback guardando DataURL local:", err);
+    console.error("Error al subir a nuestro servidor:", err);
     return dataUrl;
   }
-}
-
-/**
- * Instant edge-aware canvas background remover for solid/studio backgrounds.
- * Operates in < 50ms without network calls.
- */
-function removeBackgroundFastCanvas(
-  dataUrl: string,
-  tolerance = 45,
-  feather = 1.6
-): Promise<string> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth || img.width;
-      canvas.height = img.naturalHeight || img.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        resolve(dataUrl);
-        return;
-      }
-
-      ctx.drawImage(img, 0, 0);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imgData.data;
-
-      const W = canvas.width;
-      const H = canvas.height;
-
-      // Sample border pixels around the edges to compute accurate background color
-      const samplePoints = [
-        0, // top-left
-        Math.floor(W / 2) * 4, // top-center
-        (W - 1) * 4, // top-right
-        ((H - 1) * W) * 4, // bottom-left
-        ((H - 1) * W + Math.floor(W / 2)) * 4, // bottom-center
-        ((H - 1) * W + (W - 1)) * 4, // bottom-right
-        Math.floor(H / 2) * W * 4, // mid-left
-        (Math.floor(H / 2) * W + (W - 1)) * 4, // mid-right
-      ];
-
-      let bgR = 0,
-        bgG = 0,
-        bgB = 0;
-      samplePoints.forEach((idx) => {
-        bgR += data[idx];
-        bgG += data[idx + 1];
-        bgB += data[idx + 2];
-      });
-      bgR = Math.round(bgR / samplePoints.length);
-      bgG = Math.round(bgG / samplePoints.length);
-      bgB = Math.round(bgB / samplePoints.length);
-
-      const tolSq = tolerance * tolerance;
-      const featherRange = feather * 20;
-      const featherSq = (tolerance + featherRange) * (tolerance + featherRange);
-
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        const distSq =
-          (r - bgR) * (r - bgR) +
-          (g - bgG) * (g - bgG) +
-          (b - bgB) * (b - bgB);
-
-        if (distSq <= tolSq) {
-          data[i + 3] = 0;
-        } else if (distSq < featherSq) {
-          const alphaFactor = (Math.sqrt(distSq) - tolerance) / featherRange;
-          data[i + 3] = Math.round(Math.min(255, Math.max(0, 255 * alphaFactor)));
-        }
-      }
-
-      ctx.putImageData(imgData, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-
-    img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
-  });
 }
 
 export default function ProductImageUploader({
@@ -265,7 +161,7 @@ export default function ProductImageUploader({
     }
   };
 
-  // Instant Background Removal (< 100ms) and upload result to server
+  // High-Quality AI Background Removal executed on OUR SERVER (zero client downloads)
   const handleRemoveBackground = async () => {
     const target = value || originalImage;
     if (!target) return;
@@ -274,17 +170,29 @@ export default function ProductImageUploader({
     setStatusMessage(null);
 
     try {
-      // 1. Instant Cutout in browser
-      const transparentDataUrl = await removeBackgroundFastCanvas(target, 48, 1.8);
+      const res = await fetch("/api/upload/remove-bg", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: target.startsWith("/") ? target : undefined,
+          dataUrl: target.startsWith("data:") ? target : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "No se pudo recortar en servidor.");
+      }
+
+      onChange(data.url);
       setHasTransparentBg(true);
-
-      // 2. Save cutout directly to our server
-      const serverUrl = await uploadImageToServer(transparentDataUrl);
-      onChange(serverUrl);
-
-      setStatusMessage({ type: "success", text: "Fondo recortado y guardado en el servidor." });
-    } catch {
-      setStatusMessage({ type: "error", text: "No se pudo recortar el fondo." });
+      setStatusMessage({ type: "success", text: "Fondo recortado y guardado en servidor." });
+    } catch (err: unknown) {
+      console.error(err);
+      setStatusMessage({
+        type: "error",
+        text: "Error al recortar fondo en el servidor. Intentá de nuevo.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -295,7 +203,9 @@ export default function ProductImageUploader({
     if (originalImage) {
       setIsLoading(true);
       try {
-        const serverUrl = await uploadImageToServer(originalImage);
+        const serverUrl = originalImage.startsWith("data:")
+          ? await uploadImageToServer(originalImage)
+          : originalImage;
         onChange(serverUrl);
         setHasTransparentBg(false);
         setStatusMessage({ type: "success", text: "Se restauró la foto original." });
@@ -314,6 +224,27 @@ export default function ProductImageUploader({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Delete photo with instant client removal and 90-day server retention
+  const handleDeletePhoto = async () => {
+    const currentUrl = value;
+    onChange("");
+    setOriginalImage(null);
+    setHasTransparentBg(false);
+    setStatusMessage(null);
+
+    if (currentUrl && currentUrl.startsWith("/uploads/")) {
+      try {
+        await fetch("/api/upload", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: currentUrl }),
+        });
+      } catch (err) {
+        console.error("Error al registrar borrado:", err);
+      }
+    }
   };
 
   const isServerSaved = value && value.startsWith("/uploads/");
@@ -361,21 +292,22 @@ export default function ProductImageUploader({
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-2xl p-5 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2 group relative overflow-hidden ${
+          className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2.5 group relative overflow-hidden ${
             isDragging
-              ? "border-primary bg-primary/10"
+              ? "border-primary bg-primary/10 scale-[1.01]"
               : "border-slate-200 dark:border-white/15 bg-slate-50/60 dark:bg-slate-800/40 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/80"
           }`}
         >
           {isLoading ? (
-            <div className="flex flex-col items-center gap-2 py-3 text-slate-600 dark:text-slate-300">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <div className="flex flex-col items-center gap-2 py-4 text-slate-600 dark:text-slate-300">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
               <p className="text-xs font-semibold">Cargando...</p>
             </div>
           ) : (
             <>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white dark:bg-slate-700 text-primary shadow-xs group-hover:scale-105 transition-transform">
-                <Upload className="h-5 w-5" />
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-slate-700 text-primary shadow-xs group-hover:scale-110 transition-transform">
+                <span className="absolute -inset-1 rounded-2xl bg-primary/20 animate-ping opacity-30" />
+                <Upload className="h-5 w-5 relative z-10" />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -390,38 +322,10 @@ export default function ProductImageUploader({
         </div>
       )}
 
-      {/* SAMPLE QUICK PRESETS */}
-      {!value && (
-        <div className="flex items-center gap-2 pt-0.5 overflow-x-auto pb-1">
-          <span className="text-[10px] font-bold text-slate-400 shrink-0">Ejemplos rápidos:</span>
-          {SAMPLE_TEST_PHOTOS.map((sample) => (
-            <button
-              key={sample.name}
-              type="button"
-              onClick={async () => {
-                setIsLoading(true);
-                try {
-                  const compressed = await compressImageToDataUrl(sample.url);
-                  setOriginalImage(compressed);
-                  setHasTransparentBg(false);
-                  const serverUrl = await uploadImageToServer(compressed);
-                  onChange(serverUrl);
-                } finally {
-                  setIsLoading(false);
-                }
-              }}
-              className="text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-white/10 hover:border-primary shrink-0 transition cursor-pointer"
-            >
-              + {sample.name}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* PREVIEW CANVAS & ACTIONS */}
       {value && (
         <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/60 p-3.5 space-y-3">
-          {/* Main Visualizer with Checkered Transparency Grid */}
+          {/* Main Visualizer with Checkered Transparency Grid & Scanner Animation */}
           <div className="relative h-48 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center bg-white dark:bg-slate-900">
             {/* Checkered Grid */}
             <div
@@ -445,10 +349,13 @@ export default function ProductImageUploader({
               className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md transition-all duration-200"
             />
 
-            {/* Clean loading overlay: ONLY "Cargando..." without lengthy text */}
+            {/* Animated Laser Scanner effect during AI processing */}
             {isLoading && (
               <div className="absolute inset-0 z-20 bg-slate-950/75 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center text-white gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-white" />
+                <div className="relative">
+                  <Loader2 className="h-7 w-7 animate-spin text-white" />
+                  <span className="absolute -inset-2 rounded-full border border-white/30 animate-ping" />
+                </div>
                 <p className="text-xs font-bold tracking-wide">Cargando...</p>
               </div>
             )}
@@ -506,15 +413,11 @@ export default function ProductImageUploader({
 
               <button
                 type="button"
-                onClick={() => {
-                  onChange("");
-                  setOriginalImage(null);
-                  setHasTransparentBg(false);
-                }}
+                onClick={handleDeletePhoto}
                 className="text-[11px] text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-rose-500/10 transition cursor-pointer"
               >
                 <Trash2 className="h-3 w-3" />
-                <span>Eliminar</span>
+                <span>Eliminar foto</span>
               </button>
             </div>
           </div>
@@ -538,6 +441,14 @@ export default function ProductImageUploader({
           )}
         </div>
       )}
+
+      {/* Small Privacy & Retention policy note */}
+      <div className="pt-1 flex items-start gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-0.5 text-slate-400" />
+        <p>
+          <strong>Política de Privacidad & Retención:</strong> Al borrar una foto se retira al instante de tu catálogo y tienda pública. Se conserva de forma segura en nuestro servidor durante 90 días como respaldo y auditoría antes de su purga definitiva.
+        </p>
+      </div>
     </div>
   );
 }

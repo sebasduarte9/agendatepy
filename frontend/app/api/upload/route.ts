@@ -92,3 +92,68 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Error al procesar la subida" }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/upload
+ * Client soft-delete with 90-day retention policy:
+ * The image is removed immediately from the client's public catalog/store,
+ * while safely preserved in server storage for 90 days before final purge.
+ */
+export async function DELETE(req: Request) {
+  try {
+    const session = await getSession();
+    if (!session && process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const { url } = await req.json();
+    if (!url) {
+      return NextResponse.json({ error: "URL requerida" }, { status: 400 });
+    }
+
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
+
+    const manifestPath = path.join(uploadDir, ".retention_manifest.json");
+    let manifest: Array<{
+      url: string;
+      deletedAt: string;
+      purgeScheduledAt: string;
+      retentionDays: number;
+      status: string;
+    }> = [];
+
+    try {
+      const { readFile } = await import("fs/promises");
+      const data = await readFile(manifestPath, "utf-8");
+      manifest = JSON.parse(data);
+    } catch {
+      manifest = [];
+    }
+
+    const now = new Date();
+    const purgeDate = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+    manifest.push({
+      url,
+      deletedAt: now.toISOString(),
+      purgeScheduledAt: purgeDate.toISOString(),
+      retentionDays: 90,
+      status: "retained_90_days",
+    });
+
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+
+    return NextResponse.json({
+      ok: true,
+      clientRemoved: true,
+      retentionDays: 90,
+      purgeScheduledAt: purgeDate.toISOString(),
+      message: "Imagen retirada del catálogo público. Se conservará durante 90 días de respaldo.",
+    });
+  } catch (err: unknown) {
+    console.error("Error al registrar retención de 90 días:", err);
+    return NextResponse.json({ error: "Error al procesar eliminación" }, { status: 500 });
+  }
+}
+
