@@ -27,6 +27,7 @@ import type {
   ProductOrder,
   ProductOrderStatus,
   ProductOfferType,
+  CommissionPayoutRecord,
 } from "@/lib/dashboard-types";
 
 const TIMEZONE_NOTE =
@@ -49,30 +50,62 @@ export const defaultCivilDate = (() => {
   }
 })();
 
-const staff: StaffMember[] = [
+export const initialStaff: StaffMember[] = [
+  {
+    id: "st-sebas",
+    name: "Sebastián Duarte",
+    role: "Director / Dueño",
+    systemRole: "admin",
+    description: "Gestión global del local, finanzas, supervisión y dirección comercial.",
+    avatar: "SD",
+    color: "#FF4F2B",
+    active: true,
+    hours: "08:00 – 20:00",
+    commissionPercentage: 50,
+    productCommissionPercentage: 15,
+    advanceBalance: 0,
+  },
   {
     id: "st-marcos",
     name: "Marcos Benítez",
-    role: "Master Barber & Estilista",
+    role: "Master Barber",
     systemRole: "barbero",
-    description: "Cortes clásicos, degradé, perfilado de barba y perfilado.",
+    description: "Cortes clásicos, degradé fade, ritual de barba y perfilado a navaja.",
     avatar: "MB",
     color: "#4f46e5",
     active: true,
     hours: "09:00 – 19:00",
     commissionPercentage: 50,
+    productCommissionPercentage: 10,
+    advanceBalance: 50000,
   },
   {
     id: "st-sofia",
     name: "Sofía Alcaraz",
-    role: "Colorista & Peinados",
+    role: "Colorista & Estilista",
     systemRole: "estilista",
-    description: "Especialista en coloración, alisados y tratamientos capilares.",
+    description: "Especialista en balayage, coloración, alisados y nutrición capilar.",
     avatar: "SA",
     color: "#ec4899",
     active: true,
     hours: "09:00 – 18:00",
     commissionPercentage: 45,
+    productCommissionPercentage: 10,
+    advanceBalance: 0,
+  },
+  {
+    id: "st-leticia",
+    name: "Leticia Romero",
+    role: "Cajera & Recepción",
+    systemRole: "cajero",
+    description: "Atención al cliente, cobros en mostrador, facturación y SIPAP.",
+    avatar: "LR",
+    color: "#10b981",
+    active: true,
+    hours: "08:30 – 19:30",
+    commissionPercentage: 0,
+    productCommissionPercentage: 5,
+    advanceBalance: 0,
   },
   {
     id: "st-diego",
@@ -85,18 +118,8 @@ const staff: StaffMember[] = [
     active: true,
     hours: "11:00 – 20:00",
     commissionPercentage: 40,
-  },
-  {
-    id: "st-leticia",
-    name: "Leticia Romero",
-    role: "Cajera & Recepción",
-    systemRole: "cajero",
-    description: "Atención al cliente, cobros en caja, facturación y SIPAP.",
-    avatar: "LR",
-    color: "#10b981",
-    active: true,
-    hours: "08:30 – 19:30",
-    commissionPercentage: 0,
+    productCommissionPercentage: 10,
+    advanceBalance: 0,
   },
 ];
 
@@ -293,7 +316,7 @@ const appointments: Appointment[] = [
     start: "2026-08-22T13:00:00.000Z",
     end: "2026-08-22T14:30:00.000Z",
     paymentMethod: "pos_bancard",
-    status: "confirmed",
+    status: "completed",
     notes: "Tratamiento intensivo con botox capilar y baño de brillo. Corte de puntas abiertas (2 cm).",
   },
   {
@@ -306,7 +329,7 @@ const appointments: Appointment[] = [
     start: "2026-07-28T16:00:00.000Z",
     end: "2026-07-28T16:45:00.000Z",
     paymentMethod: "efectivo",
-    status: "confirmed",
+    status: "completed",
     notes: "Lavado premium con mascarilla reconstructora y peinado con ondas suaves.",
   },
 
@@ -335,7 +358,7 @@ const appointments: Appointment[] = [
     start: "2026-09-02T15:00:00.000Z",
     end: "2026-09-02T15:35:00.000Z",
     paymentMethod: "efectivo",
-    status: "confirmed",
+    status: "completed",
     notes: "Degradé lateral 0 a 1.5, textura con tijera de entresacar en la cúspide. Peinado con cera mate.",
   },
   {
@@ -348,7 +371,7 @@ const appointments: Appointment[] = [
     start: "2026-08-16T14:00:00.000Z",
     end: "2026-08-16T14:50:00.000Z",
     paymentMethod: "pos_bancard",
-    status: "confirmed",
+    status: "completed",
     notes: "Alineación de bigote y desvanecido de patillas.",
   },
 
@@ -363,7 +386,7 @@ const appointments: Appointment[] = [
     start: "2026-09-19T16:00:00.000Z",
     end: "2026-09-19T17:30:00.000Z",
     paymentMethod: "efectivo",
-    status: "confirmed",
+    status: "completed",
     notes: "Alisado de keratina termoactiva brasileña. Planchado en mechones finos a 210°C. Cero frizz.",
   },
   {
@@ -376,7 +399,7 @@ const appointments: Appointment[] = [
     start: "2026-08-10T17:00:00.000Z",
     end: "2026-08-10T17:40:00.000Z",
     paymentMethod: "pos_bancard",
-    status: "confirmed",
+    status: "completed",
     notes: "Corte desfilado en capas para dar ligereza antes del tratamiento.",
   },
 
@@ -391,7 +414,7 @@ const appointments: Appointment[] = [
     start: "2026-09-20T11:00:00.000Z",
     end: "2026-09-20T11:35:00.000Z",
     paymentMethod: "efectivo",
-    status: "confirmed",
+    status: "completed",
     notes: "Corte clásico a tijera en laterales, número 3 en nuca. Primera visita recomendada por Instagram.",
   },
 
@@ -421,7 +444,7 @@ const appointments: Appointment[] = [
     start: "2026-09-21T16:00:00.000Z",
     end: "2026-09-21T16:55:00.000Z",
     paymentMethod: "sipap",
-    status: "confirmed",
+    status: "completed",
     receiptUrl: "/comprobante-luis.png",
     notes: "Barba completa degrade 1 a 3 con contorno definido a navaja. Abono confirmado por SIPAP.",
   },
@@ -435,8 +458,23 @@ const appointments: Appointment[] = [
     start: "2026-08-25T16:30:00.000Z",
     end: "2026-08-25T17:10:00.000Z",
     paymentMethod: "sipap",
-    status: "confirmed",
+    status: "completed",
     notes: "Fade bajo tradicional y rebaje de volumen superior.",
+  },
+
+  // Sebastián Duarte (Admin)
+  {
+    id: "ap-7",
+    clientName: "Fernando Benítez",
+    clientEmail: "fernando.b@gmail.com",
+    clientPhone: "+595981778899",
+    serviceId: "sv-color",
+    staffId: "st-sebas",
+    start: "2026-09-22T10:00:00.000Z",
+    end: "2026-09-22T12:00:00.000Z",
+    paymentMethod: "pos_bancard",
+    status: "completed",
+    notes: "Diseño de color personalizado y asesoría de imagen VIP.",
   },
 ];
 
@@ -475,6 +513,69 @@ const initialCashMovements: CashMovement[] = [
     concept: "Cobro turno: Carla Duarte (Tratamiento Keratina)",
     date: "2026-09-19T17:35:00.000Z",
     appointmentId: "ap-3",
+  },
+];
+
+export const initialCommissionPayouts: CommissionPayoutRecord[] = [
+  {
+    id: "payout-001",
+    staffId: "st-marcos",
+    staffName: "Marcos Benítez",
+    staffRole: "Master Barber",
+    periodStart: "2026-09-01T00:00:00.000Z",
+    periodEnd: "2026-09-15T23:59:59.000Z",
+    servicesAmount: 1850000,
+    productsAmount: 210000,
+    grossCommission: 946000,
+    advancesDeducted: 100000,
+    amountPaid: 846000,
+    paymentMethod: "SIPAP",
+    status: "PAID",
+    paidAt: "2026-09-16T11:30:00.000Z",
+    paidBy: "admin@agendate.py",
+    receiptNumber: "LIQ-2026-091",
+    notes: "Liquidación quincenal conforme. Transferencia vía Banco Itaú.",
+    itemsCount: 14,
+  },
+  {
+    id: "payout-002",
+    staffId: "st-sofia",
+    staffName: "Sofía Alcaraz",
+    staffRole: "Colorista & Estilista",
+    periodStart: "2026-09-01T00:00:00.000Z",
+    periodEnd: "2026-09-15T23:59:59.000Z",
+    servicesAmount: 2400000,
+    productsAmount: 140000,
+    grossCommission: 1094000,
+    advancesDeducted: 0,
+    amountPaid: 1094000,
+    paymentMethod: "Efectivo",
+    status: "PAID",
+    paidAt: "2026-09-16T12:00:00.000Z",
+    paidBy: "admin@agendate.py",
+    receiptNumber: "LIQ-2026-092",
+    notes: "Pago en efectivo en mostrador con firma de recibo.",
+    itemsCount: 11,
+  },
+  {
+    id: "payout-003",
+    staffId: "st-diego",
+    staffName: "Diego Franco",
+    staffRole: "Barbero",
+    periodStart: "2026-09-01T00:00:00.000Z",
+    periodEnd: "2026-09-15T23:59:59.000Z",
+    servicesAmount: 1100000,
+    productsAmount: 70000,
+    grossCommission: 447000,
+    advancesDeducted: 0,
+    amountPaid: 447000,
+    paymentMethod: "SIPAP",
+    status: "PAID",
+    paidAt: "2026-09-16T14:15:00.000Z",
+    paidBy: "admin@agendate.py",
+    receiptNumber: "LIQ-2026-093",
+    notes: "Transferencia SIPAP a Ueno Bank.",
+    itemsCount: 9,
   },
 ];
 
@@ -547,7 +648,9 @@ type DashboardState = {
   addStaff: (item: Omit<StaffMember, "id">) => Promise<any> | void;
   updateStaff: (id: string, patch: Partial<StaffMember>) => Promise<any> | void;
   deleteStaff: (id: string) => Promise<any> | void;
-  updateStaffCommission: (id: string, percentage: number) => Promise<any> | void;
+  updateStaffCommission: (id: string, percentage: number, productPercentage?: number) => Promise<any> | void;
+  commissionPayouts: CommissionPayoutRecord[];
+  addCommissionPayout: (payout: Omit<CommissionPayoutRecord, "id" | "paidAt">) => CommissionPayoutRecord;
   addService: (item: Omit<ServiceItem, "id">) => Promise<any> | void;
   updateService: (id: string, patch: Partial<ServiceItem>) => Promise<any> | void;
   removeService: (id: string) => Promise<any> | void;
@@ -628,13 +731,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     openingCash: 300000,
     acceptedPaymentMethods: ["efectivo", "pos", "transferencia", "billetera", "qr"],
   },
-  staff: [],
-  services: [],
+  staff: initialStaff,
+  services: services,
   products: initialProducts,
   productOrders: initialProductOrders,
-  appointments: [],
+  appointments: appointments,
   clients: [],
-  cashMovements: [],
+  cashMovements: initialCashMovements,
+  commissionPayouts: initialCommissionPayouts,
   whatsappTemplates: initialWhatsAppTemplates,
   loyalty: initialLoyalty,
   sipap: initialSipap,
@@ -736,18 +840,23 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }
 
         if (Array.isArray(data.staff)) {
-          nextState.staff = data.staff.map((st: { id: string; name: string; active?: boolean; commissionPercentage?: number }) => ({
-            id: st.id,
-            name: st.name,
-            role: "Colaborador",
-            systemRole: "barbero",
-            description: "",
-            avatar: st.name.slice(0, 2).toUpperCase(),
-            color: "#4f46e5",
-            active: st.active ?? true,
-            hours: "08:00 – 20:00",
-            commissionPercentage: st.commissionPercentage ?? 50,
-          }));
+          nextState.staff =
+            data.staff.length > 0
+              ? data.staff.map((st: any) => ({
+                  id: st.id,
+                  name: st.name,
+                  role: st.role || "Colaborador",
+                  systemRole: st.systemRole || (st.name.toLowerCase().includes("leticia") ? "cajero" : st.name.toLowerCase().includes("sofia") ? "estilista" : "barbero"),
+                  description: st.description || "",
+                  avatar: st.name.slice(0, 2).toUpperCase(),
+                  color: st.color || "#4f46e5",
+                  active: st.active ?? true,
+                  hours: st.hours || "08:00 – 20:00",
+                  commissionPercentage: st.commissionPercentage ?? 50,
+                  productCommissionPercentage: st.productCommissionPercentage ?? 10,
+                  advanceBalance: st.advanceBalance ?? 0,
+                }))
+              : initialStaff;
         }
 
         if (Array.isArray(data.clients)) {
@@ -1151,8 +1260,60 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return false;
     }
   },
-  updateStaffCommission: (id, percentage) =>
-    get().updateStaff(id, { commissionPercentage: percentage }),
+  updateStaffCommission: (id, percentage, productPercentage) => {
+    const patch: Partial<StaffMember> = { commissionPercentage: percentage };
+    if (productPercentage !== undefined) {
+      patch.productCommissionPercentage = productPercentage;
+    }
+    return get().updateStaff(id, patch);
+  },
+  addCommissionPayout: (payoutData) => {
+    const id = "payout-" + Date.now();
+    const paidAt = new Date().toISOString();
+    const receiptNumber =
+      payoutData.receiptNumber ||
+      `LIQ-${new Date().getFullYear()}-${String(get().commissionPayouts.length + 1).padStart(3, "0")}`;
+    const newPayout: CommissionPayoutRecord = {
+      ...payoutData,
+      id,
+      paidAt,
+      receiptNumber,
+    };
+
+    // 1. Add to payouts list
+    const updatedPayouts = [newPayout, ...get().commissionPayouts];
+
+    // 2. Automatically register an EGRESO in Caja Diaria
+    const cashExpense: CashMovement = {
+      id: "cm-" + Date.now(),
+      type: "egreso",
+      amount: newPayout.amountPaid,
+      method: (newPayout.paymentMethod.toLowerCase().includes("sipap") ? "transferencia" : "efectivo") as any,
+      concept: `Liquidación de comisiones: ${newPayout.staffName} (${receiptNumber})`,
+      category: "Comisiones",
+      date: paidAt,
+    };
+
+    set({
+      commissionPayouts: updatedPayouts,
+      cashMovements: [cashExpense, ...get().cashMovements],
+    });
+
+    // Also attempt POST to backend if running with Postgres
+    fetch("/api/commission-payouts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        staffId: newPayout.staffId,
+        periodStart: newPayout.periodStart,
+        periodEnd: newPayout.periodEnd,
+        paymentMethod: newPayout.paymentMethod,
+        notes: newPayout.notes,
+      }),
+    }).catch(() => {});
+
+    return newPayout;
+  },
   addService: async (item) => {
     try {
       const res = await fetch("/api/services", {

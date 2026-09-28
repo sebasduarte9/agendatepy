@@ -515,25 +515,47 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Liquidación",
     icon: Coins,
     summary:
-      "Cálculo automático de comisiones por cada servicio realizado para pagar a barberos y estilistas sin discusiones ni errores.",
+      "Cálculo automático de comisiones por cada servicio y venta de productos para pagar a barberos y estilistas sin discusiones ni errores.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Filtrar por profesional y periodo",
+        taskTitle: "Cabecera y Filtros de Liquidación",
         instruction:
-          "Elegí a quién querés liquidar (ej: Marcos Benítez) y el rango de fechas (esta semana, quincena o mes).",
+          "Seleccioná a un profesional específico o a todo el equipo, y definí el período de corte (esta quincena, mes o últimos 7 días).",
+        tip: "Podés auditar a un colaborador individualmente o ver el consolidado general de tu salón.",
+        targetSelector: '[data-tour="comisiones-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Auditar los servicios cobrados",
+        taskTitle: "Métricas y Comisiones Pendientes",
         instruction:
-          "Verás la lista detallada de turnos atendidos por esa persona, el precio cobrado y el porcentaje pactado.",
+          "Monitoreá en tiempo real la comisión total devengada, saldos pendientes por liquidar, montos ya pagados y la facturación global generada por tu equipo.",
+        tip: "Muestra la correlación exacta entre lo facturado en caja y lo adeudado a profesionales.",
+        targetSelector: '[data-tour="comisiones-kpis"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Marcar comisión como pagada",
+        taskTitle: "Reglas & Porcentajes Configurables",
         instruction:
-          "Al transferir o entregar el efectivo al colaborador, tocá 'Registrar Pago de Comisión' para asentar la fecha y comprobante.",
+          "Hacé clic en 'Reglas & %' para definir comisiones diferenciadas para servicios y venta de productos de mostrador para cada rol (dueño, cajera, barbero, estilista).",
+        tip: "Cada profesional puede tener un porcentaje personalizado para adaptarse a su categoría.",
+        targetSelector: '[data-tour="comisiones-rules"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Liquidar Comisiones con Egreso en Caja",
+        instruction:
+          "Hacé clic en 'Liquidar Comisiones' para calcular el monto neto, descontar vales o adelantos, elegir el medio de pago (SIPAP/Efectivo) y registrar el egreso contable en tu Caja Diaria de forma automática.",
+        tip: "Incluye la opción de emitir el comprobante de liquidación y enviarlo directo por WhatsApp.",
+        targetSelector: '[data-tour="comisiones-liquidar-btn"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Historial de Liquidaciones & Comprobantes",
+        instruction:
+          "Revisá el historial con número de recibo oficial (#LIQ-2026-XXX), fecha de pago y botón directo para imprimir o compartir el comprobante.",
+        tip: "Garantiza total transparencia contable y respaldo legal para tus colaboradores.",
+        targetSelector: '[data-tour="comisiones-payouts-table"]',
       },
     ],
   },

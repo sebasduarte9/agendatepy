@@ -16,6 +16,29 @@ export type StaffMember = {
   /** Horario regular en hora local del negocio (timezone store). */
   hours: string;
   commissionPercentage: number;
+  productCommissionPercentage?: number;
+  advanceBalance?: number;
+};
+
+export type CommissionPayoutRecord = {
+  id: string;
+  staffId: string;
+  staffName: string;
+  staffRole?: string;
+  periodStart: string;
+  periodEnd: string;
+  servicesAmount: number;
+  productsAmount: number;
+  grossCommission: number;
+  advancesDeducted: number;
+  amountPaid: number;
+  paymentMethod: "Efectivo" | "SIPAP" | "POS Bancard" | "Billetera" | string;
+  status: "PAID" | "PENDING";
+  paidAt: string;
+  paidBy?: string;
+  receiptNumber?: string;
+  notes?: string;
+  itemsCount: number;
 };
 
 export type ServiceItem = {
