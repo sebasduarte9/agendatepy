@@ -51,6 +51,7 @@ export default function ProductosPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
+  const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
@@ -155,10 +156,14 @@ export default function ProductosPage() {
   }
 
   function handleDelete(id: string, name: string) {
-    if (confirm(`¿Eliminar "${name}" del catálogo?`)) {
-      deleteProduct(id);
-      pushToast("success", "Producto eliminado");
-    }
+    setProductToDelete({ id, name });
+  }
+
+  function handleConfirmDeleteProduct() {
+    if (!productToDelete) return;
+    deleteProduct(productToDelete.id);
+    pushToast("success", `Producto "${productToDelete.name}" eliminado`);
+    setProductToDelete(null);
   }
 
   async function copyStoreLink() {
@@ -517,6 +522,46 @@ export default function ProductosPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Web Modal for Delete Product Confirmation */}
+      <Modal
+        open={!!productToDelete}
+        onClose={() => setProductToDelete(null)}
+        title="¿Eliminar producto del catálogo?"
+      >
+        <div className="space-y-4 text-xs">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-bold">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-900 dark:text-white">
+                {productToDelete?.name}
+              </p>
+              <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5 leading-relaxed">
+                Este producto se quitará de tu inventario y catálogo de mostrador.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => setProductToDelete(null)}
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDeleteProduct}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+            >
+              Eliminar Producto
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

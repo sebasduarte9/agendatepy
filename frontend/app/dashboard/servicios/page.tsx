@@ -67,6 +67,7 @@ export default function ServiciosPage() {
 
   // Delete Confirmation Modal State
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   // Service Modal state (Create / Edit general info)
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
@@ -184,6 +185,30 @@ export default function ServiciosPage() {
       }
     } catch (err) {
       console.error("Error guardando categoría en SQL:", err);
+    }
+  }
+
+  async function handleConfirmDeleteCategory() {
+    if (!categoryToDelete) return;
+    const cat = categoryToDelete;
+    // Optimistic update
+    setCustomCategories((prev) => prev.filter((c) => c.toLowerCase() !== cat.toLowerCase()));
+    if (categoryFilter.toLowerCase() === cat.toLowerCase()) {
+      setCategoryFilter("Todos");
+    }
+    setCategoryToDelete(null);
+    pushToast("success", `Categoría "${cat}" eliminada del catálogo.`);
+
+    try {
+      const res = await fetch(`/api/services/categories?name=${encodeURIComponent(cat)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.categories)) {
+        setCustomCategories(data.categories);
+      }
+    } catch (err) {
+      console.error("Error eliminando categoría en SQL:", err);
     }
   }
 
@@ -504,20 +529,41 @@ export default function ServiciosPage() {
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
-          {filterCategoryList.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setCategoryFilter(cat)}
-              className={`rounded-2xl border px-3.5 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
-                categoryFilter === cat
-                  ? "border-primary bg-primary/10 text-primary shadow-xs"
-                  : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {filterCategoryList.map((cat) => {
+            const isSelected = categoryFilter === cat;
+            const isRemovable = cat !== "Todos";
+            return (
+              <div
+                key={cat}
+                className={`group inline-flex items-center gap-1.5 rounded-2xl border px-3 py-1.5 text-xs font-bold transition shrink-0 ${
+                  isSelected
+                    ? "border-primary bg-primary/10 text-primary shadow-xs"
+                    : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilter(cat)}
+                  className="cursor-pointer"
+                >
+                  {cat}
+                </button>
+                {isRemovable && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCategoryToDelete(cat);
+                    }}
+                    title={`Eliminar categoría "${cat}"`}
+                    className="opacity-40 hover:opacity-100 p-0.5 rounded-md hover:bg-rose-500/10 hover:text-rose-500 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
 
           {/* Quick Add Category inline */}
           {isAddingCategory ? (
@@ -1650,6 +1696,47 @@ export default function ServiciosPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal 4: Custom Web Modal for Delete Category Confirmation */}
+      <Modal
+        open={!!categoryToDelete}
+        onClose={() => setCategoryToDelete(null)}
+        title="¿Eliminar categoría de servicios?"
+      >
+        <div className="space-y-4 text-xs">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-bold">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-900 dark:text-white">
+                Categoría: &quot;{categoryToDelete}&quot;
+              </p>
+              <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5 leading-relaxed">
+                Esta categoría se quitará del catálogo y de la base de datos. Los servicios vinculados a ella seguirán existiendo en tu negocio.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => setCategoryToDelete(null)}
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDeleteCategory}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+            >
+              Eliminar Categoría
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
+

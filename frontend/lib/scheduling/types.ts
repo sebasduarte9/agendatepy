@@ -29,6 +29,19 @@ export type PublicService = {
   name: string;
   durationMinutes: number;
   price: number;
+  category?: string;
+  hasPromo?: boolean;
+  promoPrice?: number;
+  promoBadge?: string;
+  promoDisplayType?: "percentage" | "amount";
+  promoType?: "time" | "quantity" | "both";
+  promoLimitQuantity?: number;
+  promoLimitHours?: number;
+  requirePrepayment?: boolean;
+  prepaymentType?: "deposit" | "full";
+  prepaymentAmount?: number;
+  prepaymentMethod?: "sipap" | "transferencia" | "qr" | "cualquiera";
+  prepaymentInstructions?: string;
 };
 
 export type PublicTenant = {

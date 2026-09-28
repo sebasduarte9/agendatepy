@@ -86,6 +86,7 @@ export default function EquipoRolesPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
   const [invitingId, setInvitingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -234,10 +235,14 @@ export default function EquipoRolesPage() {
   }
 
   function handleDelete(id: string, name: string) {
-    if (confirm(`¿Eliminar a "${name}" del equipo?`)) {
-      deleteStaff(id);
-      pushToast("success", "Colaborador eliminado del equipo");
-    }
+    setMemberToDelete({ id, name });
+  }
+
+  function handleConfirmDeleteMember() {
+    if (!memberToDelete) return;
+    deleteStaff(memberToDelete.id);
+    pushToast("success", `Colaborador "${memberToDelete.name}" eliminado del equipo`);
+    setMemberToDelete(null);
   }
 
   return (
@@ -610,6 +615,46 @@ export default function EquipoRolesPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Web Modal for Delete Staff Member Confirmation */}
+      <Modal
+        open={!!memberToDelete}
+        onClose={() => setMemberToDelete(null)}
+        title="¿Eliminar colaborador del equipo?"
+      >
+        <div className="space-y-4 text-xs">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-bold">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-900 dark:text-white">
+                {memberToDelete?.name}
+              </p>
+              <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5 leading-relaxed">
+                Este colaborador ya no figurará en la agenda de turnos ni tendrá acceso al panel de control.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => setMemberToDelete(null)}
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDeleteMember}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+            >
+              Eliminar Colaborador
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

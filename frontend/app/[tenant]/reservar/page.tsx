@@ -197,6 +197,29 @@ export default async function ReservarPage({ params }: PageProps) {
 
   const theme = parseTheme(tenant.themeSettings);
 
+  const tenantSettings = (tenant.settings as Record<string, any>) || {};
+  const serviceExtras = (tenantSettings.serviceExtras as Record<string, any>) || {};
+
+  const enrichedServices = (tenant.services || []).map((s: any) => {
+    const extra = serviceExtras[s.id] || {};
+    return {
+      ...s,
+      category: extra.category || s.category,
+      hasPromo: Boolean(extra.hasPromo),
+      promoPrice: extra.promoPrice !== undefined ? Number(extra.promoPrice) : undefined,
+      promoBadge: extra.promoBadge || undefined,
+      promoDisplayType: extra.promoDisplayType || undefined,
+      promoType: extra.promoType || undefined,
+      promoLimitHours: extra.promoLimitHours !== undefined ? Number(extra.promoLimitHours) : undefined,
+      promoLimitQuantity: extra.promoLimitQuantity !== undefined ? Number(extra.promoLimitQuantity) : undefined,
+      requirePrepayment: Boolean(extra.requirePrepayment),
+      prepaymentType: extra.prepaymentType || undefined,
+      prepaymentAmount: extra.prepaymentAmount !== undefined ? Number(extra.prepaymentAmount) : undefined,
+      prepaymentMethod: extra.prepaymentMethod || undefined,
+      prepaymentInstructions: extra.prepaymentInstructions || undefined,
+    };
+  });
+
   return (
     <BookingWizard
       tenant={{
@@ -241,7 +264,7 @@ export default async function ReservarPage({ params }: PageProps) {
         avatarShape: theme.avatarShape,
         avatarBorder: theme.avatarBorder,
       }}
-      services={tenant.services}
+      services={enrichedServices}
     />
   );
 }

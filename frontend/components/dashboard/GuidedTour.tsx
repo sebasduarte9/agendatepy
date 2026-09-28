@@ -395,22 +395,59 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Registrar un cobro o ingreso",
+        taskTitle: "Panel Central de Caja & Finanzas",
         instruction:
-          "Tocá '+ Nuevo Movimiento'. Seleccioná si fue cobro de turno, propina o venta de producto, ingresá el monto en Gs. y elegí el método de pago.",
+          "Aquí controlás todos los movimientos de dinero de tu negocio: cobros de turnos, venta de productos de mostrador y gastos menores.",
+        tip: "Mantené tu caja actualizada en tiempo real para evitar descuadres al final del turno.",
+        targetSelector: '[data-tour="caja-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Controlar el desglose por medio de pago",
+        taskTitle: "Registro Completo por Días & Calendario",
         instruction:
-          "Las tarjetas de balance arriba te separan exactamente cuánto tenés en Efectivo en mano, cuánto entró por SIPAP y cuánto por tarjeta.",
-        tip: "Así el arqueo al final del día coincide al 100% con tu extracto bancario.",
+          "Navegá fácilmente entre Hoy, Ayer, cualquier fecha específica del calendario o visualizá el historial completo de movimientos.",
+        tip: "Al cambiar de día, los balances y cobros se recalculan al instante para la fecha elegida.",
+        targetSelector: '[data-tour="caja-date-filter"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Realizar el arqueo y cierre del día",
+        taskTitle: "Métricas & Saldo Esperado en Caja",
         instruction:
-          "Revisá el total recaudado del día contra el dinero físico en la gaveta y confirmá el cierre para dejar la caja lista para mañana.",
+          "Consultá el total de ingresos, los egresos y el efectivo físico exacto que debe haber en tu cajón (Fondo inicial + Efectivo cobrado - Egresos).",
+        tip: "Los cobros por POS y transferencias bancarias SIPAP van directo a tu cuenta comercial.",
+        targetSelector: '[data-tour="caja-kpis"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Desglose por Medios de Pago",
+        instruction:
+          "Separá con precisión cuánto dinero ingresó en Efectivo Físico, cuánto vía tarjeta POS Bancard y cuánto por transferencias bancarias SIPAP.",
+        tip: "Facilita la conciliación con tu extracto bancario en cuestión de segundos.",
+        targetSelector: '[data-tour="caja-methods"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Registrar Nuevo Cobro o Egreso",
+        instruction:
+          "Tocá '+ Registrar Movimiento' para asentar un cobro de servicio, venta de producto de mostrador o gasto menor (hielo, café, insumos).",
+        tip: "Podés seleccionar productos cargados en tienda para descontar stock automáticamente.",
+        targetSelector: '[data-tour="caja-new-btn"]',
+      },
+      {
+        stepNumber: 6,
+        taskTitle: "Arqueo & Cierre de Caja del Día",
+        instruction:
+          "Al terminar la jornada laboral, tocá 'Cierre de Caja'. Contá los billetes en tu gaveta física y el sistema detectará al instante si tu caja está exacta, con sobrante o con faltante.",
+        tip: "Podés añadir observaciones y los cierres quedan guardados en la base de datos.",
+        targetSelector: '[data-tour="caja-close-btn"]',
+      },
+      {
+        stepNumber: 7,
+        taskTitle: "Auditoría Cronológica de Movimientos",
+        instruction:
+          "Revisá cada movimiento registrado en orden de hora, con su método de pago, comprobante o voucher y exportá a CSV si necesitás contabilidad.",
+        tip: "Podés filtrar la tabla rápidamente por Efectivo, POS o Transferencia.",
+        targetSelector: '[data-tour="caja-table"]',
       },
     ],
   },

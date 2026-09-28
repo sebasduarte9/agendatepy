@@ -32,6 +32,9 @@ import {
   Phone,
   Globe,
   Star,
+  Flame,
+  Timer,
+  BadgePercent,
 } from "lucide-react";
 
 function InstagramIcon({ className = "h-4 w-4" }: { className?: string }) {
@@ -355,6 +358,7 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                     <ul className="space-y-2.5">
                       {services.map((item) => {
                         const selected = item.id === serviceId;
+                        const hasPromo = Boolean(item.hasPromo && item.promoPrice && item.promoPrice < item.price);
                         return (
                           <li key={item.id}>
                             <button
@@ -372,15 +376,53 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                                   : itemBgClass
                               }`}
                             >
-                              <div>
-                                <span className="block font-bold text-sm">{item.name}</span>
-                                <span className={`mt-0.5 inline-flex items-center gap-1 text-xs ${secondaryTextClass}`}>
-                                  <Clock className="h-3 w-3" /> {item.durationMinutes} min
-                                </span>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="block font-bold text-sm">{item.name}</span>
+                                  {hasPromo && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs">
+                                      <Flame className="h-3 w-3" />
+                                      {item.promoBadge || "PROMO FLASH"}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className={`inline-flex items-center gap-1 text-xs ${secondaryTextClass}`}>
+                                    <Clock className="h-3 w-3" /> {item.durationMinutes} min
+                                  </span>
+                                  {hasPromo && item.promoLimitHours && (
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                                      <Timer className="h-3 w-3" /> Vence en {item.promoLimitHours}h
+                                    </span>
+                                  )}
+                                  {hasPromo && item.promoLimitQuantity && (
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                                      ¡Últimos {item.promoLimitQuantity} cupos!
+                                    </span>
+                                  )}
+                                  {item.requirePrepayment && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                                      <ShieldCheck className="h-3 w-3 text-emerald-500" /> Seña requerida
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <span className="font-black text-sm text-primary">
-                                Gs. {item.price.toLocaleString("es-PY")}
-                              </span>
+                              <div className="text-right shrink-0 ml-3">
+                                {hasPromo ? (
+                                  <div>
+                                    <span className="block text-xs line-through text-slate-400 dark:text-slate-500">
+                                      Gs. {item.price.toLocaleString("es-PY")}
+                                    </span>
+                                    <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">
+                                      Gs. {item.promoPrice?.toLocaleString("es-PY")}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="font-black text-sm text-primary">
+                                    Gs. {item.price.toLocaleString("es-PY")}
+                                  </span>
+                                )}
+                              </div>
                             </button>
                           </li>
                         );
@@ -463,18 +505,60 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
                   <div className="space-y-4">
                     {/* Summary Card */}
                     <div className={`rounded-2xl border p-4 text-xs ${itemBgClass}`}>
-                      <div className="flex items-center justify-between border-b pb-2 border-black/5 dark:border-white/5">
-                        <span className="font-bold text-sm">{service?.name}</span>
-                        <span className="font-black text-primary">
-                          Gs. {service?.price.toLocaleString("es-PY")}
-                        </span>
+                      <div className="flex items-center justify-between border-b pb-2.5 border-black/5 dark:border-white/5">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-sm">{service?.name}</span>
+                            {service?.hasPromo && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 px-2 py-0.5 text-[10px] font-black text-white">
+                                <Flame className="h-3 w-3" />
+                                {service.promoBadge || "PROMO FLASH"}
+                              </span>
+                            )}
+                          </div>
+                          {service?.hasPromo && service.promoPrice && service.promoPrice < service.price && (
+                            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">
+                              ¡Ahorrás Gs. {(service.price - service.promoPrice).toLocaleString("es-PY")}!
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          {service?.hasPromo && service.promoPrice && service.promoPrice < service.price ? (
+                            <div>
+                              <span className="block text-[11px] line-through text-slate-400">
+                                Gs. {service.price.toLocaleString("es-PY")}
+                              </span>
+                              <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">
+                                Gs. {service.promoPrice.toLocaleString("es-PY")}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-black text-primary text-sm">
+                              Gs. {service?.price.toLocaleString("es-PY")}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className={`mt-2 flex items-center justify-between ${secondaryTextClass}`}>
+                      <div className={`mt-2.5 flex items-center justify-between ${secondaryTextClass}`}>
                         <span>Fecha y hora:</span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">
                           {start ? formatInTimeZone(new Date(start), tenant.timezone, "d 'de' MMMM · HH:mm 'hs'", { locale: es }) : ""}
                         </span>
                       </div>
+
+                      {service?.requirePrepayment && (
+                        <div className="mt-3 rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                          <ShieldCheck className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                          <div>
+                            <p className="font-bold text-[11px]">
+                              Seña requerida: Gs. {(service.prepaymentAmount || Math.round((service.promoPrice || service.price) * 0.5)).toLocaleString("es-PY")} ({service.prepaymentMethod?.toUpperCase() || "SIPAP"})
+                            </p>
+                            <p className="text-[10px] text-amber-800 dark:text-amber-300 mt-0.5">
+                              {service.prepaymentInstructions || "Enviar comprobante por WhatsApp al agendar para congelar tu lugar."}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-3">

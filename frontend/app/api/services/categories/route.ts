@@ -103,6 +103,66 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN"]);
+    if (isGuardError(auth)) return auth;
+
+    let name = request.nextUrl.searchParams.get("name") || "";
+    if (!name) {
+      const body = await request.json().catch(() => ({}));
+      name = typeof body.name === "string" ? body.name : "";
+    }
+    name = name.trim();
+
+    if (!name) {
+      return NextResponse.json(
+        { ok: false, error: "VALIDATION_ERROR", message: "Nombre de categoría requerido." },
+        { status: 400 }
+      );
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: auth.tenantId },
+      select: { settings: true },
+    });
+
+    const currentSettings = (tenant?.settings as Record<string, any>) || {};
+    const currentCategories: string[] = Array.isArray(currentSettings.serviceCategories)
+      ? currentCategoriesFilter(currentSettings.serviceCategories)
+      : [...DEFAULT_CATEGORIES];
+
+    // Filter out target category (case-insensitive)
+    const updatedCategories = currentCategories.filter(
+      (c) => c.toLowerCase() !== name.toLowerCase()
+    );
+
+    await prisma.tenant.update({
+      where: { id: auth.tenantId },
+      data: {
+        settings: {
+          ...currentSettings,
+          serviceCategories: updatedCategories,
+        },
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      deleted: name,
+      categories: updatedCategories,
+      message: `Categoría "${name}" eliminada correctamente.`,
+    });
+  } catch (error) {
+    console.error("Error en DELETE /api/services/categories:", error);
+    return NextResponse.json(
+      { ok: false, error: "DB_UNAVAILABLE", message: "Error al eliminar categoría en base de datos." },
+      { status: 500 }
+    );
+  }
+}
+
 function currentCategoriesFilter(list: unknown[]): string[] {
   return list.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
+
