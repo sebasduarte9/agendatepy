@@ -112,7 +112,7 @@ export type Client = {
   formula?: string; // Ficha técnica: tinte, corte o preferencia médica/estética
   totalVisits: number;
   totalSpent: number;
-  lastVisit: string; // ISO
+  lastVisit: string | null; // ISO o null si no tiene visitas completadas
   tags: string[]; // "VIP", "Frecuente", "Nuevo"
   loyaltyPoints: number; // Sellos / puntos de fidelización acumulados
   loyaltyRedeemed: number; // Recompensas canjeadas

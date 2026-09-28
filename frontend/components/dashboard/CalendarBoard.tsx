@@ -89,6 +89,7 @@ export default function CalendarBoard() {
 
   const [newClientName, setNewClientName] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
+  const [newClientId, setNewClientId] = useState<string | null>(null);
   const [newServiceId, setNewServiceId] = useState(services[0]?.id || "");
   const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>("efectivo");
 
@@ -104,8 +105,6 @@ export default function CalendarBoard() {
   const searchParams = useSearchParams();
   const queryAppointmentId = searchParams?.get("appointmentId");
   const queryNewForClient = searchParams?.get("newForClient");
-  const queryClientName = searchParams?.get("clientName");
-  const queryClientPhone = searchParams?.get("clientPhone");
 
   useEffect(() => {
     if (queryAppointmentId && appointments.length > 0) {
@@ -121,12 +120,31 @@ export default function CalendarBoard() {
 
   useEffect(() => {
     if (queryNewForClient) {
-      if (queryClientName) setNewClientName(queryClientName);
-      if (queryClientPhone) setNewClientPhone(queryClientPhone);
-      setNewModalMode("appointment");
-      setNewModalOpen(true);
+      // 1. Intentar resolver el cliente desde el store local de Zustand
+      const match = clients.find((c) => c.id === queryNewForClient);
+      if (match) {
+        setNewClientId(match.id);
+        setNewClientName(match.name);
+        setNewClientPhone(match.phone);
+        setNewModalMode("appointment");
+        setNewModalOpen(true);
+      } else if (queryNewForClient.length > 10) {
+        // 2. Si aún no está en store (ej: navegación directa), consultar API autenticada sin PII en URL
+        fetch(`/api/clients/${queryNewForClient}`)
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.ok && d.client) {
+              setNewClientId(d.client.id);
+              setNewClientName(d.client.name);
+              setNewClientPhone(d.client.phone);
+              setNewModalMode("appointment");
+              setNewModalOpen(true);
+            }
+          })
+          .catch(() => {});
+      }
     }
-  }, [queryNewForClient, queryClientName, queryClientPhone]);
+  }, [queryNewForClient, clients]);
 
   // Filtered appointments
   const filtered = appointments.filter((item) => {
@@ -150,6 +168,7 @@ export default function CalendarBoard() {
       time: timeStr,
       staffId: staffId || staff[0]?.id || "",
     });
+    setNewClientId(null);
     setNewClientName("");
     setNewClientPhone("");
     setNewServiceId(services[0]?.id || "");
@@ -200,6 +219,7 @@ export default function CalendarBoard() {
 
     const newApp: Appointment = {
       id: `app-${Date.now()}`,
+      clientId: newClientId || undefined,
       clientName: newClientName.trim(),
       clientPhone: normPhone,
       clientEmail: `${newClientName.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,

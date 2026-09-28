@@ -71,12 +71,10 @@ export async function GET(request: NextRequest) {
       const completedApts = clientApts.filter((a) => a.status === "COMPLETED");
       const totalVisits = completedApts.length;
 
-      // Última visita: último COMPLETED
+      // Última visita: ÚNICAMENTE existe si hay al menos un appointment COMPLETED
       const latestCompleted = completedApts.length > 0 ? completedApts[0] : null;
       const lastVisit = latestCompleted
         ? latestCompleted.startTime.toISOString()
-        : c.lastVisit
-        ? c.lastVisit.toISOString()
         : null;
 
       // Próxima cita: primer appointment futuro que no sea CANCELLED, NO_SHOW, EXPIRED
@@ -111,7 +109,7 @@ export async function GET(request: NextRequest) {
         instagram: c.instagram || "",
         totalVisits,
         totalSpent,
-        lastVisit: lastVisit || c.createdAt.toISOString(),
+        lastVisit,
         nextAppointment: nextApt
           ? {
               id: nextApt.id,
