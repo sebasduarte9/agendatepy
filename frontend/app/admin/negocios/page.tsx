@@ -171,9 +171,9 @@ export default function AdminTenantsDirectoryPage() {
               setPage(1);
             }}
             options={[
-              { value: "ALL", label: "💳 Todos los Planes" },
-              { value: "FREE", label: "🔘 Cuentas FREE" },
-              { value: "PAID", label: "💎 Cuentas de Pago" },
+              { value: "ALL", label: "Todos los Planes" },
+              { value: "FREE", label: "Cuentas FREE" },
+              { value: "PAID", label: "Cuentas de Pago" },
               { value: "PROFESIONAL", label: "PROFESIONAL" },
               { value: "EMPRESA", label: "EMPRESA" },
             ]}
@@ -206,11 +206,11 @@ export default function AdminTenantsDirectoryPage() {
               setPage(1);
             }}
             options={[
-              { value: "createdAt-desc", label: "📅 Más recientes primero" },
-              { value: "createdAt-asc", label: "📅 Más antiguos primero" },
-              { value: "name-asc", label: "🔤 Nombre (A - Z)" },
-              { value: "name-desc", label: "🔤 Nombre (Z - A)" },
-              { value: "lastActivity-desc", label: "⚡ Mayor actividad reciente" },
+              { value: "createdAt-desc", label: "Más recientes primero" },
+              { value: "createdAt-asc", label: "Más antiguos primero" },
+              { value: "name-asc", label: "Nombre (A - Z)" },
+              { value: "name-desc", label: "Nombre (Z - A)" },
+              { value: "lastActivity-desc", label: "Mayor actividad reciente" },
             ]}
             buttonClassName="bg-slate-950 border-slate-800 text-slate-300 min-w-[190px]"
           />

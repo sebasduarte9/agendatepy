@@ -214,7 +214,7 @@ export default function WebHeatmapAdminPage() {
             value={tenantId}
             onChange={(val) => setTenantId(val)}
             options={[
-              { value: "ALL", label: "🏢 Todos los Negocios" },
+              { value: "ALL", label: "Todos los Negocios" },
               ...tenants.map((t) => ({ value: t.id, label: t.name })),
             ]}
             buttonClassName="bg-slate-900 border-slate-800 text-slate-300 min-w-[170px]"
@@ -225,7 +225,7 @@ export default function WebHeatmapAdminPage() {
             value={pagePath}
             onChange={(val) => setPagePath(val)}
             options={[
-              { value: "all", label: "🌐 Todas las Páginas" },
+              { value: "all", label: "Todas las Páginas" },
               ...(data?.availablePages?.map((p) => ({
                 value: p.path,
                 label: p.path,

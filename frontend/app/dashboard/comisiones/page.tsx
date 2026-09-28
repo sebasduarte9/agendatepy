@@ -421,7 +421,8 @@ export default function ComisionesPage() {
     () => [
       {
         value: "ALL",
-        label: `👥 Todo el equipo (${staff.length})`,
+        label: `Todo el equipo (${staff.length})`,
+        icon: <Users className="h-3.5 w-3.5 text-primary" />,
       },
       ...staff.map((s) => ({
         value: s.id,
@@ -557,8 +558,11 @@ export default function ComisionesPage() {
         />
       </div>
 
-      {/* Quick Jump Anchors for fast navigation */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+      {/* Quick Jump Navigation Tabs */}
+      <div
+        data-tour="comisiones-tabs"
+        className="flex items-center gap-2 overflow-x-auto pb-1 text-xs"
+      >
         <a
           href="#seccion-equipo"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold transition"
@@ -955,13 +959,15 @@ export default function ComisionesPage() {
                           {new Date(p.periodEnd).toLocaleDateString("es-PY", { day: "2-digit", month: "short" })}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5 text-[10px]">
-                            <span className="font-semibold text-indigo-700 dark:text-indigo-400">
-                              ✂️ {servPct}%
+                          <div className="flex items-center gap-2 text-[10.5px]">
+                            <span className="inline-flex items-center gap-1 font-semibold text-indigo-700 dark:text-indigo-400">
+                              <Scissors className="h-3 w-3" />
+                              <span>{servPct}%</span>
                             </span>
-                            <span className="text-slate-300">/</span>
-                            <span className="font-semibold text-amber-700 dark:text-amber-400">
-                              🛍️ {prodPct}%
+                            <span className="text-slate-300 dark:text-slate-600">/</span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
+                              <ShoppingBag className="h-3 w-3" />
+                              <span>{prodPct}%</span>
                             </span>
                           </div>
                         </td>

@@ -543,6 +543,14 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 4,
+        taskTitle: "Pestañas de Navegación",
+        instruction:
+          "Utilizá estas pestañas para acceder directamente al equipo y sus ganancias, al detalle de turnos y ventas, y al historial de pagos.",
+        tip: "Te permite moverte de forma ágil entre las diferentes áreas del módulo.",
+        targetSelector: '[data-tour="comisiones-tabs"]',
+      },
+      {
+        stepNumber: 5,
         taskTitle: "Perfil y Ganancias (% Servicios vs % Productos)",
         instruction:
           "En la tarjeta de cada profesional podés ver qué porcentaje de su dinero viene de servicios y qué porcentaje viene de productos vendidos.",
@@ -550,7 +558,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         targetSelector: '[data-tour="comisiones-staff-list"]',
       },
       {
-        stepNumber: 5,
+        stepNumber: 6,
         taskTitle: "Pagar al Colaborador",
         instruction:
           "Hacé clic en 'Pagar Comisión' para pagarle a un profesional, descontar adelantos o vales si los tuviera, y asentar la salida de caja.",
@@ -558,7 +566,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         targetSelector: '[data-tour="comisiones-liquidar-btn"]',
       },
       {
-        stepNumber: 6,
+        stepNumber: 7,
         taskTitle: "Detalle de Servicios y Ventas",
         instruction:
           "Revisá cada servicio realizado y cada producto vendido con el monto cobrado y la ganancia calculada para el colaborador.",
@@ -566,7 +574,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         targetSelector: '[data-tour="comisiones-turnos-table"]',
       },
       {
-        stepNumber: 7,
+        stepNumber: 8,
         taskTitle: "Historial de Pagos y Recibos",
         instruction:
           "Consultá todos los pagos realizados e imprimí o compartí por WhatsApp el recibo oficial con el desglose de servicios y productos.",
