@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Scissors,
@@ -17,12 +17,9 @@ import {
   BadgePercent,
   Flame,
   Layers,
-  Tag,
   Eye,
   EyeOff,
-  Percent,
   X,
-  UserCheck,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -57,7 +54,7 @@ export default function ServiciosPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("Todos");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Custom Categories State
+  // Custom Categories State (persisted to PostgreSQL SQL via /api/services/categories)
   const [customCategories, setCustomCategories] = useState<string[]>(INITIAL_CATEGORIES);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState("");
@@ -65,11 +62,9 @@ export default function ServiciosPage() {
   // Delete Confirmation Modal State
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
-  // Service Modal state
+  // Service Modal state (Create / Edit general info)
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
-
-  // Form State
   const [serviceForm, setServiceForm] = useState({
     name: "",
     category: "Peluquería",
@@ -78,7 +73,12 @@ export default function ServiciosPage() {
     description: "",
     active: true,
     staffIds: [] as string[],
-    hasPromo: false,
+  });
+
+  // Dedicated Promo Flash Modal State
+  const [promoModalService, setPromoModalService] = useState<ServiceItem | null>(null);
+  const [promoForm, setPromoForm] = useState({
+    hasPromo: true,
     promoCalcMode: "percentage" as "percentage" | "amount",
     promoPercent: 20,
     promoPrice: 64000,
@@ -86,7 +86,21 @@ export default function ServiciosPage() {
     promoBadge: "-20% OFF",
   });
 
-  // Dynamic Categories merging defaults + created + services
+  // Fetch categories from SQL on mount
+  useEffect(() => {
+    fetch("/api/services/categories")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCustomCategories(data.categories);
+        }
+      })
+      .catch((err) => {
+        console.warn("No se pudo cargar categorías desde SQL:", err);
+      });
+  }, []);
+
+  // Dynamic Categories merging defaults + SQL created + existing services
   const allCategories = useMemo(() => {
     const set = new Set<string>();
     customCategories.forEach((c) => set.add(c));
@@ -127,22 +141,39 @@ export default function ServiciosPage() {
       ? Math.round(services.reduce((sum, s) => sum + s.durationMin, 0) / services.length)
       : 0;
 
-  // Handlers for Categories
-  function handleCreateCategory() {
+  // Handlers for Categories (Saved in PostgreSQL SQL)
+  async function handleCreateCategory() {
     const trimmed = newCategoryInput.trim();
     if (!trimmed) return;
     if (allCategories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
       pushToast("error", "Esa categoría ya existe.");
       return;
     }
+
+    // Optimistic update
     setCustomCategories((prev) => [...prev, trimmed]);
     setServiceForm((prev) => ({ ...prev, category: trimmed }));
     setNewCategoryInput("");
     setIsAddingCategory(false);
-    pushToast("success", `Categoría "${trimmed}" agregada`);
+    pushToast("success", `Categoría "${trimmed}" guardada`);
+
+    // Persist to PostgreSQL tenant settings via SQL API
+    try {
+      const res = await fetch("/api/services/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.categories)) {
+        setCustomCategories(data.categories);
+      }
+    } catch (err) {
+      console.error("Error guardando categoría en SQL:", err);
+    }
   }
 
-  // Handlers for Services
+  // Handlers for Services (Create / Edit)
   function handleOpenCreateService() {
     setEditingService(null);
     const defaultStaffIds = activeStaff.map((s) => s.id);
@@ -154,24 +185,12 @@ export default function ServiciosPage() {
       description: "",
       active: true,
       staffIds: defaultStaffIds,
-      hasPromo: false,
-      promoCalcMode: "percentage",
-      promoPercent: 20,
-      promoPrice: 64000,
-      promoDisplayType: "percentage",
-      promoBadge: "-20% OFF",
     });
     setServiceModalOpen(true);
   }
 
-  function handleOpenEditService(s: ServiceItem, openForPromo = false) {
+  function handleOpenEditService(s: ServiceItem) {
     setEditingService(s);
-    const price = s.price || 0;
-    const hasPromo = openForPromo ? true : !!s.hasPromo;
-    const promoPrice = s.promoPrice || Math.round(price * 0.8);
-    const calculatedPercent =
-      price > 0 && promoPrice < price ? Math.round(((price - promoPrice) / price) * 100) : 20;
-
     const initialStaffIds =
       s.staffIds && s.staffIds.length > 0
         ? s.staffIds
@@ -185,103 +204,36 @@ export default function ServiciosPage() {
       description: s.description,
       active: s.active !== false,
       staffIds: initialStaffIds,
-      hasPromo,
-      promoCalcMode: "percentage",
-      promoPercent: calculatedPercent,
-      promoPrice,
-      promoDisplayType: s.promoDisplayType || "percentage",
-      promoBadge: s.promoBadge || `-${calculatedPercent}% OFF`,
     });
     setServiceModalOpen(true);
   }
 
-  // Discount Calculation Helpers
-  function handleBasePriceChange(newPrice: number) {
-    const safePrice = Math.max(0, newPrice);
-    if (serviceForm.hasPromo) {
-      if (serviceForm.promoCalcMode === "percentage") {
-        const newPromoPrice = Math.round(safePrice * (1 - serviceForm.promoPercent / 100));
-        const badge =
-          serviceForm.promoDisplayType === "percentage"
-            ? `-${serviceForm.promoPercent}% OFF`
-            : `Ahorrá ${formatGs(safePrice - newPromoPrice)}`;
-        setServiceForm((prev) => ({
-          ...prev,
-          price: safePrice,
-          promoPrice: newPromoPrice,
-          promoBadge: badge,
-        }));
-      } else {
-        const percent =
-          safePrice > 0 ? Math.round(((safePrice - serviceForm.promoPrice) / safePrice) * 100) : 0;
-        const badge =
-          serviceForm.promoDisplayType === "percentage"
-            ? `-${Math.max(0, percent)}% OFF`
-            : `Ahorrá ${formatGs(Math.max(0, safePrice - serviceForm.promoPrice))}`;
-        setServiceForm((prev) => ({
-          ...prev,
-          price: safePrice,
-          promoPercent: Math.max(0, percent),
-          promoBadge: badge,
-        }));
-      }
-    } else {
-      setServiceForm((prev) => ({ ...prev, price: safePrice }));
+  function handleSaveService(e: React.FormEvent) {
+    e.preventDefault();
+    if (!serviceForm.name.trim()) {
+      pushToast("error", "Ingresá el nombre del servicio.");
+      return;
     }
-  }
 
-  function handlePercentChange(newPercent: number) {
-    const clampedPercent = Math.min(99, Math.max(1, newPercent));
-    const calculatedPromoPrice = Math.round(
-      serviceForm.price * (1 - clampedPercent / 100)
-    );
-    const badge =
-      serviceForm.promoDisplayType === "percentage"
-        ? `-${clampedPercent}% OFF`
-        : `Ahorrá ${formatGs(serviceForm.price - calculatedPromoPrice)}`;
+    const payload = {
+      name: serviceForm.name.trim(),
+      category: serviceForm.category,
+      durationMin: Number(serviceForm.durationMin) || 30,
+      price: Number(serviceForm.price) || 0,
+      description: serviceForm.description.trim(),
+      image: editingService?.image || "scissors",
+      active: serviceForm.active,
+      staffIds: serviceForm.staffIds,
+    };
 
-    setServiceForm((prev) => ({
-      ...prev,
-      promoPercent: clampedPercent,
-      promoPrice: calculatedPromoPrice,
-      promoBadge: badge,
-      promoCalcMode: "percentage",
-    }));
-  }
-
-  function handlePromoPriceChange(newPromoPrice: number) {
-    const clamped = Math.max(0, newPromoPrice);
-    const calculatedPercent =
-      serviceForm.price > 0
-        ? Math.round(((serviceForm.price - clamped) / serviceForm.price) * 100)
-        : 0;
-    const badge =
-      serviceForm.promoDisplayType === "percentage"
-        ? `-${Math.max(0, calculatedPercent)}% OFF`
-        : `Ahorrá ${formatGs(Math.max(0, serviceForm.price - clamped))}`;
-
-    setServiceForm((prev) => ({
-      ...prev,
-      promoPrice: clamped,
-      promoPercent: Math.max(0, calculatedPercent),
-      promoBadge: badge,
-      promoCalcMode: "amount",
-    }));
-  }
-
-  function handleDisplayTypeChange(type: "percentage" | "amount") {
-    let badge = "";
-    if (type === "percentage") {
-      badge = `-${serviceForm.promoPercent}% OFF`;
+    if (editingService) {
+      updateService(editingService.id, payload);
+      pushToast("success", `Servicio "${serviceForm.name}" actualizado`);
     } else {
-      const saved = Math.max(0, serviceForm.price - serviceForm.promoPrice);
-      badge = `Ahorrá ${formatGs(saved)}`;
+      addService(payload);
+      pushToast("success", `Servicio "${serviceForm.name}" creado`);
     }
-    setServiceForm((prev) => ({
-      ...prev,
-      promoDisplayType: type,
-      promoBadge: badge,
-    }));
+    setServiceModalOpen(false);
   }
 
   // Toggle staff assignment
@@ -302,36 +254,110 @@ export default function ServiciosPage() {
     }));
   }
 
-  function handleSaveService(e: React.FormEvent) {
-    e.preventDefault();
-    if (!serviceForm.name.trim()) {
-      pushToast("error", "Ingresá el nombre del servicio.");
-      return;
-    }
+  // Handlers for Dedicated Promo Flash Modal
+  function handleOpenPromoModal(service: ServiceItem) {
+    setPromoModalService(service);
+    const price = service.price || 0;
+    const hasPromo = !!service.hasPromo;
+    const promoPrice = service.promoPrice || Math.round(price * 0.8);
+    const calculatedPercent =
+      price > 0 && promoPrice < price ? Math.round(((price - promoPrice) / price) * 100) : 20;
 
-    const payload = {
-      name: serviceForm.name.trim(),
-      category: serviceForm.category,
-      durationMin: Number(serviceForm.durationMin) || 30,
-      price: Number(serviceForm.price) || 0,
-      description: serviceForm.description.trim(),
-      image: editingService?.image || "scissors",
-      active: serviceForm.active,
-      staffIds: serviceForm.staffIds,
-      hasPromo: serviceForm.hasPromo,
-      promoPrice: serviceForm.hasPromo ? Number(serviceForm.promoPrice) || 0 : undefined,
-      promoBadge: serviceForm.hasPromo ? serviceForm.promoBadge : undefined,
-      promoDisplayType: serviceForm.hasPromo ? serviceForm.promoDisplayType : undefined,
-    };
+    setPromoForm({
+      hasPromo: hasPromo ? true : true, // When opening promo modal, default active toggle on
+      promoCalcMode: "percentage",
+      promoPercent: calculatedPercent,
+      promoPrice,
+      promoDisplayType: service.promoDisplayType || "percentage",
+      promoBadge: service.promoBadge || `-${calculatedPercent}% OFF`,
+    });
+  }
 
-    if (editingService) {
-      updateService(editingService.id, payload);
-      pushToast("success", `Servicio "${serviceForm.name}" actualizado`);
+  function handlePromoPercentChange(newPercent: number) {
+    if (!promoModalService) return;
+    const clampedPercent = Math.min(99, Math.max(1, newPercent));
+    const basePrice = promoModalService.price;
+    const calculatedPromoPrice = Math.round(basePrice * (1 - clampedPercent / 100));
+    const badge =
+      promoForm.promoDisplayType === "percentage"
+        ? `-${clampedPercent}% OFF`
+        : `Ahorrá ${formatGs(basePrice - calculatedPromoPrice)}`;
+
+    setPromoForm((prev) => ({
+      ...prev,
+      promoPercent: clampedPercent,
+      promoPrice: calculatedPromoPrice,
+      promoBadge: badge,
+      promoCalcMode: "percentage",
+    }));
+  }
+
+  function handlePromoPriceChange(newPromoPrice: number) {
+    if (!promoModalService) return;
+    const basePrice = promoModalService.price;
+    const clamped = Math.max(0, newPromoPrice);
+    const calculatedPercent =
+      basePrice > 0 ? Math.round(((basePrice - clamped) / basePrice) * 100) : 0;
+    const badge =
+      promoForm.promoDisplayType === "percentage"
+        ? `-${Math.max(0, calculatedPercent)}% OFF`
+        : `Ahorrá ${formatGs(Math.max(0, basePrice - clamped))}`;
+
+    setPromoForm((prev) => ({
+      ...prev,
+      promoPrice: clamped,
+      promoPercent: Math.max(0, calculatedPercent),
+      promoBadge: badge,
+      promoCalcMode: "amount",
+    }));
+  }
+
+  function handlePromoDisplayTypeChange(type: "percentage" | "amount") {
+    if (!promoModalService) return;
+    let badge = "";
+    if (type === "percentage") {
+      badge = `-${promoForm.promoPercent}% OFF`;
     } else {
-      addService(payload);
-      pushToast("success", `Servicio "${serviceForm.name}" creado`);
+      const saved = Math.max(0, promoModalService.price - promoForm.promoPrice);
+      badge = `Ahorrá ${formatGs(saved)}`;
     }
-    setServiceModalOpen(false);
+    setPromoForm((prev) => ({
+      ...prev,
+      promoDisplayType: type,
+      promoBadge: badge,
+    }));
+  }
+
+  function handleSavePromo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!promoModalService) return;
+
+    updateService(promoModalService.id, {
+      hasPromo: promoForm.hasPromo,
+      promoPrice: promoForm.hasPromo ? Number(promoForm.promoPrice) || 0 : undefined,
+      promoBadge: promoForm.hasPromo ? promoForm.promoBadge : undefined,
+      promoDisplayType: promoForm.hasPromo ? promoForm.promoDisplayType : undefined,
+    });
+
+    pushToast(
+      "success",
+      promoForm.hasPromo
+        ? `Promoción activada para "${promoModalService.name}"`
+        : `Promoción desactivada para "${promoModalService.name}"`
+    );
+    setPromoModalService(null);
+  }
+
+  function handleRemovePromo() {
+    if (!promoModalService) return;
+    updateService(promoModalService.id, {
+      hasPromo: false,
+      promoPrice: undefined,
+      promoBadge: undefined,
+      promoDisplayType: undefined,
+    });
+    pushToast("success", `Promoción quitada de "${promoModalService.name}"`);
+    setPromoModalService(null);
   }
 
   function handleToggleVisibility(service: ServiceItem) {
@@ -376,7 +402,7 @@ export default function ServiciosPage() {
             <Scissors className="h-5 w-5 text-primary" />
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Categorías, duraciones por turno, profesionales asignados y promociones calculadas.
+            Categorías, duraciones por turno, profesionales asignados y promociones flash.
           </p>
         </div>
 
@@ -478,7 +504,7 @@ export default function ServiciosPage() {
                 type="button"
                 onClick={handleCreateCategory}
                 className="rounded-xl bg-primary text-white p-1 hover:opacity-90 transition cursor-pointer"
-                title="Guardar categoría"
+                title="Guardar categoría en base de datos"
               >
                 <Check className="h-3.5 w-3.5" />
               </button>
@@ -625,10 +651,10 @@ export default function ServiciosPage() {
                 </div>
 
                 <div className="mt-4 space-y-2.5 pt-3.5 border-t border-slate-100 dark:border-white/5">
-                  {/* Promo Badge / Fast Toggle Button */}
+                  {/* Standalone Promo Flash Button */}
                   <button
                     type="button"
-                    onClick={() => handleOpenEditService(item, !item.hasPromo)}
+                    onClick={() => handleOpenPromoModal(item)}
                     className={`w-full flex items-center justify-between rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
                       item.hasPromo
                         ? "border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
@@ -644,11 +670,11 @@ export default function ServiciosPage() {
                       <span>
                         {item.hasPromo
                           ? `Promo activa: ${item.promoBadge || "-20% OFF"}`
-                          : "Activar descuento"}
+                          : "Activar promo flash"}
                       </span>
                     </span>
                     <span className="text-[10px] opacity-75 font-bold">
-                      {item.hasPromo ? "Modificar" : "Activar"}
+                      {item.hasPromo ? "Modificar" : "Configurar"}
                     </span>
                   </button>
 
@@ -681,7 +707,7 @@ export default function ServiciosPage() {
                       type="button"
                       onClick={() => handleOpenEditService(item)}
                       className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-primary hover:border-primary/50 transition cursor-pointer"
-                      title="Editar servicio"
+                      title="Editar datos del servicio"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -702,7 +728,7 @@ export default function ServiciosPage() {
         </div>
       )}
 
-      {/* Custom Modern Modal: Service Create / Edit */}
+      {/* Modal 1: Service Create / Edit (Clean, Zero Promo Clutter) */}
       <Modal
         open={serviceModalOpen}
         onClose={() => setServiceModalOpen(false)}
@@ -760,7 +786,7 @@ export default function ServiciosPage() {
                 className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="h-3 w-3" />
-                <span>Crear Categoría</span>
+                <span>Nueva Categoría</span>
               </button>
             </div>
 
@@ -806,7 +832,7 @@ export default function ServiciosPage() {
                   onClick={handleCreateCategory}
                   className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:opacity-95 cursor-pointer"
                 >
-                  Agregar
+                  Guardar en SQL
                 </button>
               </div>
             )}
@@ -878,7 +904,7 @@ export default function ServiciosPage() {
                   step="5000"
                   required
                   value={serviceForm.price}
-                  onChange={(e) => handleBasePriceChange(Number(e.target.value))}
+                  onChange={(e) => setServiceForm({ ...serviceForm, price: Math.max(0, Number(e.target.value)) })}
                   className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white font-mono font-black text-base focus:border-primary focus:outline-none"
                 />
               </div>
@@ -887,7 +913,7 @@ export default function ServiciosPage() {
                   <button
                     key={quick}
                     type="button"
-                    onClick={() => handleBasePriceChange(quick)}
+                    onClick={() => setServiceForm({ ...serviceForm, price: quick })}
                     className="flex-1 rounded-xl border border-slate-200/60 dark:border-white/10 py-1 text-[10px] font-bold text-slate-500 hover:text-primary hover:border-primary transition cursor-pointer"
                   >
                     {quick / 1000}k
@@ -956,153 +982,6 @@ export default function ServiciosPage() {
             </div>
           </div>
 
-          {/* AUTOMATIC DISCOUNT CALCULATOR & LIVE PREVIEW DEMO */}
-          <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-amber-500/10 to-transparent p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Flame className="h-4 w-4 text-amber-500 fill-amber-500" />
-                <span className="font-extrabold text-slate-900 dark:text-white text-xs">
-                  Descuento o Promoción Flash
-                </span>
-              </div>
-
-              {/* Custom Switch for Promo */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={serviceForm.hasPromo}
-                onClick={() => setServiceForm({ ...serviceForm, hasPromo: !serviceForm.hasPromo })}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  serviceForm.hasPromo ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    serviceForm.hasPromo ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {serviceForm.hasPromo && (
-              <div className="space-y-3 pt-3 border-t border-amber-500/20 text-xs">
-                {/* Dual Inputs: % vs Monto sync */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                      Porcentaje de Descuento (%)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="1"
-                        max="99"
-                        value={serviceForm.promoPercent}
-                        onChange={(e) => handlePercentChange(Number(e.target.value))}
-                        className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 pl-3 pr-8 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-amber-600">
-                        %
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      Calcula el monto final automáticamente.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                      Precio Promocional (Gs.)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1000"
-                      value={serviceForm.promoPrice}
-                      onChange={(e) => handlePromoPriceChange(Number(e.target.value))}
-                      className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
-                    />
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      Calcula el % de descuento automáticamente.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Badge Style Selector */}
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
-                    ¿Cómo mostrar el descuento al cliente?
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleDisplayTypeChange("percentage")}
-                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
-                        serviceForm.promoDisplayType === "percentage"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
-                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
-                      }`}
-                    >
-                      <span className="block text-xs font-black">Mostrar Porcentaje</span>
-                      <span className="text-[10px] opacity-75">
-                        Ej: -{serviceForm.promoPercent}% OFF
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDisplayTypeChange("amount")}
-                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
-                        serviceForm.promoDisplayType === "amount"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
-                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
-                      }`}
-                    >
-                      <span className="block text-xs font-black">Mostrar Monto Ahorrado</span>
-                      <span className="text-[10px] opacity-75">
-                        Ej: Ahorrá {formatGs(Math.max(0, serviceForm.price - serviceForm.promoPrice))}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* LIVE PREVIEW DEMO CARD */}
-                <div className="mt-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-xs">
-                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-2">
-                    <span>Vista previa en vivo para el cliente:</span>
-                    <span className="text-amber-500 font-black">DEMO EN RESERVA</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                        {serviceForm.name || "Nombre del servicio"}
-                      </h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {serviceForm.durationMin} minutos · {serviceForm.category}
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="flex items-center gap-1.5 justify-end">
-                        <span className="text-xs text-slate-400 line-through font-mono">
-                          {formatGs(serviceForm.price)}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-700 dark:text-amber-300">
-                          <Flame className="h-3 w-3 fill-amber-500 text-amber-500" />
-                          {serviceForm.promoBadge}
-                        </span>
-                      </div>
-                      <div className="font-mono font-black text-lg text-emerald-600 dark:text-emerald-400 mt-0.5">
-                        {formatGs(serviceForm.promoPrice)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Modal Footer Actions */}
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
             <button
@@ -1122,7 +1001,201 @@ export default function ServiciosPage() {
         </form>
       </Modal>
 
-      {/* Custom Web Modal: Delete Service Confirmation */}
+      {/* Modal 2: Dedicated Standalone Promo Flash Modal */}
+      {promoModalService && (
+        <Modal
+          open={!!promoModalService}
+          onClose={() => setPromoModalService(null)}
+          title={`Promoción Flash: ${promoModalService.name}`}
+        >
+          <form onSubmit={handleSavePromo} className="space-y-4 text-xs">
+            {/* Promo Header & Switch */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white font-bold">
+                  <Flame className="h-4 w-4 fill-white" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
+                    Activar Precio Promocional
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Precio estándar: <strong className="text-slate-700 dark:text-slate-300 font-mono">{formatGs(promoModalService.price)}</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Custom Switch for Promo */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={promoForm.hasPromo}
+                onClick={() => setPromoForm({ ...promoForm, hasPromo: !promoForm.hasPromo })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  promoForm.hasPromo ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    promoForm.hasPromo ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {promoForm.hasPromo && (
+              <div className="space-y-4 pt-1">
+                {/* Dual Inputs: % vs Monto sync */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                      Porcentaje de Descuento (%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={promoForm.promoPercent}
+                        onChange={(e) => handlePromoPercentChange(Number(e.target.value))}
+                        className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 pl-3 pr-8 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-amber-600">
+                        %
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Calcula el monto final automáticamente.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                      Precio Promocional (Gs.)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={promoForm.promoPrice}
+                      onChange={(e) => handlePromoPriceChange(Number(e.target.value))}
+                      className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                    />
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Calcula el % de descuento automáticamente.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Badge Style Selector */}
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                    ¿Cómo mostrar el descuento en tu portal?
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePromoDisplayTypeChange("percentage")}
+                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                        promoForm.promoDisplayType === "percentage"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      <span className="block text-xs font-black">Mostrar Porcentaje</span>
+                      <span className="text-[10px] opacity-75">
+                        Ej: -{promoForm.promoPercent}% OFF
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePromoDisplayTypeChange("amount")}
+                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                        promoForm.promoDisplayType === "amount"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      <span className="block text-xs font-black">Mostrar Monto Ahorrado</span>
+                      <span className="text-[10px] opacity-75">
+                        Ej: Ahorrá {formatGs(Math.max(0, promoModalService.price - promoForm.promoPrice))}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* LIVE PREVIEW DEMO CARD */}
+                <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-xs">
+                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-2">
+                    <span>Vista previa en vivo para el cliente:</span>
+                    <span className="text-amber-500 font-black">DEMO EN RESERVA</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                        {promoModalService.name}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {promoModalService.durationMin} minutos · {promoModalService.category || "General"}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className="text-xs text-slate-400 line-through font-mono">
+                          {formatGs(promoModalService.price)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-700 dark:text-amber-300">
+                          <Flame className="h-3 w-3 fill-amber-500 text-amber-500" />
+                          {promoForm.promoBadge}
+                        </span>
+                      </div>
+                      <div className="font-mono font-black text-lg text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        {formatGs(promoForm.promoPrice)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+              {promoModalService.hasPromo ? (
+                <button
+                  type="button"
+                  onClick={handleRemovePromo}
+                  className="rounded-2xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3.5 py-2 font-bold transition cursor-pointer"
+                >
+                  Quitar Promoción
+                </button>
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPromoModalService(null)}
+                  className="rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-amber-500 hover:bg-amber-600 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+                >
+                  Guardar Promoción
+                </button>
+              </div>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Modal 3: Custom Web Modal for Delete Service Confirmation */}
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
