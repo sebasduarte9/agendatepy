@@ -189,7 +189,7 @@ function Bullet({
   children: ReactNode;
 }) {
   return (
-    <li className="flex items-start gap-2.5 rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 p-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+    <li className="flex items-start gap-2.5 rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 p-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:border-brand/30 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200">
       {icon}
       <div>{children}</div>
     </li>

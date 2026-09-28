@@ -29,7 +29,7 @@ export default function Integrations() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 lg:p-8 shadow-xs flex flex-col justify-between min-w-0"
+            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 lg:p-8 shadow-xs flex flex-col justify-between min-w-0 hover:-translate-y-1 hover:shadow-md transition-all duration-300"
           >
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 dark:bg-brand/20 px-3 py-0.5 text-[10px] sm:text-xs font-bold text-brand uppercase tracking-wider">
@@ -45,19 +45,19 @@ export default function Integrations() {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <MessageSquare className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                 WhatsApp Oficial
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <Share2 className="h-3.5 w-3.5 text-pink-600 shrink-0" />
                 Link en Instagram
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                 Google Maps & Ficha
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <QrCode className="h-3.5 w-3.5 text-brand shrink-0" />
                 QR en Mostrador
               </span>
@@ -70,7 +70,7 @@ export default function Integrations() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 lg:p-8 shadow-xs flex flex-col justify-between min-w-0"
+            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 lg:p-8 shadow-xs flex flex-col justify-between min-w-0 hover:-translate-y-1 hover:shadow-md transition-all duration-300"
           >
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-950/40 px-3 py-0.5 text-[10px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">
@@ -86,19 +86,19 @@ export default function Integrations() {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <Landmark className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                 SIPAP (Todos los Bancos)
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <CreditCard className="h-3.5 w-3.5 text-brand shrink-0" />
                 QR Bancard & POS
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                 Google Calendar
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <Smartphone className="h-3.5 w-3.5 text-slate-800 dark:text-white shrink-0" />
                 Apple Wallet & iOS
               </span>

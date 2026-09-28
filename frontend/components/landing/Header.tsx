@@ -154,7 +154,7 @@ export default function Header() {
                       key={item.id}
                       href={item.href}
                       onClick={(e) => handleNavClick(e, item.id, item.href)}
-                      className={`relative h-7 whitespace-nowrap rounded-full px-3 text-xs font-semibold transition-all duration-200 flex items-center ${
+                      className={`relative h-7 whitespace-nowrap rounded-full px-2.5 xl:px-3 text-[11px] xl:text-xs font-semibold transition-all duration-200 flex items-center ${
                         isActive
                           ? "bg-white dark:bg-slate-800 text-brand dark:text-white shadow-xs font-bold"
                           : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
@@ -171,12 +171,12 @@ export default function Header() {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 shrink-0">
-          {/* Subtle Live Demo Link */}
+          {/* Subtle Live Demo Link (visible on xl+ so 1024px iPad landscape has ample space) */}
           <Link
             href="/barberia/reservar"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden md:inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand transition px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="hidden xl:inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand transition px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <span>Ver Demo</span>
             <ExternalLink className="h-3 w-3 opacity-60" />
@@ -185,20 +185,21 @@ export default function Header() {
           {/* Login Button */}
           <Link
             href="/login"
-            className="hidden sm:inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs font-semibold transition-colors border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 h-8.5 sm:h-9 px-3 rounded-full text-slate-700 dark:text-slate-200 shadow-2xs"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs font-semibold transition-colors border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-full text-slate-700 dark:text-slate-200 shadow-2xs"
           >
             <LogIn className="h-3.5 w-3.5 text-slate-400" />
             <span>Acceder</span>
           </Link>
 
-          {/* High-Converting Primary CTA: Adaptive Text on Small Mobile */}
+          {/* High-Converting Primary CTA: Adaptive Text across Viewports */}
           <Link
             href="/onboarding"
-            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] xs:text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-8 xs:h-8.5 sm:h-9 px-2.5 xs:px-3 sm:px-4.5 rounded-full shadow-md shadow-brand/25"
+            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-8.5 sm:h-9 px-3 sm:px-4.5 rounded-full shadow-md shadow-brand/25"
           >
-            <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300 shrink-0" />
-            <span className="hidden xs:inline">Prueba gratuitamente</span>
-            <span className="xs:hidden">Probar gratis</span>
+            <Zap className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+            <span className="hidden xl:inline">Prueba gratuitamente</span>
+            <span className="hidden sm:inline xl:hidden">Probar gratis</span>
+            <span className="sm:hidden">Probar</span>
           </Link>
 
           {/* Mobile Hamburger Toggle */}

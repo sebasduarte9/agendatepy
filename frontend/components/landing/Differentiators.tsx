@@ -32,7 +32,7 @@ const ITEMS = [
 
 export default function Differentiators() {
   return (
-    <section id="diferenciales" className="relative overflow-hidden mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20 scroll-mt-20">
+    <section id="diferenciales" className="relative overflow-hidden mx-auto max-w-7xl px-3 sm:px-6 py-12 sm:py-20 scroll-mt-20">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ export default function Differentiators() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: (index % 2) * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 shadow-xs hover:border-brand/40 transition min-w-0"
+              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 shadow-xs hover:border-brand/40 hover:-translate-y-1 hover:shadow-md transition-all duration-300 min-w-0"
             >
               <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
                 <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />

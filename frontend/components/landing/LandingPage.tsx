@@ -12,6 +12,7 @@ import Pricing from "./Pricing";
 import Integrations from "./Integrations";
 import Differentiators from "./Differentiators";
 import FAQ from "./FAQ";
+import BottomCta from "./BottomCta";
 import Footer from "./Footer";
 import WhatsAppFloatingButton from "./WhatsAppFloatingButton";
 import StickyMobileCta from "./StickyMobileCta";
@@ -31,6 +32,7 @@ export default function LandingPage() {
         <Integrations />
         <Differentiators />
         <FAQ />
+        <BottomCta />
       </main>
       <Footer />
       <WhatsAppFloatingButton />

@@ -72,6 +72,27 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "AgendatePY — Sistema de Turnos Online y WhatsApp para Paraguay",
+  "alternateName": ["AgendatePY", "Agendate PY", "App Turnos Paraguay"],
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Scheduling Software",
+  "operatingSystem": "Web, iOS, Android",
+  "url": "https://agendatepy.com",
+  "description":
+    "Sistema de turnos online y agenda digital con WhatsApp para peluquerías, barberías, spas y consultorios en Paraguay. Recordatorios automáticos y cobro en Guaraníes.",
+  "offers": {
+    "@type": "Offer",
+    "price": "100000",
+    "priceCurrency": "PYG",
+    "availability": "https://schema.org/InStock",
+  },
+  "inLanguage": "es-PY",
+  "availableOnDevice": ["Desktop", "Mobile", "Tablet"],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -79,6 +100,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={`${jakarta.variable} h-full scroll-smooth`} data-scroll-behavior="smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans antialiased">{children}</body>
     </html>
   );

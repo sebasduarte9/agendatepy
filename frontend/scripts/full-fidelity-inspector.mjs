@@ -31,6 +31,7 @@ const SECTIONS = [
   { id: '10_integraciones', selector: '#integraciones' },
   { id: '11_diferenciales', selector: '#diferenciales' },
   { id: '12_faq', selector: '#faq' },
+  { id: '12b_bottom_cta', selector: 'main > section:last-of-type' },
   { id: '13_footer', selector: 'footer' },
 ];
 

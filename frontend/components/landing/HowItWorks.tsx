@@ -315,7 +315,7 @@ function WorkflowStep({
   detail: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 p-3.5 sm:p-4 shadow-xs backdrop-blur-xl hover:border-brand/40 transition">
+    <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 p-3.5 sm:p-4 shadow-xs backdrop-blur-xl hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
       <div className="flex items-center gap-2.5 sm:gap-3">
         <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] sm:text-xs font-black text-brand dark:text-white border border-slate-200/60 dark:border-white/10">
           {step}

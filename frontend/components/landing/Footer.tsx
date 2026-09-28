@@ -56,7 +56,7 @@ const COLUMNS = [
 export default function Footer() {
   return (
     <footer id="contacto" className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 transition-colors">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-14 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-14 sm:px-6">
         <div className="grid gap-6 sm:gap-10 grid-cols-2 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-block">

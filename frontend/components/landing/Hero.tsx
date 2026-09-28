@@ -34,11 +34,13 @@ export default function Hero() {
 
   return (
     <section id="inicio" className="relative overflow-hidden pt-4 sm:pt-8 pb-12 sm:pb-16 lg:pt-14 lg:pb-24 scroll-mt-20">
-      {/* Background ambient lighting */}
-      <div className="pointer-events-none absolute -top-40 right-0 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-brand/20 via-orange-500/10 to-transparent blur-3xl max-w-full" />
-      <div className="pointer-events-none absolute -bottom-40 left-0 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-emerald-500/15 via-brand/10 to-transparent blur-3xl max-w-full" />
+      {/* Background ambient lighting centered with content for ultra-wide and TV displays */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto max-w-7xl h-full overflow-hidden">
+        <div className="absolute -top-32 right-4 sm:right-12 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-brand/20 via-orange-500/10 to-transparent blur-3xl" />
+        <div className="absolute top-1/2 -left-20 h-[450px] w-[450px] rounded-full bg-gradient-to-tr from-emerald-500/15 via-brand/10 to-transparent blur-3xl" />
+      </div>
 
-      <div className="mx-auto grid max-w-7xl items-center gap-8 sm:gap-12 px-3 sm:px-6 lg:grid-cols-12">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-8 sm:gap-12 px-3 sm:px-6 lg:grid-cols-12">
         {/* Left Column: High-Converting Value Proposition */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -136,10 +138,10 @@ export default function Hero() {
                     key={item.id}
                     type="button"
                     onClick={() => setSelectedCategory(item.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer hover:-translate-y-0.5 ${
                       active
                         ? "border-brand bg-brand text-white shadow-md shadow-brand/25 font-bold"
-                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 shadow-xs"
+                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 hover:shadow-xs shadow-2xs"
                     }`}
                   >
                     <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />

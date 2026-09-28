@@ -228,10 +228,10 @@ function PriceCard({
     <motion.article
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
-      className={`relative rounded-3xl p-4.5 xs:p-5 sm:p-7 lg:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
+      className={`relative rounded-3xl p-4.5 xs:p-5 sm:p-7 lg:p-5.5 xl:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl hover:-translate-y-1 ${
         highlighted
-          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(255,79,43,0.3)] ring-4 ring-brand/10 dark:ring-brand/20"
-          : "border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:border-brand/40"
+          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(255,79,43,0.3)] ring-4 ring-brand/10 dark:ring-brand/20 hover:shadow-[0_30px_60px_-12px_rgba(255,79,43,0.35)]"
+          : "border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:border-brand/40 hover:shadow-xl"
       }`}
     >
       {highlighted && (
@@ -253,11 +253,11 @@ function PriceCard({
 
         {/* Precio y desglose de ahorro con altura reservada estable */}
         <div className="my-4 sm:my-5 border-b border-slate-100 dark:border-slate-800 pb-4 sm:pb-5">
-          <div className="flex items-baseline gap-1">
-            <span className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono break-words">
+          <div className="flex items-baseline gap-1 whitespace-nowrap">
+            <span className="text-xl xs:text-2xl sm:text-3xl lg:text-[27px] xl:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono shrink-0">
               {price}
             </span>
-            <span className="text-xs font-semibold text-slate-400">{period}</span>
+            <span className="text-xs font-semibold text-slate-400 shrink-0">{period}</span>
           </div>
 
           {/* Zona de altura fija y estable reservada para el ahorro y facturación */}

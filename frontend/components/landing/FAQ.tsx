@@ -10,8 +10,16 @@ const FAQS = [
     a: "AgendatePY es la plataforma de agendamiento online y asistente por WhatsApp creada para negocios en Paraguay: peluquerías, barberías, salones de belleza, spas, consultorios médicos, odontología, canchas deportivas y profesionales independientes.",
   },
   {
+    q: "¿AgendatePY cobra alguna comisión por mis reservas o ventas?",
+    a: "No. En AgendatePY cobramos 0% de comisión sobre tus servicios, turnos o cobros. Pagás una suscripción mensual fija en Guaraníes y el 100% de lo que factura tu negocio va íntegro a tu cuenta bancaria.",
+  },
+  {
     q: "¿Mis clientes necesitan descargar alguna app para reservar?",
     a: "No. Tus clientes acceden a tu enlace web personalizado (tuneogocio.agendatepy.com) o reservan conversando por WhatsApp. Sin descargar nada ni crear contraseñas.",
+  },
+  {
+    q: "¿Puedo colocar mi enlace de reserva en Instagram, Google Maps o TikTok?",
+    a: "Sí. Tu enlace web personalizado está optimizado para colocarse en la biografía de Instagram, ficha de Google Maps o enviarse por WhatsApp. Tus clientes reservan en 30 segundos sin registrarse.",
   },
   {
     q: "¿Cómo funcionan las comisiones de empleados y profesionales?",
@@ -54,7 +62,7 @@ export default function FAQ() {
           return (
             <div
               key={item.q}
-              className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs transition-colors"
+              className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200"
             >
               <button
                 type="button"
