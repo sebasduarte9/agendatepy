@@ -503,7 +503,7 @@ export default function ProductosPage() {
         </Card>
       ) : (
         <div data-tour="productos-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredProducts.map((p) => {
+          {filteredProducts.map((p, index) => {
             const isLowStock = p.stock <= 5;
             const marginPercent = Math.round(((p.price - p.cost) / p.price) * 100);
             const isBroken = brokenImages[p.id] || !p.imageUrl;
@@ -625,6 +625,30 @@ export default function ProductosPage() {
                         Stock: {p.stock} u.
                       </span>
                     </div>
+
+                    {/* Standalone Promo / Descuento Button */}
+                    <button
+                      type="button"
+                      data-tour={index === 0 ? "productos-promo-btn" : undefined}
+                      onClick={() => openEditModal(p)}
+                      className={`w-full flex items-center justify-between rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
+                        p.isOnSale && p.salePrice && p.salePrice < p.price
+                          ? "border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                          : "border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-amber-600 hover:border-amber-400/40"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Tag className="h-3.5 w-3.5 text-amber-500" />
+                        <span>
+                          {p.isOnSale && p.salePrice && p.salePrice < p.price
+                            ? `Oferta: ${formatGs(p.salePrice)} (-${Math.round(((p.price - p.salePrice) / p.price) * 100)}%)`
+                            : "Poner en oferta / descuento"}
+                        </span>
+                      </span>
+                      <span className="text-[10px] opacity-75 font-bold">
+                        {p.isOnSale ? "Modificar" : "Configurar"}
+                      </span>
+                    </button>
 
                     {/* Stock quick adjuster */}
                     <div className="flex items-center justify-between pt-1 text-xs">
@@ -786,7 +810,7 @@ export default function ProductosPage() {
           )}
 
           {/* Special Offer / Promotional Campaign Section */}
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 p-3.5 space-y-3">
+          <div data-tour="product-offer-section" className="rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 p-3.5 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white font-black shadow-xs">
@@ -952,10 +976,6 @@ export default function ProductosPage() {
               </p>
             </div>
           </div>
-
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
-            🔒 <strong>Política de Privacidad & Retención:</strong> Las imágenes asociadas se quitan de inmediato de la tienda pública y se conservan de forma segura durante 90 días como respaldo y prevención de fraude antes de su eliminación definitiva.
-          </p>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
             <button

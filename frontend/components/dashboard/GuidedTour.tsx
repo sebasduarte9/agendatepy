@@ -419,6 +419,14 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 5,
+        taskTitle: "Ofertas Especiales & Descuentos",
+        instruction:
+          "Activá 'Poner este producto en Oferta' para configurar un precio promocional con límite por fecha/hora de expiración o por cupo máximo de unidades.",
+        tip: "Tus clientes verán el precio anterior tachado, el porcentaje de descuento y el contador de unidades.",
+        targetSelector: '[data-tour="product-offer-section"]',
+      },
+      {
+        stepNumber: 6,
         taskTitle: "Control de Inventario y Alertas de Stock Bajo",
         instruction:
           "Monitoreá el total de unidades físicas, valor de venta estimado, margen proyectado y productos en estado crítico (≤5 unidades) para reponer a tiempo.",
@@ -426,12 +434,12 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         targetSelector: '[data-tour="productos-kpis"]',
       },
       {
-        stepNumber: 6,
-        taskTitle: "Ajuste táctil rápido (-1, +1, +5) y edición",
+        stepNumber: 7,
+        taskTitle: "Ajuste de Stock Rápido & Ofertas Flash",
         instruction:
-          "En cada tarjeta de producto tenés botones rápidos para descontar cuando vendés al mostrador o sumar cuando llega una caja del distribuidor.",
-        tip: "Tocá el botón de edición para cambiar fotos o precios, o la papelera para eliminar productos de forma segura.",
-        targetSelector: '[data-tour="productos-grid"]',
+          "En cada tarjeta tenés botones rápidos (-1, +1, +5) para actualizar stock en mostrador y el botón 'Poner en oferta' para lanzar promociones inmediatas.",
+        tip: "El producto de ejemplo ya viene listo para que pruebes los descuentos y veas cómo impacta en tu catálogo.",
+        targetSelector: '[data-tour="productos-promo-btn"]',
       },
     ],
   },
@@ -999,7 +1007,7 @@ export default function GuidedTour() {
     if (typeof window !== "undefined") {
       const isProductModalStep =
         currentStep.actionPath === "open-product-modal" ||
-        (currentSection?.id === "productos" && [2, 3, 4].includes(currentStep.stepNumber));
+        (currentSection?.id === "productos" && [2, 3, 4, 5].includes(currentStep.stepNumber));
 
       if (isProductModalStep) {
         window.dispatchEvent(new CustomEvent("agendate-open-product-modal"));

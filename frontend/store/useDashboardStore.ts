@@ -678,7 +678,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
   staff: [],
   services: [],
-  products: [],
+  products: initialProducts,
   productOrders: initialProductOrders,
   appointments: [],
   clients: [],
@@ -851,7 +851,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }
 
         if (Array.isArray(data.products)) {
-          nextState.products = data.products;
+          nextState.products = data.products.length > 0 ? data.products : initialProducts;
         }
 
         return nextState;

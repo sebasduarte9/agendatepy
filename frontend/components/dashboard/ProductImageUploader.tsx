@@ -10,8 +10,6 @@ import {
   Download,
   Loader2,
   Trash2,
-  Server,
-  ShieldCheck,
 } from "lucide-react";
 
 interface ProductImageUploaderProps {
@@ -247,29 +245,12 @@ export default function ProductImageUploader({
     }
   };
 
-  const isServerSaved = value && value.startsWith("/uploads/");
-
   return (
     <div className="space-y-3" data-tour="product-image-uploader">
       <div className="flex items-center justify-between">
         <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
           Foto del Producto
         </label>
-        {value && (
-          <div className="flex items-center gap-1.5">
-            {isServerSaved && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                <Server className="h-3 w-3" />
-                En Servidor
-              </span>
-            )}
-            {hasTransparentBg && (
-              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                Sin fondo
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Hidden file input */}
@@ -442,13 +423,6 @@ export default function ProductImageUploader({
         </div>
       )}
 
-      {/* Small Privacy & Retention policy note */}
-      <div className="pt-1 flex items-start gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
-        <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-0.5 text-slate-400" />
-        <p>
-          <strong>Política de Privacidad & Retención:</strong> Al borrar una foto se retira al instante de tu catálogo y tienda pública. Se conserva de forma segura en nuestro servidor durante 90 días como respaldo y auditoría antes de su purga definitiva.
-        </p>
-      </div>
     </div>
   );
 }
