@@ -29,6 +29,10 @@ export type CommissionPayoutRecord = {
   periodEnd: string;
   servicesAmount: number;
   productsAmount: number;
+  servicesCommission?: number;
+  productsCommission?: number;
+  servicesSharePercent?: number;
+  productsSharePercent?: number;
   grossCommission: number;
   advancesDeducted: number;
   amountPaid: number;
@@ -103,6 +107,7 @@ export type ProductOrder = {
   orderNumber: string; // ej: #PED-804
   clientName: string;
   clientPhone: string;
+  sellerStaffId?: string;
   items: ProductOrderItem[];
   totalAmount: number;
   status: ProductOrderStatus;
