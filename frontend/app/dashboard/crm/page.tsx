@@ -15,29 +15,34 @@ import {
   ExternalLink,
   ShieldCheck,
   Award,
-  Scissors,
   Settings,
   Plus,
-  ArrowRight,
   RefreshCw,
   Phone,
-  FileText,
   CreditCard,
-  MapPin,
   X,
-  Radio,
-  Sliders,
   CheckCircle2,
   ShoppingBag,
-  Package,
   Tag,
   Truck,
   Store,
   AlertCircle,
+  QrCode,
+  Smartphone,
+  Bot,
+  Sparkles,
+  Trash2,
+  HelpCircle,
+  Info,
+  Copy,
+  ChevronRight,
+  Shield,
+  Radio,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
+import CustomSelect, { CustomSelectOption } from "@/components/dashboard/ui/CustomSelect";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { CrmChannel, CrmConversation, ProductOrderStatus } from "@/lib/dashboard-types";
 
@@ -84,13 +89,20 @@ export default function CrmOmnichannelPage() {
   const {
     crmConversations,
     clients,
+    products,
     business,
+    evolutionConfig,
+    updateEvolutionConfig,
+    loadDemoConversation,
+    clearCrmConversations,
+    createOrderFromCrm,
     sendCrmMessage,
     resolveCrmConversation,
     reopenCrmConversation,
     pushToast,
     productOrders,
     updateProductOrderStatus,
+    openTour,
   } = useDashboardStore();
 
   const [mainSection, setMainSection] = useState<"mensajes" | "pedidos">("mensajes");
@@ -102,7 +114,24 @@ export default function CrmOmnichannelPage() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string>(crmConversations[0]?.id || "");
   const [replyText, setReplyText] = useState("");
-  const [configModalOpen, setConfigModalOpen] = useState(false);
+
+  // Modals
+  const [evolutionModalOpen, setEvolutionModalOpen] = useState(false);
+  const [evolutionModalTab, setEvolutionModalTab] = useState<"qr" | "config">("qr");
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+
+  // Order modal state
+  const [orderProductId, setOrderProductId] = useState(products[0]?.id || "pr-1");
+  const [orderQty, setOrderQty] = useState(1);
+  const [orderDelivery, setOrderDelivery] = useState<"retirar_en_local" | "delivery">("retirar_en_local");
+  const [orderPayment, setOrderPayment] = useState<"efectivo" | "pos" | "transferencia">("transferencia");
+  const [orderNotes, setOrderNotes] = useState("");
+
+  // Evolution settings draft state
+  const [baseUrlDraft, setBaseUrlDraft] = useState(evolutionConfig.baseUrl);
+  const [instanceDraft, setInstanceDraft] = useState(evolutionConfig.instanceName);
+  const [apiKeyDraft, setApiKeyDraft] = useState(evolutionConfig.apiKey);
+  const [qrCounter, setQrCounter] = useState(45);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -112,6 +141,22 @@ export default function CrmOmnichannelPage() {
       }
     }
   }, []);
+
+  // Update selected conversation when crmConversations changes
+  useEffect(() => {
+    if (crmConversations.length > 0 && (!selectedId || !crmConversations.some((c) => c.id === selectedId))) {
+      setSelectedId(crmConversations[0].id);
+    }
+  }, [crmConversations, selectedId]);
+
+  // QR timer countdown
+  useEffect(() => {
+    if (!evolutionModalOpen) return;
+    const timer = setInterval(() => {
+      setQrCounter((prev) => (prev > 1 ? prev - 1 : 45));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [evolutionModalOpen]);
 
   const filteredOrders = useMemo(() => {
     return productOrders.filter((ord) => {
@@ -138,7 +183,7 @@ export default function CrmOmnichannelPage() {
   const quickReplies = [
     {
       title: "Enlace de Turnos",
-      text: `¡Hola! Podés agendar tu turno al instante y elegir profesional en nuestra web oficial: https://${business.slug || "barberia"}.agendate.py/reservar`,
+      text: `¡Hola! Podés reservar tu turno al instante y elegir profesional en nuestra web oficial: https://${business.slug || "barberia"}.agendate.py/reservar`,
     },
     {
       title: "Precios & Promos",
@@ -184,6 +229,16 @@ export default function CrmOmnichannelPage() {
     return clients.find((cl) => cl.id === activeConversation.clientId) || null;
   }, [activeConversation, clients]);
 
+  const selectedProduct = useMemo(() => {
+    return products.find((p) => p.id === orderProductId) || products[0];
+  }, [products, orderProductId]);
+
+  const unitPrice = selectedProduct?.isOnSale && selectedProduct?.salePrice
+    ? selectedProduct.salePrice
+    : selectedProduct?.price || 0;
+
+  const orderTotal = unitPrice * orderQty;
+
   function handleSend() {
     if (!replyText.trim() || !activeConversation) return;
     sendCrmMessage(activeConversation.id, replyText);
@@ -193,6 +248,36 @@ export default function CrmOmnichannelPage() {
 
   function handleQuickReply(text: string) {
     setReplyText(text);
+  }
+
+  function handleCreateOrderSubmit() {
+    if (!activeConversation || !selectedProduct) return;
+
+    createOrderFromCrm({
+      clientName: activeConversation.clientName,
+      clientPhone: activeConversation.channelIdentifier,
+      items: [
+        {
+          productId: selectedProduct.id,
+          productName: selectedProduct.name,
+          qty: orderQty,
+          unitPrice: unitPrice,
+          isOnSale: selectedProduct.isOnSale,
+        },
+      ],
+      deliveryType: orderDelivery,
+      paymentMethod: orderPayment,
+      notes: orderNotes.trim() ? orderNotes.trim() : `Pedido tomado por chat (${activeConversation.channel})`,
+    });
+
+    // Send auto confirmation message into chat
+    const autoMsg = `¡Pedido registrado con éxito! Hemos guardado tu pedido de ${orderQty}x ${selectedProduct.name} por ${formatGs(orderTotal)}. Modalidad: ${orderDelivery === "retirar_en_local" ? "Retiro en local" : "Delivery"}.`;
+    sendCrmMessage(activeConversation.id, autoMsg);
+
+    setOrderModalOpen(false);
+    setOrderNotes("");
+    setOrderQty(1);
+    pushToast("success", "Pedido creado y mensaje de confirmación enviado al cliente.");
   }
 
   const unreadTotal = crmConversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
@@ -206,45 +291,132 @@ export default function CrmOmnichannelPage() {
     .filter((c) => c.channel === "messenger")
     .reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
+  // CustomSelect Options for Order Modal
+  const productOptions: CustomSelectOption[] = products.map((p) => ({
+    value: p.id,
+    label: p.name,
+    subtitle: `${formatGs(p.isOnSale && p.salePrice ? p.salePrice : p.price)} · Stock: ${p.stock} u.`,
+    badge: p.isOnSale ? "OFERTA" : undefined,
+  }));
+
+  const deliveryOptions: CustomSelectOption[] = [
+    {
+      value: "retirar_en_local",
+      label: "Retirar en el Local (Sin costo)",
+      icon: <Store className="h-4 w-4 text-emerald-500" />,
+      subtitle: "El cliente pasa a retirar cuando venga a su turno",
+    },
+    {
+      value: "delivery",
+      label: "Envío por Delivery (Asunción / Gran Asunción)",
+      icon: <Truck className="h-4 w-4 text-indigo-500" />,
+      subtitle: "Despacho con moto mensajería rápida",
+    },
+  ];
+
+  const paymentOptions: CustomSelectOption[] = [
+    {
+      value: "transferencia",
+      label: "Transferencia Bancaria SIPAP",
+      icon: <CreditCard className="h-4 w-4 text-indigo-500" />,
+      subtitle: "Envío de comprobante por chat",
+    },
+    {
+      value: "efectivo",
+      label: "Efectivo en Caja / Contraentrega",
+      icon: <Tag className="h-4 w-4 text-emerald-500" />,
+      subtitle: "Abona al momento de recibir el producto",
+    },
+    {
+      value: "pos",
+      label: "Tarjeta / POS Bancard",
+      icon: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
+      subtitle: "Cobro con datáfono en el local",
+    },
+  ];
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Top Banner & Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        data-tour="crm-header"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-5 shadow-xs"
+      >
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-bold text-primary mb-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Bandeja Unificada 3 en 1 · WhatsApp, Instagram & Facebook</span>
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                evolutionConfig.connected
+                  ? "bg-emerald-500 animate-pulse"
+                  : "bg-amber-500"
+              }`}
+            />
+            <span>
+              {evolutionConfig.connected
+                ? `WhatsApp Conectado · Evolution API (${evolutionConfig.phoneNumber || "+595 981 765 432"})`
+                : "Evolution API $0 · Vinculá tu WhatsApp gratis sin pagar a Meta"}
+            </span>
           </div>
+
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             CRM Omnicanal de Clientes
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Atendé y respondé mensajes de WhatsApp, Instagram Direct y Facebook Messenger en una sola bandeja.
+          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm mt-0.5">
+            Atendé WhatsApp, procesá pedidos y agendá turnos en 1 clic desde una sola bandeja centralizada.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
-            onClick={() => setConfigModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white shadow-2xs transition"
+            data-tour="crm-evolution-btn"
+            onClick={() => setEvolutionModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 text-xs font-bold shadow-sm transition cursor-pointer"
           >
-            <Settings className="h-4 w-4 text-slate-500" />
-            <span>Configurar Canales & Meta</span>
+            <QrCode className="h-4 w-4" />
+            <span>
+              {evolutionConfig.connected ? "Ajustes Evolution API" : "Conectar Evolution API ($0)"}
+            </span>
           </button>
 
-          <Link
-            href="/dashboard/nueva-reserva"
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary hover:opacity-95 px-4 py-2.5 text-xs font-bold text-white shadow-md transition"
+          {crmConversations.length > 0 ? (
+            <button
+              type="button"
+              onClick={clearCrmConversations}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 border border-slate-200/80 dark:border-white/10 px-3.5 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 transition cursor-pointer"
+              title="Volver al estado de fábrica sin mensajes"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Limpiar Bandeja</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={loadDemoConversation}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/80 dark:border-indigo-800/60 px-3.5 py-2.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 transition cursor-pointer"
+            >
+              <Sparkles className="h-4 w-4 text-indigo-500" />
+              <span>Cargar 1 Chat de Prueba</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => openTour("crm")}
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 px-3 py-2.5 text-xs font-semibold text-slate-700 dark:text-white transition cursor-pointer"
+            title="Iniciar Visita Guiada del CRM"
           >
-            <Plus className="h-4 w-4" />
-            <span>Nueva Cita</span>
-          </Link>
+            <HelpCircle className="h-4 w-4 text-primary" />
+            <span className="hidden sm:inline">Visita Guiada</span>
+          </button>
         </div>
       </div>
 
       {/* View Switcher: Mensajes Omnicanal vs Órdenes de Tienda */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-fit border border-slate-200/80 dark:border-white/10">
+      <div
+        data-tour="crm-switcher"
+        className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-fit border border-slate-200/80 dark:border-white/10"
+      >
         <button
           type="button"
           onClick={() => setMainSection("mensajes")}
@@ -283,566 +455,636 @@ export default function CrmOmnichannelPage() {
       </div>
 
       {mainSection === "mensajes" ? (
-        /* Main CRM Grid Container */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[680px]">
-        {/* LEFT COLUMN: Conversation List & Filter Bar (4 cols) */}
-        <div className="lg:col-span-4 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
-          {/* Channel Selector Pills */}
-          <div className="p-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/60 dark:bg-slate-950/40">
-            <div className="grid grid-cols-4 gap-1 p-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-white/5">
+        crmConversations.length === 0 ? (
+          /* FACTORY CLEAN EMPTY STATE HERO */
+          <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-8 sm:p-12 text-center shadow-sm">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200 dark:border-emerald-800/40 mb-5 shadow-xs">
+              <QrCode className="h-10 w-10" />
+            </div>
+
+            <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-bold text-primary mb-3">
+              Bandeja Limpia de Fábrica (0 Mensajes)
+            </span>
+
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight max-w-xl mx-auto">
+              Conectá tu WhatsApp gratis y comenzá a recibir mensajes en vivo
+            </h2>
+
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-2.5 leading-relaxed">
+              Utilizamos <strong>Evolution API</strong> (motor Baileys de código abierto). No necesitás pagar planes de terceros ni tarifas por conversación a Meta. Escaneás el código QR como en WhatsApp Web y tu local queda sincronizado al instante.
+            </p>
+
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={() => setChannelFilter("todos")}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition ${
-                  channelFilter === "todos"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+                onClick={() => setEvolutionModalOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3.5 text-xs sm:text-sm font-bold shadow-md transition cursor-pointer"
               >
-                <span>Todos</span>
-                <span className="text-[9.5px] opacity-80">{crmConversations.length}</span>
+                <QrCode className="h-4 w-4" />
+                <span>Escanear Código QR (Evolution API $0)</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setChannelFilter("whatsapp")}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition relative ${
-                  channelFilter === "whatsapp"
-                    ? "bg-emerald-500 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+                onClick={loadDemoConversation}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white px-5 py-3.5 text-xs sm:text-sm font-semibold border border-slate-200/80 dark:border-white/10 transition cursor-pointer"
               >
-                <div className="flex items-center gap-1">
-                  <ChannelIcon channel="whatsapp" size="sm" />
-                  <span>WA</span>
-                </div>
-                {waUnread > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white">
-                    {waUnread}
-                  </span>
-                )}
-                <span className="text-[9.5px] opacity-80">
-                  {crmConversations.filter((c) => c.channel === "whatsapp").length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setChannelFilter("instagram")}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition relative ${
-                  channelFilter === "instagram"
-                    ? "bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <ChannelIcon channel="instagram" size="sm" />
-                  <span>IG</span>
-                </div>
-                {igUnread > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white">
-                    {igUnread}
-                  </span>
-                )}
-                <span className="text-[9.5px] opacity-80">
-                  {crmConversations.filter((c) => c.channel === "instagram").length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setChannelFilter("messenger")}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition relative ${
-                  channelFilter === "messenger"
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <ChannelIcon channel="messenger" size="sm" />
-                  <span>Msg</span>
-                </div>
-                {msUnread > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white">
-                    {msUnread}
-                  </span>
-                )}
-                <span className="text-[9.5px] opacity-80">
-                  {crmConversations.filter((c) => c.channel === "messenger").length}
-                </span>
+                <Sparkles className="h-4 w-4 text-indigo-500" />
+                <span>Cargar 1 Conversación de Demostración</span>
               </button>
             </div>
 
-            {/* Search Box */}
-            <div className="relative mt-2.5">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar cliente, @ig o texto..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 pl-9 pr-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
-            </div>
-
-            {/* Status Tabs */}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/40 dark:border-white/5 text-[11px]">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("open")}
-                  className={`font-semibold transition ${
-                    statusFilter === "open"
-                      ? "text-primary font-bold border-b-2 border-primary pb-0.5"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  Abiertos
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("resolved")}
-                  className={`font-semibold transition ${
-                    statusFilter === "resolved"
-                      ? "text-primary font-bold border-b-2 border-primary pb-0.5"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  Resueltos
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("all")}
-                  className={`font-semibold transition ${
-                    statusFilter === "all"
-                      ? "text-primary font-bold border-b-2 border-primary pb-0.5"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  Todos
-                </button>
+            {/* 3 Pillars of the System */}
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5 text-left border-t border-slate-100 dark:border-white/10 pt-8">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5 space-y-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                  <Smartphone className="h-5 w-5" />
+                </div>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                  WhatsApp $0 sin Costos Meta
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Conexión directa mediante socket Web. No pagás los cargos por conversación de Meta Cloud API ni intermediarios costosos.
+                </p>
               </div>
 
-              {unreadTotal > 0 && (
-                <span className="rounded-full bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-0.5">
-                  {unreadTotal} sin leer
-                </span>
-              )}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5 space-y-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                  Agendar Turnos en 1 Clic
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Si el cliente pide turno por chat, tocás &quot;Agendar Turno&quot; y su nombre, teléfono y preferencia se trasladan directo al calendario.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5 space-y-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600">
+                  <ShoppingBag className="h-5 w-5" />
+                </div>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                  Procesar Pedidos de Productos
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Si consultan por ceras, aceites o tratamientos, creás el pedido con retiro o delivery y enviás la confirmación automática por WhatsApp.
+                </p>
+              </div>
             </div>
           </div>
-
-          {/* Conversation List Scroll */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
-            {filteredConversations.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400">
-                No hay conversaciones con estos filtros.
-              </div>
-            ) : (
-              filteredConversations.map((c) => {
-                const isSelected = activeConversation?.id === c.id;
-                const initials = c.clientName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase();
-
-                return (
+        ) : (
+          /* ACTIVE CRM 3-COLUMN WORKSPACE */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[720px]">
+            {/* LEFT COLUMN: Channel Filter & Conversation List (4 cols) */}
+            <div className="lg:col-span-4 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
+              {/* Channel Selector Pills */}
+              <div
+                data-tour="crm-channels"
+                className="p-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/60 dark:bg-slate-950/40"
+              >
+                <div className="grid grid-cols-4 gap-1 p-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-white/5">
                   <button
-                    key={c.id}
                     type="button"
-                    onClick={() => setSelectedId(c.id)}
-                    className={`w-full text-left p-3.5 flex items-start gap-3 transition ${
-                      isSelected
-                        ? "bg-primary/10 dark:bg-primary/20 border-l-4 border-primary"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    onClick={() => setChannelFilter("todos")}
+                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition cursor-pointer ${
+                      channelFilter === "todos"
+                        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                   >
-                    {/* Avatar with Channel Icon Badge */}
-                    <div className="relative shrink-0">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs shadow-2xs">
-                        {initials}
-                      </div>
-                      <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-white/10">
-                        <ChannelIcon channel={c.channel} size="sm" />
-                      </span>
-                    </div>
-
-                    {/* Meta info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          {c.clientName}
-                        </h4>
-                        <span className="text-[10px] text-slate-400 shrink-0 font-medium">
-                          {new Date(c.lastMessageTime).toLocaleTimeString("es-PY", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
-                          {c.lastMessage}
-                        </p>
-                        {c.unreadCount > 0 && (
-                          <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary text-[9.5px] font-extrabold text-white shrink-0">
-                            {c.unreadCount}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-                        <span className="truncate">{c.channelIdentifier}</span>
-                        {c.status === "resolved" && (
-                          <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-1 py-0.2 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">
-                            Resuelto
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <span>Todos</span>
+                    <span className="text-[9.5px] opacity-80">{crmConversations.length}</span>
                   </button>
-                );
-              })
-            )}
-          </div>
-        </div>
 
-        {/* CENTER COLUMN: Live Chat Stream & Quick Reply (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
-          {activeConversation ? (
-            <>
-              {/* Chat Header */}
-              <div className="p-3.5 border-b border-slate-100 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950/40 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xs">
-                      {activeConversation.clientName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)}
+                  <button
+                    type="button"
+                    onClick={() => setChannelFilter("whatsapp")}
+                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition relative cursor-pointer ${
+                      channelFilter === "whatsapp"
+                        ? "bg-emerald-500 text-white shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <ChannelIcon channel="whatsapp" size="sm" />
+                      <span>WA</span>
                     </div>
-                    <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs">
-                      <ChannelIcon channel={activeConversation.channel} size="sm" />
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>{activeConversation.clientName}</span>
-                      <span
-                        className={`rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold capitalize ${channelBadgeStyles(
-                          activeConversation.channel
-                        )}`}
-                      >
-                        {activeConversation.channel}
+                    {waUnread > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white">
+                        {waUnread}
                       </span>
-                    </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                      {activeConversation.channelIdentifier}
-                    </p>
-                  </div>
+                    )}
+                    <span className="text-[9.5px] opacity-80">
+                      {crmConversations.filter((c) => c.channel === "whatsapp").length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setChannelFilter("instagram")}
+                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition relative cursor-pointer ${
+                      channelFilter === "instagram"
+                        ? "bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 text-white shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <ChannelIcon channel="instagram" size="sm" />
+                      <span>IG</span>
+                    </div>
+                    {igUnread > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white">
+                        {igUnread}
+                      </span>
+                    )}
+                    <span className="text-[9.5px] opacity-80">
+                      {crmConversations.filter((c) => c.channel === "instagram").length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setChannelFilter("messenger")}
+                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition relative cursor-pointer ${
+                      channelFilter === "messenger"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <ChannelIcon channel="messenger" size="sm" />
+                      <span>Msg</span>
+                    </div>
+                    {msUnread > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white">
+                        {msUnread}
+                      </span>
+                    )}
+                    <span className="text-[9.5px] opacity-80">
+                      {crmConversations.filter((c) => c.channel === "messenger").length}
+                    </span>
+                  </button>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  {activeConversation.status === "resolved" ? (
+                {/* Search Box */}
+                <div className="relative mt-2.5">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar cliente o mensaje..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 pl-9 pr-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+
+                {/* Status Tabs */}
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/40 dark:border-white/5 text-[11px]">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => reopenCrmConversation(activeConversation.id)}
-                      className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-white transition"
+                      onClick={() => setStatusFilter("open")}
+                      className={`font-semibold transition cursor-pointer ${
+                        statusFilter === "open"
+                          ? "text-primary font-bold border-b-2 border-primary pb-0.5"
+                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      }`}
                     >
-                      Reabrir
+                      Abiertos
                     </button>
-                  ) : (
                     <button
                       type="button"
-                      onClick={() => resolveCrmConversation(activeConversation.id)}
-                      className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 px-3 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 transition"
+                      onClick={() => setStatusFilter("resolved")}
+                      className={`font-semibold transition cursor-pointer ${
+                        statusFilter === "resolved"
+                          ? "text-primary font-bold border-b-2 border-primary pb-0.5"
+                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      }`}
                     >
-                      Marcar Resuelto
+                      Resueltos
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter("all")}
+                      className={`font-semibold transition cursor-pointer ${
+                        statusFilter === "all"
+                          ? "text-primary font-bold border-b-2 border-primary pb-0.5"
+                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      Todos
+                    </button>
+                  </div>
+
+                  {unreadTotal > 0 && (
+                    <span className="rounded-full bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-0.5">
+                      {unreadTotal} sin leer
+                    </span>
                   )}
                 </div>
               </div>
 
-              {/* Message Stream */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafbfc] dark:bg-[#0a0f1d]">
-                <div className="text-center">
-                  <span className="rounded-full bg-slate-200/70 dark:bg-slate-800 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                    Conversación sincronizada vía {activeConversation.channel.toUpperCase()}
-                  </span>
-                </div>
-
-                {activeConversation.messages.map((m) => {
-                  const isAgent = m.sender === "agent";
-                  return (
-                    <div
-                      key={m.id}
-                      className={`flex flex-col ${isAgent ? "items-end" : "items-start"}`}
-                    >
-                      <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${
-                          isAgent
-                            ? "bg-primary text-white rounded-br-xs"
-                            : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-white/5 rounded-bl-xs"
-                        }`}
-                      >
-                        <p>{m.text}</p>
-                        <div
-                          className={`mt-1 flex items-center justify-end gap-1 text-[9.5px] ${
-                            isAgent ? "text-white/80" : "text-slate-400"
-                          }`}
-                        >
-                          <span>
-                            {new Date(m.timestamp).toLocaleTimeString("es-PY", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                          {isAgent && <CheckCheck className="h-3.5 w-3.5 text-emerald-200" />}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Quick Reply Bar */}
-              <div className="px-3 pt-2 pb-1 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-amber-500" /> Respuestas Rápidas con 1 Clic:
-                </p>
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                  {quickReplies.map((qr) => (
-                    <button
-                      key={qr.title}
-                      type="button"
-                      onClick={() => handleQuickReply(qr.text)}
-                      className="shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 px-2.5 py-1 text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 transition"
-                    >
-                      {qr.title}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Message Input Bar */}
-              <div className="p-3 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900 flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder={`Responder a ${activeConversation.clientName} por ${activeConversation.channel}...`}
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                />
-
-                <button
-                  type="button"
-                  onClick={handleSend}
-                  disabled={!replyText.trim()}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:opacity-95 disabled:opacity-40 transition shadow-sm"
-                  aria-label="Enviar mensaje"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <MessageSquare className="h-12 w-12 text-slate-300 dark:text-slate-700 mb-3" />
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                Seleccioná una conversación
-              </p>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                Gestioná WhatsApp, Instagram Direct y Messenger desde un solo lugar.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT COLUMN: Client 360 Context & Booking Action (3 cols) */}
-        <div className="lg:col-span-3 flex flex-col gap-4">
-          {activeConversation ? (
-            <>
-              {/* Customer Profile Card */}
-              <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-4 shadow-sm space-y-4">
-                <div className="text-center pb-3 border-b border-slate-100 dark:border-white/10">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-tr from-primary to-indigo-600 text-white font-black text-lg shadow-md mb-2">
-                    {activeConversation.clientName
+              {/* Conversation List Scroll */}
+              <div
+                data-tour="crm-conversations-list"
+                className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5"
+              >
+                {filteredConversations.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-400">
+                    No hay conversaciones con estos filtros.
+                  </div>
+                ) : (
+                  filteredConversations.map((c) => {
+                    const isSelected = activeConversation?.id === c.id;
+                    const initials = c.clientName
                       .split(" ")
                       .map((n) => n[0])
                       .join("")
-                      .slice(0, 2)}
-                  </div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    {activeConversation.clientName}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 font-medium">
-                    {linkedClient ? linkedClient.email : "Contacto Omnicanal"}
-                  </p>
+                      .slice(0, 2)
+                      .toUpperCase();
 
-                  {linkedClient?.tags && (
-                    <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
-                      {linkedClient.tags.map((t) => (
-                        <span
-                          key={t}
-                          className="rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5"
-                        >
-                          {t}
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedId(c.id)}
+                        className={`w-full text-left p-3.5 flex items-start gap-3 transition cursor-pointer ${
+                          isSelected
+                            ? "bg-primary/10 dark:bg-primary/20 border-l-4 border-primary"
+                            : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        }`}
+                      >
+                        {/* Avatar with Channel Icon Badge */}
+                        <div className="relative shrink-0">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs shadow-2xs">
+                            {initials}
+                          </div>
+                          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-white/10">
+                            <ChannelIcon channel={c.channel} size="sm" />
+                          </span>
+                        </div>
+
+                        {/* Meta info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1 mb-0.5">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {c.clientName}
+                            </h4>
+                            <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                              {new Date(c.lastMessageTime).toLocaleTimeString("es-PY", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[190px]">
+                              {c.lastMessage}
+                            </p>
+                            {c.unreadCount > 0 && (
+                              <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary text-[9.5px] font-extrabold text-white shrink-0">
+                                {c.unreadCount}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+                            <span className="truncate">{c.channelIdentifier}</span>
+                            {c.status === "resolved" && (
+                              <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-1 py-0.2 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">
+                                Resuelto
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* CENTER COLUMN: Live Chat Stream & Quick Reply (5 cols) */}
+            <div
+              data-tour="crm-chat-box"
+              className="lg:col-span-5 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden"
+            >
+              {activeConversation ? (
+                <>
+                  {/* Chat Header */}
+                  <div className="p-3.5 border-b border-slate-100 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950/40 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xs">
+                          {activeConversation.clientName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </div>
+                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs">
+                          <ChannelIcon channel={activeConversation.channel} size="sm" />
                         </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <span>{activeConversation.clientName}</span>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold capitalize ${channelBadgeStyles(
+                              activeConversation.channel
+                            )}`}
+                          >
+                            {activeConversation.channel}
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                          {activeConversation.channelIdentifier}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {activeConversation.status === "resolved" ? (
+                        <button
+                          type="button"
+                          onClick={() => reopenCrmConversation(activeConversation.id)}
+                          className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-white transition cursor-pointer"
+                        >
+                          Reabrir
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => resolveCrmConversation(activeConversation.id)}
+                          className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 px-3 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer"
+                        >
+                          Marcar Resuelto
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Message Stream */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafbfc] dark:bg-[#0a0f1d]">
+                    <div className="text-center">
+                      <span className="rounded-full bg-slate-200/70 dark:bg-slate-800 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                        Conversación sincronizada vía {activeConversation.channel.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {activeConversation.messages.map((m) => {
+                      const isAgent = m.sender === "agent";
+                      return (
+                        <div
+                          key={m.id}
+                          className={`flex flex-col ${isAgent ? "items-end" : "items-start"}`}
+                        >
+                          <div
+                            className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${
+                              isAgent
+                                ? "bg-primary text-white rounded-br-xs"
+                                : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-white/5 rounded-bl-xs"
+                            }`}
+                          >
+                            <p>{m.text}</p>
+                            <div
+                              className={`mt-1 flex items-center justify-end gap-1 text-[9.5px] ${
+                                isAgent ? "text-white/80" : "text-slate-400"
+                              }`}
+                            >
+                              <span>
+                                {new Date(m.timestamp).toLocaleTimeString("es-PY", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                              {isAgent && <CheckCheck className="h-3.5 w-3.5 text-emerald-200" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Quick Reply Bar */}
+                  <div className="px-3 pt-2 pb-1 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-500" /> Respuestas Rápidas con 1 Clic:
+                    </p>
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                      {quickReplies.map((qr) => (
+                        <button
+                          key={qr.title}
+                          type="button"
+                          onClick={() => handleQuickReply(qr.text)}
+                          className="shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 px-2.5 py-1 text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                        >
+                          {qr.title}
+                        </button>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                {/* Linked Channels Info */}
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                    Canales Vinculados:
+                  {/* Message Input Bar */}
+                  <div className="p-3 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900 flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder={`Responder a ${activeConversation.clientName} por ${activeConversation.channel}...`}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={handleSend}
+                      disabled={!replyText.trim()}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:opacity-95 disabled:opacity-40 transition shadow-sm cursor-pointer"
+                      aria-label="Enviar mensaje"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                  <MessageSquare className="h-12 w-12 text-slate-300 dark:text-slate-700 mb-3" />
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    Seleccioná una conversación
                   </p>
-
-                  {/* WhatsApp row */}
-                  <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                      <ChannelIcon channel="whatsapp" size="sm" />
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        WhatsApp
-                      </span>
-                    </div>
-                    {linkedClient?.phone || activeConversation.channel === "whatsapp" ? (
-                      <a
-                        href={`https://wa.me/${(linkedClient?.phone || activeConversation.channelIdentifier).replace(/[^0-9]/g, "")}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-bold hover:underline flex items-center gap-1"
-                      >
-                        <span>{linkedClient?.phone || activeConversation.channelIdentifier}</span>
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : (
-                      <span className="text-[10px] text-slate-400">No vinculado</span>
-                    )}
-                  </div>
-
-                  {/* Instagram row */}
-                  <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                      <ChannelIcon channel="instagram" size="sm" />
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        Instagram
-                      </span>
-                    </div>
-                    {linkedClient?.instagram || activeConversation.channel === "instagram" ? (
-                      <a
-                        href={`https://instagram.com/${(linkedClient?.instagram || activeConversation.channelIdentifier).replace("@", "")}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-pink-600 dark:text-pink-400 font-mono font-bold hover:underline flex items-center gap-1"
-                      >
-                        <span>{linkedClient?.instagram || activeConversation.channelIdentifier}</span>
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : (
-                      <span className="text-[10px] text-slate-400">No vinculado</span>
-                    )}
-                  </div>
-
-                  {/* Messenger row */}
-                  <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                      <ChannelIcon channel="messenger" size="sm" />
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        Messenger
-                      </span>
-                    </div>
-                    {linkedClient?.messengerId || activeConversation.channel === "messenger" ? (
-                      <a
-                        href="https://m.me"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-blue-600 dark:text-blue-400 font-mono font-bold hover:underline flex items-center gap-1"
-                      >
-                        <span>{linkedClient?.messengerId || activeConversation.channelIdentifier}</span>
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : (
-                      <span className="text-[10px] text-slate-400">No vinculado</span>
-                    )}
-                  </div>
+                  <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                    Gestioná WhatsApp, Instagram y Messenger desde un solo lugar.
+                  </p>
                 </div>
-
-                {/* VIP & Stats */}
-                {linkedClient && (
-                  <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
-                        <Award className="h-3.5 w-3.5 text-amber-500" /> Club VIP:
-                      </span>
-                      <span className="font-mono font-black text-amber-800 dark:text-amber-200">
-                        {linkedClient.loyaltyPoints} / 5 sellos
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
-                      <span>Consumo total:</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {formatGs(linkedClient.totalSpent)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
-                      <span>Total de visitas:</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {linkedClient.totalVisits} visitas
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Direct Action Buttons */}
-                <div className="space-y-2 pt-2">
-                  <Link
-                    href={`/dashboard/nueva-reserva?clientName=${encodeURIComponent(activeConversation.clientName)}&clientPhone=${encodeURIComponent(linkedClient?.phone || "")}`}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary hover:opacity-95 text-white py-2.5 text-xs font-bold shadow-md transition"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    <span>Agendar Turno p/ Cliente</span>
-                  </Link>
-
-                  <Link
-                    href="/dashboard/clientes"
-                    className="w-full flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Ver Ficha Técnica Completa</span>
-                  </Link>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-5 text-center text-xs text-slate-400">
-              Seleccioná un chat para ver su ficha 360°.
+              )}
             </div>
-          )}
 
-          {/* Quick Stats Pill */}
-          <div className="rounded-3xl bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/60 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/40 border border-indigo-200/60 dark:border-white/10 p-4 space-y-2">
-            <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              <span>Sincronización Multicanal Activa</span>
-            </h4>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              Tus clientes pueden escribirte por WhatsApp, Instagram o Messenger. Toda cita agendada se sincroniza con el calendario central en PostgreSQL.
-            </p>
+            {/* RIGHT COLUMN: Client 360 Context & Direct Actions (3 cols) */}
+            <div
+              data-tour="crm-client-profile"
+              className="lg:col-span-3 flex flex-col gap-4"
+            >
+              {activeConversation ? (
+                <>
+                  {/* Customer Profile Card */}
+                  <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-4 shadow-sm space-y-4">
+                    <div className="text-center pb-3 border-b border-slate-100 dark:border-white/10">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-tr from-primary to-indigo-600 text-white font-black text-lg shadow-md mb-2">
+                        {activeConversation.clientName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .slice(0, 2)}
+                      </div>
+                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        {activeConversation.clientName}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 font-medium font-mono">
+                        {activeConversation.channelIdentifier}
+                      </p>
+
+                      {linkedClient?.tags && (
+                        <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
+                          {linkedClient.tags.map((t) => (
+                            <span
+                              key={t}
+                              className="rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Direct Turno & Pedido Action Buttons */}
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        Procesar en 1 Clic:
+                      </p>
+
+                      <Link
+                        href={`/dashboard/nueva-reserva?clientName=${encodeURIComponent(activeConversation.clientName)}&clientPhone=${encodeURIComponent(activeConversation.channelIdentifier)}`}
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary hover:opacity-95 text-white py-2.5 text-xs font-bold shadow-sm transition"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        <span>Agendar Turno p/ Cliente</span>
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => setOrderModalOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 text-xs font-bold shadow-sm transition cursor-pointer"
+                      >
+                        <ShoppingBag className="h-4 w-4" />
+                        <span>Crear Pedido de Producto</span>
+                      </button>
+
+                      <Link
+                        href="/dashboard/clientes"
+                        className="w-full flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
+                      >
+                        <User className="h-3.5 w-3.5" />
+                        <span>Ver Ficha Técnica Completa</span>
+                      </Link>
+                    </div>
+
+                    {/* Linked Channels Info */}
+                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        Canal Activo:
+                      </p>
+
+                      <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
+                        <div className="flex items-center gap-2">
+                          <ChannelIcon channel={activeConversation.channel} size="sm" />
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                            {activeConversation.channel}
+                          </span>
+                        </div>
+                        {activeConversation.channel === "whatsapp" ? (
+                          <a
+                            href={`https://wa.me/${activeConversation.channelIdentifier.replace(/[^0-9]/g, "")}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-bold hover:underline flex items-center gap-1"
+                          >
+                            <span>Abrir WA</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">Directo</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* VIP & Stats if linked client */}
+                    {linkedClient && (
+                      <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
+                            <Award className="h-3.5 w-3.5 text-amber-500" /> Club de Fidelización:
+                          </span>
+                          <span className="font-mono font-black text-amber-800 dark:text-amber-200">
+                            {linkedClient.loyaltyPoints} / 5 sellos
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
+                          <span>Consumo total:</span>
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {formatGs(linkedClient.totalSpent)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-5 text-center text-xs text-slate-400">
+                  Seleccioná un chat para ver su ficha 360°.
+                </div>
+              )}
+
+              {/* Evolution API Gateway Status Card */}
+              <div className="rounded-3xl bg-gradient-to-br from-emerald-50/70 via-white to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/40 border border-emerald-200/60 dark:border-white/10 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    <span>Evolution API</span>
+                  </h4>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[9.5px] font-bold ${
+                      evolutionConfig.connected
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"
+                    }`}
+                  >
+                    {evolutionConfig.connected ? "En línea" : "Desconectado"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Conexión directa $0 vía Baileys. Los mensajes entrantes se procesan automáticamente sin pagar a Meta.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setEvolutionModalOpen(true)}
+                  className="w-full text-center text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline pt-1 cursor-pointer"
+                >
+                  Ver ajustes de conexión →
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        )
       ) : (
         /* Orders & Store Sales Management View */
         <div className="space-y-6">
@@ -903,150 +1145,97 @@ export default function CrmOmnichannelPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setOrderStatusFilter(tab.id as any)}
-                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${
                     orderStatusFilter === tab.id
                       ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                      : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200/60 dark:border-white/5"
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className="text-[10px] opacity-70">({tab.count})</span>
+                  <span className="text-[10px] opacity-75">({tab.count})</span>
                 </button>
               ))}
             </div>
 
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <div className="relative sm:w-72">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por cliente, pedido o teléfono..."
+                placeholder="Buscar por cliente o #PED..."
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-10 pr-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary shadow-2xs"
+                className="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 pl-9 pr-3 py-2 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
           </div>
 
-          {/* Orders Cards Grid */}
+          {/* Orders Grid */}
           {filteredOrders.length === 0 ? (
             <Card className="p-12 text-center">
-              <ShoppingBag className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" />
-              <h3 className="mt-3 text-sm font-bold text-slate-800 dark:text-slate-200">
-                No se encontraron pedidos
-              </h3>
-              <p className="mt-1 text-xs text-slate-400">
-                Los pedidos y reservas de productos realizados desde tu tienda web aparecerán aquí en vivo.
-              </p>
+              <ShoppingBag className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-3" />
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">No hay órdenes con estos filtros</h3>
+              <p className="text-xs text-slate-500 mt-1">Los pedidos creados desde el CRM o catálogo aparecerán aquí.</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredOrders.map((ord) => {
                 const isPending = ord.status === "pending";
                 const isConfirmed = ord.status === "confirmed";
                 const isDelivered = ord.status === "delivered";
                 const isCancelled = ord.status === "cancelled";
 
-                const rawPhone = ord.clientPhone.replace(/\D/g, "");
-                const waMessage = encodeURIComponent(
-                  `¡Hola ${ord.clientName}! 👋 Te escribo de ${business.name || "la barbería"} respecto a tu pedido *${ord.orderNumber}* por Gs. ${ord.totalAmount.toLocaleString("es-PY")}. ¿Podemos coordinar la entrega o retiro?`
-                );
-
                 return (
-                  <Card key={ord.id} className="p-4 flex flex-col justify-between space-y-4 hover:border-primary/40 transition">
+                  <Card key={ord.id} className="p-4 flex flex-col justify-between space-y-4">
+                    {/* Header */}
                     <div>
-                      {/* Top Header */}
-                      <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-3">
-                        <div>
-                          <span className="font-mono text-sm font-black text-slate-900 dark:text-white">
-                            {ord.orderNumber}
-                          </span>
-                          <span className="block text-[10px] text-slate-400 mt-0.5">
-                            {new Date(ord.createdAt).toLocaleDateString("es-PY", {
-                              day: "2-digit",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
-
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-black text-slate-900 dark:text-white">
+                          {ord.orderNumber}
+                        </span>
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold capitalize ${
                             isPending
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400"
                               : isConfirmed
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400"
                               : isDelivered
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                              : "bg-slate-100 text-slate-500 dark:bg-slate-800"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400"
+                              : "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400"
                           }`}
                         >
-                          {isPending
-                            ? "Pendiente"
-                            : isConfirmed
-                            ? "Confirmado"
-                            : isDelivered
-                            ? "Entregado"
-                            : "Cancelado"}
+                          {ord.status}
                         </span>
                       </div>
 
-                      {/* Client info & WhatsApp button */}
-                      <div className="flex items-center justify-between gap-2 pt-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                            {ord.clientName}
-                          </p>
-                          <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                            {ord.clientPhone}
-                          </p>
-                        </div>
-
-                        <a
-                          href={`https://wa.me/${rawPhone}?text=${waMessage}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white border border-emerald-500/20 px-2.5 py-1.5 text-xs font-bold transition cursor-pointer shrink-0"
-                          title="Contactar al cliente por WhatsApp"
-                        >
-                          <ChannelIcon channel="whatsapp" size="sm" />
-                          <span>WhatsApp</span>
-                        </a>
+                      <div className="mt-2 space-y-0.5">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{ord.clientName}</p>
+                        <p className="text-xs text-slate-500 font-mono">{ord.clientPhone}</p>
                       </div>
 
-                      {/* Delivery and payment badges */}
-                      <div className="flex items-center gap-2 pt-2 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-                        <span className="flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5">
-                          {ord.deliveryType === "delivery" ? (
-                            <Truck className="h-3 w-3 text-indigo-500" />
-                          ) : (
-                            <Store className="h-3 w-3 text-primary" />
-                          )}
-                          <span>{ord.deliveryType === "delivery" ? "Delivery" : "Retiro en local"}</span>
-                        </span>
-
-                        <span className="flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5">
-                          <CreditCard className="h-3 w-3 text-emerald-500" />
-                          <span className="capitalize">{ord.paymentMethod}</span>
-                        </span>
+                      <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
+                        {ord.deliveryType === "retirar_en_local" ? (
+                          <span className="flex items-center gap-1">
+                            <Store className="h-3.5 w-3.5 text-emerald-500" /> Retiro en local
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Truck className="h-3.5 w-3.5 text-indigo-500" /> Delivery Asunción
+                          </span>
+                        )}
+                        <span>·</span>
+                        <span className="capitalize">{ord.paymentMethod}</span>
                       </div>
 
-                      {/* Item list */}
-                      <div className="mt-3 space-y-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-2.5 text-xs border border-slate-100 dark:border-white/5">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Items del Pedido ({ord.items.reduce((s, i) => s + i.qty, 0)})
-                        </p>
+                      {/* Items */}
+                      <div className="mt-3 divide-y divide-slate-100 dark:divide-white/5 border-t border-slate-100 dark:border-white/5 pt-2 text-xs space-y-1.5">
                         {ord.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-xs py-0.5">
-                            <div className="flex items-center gap-1.5 truncate">
-                              <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">
-                                {item.qty}x
-                              </span>
-                              <span className="truncate text-slate-800 dark:text-slate-200">
-                                {item.productName}
+                          <div key={idx} className="flex items-center justify-between pt-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-slate-800 dark:text-slate-200">
+                                {item.qty}x {item.productName}
                               </span>
                               {item.isOnSale && (
-                                <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                                <span className="rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[9px] font-black px-1">
                                   OFERTA
                                 </span>
                               )}
@@ -1132,84 +1321,417 @@ export default function CrmOmnichannelPage() {
         </div>
       )}
 
-      {/* CHANNEL CONFIGURATION MODAL */}
+      {/* EVOLUTION API CONNECTION WIZARD MODAL */}
       <Modal
-        open={configModalOpen}
-        onClose={() => setConfigModalOpen(false)}
-        title="Canales de Mensajería Conectados"
+        open={evolutionModalOpen}
+        onClose={() => setEvolutionModalOpen(false)}
+        title="Conectar WhatsApp Gratis · Evolution API"
       >
         <div className="space-y-5 text-xs">
-          <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-900/60 p-4">
-            <h4 className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5 mb-1 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              <span>Sincronización Automática Activa</span>
+          {/* Top Info Banner */}
+          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/60 p-4">
+            <h4 className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5 mb-1 text-sm">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <span>Conexión Directa sin Pagar a Meta ($0 Costo)</span>
             </h4>
-            <p className="text-indigo-700 dark:text-indigo-300 leading-relaxed">
-              Tus canales están vinculados a la bandeja central de tu negocio. Todos los mensajes entrantes de clientes se reciben al instante sin configuraciones complejas.
+            <p className="text-emerald-700 dark:text-emerald-300 leading-relaxed">
+              <strong>Evolution API</strong> permite vincular cualquier número de WhatsApp (personal o business) mediante código QR. No pagás tarifas por plantilla ni suscripciones mensuales a intermediarios.
             </p>
           </div>
 
-          <div className="space-y-2.5">
-            <h5 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <span>Estado de tus Canales:</span>
-            </h5>
+          {/* Modal Tabs */}
+          <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setEvolutionModalTab("qr")}
+              className={`flex-1 py-2 text-center rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                evolutionModalTab === "qr"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              }`}
+            >
+              <QrCode className="h-4 w-4" />
+              <span>Escanear Código QR</span>
+            </button>
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5">
-              <div className="flex items-center gap-2.5">
-                <ChannelIcon channel="whatsapp" size="sm" />
-                <div>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block text-xs">
-                    WhatsApp Business
-                  </span>
-                  <span className="text-[11px] text-slate-500">Confirmaciones y chat directo</span>
-                </div>
-              </div>
-              <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold px-2.5 py-0.5 text-[10px]">
-                Conectado y Activo
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5">
-              <div className="flex items-center gap-2.5">
-                <ChannelIcon channel="instagram" size="sm" />
-                <div>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block text-xs">
-                    Instagram Direct
-                  </span>
-                  <span className="text-[11px] text-slate-500">Mensajes privados y consultas</span>
-                </div>
-              </div>
-              <span className="rounded-full bg-pink-100 dark:bg-pink-950/60 text-pink-700 dark:text-pink-400 font-bold px-2.5 py-0.5 text-[10px]">
-                Conectado
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5">
-              <div className="flex items-center gap-2.5">
-                <ChannelIcon channel="messenger" size="sm" />
-                <div>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block text-xs">
-                    Facebook Messenger
-                  </span>
-                  <span className="text-[11px] text-slate-500">Página oficial del negocio</span>
-                </div>
-              </div>
-              <span className="rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold px-2.5 py-0.5 text-[10px]">
-                Conectado
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={() => setEvolutionModalTab("config")}
+              className={`flex-1 py-2 text-center rounded-lg font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                evolutionModalTab === "config"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              }`}
+            >
+              <Settings className="h-4 w-4" />
+              <span>Servidor & Webhook</span>
+            </button>
           </div>
+
+          {evolutionModalTab === "qr" ? (
+            /* TAB 1: QR CODE SCANNER */
+            <div className="space-y-4">
+              <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center gap-6">
+                {/* Visual QR Card */}
+                <div className="relative flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-sm border border-slate-200 shrink-0">
+                  <div className="w-44 h-44 bg-white flex flex-col items-center justify-center relative p-2">
+                    {/* Stylized QR Code SVG */}
+                    <svg className="w-full h-full text-slate-900" viewBox="0 0 100 100" fill="currentColor">
+                      {/* Corner 1 */}
+                      <rect x="5" y="5" width="25" height="25" rx="3" fill="none" stroke="currentColor" strokeWidth="4" />
+                      <rect x="11" y="11" width="13" height="13" rx="1" />
+                      {/* Corner 2 */}
+                      <rect x="70" y="5" width="25" height="25" rx="3" fill="none" stroke="currentColor" strokeWidth="4" />
+                      <rect x="76" y="11" width="13" height="13" rx="1" />
+                      {/* Corner 3 */}
+                      <rect x="5" y="70" width="25" height="25" rx="3" fill="none" stroke="currentColor" strokeWidth="4" />
+                      <rect x="11" y="76" width="13" height="13" rx="1" />
+                      {/* Data dots */}
+                      <circle cx="45" cy="15" r="4" />
+                      <circle cx="55" cy="25" r="3" />
+                      <circle cx="40" cy="35" r="4" />
+                      <circle cx="50" cy="50" r="5" />
+                      <circle cx="65" cy="45" r="4" />
+                      <circle cx="35" cy="55" r="3" />
+                      <circle cx="20" cy="45" r="4" />
+                      <circle cx="50" cy="70" r="4" />
+                      <circle cx="70" cy="70" r="4" />
+                      <circle cx="85" cy="55" r="4" />
+                      <circle cx="75" cy="40" r="3" />
+                      <circle cx="60" cy="85" r="4" />
+                      <circle cx="85" cy="85" r="4" />
+                      <circle cx="40" cy="85" r="3" />
+                    </svg>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between w-full text-[10px] text-slate-500 font-mono">
+                    <span className="flex items-center gap-1">
+                      <RefreshCw className="h-3 w-3 animate-spin text-emerald-500" />
+                      <span>{qrCounter}s</span>
+                    </span>
+                    <span className="font-bold text-slate-700">Instancia: {evolutionConfig.instanceName}</span>
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <div className="space-y-3 flex-1">
+                  <h5 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Pasos para vincular:
+                  </h5>
+                  <ol className="space-y-2 text-slate-600 dark:text-slate-300 text-xs">
+                    <li className="flex items-start gap-2">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
+                        1
+                      </span>
+                      <span>Abrí <strong>WhatsApp</strong> en tu celular.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
+                        2
+                      </span>
+                      <span>Tocá los tres puntos o Ajustes &gt; <strong>Dispositivos Vinculados</strong>.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
+                        3
+                      </span>
+                      <span>Tocá <strong>Vincular un dispositivo</strong> y apuntá con tu cámara a este código.</span>
+                    </li>
+                  </ol>
+
+                  {/* Status Banner */}
+                  <div className="pt-2">
+                    {evolutionConfig.connected ? (
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <span className="font-bold text-emerald-800 dark:text-emerald-300">
+                            Conectado: {evolutionConfig.phoneNumber || "+595 981 765 432"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateEvolutionConfig({ connected: false, phoneNumber: "" });
+                            pushToast("error", "WhatsApp desconectado.");
+                          }}
+                          className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                        >
+                          Desconectar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40">
+                        <span className="text-amber-800 dark:text-amber-300 font-medium">
+                          Esperando escaneo de código...
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateEvolutionConfig({
+                              connected: true,
+                              phoneNumber: "+595 981 765 432",
+                              lastSync: new Date().toISOString(),
+                            });
+                            pushToast("success", "WhatsApp vinculado exitosamente con Evolution API.");
+                          }}
+                          className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 text-xs transition cursor-pointer shrink-0"
+                        >
+                          Simular Vinculación QR Exitosa
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* TAB 2: SERVER & WEBHOOK CONFIG */
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  URL del Servidor Evolution API:
+                </label>
+                <input
+                  type="text"
+                  value={baseUrlDraft}
+                  onChange={(e) => setBaseUrlDraft(e.target.value)}
+                  placeholder="http://localhost:8080 o https://whatsapp.tu-vps.com"
+                  className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Host donde corre la instancia de Docker con Evolution API.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Nombre de Instancia:
+                  </label>
+                  <input
+                    type="text"
+                    value={instanceDraft}
+                    onChange={(e) => setInstanceDraft(e.target.value)}
+                    placeholder="agendate-py"
+                    className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    API Key / Token:
+                  </label>
+                  <input
+                    type="text"
+                    value={apiKeyDraft}
+                    onChange={(e) => setApiKeyDraft(e.target.value)}
+                    placeholder="agendate_evo_key_..."
+                    className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Webhook URL (Recepción de Mensajes en AgendatePY):
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={evolutionConfig.webhookUrl}
+                    className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 px-3 py-2 text-xs text-slate-500 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (evolutionConfig.webhookUrl) {
+                        navigator.clipboard.writeText(evolutionConfig.webhookUrl);
+                        pushToast("success", "URL de Webhook copiada.");
+                      }
+                    }}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-bold text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer flex items-center gap-1"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Copiar</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bot Toggle */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-white/5">
+                <div className="space-y-0.5">
+                  <span className="font-bold text-slate-900 dark:text-white block text-xs flex items-center gap-1.5">
+                    <Bot className="h-4 w-4 text-indigo-500" />
+                    <span>Bot de Asistencia & Enlace de Turnos Automático</span>
+                  </span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Si te escriben por WhatsApp fuera de horario o piden turnos, el bot envía automáticamente el enlace de tu web oficial.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateEvolutionConfig({ autoBotEnabled: !evolutionConfig.autoBotEnabled });
+                  }}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                    evolutionConfig.autoBotEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out mt-0.5 ml-0.5 ${
+                      evolutionConfig.autoBotEnabled ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateEvolutionConfig({
+                      baseUrl: baseUrlDraft,
+                      instanceName: instanceDraft,
+                      apiKey: apiKeyDraft,
+                    });
+                    pushToast("success", "Configuración de Evolution API guardada.");
+                  }}
+                  className="rounded-xl bg-primary text-white font-bold px-4 py-2 hover:opacity-95 transition cursor-pointer"
+                >
+                  Guardar Parámetros
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex justify-end">
             <button
               type="button"
-              onClick={() => {
-                setConfigModalOpen(false);
-                pushToast("success", "Canales verificados y en línea correctamente.");
-              }}
-              className="rounded-xl bg-primary text-white font-bold px-4 py-2 hover:opacity-95 transition"
+              onClick={() => setEvolutionModalOpen(false)}
+              className="rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold px-4 py-2 hover:opacity-90 transition cursor-pointer"
             >
-              Cerrar y Continuar
+              Listo
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* CREATE ORDER FROM CRM MODAL */}
+      <Modal
+        open={orderModalOpen}
+        onClose={() => setOrderModalOpen(false)}
+        title={`Crear Pedido de Producto · ${activeConversation?.clientName || "Cliente"}`}
+      >
+        <div className="space-y-4 text-xs">
+          <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-900/60 p-3.5">
+            <p className="text-indigo-900 dark:text-indigo-200 leading-relaxed font-medium">
+              El pedido se vinculará a <strong>{activeConversation?.clientName}</strong> ({activeConversation?.channelIdentifier}) y se enviará un mensaje de confirmación automático al chat de WhatsApp.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Producto a despachar:
+            </label>
+            <CustomSelect
+              value={orderProductId}
+              onChange={(val) => setOrderProductId(val)}
+              options={productOptions}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 items-center">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Cantidad:
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOrderQty((q) => Math.max(1, q - 1))}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white font-bold hover:bg-slate-200 transition cursor-pointer"
+                >
+                  -
+                </button>
+                <span className="w-10 text-center font-mono font-bold text-sm">
+                  {orderQty}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOrderQty((q) => q + 1)}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white font-bold hover:bg-slate-200 transition cursor-pointer"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-white/5 text-right">
+              <span className="text-[10px] text-slate-400 block font-bold">Total a Cobrar:</span>
+              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                {formatGs(orderTotal)}
+              </span>
+              {selectedProduct?.isOnSale && (
+                <span className="text-[9.5px] text-rose-500 font-bold block">
+                  Precio con descuento aplicado
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Modalidad de Entrega:
+            </label>
+            <CustomSelect
+              value={orderDelivery}
+              onChange={(val) => setOrderDelivery(val as any)}
+              options={deliveryOptions}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Método de Pago:
+            </label>
+            <CustomSelect
+              value={orderPayment}
+              onChange={(val) => setOrderPayment(val as any)}
+              options={paymentOptions}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Notas Adicionales (Opcional):
+            </label>
+            <textarea
+              rows={2}
+              value={orderNotes}
+              onChange={(e) => setOrderNotes(e.target.value)}
+              placeholder="Ej: Retira el jueves cuando venga a su corte con Marcos..."
+              className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setOrderModalOpen(false)}
+              className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateOrderSubmit}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 shadow-sm transition cursor-pointer flex items-center gap-1.5"
+            >
+              <Check className="h-4 w-4" />
+              <span>Confirmar Pedido &amp; Notificar</span>
             </button>
           </div>
         </div>

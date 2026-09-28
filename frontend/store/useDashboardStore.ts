@@ -714,6 +714,18 @@ type DashboardState = {
   pushToast: (type: "success" | "error", message: string) => void;
   dismissToast: (id: string) => void;
   crmConversations: CrmConversation[];
+  evolutionConfig: EvolutionApiConfig;
+  updateEvolutionConfig: (config: Partial<EvolutionApiConfig>) => void;
+  loadDemoConversation: () => void;
+  clearCrmConversations: () => void;
+  createOrderFromCrm: (data: {
+    clientName: string;
+    clientPhone: string;
+    items: { productId: string; productName: string; qty: number; unitPrice: number; isOnSale?: boolean }[];
+    notes?: string;
+    deliveryType: "retirar_en_local" | "delivery";
+    paymentMethod: "efectivo" | "pos" | "transferencia";
+  }) => void;
   sendCrmMessage: (conversationId: string, text: string) => void;
   resolveCrmConversation: (conversationId: string) => void;
   reopenCrmConversation: (conversationId: string) => void;
@@ -1768,6 +1780,97 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }),
 
   crmConversations: [],
+  evolutionConfig: {
+    enabled: false,
+    connected: false,
+    baseUrl: "http://localhost:8080",
+    instanceName: "agendate-py",
+    apiKey: "agendate_evo_key_sec2026",
+    phoneNumber: "",
+    autoBotEnabled: true,
+    webhookUrl: "https://agendate.py/api/webhooks/whatsapp",
+    autoSendOnBooking: true,
+    autoSendOnCancel: true,
+  },
+  updateEvolutionConfig: (config) => {
+    set({
+      evolutionConfig: { ...get().evolutionConfig, ...config },
+    });
+    get().pushToast("success", "Configuración de Evolution API actualizada.");
+  },
+  loadDemoConversation: () => {
+    const demoConv: CrmConversation = {
+      id: "conv-demo-1",
+      clientName: "Martín Benítez",
+      clientAvatar: "MB",
+      channel: "whatsapp",
+      channelIdentifier: "+595 981 765 432",
+      lastMessage: "¡Genial! Agendame por favor para el jueves y guardame un pote de la cera para retirar cuando vaya.",
+      lastMessageTime: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      unreadCount: 1,
+      status: "open",
+      messages: [
+        {
+          id: "m-demo-1",
+          sender: "client",
+          text: "¡Hola! Buenas tardes. Quería consultar si tienen turno disponible para corte y perfilado de barba para este jueves a las 16:00 hs aprox.",
+          timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+          status: "read",
+        },
+        {
+          id: "m-demo-2",
+          sender: "client",
+          text: "Y también quería saber si tienen en stock la cera capilar efecto mate que vi en sus publicaciones.",
+          timestamp: new Date(Date.now() - 24 * 60 * 1000).toISOString(),
+          status: "read",
+        },
+        {
+          id: "m-demo-3",
+          sender: "agent",
+          text: "¡Hola Martín! Qué tal. Sí, tenemos disponibilidad este jueves a las 16:00 con nuestro estilista Marcos. Y la cera capilar mate la tenemos en stock con descuento promocional en Gs. 50.000.",
+          timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+          status: "delivered",
+        },
+        {
+          id: "m-demo-4",
+          sender: "client",
+          text: "¡Genial! Agendame por favor para el jueves y guardame un pote de la cera para retirar cuando vaya.",
+          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+          status: "delivered",
+        },
+      ],
+    };
+    set({
+      crmConversations: [demoConv],
+    });
+    get().pushToast("success", "Conversación de prueba cargada en la bandeja.");
+  },
+  clearCrmConversations: () => {
+    set({ crmConversations: [] });
+    get().pushToast("success", "Bandeja limpia de fábrica (0 conversaciones).");
+  },
+  createOrderFromCrm: (data) => {
+    const total = data.items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
+    const orderNumber = `#PED-${Math.floor(100 + Math.random() * 900)}`;
+    const newOrder: ProductOrder = {
+      id: `ord-${Date.now()}`,
+      orderNumber,
+      clientName: data.clientName,
+      clientPhone: data.clientPhone,
+      items: data.items,
+      totalAmount: total,
+      status: "pending",
+      paymentMethod: data.paymentMethod,
+      deliveryType: data.deliveryType,
+      createdAt: new Date().toISOString(),
+      notes: data.notes || "Generado desde chat de CRM",
+    };
+    set({
+      productOrders: [newOrder, ...get().productOrders],
+    });
+    get().pushToast("success", `Pedido ${orderNumber} creado exitosamente desde CRM`);
+  },
+
   sendCrmMessage: (conversationId, text) => {
     if (!text.trim()) return;
     const newMsg: CrmMessage = {

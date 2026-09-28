@@ -259,6 +259,10 @@ export type EvolutionApiConfig = {
   autoSendOnBooking: boolean;
   autoSendOnCancel: boolean;
   connected: boolean;
+  phoneNumber?: string;
+  autoBotEnabled?: boolean;
+  webhookUrl?: string;
+  lastSync?: string;
 };
 
 export type BusinessProfile = {

@@ -230,32 +230,51 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Bandeja Unificada",
     icon: MessagesSquare,
     summary:
-      "Centralizá todas las consultas que te llegan por WhatsApp, Instagram Direct y chat web en una sola bandeja sin perder ningún cliente.",
+      "Centralizá todas las consultas de WhatsApp, Instagram y redes en una sola bandeja. Conectá gratis con Evolution API mediante código QR y procesá turnos o pedidos de productos en 1 clic.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Explorar la lista de conversaciones",
+        taskTitle: "Bandeja Omnicanal & Conexión $0",
         instruction:
-          "En la columna izquierda tenés todos los chats ordenados por los más recientes. Cada chat muestra el canal (WhatsApp, Instagram o Web) y si está pendiente.",
+          "Tu CRM viene limpio de fábrica. Podés conectar WhatsApp escaneando un código QR con Evolution API ($0 costo por mensaje) o cargar 1 chat de prueba para explorar la bandeja.",
+        tip: "Hacé clic en 'Conectar Evolution API' para vincular tu WhatsApp Web en segundos.",
+        targetSelector: '[data-tour="crm-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Responder en tiempo real con 1 clic",
+        taskTitle: "Mensajes vs Pedidos de Tienda",
         instruction:
-          "Escribí tu mensaje o usá respuestas predeterminadas. El mensaje se envía directo al canal de origen del cliente sin salir de tu panel.",
-        tip: "Tenés atajos para enviar la lista de precios o el enlace de reservas directamente.",
+          "Alterná con 1 clic entre el chat en vivo con clientes y el panel de órdenes de productos solicitados por tus clientes.",
+        targetSelector: '[data-tour="crm-switcher"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Guardar notas privadas del cliente",
+        taskTitle: "Filtro de Canales & Estados",
         instruction:
-          "En el panel derecho de la conversación podés anotar detalles internos (ej: 'Prefiere pagar en efectivo', 'Viene con su hijo') que solo tu equipo puede ver.",
+          "Filtrá conversaciones por WhatsApp, Instagram o Messenger, o visualizá solo los chats que están pendientes o resueltos.",
+        targetSelector: '[data-tour="crm-channels"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Archivar o resolver conversaciones",
+        taskTitle: "Lista de Conversaciones",
         instruction:
-          "Cuando el turno quede agendado o la consulta esté resuelta, tocá 'Marcar como Resuelto' para mantener tu bandeja limpia.",
+          "Los chats aparecen ordenados por hora con alertas de mensajes no leídos. Al hacer clic sobre cualquier chat, se abre el hilo de conversación.",
+        targetSelector: '[data-tour="crm-conversations-list"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Chat en Vivo & Respuestas Rápidas",
+        instruction:
+          "Conversá en tiempo real con el cliente y utilizá los botones de respuestas rápidas para enviar enlaces de reserva o datos SIPAP al instante.",
+        tip: "Presioná Enter para enviar el mensaje directamente.",
+        targetSelector: '[data-tour="crm-chat-box"]',
+      },
+      {
+        stepNumber: 6,
+        taskTitle: "Ficha 360°, Agendar Cita & Crear Pedido",
+        instruction:
+          "Desde el panel lateral podés agendar un turno con los datos del cliente ya pre-cargados o crear un pedido de producto solicitado por chat.",
+        targetSelector: '[data-tour="crm-client-profile"]',
       },
     ],
   },
