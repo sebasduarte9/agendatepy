@@ -27,10 +27,12 @@ export type ServiceItem = {
   description: string;
   image: string;
   active?: boolean;
+  staffIds?: string[]; // IDs de colaboradores que realizan este servicio
   // Promociones y Ofertas limitadas
   hasPromo?: boolean;
   promoPrice?: number;
-  promoBadge?: string; // ej: "-20% OFF", "2x1", "Promo Flash"
+  promoBadge?: string; // ej: "-20% OFF", "Ahorrá 20.000 Gs"
+  promoDisplayType?: "percentage" | "amount"; // Modo de visualización del descuento
   promoType?: "quantity" | "time"; // por cantidad de cupos o por tiempo limitado
   promoLimitQuantity?: number; // ej: 5 cupos
   promoLimitHours?: number; // ej: 24 horas

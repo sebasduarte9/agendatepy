@@ -17,7 +17,12 @@ import {
   BadgePercent,
   Flame,
   Layers,
-  Sparkles,
+  Tag,
+  Eye,
+  EyeOff,
+  Percent,
+  X,
+  UserCheck,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -26,14 +31,16 @@ import Modal from "@/components/dashboard/ui/Modal";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { ServiceItem } from "@/lib/dashboard-types";
 
-const DEFAULT_CATEGORIES = [
-  "Todos",
+const INITIAL_CATEGORIES = [
   "Peluquería",
   "Barbería",
   "Color",
   "Tratamiento",
   "Estética",
-] as const;
+  "Manicura & Pedicura",
+];
+
+const PRESET_DURATIONS = [15, 30, 45, 60, 90, 120];
 
 export default function ServiciosPage() {
   const {
@@ -50,29 +57,46 @@ export default function ServiciosPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("Todos");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Custom Categories State
+  const [customCategories, setCustomCategories] = useState<string[]>(INITIAL_CATEGORIES);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState("");
+
   // Service Modal state
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
+
+  // Form State
   const [serviceForm, setServiceForm] = useState({
     name: "",
     category: "Peluquería",
     durationMin: 45,
-    price: 85000,
+    price: 80000,
     description: "",
+    active: true,
+    staffIds: [] as string[],
     hasPromo: false,
-    promoPrice: 65000,
+    promoCalcMode: "percentage" as "percentage" | "amount",
+    promoPercent: 20,
+    promoPrice: 64000,
+    promoDisplayType: "percentage" as "percentage" | "amount",
     promoBadge: "-20% OFF",
   });
 
-  // Dynamic categories
-  const categories = useMemo(() => {
-    const set = new Set<string>(["Todos"]);
+  // Dynamic Categories merging defaults + created + services
+  const allCategories = useMemo(() => {
+    const set = new Set<string>();
+    customCategories.forEach((c) => set.add(c));
     services.forEach((s) => {
       if (s.category && s.category.trim()) set.add(s.category.trim());
     });
-    DEFAULT_CATEGORIES.forEach((cat) => set.add(cat));
     return Array.from(set);
-  }, [services]);
+  }, [customCategories, services]);
+
+  const filterCategoryList = useMemo(() => ["Todos", ...allCategories], [allCategories]);
+
+  // Active staff list
+  const activeStaff = useMemo(() => staff.filter((s) => s.active), [staff]);
 
   // Filtered Services
   const filteredServices = useMemo(() => {
@@ -89,7 +113,8 @@ export default function ServiciosPage() {
   }, [services, search, categoryFilter]);
 
   // KPIs
-  const activeStaffCount = staff.filter((s) => s.active).length;
+  const activeStaffCount = activeStaff.length;
+  const visibleServicesCount = services.filter((s) => s.active !== false).length;
   const avgPrice =
     services.length > 0
       ? Math.round(services.reduce((sum, s) => sum + s.price, 0) / services.length)
@@ -99,17 +124,38 @@ export default function ServiciosPage() {
       ? Math.round(services.reduce((sum, s) => sum + s.durationMin, 0) / services.length)
       : 0;
 
-  // Handlers
+  // Handlers for Categories
+  function handleCreateCategory() {
+    const trimmed = newCategoryInput.trim();
+    if (!trimmed) return;
+    if (allCategories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      pushToast("error", "Esa categoría ya existe.");
+      return;
+    }
+    setCustomCategories((prev) => [...prev, trimmed]);
+    setServiceForm((prev) => ({ ...prev, category: trimmed }));
+    setNewCategoryInput("");
+    setIsAddingCategory(false);
+    pushToast("success", `Categoría "${trimmed}" agregada`);
+  }
+
+  // Handlers for Services
   function handleOpenCreateService() {
     setEditingService(null);
+    const defaultStaffIds = activeStaff.map((s) => s.id);
     setServiceForm({
       name: "",
-      category: "Peluquería",
+      category: allCategories[0] || "Peluquería",
       durationMin: 40,
       price: 80000,
       description: "",
+      active: true,
+      staffIds: defaultStaffIds,
       hasPromo: false,
-      promoPrice: 65000,
+      promoCalcMode: "percentage",
+      promoPercent: 20,
+      promoPrice: 64000,
+      promoDisplayType: "percentage",
       promoBadge: "-20% OFF",
     });
     setServiceModalOpen(true);
@@ -117,17 +163,140 @@ export default function ServiciosPage() {
 
   function handleOpenEditService(s: ServiceItem, openForPromo = false) {
     setEditingService(s);
+    const price = s.price || 0;
+    const hasPromo = openForPromo ? true : !!s.hasPromo;
+    const promoPrice = s.promoPrice || Math.round(price * 0.8);
+    const calculatedPercent =
+      price > 0 && promoPrice < price ? Math.round(((price - promoPrice) / price) * 100) : 20;
+
+    const initialStaffIds =
+      s.staffIds && s.staffIds.length > 0
+        ? s.staffIds
+        : activeStaff.map((st) => st.id);
+
     setServiceForm({
       name: s.name,
-      category: s.category || "Peluquería",
+      category: s.category || allCategories[0] || "Peluquería",
       durationMin: s.durationMin,
       price: s.price,
       description: s.description,
-      hasPromo: openForPromo ? true : !!s.hasPromo,
-      promoPrice: s.promoPrice || Math.round(s.price * 0.8),
-      promoBadge: s.promoBadge || "-20% OFF",
+      active: s.active !== false,
+      staffIds: initialStaffIds,
+      hasPromo,
+      promoCalcMode: "percentage",
+      promoPercent: calculatedPercent,
+      promoPrice,
+      promoDisplayType: s.promoDisplayType || "percentage",
+      promoBadge: s.promoBadge || `-${calculatedPercent}% OFF`,
     });
     setServiceModalOpen(true);
+  }
+
+  // Discount Calculation Helpers
+  function handleBasePriceChange(newPrice: number) {
+    const safePrice = Math.max(0, newPrice);
+    if (serviceForm.hasPromo) {
+      if (serviceForm.promoCalcMode === "percentage") {
+        const newPromoPrice = Math.round(safePrice * (1 - serviceForm.promoPercent / 100));
+        const badge =
+          serviceForm.promoDisplayType === "percentage"
+            ? `-${serviceForm.promoPercent}% OFF`
+            : `Ahorrá ${formatGs(safePrice - newPromoPrice)}`;
+        setServiceForm((prev) => ({
+          ...prev,
+          price: safePrice,
+          promoPrice: newPromoPrice,
+          promoBadge: badge,
+        }));
+      } else {
+        const percent =
+          safePrice > 0 ? Math.round(((safePrice - serviceForm.promoPrice) / safePrice) * 100) : 0;
+        const badge =
+          serviceForm.promoDisplayType === "percentage"
+            ? `-${Math.max(0, percent)}% OFF`
+            : `Ahorrá ${formatGs(Math.max(0, safePrice - serviceForm.promoPrice))}`;
+        setServiceForm((prev) => ({
+          ...prev,
+          price: safePrice,
+          promoPercent: Math.max(0, percent),
+          promoBadge: badge,
+        }));
+      }
+    } else {
+      setServiceForm((prev) => ({ ...prev, price: safePrice }));
+    }
+  }
+
+  function handlePercentChange(newPercent: number) {
+    const clampedPercent = Math.min(99, Math.max(1, newPercent));
+    const calculatedPromoPrice = Math.round(
+      serviceForm.price * (1 - clampedPercent / 100)
+    );
+    const badge =
+      serviceForm.promoDisplayType === "percentage"
+        ? `-${clampedPercent}% OFF`
+        : `Ahorrá ${formatGs(serviceForm.price - calculatedPromoPrice)}`;
+
+    setServiceForm((prev) => ({
+      ...prev,
+      promoPercent: clampedPercent,
+      promoPrice: calculatedPromoPrice,
+      promoBadge: badge,
+      promoCalcMode: "percentage",
+    }));
+  }
+
+  function handlePromoPriceChange(newPromoPrice: number) {
+    const clamped = Math.max(0, newPromoPrice);
+    const calculatedPercent =
+      serviceForm.price > 0
+        ? Math.round(((serviceForm.price - clamped) / serviceForm.price) * 100)
+        : 0;
+    const badge =
+      serviceForm.promoDisplayType === "percentage"
+        ? `-${Math.max(0, calculatedPercent)}% OFF`
+        : `Ahorrá ${formatGs(Math.max(0, serviceForm.price - clamped))}`;
+
+    setServiceForm((prev) => ({
+      ...prev,
+      promoPrice: clamped,
+      promoPercent: Math.max(0, calculatedPercent),
+      promoBadge: badge,
+      promoCalcMode: "amount",
+    }));
+  }
+
+  function handleDisplayTypeChange(type: "percentage" | "amount") {
+    let badge = "";
+    if (type === "percentage") {
+      badge = `-${serviceForm.promoPercent}% OFF`;
+    } else {
+      const saved = Math.max(0, serviceForm.price - serviceForm.promoPrice);
+      badge = `Ahorrá ${formatGs(saved)}`;
+    }
+    setServiceForm((prev) => ({
+      ...prev,
+      promoDisplayType: type,
+      promoBadge: badge,
+    }));
+  }
+
+  // Toggle staff assignment
+  function handleToggleStaff(staffId: string) {
+    setServiceForm((prev) => {
+      const exists = prev.staffIds.includes(staffId);
+      const next = exists
+        ? prev.staffIds.filter((id) => id !== staffId)
+        : [...prev.staffIds, staffId];
+      return { ...prev, staffIds: next };
+    });
+  }
+
+  function handleSelectAllStaff() {
+    setServiceForm((prev) => ({
+      ...prev,
+      staffIds: activeStaff.map((s) => s.id),
+    }));
   }
 
   function handleSaveService(e: React.FormEvent) {
@@ -144,9 +313,12 @@ export default function ServiciosPage() {
       price: Number(serviceForm.price) || 0,
       description: serviceForm.description.trim(),
       image: editingService?.image || "scissors",
+      active: serviceForm.active,
+      staffIds: serviceForm.staffIds,
       hasPromo: serviceForm.hasPromo,
       promoPrice: serviceForm.hasPromo ? Number(serviceForm.promoPrice) || 0 : undefined,
       promoBadge: serviceForm.hasPromo ? serviceForm.promoBadge : undefined,
+      promoDisplayType: serviceForm.hasPromo ? serviceForm.promoDisplayType : undefined,
     };
 
     if (editingService) {
@@ -157,6 +329,15 @@ export default function ServiciosPage() {
       pushToast("success", `Servicio "${serviceForm.name}" creado`);
     }
     setServiceModalOpen(false);
+  }
+
+  function handleToggleVisibility(service: ServiceItem) {
+    const nextActive = service.active === false ? true : false;
+    updateService(service.id, { active: nextActive });
+    pushToast(
+      "success",
+      `Servicio "${service.name}" ${nextActive ? "ahora está visible online" : "ahora está oculto"}`
+    );
   }
 
   function handleDeleteService(id: string, name: string) {
@@ -192,7 +373,7 @@ export default function ServiciosPage() {
             <Scissors className="h-5 w-5 text-primary" />
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Definí precios en Guaraníes, tiempos de atención por turno y promociones activas.
+            Categorías, duraciones por turno, profesionales asignados y promociones calculadas.
           </p>
         </div>
 
@@ -215,10 +396,10 @@ export default function ServiciosPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
-              ¿Querés asignar profesionales o comisiones a tus servicios?
+              ¿Querés gestionar horarios y comisiones individuales?
             </p>
             <p className="text-[11px] text-indigo-700/80 dark:text-indigo-400">
-              Gestioná horarios y porcentajes de tu equipo en la sección especializada de Colaboradores.
+              Los porcentajes de ganancia de cada especialista se administran en Colaboradores.
             </p>
           </div>
         </div>
@@ -234,8 +415,8 @@ export default function ServiciosPage() {
       {/* KPI Stats */}
       <div data-tour="servicios-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Total Servicios en Menú"
-          value={`${services.length} opciones`}
+          label="Servicios Activos Online"
+          value={`${visibleServicesCount} de ${services.length}`}
           icon={Layers}
         />
         <StatCard
@@ -250,13 +431,13 @@ export default function ServiciosPage() {
         />
       </div>
 
-      {/* Search Bar & Category Filters */}
+      {/* Search Bar & Category Filters + Add Category Action */}
       <div
         data-tour="servicios-filters"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
-          {categories.map((cat) => (
+          {filterCategoryList.map((cat) => (
             <button
               key={cat}
               type="button"
@@ -270,6 +451,53 @@ export default function ServiciosPage() {
               {cat}
             </button>
           ))}
+
+          {/* Quick Add Category inline */}
+          {isAddingCategory ? (
+            <div className="inline-flex items-center gap-1 rounded-2xl border border-primary/40 bg-white dark:bg-slate-900 p-1 shadow-xs shrink-0">
+              <input
+                type="text"
+                autoFocus
+                placeholder="Nombre categoría..."
+                value={newCategoryInput}
+                onChange={(e) => setNewCategoryInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateCategory();
+                  } else if (e.key === "Escape") {
+                    setIsAddingCategory(false);
+                  }
+                }}
+                className="w-32 px-2 py-0.5 text-xs text-slate-900 dark:text-white focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleCreateCategory}
+                className="rounded-xl bg-primary text-white p-1 hover:opacity-90 transition cursor-pointer"
+                title="Guardar categoría"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddingCategory(false)}
+                className="rounded-xl p-1 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                title="Cancelar"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAddingCategory(true)}
+              className="inline-flex items-center gap-1 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-800/50 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition shrink-0 cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>+ Categoría</span>
+            </button>
+          )}
         </div>
 
         <div className="relative w-full sm:w-64">
@@ -310,21 +538,49 @@ export default function ServiciosPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredServices.map((item, index) => {
+            const isVisible = item.active !== false;
             const hasActivePromo = item.hasPromo && item.promoPrice;
             const currentPrice = hasActivePromo ? item.promoPrice! : item.price;
             const isCopied = copiedId === item.id;
+
+            // Find staff assigned to this service
+            const assignedStaff = activeStaff.filter(
+              (st) => !item.staffIds || item.staffIds.length === 0 || item.staffIds.includes(st.id)
+            );
 
             return (
               <Card
                 key={item.id}
                 data-tour={index === 0 ? "servicios-card" : undefined}
-                className="group flex flex-col justify-between rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-5 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-300"
+                className={`group flex flex-col justify-between rounded-3xl border p-5 shadow-xs transition-all duration-300 ${
+                  isVisible
+                    ? "border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 hover:shadow-md hover:border-primary/40"
+                    : "border-slate-200/50 dark:border-white/5 bg-slate-100/50 dark:bg-slate-900/40 opacity-75"
+                }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
-                      {item.category || "General"}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
+                        {item.category || "General"}
+                      </span>
+
+                      {/* Visibility Pill */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleVisibility(item)}
+                        title={isVisible ? "Visible online (Clic para ocultar)" : "Oculto (Clic para publicar)"}
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition cursor-pointer ${
+                          isVisible
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            : "bg-slate-200 dark:bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700"
+                        }`}
+                      >
+                        {isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        <span>{isVisible ? "Online" : "Oculto"}</span>
+                      </button>
+                    </div>
+
                     <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold">
                       <Clock className="h-3.5 w-3.5 text-primary" />
                       <span>{item.durationMin} min</span>
@@ -338,6 +594,7 @@ export default function ServiciosPage() {
                     {item.description || "Servicio estándar de atención en el local."}
                   </p>
 
+                  {/* Price Section */}
                   <div className="mt-4 flex items-baseline gap-2">
                     <span className="font-mono font-black text-xl text-slate-900 dark:text-white">
                       {formatGs(currentPrice)}
@@ -347,6 +604,16 @@ export default function ServiciosPage() {
                         {formatGs(item.price)}
                       </span>
                     )}
+                  </div>
+
+                  {/* Assigned Staff Preview */}
+                  <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <Users className="h-3 w-3 text-slate-400" />
+                    <span className="truncate">
+                      {assignedStaff.length === activeStaff.length
+                        ? "Todo el equipo"
+                        : `${assignedStaff.length} especialistas asignados`}
+                    </span>
                   </div>
                 </div>
 
@@ -428,79 +695,204 @@ export default function ServiciosPage() {
         </div>
       )}
 
-      {/* Modal: Service Create / Edit */}
+      {/* Custom Modern Modal: Service Create / Edit */}
       <Modal
         open={serviceModalOpen}
         onClose={() => setServiceModalOpen(false)}
         title={editingService ? `Editar: ${editingService.name}` : "Nuevo Servicio en Catálogo"}
       >
         <form onSubmit={handleSaveService} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Nombre del Servicio *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ej: Corte Fade Clásico + Barba"
-              value={serviceForm.name}
-              onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
-              className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                Categoría
-              </label>
-              <select
-                value={serviceForm.category}
-                onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              >
-                <option value="Peluquería">Peluquería</option>
-                <option value="Barbería">Barbería</option>
-                <option value="Color">Color</option>
-                <option value="Tratamiento">Tratamiento</option>
-                <option value="Estética">Estética</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                Duración (minutos)
+          {/* Service Name & Visibility Switch */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex-1">
+              <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                Nombre del Servicio *
               </label>
               <input
-                type="number"
-                min="5"
-                step="5"
-                value={serviceForm.durationMin}
-                onChange={(e) =>
-                  setServiceForm({ ...serviceForm, durationMin: Number(e.target.value) })
-                }
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                type="text"
+                required
+                placeholder="Ej: Corte Fade Clásico + Barba"
+                value={serviceForm.name}
+                onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
+                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
               />
+            </div>
+
+            {/* Custom Visibility Switch */}
+            <div className="flex items-center gap-2 pt-1 sm:pt-4">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={serviceForm.active}
+                onClick={() => setServiceForm({ ...serviceForm, active: !serviceForm.active })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  serviceForm.active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    serviceForm.active ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <span className="font-bold text-[11px] text-slate-700 dark:text-slate-300">
+                {serviceForm.active ? "Visible Online" : "Oculto"}
+              </span>
             </div>
           </div>
 
+          {/* Category Custom Selector */}
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Precio Estándar (Gs.) *
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="5000"
-              required
-              value={serviceForm.price}
-              onChange={(e) => setServiceForm({ ...serviceForm, price: Number(e.target.value) })}
-              className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white font-mono font-bold focus:border-primary focus:outline-none"
-            />
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="font-bold text-slate-700 dark:text-slate-200">
+                Categoría del Servicio
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsAddingCategory(!isAddingCategory)}
+                className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="h-3 w-3" />
+                <span>Crear Categoría</span>
+              </button>
+            </div>
+
+            {/* Category Chips Custom Selector */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {allCategories.map((cat) => {
+                const isSelected = serviceForm.category === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setServiceForm({ ...serviceForm, category: cat })}
+                    className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      isSelected
+                        ? "border-primary bg-primary text-white shadow-xs"
+                        : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-400"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick add inline in modal */}
+            {isAddingCategory && (
+              <div className="mt-2 flex items-center gap-2 p-2 rounded-2xl bg-primary/5 border border-primary/20">
+                <input
+                  type="text"
+                  placeholder="Nombre de la nueva categoría..."
+                  value={newCategoryInput}
+                  onChange={(e) => setNewCategoryInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleCreateCategory();
+                    }
+                  }}
+                  className="flex-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateCategory}
+                  className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:opacity-95 cursor-pointer"
+                >
+                  Agregar
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* Duration & Base Price with Custom Steppers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Custom Duration Selector */}
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                Duración del Turno ({serviceForm.durationMin} min)
+              </label>
+              <div className="grid grid-cols-3 gap-1.5 mb-2">
+                {PRESET_DURATIONS.map((dur) => (
+                  <button
+                    key={dur}
+                    type="button"
+                    onClick={() => setServiceForm({ ...serviceForm, durationMin: dur })}
+                    className={`py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                      serviceForm.durationMin === dur
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                    }`}
+                  >
+                    {dur} min
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setServiceForm({
+                      ...serviceForm,
+                      durationMin: Math.max(5, serviceForm.durationMin - 5),
+                    })
+                  }
+                  className="h-8 w-8 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  -5
+                </button>
+                <div className="flex-1 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 py-1.5 rounded-xl">
+                  {serviceForm.durationMin} minutos
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setServiceForm({
+                      ...serviceForm,
+                      durationMin: serviceForm.durationMin + 5,
+                    })
+                  }
+                  className="h-8 w-8 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  +5
+                </button>
+              </div>
+            </div>
+
+            {/* Base Price Input with helper pills */}
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                Precio Estándar (Gs.) *
+              </label>
+              <div className="relative mb-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="5000"
+                  required
+                  value={serviceForm.price}
+                  onChange={(e) => handleBasePriceChange(Number(e.target.value))}
+                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white font-mono font-black text-base focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                {[50000, 80000, 100000, 150000].map((quick) => (
+                  <button
+                    key={quick}
+                    type="button"
+                    onClick={() => handleBasePriceChange(quick)}
+                    className="flex-1 rounded-xl border border-slate-200/60 dark:border-white/10 py-1 text-[10px] font-bold text-slate-500 hover:text-primary hover:border-primary transition cursor-pointer"
+                  >
+                    {quick / 1000}k
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
               Descripción o Detalle (opcional)
             </label>
             <textarea
@@ -508,77 +900,214 @@ export default function ServiciosPage() {
               placeholder="Detallá qué incluye el servicio para tus clientes..."
               value={serviceForm.description}
               onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
-              className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
             />
           </div>
 
-          {/* Promoción o Descuento */}
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+          {/* Staff Assignment: Multi-select */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="font-bold text-slate-700 dark:text-slate-200">
+                ¿Quiénes realizan este servicio?
+              </label>
+              <button
+                type="button"
+                onClick={handleSelectAllStaff}
+                className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+              >
+                Seleccionar todos
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {activeStaff.map((st) => {
+                const isAssigned = serviceForm.staffIds.includes(st.id);
+                return (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => handleToggleStaff(st.id)}
+                    className={`flex items-center gap-2 p-2 rounded-2xl border text-left transition cursor-pointer ${
+                      isAssigned
+                        ? "border-primary bg-primary/10 text-primary font-bold shadow-xs"
+                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 opacity-60"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
+                        isAssigned
+                          ? "bg-primary text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-600"
+                      }`}
+                    >
+                      {isAssigned ? <Check className="h-3.5 w-3.5" /> : st.name.slice(0, 1)}
+                    </div>
+                    <span className="truncate text-xs">{st.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* AUTOMATIC DISCOUNT CALCULATOR & LIVE PREVIEW DEMO */}
+          <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-amber-500/10 to-transparent p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <BadgePercent className="h-4 w-4 text-amber-500" />
-                <span className="font-bold text-slate-900 dark:text-white text-xs">
-                  Promoción o Descuento Flash
+                <Flame className="h-4 w-4 text-amber-500 fill-amber-500" />
+                <span className="font-extrabold text-slate-900 dark:text-white text-xs">
+                  Descuento o Promoción Flash
                 </span>
               </div>
-              <input
-                type="checkbox"
-                id="hasPromoToggle"
-                checked={serviceForm.hasPromo}
-                onChange={(e) => setServiceForm({ ...serviceForm, hasPromo: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer"
-              />
+
+              {/* Custom Switch for Promo */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={serviceForm.hasPromo}
+                onClick={() => setServiceForm({ ...serviceForm, hasPromo: !serviceForm.hasPromo })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  serviceForm.hasPromo ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    serviceForm.hasPromo ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
 
             {serviceForm.hasPromo && (
-              <div className="space-y-3 pt-2 border-t border-amber-500/20 text-xs">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3 pt-3 border-t border-amber-500/20 text-xs">
+                {/* Dual Inputs: % vs Monto sync */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                      Porcentaje de Descuento (%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={serviceForm.promoPercent}
+                        onChange={(e) => handlePercentChange(Number(e.target.value))}
+                        className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 pl-3 pr-8 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-amber-600">
+                        %
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Calcula el monto final automáticamente.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
                       Precio Promocional (Gs.)
                     </label>
                     <input
                       type="number"
                       min="0"
-                      step="5000"
+                      step="1000"
                       value={serviceForm.promoPrice}
-                      onChange={(e) =>
-                        setServiceForm({ ...serviceForm, promoPrice: Number(e.target.value) })
-                      }
-                      className="w-full rounded-xl border border-amber-500/30 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white font-mono focus:border-amber-500 focus:outline-none"
+                      onChange={(e) => handlePromoPriceChange(Number(e.target.value))}
+                      className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                     />
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Calcula el % de descuento automáticamente.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Badge Style Selector */}
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                    ¿Cómo mostrar el descuento al cliente?
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDisplayTypeChange("percentage")}
+                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                        serviceForm.promoDisplayType === "percentage"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      <span className="block text-xs font-black">Mostrar Porcentaje</span>
+                      <span className="text-[10px] opacity-75">
+                        Ej: -{serviceForm.promoPercent}% OFF
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDisplayTypeChange("amount")}
+                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                        serviceForm.promoDisplayType === "amount"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      <span className="block text-xs font-black">Mostrar Monto Ahorrado</span>
+                      <span className="text-[10px] opacity-75">
+                        Ej: Ahorrá {formatGs(Math.max(0, serviceForm.price - serviceForm.promoPrice))}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* LIVE PREVIEW DEMO CARD */}
+                <div className="mt-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-xs">
+                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-2">
+                    <span>Vista previa en vivo para el cliente:</span>
+                    <span className="text-amber-500 font-black">DEMO EN RESERVA</span>
                   </div>
 
-                  <div>
-                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Etiqueta
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: -20% OFF"
-                      value={serviceForm.promoBadge}
-                      onChange={(e) =>
-                        setServiceForm({ ...serviceForm, promoBadge: e.target.value })
-                      }
-                      className="w-full rounded-xl border border-amber-500/30 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
-                    />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                        {serviceForm.name || "Nombre del servicio"}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {serviceForm.durationMin} minutos · {serviceForm.category}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className="text-xs text-slate-400 line-through font-mono">
+                          {formatGs(serviceForm.price)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-700 dark:text-amber-300">
+                          <Flame className="h-3 w-3 fill-amber-500 text-amber-500" />
+                          {serviceForm.promoBadge}
+                        </span>
+                      </div>
+                      <div className="font-mono font-black text-lg text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        {formatGs(serviceForm.promoPrice)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2">
+          {/* Modal Footer Actions */}
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
             <button
               type="button"
               onClick={() => setServiceModalOpen(false)}
-              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-5 py-2 font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
+              className="rounded-2xl bg-primary px-5 py-2.5 font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
             >
               {editingService ? "Guardar Cambios" : "Crear Servicio"}
             </button>
