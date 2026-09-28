@@ -774,8 +774,34 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         return false;
       }
 
+      // Regla estricta de fidelización VIP: solo otorga sello y suma visita al COMPLETAR y asistir al turno
+      let updatedClients = get().clients;
+      if (patch.status === "completed" && existing.status !== "completed") {
+        const service = get().services.find((s) => s.id === (patch.serviceId || existing.serviceId));
+        const price = service?.price ?? 0;
+        const addPoints = get().loyalty.enabled ? get().loyalty.pointsPerVisit : 1;
+
+        updatedClients = updatedClients.map((c) => {
+          const isMatch =
+            (existing.clientId && c.id === existing.clientId) ||
+            c.phone === existing.clientPhone ||
+            c.name.toLowerCase() === existing.clientName.toLowerCase();
+          if (isMatch) {
+            return {
+              ...c,
+              totalVisits: c.totalVisits + 1,
+              totalSpent: c.totalSpent + price,
+              lastVisit: existing.start,
+              loyaltyPoints: c.loyaltyPoints + addPoints,
+            };
+          }
+          return c;
+        });
+      }
+
       set({
         appointments: prev.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+        clients: updatedClients,
       });
       return true;
     } catch (err) {
@@ -792,21 +818,26 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     );
     const service = get().services.find((s) => s.id === item.serviceId);
     const price = service?.price ?? 0;
-    const addPoints = get().loyalty.enabled ? get().loyalty.pointsPerVisit : 0;
+
+    // Regla estricta de fidelización VIP: solo suma visita y sello si el turno ya fue completado/asistido
+    const isCompleted = item.status === "completed";
+    const addPoints = isCompleted && get().loyalty.enabled ? get().loyalty.pointsPerVisit : 0;
 
     let updatedClients = get().clients;
     if (existing) {
-      updatedClients = get().clients.map((c) =>
-        c.id === existing.id
-          ? {
-              ...c,
-              totalVisits: c.totalVisits + 1,
-              totalSpent: c.totalSpent + price,
-              lastVisit: item.start,
-              loyaltyPoints: c.loyaltyPoints + addPoints,
-            }
-          : c,
-      );
+      if (isCompleted) {
+        updatedClients = get().clients.map((c) =>
+          c.id === existing.id
+            ? {
+                ...c,
+                totalVisits: c.totalVisits + 1,
+                totalSpent: c.totalSpent + price,
+                lastVisit: item.start,
+                loyaltyPoints: c.loyaltyPoints + addPoints,
+              }
+            : c,
+        );
+      }
     } else {
       const newClient: Client = {
         id: `cl-${Date.now()}`,
@@ -814,9 +845,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         phone: item.clientPhone,
         email: item.clientEmail,
         notes: item.notes || "Agendado vía web",
-        totalVisits: 0,
-        totalSpent: 0,
-        lastVisit: null,
+        totalVisits: isCompleted ? 1 : 0,
+        totalSpent: isCompleted ? price : 0,
+        lastVisit: isCompleted ? item.start : null,
         tags: ["Nuevo"],
         loyaltyPoints: addPoints,
         loyaltyRedeemed: 0,

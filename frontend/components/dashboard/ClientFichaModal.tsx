@@ -27,6 +27,8 @@ import {
   X,
   CreditCard,
   Building,
+  ShieldCheck,
+  CalendarPlus,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -48,15 +50,17 @@ type Props = {
   client: Client | null;
   onClose: () => void;
   onOpenEdit: (c: Client) => void;
+  onOpenQuickBooking?: (c: Client) => void;
 };
 
-export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props) {
+export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQuickBooking }: Props) {
   const {
     appointments,
     services,
     staff,
     business,
     cashMovements,
+    loyalty,
     updateClient,
     addClientMedia,
     deleteClientMedia,
@@ -315,14 +319,28 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href={`/dashboard/calendario?newForClient=${client.id}`}
-                onClick={onClose}
-                className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-bold shadow-md transition"
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Nueva Cita</span>
-              </Link>
+              {onOpenQuickBooking ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenQuickBooking(client);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-bold shadow-md transition cursor-pointer"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Agendar Turno</span>
+                </button>
+              ) : (
+                <Link
+                  href={`/dashboard/calendario?newForClient=${client.id}`}
+                  onClick={onClose}
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-bold shadow-md transition"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Nueva Cita</span>
+                </Link>
+              )}
 
               <button
                 type="button"
@@ -415,13 +433,26 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                 <Clock className="h-3.5 w-3.5 text-slate-400" />
                 <span>Sin próximas citas agendadas</span>
               </span>
-              <Link
-                href={`/dashboard/calendario?newForClient=${client.id}`}
-                onClick={onClose}
-                className="font-bold text-primary hover:underline"
-              >
-                + Agendar cita
-              </Link>
+              {onOpenQuickBooking ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenQuickBooking(client);
+                  }}
+                  className="font-bold text-primary hover:underline cursor-pointer"
+                >
+                  + Agendar cita
+                </button>
+              ) : (
+                <Link
+                  href={`/dashboard/calendario?newForClient=${client.id}`}
+                  onClick={onClose}
+                  className="font-bold text-primary hover:underline"
+                >
+                  + Agendar cita
+                </Link>
+              )}
             </div>
           )}
 
@@ -518,14 +549,28 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                 {clientAppointments.length === 0 ? (
                   <div className="text-center py-8 text-xs text-slate-400 space-y-2">
                     <p>No se registran citas pasadas ni futuras para este cliente.</p>
-                    <Link
-                      href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
-                      onClick={onClose}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3 py-1.5 text-xs font-bold"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>Agendar primera cita</span>
-                    </Link>
+                    {onOpenQuickBooking ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenQuickBooking(client);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3.5 py-2 text-xs font-bold hover:opacity-95 transition cursor-pointer"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Agendar primera cita</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                        onClick={onClose}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3 py-1.5 text-xs font-bold"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Agendar primera cita</span>
+                      </Link>
+                    )}
                   </div>
                 ) : (
                   clientAppointments.map((visit, index) => {
@@ -608,7 +653,21 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                             <span>Atendido: <strong>{staffMember?.name || "Profesional"}</strong></span>
                           </div>
 
-                          <div className="flex items-center justify-end">
+                          <div className="flex items-center justify-end gap-2">
+                            {onOpenQuickBooking && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onClose();
+                                  onOpenQuickBooking(client);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary transition cursor-pointer"
+                                title="Reagendar turno para este cliente"
+                              >
+                                <CalendarPlus className="h-3 w-3" />
+                                <span>Reagendar</span>
+                              </button>
+                            )}
                             <Link
                               href={`/dashboard/calendario?appointmentId=${visit.id}`}
                               onClick={onClose}
@@ -873,6 +932,19 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
           {/* TAB 4: CLUB VIP & APPLE WALLET */}
           {activeTab === "vip" && (
             <div className="space-y-4">
+              {/* Regla de Fidelización VIP obligatoria */}
+              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/25 p-3.5 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-xs text-amber-950 dark:text-amber-100">
+                    Regla de Fidelización VIP
+                  </p>
+                  <p className="text-[11px] text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
+                    Para obtener un sello automático, <strong>es obligatorio que el cliente haya asistido al turno</strong> y esté registrado como <em>Completado</em>. Los turnos futuros o pendientes no suman sellos hasta su realización en el salón.
+                  </p>
+                </div>
+              </div>
+
               <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50/80 via-white to-amber-100/40 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/40 border border-amber-200/80 dark:border-amber-900/40 space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-amber-200/60 dark:border-white/10">
                   <div className="flex items-center gap-2">
@@ -884,7 +956,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                         Tarjeta de Fidelización VIP
                       </h3>
                       <p className="text-[11px] text-slate-500">
-                        {client.loyaltyPoints} de 5 sellos acumulados
+                        {Math.min(5, Math.max(0, completedVisits.length - (client.loyaltyRedeemed || 0) * (loyalty?.rewardThreshold || 5)))} de 5 sellos acumulados ({completedVisits.length} asistencias)
                       </p>
                     </div>
                   </div>
@@ -902,7 +974,15 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                 {/* Stamp visual row */}
                 <div className="flex items-center justify-around gap-2 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-amber-200/60 dark:border-white/5">
                   {[1, 2, 3, 4, 5].map((s) => {
-                    const isCompleted = s <= client.loyaltyPoints;
+                    const earnedStamps = Math.min(
+                      5,
+                      Math.max(
+                        0,
+                        completedVisits.length -
+                          (client.loyaltyRedeemed || 0) * (loyalty?.rewardThreshold || 5)
+                      )
+                    );
+                    const isCompleted = s <= earnedStamps;
                     return (
                       <div key={s} className="flex flex-col items-center gap-1">
                         <div

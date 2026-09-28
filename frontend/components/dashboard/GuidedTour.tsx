@@ -243,35 +243,50 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
   clientes: {
     id: "clientes",
     title: "Clientes & Ficha Técnica",
-    badge: "Historial VIP",
+    badge: "Directorio & CRM",
     icon: Users,
     summary:
-      "Guardá las fórmulas técnicas de tinte, preferencias y notas privadas de cada cliente para brindar una atención personalizada.",
+      "Gestioná tu cartera de clientes, fórmulas técnicas privadas de tinte o corte, historial de visitas y tarjetas de fidelización.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Buscar rápidamente a un cliente",
+        taskTitle: "Directorio Central de Clientes",
         instruction:
-          "Escribí en la barra superior el nombre, número de teléfono o fórmula técnica. El buscador filtra en tiempo real entre todos tus clientes.",
+          "En esta sección tenés el registro centralizado de tus clientes: datos de contacto, historial de visitas y acceso directo a sus fichas técnicas.",
+        tip: "Usá el botón 'Nuevo Cliente' para cargar a alguien de forma manual con su número de WhatsApp.",
+        targetSelector: '[data-tour="clientes-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Ver y editar la Ficha Técnica Privada",
+        taskTitle: "Métricas de tu Cartera",
         instruction:
-          "Tocá el botón 'Ver Ficha Técnica' en cualquier cliente. Podés anotar tonos de colorimetría, volúmenes de oxidante, alergias o cómo prefiere su café.",
-        tip: "La ficha técnica es privada y solo tu equipo puede verla; los clientes no tienen acceso a estas notas.",
+          "Monitoreá el total de clientes registrados, cuántos pertenecen a la categoría VIP o Frecuente y el gasto promedio por cliente.",
+        tip: "Los números se actualizan automáticamente con cada turno completado y cobrado en caja.",
+        targetSelector: '[data-tour="clientes-kpis"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Galería de fotos de antes y después",
+        taskTitle: "Buscador Inteligente & Filtros",
         instruction:
-          "En la ficha podés subir fotos de los trabajos realizados a ese cliente para tener registro de su evolución de corte o color.",
+          "Encontrá a cualquier persona al instante escribiendo su nombre, los últimos dígitos de su celular o notas de su ficha técnica.",
+        tip: "Podés filtrar rápidamente por etiquetas como VIP, Frecuente o Nuevo.",
+        targetSelector: '[data-tour="clientes-search"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Compartir la Tarjeta Digital VIP",
+        taskTitle: "Ficha Técnica, Historial & Fotos",
         instruction:
-          "Tocá el ícono de la estrella dorada para abrir su tarjeta digital interactiva con sus puntos de fidelización acumulados.",
+          "Hacé clic en 'Ver Ficha' en cualquier cliente para consultar sus fórmulas de colorimetría, notas de atención, fotos de antes y después y su historial completo de citas.",
+        tip: "Toda la información técnica es privada y visible únicamente para vos y tu equipo.",
+        targetSelector: '[data-tour="clientes-card"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Agendar Turno sin salir de la página",
+        instruction:
+          "Tocá 'Agendar' en cualquier tarjeta para abrir el agendador rápido con los datos del cliente ya pre-cargados, manteniéndote en esta misma pantalla.",
+        tip: "Al confirmar, el turno se registra en la agenda en tiempo real sin recargar la página.",
+        targetSelector: '[data-tour="clientes-agendar-btn"]',
       },
     ],
   },

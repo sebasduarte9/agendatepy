@@ -16,6 +16,7 @@ import {
   UserCheck,
   Star,
   MessagesSquare,
+  CalendarPlus,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -23,6 +24,7 @@ import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
+import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import type { Client } from "@/lib/dashboard-types";
 
@@ -34,6 +36,13 @@ export default function ClientesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [quickBookingOpen, setQuickBookingOpen] = useState(false);
+  const [quickBookingClient, setQuickBookingClient] = useState<Client | null>(null);
+
+  function handleOpenQuickBooking(c: Client) {
+    setQuickBookingClient(c);
+    setQuickBookingOpen(true);
+  }
 
   const activeFichaClient = useMemo(
     () => clients.find((c) => c.id === selectedClient?.id) || selectedClient,
@@ -178,20 +187,20 @@ export default function ClientesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="clientes-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Clientes & Ficha Técnica (CRM)
+            Clientes
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Historial de visitas, preferencias, fórmulas de colorimetría y contacto directo por WhatsApp.
+            Directorio de clientes, historial de visitas y ficha técnica privada.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={exportCSV}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs transition hover:bg-slate-50 dark:hover:bg-slate-700"
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs transition hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
           >
             <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             Exportar CSV
@@ -199,7 +208,7 @@ export default function ClientesPage() {
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 transition hover:brightness-110 active:scale-95"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 transition hover:opacity-95 cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             Nuevo Cliente
@@ -208,7 +217,7 @@ export default function ClientesPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div data-tour="clientes-kpis" className="grid gap-4 md:grid-cols-3">
         <StatCard
           label="Total de Clientes"
           value={String(clients.length)}
@@ -220,14 +229,14 @@ export default function ClientesPage() {
           icon={Sparkles}
         />
         <StatCard
-          label="Gasto Promedio Acumulado"
+          label="Gasto Promedio por Cliente"
           value={formatGs(avgSpent)}
           icon={UserCheck}
         />
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="clientes-search" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
           <input
@@ -244,7 +253,7 @@ export default function ClientesPage() {
               key={tag}
               type="button"
               onClick={() => setSelectedTag(tag)}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${
+              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition-all duration-200 cursor-pointer ${
                 selectedTag === tag
                   ? "bg-primary text-white shadow-xs"
                   : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -258,7 +267,7 @@ export default function ClientesPage() {
 
       {/* Clients Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredClients.map((client) => {
+        {filteredClients.map((client, index) => {
           const initials = client.name
             .split(" ")
             .map((n) => n[0])
@@ -271,7 +280,11 @@ export default function ClientesPage() {
           )}`;
 
           return (
-            <Card key={client.id} className="flex flex-col justify-between space-y-4 hover:border-primary/40 transition">
+            <Card
+              key={client.id}
+              data-tour={index === 0 ? "clientes-card" : undefined}
+              className="flex flex-col justify-between space-y-4 hover:border-primary/40 transition"
+            >
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -402,31 +415,36 @@ export default function ClientesPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setSelectedClient(client)}
-                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-primary/90 transition"
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-3 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <Sparkles className="h-3.5 w-3.5 text-amber-400" />
                     <span>Ver Ficha</span>
                   </button>
 
-                  <Link
-                    href={`/dashboard/calendario?newForClient=${client.id}`}
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-primary hover:bg-primary/10 transition"
-                    title="Nueva Cita para este cliente"
+                  <button
+                    type="button"
+                    data-tour={index === 0 ? "clientes-agendar-btn" : undefined}
+                    onClick={() => handleOpenQuickBooking(client)}
+                    className="inline-flex items-center gap-1 rounded-xl bg-primary text-white px-3 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
+                    title="Agendar turno directamente"
                   >
                     <Calendar className="h-3.5 w-3.5" />
-                  </Link>
+                    <span>Agendar</span>
+                  </button>
 
-                  <Link
-                    href="/dashboard/crm"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-                    title="Historial de mensajes"
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
+                    title="Escribir por WhatsApp"
                   >
-                    <MessagesSquare className="h-3.5 w-3.5" />
-                  </Link>
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </a>
 
                   <Link
                     href={`/${business.slug || "barberia"}/tarjeta/${client.id}`}
@@ -440,7 +458,7 @@ export default function ClientesPage() {
                   <button
                     type="button"
                     onClick={() => openEditModal(client)}
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
                     title="Editar datos del cliente"
                   >
                     <Edit2 className="h-3.5 w-3.5" />
@@ -467,7 +485,7 @@ export default function ClientesPage() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition"
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>+ Crear Cliente</span>
@@ -481,6 +499,14 @@ export default function ClientesPage() {
         client={activeFichaClient}
         onClose={() => setSelectedClient(null)}
         onOpenEdit={openEditModal}
+        onOpenQuickBooking={handleOpenQuickBooking}
+      />
+
+      {/* Quick Booking Modal: Stays right on this page! */}
+      <QuickBookingModal
+        open={quickBookingOpen}
+        onClose={() => setQuickBookingOpen(false)}
+        prefillClient={quickBookingClient}
       />
 
       {/* Modal: Create / Edit Client */}
