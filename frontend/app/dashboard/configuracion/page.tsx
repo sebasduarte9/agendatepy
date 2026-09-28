@@ -25,9 +25,57 @@ import {
   Laptop,
   Lock,
   ExternalLink,
+  CreditCard,
+  Banknote,
+  Landmark,
+  Wallet,
+  QrCode,
 } from "lucide-react";
 import { TIMEZONES, useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
+
+const AVAILABLE_PAYMENT_METHODS = [
+  {
+    id: "efectivo",
+    title: "Efectivo en Caja",
+    description: "Cobro directo con guaraníes en billetes o monedas al atender al cliente.",
+    icon: Banknote,
+    badge: "Físico",
+    activeColor: "border-emerald-500/40 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    id: "pos",
+    title: "POS / Tarjetas Bancard",
+    description: "Tarjetas de Débito y Crédito (Visa, Mastercard, etc.) mediante terminal físico.",
+    icon: CreditCard,
+    badge: "POS / Tarjetas",
+    activeColor: "border-blue-500/40 bg-blue-500/5 text-blue-600 dark:text-blue-400",
+  },
+  {
+    id: "transferencia",
+    title: "Transferencias SIPAP / Bancos",
+    description: "Transferencias directas entre cuentas de bancos locales (SIPAP / SPI 24/7).",
+    icon: Landmark,
+    badge: "SIPAP / SPI",
+    activeColor: "border-indigo-500/40 bg-indigo-500/5 text-indigo-600 dark:text-indigo-400",
+  },
+  {
+    id: "billetera",
+    title: "Billeteras Móviles",
+    description: "Tigo Money, Billetera Personal, Zimple, Wally, Mango y giros.",
+    icon: Wallet,
+    badge: "Giros / Billeteras",
+    activeColor: "border-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400",
+  },
+  {
+    id: "qr",
+    title: "QR Bancard / Pagos con QR",
+    description: "Cobros inmediatos escaneando código QR con apps bancarias y billeteras.",
+    icon: QrCode,
+    badge: "QR Instantáneo",
+    activeColor: "border-violet-500/40 bg-violet-500/5 text-violet-600 dark:text-violet-400",
+  },
+];
 
 export default function ConfiguracionPage() {
   const { business, updateBusiness, pushToast } = useDashboardStore();
@@ -48,6 +96,30 @@ export default function ConfiguracionPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const activePaymentMethods = business.acceptedPaymentMethods || [
+    "efectivo",
+    "pos",
+    "transferencia",
+    "billetera",
+    "qr",
+  ];
+
+  const handleTogglePaymentMethod = (methodId: string) => {
+    const isCurrentlyActive = activePaymentMethods.includes(methodId);
+    let nextMethods: string[];
+    if (isCurrentlyActive) {
+      if (activePaymentMethods.length <= 1) {
+        pushToast("error", "Debes mantener al menos un medio de pago habilitado para tu negocio.");
+        return;
+      }
+      nextMethods = activePaymentMethods.filter((id) => id !== methodId);
+    } else {
+      nextMethods = [...activePaymentMethods, methodId];
+    }
+    updateBusiness({ acceptedPaymentMethods: nextMethods });
+    pushToast("success", "Medios de pago actualizados");
+  };
 
   useEffect(() => {
     const saved2fa = localStorage.getItem(`agendate_2fa_${business.slug || "default"}`);
@@ -123,6 +195,7 @@ export default function ConfiguracionPage() {
         address: business.address,
         timezone: business.timezone,
         primaryColor: business.primaryColor,
+        acceptedPaymentMethods: activePaymentMethods,
         ...({
           openingTime,
           closingTime,
@@ -335,6 +408,77 @@ export default function ConfiguracionPage() {
                 Abrir atención los días Domingos
               </span>
             </label>
+          </div>
+        </Card>
+
+        {/* Medios de Pago Habilitados */}
+        <Card className="space-y-4">
+          <div className="border-b border-slate-100 dark:border-white/5 pb-3 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                Medios de Pago Habilitados en el Negocio
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Seleccioná qué formas de pago acepta tu local para cobros en caja, reservas y pagos de clientes.
+              </p>
+            </div>
+            <span className="rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[11px] font-black text-primary">
+              {activePaymentMethods.length} activos
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {AVAILABLE_PAYMENT_METHODS.map((pm) => {
+              const isEnabled = activePaymentMethods.includes(pm.id);
+              const Icon = pm.icon;
+              return (
+                <button
+                  key={pm.id}
+                  type="button"
+                  onClick={() => handleTogglePaymentMethod(pm.id)}
+                  className={`group relative text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                    isEnabled
+                      ? `${pm.activeColor} border-opacity-100 shadow-sm shadow-black/5`
+                      : "border-slate-200/70 dark:border-white/5 bg-slate-50/40 dark:bg-slate-900/30 opacity-60 hover:opacity-100 hover:border-slate-300 dark:hover:border-white/10"
+                  }`}
+                >
+                  <div
+                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                      isEnabled
+                        ? "bg-white dark:bg-slate-800 shadow-sm"
+                        : "bg-slate-200/50 dark:bg-slate-800/50 text-slate-400"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0 pr-6">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white">
+                        {pm.title}
+                      </span>
+                      <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/5 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                        {pm.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                      {pm.description}
+                    </p>
+                  </div>
+                  <div className="absolute right-3.5 top-3.5">
+                    <div
+                      className={`h-5 w-5 rounded-lg flex items-center justify-center border transition-all ${
+                        isEnabled
+                          ? "bg-primary border-primary text-white"
+                          : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                      }`}
+                    >
+                      {isEnabled && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </Card>
 

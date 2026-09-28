@@ -48,6 +48,13 @@ export async function GET(request: NextRequest) {
         weekendClosing: settings.weekendClosing || "21:00",
         sundayOpen: Boolean(settings.sundayOpen),
         openingCash: settings.openingCash ?? 300000,
+        acceptedPaymentMethods: settings.acceptedPaymentMethods || [
+          "efectivo",
+          "pos",
+          "transferencia",
+          "billetera",
+          "qr",
+        ],
         settings,
       },
     });
@@ -88,6 +95,7 @@ export async function PATCH(request: NextRequest) {
       weekendClosing,
       sundayOpen,
       openingCash,
+      acceptedPaymentMethods,
       settings: customSettings,
     } = body;
 
@@ -110,6 +118,9 @@ export async function PATCH(request: NextRequest) {
     if (weekendClosing !== undefined) mergedSettings.weekendClosing = String(weekendClosing).trim();
     if (sundayOpen !== undefined) mergedSettings.sundayOpen = Boolean(sundayOpen);
     if (openingCash !== undefined) mergedSettings.openingCash = Number(openingCash);
+    if (acceptedPaymentMethods !== undefined && Array.isArray(acceptedPaymentMethods)) {
+      mergedSettings.acceptedPaymentMethods = acceptedPaymentMethods;
+    }
 
     updateData.settings = mergedSettings;
 

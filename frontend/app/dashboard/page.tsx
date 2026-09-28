@@ -584,12 +584,12 @@ export default function DashboardHomePage() {
 
             <div className="grid grid-cols-2 gap-2 text-xs">
               <Link
-                href="/dashboard/bloquear-horario"
+                href="/dashboard/nueva-reserva"
                 className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5"
               >
-                <Ban className="h-4 w-4 text-red-500" />
+                <Ban className="h-4 w-4 text-amber-500" />
                 <span className="font-bold text-slate-800 dark:text-slate-200">Bloquear Horario</span>
-                <span className="text-[10px] text-slate-400">Almuerzos o permisos</span>
+                <span className="text-[10px] text-slate-400">Descansos o permisos</span>
               </Link>
 
               <Link

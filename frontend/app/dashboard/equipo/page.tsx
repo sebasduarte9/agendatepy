@@ -73,6 +73,17 @@ const PERMISSIONS_LIST = [
   { id: "services", label: "Modificar Precios & Catálogo" },
 ];
 
+const STAFF_COLORS = [
+  "#4f46e5",
+  "#7c3aed",
+  "#059669",
+  "#d97706",
+  "#e11d48",
+  "#0284c7",
+  "#0d9488",
+  "#ec4899",
+];
+
 export default function EquipoRolesPage() {
   const {
     staff,
@@ -248,7 +259,7 @@ export default function EquipoRolesPage() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="equipo-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
             <Users className="h-6 w-6 text-brand" />
@@ -261,8 +272,9 @@ export default function EquipoRolesPage() {
 
         <button
           type="button"
+          data-tour="equipo-new-btn"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition"
+          className="inline-flex items-center gap-2 rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           <span>Invitar Colaborador</span>
@@ -294,7 +306,7 @@ export default function EquipoRolesPage() {
       </div>
 
       {/* Team Members List */}
-      <Card className="p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4">
+      <Card data-tour="equipo-list" className="p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -417,7 +429,7 @@ export default function EquipoRolesPage() {
       </Card>
 
       {/* Permissions Matrix */}
-      <Card className="p-5 border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4">
+      <Card data-tour="equipo-roles" className="p-5 border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4">
         <div>
           <h2 className="text-base font-bold text-slate-900 dark:text-white">
             Matriz de Permisos por Rol en el Local
@@ -510,36 +522,105 @@ export default function EquipoRolesPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Rol del Sistema
-              </label>
-              <select
-                value={formData.systemRole}
-                onChange={(e) => {
-                  const sRole = e.target.value as UserRole;
-                  const def = ROLE_DEFINITIONS.find((r) => r.role === sRole);
-                  setFormData({
-                    ...formData,
-                    systemRole: sRole,
-                    role: def?.title || formData.role,
-                  });
-                }}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white focus:border-brand focus:outline-none"
-              >
-                {ROLE_DEFINITIONS.map((r) => (
-                  <option key={r.role} value={r.role}>
-                    {r.title}
-                  </option>
-                ))}
-              </select>
+          {/* Selector de Rol Sin Elementos Web Básicos */}
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+              Rol del Sistema y Perfil de Acceso *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {ROLE_DEFINITIONS.map((r) => {
+                const isSelected = formData.systemRole === r.role;
+                const Icon = r.icon;
+                return (
+                  <button
+                    key={r.role}
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        systemRole: r.role,
+                        role: r.title,
+                      });
+                    }}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-brand bg-brand/5 dark:bg-brand/10 ring-1 ring-brand shadow-xs"
+                        : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-slate-800"
+                    }`}
+                  >
+                    <div
+                      className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
+                        isSelected ? "bg-brand text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-500"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                          {r.title}
+                        </span>
+                        {isSelected && <Check className="h-3.5 w-3.5 text-brand shrink-0" />}
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                        {r.desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Comisión (%)
+          {/* Color del Perfil en Calendario */}
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+              Color Identificador en Agenda y Calendario
+            </label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {STAFF_COLORS.map((c) => {
+                const isSelected = formData.color.toLowerCase() === c.toLowerCase();
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, color: c })}
+                    className={`h-7 w-7 rounded-full transition-transform flex items-center justify-center cursor-pointer ${
+                      isSelected ? "scale-110 ring-2 ring-offset-2 ring-brand" : "hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: c }}
+                  >
+                    {isSelected && <Check className="h-3.5 w-3.5 text-white stroke-[3]" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Comisión con Presets */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block">
+                Comisión por Servicios (%)
               </label>
+              <div className="flex items-center gap-1">
+                {[30, 40, 45, 50, 60, 70].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, commissionPercentage: pct })}
+                    className={`px-2 py-0.5 text-[10px] font-bold rounded-md border transition cursor-pointer ${
+                      formData.commissionPercentage === pct
+                        ? "bg-brand text-white border-brand shadow-xs"
+                        : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
               <input
                 type="number"
                 min={0}
@@ -548,8 +629,9 @@ export default function EquipoRolesPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, commissionPercentage: Number(e.target.value) })
                 }
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white focus:border-brand focus:outline-none"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-slate-900 dark:text-white font-bold text-sm focus:border-brand focus:outline-none"
               />
+              <span className="absolute right-3.5 top-2.5 text-slate-400 font-bold text-xs">% de comisión</span>
             </div>
           </div>
 
@@ -562,7 +644,7 @@ export default function EquipoRolesPage() {
               placeholder="09:00 – 19:00 (Martes a Sábado)"
               value={formData.hours}
               onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-slate-900 dark:text-white focus:border-brand focus:outline-none"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-slate-900 dark:text-white focus:border-brand focus:outline-none"
             />
           </div>
 
@@ -572,17 +654,30 @@ export default function EquipoRolesPage() {
               Permisos personalizables para este colaborador:
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40 p-3">
-              {PERMISSIONS_LIST.map((perm) => (
-                <label key={perm.id} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.permissions.includes(perm.id)}
-                    onChange={() => togglePermission(perm.id)}
-                    className="h-3.5 w-3.5 rounded text-brand focus:ring-brand"
-                  />
-                  <span>{perm.label}</span>
-                </label>
-              ))}
+              {PERMISSIONS_LIST.map((perm) => {
+                const isChecked = formData.permissions.includes(perm.id);
+                return (
+                  <button
+                    key={perm.id}
+                    type="button"
+                    onClick={() => togglePermission(perm.id)}
+                    className={`flex items-center gap-2 p-2 rounded-lg text-left text-xs transition cursor-pointer border ${
+                      isChecked
+                        ? "bg-brand/10 border-brand/30 text-brand font-semibold"
+                        : "bg-white dark:bg-slate-800 border-slate-200/60 dark:border-white/5 text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    <div
+                      className={`h-4 w-4 rounded flex items-center justify-center border shrink-0 ${
+                        isChecked ? "bg-brand border-brand text-white" : "border-slate-300 dark:border-slate-600"
+                      }`}
+                    >
+                      {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
+                    <span className="truncate">{perm.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

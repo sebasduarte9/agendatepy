@@ -654,51 +654,35 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Invitar a un colaborador con Google",
+        taskTitle: "Directorio de Colaboradores & Especialistas",
         instruction:
-          "Tocá '+ Invitar Colaborador'. Escribí su correo de Gmail y seleccioná su rol. Al confirmar, recibirá una invitación directa en su bandeja de entrada.",
+          "Administrá tu staff: barberos, estilistas, manicuristas y cajeros con sus porcentajes de comisión y horarios habituales.",
+        tip: "Cada miembro del equipo tiene un color identificador para la agenda visual.",
+        targetSelector: '[data-tour="equipo-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Personalizar permisos por persona",
+        taskTitle: "Invitar a un Colaborador con Google",
         instruction:
-          "Podés activar o desactivar permisos individuales: ver finanzas de la empresa, cobrar en caja, ver fórmulas técnicas de clientes o modificar precios.",
-        tip: "Los barberos o estilistas pueden tener acceso solo a su propia agenda sin ver los números totales de la caja del dueño.",
+          "Tocá '+ Invitar Colaborador'. Escribí su correo de Gmail y seleccioná su rol. Al confirmar, recibirá una invitación para ingresar directamente.",
+        tip: "Podés definir de entrada el porcentaje de comisión pactado por turno.",
+        targetSelector: '[data-tour="equipo-new-btn"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Seguridad y control de acceso",
+        taskTitle: "Roles & Niveles de Acceso",
         instruction:
-          "Cada integrante inicia sesión de manera segura con su cuenta de Google o correo. Podés desvincular o editar los accesos de cualquier colaborador en cualquier momento.",
-        tip: "Mantené los permisos de caja y comisiones restringidos únicamente a personal autorizado.",
-      },
-    ],
-  },
-  "bloquear-horario": {
-    id: "bloquear-horario",
-    title: "Bloqueo de Horarios & Feriados",
-    badge: "Disponibilidad",
-    icon: Ban,
-    summary:
-      "Cerrá horas de almuerzo, feriados, capacitaciones o descansos para que ningún cliente reserve en horarios no laborables.",
-    steps: [
-      {
-        stepNumber: 1,
-        taskTitle: "Elegir el tipo de bloqueo",
-        instruction:
-          "Seleccioná si vas a bloquear un profesional individual o todo el local completo (por ejemplo, feriado de Año Nuevo o limpieza general).",
+          "Diferenciá entre Dueño/Admin, Cajero/Recepción y Profesionales. Podés restringir que los colaboradores solo vean su propia agenda sin acceder a la facturación total.",
+        tip: "Mantené las finanzas y comisiones del local protegidas.",
+        targetSelector: '[data-tour="equipo-roles"]',
       },
       {
-        stepNumber: 2,
-        taskTitle: "Definir fecha y rango de horas",
+        stepNumber: 4,
+        taskTitle: "Fichas de Personal & Permisos Detallados",
         instruction:
-          "Marcá el día y el horario de inicio y fin (ej: 12:30 a 14:00 para almuerzo).",
-      },
-      {
-        stepNumber: 3,
-        taskTitle: "Indicar el motivo del bloqueo",
-        instruction:
-          "Escribí una referencia (ej: 'Descanso médico', 'Almuerzo'). El calendario marcará ese espacio con franjas grises no disponibles.",
+          "En cada tarjeta podés editar horarios, pausar temporalmente a un colaborador o ajustar permisos avanzados en cualquier momento.",
+        tip: "Los cambios se guardan directamente en la base de datos SQL.",
+        targetSelector: '[data-tour="equipo-list"]',
       },
     ],
   },
@@ -848,7 +832,6 @@ export default function GuidedTour() {
     if (pathname.includes("/fidelizacion")) return "fidelizacion";
     if (pathname.includes("/apariencia")) return "apariencia";
     if (pathname.includes("/equipo")) return "equipo";
-    if (pathname.includes("/bloquear-horario")) return "bloquear-horario";
     if (pathname.includes("/transferencias")) return "transferencias";
     if (pathname.includes("/extras")) return "extras";
     if (pathname.includes("/configuracion")) return "configuracion";

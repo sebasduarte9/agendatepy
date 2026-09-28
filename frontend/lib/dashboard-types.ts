@@ -219,4 +219,5 @@ export type BusinessProfile = {
   metaPixel: string;
   tiktokPixel: string;
   openingCash: number; // Fondo de caja inicial en Gs.
+  acceptedPaymentMethods?: string[]; // Medios de pago habilitados: efectivo, pos, transferencia, billetera, qr
 };

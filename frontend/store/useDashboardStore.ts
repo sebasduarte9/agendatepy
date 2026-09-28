@@ -585,6 +585,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     metaPixel: "",
     tiktokPixel: "",
     openingCash: 300000,
+    acceptedPaymentMethods: ["efectivo", "pos", "transferencia", "billetera", "qr"],
   },
   staff: [],
   services: [],
@@ -654,6 +655,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             whatsappNumber: t.whatsappNumber || state.business.whatsappNumber,
             address: t.address || state.business.address,
             openingCash: t.openingCash ?? state.business.openingCash,
+            acceptedPaymentMethods: t.settings?.acceptedPaymentMethods || state.business.acceptedPaymentMethods,
           };
         }
 

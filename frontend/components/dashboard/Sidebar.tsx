@@ -51,7 +51,6 @@ const PRIMARY_LINKS: SidebarLink[] = [
 const OPERATIONS_LINKS: SidebarLink[] = [
   { href: "/dashboard/nueva-reserva", label: "Nueva Reserva", icon: CalendarPlus, roles: ["admin", "cajero"] },
   { href: "/dashboard/equipo", label: "Equipo & Roles", icon: Users, badge: "Permisos", roles: ["admin"] },
-  { href: "/dashboard/bloquear-horario", label: "Bloquear Horario", icon: Ban, roles: ["admin", "barbero", "estilista"] },
   { href: "/dashboard/productos", label: "Productos & Tienda", icon: ShoppingBag, badge: "Web", roles: ["admin", "cajero"] },
   { href: "/dashboard/comisiones", label: "Comisiones", icon: Coins, badge: "Pagos", roles: ["admin", "barbero", "estilista"] },
   { href: "/dashboard/transferencias", label: "Transferencias SIPAP", icon: Receipt, roles: ["admin", "cajero"] },
