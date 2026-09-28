@@ -952,7 +952,7 @@ type DashboardState = {
   addClient: (client: Omit<Client, "id">) => Promise<any> | void;
   updateClient: (id: string, patch: Partial<Client>) => Promise<any> | void;
   deleteClient: (id: string) => Promise<any> | void;
-  updateLoyalty: (patch: Partial<LoyaltySettings>) => void;
+  updateLoyalty: (patch: Partial<LoyaltySettings>) => Promise<boolean> | void;
   addClientLoyaltyPoint: (clientId: string) => void;
   redeemClientReward: (clientId: string) => void;
   updateSipap: (patch: Partial<SipapConfig>) => void;
@@ -1926,16 +1926,24 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  updateLoyalty: (patch) => {
+  updateLoyalty: async (patch) => {
     const nextLoyalty = { ...get().loyalty, ...patch };
     set({ loyalty: nextLoyalty });
-    fetch("/api/tenant/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        settings: { loyalty: nextLoyalty },
-      }),
-    }).catch((err) => console.warn("Error guardando loyalty en tenant.settings:", err));
+    try {
+      const res = await fetch("/api/tenant/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settings: { loyalty: nextLoyalty },
+          loyalty: nextLoyalty,
+        }),
+      });
+      const data = await res.json();
+      return Boolean(data.ok);
+    } catch (err) {
+      console.warn("Error guardando loyalty en tenant.settings:", err);
+      return false;
+    }
   },
   addClientLoyaltyPoint: (clientId) => {
     const prev = get().clients;

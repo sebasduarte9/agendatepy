@@ -604,29 +604,51 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
   },
   fidelizacion: {
     id: "fidelizacion",
-    title: "Club VIP & Programa de Puntos",
-    badge: "Lealtad",
+    title: "Club VIP & Programa de Fidelización",
+    badge: "Retención & Lealtad",
     icon: Award,
     summary:
-      "Hacé que tus clientes vuelvan siempre acumulando puntos por cada corte o tratamiento con tarjetas Apple & Google Wallet.",
+      "Aumentá la recurrencia de tus clientes con tarjetas digitales para Apple & Google Wallet, sellos por visita y premios automáticos.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Configurar la regla de puntos",
+        taskTitle: "Club VIP & Tarjetas de Fidelización",
         instruction:
-          "Definí cuántos puntos gana el cliente por cada turno asistido (ej: 1 punto por visita) o por cada 10.000 Gs gastados.",
+          "Bienvenido al Club VIP de AgendatePY. Desde acá fidelizás a tus clientes con tarjetas digitales oficiales, sellos por visita y canjes automatizados para maximizar la recurrencia.",
+        tip: "Podés iniciar la guía en cualquier momento desde el botón 'Guía Interactiva'.",
+        targetSelector: '[data-tour="fidelizacion-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Establecer premios y beneficios",
+        taskTitle: "Pases Apple Wallet (.pkpass) & Google Wallet",
         instruction:
-          "Creá los premios que pueden canjear (ej: '5to corte con 50% OFF' o '10 puntos = Tratamiento capilar gratis').",
+          "Tus clientes pueden instalar su tarjeta digital directamente en la app Wallet de su iPhone o Android. Cada vez que visitan tu salón y ganan sellos, su celular recibe una notificación push automática.",
+        tip: "Hacé clic en 'Ver Tarjeta Demo' para ver el diseño interactivo que verá tu cliente en su pantalla.",
+        targetSelector: '[data-tour="fidelizacion-wallet-banner"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Enviar la tarjeta digital al cliente",
+        taskTitle: "Indicadores Clave de Lealtad (KPIs)",
         instruction:
-          "Copiá el enlace de su tarjeta y pasáselo por WhatsApp para que la instale en su iPhone o Android en 1 toque.",
+          "Supervisá en tiempo real la meta actual del club, la cantidad total de sellos activos en circulación, cuántos clientes tienen premio listo para retirar y el total de canjes completados.",
+        tip: "Los clientes con premio listo son tu mejor oportunidad para enviarles un WhatsApp y llenar turnos en días tranquilos.",
+        targetSelector: '[data-tour="fidelizacion-kpis"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Reglas del Club: Sellos o Puntos",
+        instruction:
+          "Personalizá la mecánica del programa: elegí entre 'Tarjeta de Sellos' (1 sello por turno asistido) o 'Tarjeta de Puntos'. Definí la meta de visitas para el premio y el beneficio que recibirá el cliente (ej: 50% OFF o Producto Gratis).",
+        tip: "Al guardar, las reglas se sincronizan inmediatamente en la base de datos de tu negocio.",
+        targetSelector: '[data-tour="fidelizacion-config-card"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Gestión de Sellos, Canjes y Envíos por WhatsApp",
+        instruction:
+          "En esta tabla podés sumar sellos (+1 Sello) tras cada atención, canjear beneficios listos con 1 toque o enviar el enlace de su tarjeta digital por WhatsApp con el mensaje ya redactado.",
+        tip: "Usá el buscador rápido para localizar a cualquier cliente por nombre o número telefónico.",
+        targetSelector: '[data-tour="fidelizacion-clients-table"]',
       },
     ],
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -21,11 +21,29 @@ import {
   ShieldCheck,
   Plus,
   Info,
+  Sparkles,
+  QrCode,
+  Share2,
+  Compass,
+  ArrowUpRight,
+  Zap,
+  Filter,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
+import Modal from "@/components/dashboard/ui/Modal";
 import { formatGs } from "@/lib/dashboard-dates";
+import type { Client } from "@/lib/dashboard-types";
+
+const REWARD_PRESETS = [
+  "50% OFF en tu próximo corte o servicio",
+  "Corte o Perfilado de Barba de regalo",
+  "Tratamiento de Nutrición Capilar Gratis",
+  "Cera Capilar Efecto Mate de Regalo",
+  "Servicio Completo Gratis (Corte + Barba)",
+];
 
 export default function FidelizacionPage() {
   const {
@@ -36,11 +54,17 @@ export default function FidelizacionPage() {
     addClientLoyaltyPoint,
     redeemClientReward,
     pushToast,
+    openTour,
   } = useDashboardStore();
 
   const [search, setSearch] = useState("");
+  const [filterTab, setFilterTab] = useState<"todos" | "con_premio" | "vips">("todos");
   const [editingSettings, setEditingSettings] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [selectedClientForQr, setSelectedClientForQr] = useState<Client | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+
   const [formSettings, setFormSettings] = useState({
     enabled: loyalty.enabled,
     mode: loyalty.mode || "stamps",
@@ -49,27 +73,83 @@ export default function FidelizacionPage() {
     pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
   });
 
+  // Keep form in sync if store updates
+  useEffect(() => {
+    setFormSettings({
+      enabled: loyalty.enabled,
+      mode: loyalty.mode || "stamps",
+      rewardThreshold: loyalty.rewardThreshold,
+      rewardDescription: loyalty.rewardDescription,
+      pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
+    });
+  }, [loyalty]);
+
+  // Generate QR when client is selected
+  useEffect(() => {
+    if (selectedClientForQr) {
+      const url = getCardUrl(selectedClientForQr.id);
+      QRCode.toDataURL(url, {
+        width: 256,
+        margin: 1,
+        color: {
+          dark: "#0f172a",
+          light: "#ffffff",
+        },
+      }).then(setQrCodeDataUrl).catch((err) => console.error("Error generating QR:", err));
+    } else {
+      setQrCodeDataUrl("");
+    }
+  }, [selectedClientForQr]);
+
   const totalPointsAwarded = clients.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
   const totalRewardsRedeemed = clients.reduce((sum, c) => sum + (c.loyaltyRedeemed || 0), 0);
   const eligibleClients = clients.filter(
     (c) => (c.loyaltyPoints || 0) >= loyalty.rewardThreshold
   );
 
-  const filteredClients = clients
-    .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search))
-    .sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0));
+  const filteredClients = useMemo(() => {
+    return clients
+      .filter((c) => {
+        const matchesSearch =
+          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          c.phone.includes(search) ||
+          (c.instagram && c.instagram.toLowerCase().includes(search.toLowerCase()));
 
-  function handleSaveSettings(e: React.FormEvent) {
+        if (!matchesSearch) return false;
+
+        if (filterTab === "con_premio") {
+          return (c.loyaltyPoints || 0) >= loyalty.rewardThreshold;
+        }
+        if (filterTab === "vips") {
+          return c.tags.includes("VIP");
+        }
+
+        return true;
+      })
+      .sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0));
+  }, [clients, search, filterTab, loyalty.rewardThreshold]);
+
+  async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
-    updateLoyalty({
-      enabled: formSettings.enabled,
-      mode: formSettings.mode as "stamps" | "points",
-      rewardThreshold: Number(formSettings.rewardThreshold),
-      rewardDescription: formSettings.rewardDescription.trim(),
-      pointsPerVisit: Number(formSettings.pointsPerVisit) || 1,
-    });
-    setEditingSettings(false);
-    pushToast("success", "Configuración del Club VIP guardada");
+    setIsSavingSettings(true);
+    try {
+      const patch = {
+        enabled: formSettings.enabled,
+        mode: formSettings.mode as "stamps" | "points",
+        rewardThreshold: Number(formSettings.rewardThreshold),
+        rewardDescription: formSettings.rewardDescription.trim(),
+        pointsPerVisit: Number(formSettings.pointsPerVisit) || 1,
+      };
+
+      await updateLoyalty(patch);
+      setEditingSettings(false);
+      pushToast("success", "Reglas del Club VIP guardadas y sincronizadas con la base de datos.");
+    } catch (err) {
+      console.error("Error guardando reglas de fidelización:", err);
+      pushToast("error", "Hubo un error al guardar las reglas.");
+    } finally {
+      setIsSavingSettings(false);
+    }
   }
 
   function handleAddPoint(clientId: string, clientName: string) {
@@ -79,7 +159,7 @@ export default function FidelizacionPage() {
 
   function handleRedeem(clientId: string, clientName: string) {
     redeemClientReward(clientId);
-    pushToast("success", `¡Recompensa canjeada para ${clientName}!`);
+    pushToast("success", `¡Premio canjeado con éxito para ${clientName}!`);
   }
 
   function getCardUrl(clientId: string) {
@@ -91,7 +171,7 @@ export default function FidelizacionPage() {
     const url = getCardUrl(clientId);
     await navigator.clipboard.writeText(url);
     setCopiedId(clientId);
-    pushToast("success", "Enlace de tarjeta digital copiado al portapapeles");
+    pushToast("success", "Enlace de tarjeta digital copiado.");
     setTimeout(() => setCopiedId(null), 2000);
   }
 
@@ -99,91 +179,254 @@ export default function FidelizacionPage() {
     const cardUrl = getCardUrl(clientId);
     const cleanPhone = clientPhone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `¡Hola ${clientName}! Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n${cardUrl}\n\nPodés guardarla directamente en tu *Apple Wallet* (iPhone) o *Google Wallet* (Android). ¡Acumulás sellos en cada visita para canjear tu premio de ${loyalty.rewardDescription}!`
+      `¡Hola ${clientName}! 👋 Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n📲 ${cardUrl}\n\nPodés guardarla directamente en tu *Apple Wallet* (iPhone) o *Google Wallet* (Android). ¡Acumulás sellos en cada visita para canjear tu premio de: *${loyalty.rewardDescription}*!`
     );
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* ═══ 1. HEADER ═══ */}
+      <div
+        data-tour="fidelizacion-header"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-5 shadow-xs"
+      >
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold border transition ${
+                loyalty.enabled
+                  ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+                  : "bg-slate-100 text-slate-500 border-slate-200/60 dark:border-white/10"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  loyalty.enabled ? "bg-amber-500 animate-pulse" : "bg-slate-400"
+                }`}
+              />
+              <Crown className="h-3 w-3 text-amber-500" />
+              <span>{loyalty.enabled ? "Club VIP Activo" : "Club VIP en Pausa"}</span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+              <Wallet className="h-3 w-3 text-primary" />
+              <span>Pases Apple & Google Wallet</span>
+            </span>
+          </div>
+
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl flex items-center gap-2">
             <span>Fidelización & Tarjeta Digital VIP</span>
-            <Crown className="h-5 w-5 text-amber-500 fill-amber-400" />
+            <Crown className="h-6 w-6 text-amber-500 fill-amber-400" />
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Enviá a tus clientes su tarjeta digital con sellos para agregar a su Apple Wallet o Google Wallet.
+          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm mt-0.5">
+            Otorgá sellos por visita, emití pases para Apple & Google Wallet y premiá la lealtad de tus clientes.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setEditingSettings(!editingSettings)}
-          className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition backdrop-blur-xl"
-        >
-          <Settings className="h-4 w-4 text-slate-400" />
-          <span>{editingSettings ? "Cerrar Ajustes" : "Configurar Recompensas"}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => openTour("fidelizacion")}
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/80 dark:border-indigo-800/60 px-4 py-2.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 shadow-xs transition cursor-pointer"
+          >
+            <Compass className="h-4 w-4 text-indigo-500" />
+            <span>Guía Interactiva</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEditingSettings(!editingSettings)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 px-4 py-2.5 text-xs font-bold shadow-sm transition cursor-pointer"
+          >
+            <Settings className="h-4 w-4" />
+            <span>{editingSettings ? "Cerrar Configuración" : "Configurar Reglas"}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Apple & Google Wallet Integration Showcase Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-300/60 dark:border-amber-500/20 bg-gradient-to-r from-amber-50 via-white to-indigo-50/70 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-5 text-slate-900 dark:text-white shadow-sm transition-all duration-300">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-amber-400/20 dark:bg-amber-500/15 blur-3xl" />
+      {/* ═══ 2. WALLET SHOWCASE & LIVE PASS PREVIEW ═══ */}
+      <div
+        data-tour="fidelizacion-wallet-banner"
+        className="relative overflow-hidden rounded-3xl border border-amber-300/60 dark:border-amber-500/20 bg-gradient-to-br from-amber-50/70 via-white to-indigo-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/60 p-6 sm:p-8 text-slate-900 dark:text-white shadow-sm"
+      >
+        <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-amber-400/15 dark:bg-amber-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute left-1/3 -bottom-20 h-56 w-56 rounded-full bg-indigo-400/15 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1.5 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 dark:bg-amber-400/20 border border-amber-500/20 dark:border-amber-400/30 px-3 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
-              <Wallet className="h-3.5 w-3.5 text-amber-500" />
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Left Column: Benefits & Integration */}
+          <div className="lg:col-span-7 space-y-3.5">
+            <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 dark:bg-amber-400/20 border border-amber-500/20 dark:border-amber-400/30 px-3.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-300">
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
               <span>Soporte Oficial Apple Wallet (.pkpass) & Google Wallet</span>
             </div>
-            <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
-              Tus clientes llevan tu salón en la pantalla de su celular
+
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              Tus clientes llevan tu salón guardado en el bolsillo
             </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              Cada cliente cuenta con un enlace único con su tarjeta digital, sellos en tiempo real y código QR. Al tocar &ldquo;Agregar a Wallet&rdquo;, se instala en su iPhone o Android con notificaciones push al ganar sellos.
+
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
+              Sin descargar ninguna app pesada. Cada cliente tiene un pase digital con su nombre, sellos acumulados en tiempo real y código QR. Al tocar <strong>&ldquo;Agregar a Apple Wallet&rdquo;</strong> o <strong>&ldquo;Guardar en Google Wallet&rdquo;</strong>, reciben notificaciones automáticas al ganar sellos.
             </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+              <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
+                  <Smartphone className="h-3.5 w-3.5 text-primary" />
+                  <span>Sin Descargas</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Funciona nativo en iPhone y Android con solo abrir el enlace.</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Push Automático</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Al sumar un sello en caja, el pase de su celular se actualiza solo.</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
+                  <Gift className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Canje en 1 Clic</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Escaneás el QR en el local o canjeás directo desde esta pantalla.</p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              <Link
+                href={getCardUrl(clients[0]?.id || "cli-martin")}
+                target="_blank"
+                className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 hover:bg-amber-300 px-5 py-3 text-xs font-black text-slate-950 shadow-md transition cursor-pointer"
+              >
+                <Smartphone className="h-4 w-4" />
+                <span>Ver Tarjeta Demo (Vista Cliente)</span>
+                <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setSelectedClientForQr(clients[0] || null)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 px-4 py-3 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer shadow-xs"
+              >
+                <QrCode className="h-4 w-4 text-emerald-600" />
+                <span>Mostrar QR para Escaneo</span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={getCardUrl(clients[0]?.id || "cl-1")}
-              target="_blank"
-              className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 hover:bg-amber-300 px-4 py-2.5 text-xs font-black text-slate-950 shadow-md transition"
-            >
-              <Smartphone className="h-4 w-4" />
-              <span>Ver Tarjeta Demo (Cliente)</span>
-              <ExternalLink className="h-3.5 w-3.5 opacity-70" />
-            </Link>
+          {/* Right Column: Live Apple Wallet Pass Simulation */}
+          <div className="lg:col-span-5 flex justify-center">
+            <div className="w-full max-w-sm rounded-3xl bg-slate-950 text-white p-5 shadow-2xl border border-white/15 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+
+              {/* Pass Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400 text-slate-950 font-black text-xs">
+                    {business.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="font-black text-xs tracking-tight">{business.name}</h4>
+                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">VIP Member Pass</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-0.5 text-[9px] font-bold text-slate-300">
+                  <Award className="h-3 w-3 text-amber-400" />
+                  <span>Nivel Oro</span>
+                </div>
+              </div>
+
+              {/* Pass Content */}
+              <div className="py-4 space-y-3">
+                <div className="flex justify-between items-baseline">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Titular del Pase</span>
+                    <span className="text-sm font-extrabold text-white">Martín Benítez</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Progreso Actual</span>
+                    <span className="text-sm font-black text-amber-400">4 / {loyalty.rewardThreshold} Sellos</span>
+                  </div>
+                </div>
+
+                {/* Stamps Row Simulation */}
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider block mb-2">Sellos Acumulados</span>
+                  <div className="flex items-center justify-between gap-1">
+                    {Array.from({ length: Math.min(loyalty.rewardThreshold, 10) }).map((_, i) => {
+                      const filled = i < 4;
+                      return (
+                        <div
+                          key={i}
+                          className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold transition ${
+                            filled
+                              ? "bg-gradient-to-tr from-amber-400 to-amber-300 text-slate-950 shadow-md scale-105"
+                              : "bg-white/10 text-slate-500 border border-white/10"
+                          }`}
+                        >
+                          <Award className={`h-4 w-4 ${filled ? "text-slate-950" : "text-slate-600"}`} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Benefit description */}
+                <div className="p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/20 text-center">
+                  <span className="text-[10px] text-amber-300 font-semibold block">Próximo Premio al llegar a {loyalty.rewardThreshold} sellos:</span>
+                  <span className="text-xs font-black text-amber-400 mt-0.5 block">{loyalty.rewardDescription}</span>
+                </div>
+              </div>
+
+              {/* Pass Footer / Barcode mockup */}
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400">
+                <span className="font-mono">PASS-AGPY-78401</span>
+                <span className="flex items-center gap-1 font-semibold text-slate-300">
+                  <Wallet className="h-3 w-3 text-amber-400" />
+                  <span>Listo para Apple Wallet</span>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Settings Panel (Collapsible) */}
+      {/* ═══ 3. CONFIGURATION PANEL (COLLAPSIBLE / FORM) ═══ */}
       {editingSettings && (
-        <Card className="border-2 border-primary/20 bg-primary/5 dark:bg-primary/10 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="h-5 w-5 text-primary" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Ajustes del Programa de Fidelidad</h2>
+        <Card data-tour="fidelizacion-config-card" className="border-2 border-primary/30 bg-primary/5 dark:bg-primary/10 p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-primary/15 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
+                <SlidersHorizontal className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Reglas del Programa de Fidelización & Beneficios
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Definí cómo ganan sellos tus clientes y qué premio se les acredita automáticamente.
+                </p>
+              </div>
             </div>
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+
+            <label className="flex items-center gap-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-2xl px-3.5 py-2 shadow-2xs">
               <input
                 type="checkbox"
                 checked={formSettings.enabled}
                 onChange={(e) => setFormSettings({ ...formSettings, enabled: e.target.checked })}
-                className="h-4 w-4 rounded text-primary focus:ring-primary"
+                className="h-4 w-4 rounded text-primary focus:ring-primary cursor-pointer"
               />
               <span>Programa Activo</span>
             </label>
           </div>
 
-          <form onSubmit={handleSaveSettings} className="space-y-4 text-xs">
+          <form onSubmit={handleSaveSettings} className="space-y-5 text-xs">
             {/* Modalidad del programa */}
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
-                Modalidad de Fidelización en la Tarjeta
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-2">
+                Modalidad de la Tarjeta Digital
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
@@ -196,18 +439,20 @@ export default function FidelizacionPage() {
                       pointsPerVisit: 1,
                     })
                   }
-                  className={`p-3.5 rounded-2xl border text-left transition ${
+                  className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
                     formSettings.mode === "stamps"
                       ? "border-primary bg-primary/10 dark:bg-primary/20 text-primary font-bold shadow-xs"
-                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Award className="h-4 w-4 text-amber-500" />
-                    <span className="font-bold text-slate-900 dark:text-white">Tarjeta de Sellos</span>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Award className="h-5 w-5 text-amber-500" />
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                      Tarjeta de Sellos por Visita (Recomendada)
+                    </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-normal">
-                    1 sello automático por cada turno asistido. A los X sellos, gana su premio.
+                  <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
+                    1 sello automático por cada cita o visita asistida. Es la más fácil de entender para el cliente: &ldquo;Completá 5 visitas y ganás tu premio&rdquo;.
                   </p>
                 </button>
 
@@ -221,28 +466,31 @@ export default function FidelizacionPage() {
                       pointsPerVisit: 10,
                     })
                   }
-                  className={`p-3.5 rounded-2xl border text-left transition ${
+                  className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
                     formSettings.mode === "points"
                       ? "border-primary bg-primary/10 dark:bg-primary/20 text-primary font-bold shadow-xs"
-                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Coins className="h-4 w-4 text-indigo-500" />
-                    <span className="font-bold text-slate-900 dark:text-white">Tarjeta de Puntos</span>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Coins className="h-5 w-5 text-indigo-500" />
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                      Tarjeta de Puntos Acumulables
+                    </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-normal">
-                    Acumula puntos por visita. Ideal para premios de mayor escala.
+                  <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
+                    Acumula puntos por visita o por consumo. Ideal para salones y negocios con catálogo variado de premios escalonados.
                   </p>
                 </button>
               </div>
             </div>
 
+            {/* Threshold & Points Inputs */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
                   {formSettings.mode === "stamps"
-                    ? "Meta para Canjear (Sellos / Visitas)"
+                    ? "Meta para Canjear (Cantidad de Visitas / Sellos)"
                     : "Puntos necesarios para canjear"}
                 </label>
                 <input
@@ -253,18 +501,18 @@ export default function FidelizacionPage() {
                   onChange={(e) =>
                     setFormSettings({ ...formSettings, rewardThreshold: Number(e.target.value) })
                   }
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
                 />
-                <p className="mt-1 text-[11px] text-slate-400">
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                   {formSettings.mode === "stamps"
-                    ? "Recomendado: 5 o 10 sellos."
-                    : "Ejemplo: 100 puntos."}
+                    ? "Estándar de fidelidad: 5 o 10 sellos."
+                    : "Ejemplo: 100 puntos acumulados."}
                 </p>
               </div>
 
               {formSettings.mode === "points" ? (
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
                     Puntos otorgados por visita completada
                   </label>
                   <input
@@ -275,61 +523,108 @@ export default function FidelizacionPage() {
                     onChange={(e) =>
                       setFormSettings({ ...formSettings, pointsPerVisit: Number(e.target.value) })
                     }
-                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
                   />
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Se sumarán automáticamente al completar la cita.
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    Se sumarán automáticamente a la tarjeta del cliente tras confirmar su asistencia.
                   </p>
                 </div>
-              ) : null}
+              ) : (
+                <div className="flex flex-col justify-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
+                  <span className="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <span>Acreditación Automática</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    Cada vez que un barbero o estilista completa el servicio en el calendario, se agrega +1 sello de forma inmediata.
+                  </span>
+                </div>
+              )}
+            </div>
 
-              <div className={formSettings.mode === "stamps" ? "sm:col-span-1" : "sm:col-span-2"}>
-                <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                  Descripción del Premio / Beneficio
+            {/* Description & Presets */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="font-bold text-slate-800 dark:text-slate-200">
+                  Descripción del Premio / Beneficio a Entregar
                 </label>
-                <input
-                  type="text"
-                  value={formSettings.rewardDescription}
-                  onChange={(e) =>
-                    setFormSettings({ ...formSettings, rewardDescription: e.target.value })
-                  }
-                  placeholder="Ej. 50% de descuento en tu próximo corte"
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
-                <p className="mt-1 text-[11px] text-slate-400">
-                  Este mensaje se muestra en grande en la tarjeta del cliente.
-                </p>
+                <span className="text-[11px] text-slate-400">Visible en Apple & Google Wallet</span>
+              </div>
+              <input
+                type="text"
+                value={formSettings.rewardDescription}
+                onChange={(e) =>
+                  setFormSettings({ ...formSettings, rewardDescription: e.target.value })
+                }
+                placeholder="Ej. 50% de descuento en tu próximo corte"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
+              />
+
+              {/* Quick Presets */}
+              <div className="mt-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                  Sugerencias Rápidas:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {REWARD_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setFormSettings({ ...formSettings, rewardDescription: preset })}
+                      className={`px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition cursor-pointer ${
+                        formSettings.rewardDescription === preset
+                          ? "bg-primary text-white border-primary"
+                          : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-white/5 hover:bg-slate-100"
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-primary/10">
+            {/* Form Footer */}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-primary/15">
               <button
                 type="button"
                 onClick={() => setEditingSettings(false)}
-                className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300"
+                className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 cursor-pointer transition"
               >
                 Cancelar
               </button>
+
               <button
                 type="submit"
-                className="rounded-xl bg-primary px-5 py-2 font-bold text-white shadow-sm hover:opacity-95"
+                disabled={isSavingSettings}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary hover:opacity-95 px-5 py-2 font-bold text-white shadow-sm transition cursor-pointer disabled:opacity-50"
               >
-                Guardar Reglas
+                {isSavingSettings ? (
+                  <>
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    <span>Guardando en BD...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Guardar Reglas en Base de Datos</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
         </Card>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ═══ 4. KPI METRICS CARDS ═══ */}
+      <div data-tour="fidelizacion-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Meta Actual del Club"
           value={`${loyalty.rewardThreshold} visitas`}
           icon={Award}
         />
         <StatCard
-          label="Sellos Acumulados Activos"
+          label="Sellos Activos en Circulación"
           value={`${totalPointsAwarded} sellos`}
           icon={ShieldCheck}
         />
@@ -346,155 +641,316 @@ export default function FidelizacionPage() {
         />
       </div>
 
-      {/* Search and Clients List */}
-      <Card className="space-y-4">
+      {/* ═══ 5. CLIENTS & DIGITAL PASSES DIRECTORY ═══ */}
+      <Card data-tour="fidelizacion-clients-table" className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 dark:border-white/5 pb-3">
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
               Tarjetas Digitales & Sellos de Clientes
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Otorgá sellos por visita, canjeá recompensas y enviá su enlace de tarjeta por WhatsApp.
+              Otorgá sellos por visita, canjeá beneficios al instante y enviá el pase por WhatsApp.
             </p>
           </div>
 
-          <div className="relative max-w-xs w-full">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar cliente por nombre o teléfono..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 pl-8 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-primary backdrop-blur-xl"
-            />
+          {/* Filters & Search */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setFilterTab("todos")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  filterTab === "todos"
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                }`}
+              >
+                Todos ({clients.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFilterTab("con_premio")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                  filterTab === "con_premio"
+                    ? "bg-amber-400 text-slate-950 font-black shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                }`}
+              >
+                <Gift className="h-3 w-3" />
+                <span>Premio Listo ({eligibleClients.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFilterTab("vips")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                  filterTab === "vips"
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                }`}
+              >
+                <Flame className="h-3 w-3 text-amber-500" />
+                <span>VIPs</span>
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar cliente..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Table / Client Cards */}
+        {/* Client Rows */}
         <div className="divide-y divide-slate-100 dark:divide-white/5">
-          {filteredClients.map((client) => {
-            const points = client.loyaltyPoints || 0;
-            const threshold = loyalty.rewardThreshold;
-            const canRedeem = points >= threshold;
-            const isCopied = copiedId === client.id;
+          {filteredClients.length === 0 ? (
+            <div className="py-12 text-center space-y-2">
+              <Award className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                No se encontraron clientes con este filtro
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Probá buscando por otro nombre o restablecé los filtros.
+              </p>
+            </div>
+          ) : (
+            filteredClients.map((client) => {
+              const points = client.loyaltyPoints || 0;
+              const threshold = loyalty.rewardThreshold;
+              const canRedeem = points >= threshold;
+              const isCopied = copiedId === client.id;
+              const initials = client.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
 
-            return (
-              <div
-                key={client.id}
-                className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-slate-900 dark:text-white">
-                      {client.name}
-                    </span>
-                    <span className="text-xs text-slate-400 font-mono">{client.phone}</span>
-                    {client.tags.includes("VIP") && (
-                      <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-0.5">
-                        <Flame className="h-3 w-3" /> VIP
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-                    <span>Total gastado: <strong className="text-slate-700 dark:text-slate-200">{formatGs(client.totalSpent)}</strong></span>
-                    <span>•</span>
-                    <span>{client.totalVisits} visitas</span>
-                    <span>•</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{client.loyaltyRedeemed || 0} canjes</span>
-                  </div>
-                </div>
+              return (
+                <div
+                  key={client.id}
+                  className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-2xl transition"
+                >
+                  {/* Client Info */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 font-black text-white text-xs shadow-xs">
+                      {initials}
+                    </div>
 
-                {/* Progress Stamps & Quick Actions */}
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Digital stamps row */}
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: threshold }).map((_, i) => {
-                      const filled = i < points;
-                      return (
-                        <span
-                          key={i}
-                          className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold transition ${
-                            filled
-                              ? "bg-amber-400 text-slate-950 shadow-xs scale-105"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600"
-                          }`}
-                        >
-                          <Award
-                            className={`h-3.5 w-3.5 ${
-                              filled ? "text-slate-950" : "text-slate-300 dark:text-slate-600"
-                            }`}
-                          />
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                          {client.name}
                         </span>
-                      );
-                    })}
+                        {client.tags.includes("VIP") && (
+                          <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-0.5">
+                            <Flame className="h-3 w-3" /> VIP
+                          </span>
+                        )}
+                        {canRedeem && (
+                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[9.5px] font-black text-emerald-800 dark:text-emerald-300 animate-pulse border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                            <Gift className="h-3 w-3" /> ¡Premio Listo!
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                        <span>{client.phone}</span>
+                        <span>•</span>
+                        <span className="font-sans">Consumo: <strong className="text-slate-700 dark:text-slate-200">{formatGs(client.totalSpent)}</strong></span>
+                        <span>•</span>
+                        <span className="font-sans text-emerald-600 dark:text-emerald-400 font-bold">{client.loyaltyRedeemed || 0} canjes históricos</span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Actions Buttons */}
-                  <div className="flex items-center gap-1.5">
-                    {/* Add point */}
-                    <button
-                      type="button"
-                      onClick={() => handleAddPoint(client.id, client.name)}
-                      className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-2.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition"
-                      title="Sumar +1 sello"
-                    >
-                      +1 Sello
-                    </button>
+                  {/* Stamps Row & Actions */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Digital Stamps Progress */}
+                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/60 dark:border-white/5">
+                      {Array.from({ length: threshold }).map((_, i) => {
+                        const filled = i < points;
+                        return (
+                          <span
+                            key={i}
+                            className={`flex h-7 w-7 items-center justify-center rounded-xl text-xs font-bold transition ${
+                              filled
+                                ? "bg-amber-400 text-slate-950 shadow-xs scale-105"
+                                : "bg-white dark:bg-slate-900 text-slate-300 dark:text-slate-600"
+                            }`}
+                            title={`Sello ${i + 1} de ${threshold}`}
+                          >
+                            <Award
+                              className={`h-3.5 w-3.5 ${
+                                filled ? "text-slate-950" : "text-slate-300 dark:text-slate-600"
+                              }`}
+                            />
+                          </span>
+                        );
+                      })}
+                    </div>
 
-                    {/* Redeem reward if eligible */}
-                    {canRedeem ? (
+                    {/* Actions Buttons */}
+                    <div className="flex items-center gap-1.5">
+                      {/* Add Point (+1 Sello) */}
                       <button
                         type="button"
-                        onClick={() => handleRedeem(client.id, client.name)}
-                        className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-amber-600 animate-pulse"
+                        onClick={() => handleAddPoint(client.id, client.name)}
+                        className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs transition cursor-pointer"
+                        title="Sumar +1 sello tras la visita"
                       >
-                        <Gift className="h-3.5 w-3.5" />
-                        Canjear Premio
+                        +1 Sello
                       </button>
-                    ) : (
-                      <span className="text-[11px] font-semibold text-slate-400 px-1">
-                        Faltan {threshold - points}
-                      </span>
-                    )}
 
-                    {/* WhatsApp Send Card */}
-                    <a
-                      href={getWhatsAppShareUrl(client.name, client.phone, client.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-500 transition"
-                      title="Mandar tarjeta por WhatsApp al cliente"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Mandar Tarjeta</span>
-                    </a>
+                      {/* Redeem Button (if eligible) */}
+                      {canRedeem ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRedeem(client.id, client.name)}
+                          className="inline-flex items-center gap-1 rounded-xl bg-amber-500 hover:bg-amber-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition cursor-pointer animate-bounce"
+                        >
+                          <Gift className="h-3.5 w-3.5" />
+                          <span>Canjear Premio</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-slate-400 px-1 font-mono">
+                          Faltan {threshold - points}
+                        </span>
+                      )}
 
-                    {/* Copy Link */}
-                    <button
-                      type="button"
-                      onClick={() => handleCopyCardLink(client.id)}
-                      className="flex h-7 w-7 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-primary transition"
-                      title="Copiar enlace de tarjeta digital"
-                    >
-                      {isCopied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                    </button>
+                      {/* WhatsApp Share Card Link */}
+                      <a
+                        href={getWhatsAppShareUrl(client.name, client.phone, client.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition cursor-pointer"
+                        title="Enviar tarjeta al WhatsApp del cliente"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Enviar Tarjeta</span>
+                      </a>
 
-                    {/* View Card */}
-                    <Link
-                      href={getCardUrl(client.id)}
-                      target="_blank"
-                      className="flex h-7 w-7 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-primary transition"
-                      title="Ver tarjeta digital como la ve el cliente"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Link>
+                      {/* Show QR Modal */}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedClientForQr(client)}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition cursor-pointer"
+                        title="Mostrar código QR del pase"
+                      >
+                        <QrCode className="h-4 w-4" />
+                      </button>
+
+                      {/* Copy Direct Card Link */}
+                      <button
+                        type="button"
+                        onClick={() => handleCopyCardLink(client.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                        title="Copiar enlace de tarjeta digital"
+                      >
+                        {isCopied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                      </button>
+
+                      {/* Open Card View in New Tab */}
+                      <Link
+                        href={getCardUrl(client.id)}
+                        target="_blank"
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                        title="Ver tarjeta digital como la ve el cliente"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </Card>
+
+      {/* ═══ 6. QR SCAN & PASS MODAL ═══ */}
+      <Modal
+        open={Boolean(selectedClientForQr)}
+        onClose={() => setSelectedClientForQr(null)}
+        title="Pase Digital Apple & Google Wallet"
+        maxWidth="max-w-md"
+      >
+        {selectedClientForQr && (
+          <div className="space-y-4 text-center text-xs">
+            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-2xl bg-amber-400 text-slate-950 font-black text-sm shadow-md">
+              <Crown className="h-6 w-6" />
+            </div>
+
+            <div>
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                {selectedClientForQr.name}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                {selectedClientForQr.phone}
+              </p>
+            </div>
+
+            {/* QR Code Container */}
+            <div className="mx-auto w-56 h-56 p-3 bg-white rounded-3xl border border-slate-200 shadow-inner flex items-center justify-center">
+              {qrCodeDataUrl ? (
+                <img
+                  src={qrCodeDataUrl}
+                  alt={`QR de ${selectedClientForQr.name}`}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <span className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <span className="text-[10px]">Generando código...</span>
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xs mx-auto leading-relaxed">
+              El cliente puede escanear este código QR con la cámara de su celular para abrir su pase e instalarlo en <strong>Apple Wallet</strong> o <strong>Google Wallet</strong>.
+            </p>
+
+            <div className="pt-2 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleCopyCardLink(selectedClientForQr.id)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition cursor-pointer"
+              >
+                {copiedId === selectedClientForQr.id ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-500" />
+                    <span>Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    <span>Copiar Enlace</span>
+                  </>
+                )}
+              </button>
+
+              <a
+                href={getWhatsAppShareUrl(selectedClientForQr.name, selectedClientForQr.phone, selectedClientForQr.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 font-bold text-white shadow-xs transition cursor-pointer"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>Enviar por WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

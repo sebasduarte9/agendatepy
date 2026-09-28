@@ -121,6 +121,11 @@ export async function PATCH(request: NextRequest) {
     if (acceptedPaymentMethods !== undefined && Array.isArray(acceptedPaymentMethods)) {
       mergedSettings.acceptedPaymentMethods = acceptedPaymentMethods;
     }
+    if (body.loyalty !== undefined) {
+      mergedSettings.loyalty = body.loyalty;
+    } else if (customSettings?.loyalty !== undefined) {
+      mergedSettings.loyalty = customSettings.loyalty;
+    }
 
     updateData.settings = mergedSettings;
 
