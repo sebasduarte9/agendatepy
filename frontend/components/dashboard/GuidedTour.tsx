@@ -670,19 +670,27 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 3,
-        taskTitle: "Roles & Niveles de Acceso",
+        taskTitle: "Métricas del Personal & Roles",
         instruction:
-          "Diferenciá entre Dueño/Admin, Cajero/Recepción y Profesionales. Podés restringir que los colaboradores solo vean su propia agenda sin acceder a la facturación total.",
-        tip: "Mantené las finanzas y comisiones del local protegidas.",
-        targetSelector: '[data-tour="equipo-roles"]',
+          "Monitoreá cuántos colaboradores tenés activos, cuántos administradores, personal de caja y especialistas en salón.",
+        tip: "Mantené el balance adecuado en tu negocio.",
+        targetSelector: '[data-tour="equipo-kpis"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Fichas de Personal & Permisos Detallados",
+        taskTitle: "Fichas de Colaboradores & Acciones Rápidas",
         instruction:
-          "En cada tarjeta podés editar horarios, pausar temporalmente a un colaborador o ajustar permisos avanzados en cualquier momento.",
-        tip: "Los cambios se guardan directamente en la base de datos SQL.",
+          "En cada tarjeta podés editar horarios, enviar invitaciones de acceso Google, pausar turnos o ajustar porcentajes de comisión.",
+        tip: "Los cambios se guardan directamente en PostgreSQL.",
         targetSelector: '[data-tour="equipo-list"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Matriz de Roles & Niveles de Acceso",
+        instruction:
+          "Diferenciá entre Dueño/Admin, Cajero/Recepción y Profesionales. Protegé las finanzas y asegurá que cada uno vea solo lo que le corresponde.",
+        tip: "El cajero solo ve caja y turnos; los profesionales ven su propia agenda.",
+        targetSelector: '[data-tour="equipo-roles"]',
       },
     ],
   },
@@ -963,19 +971,15 @@ export default function GuidedTour() {
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
             const isFixedNav =
+              currentStep.targetSelector === "aside" ||
+              currentStep.targetSelector === "nav" ||
               currentStep.targetSelector?.includes("sidebar") ||
-              currentStep.targetSelector?.includes("header") ||
-              currentStep.targetSelector === "aside";
+              currentStep.targetSelector?.includes("fixed");
 
             if (isFixedNav) {
               window.scrollTo({ top: 0, behavior: "smooth" });
             } else {
-              const elDocTop = window.scrollY + rect.top;
-              const targetScrollY = Math.max(
-                0,
-                Math.round(elDocTop + rect.height / 2 - window.innerHeight / 2)
-              );
-              window.scrollTo({ top: targetScrollY, behavior: "smooth" });
+              el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
             }
             const syncRect = () => {
               const fresh = el.getBoundingClientRect();
@@ -1150,34 +1154,7 @@ export default function GuidedTour() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isTourOpen, showExitConfirm, handleNext, handlePrev]);
 
-  // Lock manual user scrolling while tour is active
-  useEffect(() => {
-    if (!isTourOpen) return;
-
-    const preventWheel = (e: WheelEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target?.closest(".guided-tour-scrollable")) return;
-      e.preventDefault();
-    };
-
-    const preventTouch = (e: TouchEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target?.closest(".guided-tour-scrollable")) return;
-      e.preventDefault();
-    };
-
-    window.addEventListener("wheel", preventWheel, { passive: false });
-    window.addEventListener("touchmove", preventTouch, { passive: false });
-
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      window.removeEventListener("wheel", preventWheel);
-      window.removeEventListener("touchmove", preventTouch);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isTourOpen]);
+  // The full-screen backdrop (z-[99992]) handles pointer events gracefully
 
   // Elevate active targeted tab button ONLY when the current step explicitly targets it
   useEffect(() => {
@@ -1336,11 +1313,12 @@ export default function GuidedTour() {
       else if (candAbove.fits) {
         chosen = { l: candAbove.l, t: candAbove.t };
       }
-      // 6. Safe fallback: right of target or clamped safely
+      // 6. Safe fallback: if none of the 4 adjacent sides comfortably fit,
+      // place card safely in top or bottom center where it remains 100% visible and readable
       else {
         chosen = {
-          l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.right + gap)),
-          t: Math.max(84, Math.min(H - cardHeightEstimate - 20, targetRect.top)),
+          l: Math.max(20, Math.round((W - cardWidth) / 2)),
+          t: targetRect.top > H * 0.4 ? 84 : Math.max(84, Math.round(H - cardHeightEstimate - 24)),
         };
       }
 
