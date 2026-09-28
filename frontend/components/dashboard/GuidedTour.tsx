@@ -230,14 +230,14 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Bandeja Unificada",
     icon: MessagesSquare,
     summary:
-      "Centralizá todas las consultas de WhatsApp, Instagram y redes en una sola bandeja. Conectá gratis con Evolution API mediante código QR y procesá turnos o pedidos de productos en 1 clic.",
+      "Centralizá todas las consultas de WhatsApp, Instagram y redes en una sola bandeja. Conectá mediante código QR y procesá turnos o pedidos de productos en 1 clic.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Bandeja Omnicanal & Conexión $0",
+        taskTitle: "Bandeja Omnicanal & Canales Directos",
         instruction:
-          "Tu CRM viene limpio de fábrica. Podés conectar WhatsApp escaneando un código QR con Evolution API ($0 costo por mensaje) o cargar 1 chat de prueba para explorar la bandeja.",
-        tip: "Hacé clic en 'Conectar Evolution API' para vincular tu WhatsApp Web en segundos.",
+          "Tu CRM viene limpio de fábrica. Podés conectar WhatsApp escaneando un código QR o cargar 1 chat de prueba para explorar la bandeja.",
+        tip: "Hacé clic en 'Conectar Canales' para vincular tu WhatsApp en segundos.",
         targetSelector: '[data-tour="crm-header"]',
       },
       {

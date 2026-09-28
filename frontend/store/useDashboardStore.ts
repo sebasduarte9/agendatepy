@@ -1543,11 +1543,23 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
   updateProductOrderStatus: (orderId, status) => {
+    const order = get().productOrders.find((o) => o.id === orderId);
     set({
       productOrders: get().productOrders.map((o) =>
         o.id === orderId ? { ...o, status } : o
       ),
     });
+    // When delivered, auto-register cash ingress
+    if (status === "delivered" && order) {
+      get().addCashMovement({
+        type: "ingreso",
+        amount: order.totalAmount,
+        method: (order.paymentMethod || "efectivo") as any,
+        concept: `Venta de producto: ${order.items.map((i) => `${i.qty}x ${i.productName}`).join(", ")} · ${order.orderNumber}`,
+        date: new Date().toISOString(),
+        category: "Venta Producto",
+      });
+    }
   },
   createProductOrder: (orderData) => {
     const newOrder: ProductOrder = {
@@ -1796,7 +1808,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({
       evolutionConfig: { ...get().evolutionConfig, ...config },
     });
-    get().pushToast("success", "Configuración de Evolution API actualizada.");
+    get().pushToast("success", "Configuración de WhatsApp actualizada.");
   },
   loadDemoConversation: () => {
     const demoConv: CrmConversation = {

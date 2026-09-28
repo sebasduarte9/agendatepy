@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  whatsapp-gateway:
+    image: atendai/evolution-api:v2.1.2
+    container_name: agendatepy_whatsapp_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_URL=${EVOLUTION_SERVER_URL:-http://localhost:8080}
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-agendatepy_whatsapp_secure_key_2026}
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+      
+      # Webhook global para AgendatePY
+      - WEBHOOK_GLOBAL_ENABLED=true
+      - WEBHOOK_GLOBAL_URL=${EVOLUTION_WEBHOOK_URL:-http://host.docker.internal:3000/api/webhooks/whatsapp}
+      - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false
+      - WEBHOOK_EVENTS_CONNECTION_UPDATE=true
+      - WEBHOOK_EVENTS_QRCODE_UPDATED=true
+      - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
+
+      # Identificador de sesión para clientes
+      - CONFIG_SESSION_PHONE_CLIENT=AgendatePY
+      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - QRCODE_LIMIT=30
+      - LOG_LEVEL=ERROR
+
+      # Base de datos interna ligera
+      - DATABASE_ENABLED=false
+      - REDIS_ENABLED=false
+    volumes:
+      - evolution_instances:/evolution/instances
+      - evolution_store:/evolution/store
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  evolution_instances:
+  evolution_store:
