@@ -292,31 +292,59 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
   },
   servicios: {
     id: "servicios",
-    title: "Servicios, Precios & Profesionales",
+    title: "Catálogo de Servicios",
     badge: "Menú & Tarifas",
     icon: Scissors,
     summary:
-      "Definí tu menú de servicios con precios en Guaraníes, tiempos de atención y los porcentajes de comisión de tu equipo.",
+      "Definí tu menú de atención con precios en Guaraníes, duraciones por turno y enlaces directos de reserva para tus clientes.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Agregar un nuevo servicio al menú",
+        taskTitle: "Catálogo Central de Servicios",
         instruction:
-          "Hacé clic en '+ Nuevo Servicio'. Ingresá el nombre (ej: Balayage, Corte Degradé), elegí la categoría, duración en minutos y el precio en Gs.",
-        tip: "Definir bien la duración evita que dos turnos se pisen en el calendario.",
+          "Aquí administrás los servicios que tu negocio ofrece. Cada servicio define su duración en minutos y su precio en Guaraníes.",
+        tip: "La duración es clave para que el calendario calcule automáticamente los bloques libres sin solapamientos.",
+        targetSelector: '[data-tour="servicios-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Compartir enlace directo a un servicio específico",
+        taskTitle: "Métricas del Menú",
         instruction:
-          "En cada tarjeta de servicio tenés el botón 'Compartir Link'. Al enviarlo por WhatsApp, el cliente entra directamente con ese servicio pre-seleccionado.",
+          "Consultá cuántos servicios tenés activos, la duración promedio de atención y el ticket promedio por turno.",
+        tip: "Estos valores te ayudan a dimensionar la rentabilidad y capacidad diaria de tu local.",
+        targetSelector: '[data-tour="servicios-kpis"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Configurar comisiones del personal",
+        taskTitle: "Categorías y Buscador Rápido",
         instruction:
-          "Pasá a la pestaña 'Equipo & Profesionales'. Podés editar el porcentaje de comisión de cada persona (ej: 50% o 40%) y copiar su enlace de turnos individual.",
-        tip: "Los colaboradores pueden compartir su propio enlace en sus historias de Instagram para llenar su agenda.",
+          "Filtrá entre categorías como Peluquería, Barbería o Tratamientos, o buscá rápidamente cualquier servicio por su nombre.",
+        tip: "Tus clientes también verán estas categorías organizadas en su pantalla de reserva online.",
+        targetSelector: '[data-tour="servicios-filters"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Tarjetas de Servicio & Promociones",
+        instruction:
+          "Cada tarjeta muestra el tiempo de turno, el precio estándar y si tiene un descuento o promoción flash activa.",
+        tip: "Podés activar o editar promociones en 1 clic tocando el botón 'Activar descuento' en cualquier tarjeta.",
+        targetSelector: '[data-tour="servicios-card"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Compartir Enlace Directo",
+        instruction:
+          "Tocá 'Copiar Link' en cualquier servicio para enviárselo a un cliente por WhatsApp o ponerlo en tus historias. Entrarán directo con ese servicio seleccionado.",
+        tip: "Ideal para promociones de Instagram o campañas específicas.",
+        targetSelector: '[data-tour="servicios-share-btn"]',
+      },
+      {
+        stepNumber: 6,
+        taskTitle: "Agregar un Nuevo Servicio",
+        instruction:
+          "Hacé clic en '+ Nuevo Servicio' para cargar un corte, tratamiento o paquete con su duración y tarifa.",
+        tip: "Podés editar o pausar cualquier servicio en el momento que desees con el ícono del lápiz.",
+        targetSelector: '[data-tour="servicios-new-btn"]',
       },
     ],
   },

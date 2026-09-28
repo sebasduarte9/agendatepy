@@ -3,17 +3,21 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Copy,
-  Pencil,
-  Trash2,
   Scissors,
-  Sparkles,
   Plus,
   Search,
   Coins,
   Clock,
   Users,
   ArrowRight,
+  Copy,
+  Check,
+  Pencil,
+  Trash2,
+  BadgePercent,
+  Flame,
+  Layers,
+  Sparkles,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -22,7 +26,14 @@ import Modal from "@/components/dashboard/ui/Modal";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { ServiceItem } from "@/lib/dashboard-types";
 
-const SERVICE_CATEGORIES = ["Todas", "Peluquería", "Barbería", "Color", "Tratamiento", "Estética"] as const;
+const DEFAULT_CATEGORIES = [
+  "Todos",
+  "Peluquería",
+  "Barbería",
+  "Color",
+  "Tratamiento",
+  "Estética",
+] as const;
 
 export default function ServiciosPage() {
   const {
@@ -36,7 +47,8 @@ export default function ServiciosPage() {
   } = useDashboardStore();
 
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("Todas");
+  const [categoryFilter, setCategoryFilter] = useState<string>("Todos");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Service Modal state
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
@@ -47,14 +59,20 @@ export default function ServiciosPage() {
     durationMin: 45,
     price: 85000,
     description: "",
-    image: "scissors",
     hasPromo: false,
     promoPrice: 65000,
     promoBadge: "-20% OFF",
-    promoType: "quantity" as "quantity" | "time",
-    promoLimitQuantity: 5,
-    promoLimitHours: 24,
   });
+
+  // Dynamic categories
+  const categories = useMemo(() => {
+    const set = new Set<string>(["Todos"]);
+    services.forEach((s) => {
+      if (s.category && s.category.trim()) set.add(s.category.trim());
+    });
+    DEFAULT_CATEGORIES.forEach((cat) => set.add(cat));
+    return Array.from(set);
+  }, [services]);
 
   // Filtered Services
   const filteredServices = useMemo(() => {
@@ -64,7 +82,7 @@ export default function ServiciosPage() {
         s.description.toLowerCase().includes(search.toLowerCase()) ||
         (s.category && s.category.toLowerCase().includes(search.toLowerCase()));
       const matchCat =
-        categoryFilter === "Todas" ||
+        categoryFilter === "Todos" ||
         (s.category && s.category.toLowerCase() === categoryFilter.toLowerCase());
       return matchSearch && matchCat;
     });
@@ -76,8 +94,12 @@ export default function ServiciosPage() {
     services.length > 0
       ? Math.round(services.reduce((sum, s) => sum + s.price, 0) / services.length)
       : 0;
+  const avgDuration =
+    services.length > 0
+      ? Math.round(services.reduce((sum, s) => sum + s.durationMin, 0) / services.length)
+      : 0;
 
-  // Handlers for Services
+  // Handlers
   function handleOpenCreateService() {
     setEditingService(null);
     setServiceForm({
@@ -86,13 +108,9 @@ export default function ServiciosPage() {
       durationMin: 40,
       price: 80000,
       description: "",
-      image: "scissors",
       hasPromo: false,
       promoPrice: 65000,
       promoBadge: "-20% OFF",
-      promoType: "quantity",
-      promoLimitQuantity: 5,
-      promoLimitHours: 24,
     });
     setServiceModalOpen(true);
   }
@@ -105,13 +123,9 @@ export default function ServiciosPage() {
       durationMin: s.durationMin,
       price: s.price,
       description: s.description,
-      image: s.image,
       hasPromo: openForPromo ? true : !!s.hasPromo,
       promoPrice: s.promoPrice || Math.round(s.price * 0.8),
       promoBadge: s.promoBadge || "-20% OFF",
-      promoType: s.promoType || "quantity",
-      promoLimitQuantity: s.promoLimitQuantity || 5,
-      promoLimitHours: s.promoLimitHours || 24,
     });
     setServiceModalOpen(true);
   }
@@ -119,76 +133,81 @@ export default function ServiciosPage() {
   function handleSaveService(e: React.FormEvent) {
     e.preventDefault();
     if (!serviceForm.name.trim()) {
-      pushToast("error", "Por favor ingresá el nombre del servicio.");
+      pushToast("error", "Ingresá el nombre del servicio.");
       return;
     }
 
-    const promoPayload = {
+    const payload = {
+      name: serviceForm.name.trim(),
+      category: serviceForm.category,
+      durationMin: Number(serviceForm.durationMin) || 30,
+      price: Number(serviceForm.price) || 0,
+      description: serviceForm.description.trim(),
+      image: editingService?.image || "scissors",
       hasPromo: serviceForm.hasPromo,
       promoPrice: serviceForm.hasPromo ? Number(serviceForm.promoPrice) || 0 : undefined,
       promoBadge: serviceForm.hasPromo ? serviceForm.promoBadge : undefined,
-      promoType: serviceForm.hasPromo ? serviceForm.promoType : undefined,
-      promoLimitQuantity: serviceForm.hasPromo ? Number(serviceForm.promoLimitQuantity) || 5 : undefined,
-      promoLimitHours: serviceForm.hasPromo ? Number(serviceForm.promoLimitHours) || 24 : undefined,
     };
 
     if (editingService) {
-      updateService(editingService.id, {
-        name: serviceForm.name.trim(),
-        category: serviceForm.category,
-        durationMin: Number(serviceForm.durationMin) || 30,
-        price: Number(serviceForm.price) || 0,
-        description: serviceForm.description.trim(),
-        image: serviceForm.image,
-        ...promoPayload,
-      });
+      updateService(editingService.id, payload);
       pushToast("success", `Servicio "${serviceForm.name}" actualizado`);
     } else {
-      addService({
-        name: serviceForm.name.trim(),
-        category: serviceForm.category,
-        durationMin: Number(serviceForm.durationMin) || 30,
-        price: Number(serviceForm.price) || 0,
-        description: serviceForm.description.trim(),
-        image: serviceForm.image,
-        ...promoPayload,
-      });
-      pushToast("success", `Servicio "${serviceForm.name}" creado con éxito`);
+      addService(payload);
+      pushToast("success", `Servicio "${serviceForm.name}" creado`);
     }
     setServiceModalOpen(false);
   }
 
   function handleDeleteService(id: string, name: string) {
-    if (confirm(`¿Estás seguro de eliminar el servicio "${name}"?`)) {
+    if (confirm(`¿Eliminar el servicio "${name}" del menú?`)) {
       removeService(id);
-      pushToast("success", "Servicio eliminado del catálogo");
+      pushToast("success", "Servicio eliminado");
+    }
+  }
+
+  async function handleCopyServiceLink(serviceId: string, serviceName: string) {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://agendate.py";
+    const url = `${origin}/${business.slug || "barberia"}/reservar?service=${serviceId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(serviceId);
+      pushToast("success", `Enlace de "${serviceName}" copiado`);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      pushToast("error", "No se pudo copiar el enlace");
     }
   }
 
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        data-tour="servicios-header"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Servicios & Precios
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
+            <span>Catálogo de Servicios</span>
+            <Scissors className="h-5 w-5 text-primary" />
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Configurá tu catálogo de atención, duraciones en minutos, precios en Guaraníes y promociones.
+            Definí precios en Guaraníes, tiempos de atención por turno y promociones activas.
           </p>
         </div>
 
         <button
           type="button"
+          data-tour="servicios-new-btn"
           onClick={handleOpenCreateService}
-          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition w-fit"
+          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer w-fit"
         >
           <Plus className="h-4 w-4" />
-          <span>Nuevo Servicio</span>
+          <span>+ Nuevo Servicio</span>
         </button>
       </div>
 
-      {/* Staff Delegation Banner (Ensures Single Source of Truth for Team) */}
+      {/* Team Link Notification Banner */}
       <div className="flex items-center justify-between rounded-2xl border border-indigo-200/80 dark:border-indigo-800/40 bg-indigo-50/70 dark:bg-indigo-950/30 p-3.5 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold">
@@ -196,10 +215,10 @@ export default function ServiciosPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
-              ¿Buscás administrar colaboradores, horarios y comisiones?
+              ¿Querés asignar profesionales o comisiones a tus servicios?
             </p>
             <p className="text-[11px] text-indigo-700/80 dark:text-indigo-400">
-              El equipo operativo se gestiona de forma centralizada en el módulo de Equipo.
+              Gestioná horarios y porcentajes de tu equipo en la sección especializada de Colaboradores.
             </p>
           </div>
         </div>
@@ -213,36 +232,38 @@ export default function ServiciosPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div data-tour="servicios-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Total Servicios en Menú"
-          value={`${services.length} items`}
-          icon={Scissors}
-          delta={services.length}
+          value={`${services.length} opciones`}
+          icon={Layers}
         />
         <StatCard
-          label="Precio Promedio por Turno"
+          label="Duración Promedio"
+          value={`${avgDuration} min / turno`}
+          icon={Clock}
+        />
+        <StatCard
+          label="Precio Promedio"
           value={formatGs(avgPrice)}
           icon={Coins}
-        />
-        <StatCard
-          label="Colaboradores Asignables"
-          value={`${activeStaffCount} en equipo`}
-          icon={Users}
         />
       </div>
 
       {/* Search Bar & Category Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-          {SERVICE_CATEGORIES.map((cat) => (
+      <div
+        data-tour="servicios-filters"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
+          {categories.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setCategoryFilter(cat)}
-              className={`rounded-2xl border px-3.5 py-1.5 text-xs font-bold transition shrink-0 ${
+              className={`rounded-2xl border px-3.5 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
                 categoryFilter === cat
-                  ? "border-primary bg-primary/10 text-primary"
+                  ? "border-primary bg-primary/10 text-primary shadow-xs"
                   : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
@@ -255,7 +276,7 @@ export default function ServiciosPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar por nombre o detalle..."
+            placeholder="Buscar servicio..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
@@ -270,126 +291,140 @@ export default function ServiciosPage() {
             <Scissors className="h-6 w-6" />
           </div>
           <h3 className="font-bold text-slate-900 dark:text-white text-base">
-            {services.length === 0 ? "No tenés servicios todavía" : "No encontramos servicios en esta categoría"}
+            {services.length === 0 ? "No tenés servicios todavía" : "No hay servicios en esta categoría"}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
             {services.length === 0
-              ? "Agregá tu primer servicio para comenzar a recibir reservas en tu portal y agendar citas."
-              : "Probá cambiando la categoría o limpiá la búsqueda para ver otros servicios."}
+              ? "Cargá los servicios que ofrece tu local para que tus clientes puedan reservar turnos online."
+              : "Probá cambiando el filtro o limpiá el buscador para ver más opciones."}
           </p>
           <button
             type="button"
             onClick={handleOpenCreateService}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition"
+            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            <span>+ Crear servicio</span>
+            <span>+ Crear primer servicio</span>
           </button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredServices.map((item) => (
-            <Card
-              key={item.id}
-              className="group flex flex-col justify-between rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-5 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-300"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2">
-                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
-                    {item.category || "General"}
-                  </span>
-                  <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold">
-                    <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span>{item.durationMin} min</span>
+          {filteredServices.map((item, index) => {
+            const hasActivePromo = item.hasPromo && item.promoPrice;
+            const currentPrice = hasActivePromo ? item.promoPrice! : item.price;
+            const isCopied = copiedId === item.id;
+
+            return (
+              <Card
+                key={item.id}
+                data-tour={index === 0 ? "servicios-card" : undefined}
+                className="group flex flex-col justify-between rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-5 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-300"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
+                      {item.category || "General"}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold">
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                      <span>{item.durationMin} min</span>
+                    </div>
+                  </div>
+
+                  <h3 className="mt-3 font-bold text-slate-900 dark:text-white text-base group-hover:text-primary transition">
+                    {item.name}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {item.description || "Servicio estándar de atención en el local."}
+                  </p>
+
+                  <div className="mt-4 flex items-baseline gap-2">
+                    <span className="font-mono font-black text-xl text-slate-900 dark:text-white">
+                      {formatGs(currentPrice)}
+                    </span>
+                    {hasActivePromo && (
+                      <span className="text-xs text-slate-400 line-through font-mono">
+                        {formatGs(item.price)}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <h3 className="mt-3 font-bold text-slate-900 dark:text-white text-base group-hover:text-primary transition">
-                  {item.name}
-                </h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                  {item.description || "Servicio estándar de atención en el local."}
-                </p>
+                <div className="mt-4 space-y-2.5 pt-3.5 border-t border-slate-100 dark:border-white/5">
+                  {/* Promo Badge / Fast Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditService(item, !item.hasPromo)}
+                    className={`w-full flex items-center justify-between rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
+                      item.hasPromo
+                        ? "border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                        : "border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-amber-600 hover:border-amber-400/40"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {item.hasPromo ? (
+                        <Flame className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                      ) : (
+                        <BadgePercent className="h-3.5 w-3.5 text-slate-400" />
+                      )}
+                      <span>
+                        {item.hasPromo
+                          ? `Promo activa: ${item.promoBadge || "-20% OFF"}`
+                          : "Activar descuento"}
+                      </span>
+                    </span>
+                    <span className="text-[10px] opacity-75">
+                      {item.hasPromo ? "Modificar" : "+"}
+                    </span>
+                  </button>
 
-                <div className="mt-4 flex items-baseline gap-2">
-                  <span className="font-mono font-black text-xl text-slate-900 dark:text-white">
-                    {formatGs(item.hasPromo && item.promoPrice ? item.promoPrice : item.price)}
-                  </span>
-                  {item.hasPromo && item.promoPrice && (
-                    <span className="text-xs text-slate-400 line-through font-mono">
-                      {formatGs(item.price)}
-                    </span>
-                  )}
-                </div>
-              </div>
+                  {/* Actions Row */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      data-tour={index === 0 ? "servicios-share-btn" : undefined}
+                      onClick={() => handleCopyServiceLink(item.id, item.name)}
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border py-2 px-3 text-xs font-bold transition cursor-pointer ${
+                        isCopied
+                          ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white hover:border-primary"
+                      }`}
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-emerald-500" />
+                          <span>¡Enlace copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          <span>Copiar Link</span>
+                        </>
+                      )}
+                    </button>
 
-              <div className="mt-5 space-y-3 pt-3.5 border-t border-slate-100 dark:border-white/5">
-                {/* Promo Badge */}
-                {item.hasPromo && (
-                  <div className="flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-800 dark:text-amber-300 font-bold">
-                    <span className="flex items-center gap-1">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                      Promo: {item.promoBadge || "-20% OFF"}
-                    </span>
-                    <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                      Activa
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditService(item)}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-primary hover:border-primary/50 transition cursor-pointer"
+                      title="Editar servicio"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteService(item.id, item.name)}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer"
+                      title="Eliminar servicio"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                )}
-
-                {/* Promo Switch button */}
-                <button
-                  type="button"
-                  onClick={() => handleOpenEditService(item, !item.hasPromo)}
-                  className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
-                    item.hasPromo
-                      ? "border border-amber-500/40 bg-amber-500/15 text-amber-800 dark:text-amber-200 hover:bg-amber-500/25"
-                      : "border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:border-amber-500/40 hover:text-amber-600 dark:hover:text-amber-300"
-                  }`}
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                  <span>
-                    {item.hasPromo
-                      ? `Promo Configurada: ${item.promoBadge || "-20% OFF"}`
-                      : "+ Activar Promoción / Descuento"}
-                  </span>
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const url = `${window.location.origin}/${business.slug || "barberia"}/reservar?service=${item.id}`;
-                      await navigator.clipboard.writeText(url);
-                      pushToast("success", `Enlace directo de "${item.name}" copiado`);
-                    }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 py-2 px-3 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white hover:border-primary transition duration-200"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    <span>Compartir Link</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditService(item)}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-primary hover:border-primary/50 transition"
-                    title="Editar servicio"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteService(item.id, item.name)}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
-                    title="Eliminar servicio"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -407,7 +442,7 @@ export default function ServiciosPage() {
             <input
               type="text"
               required
-              placeholder="Ej: Corte Fade Premium + Barba"
+              placeholder="Ej: Corte Fade Clásico + Barba"
               value={serviceForm.name}
               onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
               className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
@@ -466,22 +501,22 @@ export default function ServiciosPage() {
 
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Descripción del Servicio
+              Descripción o Detalle (opcional)
             </label>
             <textarea
               rows={2}
-              placeholder="Detallá qué incluye el servicio para que el cliente lo vea en su reserva..."
+              placeholder="Detallá qué incluye el servicio para tus clientes..."
               value={serviceForm.description}
               onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
               className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
             />
           </div>
 
-          {/* Promociones / Flash Offers */}
+          {/* Promoción o Descuento */}
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-500" />
+                <BadgePercent className="h-4 w-4 text-amber-500" />
                 <span className="font-bold text-slate-900 dark:text-white text-xs">
                   Promoción o Descuento Flash
                 </span>
@@ -491,7 +526,7 @@ export default function ServiciosPage() {
                 id="hasPromoToggle"
                 checked={serviceForm.hasPromo}
                 onChange={(e) => setServiceForm({ ...serviceForm, hasPromo: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
+                className="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer"
               />
             </div>
 
@@ -516,7 +551,7 @@ export default function ServiciosPage() {
 
                   <div>
                     <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Texto del Distintivo
+                      Etiqueta
                     </label>
                     <input
                       type="text"
@@ -537,13 +572,13 @@ export default function ServiciosPage() {
             <button
               type="button"
               onClick={() => setServiceModalOpen(false)}
-              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-5 py-2 font-bold text-white shadow-md hover:opacity-95 transition"
+              className="rounded-xl bg-primary px-5 py-2 font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
             >
               {editingService ? "Guardar Cambios" : "Crear Servicio"}
             </button>
