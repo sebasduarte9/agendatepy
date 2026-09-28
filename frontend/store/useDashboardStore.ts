@@ -205,6 +205,7 @@ export const initialProducts: ProductItem[] = [
 
 export const initialLoyalty: LoyaltySettings = {
   enabled: true,
+  mode: "stamps",
   rewardThreshold: 5,
   rewardDescription: "50% OFF en tu próximo corte o servicio",
   pointsPerVisit: 1,

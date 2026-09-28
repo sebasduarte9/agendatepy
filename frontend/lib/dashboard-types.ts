@@ -164,9 +164,12 @@ export type WhatsAppTemplate = {
   enabled: boolean;
 };
 
+export type LoyaltyMode = "stamps" | "points";
+
 export type LoyaltySettings = {
   enabled: boolean;
-  rewardThreshold: number; // Ej. 5 visitas
+  mode?: LoyaltyMode; // "stamps" (sellos por visita) o "points" (puntos acumulables)
+  rewardThreshold: number; // Ej. 5 sellos o 100 puntos
   rewardDescription: string; // Ej. "50% de descuento en tu próximo corte"
   pointsPerVisit: number;
 };

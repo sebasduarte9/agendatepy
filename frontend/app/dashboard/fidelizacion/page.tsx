@@ -41,8 +41,10 @@ export default function FidelizacionPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [formSettings, setFormSettings] = useState({
     enabled: loyalty.enabled,
+    mode: loyalty.mode || "stamps",
     rewardThreshold: loyalty.rewardThreshold,
     rewardDescription: loyalty.rewardDescription,
+    pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
   });
 
   const totalPointsAwarded = clients.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
@@ -59,8 +61,10 @@ export default function FidelizacionPage() {
     e.preventDefault();
     updateLoyalty({
       enabled: formSettings.enabled,
+      mode: formSettings.mode as "stamps" | "points",
       rewardThreshold: Number(formSettings.rewardThreshold),
       rewardDescription: formSettings.rewardDescription.trim(),
+      pointsPerVisit: Number(formSettings.pointsPerVisit) || 1,
     });
     setEditingSettings(false);
     pushToast("success", "Configuración del Club VIP guardada");
@@ -173,45 +177,130 @@ export default function FidelizacionPage() {
             </label>
           </div>
 
-          <form onSubmit={handleSaveSettings} className="grid gap-4 sm:grid-cols-2 text-xs">
+          <form onSubmit={handleSaveSettings} className="space-y-4 text-xs">
+            {/* Modalidad del programa */}
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                Meta para Canjear (Cantidad de Visitas / Sellos)
+              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+                Modalidad de Fidelización en la Tarjeta
               </label>
-              <input
-                type="number"
-                min="2"
-                max="20"
-                value={formSettings.rewardThreshold}
-                onChange={(e) =>
-                  setFormSettings({ ...formSettings, rewardThreshold: Number(e.target.value) })
-                }
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              />
-              <p className="mt-1 text-[11px] text-slate-400">
-                Recomendado: 5 o 10 visitas para mantener la recurrencia alta.
-              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormSettings({
+                      ...formSettings,
+                      mode: "stamps",
+                      rewardThreshold: formSettings.mode === "points" ? 5 : formSettings.rewardThreshold,
+                      pointsPerVisit: 1,
+                    })
+                  }
+                  className={`p-3.5 rounded-2xl border text-left transition ${
+                    formSettings.mode === "stamps"
+                      ? "border-primary bg-primary/10 dark:bg-primary/20 text-primary font-bold shadow-xs"
+                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
+                    <span className="font-bold text-slate-900 dark:text-white">Tarjeta de Sellos</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-normal">
+                    1 sello automático por cada turno asistido. A los X sellos, gana su premio.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormSettings({
+                      ...formSettings,
+                      mode: "points",
+                      rewardThreshold: formSettings.mode === "stamps" ? 100 : formSettings.rewardThreshold,
+                      pointsPerVisit: 10,
+                    })
+                  }
+                  className={`p-3.5 rounded-2xl border text-left transition ${
+                    formSettings.mode === "points"
+                      ? "border-primary bg-primary/10 dark:bg-primary/20 text-primary font-bold shadow-xs"
+                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="h-4 w-4 text-indigo-500" />
+                    <span className="font-bold text-slate-900 dark:text-white">Tarjeta de Puntos</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-normal">
+                    Acumula puntos por visita. Ideal para premios de mayor escala.
+                  </p>
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                Descripción del Premio / Beneficio
-              </label>
-              <input
-                type="text"
-                value={formSettings.rewardDescription}
-                onChange={(e) =>
-                  setFormSettings({ ...formSettings, rewardDescription: e.target.value })
-                }
-                placeholder="Ej. 50% de descuento en tu próximo corte"
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              />
-              <p className="mt-1 text-[11px] text-slate-400">
-                Este mensaje lo verá el cliente en su Apple / Google Wallet.
-              </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                  {formSettings.mode === "stamps"
+                    ? "Meta para Canjear (Sellos / Visitas)"
+                    : "Puntos necesarios para canjear"}
+                </label>
+                <input
+                  type="number"
+                  min="2"
+                  max={formSettings.mode === "stamps" ? "20" : "5000"}
+                  value={formSettings.rewardThreshold}
+                  onChange={(e) =>
+                    setFormSettings({ ...formSettings, rewardThreshold: Number(e.target.value) })
+                  }
+                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  {formSettings.mode === "stamps"
+                    ? "Recomendado: 5 o 10 sellos."
+                    : "Ejemplo: 100 puntos."}
+                </p>
+              </div>
+
+              {formSettings.mode === "points" ? (
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                    Puntos otorgados por visita completada
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={formSettings.pointsPerVisit}
+                    onChange={(e) =>
+                      setFormSettings({ ...formSettings, pointsPerVisit: Number(e.target.value) })
+                    }
+                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    Se sumarán automáticamente al completar la cita.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className={formSettings.mode === "stamps" ? "sm:col-span-1" : "sm:col-span-2"}>
+                <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                  Descripción del Premio / Beneficio
+                </label>
+                <input
+                  type="text"
+                  value={formSettings.rewardDescription}
+                  onChange={(e) =>
+                    setFormSettings({ ...formSettings, rewardDescription: e.target.value })
+                  }
+                  placeholder="Ej. 50% de descuento en tu próximo corte"
+                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 font-bold text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Este mensaje se muestra en grande en la tarjeta del cliente.
+                </p>
+              </div>
             </div>
 
-            <div className="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-primary/10">
+            <div className="flex justify-end gap-2 pt-2 border-t border-primary/10">
               <button
                 type="button"
                 onClick={() => setEditingSettings(false)}
