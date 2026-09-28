@@ -21,6 +21,7 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
+import ProductImageUploader from "@/components/dashboard/ProductImageUploader";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { ProductItem } from "@/lib/dashboard-types";
 
@@ -29,7 +30,7 @@ const CATEGORIES = ["Todas", "Peinado", "Cuidado Barba", "Lavado & Cuidado", "Fr
 function ProductImageFallback({ category, name }: { category: string; name: string }) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-tr from-slate-100 to-indigo-50/50 dark:from-slate-800 dark:to-slate-700/60 p-4 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-brand shadow-sm">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-primary shadow-sm">
         <Package className="h-6 w-6" />
       </div>
       <p className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{name}</p>
@@ -301,7 +302,10 @@ export default function ProductosPage() {
             return (
               <Card key={p.id} className="flex flex-col justify-between overflow-hidden p-0 border border-slate-200/90 dark:border-white/10 shadow-xs hover:border-primary/40 transition">
                 {/* Image and badges */}
-                <div className="relative h-44 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className="relative h-48 w-full bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200/80 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900/90 overflow-hidden flex items-center justify-center p-3">
+                  {/* Subtle soft studio lighting behind cutout products */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/70 via-transparent to-transparent dark:from-white/5 pointer-events-none" />
+
                   {isBroken ? (
                     <ProductImageFallback category={p.category} name={p.name} />
                   ) : (
@@ -310,11 +314,11 @@ export default function ProductosPage() {
                       src={p.imageUrl}
                       alt={p.name}
                       onError={() => setBrokenImages((prev) => ({ ...prev, [p.id]: true }))}
-                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                      className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md transition-transform duration-300 hover:scale-105"
                     />
                   )}
 
-                  <div className="absolute top-3 left-3 flex gap-1.5">
+                  <div className="absolute top-3 left-3 flex gap-1.5 z-20">
                     <span className="rounded-lg bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md">
                       {p.category}
                     </span>
@@ -325,7 +329,7 @@ export default function ProductosPage() {
                     )}
                   </div>
 
-                  <div className="absolute top-3 right-3 flex items-center gap-1">
+                  <div className="absolute top-3 right-3 flex items-center gap-1 z-20">
                     <button
                       type="button"
                       onClick={() => openEditModal(p)}
@@ -415,9 +419,10 @@ export default function ProductosPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        maxWidth="max-w-xl"
         title={editingProduct ? "Editar Producto" : "Nuevo Producto para la Tienda"}
       >
-        <form onSubmit={handleSaveProduct} className="space-y-4 pt-2">
+        <form onSubmit={handleSaveProduct} className="space-y-4 pt-1">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Nombre del Producto *</label>
             <input
@@ -456,7 +461,14 @@ export default function ProductosPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Subir foto y Quitar Fondo Gratis con IA */}
+          <ProductImageUploader
+            value={form.imageUrl}
+            onChange={(url) => setForm({ ...form, imageUrl: url })}
+            categoryHint={form.category}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Stock Inicial (unidades)</label>
               <input
@@ -469,18 +481,15 @@ export default function ProductosPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">URL Imagen (opcional)</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Costo Compra Proveedor (Gs.)</label>
               <input
-                type="url"
-                value={form.imageUrl}
-                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                placeholder="https://images.unsplash..."
+                type="number"
+                step={5000}
+                value={form.cost}
+                onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })}
                 className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Precio Venta al Público (Gs.) *</label>
               <input
@@ -489,17 +498,7 @@ export default function ProductosPage() {
                 required
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Costo de Compra Proveedor (Gs.)</label>
-              <input
-                type="number"
-                step={5000}
-                value={form.cost}
-                onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary font-bold text-primary"
               />
             </div>
           </div>

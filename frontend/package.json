@@ -15,6 +15,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
     "@prisma/client": "^6.19.3",
     "@types/qrcode": "^1.5.6",
     "date-fns": "^4.4.0",

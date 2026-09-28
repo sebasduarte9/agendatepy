@@ -39,6 +39,7 @@ import {
   Send,
   CheckCircle2,
   UserCheck,
+  Search,
   X,
 } from "lucide-react";
 
@@ -131,6 +132,7 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [selectedProductCategory, setSelectedProductCategory] = useState("Todas");
+  const [productSearch, setProductSearch] = useState("");
 
   // Selected photo for quick zoom/preview
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -800,10 +802,22 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
               </p>
             </div>
             {totalCartCount > 0 && (
-              <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-black text-primary">
+              <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-black text-primary animate-pulse">
                 {totalCartCount} en carrito
               </span>
             )}
+          </div>
+
+          {/* Quick Search */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Buscar ceras, aceites, champús o productos..."
+              className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 pl-9 pr-3.5 py-2 text-xs outline-none focus:border-primary placeholder:text-slate-400 transition"
+            />
           </div>
 
           {/* Categories Selector */}
@@ -829,35 +843,70 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
           {/* Product Items List */}
           <div className="space-y-3">
             {allProducts
-              .filter(
-                (p) =>
+              .filter((p) => {
+                const matchCat =
                   selectedProductCategory === "Todas" ||
-                  p.category.toLowerCase() === selectedProductCategory.toLowerCase()
-              )
+                  p.category.toLowerCase() === selectedProductCategory.toLowerCase();
+                const matchQuery =
+                  !productSearch.trim() ||
+                  p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                  p.description.toLowerCase().includes(productSearch.toLowerCase());
+                return matchCat && matchQuery;
+              })
               .map((p) => {
                 const qty = cart[p.id] || 0;
+                const isOutOfStock = p.stock !== undefined && p.stock <= 0;
+                const isLowStock = p.stock !== undefined && p.stock > 0 && p.stock <= 3;
+
                 return (
                   <div
                     key={p.id}
-                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border p-3.5 transition ${itemBgClass}`}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 rounded-2xl border p-3.5 transition hover:border-primary/40 ${itemBgClass}`}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        className="h-14 w-14 rounded-2xl object-cover shrink-0 shadow-xs border border-black/5 dark:border-white/5"
-                      />
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      {/* Image container with studio spotlight backdrop for transparent cutouts */}
+                      <div className="relative h-18 w-18 sm:h-20 sm:w-20 rounded-2xl overflow-hidden shrink-0 border border-black/5 dark:border-white/10 bg-gradient-to-b from-slate-100 to-slate-200/90 dark:from-slate-800 dark:to-slate-900/90 flex items-center justify-center p-1.5 shadow-xs">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/70 via-transparent to-transparent dark:from-white/10 pointer-events-none" />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          className="relative z-10 max-h-full max-w-full object-contain drop-shadow-xs transition-transform duration-200 hover:scale-105"
+                        />
+                      </div>
+
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-xs font-bold leading-tight truncate">{p.name}</p>
+                          <p className="text-xs sm:text-sm font-bold leading-tight truncate">{p.name}</p>
                           <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10 text-slate-500">
                             {p.category}
                           </span>
                         </div>
-                        <p className="text-sm font-black text-primary mt-1">
-                          Gs. {p.price.toLocaleString("es-PY")}
-                        </p>
+
+                        {p.description && (
+                          <p className={`text-[11px] line-clamp-1 mt-0.5 ${secondaryTextClass}`}>
+                            {p.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm sm:text-base font-black text-primary">
+                            Gs. {p.price.toLocaleString("es-PY")}
+                          </p>
+                          {isOutOfStock ? (
+                            <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded">
+                              Agotado
+                            </span>
+                          ) : isLowStock ? (
+                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                              ¡Últimas {p.stock} u.!
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                              En stock
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -875,12 +924,20 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                       </a>
 
                       {/* Quantity Controls */}
-                      {qty > 0 ? (
+                      {isOutOfStock ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 px-3 py-1.5 text-xs font-semibold cursor-not-allowed"
+                        >
+                          Agotado
+                        </button>
+                      ) : qty > 0 ? (
                         <div className="flex items-center gap-1.5 bg-black/5 dark:bg-white/10 p-0.5 rounded-xl">
                           <button
                             type="button"
                             onClick={() => updateCartQty(p.id, -1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xs cursor-pointer"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
@@ -888,7 +945,7 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                           <button
                             type="button"
                             onClick={() => updateCartQty(p.id, 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white shadow-xs cursor-pointer"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white shadow-xs cursor-pointer hover:opacity-90 transition"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
@@ -906,6 +963,27 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                   </div>
                 );
               })}
+
+            {allProducts.filter((p) => {
+              const matchCat =
+                selectedProductCategory === "Todas" ||
+                p.category.toLowerCase() === selectedProductCategory.toLowerCase();
+              const matchQuery =
+                !productSearch.trim() ||
+                p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                p.description.toLowerCase().includes(productSearch.toLowerCase());
+              return matchCat && matchQuery;
+            }).length === 0 && (
+              <div className="p-8 text-center rounded-2xl border border-black/5 dark:border-white/10">
+                <ShoppingBag className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+                <p className="mt-2 text-xs font-bold text-slate-700 dark:text-slate-200">
+                  No se encontraron productos
+                </p>
+                <p className={`text-[11px] mt-0.5 ${secondaryTextClass}`}>
+                  Probá ajustando el término de búsqueda o seleccionando otra categoría.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Checkout & Action Buttons Card */}
