@@ -20,6 +20,7 @@ import {
   CreditCard,
   X,
   CheckCircle2,
+  Building2,
   ShoppingBag,
   Tag,
   Truck,
@@ -83,6 +84,7 @@ export default function CrmOmnichannelPage() {
     loadDemoConversation, clearCrmConversations, createOrderFromCrm,
     sendCrmMessage, resolveCrmConversation, reopenCrmConversation,
     pushToast, productOrders, updateProductOrderStatus,
+    receipts, setReceiptStatus,
   } = useDashboardStore();
 
   const [mainSection, setMainSection] = useState<"mensajes" | "pedidos">("mensajes");
@@ -91,7 +93,7 @@ export default function CrmOmnichannelPage() {
   const [channelFilter, setChannelFilter] = useState<"todos" | CrmChannel>("todos");
   const [statusFilter, setStatusFilter] = useState<"open" | "resolved" | "all">("open");
   const [search, setSearch] = useState("");
-  const [selectedId, setSelectedId] = useState<string>(crmConversations[0]?.id || "");
+  const [selectedId, setSelectedId] = useState<string>("conv-demo-1");
   const [replyText, setReplyText] = useState("");
 
   // Modals
@@ -208,6 +210,15 @@ export default function CrmOmnichannelPage() {
     );
   }, [activeConversation, productOrders]);
 
+  // SIPAP Bank receipts for active conversation client
+  const clientReceipts = useMemo(() => {
+    if (!activeConversation) return [];
+    return receipts.filter((r) =>
+      r.clientName.toLowerCase() === activeConversation.clientName.toLowerCase() ||
+      (r.clientPhone && r.clientPhone.replace(/\s/g, "").includes(activeConversation.channelIdentifier.replace(/\s/g, "")))
+    );
+  }, [activeConversation, receipts]);
+
   const selectedProduct = useMemo(() => products.find((p) => p.id === orderProductId) || products[0], [products, orderProductId]);
   const unitPrice = selectedProduct?.isOnSale && selectedProduct?.salePrice ? selectedProduct.salePrice : selectedProduct?.price || 0;
   const orderTotal = unitPrice * orderQty;
@@ -317,9 +328,22 @@ export default function CrmOmnichannelPage() {
       {/* ═══ HEADER ═══ */}
       <div data-tour="crm-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-5 shadow-xs">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">
-            <span className={`h-2 w-2 rounded-full ${evolutionConfig.connected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
-            <span>{evolutionConfig.connected ? `WhatsApp Conectado (${evolutionConfig.phoneNumber || "Tu número"})` : "Conectar WhatsApp y Redes"}</span>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold border transition ${evolutionConfig.connected ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200/60 dark:border-white/10"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${evolutionConfig.connected ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+              <ChannelIcon channel="whatsapp" size="sm" />
+              <span>{evolutionConfig.connected ? "WhatsApp Conectado" : "WhatsApp"}</span>
+            </span>
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold border transition ${evolutionConfig.instagramConnected ? "bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/20" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200/60 dark:border-white/10"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${evolutionConfig.instagramConnected ? "bg-pink-500" : "bg-slate-400"}`} />
+              <ChannelIcon channel="instagram" size="sm" />
+              <span>{evolutionConfig.instagramConnected ? (evolutionConfig.instagramHandle || "@barberia_central") : "Instagram"}</span>
+            </span>
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold border transition ${evolutionConfig.messengerConnected ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200/60 dark:border-white/10"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${evolutionConfig.messengerConnected ? "bg-blue-500" : "bg-slate-400"}`} />
+              <ChannelIcon channel="messenger" size="sm" />
+              <span>{evolutionConfig.messengerConnected ? "Facebook Conectado" : "Facebook"}</span>
+            </span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">CRM Omnicanal</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm mt-0.5">Atendé clientes, procesá pedidos y agendá turnos desde una sola bandeja.</p>
@@ -327,7 +351,7 @@ export default function CrmOmnichannelPage() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button type="button" onClick={() => setChannelsModalOpen(true)} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 text-xs font-bold shadow-sm transition cursor-pointer">
             <Settings className="h-4 w-4" />
-            <span>{evolutionConfig.connected ? "Canales Conectados" : "Conectar Canales"}</span>
+            <span>Canales y Conexión</span>
           </button>
           {crmConversations.length > 0 ? (
             <button type="button" onClick={clearCrmConversations} className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 border border-slate-200/80 dark:border-white/10 px-3.5 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 transition cursor-pointer">
@@ -495,6 +519,63 @@ export default function CrmOmnichannelPage() {
                         <div key={m.id} className={`flex flex-col ${isAgent ? "items-end" : "items-start"}`}>
                           <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${isAgent ? "bg-primary text-white rounded-br-xs" : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-white/5 rounded-bl-xs"}`}>
                             <p>{m.text}</p>
+                            {m.receiptAttachment && (
+                              <div className="mt-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-950/50 p-3 text-slate-800 dark:text-slate-100 space-y-2">
+                                <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5">
+                                  <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-800 dark:text-emerald-300">
+                                    <Building2 className="h-4 w-4 text-emerald-600" />
+                                    <span>{m.receiptAttachment.bankOrigin}</span>
+                                  </div>
+                                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9.5px] font-extrabold text-emerald-700 dark:text-emerald-300">
+                                    SIPAP
+                                  </span>
+                                </div>
+
+                                <div className="flex items-baseline justify-between">
+                                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Monto Acreditado:</span>
+                                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                                    {formatGs(m.receiptAttachment.amount)}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400 font-mono">
+                                  <span>Operación:</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200">{m.receiptAttachment.operationNumber}</span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px]">
+                                  <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold bg-white/80 dark:bg-slate-900/60 rounded-lg p-1 border border-emerald-500/20">
+                                    <QrCode className="h-3.5 w-3.5 text-emerald-600" />
+                                    <span>QR Validado</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold bg-white/80 dark:bg-slate-900/60 rounded-lg p-1 border border-emerald-500/20">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                    <span>OCR {m.receiptAttachment.ocrConfidence}%</span>
+                                  </div>
+                                </div>
+
+                                <div className="pt-1">
+                                  {m.receiptAttachment.status === "pending" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setReceiptStatus(m.receiptAttachment!.receiptId, "approved");
+                                        pushToast("success", `Comprobante ${m.receiptAttachment!.operationNumber} de ${activeConversation.clientName} APROBADO.`);
+                                      }}
+                                      className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 text-[11px] transition shadow-xs cursor-pointer"
+                                    >
+                                      <CheckCircle2 className="h-3.5 w-3.5" />
+                                      <span>Aprobar Transferencia SIPAP</span>
+                                    </button>
+                                  ) : (
+                                    <div className="w-full py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5">
+                                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                      <span>Comprobante Aprobado & Turno Confirmado</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                             <div className={`mt-1 flex items-center justify-end gap-1 text-[9.5px] ${isAgent ? "text-white/80" : "text-slate-400"}`}>
                               <span>{new Date(m.timestamp).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit" })}</span>
                               {isAgent && <CheckCheck className="h-3.5 w-3.5 text-emerald-200" />}
@@ -611,6 +692,29 @@ export default function CrmOmnichannelPage() {
                         ))}
                       </div>
                     )}
+
+                    {/* SIPAP Transfers History */}
+                    {clientReceipts.length > 0 && (
+                      <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
+                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                          <Building2 className="h-3 w-3 text-emerald-500" /> Transferencias SIPAP:
+                        </p>
+                        {clientReceipts.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-500/20">
+                            <div>
+                              <span className="font-bold text-slate-800 dark:text-slate-200 block">{r.bankOrigin || "Banco Itaú"}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">{r.operationNumber || "SIPAP"}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-mono font-bold text-slate-900 dark:text-white block">{formatGs(r.amount)}</span>
+                              <span className={`text-[9.5px] font-bold ${r.status === "approved" ? "text-emerald-600" : r.status === "rejected" ? "text-rose-600" : "text-amber-600"}`}>
+                                {r.status === "approved" ? "Aprobado" : r.status === "rejected" ? "Rechazado" : "Pendiente"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Status Card */}
@@ -710,9 +814,9 @@ export default function CrmOmnichannelPage() {
           {/* 3 Channel Tabs */}
           <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
             {([
-              { key: "whatsapp" as const, label: "WhatsApp", channel: "whatsapp" as const },
-              { key: "instagram" as const, label: "Instagram", channel: "instagram" as const },
-              { key: "facebook" as const, label: "Facebook", channel: "messenger" as const },
+              { key: "whatsapp" as const, label: "WhatsApp", channel: "whatsapp" as const, isConnected: evolutionConfig.connected },
+              { key: "instagram" as const, label: "Instagram", channel: "instagram" as const, isConnected: Boolean(evolutionConfig.instagramConnected) },
+              { key: "facebook" as const, label: "Facebook", channel: "messenger" as const, isConnected: Boolean(evolutionConfig.messengerConnected) },
             ]).map((ch) => (
               <button
                 key={ch.key}
@@ -724,8 +828,18 @@ export default function CrmOmnichannelPage() {
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
                 }`}
               >
-                <ChannelIcon channel={ch.channel} size="sm" />
+                <div className="relative flex items-center justify-center">
+                  <ChannelIcon channel={ch.channel} size="sm" />
+                  {ch.isConnected && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-500 border border-white dark:border-slate-800" />
+                  )}
+                </div>
                 <span className="text-xs">{ch.label}</span>
+                {ch.isConnected && (
+                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-extrabold px-1.5 py-0.5 rounded-full hidden sm:inline-block">
+                    Conectado
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -844,9 +958,11 @@ export default function CrmOmnichannelPage() {
                     <span className="font-extrabold text-sm mt-3">Instagram Direct</span>
                     <span className="text-[10px] text-white/80 font-medium">Bandeja Profesional</span>
                   </div>
-                  <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                    <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-600" />
-                    <span>Listo para conectar</span>
+                  <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium">
+                    <span className={`h-2 w-2 rounded-full ${evolutionConfig.instagramConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-slate-600"}`} />
+                    <span className={evolutionConfig.instagramConnected ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-500 dark:text-slate-400"}>
+                      {evolutionConfig.instagramConnected ? `Conectado (${evolutionConfig.instagramHandle || "@barberia_central"})` : "Listo para conectar"}
+                    </span>
                   </div>
                 </div>
 
@@ -877,16 +993,43 @@ export default function CrmOmnichannelPage() {
                     </li>
                   </ol>
 
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => pushToast("success", "Redirigiendo a la autorización de Instagram... (Disponible en producción)")}
-                      className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-95 text-white font-bold py-3 text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <ChannelIcon channel="instagram" size="sm" />
-                      <span>Autorizar Instagram Direct</span>
-                    </button>
-                  </div>
+                  {evolutionConfig.instagramConnected ? (
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <span className="font-bold text-emerald-800 dark:text-emerald-300 text-xs">
+                          Cuenta vinculada: {evolutionConfig.instagramHandle || "@barberia_central"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateEvolutionConfig({ instagramConnected: false });
+                          pushToast("error", "Instagram Direct desconectado.");
+                        }}
+                        className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Desconectar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateEvolutionConfig({
+                            instagramConnected: true,
+                            instagramHandle: "@barberia_central",
+                          });
+                          pushToast("success", "Instagram Direct vinculado exitosamente.");
+                        }}
+                        className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-95 text-white font-bold py-3 text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <ChannelIcon channel="instagram" size="sm" />
+                        <span>Autorizar Instagram Direct (@barberia_central)</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -900,9 +1043,11 @@ export default function CrmOmnichannelPage() {
                     <span className="font-extrabold text-sm mt-3">Facebook Messenger</span>
                     <span className="text-[10px] text-white/80 font-medium">Página Comercial</span>
                   </div>
-                  <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                    <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-600" />
-                    <span>Listo para conectar</span>
+                  <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium">
+                    <span className={`h-2 w-2 rounded-full ${evolutionConfig.messengerConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-slate-600"}`} />
+                    <span className={evolutionConfig.messengerConnected ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-500 dark:text-slate-400"}>
+                      {evolutionConfig.messengerConnected ? `Conectado (${evolutionConfig.messengerPage || "Barbería & Studio Central"})` : "Listo para conectar"}
+                    </span>
                   </div>
                 </div>
 
@@ -933,16 +1078,43 @@ export default function CrmOmnichannelPage() {
                     </li>
                   </ol>
 
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => pushToast("success", "Redirigiendo a la autorización de Facebook... (Disponible en producción)")}
-                      className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <ChannelIcon channel="messenger" size="sm" />
-                      <span>Conectar Facebook Messenger</span>
-                    </button>
-                  </div>
+                  {evolutionConfig.messengerConnected ? (
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-blue-100/80 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-800">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                        <span className="font-bold text-blue-800 dark:text-blue-300 text-xs">
+                          Página vinculada: {evolutionConfig.messengerPage || "Barbería & Studio Central"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateEvolutionConfig({ messengerConnected: false });
+                          pushToast("error", "Facebook Messenger desconectado.");
+                        }}
+                        className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Desconectar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateEvolutionConfig({
+                            messengerConnected: true,
+                            messengerPage: "Barbería & Studio Central",
+                          });
+                          pushToast("success", "Facebook Messenger vinculado exitosamente.");
+                        }}
+                        className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <ChannelIcon channel="messenger" size="sm" />
+                        <span>Conectar Facebook Messenger</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

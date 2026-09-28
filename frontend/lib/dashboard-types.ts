@@ -148,10 +148,19 @@ export type Receipt = {
   id: string;
   appointmentId: string;
   clientName: string;
+  clientPhone?: string;
   amount: number;
   submittedAt: string;
   status: "pending" | "approved" | "rejected";
   note: string;
+  bankOrigin?: string; // Ej: "Banco Itaú", "Ueno Bank", "Banco Continental", "BNF", "Sudameris"
+  operationNumber?: string; // Ej: "SIPAP-894210", "SPI-991203"
+  ocrVerified?: boolean; // True si fue extraído automáticamente por OCR
+  ocrConfidence?: number; // Porcentaje de confianza (ej: 99.4)
+  qrCodeDetected?: boolean; // Si contenía código QR bancario válido
+  qrPayload?: string;
+  channel?: CrmChannel;
+  receiptUrl?: string;
 };
 
 export type ClientMediaType = "image" | "video";
@@ -190,12 +199,24 @@ export type Client = {
 
 export type CrmChannel = "whatsapp" | "instagram" | "messenger";
 
+export type CrmReceiptAttachment = {
+  receiptId: string;
+  bankOrigin: string;
+  amount: number;
+  operationNumber: string;
+  qrCodeDetected: boolean;
+  ocrConfidence: number;
+  ocrVerified: boolean;
+  status: "pending" | "approved" | "rejected";
+};
+
 export type CrmMessage = {
   id: string;
   sender: "client" | "agent" | "bot";
   text: string;
   timestamp: string; // ISO
   status?: "sent" | "delivered" | "read";
+  receiptAttachment?: CrmReceiptAttachment;
 };
 
 export type CrmConversation = {
@@ -263,6 +284,10 @@ export type EvolutionApiConfig = {
   autoBotEnabled?: boolean;
   webhookUrl?: string;
   lastSync?: string;
+  instagramConnected?: boolean;
+  instagramHandle?: string;
+  messengerConnected?: boolean;
+  messengerPage?: string;
 };
 
 export type BusinessProfile = {

@@ -313,7 +313,261 @@ export const initialEvolutionApi: EvolutionApiConfig = {
   autoSendOnBooking: true,
   autoSendOnCancel: true,
   connected: true,
+  phoneNumber: "+595 981 765 432",
+  instagramConnected: true,
+  instagramHandle: "@barberia_central",
+  messengerConnected: true,
+  messengerPage: "Barbería & Studio Central",
 };
+
+export const initialClients: Client[] = [
+  {
+    id: "cli-martin",
+    name: "Martín Benítez",
+    phone: "+595 981 765 432",
+    email: "martin.benitez@gmail.com",
+    instagram: "@martin_benitez",
+    notes: "Prefiere degradé medio navajeado y perfilado de barba con aceite de argán.",
+    formula: "Degradé skin fade medio, tijera superior 3cm, barba contorno marcado.",
+    totalVisits: 6,
+    totalSpent: 480000,
+    lastVisit: new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString(),
+    tags: ["Frecuente", "VIP"],
+    loyaltyPoints: 4,
+    loyaltyRedeemed: 0,
+  },
+  {
+    id: "cli-camila",
+    name: "Camila González",
+    phone: "+595 972 345 678",
+    email: "camila.gonzalez@gmail.com",
+    instagram: "@camila_gonzalezpy",
+    notes: "Cabello fino ondulado, decoloración cuidadosa.",
+    formula: "Balayage tono 8.3 miel + matizador 9.02 con oxidante 20 vol.",
+    totalVisits: 3,
+    totalSpent: 540000,
+    lastVisit: new Date(Date.now() - 28 * 24 * 3600 * 1000).toISOString(),
+    tags: ["Nuevo"],
+    loyaltyPoints: 3,
+    loyaltyRedeemed: 0,
+  },
+  {
+    id: "cli-rodrigo",
+    name: "Rodrigo Duarte",
+    phone: "+595 983 912 345",
+    email: "rodrigo.duarte@hotmail.com",
+    messengerId: "rodrigo.duarte.fb",
+    notes: "Corte clásico tijera y barba con toalla caliente.",
+    formula: "Clásico ejecutivo, tijera pulida, pomada brillante.",
+    totalVisits: 8,
+    totalSpent: 640000,
+    lastVisit: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+    tags: ["VIP", "Frecuente"],
+    loyaltyPoints: 5,
+    loyaltyRedeemed: 1,
+  },
+  {
+    id: "cli-maria",
+    name: "María Ferreira",
+    phone: "+595 981 111 222",
+    email: "maria.ferreira@gmail.com",
+    instagram: "@mariaferreirapy",
+    notes: "Balayage miel: Tono 8.3 con oxidante 20 vol + matizador plata.",
+    formula: "Balayage miel: Tono 8.3 con oxidante 20 vol + matizador plata.",
+    totalVisits: 4,
+    totalSpent: 600000,
+    lastVisit: new Date(Date.now() - 20 * 24 * 3600 * 1000).toISOString(),
+    tags: ["Frecuente"],
+    loyaltyPoints: 4,
+    loyaltyRedeemed: 0,
+  },
+];
+
+export const initialReceipts: Receipt[] = [
+  {
+    id: "rec-sipap-1",
+    appointmentId: "ap-demo-1",
+    clientName: "Martín Benítez",
+    clientPhone: "+595 981 765 432",
+    amount: 130000,
+    submittedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    status: "pending",
+    note: "Transferencia SIPAP - Seña turno corte y cera capilar",
+    bankOrigin: "Banco Itaú",
+    operationNumber: "SIPAP-849201",
+    ocrVerified: true,
+    ocrConfidence: 99.4,
+    qrCodeDetected: true,
+    channel: "whatsapp",
+    receiptUrl: "/receipts/itau_demo.png",
+  },
+  {
+    id: "rec-sipap-2",
+    appointmentId: "ap-demo-2",
+    clientName: "Camila González",
+    clientPhone: "+595 972 345 678",
+    amount: 180000,
+    submittedAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    status: "approved",
+    note: "Pago total Balayage Miel y Nutrición Capilar",
+    bankOrigin: "Ueno Bank",
+    operationNumber: "SPI-204918",
+    ocrVerified: true,
+    ocrConfidence: 98.8,
+    qrCodeDetected: true,
+    channel: "whatsapp",
+  },
+  {
+    id: "rec-sipap-3",
+    appointmentId: "ap-demo-3",
+    clientName: "Rodrigo Duarte",
+    clientPhone: "+595 983 912 345",
+    amount: 80000,
+    submittedAt: new Date(Date.now() - 26 * 3600 * 1000).toISOString(),
+    status: "approved",
+    note: "Corte Degradé y Perfilado de Barba",
+    bankOrigin: "Banco Continental",
+    operationNumber: "SIPAP-592031",
+    ocrVerified: true,
+    ocrConfidence: 97.5,
+    qrCodeDetected: true,
+    channel: "whatsapp",
+  },
+  {
+    id: "rec-sipap-4",
+    appointmentId: "ap-demo-4",
+    clientName: "María Ferreira",
+    clientPhone: "+595 981 111 222",
+    amount: 150000,
+    submittedAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+    status: "approved",
+    note: "Tratamiento y Tintura",
+    bankOrigin: "BNF",
+    operationNumber: "SIPAP-110294",
+    ocrVerified: true,
+    ocrConfidence: 99.1,
+    qrCodeDetected: true,
+    channel: "whatsapp",
+  },
+];
+
+export const initialCrmConversations: CrmConversation[] = [
+  {
+    id: "conv-demo-1",
+    clientId: "cli-martin",
+    clientName: "Martín Benítez",
+    clientAvatar: "MB",
+    channel: "whatsapp",
+    channelIdentifier: "+595 981 765 432",
+    lastMessage: "Comprobante de Transferencia SIPAP (Itaú - Gs. 130.000)",
+    lastMessageTime: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    unreadCount: 1,
+    status: "open",
+    messages: [
+      {
+        id: "m-demo-1",
+        sender: "client",
+        text: "¡Hola! Buenas tardes. Quería consultar si tienen turno disponible para corte y perfilado de barba para este jueves a las 16:00 hs aprox.",
+        timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        status: "read",
+      },
+      {
+        id: "m-demo-2",
+        sender: "client",
+        text: "Y también quería saber si tienen en stock la cera capilar efecto mate que vi en sus publicaciones.",
+        timestamp: new Date(Date.now() - 24 * 60 * 1000).toISOString(),
+        status: "read",
+      },
+      {
+        id: "m-demo-3",
+        sender: "agent",
+        text: "¡Hola Martín! Qué tal. Sí, tenemos disponibilidad este jueves a las 16:00 con nuestro estilista Marcos. Y la cera capilar mate la tenemos en stock con descuento promocional en Gs. 50.000. El corte y barba son Gs. 80.000. Total Gs. 130.000.",
+        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        status: "delivered",
+      },
+      {
+        id: "m-demo-4",
+        sender: "client",
+        text: "¡Genial! Ya te transferí por SIPAP del Itaú para señar el turno y asegurar el pote de cera.",
+        timestamp: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+        status: "delivered",
+      },
+      {
+        id: "m-demo-5",
+        sender: "client",
+        text: "Comprobante de Transferencia SIPAP",
+        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        status: "delivered",
+        receiptAttachment: {
+          receiptId: "rec-sipap-1",
+          bankOrigin: "Banco Itaú",
+          amount: 130000,
+          operationNumber: "SIPAP-849201",
+          qrCodeDetected: true,
+          ocrConfidence: 99.4,
+          ocrVerified: true,
+          status: "pending",
+        },
+      },
+    ],
+  },
+  {
+    id: "conv-demo-2",
+    clientId: "cli-camila",
+    clientName: "Camila González",
+    clientAvatar: "CG",
+    channel: "instagram",
+    channelIdentifier: "@camila_gonzalezpy",
+    lastMessage: "¡Muchísimas gracias! Nos vemos el sábado entonces.",
+    lastMessageTime: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+    unreadCount: 0,
+    status: "resolved",
+    messages: [
+      {
+        id: "m-demo-ig-1",
+        sender: "client",
+        text: "¡Hola chicos! ¿Qué precio tiene el balayage miel con hidratación profunda?",
+        timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+        status: "read",
+      },
+      {
+        id: "m-demo-ig-2",
+        sender: "agent",
+        text: "¡Hola Camila! Está en promo este mes por Gs. 180.000 incluye nutrición capilar y peinado. Te podemos agendar para este sábado a las 10:00 con Sofía.",
+        timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        status: "delivered",
+      },
+      {
+        id: "m-demo-ig-3",
+        sender: "client",
+        text: "¡Muchísimas gracias! Nos vemos el sábado entonces.",
+        timestamp: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+        status: "read",
+      },
+    ],
+  },
+  {
+    id: "conv-demo-3",
+    clientId: "cli-rodrigo",
+    clientName: "Rodrigo Duarte",
+    clientAvatar: "RD",
+    channel: "messenger",
+    channelIdentifier: "Rodrigo Duarte (Facebook)",
+    lastMessage: "¿Hasta qué hora tienen abierto hoy?",
+    lastMessageTime: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    unreadCount: 1,
+    status: "open",
+    messages: [
+      {
+        id: "m-demo-fb-1",
+        sender: "client",
+        text: "Buenas tardes, ¿hasta qué hora atienden hoy en el local de Villa Morra?",
+        timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+        status: "read",
+      },
+    ],
+  },
+];
 
 /** Turnos de demo y visitas históricas en Guaraníes (Asunción, UTC-3). */
 const appointments: Appointment[] = [
@@ -785,7 +1039,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   products: initialProducts,
   productOrders: initialProductOrders,
   appointments: appointments,
-  clients: [],
+  clients: initialClients,
   cashMovements: initialCashMovements,
   commissionPayouts: initialCommissionPayouts,
   whatsappTemplates: initialWhatsAppTemplates,
@@ -793,7 +1047,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   sipap: initialSipap,
   evolutionApi: initialEvolutionApi,
   blocks: [],
-  receipts: [],
+  receipts: initialReceipts,
   currentUserRole: "admin",
   currentStaffId: undefined,
   setCurrentUserRole: (role, staffId) =>
@@ -1216,7 +1470,22 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         status: status === "approved" ? "confirmed" : status === "rejected" ? "cancelled" : item.status,
       };
     });
-    set({ receipts, appointments });
+    const crmConversations = get().crmConversations.map((c) => ({
+      ...c,
+      messages: c.messages.map((m) => {
+        if (m.receiptAttachment?.receiptId === id) {
+          return {
+            ...m,
+            receiptAttachment: {
+              ...m.receiptAttachment,
+              status,
+            },
+          };
+        }
+        return m;
+      }),
+    }));
+    set({ receipts, appointments, crmConversations });
   },
   toggleStaff: async (id) => {
     const target = get().staff.find((s) => s.id === id);
@@ -1791,71 +2060,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       ),
     }),
 
-  crmConversations: [],
-  evolutionConfig: {
-    enabled: false,
-    connected: false,
-    baseUrl: "http://localhost:8080",
-    instanceName: "agendate-py",
-    apiKey: "agendate_evo_key_sec2026",
-    phoneNumber: "",
-    autoBotEnabled: true,
-    webhookUrl: "https://agendate.py/api/webhooks/whatsapp",
-    autoSendOnBooking: true,
-    autoSendOnCancel: true,
-  },
+  crmConversations: initialCrmConversations,
+  evolutionConfig: initialEvolutionApi,
   updateEvolutionConfig: (config) => {
     set({
       evolutionConfig: { ...get().evolutionConfig, ...config },
     });
-    get().pushToast("success", "Configuración de WhatsApp actualizada.");
+    get().pushToast("success", "Configuración de canales actualizada.");
   },
   loadDemoConversation: () => {
-    const demoConv: CrmConversation = {
-      id: "conv-demo-1",
-      clientName: "Martín Benítez",
-      clientAvatar: "MB",
-      channel: "whatsapp",
-      channelIdentifier: "+595 981 765 432",
-      lastMessage: "¡Genial! Agendame por favor para el jueves y guardame un pote de la cera para retirar cuando vaya.",
-      lastMessageTime: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-      unreadCount: 1,
-      status: "open",
-      messages: [
-        {
-          id: "m-demo-1",
-          sender: "client",
-          text: "¡Hola! Buenas tardes. Quería consultar si tienen turno disponible para corte y perfilado de barba para este jueves a las 16:00 hs aprox.",
-          timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-          status: "read",
-        },
-        {
-          id: "m-demo-2",
-          sender: "client",
-          text: "Y también quería saber si tienen en stock la cera capilar efecto mate que vi en sus publicaciones.",
-          timestamp: new Date(Date.now() - 24 * 60 * 1000).toISOString(),
-          status: "read",
-        },
-        {
-          id: "m-demo-3",
-          sender: "agent",
-          text: "¡Hola Martín! Qué tal. Sí, tenemos disponibilidad este jueves a las 16:00 con nuestro estilista Marcos. Y la cera capilar mate la tenemos en stock con descuento promocional en Gs. 50.000.",
-          timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-          status: "delivered",
-        },
-        {
-          id: "m-demo-4",
-          sender: "client",
-          text: "¡Genial! Agendame por favor para el jueves y guardame un pote de la cera para retirar cuando vaya.",
-          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-          status: "delivered",
-        },
-      ],
-    };
     set({
-      crmConversations: [demoConv],
+      crmConversations: initialCrmConversations,
     });
-    get().pushToast("success", "Conversación de prueba cargada en la bandeja.");
+    get().pushToast("success", "Conversaciones demo cargadas en la bandeja con comprobante SIPAP.");
   },
   clearCrmConversations: () => {
     set({ crmConversations: [] });
@@ -1965,6 +2182,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   isTourOpen: false,
   tourSectionKey: "inicio",
   openTour: (sectionKey?: string) => {
+    if (sectionKey === "crm" || !sectionKey) {
+      if (get().crmConversations.length === 0) {
+        set({ crmConversations: initialCrmConversations });
+      }
+    }
     set({
       isTourOpen: true,
       ...(sectionKey ? { tourSectionKey: sectionKey } : {}),
