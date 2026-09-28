@@ -17,7 +17,7 @@ import {
   Plus,
   Minus,
   Copy,
-  Sparkles,
+  Camera,
   ShieldCheck,
   ChevronRight,
   ExternalLink,
@@ -1302,7 +1302,7 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
               <div className={`rounded-3xl border ${cardThemeClass} p-5`}>
                 <div className="flex items-center justify-between pb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5" /> Galería de Trabajos
+                    <Camera className="h-3.5 w-3.5" /> Galería de Trabajos
                   </span>
                   <span className={`text-[11px] ${secondaryTextClass}`}>{gallery.length} fotos</span>
                 </div>

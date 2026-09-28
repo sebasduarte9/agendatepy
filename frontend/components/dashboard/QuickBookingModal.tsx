@@ -9,7 +9,7 @@ import {
   User,
   Search,
   Check,
-  Sparkles,
+  CalendarPlus,
   Banknote,
   Landmark,
   CreditCard,
@@ -365,7 +365,7 @@ export default function QuickBookingModal({
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <CalendarPlus className="h-3.5 w-3.5" />
               <span>Agendar Turno</span>
             </button>
             <button

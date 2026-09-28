@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   LogOut,
   ChevronRight,
-  Sparkles,
+  Calendar,
   MapPin,
   AlertTriangle,
   Cpu,
@@ -139,7 +139,7 @@ export default function AdminLayout({
         <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Sparkles className="w-5 h-5 text-white animate-pulse" />
+              <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">

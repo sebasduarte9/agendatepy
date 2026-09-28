@@ -7,7 +7,6 @@ import {
   Bell,
   Check,
   Smartphone,
-  Sparkles,
   ExternalLink,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";

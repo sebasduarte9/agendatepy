@@ -4,7 +4,6 @@ import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   Calendar,
-  Sparkles,
   Camera,
   Video,
   Plus,
@@ -481,7 +480,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <FileText className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Ficha Técnica & Notas</span>
             </button>
 
@@ -845,7 +844,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               <div className="rounded-3xl border border-indigo-200/80 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/50 p-5 space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-indigo-100 dark:border-white/10">
                   <h3 className="font-extrabold text-sm text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-indigo-600" />
+                    <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     <span>Fórmula Técnica de Tinte / Corte / Barbería</span>
                   </h3>
 

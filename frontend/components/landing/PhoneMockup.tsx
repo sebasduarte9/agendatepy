@@ -16,7 +16,7 @@ import {
   Pause,
   BadgeCheck,
   Wifi,
-  Sparkles,
+  CheckCircle2,
   MapPin,
   Calendar,
   Lock,
@@ -568,7 +568,7 @@ export default function PhoneMockup() {
                         {/* Header bar of confirmation card */}
                         <div className="bg-[#008069] px-3.5 py-2 text-white flex items-center justify-between">
                           <span className="text-[11px] font-bold flex items-center gap-1">
-                            <Sparkles className="h-3.5 w-3.5" /> TURNO CONFIRMADO
+                            <CheckCircle2 className="h-3.5 w-3.5" /> TURNO CONFIRMADO
                           </span>
                           <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-mono">
                             AG-9421

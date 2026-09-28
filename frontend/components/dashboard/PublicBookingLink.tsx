@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Copy, Check, ExternalLink, QrCode, X, Globe, Sparkles } from "lucide-react";
+import { Copy, Check, ExternalLink, QrCode, X, Globe } from "lucide-react";
 import QRCode from "qrcode";
 
 interface PublicBookingLinkProps {

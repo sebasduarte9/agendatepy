@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   Crown,
   Gift,
-  Sparkles,
   Calendar,
   Share2,
   Check,
@@ -207,7 +206,7 @@ export default function TarjetaClienteView({
                 color: brandColor,
               }}
             >
-              <Sparkles className="h-3 w-3" />
+              <Crown className="h-3 w-3" />
               <span>Socio VIP</span>
             </div>
           </div>

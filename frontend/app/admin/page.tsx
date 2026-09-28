@@ -10,7 +10,6 @@ import {
   AlertCircle,
   ArrowRight,
   Search,
-  Sparkles,
   Shield,
   Layers,
   Activity,

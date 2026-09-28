@@ -8,7 +8,6 @@ import {
   Bell,
   CheckCheck,
   Smartphone,
-  Sparkles,
   QrCode,
   ShieldCheck,
   RefreshCw,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, MessageCircle, ArrowRight } from "lucide-react";
+import { CalendarPlus, MessageCircle, ArrowRight } from "lucide-react";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 export default function StickyMobileCta() {
@@ -70,7 +70,7 @@ export default function StickyMobileCta() {
                 href="/onboarding"
                 className="flex h-8.5 xs:h-9 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-2.5 xs:px-3.5 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition shrink-0 whitespace-nowrap"
               >
-                <Sparkles className="h-3 w-3 text-amber-200 shrink-0" />
+                <CalendarPlus className="h-3 w-3 text-white shrink-0" />
                 <span className="hidden xs:inline">Crear agenda</span>
                 <span className="xs:hidden">Empezar</span>
                 <ArrowRight className="h-3 w-3 shrink-0" />

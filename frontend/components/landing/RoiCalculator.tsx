@@ -8,7 +8,6 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Zap,
@@ -259,7 +258,7 @@ export default function RoiCalculator() {
                 href="/onboarding"
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3.5 text-center text-sm font-extrabold text-white shadow-lg shadow-brand/25 hover:brightness-110 transition active:scale-98"
               >
-                <Sparkles className="h-4 w-4 text-amber-200" />
+                <TrendingUp className="h-4 w-4 text-white" />
                 <span>Empezar a recuperar turnos hoy</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>

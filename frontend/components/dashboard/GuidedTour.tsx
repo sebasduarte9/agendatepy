@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles,
+  LayoutDashboard,
+  Compass,
   X,
   ArrowRight,
   ArrowLeft,
@@ -62,7 +63,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     id: "inicio",
     title: "Panel Principal & Resumen del Día",
     badge: "Visión General",
-    icon: Sparkles,
+    icon: LayoutDashboard,
     summary:
       "Tu centro de comando. Acá ves cuántos turnos tenés hoy, tus ingresos acumulados en Guaraníes y los accesos rápidos a todas las herramientas.",
     steps: [
@@ -1392,7 +1393,7 @@ export default function GuidedTour() {
                 : "bg-amber-500 text-white shadow-xs"
             }`}
           >
-            <Sparkles className="h-3 w-3" />
+            <Compass className="h-3.5 w-3.5" />
           </div>
           <span>Visita Guiada</span>
           {completedSections.includes(detectedSectionKey) ? (

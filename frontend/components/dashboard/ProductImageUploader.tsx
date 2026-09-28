@@ -4,7 +4,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Upload,
   Image as ImageIcon,
-  Sparkles,
+  Scissors,
+  Crop,
   Zap,
   RotateCcw,
   Check,
@@ -294,7 +295,7 @@ export default function ProductImageUploader({
         setAiProgressText("");
         setStatusMessage({
           type: "success",
-          text: "✨ ¡Fondo eliminado con IA con éxito! Guardá el producto para publicarlo.",
+          text: "¡Fondo eliminado con IA con éxito! Guardá el producto para publicarlo.",
         });
       };
       reader.readAsDataURL(blob);
@@ -338,7 +339,7 @@ export default function ProductImageUploader({
       setHasTransparentBg(true);
       setStatusMessage({
         type: "success",
-        text: "⚡ ¡Fondo liso eliminado en 0.1s! Podés ver la transparencia en el tablero.",
+        text: "¡Fondo liso eliminado en 0.1s! Podés ver la transparencia en el tablero.",
       });
     } catch (err) {
       setStatusMessage({
@@ -488,7 +489,7 @@ export default function ProductImageUploader({
                 setHasTransparentBg(false);
                 setStatusMessage({
                   type: "success",
-                  text: `Cargaste "${sample.name}". Probá tocar "✨ Quitar Fondo Gratis con IA".`,
+                  text: `Cargaste "${sample.name}". Probá tocar "Recortar Fondo con IA (Gratis)".`,
                 });
               }}
               className="text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-white/10 hover:border-primary shrink-0 transition cursor-pointer"
@@ -559,9 +560,9 @@ export default function ProductImageUploader({
           {/* ACTION BUTTONS: 100% FREE BACKGROUND REMOVAL */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                Herramientas de Recorte (100% Gratis):
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Scissors className="h-3.5 w-3.5 text-primary" />
+                Herramientas de Recorte Profesional (100% Gratis):
               </span>
             </div>
 
@@ -576,9 +577,9 @@ export default function ProductImageUploader({
                 {isProcessingAi ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Sparkles className="h-4 w-4" />
+                  <Scissors className="h-4 w-4" />
                 )}
-                <span>✨ Quitar Fondo con IA (Gratis)</span>
+                <span>Recortar Fondo con IA (Gratis)</span>
               </button>
 
               {/* BUTTON 2: Fast Solid Background Removal (Canvas < 100ms) */}
@@ -591,9 +592,9 @@ export default function ProductImageUploader({
                 {isProcessingFast ? (
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 ) : (
-                  <Zap className="h-4 w-4 text-amber-500" />
+                  <Crop className="h-4 w-4 text-amber-500" />
                 )}
-                <span>⚡ Quitar Fondo Liso / Blanco</span>
+                <span>Quitar Fondo Blanco / Liso</span>
               </button>
             </div>
 

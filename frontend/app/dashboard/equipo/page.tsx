@@ -8,7 +8,7 @@ import {
   Crown,
   Banknote,
   Scissors,
-  Sparkles,
+  Brush,
   Plus,
   Pencil,
   Clock,
@@ -25,7 +25,6 @@ import {
   AlertTriangle,
   ArrowRight,
   Layers,
-  Sparkle,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -70,7 +69,7 @@ const ROLE_DEFINITIONS: {
     title: "Estilista / Especialista",
     shortTitle: "Estilista",
     badgeColor: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
-    icon: Sparkles,
+    icon: Brush,
     desc: "Gestión de turnos de salón, fórmulas técnicas de clientes y liquidación de comisiones.",
   },
 ];

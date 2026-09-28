@@ -10,7 +10,6 @@ import {
   Camera,
   MessageCircle,
   Share2,
-  Sparkles,
   ExternalLink,
   Target,
   BarChart3,

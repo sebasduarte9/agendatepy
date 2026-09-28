@@ -7,7 +7,9 @@ import {
   Crown,
   Gift,
   CheckCircle2,
-  Sparkles,
+  Wallet,
+  SlidersHorizontal,
+  Coins,
   Settings,
   Flame,
   Search,
@@ -133,7 +135,7 @@ export default function FidelizacionPage() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1.5 max-w-xl">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 dark:bg-amber-400/20 border border-amber-500/20 dark:border-amber-400/30 px-3 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <Wallet className="h-3.5 w-3.5 text-amber-500" />
               <span>Soporte Oficial Apple Wallet (.pkpass) & Google Wallet</span>
             </div>
             <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
@@ -163,7 +165,7 @@ export default function FidelizacionPage() {
         <Card className="border-2 border-primary/20 bg-primary/5 dark:bg-primary/10 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <SlidersHorizontal className="h-5 w-5 text-primary" />
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Ajustes del Programa de Fidelidad</h2>
             </div>
             <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
@@ -226,7 +228,7 @@ export default function FidelizacionPage() {
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <Sparkles className="h-4 w-4 text-indigo-500" />
+                    <Coins className="h-4 w-4 text-indigo-500" />
                     <span className="font-bold text-slate-900 dark:text-white">Tarjeta de Puntos</span>
                   </div>
                   <p className="text-[11px] text-slate-500 font-normal">

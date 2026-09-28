@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock, Bell, Sparkles, ArrowRight, MessageCircle, Calendar, CheckCheck, MapPin } from "lucide-react";
+import { CheckCircle2, Clock, Bell, ArrowRight, MessageCircle, Calendar, CheckCheck, MapPin } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
@@ -25,7 +25,7 @@ export default function WhatsAppShowcase() {
           className="lg:col-span-6 min-w-0"
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/40 px-3.5 py-1 text-[11px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-400">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+            <Bell className="h-3.5 w-3.5 text-emerald-600" />
             <span>Mensajería Automatizada por WhatsApp</span>
           </div>
 

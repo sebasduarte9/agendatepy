@@ -5,7 +5,6 @@ import {
   Users,
   Calendar,
   Layers,
-  Sparkles,
   AlertCircle,
   TrendingUp,
   CheckCircle2,

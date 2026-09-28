@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles,
+  PanelsTopLeft,
   Palette,
   Check,
   Smartphone,
@@ -174,7 +174,7 @@ const SHOWCASE_PALETTES: ShowcasePalette[] = [
     presetKey: "default",
     name: "Agendate Violet",
     category: "General",
-    icon: Sparkles,
+    icon: Palette,
     primary: "#5b31e6",
     bgLight: "#f4f2fb",
     bgDark: "#090d16",
@@ -268,7 +268,7 @@ export default function ShowcasePage() {
               className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-md transition-colors"
               style={{ backgroundColor: selectedPalette.primary }}
             >
-              <Sparkles className="h-4 w-4" />
+              <Calendar className="h-4 w-4" />
             </span>
             <span>
               AgendatePY{" "}
@@ -339,7 +339,7 @@ export default function ShowcasePage() {
       <section className="mx-auto max-w-7xl px-4 pt-12 pb-6 sm:px-6">
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
+            <Palette className="h-3.5 w-3.5" />
             <span>Laboratorio de Diseño & UX Intelligence · Paraguay</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
@@ -518,7 +518,7 @@ export default function ShowcasePage() {
             <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-black/5 dark:bg-white/10">
               {[
                 { id: "split-gallery", label: "Galería Dividida", icon: Columns },
-                { id: "floating-card", label: "Tarjeta Flotante", icon: Sparkles },
+                { id: "floating-card", label: "Tarjeta Flotante", icon: PanelsTopLeft },
                 { id: "panoramic", label: "Panorámico", icon: LayoutTemplate },
                 { id: "minimal-editorial", label: "Minimalista", icon: BookOpen },
               ].map((l) => {

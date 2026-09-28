@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Check,
   Crown,
-  Sparkles,
   Zap,
   Building2,
   ShieldCheck,

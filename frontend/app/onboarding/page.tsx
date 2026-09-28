@@ -8,7 +8,8 @@ import {
   CalendarCheck,
   Building2,
   Globe,
-  Sparkles,
+  Flower2,
+  Compass,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
@@ -26,7 +27,7 @@ import {
 
 const CATEGORIES = [
   { id: "barberia", label: "Barbería / Peluquería", icon: Scissors },
-  { id: "estetica", label: "Centro de Estética / Spa", icon: Sparkles },
+  { id: "estetica", label: "Centro de Estética / Spa", icon: Flower2 },
   { id: "salud", label: "Consultorio / Salud / Odontología", icon: Stethoscope },
   { id: "padel", label: "Canchas / Deportes", icon: Activity },
   { id: "veterinaria", label: "Veterinaria / Pet Shop", icon: Heart },
@@ -484,7 +485,7 @@ export default function OnboardingPage() {
                     className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-7 py-3 text-xs font-bold text-white shadow-md shadow-emerald-600/30 hover:bg-emerald-700 transition active:scale-[0.99] disabled:opacity-60"
                   >
                     {isFinishing ? "Creando tu negocio..." : "Completar y Comenzar Visita Guiada"}
-                    <Sparkles className="h-4 w-4" />
+                    <Compass className="h-4 w-4" />
                   </button>
                 </div>
               </div>

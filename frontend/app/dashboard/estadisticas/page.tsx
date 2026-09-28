@@ -23,7 +23,6 @@ import {
   Percent,
   CheckCircle2,
   Clock,
-  Sparkles,
   ShieldCheck,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -370,7 +369,7 @@ export default function EstadisticasPage() {
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Sparkles className="h-5 w-5" />
+              <UserRound className="h-5 w-5" />
             </div>
             <div>
               <h2 className="font-bold text-slate-900 dark:text-white text-base">

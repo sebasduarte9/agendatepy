@@ -10,7 +10,7 @@ import {
   MessageCircle,
   FileSpreadsheet,
   Calendar,
-  Sparkles,
+  FileText,
   Edit2,
   Trash2,
   UserCheck,
@@ -227,7 +227,7 @@ export default function ClientesPage() {
         <StatCard
           label="Clientes VIP / Frecuentes"
           value={String(vipCount)}
-          icon={Sparkles}
+          icon={Crown}
         />
         <StatCard
           label="Gasto Promedio por Cliente"
@@ -349,8 +349,8 @@ export default function ClientesPage() {
                 {/* Technical formula badge / alert */}
                 {client.formula && (
                   <div className="mt-3.5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 text-xs text-indigo-950">
-                    <span className="font-bold text-indigo-700 flex items-center gap-1">
-                      <Sparkles className="h-3 w-3" /> Ficha Técnica:
+                    <span className="font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
+                      <FileText className="h-3 w-3" /> Ficha Técnica:
                     </span>
                     <p className="mt-1 line-clamp-2 italic text-slate-700">{client.formula}</p>
                   </div>
@@ -422,7 +422,7 @@ export default function ClientesPage() {
                     onClick={() => setSelectedClient(client)}
                     className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-3 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                    <FileText className="h-3.5 w-3.5" />
                     <span>Ver Ficha</span>
                   </button>
 

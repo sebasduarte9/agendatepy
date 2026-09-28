@@ -8,7 +8,7 @@ import {
   Menu,
   X,
   ArrowRight,
-  Sparkles,
+  Zap,
   ExternalLink,
 } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
@@ -196,7 +196,7 @@ export default function Header() {
             href="/onboarding"
             className="inline-flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] xs:text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-8 xs:h-8.5 sm:h-9 px-2.5 xs:px-3 sm:px-4.5 rounded-full shadow-md shadow-brand/25"
           >
-            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300 shrink-0" />
+            <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300 shrink-0" />
             <span className="hidden xs:inline">Prueba gratuitamente</span>
             <span className="xs:hidden">Probar gratis</span>
           </Link>
@@ -242,7 +242,7 @@ export default function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] py-3 text-center text-sm font-bold text-white shadow-md shadow-brand/25"
                 >
-                  <Sparkles className="h-4 w-4 text-amber-300" />
+                  <Zap className="h-4 w-4 text-amber-300" />
                   <span>Prueba gratuitamente</span>
                 </Link>
 

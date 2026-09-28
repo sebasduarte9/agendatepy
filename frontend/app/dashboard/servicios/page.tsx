@@ -25,7 +25,6 @@ import {
   Hourglass,
   Timer,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";

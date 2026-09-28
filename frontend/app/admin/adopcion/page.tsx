@@ -18,7 +18,7 @@ import {
   Search,
   Filter,
   ArrowRight,
-  Sparkles,
+  CalendarCheck,
 } from "lucide-react";
 
 export default function AdoptionPage() {
@@ -91,7 +91,7 @@ export default function AdoptionPage() {
             { label: "Liquidaciones", rate: data.adoptionRates.payouts.percentage, count: data.adoptionRates.payouts.count, icon: DollarSign },
             { label: "Portal Público", rate: data.adoptionRates.portal.percentage, count: data.adoptionRates.portal.count, icon: Globe },
             { label: "Exportaciones", rate: data.adoptionRates.reports.percentage, count: data.adoptionRates.reports.count, icon: FileSpreadsheet },
-            { label: "Ready to Book", rate: data.adoptionRates.readyForBooking.percentage, count: data.adoptionRates.readyForBooking.count, icon: Sparkles },
+            { label: "Ready to Book", rate: data.adoptionRates.readyForBooking.percentage, count: data.adoptionRates.readyForBooking.count, icon: CalendarCheck },
           ].map((item) => (
             <div
               key={item.label}

@@ -6,7 +6,7 @@ import {
   Scissors,
   Smile,
   StretchHorizontal,
-  Sparkles,
+  Flower2,
   Stethoscope,
   PawPrint,
   ShieldCheck,
@@ -24,7 +24,7 @@ const ICONS: Record<CategoryId, typeof Scissors> = {
   peluqueria: Scissors,
   odontologia: Smile,
   pilates: StretchHorizontal,
-  spas: Sparkles,
+  spas: Flower2,
   medicos: Stethoscope,
   veterinarias: PawPrint,
 };

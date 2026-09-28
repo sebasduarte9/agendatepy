@@ -6,7 +6,7 @@ import {
   Check,
   Smartphone,
   ExternalLink,
-  Sparkles,
+  PanelsTopLeft,
   MessageCircle,
   MapPin,
   Save,
@@ -799,7 +799,7 @@ export default function AparienciaPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-2.5">
                     <div>
                       <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-amber-500" />
+                        <Palette className="h-4 w-4 text-primary" />
                         <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                           Estilos y Paletas Profesionales
                         </h2>
@@ -1137,7 +1137,7 @@ export default function AparienciaPage() {
                       id: "floating-card",
                       name: "Tarjeta Flotante & Stories",
                       desc: "Tarjeta de cristal suspendida con avatar centrado y burbujas estilo stories.",
-                      icon: Sparkles,
+                      icon: PanelsTopLeft,
                     },
                     {
                       id: "minimal-editorial",

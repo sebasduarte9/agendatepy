@@ -11,7 +11,7 @@ import {
   CheckCheck,
   Check,
   Clock,
-  Sparkles,
+  Zap,
   ExternalLink,
   ShieldCheck,
   Award,
@@ -530,7 +530,7 @@ export default function CrmOmnichannelPage() {
               {/* Quick Reply Bar */}
               <div className="px-3 pt-2 pb-1 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-amber-500" /> Respuestas Rápidas con 1 Clic:
+                  <Zap className="h-3 w-3 text-amber-500" /> Respuestas Rápidas con 1 Clic:
                 </p>
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
                   {quickReplies.map((qr) => (

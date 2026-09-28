@@ -17,7 +17,6 @@ import {
   Calendar,
   Building2,
   ShoppingBag,
-  Sparkles,
   History,
   X,
   Filter,

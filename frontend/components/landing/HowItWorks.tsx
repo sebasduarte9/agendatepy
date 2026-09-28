@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Zap, Check, Sparkles, MessageSquareCheck, WalletCards } from "lucide-react";
+import { Zap, Check, Clock, MessageSquareCheck, WalletCards } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 import MiniCalendar from "./MiniCalendar";
 
@@ -34,7 +34,7 @@ export default function HowItWorks() {
         className="max-w-2xl mb-6 sm:mb-8 space-y-2"
       >
         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
-          <Sparkles className="h-3.5 w-3.5" /> Flujo Ágil y Sin Fricción
+          <Clock className="h-3.5 w-3.5" /> Flujo Ágil y Sin Fricción
         </span>
         <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
           De la reserva a la atención,{" "}

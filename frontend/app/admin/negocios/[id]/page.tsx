@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   Scissors,
   Layers,
-  Sparkles,
+  Target,
   Lock,
   CreditCard,
   Mail,
@@ -241,7 +241,7 @@ export default function SingleTenantAdminPage() {
       {/* Activation Milestones */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-indigo-400" />
+          <Target className="h-4 w-4 text-indigo-400" />
           Hitos de Activación del Negocio
         </h2>
 

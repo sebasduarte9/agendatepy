@@ -14,7 +14,6 @@ import {
   Trash2,
   Check,
   Copy,
-  Sparkles,
   Layers,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";

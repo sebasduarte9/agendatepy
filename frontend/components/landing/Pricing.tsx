@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, X, Shield, Sparkles, Zap } from "lucide-react";
+import { Check, X, Shield, CheckCircle2, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
@@ -60,7 +60,7 @@ export default function Pricing() {
           className="text-center max-w-2xl mx-auto space-y-2.5 sm:space-y-3"
         >
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
-            <Sparkles className="h-3.5 w-3.5" /> Precios Transparentes en Guaraníes (PYG)
+            <CheckCircle2 className="h-3.5 w-3.5" /> Precios Transparentes en Guaraníes (PYG)
           </span>
           <h2 className="text-2xl xs:text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
             Planes a tu medida,{" "}
