@@ -679,6 +679,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             promoPrice: s.promoPrice,
             promoBadge: s.promoBadge,
             promoDisplayType: s.promoDisplayType,
+            promoType: s.promoType,
+            promoLimitQuantity: s.promoLimitQuantity,
+            promoLimitHours: s.promoLimitHours,
+            promoDeadline: s.promoDeadline,
+            requirePrepayment: Boolean(s.requirePrepayment),
+            prepaymentType: s.prepaymentType,
+            prepaymentAmount: s.prepaymentAmount,
+            prepaymentMethod: s.prepaymentMethod,
+            prepaymentInstructions: s.prepaymentInstructions,
           }));
         }
 
@@ -1117,6 +1126,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           promoPrice: item.promoPrice,
           promoBadge: item.promoBadge,
           promoDisplayType: item.promoDisplayType,
+          promoType: item.promoType,
+          promoLimitQuantity: item.promoLimitQuantity,
+          promoLimitHours: item.promoLimitHours,
+          promoDeadline: item.promoDeadline,
+          requirePrepayment: item.requirePrepayment,
+          prepaymentType: item.prepaymentType,
+          prepaymentAmount: item.prepaymentAmount,
+          prepaymentMethod: item.prepaymentMethod,
+          prepaymentInstructions: item.prepaymentInstructions,
         }),
       });
       const data = await res.json();
@@ -1138,6 +1156,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
               promoPrice: data.service.promoPrice ?? item.promoPrice,
               promoBadge: data.service.promoBadge ?? item.promoBadge,
               promoDisplayType: data.service.promoDisplayType ?? item.promoDisplayType,
+              promoType: data.service.promoType ?? item.promoType,
+              promoLimitQuantity: data.service.promoLimitQuantity ?? item.promoLimitQuantity,
+              promoLimitHours: data.service.promoLimitHours ?? item.promoLimitHours,
+              promoDeadline: data.service.promoDeadline ?? item.promoDeadline,
+              requirePrepayment: Boolean(data.service.requirePrepayment ?? item.requirePrepayment),
+              prepaymentType: data.service.prepaymentType ?? item.prepaymentType,
+              prepaymentAmount: data.service.prepaymentAmount ?? item.prepaymentAmount,
+              prepaymentMethod: data.service.prepaymentMethod ?? item.prepaymentMethod,
+              prepaymentInstructions: data.service.prepaymentInstructions ?? item.prepaymentInstructions,
             },
           ],
         });

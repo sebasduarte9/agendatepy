@@ -187,6 +187,15 @@ export async function GET(request: NextRequest) {
           promoPrice: extra.promoPrice !== undefined ? extra.promoPrice : undefined,
           promoBadge: extra.promoBadge || undefined,
           promoDisplayType: extra.promoDisplayType || undefined,
+          promoType: extra.promoType || undefined,
+          promoLimitQuantity: extra.promoLimitQuantity !== undefined ? extra.promoLimitQuantity : undefined,
+          promoLimitHours: extra.promoLimitHours !== undefined ? extra.promoLimitHours : undefined,
+          promoDeadline: extra.promoDeadline || undefined,
+          requirePrepayment: Boolean(extra.requirePrepayment),
+          prepaymentType: extra.prepaymentType || undefined,
+          prepaymentAmount: extra.prepaymentAmount !== undefined ? extra.prepaymentAmount : undefined,
+          prepaymentMethod: extra.prepaymentMethod || undefined,
+          prepaymentInstructions: extra.prepaymentInstructions || undefined,
         };
       }),
       staff: tenant.staff.map((m) => ({

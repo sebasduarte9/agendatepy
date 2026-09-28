@@ -20,6 +20,12 @@ import {
   Eye,
   EyeOff,
   X,
+  CreditCard,
+  Building2,
+  Hourglass,
+  Timer,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -84,6 +90,14 @@ export default function ServiciosPage() {
     promoPrice: 64000,
     promoDisplayType: "percentage" as "percentage" | "amount",
     promoBadge: "-20% OFF",
+    promoType: "time" as "time" | "quantity" | "both",
+    promoLimitHours: 24,
+    promoLimitQuantity: 5,
+    requirePrepayment: false,
+    prepaymentType: "deposit" as "deposit" | "full",
+    prepaymentAmount: 30000,
+    prepaymentMethod: "sipap" as "sipap" | "transferencia" | "qr" | "cualquiera",
+    prepaymentInstructions: "Enviar comprobante por WhatsApp al agendar para congelar tu cupo flash.",
   });
 
   // Fetch categories from SQL on mount
@@ -264,12 +278,20 @@ export default function ServiciosPage() {
       price > 0 && promoPrice < price ? Math.round(((price - promoPrice) / price) * 100) : 20;
 
     setPromoForm({
-      hasPromo: hasPromo ? true : true, // When opening promo modal, default active toggle on
+      hasPromo: true, // When opening promo modal, default active toggle on
       promoCalcMode: "percentage",
       promoPercent: calculatedPercent,
       promoPrice,
       promoDisplayType: service.promoDisplayType || "percentage",
       promoBadge: service.promoBadge || `-${calculatedPercent}% OFF`,
+      promoType: (service.promoType as any) || "time",
+      promoLimitHours: service.promoLimitHours || 24,
+      promoLimitQuantity: service.promoLimitQuantity || 5,
+      requirePrepayment: Boolean(service.requirePrepayment),
+      prepaymentType: service.prepaymentType || "deposit",
+      prepaymentAmount: service.prepaymentAmount !== undefined ? service.prepaymentAmount : Math.round(promoPrice * 0.5),
+      prepaymentMethod: service.prepaymentMethod || "sipap",
+      prepaymentInstructions: service.prepaymentInstructions || "Enviar comprobante por WhatsApp al agendar para congelar tu cupo flash.",
     });
   }
 
@@ -337,6 +359,14 @@ export default function ServiciosPage() {
       promoPrice: promoForm.hasPromo ? Number(promoForm.promoPrice) || 0 : undefined,
       promoBadge: promoForm.hasPromo ? promoForm.promoBadge : undefined,
       promoDisplayType: promoForm.hasPromo ? promoForm.promoDisplayType : undefined,
+      promoType: promoForm.hasPromo ? promoForm.promoType : undefined,
+      promoLimitHours: promoForm.hasPromo && (promoForm.promoType === "time" || promoForm.promoType === "both") ? Number(promoForm.promoLimitHours) || 24 : undefined,
+      promoLimitQuantity: promoForm.hasPromo && (promoForm.promoType === "quantity" || promoForm.promoType === "both") ? Number(promoForm.promoLimitQuantity) || 5 : undefined,
+      requirePrepayment: promoForm.hasPromo ? promoForm.requirePrepayment : false,
+      prepaymentType: promoForm.hasPromo && promoForm.requirePrepayment ? promoForm.prepaymentType : undefined,
+      prepaymentAmount: promoForm.hasPromo && promoForm.requirePrepayment ? (promoForm.prepaymentType === "full" ? Number(promoForm.promoPrice) || 0 : Number(promoForm.prepaymentAmount) || 0) : undefined,
+      prepaymentMethod: promoForm.hasPromo && promoForm.requirePrepayment ? promoForm.prepaymentMethod : undefined,
+      prepaymentInstructions: promoForm.hasPromo && promoForm.requirePrepayment ? promoForm.prepaymentInstructions : undefined,
     });
 
     pushToast(
@@ -355,6 +385,14 @@ export default function ServiciosPage() {
       promoPrice: undefined,
       promoBadge: undefined,
       promoDisplayType: undefined,
+      promoType: undefined,
+      promoLimitHours: undefined,
+      promoLimitQuantity: undefined,
+      requirePrepayment: false,
+      prepaymentType: undefined,
+      prepaymentAmount: undefined,
+      prepaymentMethod: undefined,
+      prepaymentInstructions: undefined,
     });
     pushToast("success", `Promoción quitada de "${promoModalService.name}"`);
     setPromoModalService(null);
@@ -648,6 +686,35 @@ export default function ServiciosPage() {
                         : `${assignedStaff.length} especialistas asignados`}
                     </span>
                   </div>
+
+                  {/* Promo Flash Attributes Badges */}
+                  {hasActivePromo && (
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
+                      {(item.promoType === "time" || item.promoType === "both" || !item.promoType) && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                          <Clock className="h-2.5 w-2.5 text-amber-500" />
+                          <span>Cronómetro {item.promoLimitHours || 24}h</span>
+                        </span>
+                      )}
+                      {(item.promoType === "quantity" || item.promoType === "both") && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-700 dark:text-orange-300">
+                          <Flame className="h-2.5 w-2.5 text-orange-500 fill-orange-500" />
+                          <span>{item.promoLimitQuantity || 5} cupos</span>
+                        </span>
+                      )}
+                      {item.requirePrepayment && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                          <CreditCard className="h-2.5 w-2.5 text-emerald-500" />
+                          <span>
+                            {item.prepaymentType === "full"
+                              ? "Pago 100% anticipado"
+                              : `Seña: ${formatGs(item.prepaymentAmount || Math.round((item.promoPrice || item.price) * 0.5))}`}{" "}
+                            ({item.prepaymentMethod === "sipap" ? "SIPAP" : item.prepaymentMethod === "qr" ? "QR" : "Transferencia"})
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 space-y-2.5 pt-3.5 border-t border-slate-100 dark:border-white/5">
@@ -1126,9 +1193,329 @@ export default function ServiciosPage() {
                   </div>
                 </div>
 
+                {/* 2. Modalidad de Urgencia & Límite (Cronómetro / Cupos) */}
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-bold text-slate-700 dark:text-slate-200">
+                      Regla de Urgencia para Agendar
+                    </label>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                      Incentiva reserva inmediata
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPromoForm({ ...promoForm, promoType: "time" })}
+                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                        promoForm.promoType === "time"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold shadow-xs"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Timer className="h-4 w-4 mx-auto mb-1 text-amber-500" />
+                      <span className="block text-[11px] font-black leading-tight">Cronómetro</span>
+                      <span className="text-[9px] opacity-75">Tiempo límite</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPromoForm({ ...promoForm, promoType: "quantity" })}
+                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                        promoForm.promoType === "quantity"
+                          ? "border-orange-500 bg-orange-500/20 text-orange-800 dark:text-orange-200 font-bold shadow-xs"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Flame className="h-4 w-4 mx-auto mb-1 text-orange-500" />
+                      <span className="block text-[11px] font-black leading-tight">Por Cupos</span>
+                      <span className="text-[9px] opacity-75">Cantidad fija</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPromoForm({ ...promoForm, promoType: "both" })}
+                      className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                        promoForm.promoType === "both"
+                          ? "border-indigo-500 bg-indigo-500/20 text-indigo-800 dark:text-indigo-200 font-bold shadow-xs"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Hourglass className="h-4 w-4 mx-auto mb-1 text-indigo-500" />
+                      <span className="block text-[11px] font-black leading-tight">Ambos</span>
+                      <span className="text-[9px] opacity-75">Tiempo + Cupos</span>
+                    </button>
+                  </div>
+
+                  {/* Configuración de Horas si tiene Cronómetro */}
+                  {(promoForm.promoType === "time" || promoForm.promoType === "both") && (
+                    <div className="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-amber-600" />
+                          <span>Duración del Cronómetro Regresivo:</span>
+                        </span>
+                        <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
+                          {promoForm.promoLimitHours} horas
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[6, 12, 24, 48, 72].map((hours) => (
+                          <button
+                            key={hours}
+                            type="button"
+                            onClick={() => setPromoForm({ ...promoForm, promoLimitHours: hours })}
+                            className={`flex-1 py-1 px-2 rounded-xl text-[11px] font-bold transition cursor-pointer ${
+                              promoForm.promoLimitHours === hours
+                                ? "bg-amber-500 text-white shadow-xs"
+                                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                            }`}
+                          >
+                            {hours}h
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Configuración de Cupos si es Por Cupos o Ambos */}
+                  {(promoForm.promoType === "quantity" || promoForm.promoType === "both") && (
+                    <div className="p-3 rounded-2xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/30 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                          <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500" />
+                          <span>Cupos Disponibles para esta Promo:</span>
+                        </span>
+                        <span className="font-mono font-bold text-orange-700 dark:text-orange-300">
+                          {promoForm.promoLimitQuantity} cupos
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[3, 5, 10, 15, 20].map((qty) => (
+                          <button
+                            key={qty}
+                            type="button"
+                            onClick={() => setPromoForm({ ...promoForm, promoLimitQuantity: qty })}
+                            className={`flex-1 py-1 px-2 rounded-xl text-[11px] font-bold transition cursor-pointer ${
+                              promoForm.promoLimitQuantity === qty
+                                ? "bg-orange-500 text-white shadow-xs"
+                                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                            }`}
+                          >
+                            {qty}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Seña y Pago Anticipado (Transferencia / SIPAP) */}
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+                        <CreditCard className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
+                          Exigir Seña o Pago por Transferencia
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Garantizá asistencia y congelá el precio con seña o SIPAP previo.
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={promoForm.requirePrepayment}
+                      onClick={() =>
+                        setPromoForm({
+                          ...promoForm,
+                          requirePrepayment: !promoForm.requirePrepayment,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        promoForm.requirePrepayment
+                          ? "bg-emerald-600"
+                          : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          promoForm.requirePrepayment ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {promoForm.requirePrepayment && (
+                    <div className="space-y-3 p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/30">
+                      {/* Modalidad de seña */}
+                      <div>
+                        <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                          Tipo de Pago Previo Requerido
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPromoForm({ ...promoForm, prepaymentType: "deposit" })
+                            }
+                            className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                              promoForm.prepaymentType === "deposit"
+                                ? "border-emerald-500 bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-bold"
+                                : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                            }`}
+                          >
+                            <span className="block text-xs font-black">Seña Parcial</span>
+                            <span className="text-[10px] opacity-75">
+                              Monto fijo de reserva
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPromoForm({ ...promoForm, prepaymentType: "full" })
+                            }
+                            className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
+                              promoForm.prepaymentType === "full"
+                                ? "border-emerald-500 bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-bold"
+                                : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
+                            }`}
+                          >
+                            <span className="block text-xs font-black">Pago 100% Total</span>
+                            <span className="text-[10px] opacity-75">
+                              {formatGs(promoForm.promoPrice)}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Monto de seña si es parcial */}
+                      {promoForm.prepaymentType === "deposit" && (
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                            Monto de la Seña Requerida (Gs.)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="5000"
+                              step="5000"
+                              value={promoForm.prepaymentAmount}
+                              onChange={(e) =>
+                                setPromoForm({
+                                  ...promoForm,
+                                  prepaymentAmount: Number(e.target.value),
+                                })
+                              }
+                              className="w-full rounded-2xl border border-emerald-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                            <div className="flex items-center gap-1 shrink-0">
+                              {[20000, 30000, 50000].map((preset) => (
+                                <button
+                                  key={preset}
+                                  type="button"
+                                  onClick={() =>
+                                    setPromoForm({ ...promoForm, prepaymentAmount: preset })
+                                  }
+                                  className={`py-1.5 px-2 rounded-xl text-[10px] font-bold border transition cursor-pointer ${
+                                    promoForm.prepaymentAmount === preset
+                                      ? "bg-emerald-600 text-white border-emerald-600"
+                                      : "bg-white dark:bg-slate-900 border-slate-200 text-slate-600 dark:text-slate-300"
+                                  }`}
+                                >
+                                  {preset / 1000}k
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Canal de pago preferido */}
+                      <div>
+                        <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                          Medio de Pago Aceptado
+                        </label>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPromoForm({ ...promoForm, prepaymentMethod: "sipap" })
+                            }
+                            className={`p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                              promoForm.prepaymentMethod === "sipap"
+                                ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
+                                : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                            }`}
+                          >
+                            <Building2 className="h-3.5 w-3.5 mx-auto mb-0.5" />
+                            <span>SIPAP Bancario</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPromoForm({ ...promoForm, prepaymentMethod: "qr" })
+                            }
+                            className={`p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                              promoForm.prepaymentMethod === "qr"
+                                ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
+                                : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                            }`}
+                          >
+                            <Coins className="h-3.5 w-3.5 mx-auto mb-0.5" />
+                            <span>QR / Billeteras</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPromoForm({ ...promoForm, prepaymentMethod: "cualquiera" })
+                            }
+                            className={`p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                              promoForm.prepaymentMethod === "cualquiera"
+                                ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
+                                : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                            }`}
+                          >
+                            <CreditCard className="h-3.5 w-3.5 mx-auto mb-0.5" />
+                            <span>Cualquiera</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Instrucción breve */}
+                      <div>
+                        <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                          Instrucción para el Cliente
+                        </label>
+                        <input
+                          type="text"
+                          value={promoForm.prepaymentInstructions}
+                          onChange={(e) =>
+                            setPromoForm({
+                              ...promoForm,
+                              prepaymentInstructions: e.target.value,
+                            })
+                          }
+                          placeholder="Ej: Enviar comprobante al WhatsApp dentro de 30 min."
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 px-3 text-xs text-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* LIVE PREVIEW DEMO CARD */}
-                <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-xs">
-                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-2">
+                <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400">
                     <span>Vista previa en vivo para el cliente:</span>
                     <span className="text-amber-500 font-black">DEMO EN RESERVA</span>
                   </div>
@@ -1157,6 +1544,34 @@ export default function ServiciosPage() {
                         {formatGs(promoForm.promoPrice)}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Urgency indicators in preview */}
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                    {(promoForm.promoType === "time" || promoForm.promoType === "both") && (
+                      <div className="flex items-center gap-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300/60 dark:border-amber-700/40 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-200">
+                        <Timer className="h-3.5 w-3.5 text-amber-600 animate-pulse" />
+                        <span>Termina en: <strong>{promoForm.promoLimitHours}h 00m</strong></span>
+                      </div>
+                    )}
+
+                    {(promoForm.promoType === "quantity" || promoForm.promoType === "both") && (
+                      <div className="flex items-center gap-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-300/60 dark:border-orange-700/40 px-2.5 py-1 text-[11px] font-bold text-orange-800 dark:text-orange-200">
+                        <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500" />
+                        <span>¡Solo quedan <strong>{promoForm.promoLimitQuantity} cupos</strong>!</span>
+                      </div>
+                    )}
+
+                    {promoForm.requirePrepayment && (
+                      <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/60 dark:border-emerald-700/40 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-200">
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                        <span>
+                          {promoForm.prepaymentType === "full"
+                            ? `Pago 100% previo (${promoForm.prepaymentMethod.toUpperCase()})`
+                            : `Seña previa: ${formatGs(promoForm.prepaymentAmount)} (${promoForm.prepaymentMethod.toUpperCase()})`}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

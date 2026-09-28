@@ -42,6 +42,15 @@ export async function GET(request: NextRequest) {
         promoPrice: extra.promoPrice !== undefined ? extra.promoPrice : undefined,
         promoBadge: extra.promoBadge || undefined,
         promoDisplayType: extra.promoDisplayType || undefined,
+        promoType: extra.promoType || undefined,
+        promoLimitQuantity: extra.promoLimitQuantity !== undefined ? extra.promoLimitQuantity : undefined,
+        promoLimitHours: extra.promoLimitHours !== undefined ? extra.promoLimitHours : undefined,
+        promoDeadline: extra.promoDeadline || undefined,
+        requirePrepayment: Boolean(extra.requirePrepayment),
+        prepaymentType: extra.prepaymentType || undefined,
+        prepaymentAmount: extra.prepaymentAmount !== undefined ? extra.prepaymentAmount : undefined,
+        prepaymentMethod: extra.prepaymentMethod || undefined,
+        prepaymentInstructions: extra.prepaymentInstructions || undefined,
       };
     });
 
@@ -61,7 +70,27 @@ export async function POST(request: NextRequest) {
     if (isGuardError(auth)) return auth;
 
     const body = await request.json();
-    const { name, durationMinutes, price, active, category, staffIds, hasPromo, promoPrice, promoBadge, promoDisplayType } = body;
+    const {
+      name,
+      durationMinutes,
+      price,
+      active,
+      category,
+      staffIds,
+      hasPromo,
+      promoPrice,
+      promoBadge,
+      promoDisplayType,
+      promoType,
+      promoLimitQuantity,
+      promoLimitHours,
+      promoDeadline,
+      requirePrepayment,
+      prepaymentType,
+      prepaymentAmount,
+      prepaymentMethod,
+      prepaymentInstructions,
+    } = body;
 
     if (!name || typeof name !== "string" || name.trim().length < 2) {
       return NextResponse.json(
@@ -135,6 +164,15 @@ export async function POST(request: NextRequest) {
         promoPrice: promoPrice !== undefined ? Number(promoPrice) : undefined,
         promoBadge: promoBadge || undefined,
         promoDisplayType: promoDisplayType || undefined,
+        promoType: promoType || undefined,
+        promoLimitQuantity: promoLimitQuantity !== undefined ? Number(promoLimitQuantity) : undefined,
+        promoLimitHours: promoLimitHours !== undefined ? Number(promoLimitHours) : undefined,
+        promoDeadline: promoDeadline || undefined,
+        requirePrepayment: Boolean(requirePrepayment),
+        prepaymentType: prepaymentType || undefined,
+        prepaymentAmount: prepaymentAmount !== undefined ? Number(prepaymentAmount) : undefined,
+        prepaymentMethod: prepaymentMethod || undefined,
+        prepaymentInstructions: prepaymentInstructions || undefined,
       };
 
       await tx.tenant.update({
@@ -156,6 +194,15 @@ export async function POST(request: NextRequest) {
         promoPrice: promoPrice !== undefined ? Number(promoPrice) : undefined,
         promoBadge: promoBadge || undefined,
         promoDisplayType: promoDisplayType || undefined,
+        promoType: promoType || undefined,
+        promoLimitQuantity: promoLimitQuantity !== undefined ? Number(promoLimitQuantity) : undefined,
+        promoLimitHours: promoLimitHours !== undefined ? Number(promoLimitHours) : undefined,
+        promoDeadline: promoDeadline || undefined,
+        requirePrepayment: Boolean(requirePrepayment),
+        prepaymentType: prepaymentType || undefined,
+        prepaymentAmount: prepaymentAmount !== undefined ? Number(prepaymentAmount) : undefined,
+        prepaymentMethod: prepaymentMethod || undefined,
+        prepaymentInstructions: prepaymentInstructions || undefined,
       };
     });
 

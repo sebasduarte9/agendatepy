@@ -33,9 +33,15 @@ export type ServiceItem = {
   promoPrice?: number;
   promoBadge?: string; // ej: "-20% OFF", "Ahorrá 20.000 Gs"
   promoDisplayType?: "percentage" | "amount"; // Modo de visualización del descuento
-  promoType?: "quantity" | "time"; // por cantidad de cupos o por tiempo limitado
+  promoType?: "quantity" | "time" | "both"; // por cantidad de cupos, tiempo limitado o ambos
   promoLimitQuantity?: number; // ej: 5 cupos
   promoLimitHours?: number; // ej: 24 horas
+  promoDeadline?: string; // Fecha y hora límite en ISO
+  requirePrepayment?: boolean; // Requiere seña o pago anticipado para confirmar
+  prepaymentType?: "full" | "deposit"; // 100% anticipado o seña fija
+  prepaymentAmount?: number; // Monto en Gs de la seña
+  prepaymentMethod?: "transferencia" | "sipap" | "qr" | "cualquiera"; // Método aceptado
+  prepaymentInstructions?: string; // Instrucciones de pago
 };
 
 export type ProductItem = {

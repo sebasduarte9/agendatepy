@@ -22,7 +22,27 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
     }
 
     const body = await request.json();
-    const { name, durationMinutes, price, active, category, staffIds, hasPromo, promoPrice, promoBadge, promoDisplayType } = body;
+    const {
+      name,
+      durationMinutes,
+      price,
+      active,
+      category,
+      staffIds,
+      hasPromo,
+      promoPrice,
+      promoBadge,
+      promoDisplayType,
+      promoType,
+      promoLimitQuantity,
+      promoLimitHours,
+      promoDeadline,
+      requirePrepayment,
+      prepaymentType,
+      prepaymentAmount,
+      prepaymentMethod,
+      prepaymentInstructions,
+    } = body;
 
     const existing = await prisma.service.findFirst({
       where: { id, tenantId: auth.tenantId },
@@ -115,6 +135,15 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
         ...(promoPrice !== undefined ? { promoPrice: Number(promoPrice) } : {}),
         ...(promoBadge !== undefined ? { promoBadge: String(promoBadge).trim() } : {}),
         ...(promoDisplayType !== undefined ? { promoDisplayType } : {}),
+        ...(promoType !== undefined ? { promoType } : {}),
+        ...(promoLimitQuantity !== undefined ? { promoLimitQuantity: Number(promoLimitQuantity) } : {}),
+        ...(promoLimitHours !== undefined ? { promoLimitHours: Number(promoLimitHours) } : {}),
+        ...(promoDeadline !== undefined ? { promoDeadline } : {}),
+        ...(requirePrepayment !== undefined ? { requirePrepayment: Boolean(requirePrepayment) } : {}),
+        ...(prepaymentType !== undefined ? { prepaymentType } : {}),
+        ...(prepaymentAmount !== undefined ? { prepaymentAmount: Number(prepaymentAmount) } : {}),
+        ...(prepaymentMethod !== undefined ? { prepaymentMethod } : {}),
+        ...(prepaymentInstructions !== undefined ? { prepaymentInstructions: String(prepaymentInstructions).trim() } : {}),
       };
 
       serviceExtras[id] = nextExtra;
@@ -138,6 +167,15 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
         promoPrice: nextExtra.promoPrice,
         promoBadge: nextExtra.promoBadge,
         promoDisplayType: nextExtra.promoDisplayType,
+        promoType: nextExtra.promoType,
+        promoLimitQuantity: nextExtra.promoLimitQuantity,
+        promoLimitHours: nextExtra.promoLimitHours,
+        promoDeadline: nextExtra.promoDeadline,
+        requirePrepayment: Boolean(nextExtra.requirePrepayment),
+        prepaymentType: nextExtra.prepaymentType,
+        prepaymentAmount: nextExtra.prepaymentAmount,
+        prepaymentMethod: nextExtra.prepaymentMethod,
+        prepaymentInstructions: nextExtra.prepaymentInstructions,
       };
     });
 
