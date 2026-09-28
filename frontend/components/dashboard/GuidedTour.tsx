@@ -68,33 +68,51 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Consultar las citas y turnos de hoy",
+        taskTitle: "¡Hola! Este es tu Panel Principal",
         instruction:
-          "Mirá la lista de próximos turnos en la tarjeta principal. Podés ver el nombre del cliente, servicio solicitado, hora exacta y profesional asignado.",
-        tip: "Tocá cualquier turno para ver los detalles completos del cliente o marcarlo como atendido.",
-        targetSelector: ".main-content",
+          "¡Te damos la bienvenida a Agendatepy! Desde este panel central vas a controlar todas las operaciones de tu negocio: citas del día, cobros en caja, métricas en tiempo real y atención al cliente.",
+        tip: "Avanzá con el botón Siguiente o presioná Enter en tu teclado.",
+        targetSelector: '[data-tour="welcome-banner"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Compartir tu enlace de reservas oficial",
+        taskTitle: "Menú Lateral Inteligente",
         instruction:
-          "Arriba a la derecha tenés el botón 'Ver mi página'. Copiá ese enlace (agendate.py/tunegocio) y pegalo en la biografía de tu Instagram o en la respuesta automática de WhatsApp.",
-        tip: "El 70% de las reservas se hacen fuera de horario comercial mientras dormís.",
-        targetSelector: "header",
+          "Acercá tu mouse a la barra lateral izquierda por un momento: se expandirá automáticamente para darte acceso a tu Agenda, Servicios, Caja, Clientes, Reportes y Ajustes.",
+        tip: "Podés fijarlo con el botón de chincheta si preferís tenerlo siempre expandido.",
+        targetSelector: '[data-tour="sidebar-nav"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Monitorear la facturación del mes y ocupación",
+        taskTitle: "Tu Portal Oficial de Reservas",
         instruction:
-          "Las tarjetas de métricas te muestran en tiempo real cuánto facturó tu negocio en Guaraníes y la tasa de ocupación de tus sillones.",
-        tip: "Hacé clic en cualquier métrica para ver el desglose en Caja o Comisiones.",
+          "Hacé clic en 'Ver mi página' para abrir tu web de turnos pública. Tus clientes podrán ver tus servicios, precios en Guaraníes y horarios disponibles 24/7.",
+        tip: "Pegá ese enlace en la biografía de tu Instagram o en la respuesta rápida de WhatsApp.",
+        targetSelector: '[data-tour="header-booking-link"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Cambiar de rol o colaborador (Modo Dueño vs Empleado)",
+        taskTitle: "Métricas Operativas del Día",
         instruction:
-          "En el selector superior podés simular cómo ve el sistema un barbero, un estilista o la recepcionista para verificar que sus permisos estén bien configurados.",
-        targetSelector: "header select",
+          "Supervisá en tiempo real tu recaudación acumulada en Guaraníes, turnos confirmados de la jornada, tasa de ocupación de sillones y clientes registrados.",
+        tip: "Todos los números se calculan al instante con datos reales de tu negocio.",
+        targetSelector: '[data-tour="kpi-cards"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Agenda Operativa & Cobro en Caja",
+        instruction:
+          "En esta lista tenés los turnos del día en orden cronológico. Podés confirmar asistencia, contactar al cliente por WhatsApp y registrar el cobro en caja con 1 solo clic.",
+        tip: "Al cobrar una cita, el ingreso se añade automáticamente a tu arqueo de caja del día.",
+        targetSelector: '[data-tour="agenda-operativa"]',
+      },
+      {
+        stepNumber: 6,
+        taskTitle: "Atención CRM & Operaciones Rápidas",
+        instruction:
+          "Atendé consultas de tus clientes y ejecutá operaciones frecuentes como bloquear horarios de almuerzo o validar comprobantes bancarios SIPAP.",
+        tip: "¡Listo! Ya conocés tu panel principal. Estás listo para comenzar.",
+        targetSelector: '[data-tour="quick-actions-crm"]',
       },
     ],
   },
@@ -525,9 +543,10 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 3,
-        taskTitle: "Probar la vista de cada rol",
+        taskTitle: "Seguridad y control de acceso",
         instruction:
-          "Arriba tenés el selector de previsualización para comprobar exactamente qué ve un Dueño vs qué ve un Colaborador en el sistema.",
+          "Cada integrante inicia sesión de manera segura con su cuenta de Google o correo. Podés desvincular o editar los accesos de cualquier colaborador en cualquier momento.",
+        tip: "Mantené los permisos de caja y comisiones restringidos únicamente a personal autorizado.",
       },
     ],
   },
@@ -759,6 +778,22 @@ export default function GuidedTour() {
     return () => window.removeEventListener("open-guided-tour", handleOpenTourEvent);
   }, [detectedSectionKey, openTour]);
 
+  // Auto-start welcome tour on first entry to the dashboard
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasSeenWelcome = localStorage.getItem("agendate_has_seen_welcome_tour");
+    const isDashboardHome = pathname === "/dashboard" || pathname === "/dashboard/";
+    if (!hasSeenWelcome && isDashboardHome) {
+      const timer = setTimeout(() => {
+        setSelectedSectionKey("inicio");
+        setCurrentStepIndex(0);
+        openTour("inicio");
+        localStorage.setItem("agendate_has_seen_welcome_tour", "true");
+      }, 750);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, openTour]);
+
   const currentSection =
     ALL_SECTION_TOURS[selectedSectionKey] || ALL_SECTION_TOURS.inicio;
   const currentStep =
@@ -820,10 +855,19 @@ export default function GuidedTour() {
         if (el) {
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
-            const HEADER_OFFSET = 84;
-            const inViewport = rect.top >= HEADER_OFFSET && rect.bottom <= (window.innerHeight - 30);
-            if (!inViewport) {
-              const targetScrollY = Math.max(0, window.scrollY + rect.top - HEADER_OFFSET - 20);
+            const isFixedNav =
+              currentStep.targetSelector?.includes("sidebar") ||
+              currentStep.targetSelector?.includes("header") ||
+              currentStep.targetSelector === "aside";
+
+            if (isFixedNav) {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+              const elDocTop = window.scrollY + rect.top;
+              const targetScrollY = Math.max(
+                0,
+                Math.round(elDocTop + rect.height / 2 - window.innerHeight / 2)
+              );
               window.scrollTo({ top: targetScrollY, behavior: "smooth" });
             }
             const syncRect = () => {
@@ -975,6 +1019,12 @@ export default function GuidedTour() {
   useEffect(() => {
     if (!isTourOpen) return;
     function handleKeyDown(e: KeyboardEvent) {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Space"].includes(e.code)) {
+        const target = e.target as HTMLElement | null;
+        if (target?.tagName !== "INPUT" && target?.tagName !== "TEXTAREA") {
+          e.preventDefault();
+        }
+      }
       if (e.key === "Escape") {
         setShowExitConfirm((prev) => !prev);
       } else if (e.key === "ArrowRight" || e.key === "Enter") {
@@ -992,6 +1042,35 @@ export default function GuidedTour() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isTourOpen, showExitConfirm, handleNext, handlePrev]);
+
+  // Lock manual user scrolling while tour is active
+  useEffect(() => {
+    if (!isTourOpen) return;
+
+    const preventWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest(".guided-tour-scrollable")) return;
+      e.preventDefault();
+    };
+
+    const preventTouch = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest(".guided-tour-scrollable")) return;
+      e.preventDefault();
+    };
+
+    window.addEventListener("wheel", preventWheel, { passive: false });
+    window.addEventListener("touchmove", preventTouch, { passive: false });
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      window.removeEventListener("wheel", preventWheel);
+      window.removeEventListener("touchmove", preventTouch);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isTourOpen]);
 
   // Elevate active targeted tab button ONLY when the current step explicitly targets it
   useEffect(() => {

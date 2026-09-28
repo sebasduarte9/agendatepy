@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   CalendarPlus,
   CalendarDays,
   TrendingUp,
-  ExternalLink,
-  Sparkles,
   Palette,
   ArrowRight,
   ShieldCheck,
@@ -19,12 +18,9 @@ import {
   Banknote,
   MessageSquare,
   MessagesSquare,
-  Copy,
-  Check,
   Ban,
   Receipt,
   Coins,
-  ChevronRight,
   AlertCircle,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
@@ -47,7 +43,6 @@ export default function DashboardHomePage() {
   const pushToast = useDashboardStore((s) => s.pushToast);
   const isInitialSyncDone = useDashboardStore((s) => s.isInitialSyncDone);
 
-  const [copiedLink, setCopiedLink] = useState(false);
   const [filterTab, setFilterTab] = useState<"hoy" | "pendientes" | "todos">("hoy");
 
   // Today's civil date in Asunción
@@ -113,18 +108,6 @@ export default function DashboardHomePage() {
     return crmConversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
   }, [crmConversations]);
 
-  const publicBookingUrl = `/${business.slug || "barberia"}/reservar`;
-
-  const copyBookingLink = () => {
-    const fullUrl = typeof window !== "undefined"
-      ? `${window.location.origin}${publicBookingUrl}`
-      : `https://agendate.py${publicBookingUrl}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedLink(true);
-    pushToast("success", "¡Enlace copiado al portapapeles!");
-    setTimeout(() => setCopiedLink(false), 2500);
-  };
-
   const handleCompleteAndPay = async (app: Appointment) => {
     const isAlreadyCharged = cashMovements.some((m) => m.appointmentId === app.id);
     if (isAlreadyCharged) {
@@ -151,9 +134,17 @@ export default function DashboardHomePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="space-y-6"
+    >
       {/* Top Welcome & Operational Command Bar */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/10 via-indigo-600/5 to-purple-600/10 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/70 border border-violet-200/80 dark:border-white/10 p-6 text-slate-900 dark:text-white shadow-xl backdrop-blur-xl transition-all duration-300">
+      <div
+        data-tour="welcome-banner"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/10 via-indigo-600/5 to-purple-600/10 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/70 border border-violet-200/80 dark:border-white/10 p-6 text-slate-900 dark:text-white shadow-xl backdrop-blur-xl transition-all duration-300"
+      >
         <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-primary/15 dark:bg-primary/20 blur-3xl" />
 
         <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -166,14 +157,14 @@ export default function DashboardHomePage() {
               ¡Buen día, {business.name}!
             </h1>
             <p className="text-xs text-slate-600 dark:text-slate-300 sm:text-sm leading-relaxed">
-              Panel central de operaciones: agenda sincronizada, cobros en caja y CRM omnicanal activo.
+              Panel central de operaciones: agenda sincronizada, cobros en caja y atención al cliente activa.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href="/dashboard/nueva-reserva"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition"
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <CalendarPlus className="h-4 w-4" />
               <span>+ Nueva Cita</span>
@@ -181,7 +172,7 @@ export default function DashboardHomePage() {
 
             <Link
               href="/dashboard/caja"
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
             >
               <Banknote className="h-4 w-4 text-emerald-500" />
               <span>Caja & Arqueo</span>
@@ -189,7 +180,7 @@ export default function DashboardHomePage() {
 
             <Link
               href="/dashboard/crm"
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
             >
               <MessagesSquare className="h-4 w-4 text-violet-500" />
               <span>CRM Chats</span>
@@ -201,44 +192,13 @@ export default function DashboardHomePage() {
             </Link>
           </div>
         </div>
-
-        {/* Public link copy bar */}
-        <div className="relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/60 dark:border-white/10 pt-4 text-xs">
-          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-            <span className="font-semibold text-slate-900 dark:text-white">Tu Web de Reservas:</span>
-            <code className="rounded-lg bg-primary/10 dark:bg-black/30 border border-primary/20 dark:border-white/10 px-2.5 py-1 font-mono text-[11px] text-primary dark:text-amber-300 font-bold">
-              agendate.py/{business.slug || "barberia"}
-            </code>
-            <button
-              type="button"
-              onClick={copyBookingLink}
-              className="inline-flex items-center gap-1 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 px-2 py-1 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-              title="Copiar enlace"
-            >
-              {copiedLink ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-slate-400" />}
-              <span>{copiedLink ? "Copiado" : "Copiar"}</span>
-            </button>
-            <Link
-              href={publicBookingUrl}
-              target="_blank"
-              className="inline-flex items-center gap-1 font-semibold text-primary hover:underline ml-1"
-            >
-              <span>Ver en vivo</span>
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          </div>
-
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-semibold">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Base de Datos PostgreSQL Conectada
-          </span>
-        </div>
       </div>
 
       {/* Checklist de Activación del Negocio & Hitos Operacionales */}
       <ActivationChecklist />
 
       {/* 4 Clean Operational KPI Cards (Real Data Calculated) */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div data-tour="kpi-cards" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Revenue Today */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
@@ -339,7 +299,7 @@ export default function DashboardHomePage() {
       {/* Main 2-Column Operational Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column (2/3 width): Today's Agenda Feed */}
-        <div className="lg:col-span-2 space-y-4">
+        <div data-tour="agenda-operativa" className="lg:col-span-2 space-y-4">
           <Card>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
               <div>
@@ -544,14 +504,14 @@ export default function DashboardHomePage() {
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
               <span className="text-slate-400 text-[11px]">
-                Actualización bidireccional en tiempo real
+                Sincronización automática de citas
               </span>
             </div>
           </Card>
         </div>
 
         {/* Right Column (1/3 width): Live CRM Inbox & Quick Operations */}
-        <div className="space-y-4">
+        <div data-tour="quick-actions-crm" className="space-y-4">
           {/* CRM Quick Inbox Card */}
           <Card>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
@@ -570,41 +530,49 @@ export default function DashboardHomePage() {
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              Mensajes entrantes de WhatsApp, Instagram Direct y Facebook Messenger.
+              Mensajes entrantes de WhatsApp, Instagram Direct y chat web.
             </p>
 
             <div className="mt-3 space-y-2">
-              {crmConversations.slice(0, 3).map((conv) => {
-                const lastMsg = conv.messages[conv.messages.length - 1];
-                return (
-                  <Link
-                    key={conv.id}
-                    href="/dashboard/crm"
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 transition"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="relative">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 font-bold text-xs">
-                          {conv.clientName.slice(0, 2).toUpperCase()}
+              {crmConversations.length === 0 ? (
+                <div className="py-6 text-center space-y-1">
+                  <MessagesSquare className="h-7 w-7 mx-auto text-slate-300 dark:text-slate-600" />
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Sin mensajes pendientes</p>
+                  <p className="text-[11px] text-slate-400">Los chats entrantes de tus clientes aparecerán aquí.</p>
+                </div>
+              ) : (
+                crmConversations.slice(0, 3).map((conv) => {
+                  const lastMsg = conv.messages[conv.messages.length - 1];
+                  return (
+                    <Link
+                      key={conv.id}
+                      href="/dashboard/crm"
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 transition"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="relative">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 font-bold text-xs">
+                            {conv.clientName.slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900" />
                         </div>
-                        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                            {conv.clientName}
+                          </p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            {lastMsg?.text || "Consulta sobre turnos"}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-slate-900 dark:text-white text-xs truncate">
-                          {conv.clientName}
-                        </p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                          {lastMsg?.text || "Consulta sobre turnos"}
-                        </p>
-                      </div>
-                    </div>
 
-                    <span className="text-[10px] font-bold text-primary uppercase shrink-0">
-                      {conv.channel}
-                    </span>
-                  </Link>
-                );
-              })}
+                      <span className="text-[10px] font-bold text-primary uppercase shrink-0">
+                        {conv.channel}
+                      </span>
+                    </Link>
+                  );
+                })
+              )}
             </div>
           </Card>
 
@@ -652,19 +620,8 @@ export default function DashboardHomePage() {
               </Link>
             </div>
           </Card>
-
-          {/* Active Cloud Integrations Status */}
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-xs space-y-2">
-            <div className="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              <span>Infraestructura & Sincronización</span>
-            </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-300">
-              Conexión activa con PostgreSQL, Google Calendar y notificaciones automáticas por WhatsApp para Paraguay.
-            </p>
-          </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

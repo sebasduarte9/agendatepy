@@ -2,19 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, Menu, Settings, Sun, Moon, ChevronDown, ExternalLink, Sparkles } from "lucide-react";
+import { LogOut, Menu, Settings, Sun, Moon, ExternalLink } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 export default function Header() {
   const business = useDashboardStore((s) => s.business);
-  const setOpen = useDashboardStore((s) => s.setSidebarOpen);
   const currentUserRole = useDashboardStore((s) => s.currentUserRole);
-  const currentStaffId = useDashboardStore((s) => s.currentStaffId);
-  const selectedStaffId = useDashboardStore((s) => s.selectedStaffId);
-  const setSelectedStaffId = useDashboardStore((s) => s.setSelectedStaffId);
-  const setCurrentUserRole = useDashboardStore((s) => s.setCurrentUserRole);
-  const pushToast = useDashboardStore((s) => s.pushToast);
-  const openTour = useDashboardStore((s) => s.openTour);
+  const setOpen = useDashboardStore((s) => s.setSidebarOpen);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -71,40 +65,11 @@ export default function Header() {
           </div>
         </div>
       </div>
+
       <div className="flex items-center gap-1.5 sm:gap-2">
-        {/* Filtro de agenda por profesional (sin alterar permisos ni identidad del usuario) */}
-        {staff.length > 0 && (
-          <div className="relative hidden sm:block">
-            <select
-              value={selectedStaffId || "all"}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "all") {
-                  setSelectedStaffId("all");
-                  pushToast("success", "Vista de agenda: todo el equipo");
-                } else {
-                  const s = staff.find((m) => m.id === val);
-                  setSelectedStaffId(val);
-                  pushToast("success", `Vista filtrada: ${s?.name || "Colaborador"}`);
-                }
-              }}
-              aria-label="Filtrar vista de agenda por profesional"
-              className="rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-100/90 dark:bg-slate-900/90 py-1.5 pl-3 pr-7 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-primary/50 transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary appearance-none max-w-[150px] truncate"
-            >
-              <option value="all">Todo el salón</option>
-              {staff.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-              <ChevronDown className="h-3.5 w-3.5" />
-            </div>
-          </div>
-        )}
 
         <Link
+          data-tour="header-booking-link"
           href={`/${business.slug || "barberia"}/reservar`}
           target="_blank"
           className="group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-indigo-500/10 hover:from-primary/20 hover:to-indigo-500/20 px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-extrabold text-primary shadow-xs hover:shadow-md hover:shadow-primary/15 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 shrink-0"
@@ -123,7 +88,7 @@ export default function Header() {
         <button
           type="button"
           onClick={toggleDarkMode}
-          className="rounded-full p-1.5 sm:p-2 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          className="rounded-full p-1.5 sm:p-2 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
           title={isDark ? "Modo Claro" : "Modo Oscuro"}
         >
@@ -134,6 +99,7 @@ export default function Header() {
           href="/dashboard/configuracion"
           className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           aria-label="Configuración rápida"
+          title="Ajustes del local"
         >
           <Settings className="h-4 w-4" />
         </Link>

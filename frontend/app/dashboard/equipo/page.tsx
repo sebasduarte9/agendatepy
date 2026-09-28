@@ -81,7 +81,6 @@ export default function EquipoRolesPage() {
     deleteStaff,
     pushToast,
     currentUserRole,
-    setCurrentUserRole,
     business,
   } = useDashboardStore();
 

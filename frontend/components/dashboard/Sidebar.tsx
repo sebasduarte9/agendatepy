@@ -80,7 +80,8 @@ export default function Sidebar() {
 
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverEnterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("agendate_sidebar_pinned");
@@ -89,23 +90,38 @@ export default function Sidebar() {
 
   useEffect(() => {
     return () => {
-      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      if (hoverEnterTimeoutRef.current) clearTimeout(hoverEnterTimeoutRef.current);
+      if (hoverLeaveTimeoutRef.current) clearTimeout(hoverLeaveTimeoutRef.current);
     };
   }, []);
 
   function handleMouseEnter() {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
+    // Cancel any pending close
+    if (hoverLeaveTimeoutRef.current) {
+      clearTimeout(hoverLeaveTimeoutRef.current);
+      hoverLeaveTimeoutRef.current = null;
     }
-    setIsHovered(true);
+    // Delay expansion (260ms) so accidental mouse brush doesn't trigger it
+    if (!isHovered && !hoverEnterTimeoutRef.current) {
+      hoverEnterTimeoutRef.current = setTimeout(() => {
+        setIsHovered(true);
+        hoverEnterTimeoutRef.current = null;
+      }, 260);
+    }
   }
 
   function handleMouseLeave() {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    hoverTimeoutRef.current = setTimeout(() => {
+    // If user leaves before hover timer fired, cancel opening
+    if (hoverEnterTimeoutRef.current) {
+      clearTimeout(hoverEnterTimeoutRef.current);
+      hoverEnterTimeoutRef.current = null;
+    }
+    // Smooth delay before collapsing
+    if (hoverLeaveTimeoutRef.current) clearTimeout(hoverLeaveTimeoutRef.current);
+    hoverLeaveTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 120);
+      hoverLeaveTimeoutRef.current = null;
+    }, 150);
   }
 
   function togglePinned() {
@@ -160,6 +176,7 @@ export default function Sidebar() {
 
       {/* Main Sidebar Element */}
       <aside
+        data-tour="sidebar-nav"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{ width: currentWidth }}

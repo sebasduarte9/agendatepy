@@ -135,3 +135,37 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN"]);
+    if (isGuardError(auth)) return auth;
+
+    // Ejecución transaccional para limpiar appointments (onDelete: Restrict) y tenant
+    await prisma.$transaction([
+      prisma.appointment.deleteMany({ where: { tenantId: auth.tenantId } }),
+      prisma.tenant.delete({ where: { id: auth.tenantId } }),
+    ]);
+
+    const response = NextResponse.json({
+      ok: true,
+      message: "Tu negocio y cuenta han sido eliminados de forma definitiva.",
+    });
+
+    // Revocar cookie de sesión
+    response.cookies.set("agendatepy_session", "", {
+      path: "/",
+      maxAge: 0,
+      httpOnly: true,
+      sameSite: "lax",
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error en DELETE /api/tenant/settings:", error);
+    return NextResponse.json(
+      { ok: false, error: "DELETE_FAILED", message: "No se pudo eliminar el negocio." },
+      { status: 500 }
+    );
+  }
+}

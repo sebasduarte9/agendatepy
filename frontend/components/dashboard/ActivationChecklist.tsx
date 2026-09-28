@@ -1,22 +1,19 @@
-"use client";
-
 import { useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
   Circle,
-  Sparkles,
+  Trophy,
   ArrowRight,
   ChevronDown,
   ChevronUp,
   PartyPopper,
   CalendarCheck2,
-  Share2,
   ExternalLink,
+  Award,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { getBusinessReadiness } from "@/lib/business-readiness";
-import PublicBookingLink from "./PublicBookingLink";
 import Card from "./ui/Card";
 
 export default function ActivationChecklist() {
@@ -38,31 +35,10 @@ export default function ActivationChecklist() {
     appointmentsCount: validAppointments.length,
   });
 
-  const isFullyActivated = readiness.isReady && validAppointments.length > 0;
+  const isFullyActivated = readiness.score === 100;
   const isFirstBookingCelebration = validAppointments.length === 1;
   const firstApp = validAppointments[0];
   const firstService = firstApp ? services.find((s) => s.id === firstApp.serviceId) : null;
-
-  // Si ya completó todo y tiene reservas, mostramos solo una versión compacta discreta
-  if (isFullyActivated && isCollapsed) {
-    return (
-      <div className="flex items-center justify-between rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-xs">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
-            Tu negocio está 100% listo y recibiendo reservas activas
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsCollapsed(false)}
-          className="text-primary hover:underline font-semibold text-[11px]"
-        >
-          Ver detalles
-        </button>
-      </div>
-    );
-  }
 
   const steps = [
     {
@@ -98,16 +74,16 @@ export default function ActivationChecklist() {
       title: "Recibir tu primera reserva real",
       done: validAppointments.length > 0,
       href: `/${business.slug || "barberia"}/reservar`,
-      cta: "Hacer prueba como cliente",
+      cta: "Probar enlace",
       isExternal: true,
     },
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-tour="activation-checklist">
       {/* 1. Celebración de Primera Reserva (Aha Moment) */}
       {isFirstBookingCelebration && (
-        <div className="relative overflow-hidden rounded-3xl border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-emerald-500/10 p-5 shadow-lg backdrop-blur-md">
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-emerald-500/10 p-5 shadow-lg backdrop-blur-md">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-md shadow-emerald-500/30">
               <PartyPopper className="h-6 w-6" />
@@ -118,7 +94,7 @@ export default function ActivationChecklist() {
                   ¡Hito alcanzado!
                 </span>
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                  PostgreSQL Real
+                  Operativo
                 </span>
               </div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white sm:text-xl">
@@ -142,64 +118,77 @@ export default function ActivationChecklist() {
         </div>
       )}
 
-      {/* 2. Tarjeta del Checklist de Activación */}
-      <Card className="border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white sm:text-base">
-                Activación de tu Negocio
-              </h2>
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                {readiness.score}% completado
-              </span>
+      {/* 2. Tarjeta de Activación con Ícono de Logro (Trophy) */}
+      <Card className="border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
+              isFullyActivated
+                ? "bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 shadow-xs"
+                : "bg-primary/10 text-primary border border-primary/20 shadow-xs"
+            }`}>
+              <Trophy className="h-5 w-5" />
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {readiness.isReady
-                ? "¡Tu negocio está listo para recibir turnos! Compartí tu enlace público con tus clientes."
-                : "Completá los pasos requeridos para abrir las reservas públicas online."}
-            </p>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white sm:text-base">
+                  {isFullyActivated ? "¡Negocio 100% Configurado!" : "Activación de tu Negocio"}
+                </h2>
+                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase ${
+                  isFullyActivated
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                    : "bg-primary/10 text-primary border border-primary/20"
+                }`}>
+                  {readiness.score}% completado
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {isFullyActivated
+                  ? "Tenés tus servicios, horarios y colaboradores listos para atender turnos."
+                  : "Completá los pasos requeridos para abrir las reservas públicas online."}
+              </p>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            title={isCollapsed ? "Expandir checklist" : "Minimizar checklist"}
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            title={isCollapsed ? "Expandir pasos" : "Minimizar"}
           >
             {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           </button>
         </div>
 
         {!isCollapsed && (
-          <div className="pt-4 space-y-4">
-            {/* Barra de progreso */}
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div className="pt-4 space-y-3.5 border-t border-slate-100 dark:border-white/5 mt-4">
+            {/* Barra de progreso sutil */}
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
-                className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-500 ease-out"
+                className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-500 ease-out"
                 style={{ width: `${readiness.score}%` }}
               />
             </div>
 
-            {/* Lista de Pasos */}
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            {/* Lista de Pasos (sin repetir enlaces ni QR innecesarios) */}
+            <div className="grid gap-2 sm:grid-cols-2">
               {steps.map((st) => (
                 <div
                   key={st.id}
-                  className={`flex items-center justify-between rounded-xl border p-3 transition ${
+                  className={`flex items-center justify-between rounded-xl border p-2.5 transition ${
                     st.done
-                      ? "border-emerald-500/20 bg-emerald-50/40 dark:bg-emerald-950/20 text-slate-700 dark:text-slate-300"
-                      : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 text-slate-900 dark:text-white"
+                      ? "border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-950/10 text-slate-700 dark:text-slate-300"
+                      : "border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-900 dark:text-white"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2 min-w-0">
                     {st.done ? (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
                     ) : (
                       <Circle className="h-4 w-4 shrink-0 text-slate-400" />
                     )}
-                    <span className={`text-xs font-semibold ${st.done ? "line-through text-slate-500" : ""}`}>
+                    <span className={`text-xs font-semibold truncate ${st.done ? "line-through text-slate-400" : ""}`}>
                       {st.title}
                     </span>
                   </div>
@@ -216,15 +205,6 @@ export default function ActivationChecklist() {
                   )}
                 </div>
               ))}
-            </div>
-
-            {/* Enlace Público Integrado */}
-            <div className="pt-2">
-              <PublicBookingLink
-                slug={business.slug || "barberia"}
-                businessName={business.name}
-                variant="banner"
-              />
             </div>
           </div>
         )}
