@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, X, Shield, CheckCircle2, Zap } from "lucide-react";
+import { Check, X, Shield, CheckCircle2, Zap, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
@@ -336,11 +336,11 @@ function PriceCard({
           <button
             type="button"
             onClick={() => setShowAllMobile(!showAllMobile)}
-            className="mt-3 text-[11px] font-bold text-brand hover:underline sm:hidden cursor-pointer"
+            className="mt-3.5 inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/5 dark:bg-brand/10 px-3 py-1.5 text-[11px] font-bold text-brand hover:bg-brand/10 transition sm:hidden cursor-pointer active:scale-95"
+            aria-expanded={showAllMobile}
           >
-            {showAllMobile
-              ? "Ver menos características"
-              : `Ver más características (+${features.length - 4})`}
+            <span>{showAllMobile ? "Ver menos características" : `Ver más características (+${features.length - 4})`}</span>
+            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showAllMobile ? "rotate-180" : ""}`} />
           </button>
         )}
       </div>

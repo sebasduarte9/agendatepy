@@ -143,16 +143,16 @@ export const CATEGORIES: CategoryContent[] = [
 ];
 
 export const TICKER_ITEMS = [
-  "Peluquerías",
-  "Odontología",
-  "Pilates",
-  "Barberías",
-  "Estética & Spas",
-  "Médicos & Especialistas",
-  "Gimnasios",
-  "Manicura & Pedicura",
-  "Veterinarias",
-  "Talleres & Servicios",
+  { label: "Peluquerías", emoji: "✂️" },
+  { label: "Barberías", emoji: "💈" },
+  { label: "Odontología", emoji: "🦷" },
+  { label: "Estética & Spas", emoji: "💆" },
+  { label: "Pilates & Yoga", emoji: "🧘" },
+  { label: "Médicos & Especialistas", emoji: "🩺" },
+  { label: "Gimnasios & Fitness", emoji: "🏋️" },
+  { label: "Manicura & Uñas", emoji: "💅" },
+  { label: "Veterinarias", emoji: "🐾" },
+  { label: "Talleres & Servicios", emoji: "🔧" },
 ];
 
 export function getCategory(id: CategoryId): CategoryContent {

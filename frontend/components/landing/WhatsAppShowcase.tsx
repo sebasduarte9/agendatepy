@@ -38,30 +38,30 @@ export default function WhatsAppShowcase() {
             <strong className="text-slate-900 dark:text-white">{category.label}</strong> en {category.businessName}.
           </p>
 
-          <ul className="mt-5 sm:mt-6 space-y-2 sm:space-y-2.5">
+          <ul className="mt-5 sm:mt-6 space-y-2.5">
             <Bullet icon={<CheckCircle2 className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-emerald-600 shrink-0 mt-0.5" />}>
-              <span className="block sm:hidden">
-                <strong className="text-slate-900 dark:text-white">Confirmación inmediata:</strong> Comprobante digital con enlace al calendario.
-              </span>
-              <span className="hidden sm:block">
-                <strong className="text-slate-900 dark:text-white block">Confirmación inmediata:</strong> Comprobante digital con detalles del servicio, horario y enlace directo para guardar en el calendario.
-              </span>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm block">Confirmación Inmediata</span>
+                <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Comprobante digital con detalles del servicio, horario y enlace directo para guardar en el calendario.
+                </p>
+              </div>
             </Bullet>
             <Bullet icon={<Clock className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-brand shrink-0 mt-0.5" />}>
-              <span className="block sm:hidden">
-                <strong className="text-slate-900 dark:text-white">Recordatorio 24h antes:</strong> Botones rápidos para confirmar o reprogramar.
-              </span>
-              <span className="hidden sm:block">
-                <strong className="text-slate-900 dark:text-white block">Recordatorio 24 horas antes:</strong> Botones de respuesta rápida para confirmar asistencia o avisar con tiempo para reprogramar.
-              </span>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm block">Recordatorio 24h Antes</span>
+                <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Botones de respuesta rápida para confirmar asistencia o avisar con tiempo para reprogramar.
+                </p>
+              </div>
             </Bullet>
             <Bullet icon={<Bell className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-brand shrink-0 mt-0.5" />}>
-              <span className="block sm:hidden">
-                <strong className="text-slate-900 dark:text-white">Aviso 2h previas:</strong> Reduce ausencias e inasistencias hasta 80%.
-              </span>
-              <span className="hidden sm:block">
-                <strong className="text-slate-900 dark:text-white block">Aviso 2 horas previas:</strong> Hasta 80% menos ausencias comprobadas en salones y consultorios locales en Paraguay.
-              </span>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm block">Aviso 2 Horas Previas</span>
+                <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Hasta 80% menos ausencias comprobadas en salones y consultorios locales en Paraguay.
+                </p>
+              </div>
             </Bullet>
           </ul>
 

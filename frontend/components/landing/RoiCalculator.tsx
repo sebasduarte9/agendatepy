@@ -85,7 +85,8 @@ export default function RoiCalculator() {
           </h2>
 
           <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            En salones, clínicas y centros de estética de Paraguay, el 20% de las citas se pierden por olvido o falta de aviso. Mirá en tiempo real cuánto recuperás con recordatorios de WhatsApp.
+            <strong className="font-bold text-slate-900 dark:text-white block sm:inline">El 20% de las citas se pierden por olvido o inasistencia. </strong>
+            <span>Mirá en tiempo real cuánto dinero recuperás en tu negocio activando recordatorios automáticos por WhatsApp.</span>
           </p>
         </motion.div>
 

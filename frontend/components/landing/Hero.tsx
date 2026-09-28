@@ -64,40 +64,16 @@ export default function Hero() {
           </h1>
 
           <p className="mt-3 sm:mt-4 max-w-2xl text-xs xs:text-sm sm:text-base lg:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-            <span className="block sm:hidden">Tus clientes reservan 24/7 por WhatsApp con recordatorios automáticos. Sin pasar horas respondiendo mensajes.</span>
-            <span className="hidden sm:block">Tus clientes reservan 24/7 sin que pases horas respondiendo mensajes. Confirmaciones inmediatas, recordatorios inteligentes que sí leen y comisiones de tu equipo calculadas sin planillas.</span>
+            <strong className="font-bold text-slate-900 dark:text-white block sm:inline">
+              Tu agenda llena 24/7 sin pasar horas respondiendo mensajes.{" "}
+            </strong>
+            <span className="text-slate-600 dark:text-slate-300">
+              Confirmaciones inmediatas, recordatorios automáticos por WhatsApp y comisiones de tu equipo calculadas sin planillas.
+            </span>
           </p>
 
-          {/* Interactive Category Selector */}
-          <div className="mt-5 sm:mt-6">
-            <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-              Probá la experiencia para tu rubro:
-            </p>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {CATEGORIES.map((item) => {
-                const Icon = ICONS[item.id];
-                const active = selectedCategory === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(item.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition active:scale-95 ${
-                      active
-                        ? "border-brand bg-brand text-white shadow-md shadow-brand/25 font-bold"
-                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 shadow-xs"
-                    }`}
-                  >
-                    <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* High-Converting CTAs */}
-          <div className="mt-6 sm:mt-8 flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center">
+          <div className="mt-5 sm:mt-7 flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center">
             {/* Primary Action Button */}
             <motion.a
               href="/onboarding"
@@ -131,8 +107,8 @@ export default function Hero() {
           </div>
 
           {/* Risk Reversal Guarantee */}
-          <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span className="inline-flex items-center gap-1">
+          <div className="mt-3.5 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
               <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" />
               <span className="inline sm:hidden">14 días gratis</span>
               <span className="hidden sm:inline">14 días sin costo</span>
@@ -144,6 +120,34 @@ export default function Hero() {
             <span className="hidden sm:inline">Activación en 3 min</span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline">Soporte en Guaraníes</span>
+          </div>
+
+          {/* Interactive Category Selector */}
+          <div className="mt-5 sm:mt-6 pt-4 border-t border-slate-200/60 dark:border-white/5">
+            <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              Probá la experiencia para tu rubro:
+            </p>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {CATEGORIES.map((item) => {
+                const Icon = ICONS[item.id];
+                const active = selectedCategory === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(item.id)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                      active
+                        ? "border-brand bg-brand text-white shadow-md shadow-brand/25 font-bold"
+                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 shadow-xs"
+                    }`}
+                  >
+                    <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Social Proof & Metrics */}

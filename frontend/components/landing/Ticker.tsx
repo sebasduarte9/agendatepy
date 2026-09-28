@@ -8,9 +8,10 @@ export default function Ticker() {
       <div className="ticker-mask overflow-hidden">
         <div className="ticker-track flex w-max gap-6 sm:gap-10 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">
           {loop.map((item, index) => (
-            <span key={`${item}-${index}`} className="whitespace-nowrap flex items-center gap-4">
-              <span>{item}</span>
-              <span className="text-slate-300 dark:text-slate-700">·</span>
+            <span key={`${item.label}-${index}`} className="whitespace-nowrap flex items-center gap-2">
+              <span className="text-sm sm:text-base">{item.emoji}</span>
+              <span>{item.label}</span>
+              <span className="text-slate-300 dark:text-slate-700 ml-4">·</span>
             </span>
           ))}
         </div>

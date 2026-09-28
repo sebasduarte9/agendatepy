@@ -7,32 +7,32 @@ const ITEMS = [
   {
     icon: Percent,
     title: "0% Comisión por reserva",
-    mobileText: "Suscripción fija en Guaraníes. Sin comisiones por turno.",
-    desktopText: "Suscripción fija en Guaraníes. Cada guaraní que factura tu negocio ingresa íntegro a tu cuenta.",
+    valuePhrase: "Suscripción fija mensual en Guaraníes.",
+    detail: "Cada guaraní que factura tu negocio ingresa íntegro a tu cuenta sin retenciones por turno.",
   },
   {
     icon: Smartphone,
-    title: "Tus clientes no descargan ninguna app",
-    mobileText: "Reservan desde Instagram o WhatsApp sin instalar apps.",
-    desktopText: "Reservan desde el celular a cualquier hora, desde tu enlace en Instagram o hablando con el asistente de WhatsApp.",
+    title: "Tus clientes no descargan apps",
+    valuePhrase: "Reservas web directas desde Instagram o WhatsApp.",
+    detail: "Tus clientes acceden desde el navegador del celular o hablando con tu asistente sin contraseñas.",
   },
   {
     icon: ShieldCheck,
-    title: "Prueba gratuitamente durante 14 días",
-    mobileText: "Configuración en 3 min sin ingresar tarjeta de crédito.",
-    desktopText: "Creás tu agenda en 3 minutos, compartís tu enlace y empezás a recibir turnos de inmediato sin ingresar tarjeta.",
+    title: "Prueba gratuita real de 14 días",
+    valuePhrase: "Activación en 3 minutos sin tarjeta de crédito.",
+    detail: "Creás tu agenda, compartís tu enlace y empezás a recibir turnos de inmediato sin contratos a plazo.",
   },
   {
     icon: Wallet,
-    title: "Cobrás directo a tu cuenta bancaria",
-    mobileText: "Transferencias SIPAP, QR Bancard o efectivo en el local.",
-    desktopText: "Transferencias SIPAP a cualquier banco de plaza, cobro con QR Bancard o efectivo al momento de la cita.",
+    title: "Cobrás directo a tu cuenta local",
+    valuePhrase: "Transferencias SIPAP, QR Bancard o efectivo.",
+    detail: "Validación automática con cualquier banco de plaza en Paraguay o cobro presencial en el local.",
   },
 ];
 
 export default function Differentiators() {
   return (
-    <section className="relative overflow-hidden mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20">
+    <section id="diferenciales" className="relative overflow-hidden mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20 scroll-mt-20">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ export default function Differentiators() {
         </h2>
       </motion.div>
       <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 md:grid-cols-2">
-        {ITEMS.map(({ icon: Icon, title, mobileText, desktopText }, index) => {
+        {ITEMS.map(({ icon: Icon, title, valuePhrase, detail }, index) => {
           return (
             <motion.article
               key={title}
@@ -56,15 +56,17 @@ export default function Differentiators() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: (index % 2) * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs hover:border-brand/40 transition min-w-0"
+              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 shadow-xs hover:border-brand/40 transition min-w-0"
             >
               <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
                 <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               </div>
               <h3 className="mt-3.5 sm:mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
-              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                <span className="block sm:hidden">{mobileText}</span>
-                <span className="hidden sm:block">{desktopText}</span>
+              <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                {valuePhrase}
+              </p>
+              <p className="mt-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {detail}
               </p>
             </motion.article>
           );

@@ -68,25 +68,25 @@ export default function HowItWorks() {
           className="lg:col-span-5 space-y-2.5 sm:space-y-3 min-w-0"
         >
           <WorkflowStep
-            step="1"
+            step="01"
             icon={<Zap className="h-4.5 w-4.5 text-brand" />}
             title="Reserva en 30 Segundos"
-            mobileText="Reserva directa por cliente sin descargar apps ni contraseñas."
-            desktopText="Tu cliente elige el servicio, día y horario disponible sin crear contraseñas ni descargar aplicaciones pesadas."
+            leadIn="Sin descargar apps ni crear contraseñas."
+            detail="Tu cliente elige el servicio, día y horario disponible directamente desde tu link."
           />
           <WorkflowStep
-            step="2"
+            step="02"
             icon={<MessageSquareCheck className="h-4.5 w-4.5 text-emerald-600" />}
             title="Aviso y Recordatorio WhatsApp"
-            mobileText="Confirmación inmediata y recordatorios 24h antes por WhatsApp."
-            desktopText="Confirmación al instante y recordatorio 24h antes con botones interactivos que reducen ausencias hasta un 80%."
+            leadIn="Confirmación inmediata y recordatorio 24h."
+            detail="Botones interactivos para confirmar o reprogramar que reducen ausencias hasta un 80%."
           />
           <WorkflowStep
-            step="3"
+            step="03"
             icon={<WalletCards className="h-4.5 w-4.5 text-brand" />}
             title="Caja y Comisiones Cuadradas"
-            mobileText="Monto al arqueo diario y comisión calculada al instante."
-            desktopText="Al finalizar el turno, el monto ingresa al arqueo del día y la comisión del colaborador queda calculada automáticamente."
+            leadIn="Arqueo diario y comisiones automáticas."
+            detail="Al finalizar el turno, el monto ingresa a caja y la liquidación del equipo queda lista."
           />
         </motion.div>
       </div>
@@ -305,30 +305,30 @@ function WorkflowStep({
   step,
   icon,
   title,
-  mobileText,
-  desktopText,
+  leadIn,
+  detail,
 }: {
   step: string;
   icon: ReactNode;
   title: string;
-  mobileText: string;
-  desktopText: string;
+  leadIn: string;
+  detail: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 p-4 shadow-xs backdrop-blur-xl hover:border-brand/40 transition">
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 p-3.5 sm:p-4 shadow-xs backdrop-blur-xl hover:border-brand/40 transition">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] sm:text-xs font-black text-brand dark:text-white border border-slate-200/60 dark:border-white/10">
           {step}
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10">
+        <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-brand/10">
           {icon}
         </div>
         <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{title}</h3>
       </div>
-      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-1">
-        <span className="block sm:hidden">{mobileText}</span>
-        <span className="hidden sm:block">{desktopText}</span>
-      </p>
+      <div className="mt-2 text-xs leading-relaxed pl-1">
+        <p className="font-semibold text-slate-800 dark:text-slate-200">{leadIn}</p>
+        <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{detail}</p>
+      </div>
     </div>
   );
 }

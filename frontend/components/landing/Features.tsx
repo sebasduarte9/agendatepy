@@ -93,8 +93,8 @@ export default function Features() {
               Tus clientes reservan directamente por WhatsApp en segundos
             </h3>
             <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="block sm:hidden">Citas confirmadas al instante en tu agenda por WhatsApp sin instalar nada.</span>
-              <span className="hidden sm:block">Sin formularios lentos ni descargas de apps. Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.</span>
+              <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Sin formularios lentos ni descargas de apps. </strong>
+              <span>Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.</span>
             </p>
           </div>
 
@@ -140,11 +140,11 @@ export default function Features() {
             </div>
 
             <h3 className="mt-3 text-lg sm:text-2xl font-black text-slate-900 dark:text-white">
-              Control de Caja y Arqueo
+              Control de Caja y Arqueo Diario
             </h3>
             <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="block sm:hidden">Cobros en efectivo y transferencias sin descuadres al cerrar turno.</span>
-              <span className="hidden sm:block">Registro automático de cobros en efectivo y transferencias. Cierre de turno diario sin descuadres ni planillas manuales.</span>
+              <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Cierre diario sin descuadres. </strong>
+              <span>Registro automático de cobros en efectivo y transferencias SIPAP sin planillas manuales.</span>
             </p>
           </div>
 
@@ -194,8 +194,8 @@ export default function Features() {
               Google & Apple Calendar
             </h3>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="block sm:hidden">Turnos sincronizados con alarmas en Android y iPhone.</span>
-              <span className="hidden sm:block">Detección de dispositivo: añade el turno con alarma 24h y 2h antes en Android y iPhone.</span>
+              <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Alarmas en Android y iPhone. </strong>
+              <span>Sincronización automática de turnos con aviso 24h y 2h antes según el dispositivo.</span>
             </p>
           </div>
 
@@ -232,8 +232,8 @@ export default function Features() {
               Fidelización Digital
             </h3>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="block sm:hidden">Sellos virtuales que premian a tus clientes frecuentes.</span>
-              <span className="hidden sm:block">Tus clientes acumulan sellos virtuales. Al completar 5 turnos, desbloquean beneficios sin cupones.</span>
+              <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Sellos virtuales que premian visitas. </strong>
+              <span>Tus clientes acumulan sellos y desbloquean beneficios sin cupones en papel.</span>
             </p>
           </div>
 
@@ -276,8 +276,8 @@ export default function Features() {
               Comisiones de Equipo
             </h3>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="block sm:hidden">Cálculo de comisiones con 1 solo clic.</span>
-              <span className="hidden sm:block">Liquidá comisiones de estilistas o colaboradores con un clic según turnos atendidos.</span>
+              <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Liquidación en 1 solo clic. </strong>
+              <span>Cálculo automático de comisiones de estilistas o colaboradores por turno atendido.</span>
             </p>
           </div>
 
@@ -293,6 +293,36 @@ export default function Features() {
           </div>
         </motion.div>
       </div>
+
+      {/* Feature Bar - Extras y Beneficios Clave (Técnica 4) */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.6 }}
+        className="mt-8 sm:mt-10 pt-6 border-t border-slate-200/80 dark:border-white/10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs text-slate-600 dark:text-slate-400"
+      >
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>Multi-profesional & roles</span>
+        </div>
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>Reportes y exportación Excel</span>
+        </div>
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>Ficha técnica y CRM de clientes</span>
+        </div>
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>Sin descargas para el cliente</span>
+        </div>
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>Soporte prioritario en Guaraníes</span>
+        </div>
+      </motion.div>
     </section>
   );
 }
