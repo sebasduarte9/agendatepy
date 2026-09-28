@@ -19,6 +19,7 @@ import {
   X,
   FolderPlus,
   Clock,
+  Percent,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -74,7 +75,7 @@ export default function ProductosPage() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
-  // Form state
+  // Form state for creating/editing a product
   const [form, setForm] = useState<{
     name: string;
     description: string;
@@ -84,11 +85,6 @@ export default function ProductosPage() {
     category: string;
     stock: number;
     active: boolean;
-    isOnSale: boolean;
-    salePrice: number;
-    saleType: "time" | "quantity" | "both";
-    saleExpiresAt: string;
-    saleMaxUnits: number;
   }>({
     name: "",
     description: "",
@@ -98,9 +94,15 @@ export default function ProductosPage() {
     category: "Peinado",
     stock: 10,
     active: true,
+  });
+
+  // Dedicated Promotion & Discount Modal State
+  const [promoModalProduct, setPromoModalProduct] = useState<ProductItem | null>(null);
+  const [promoForm, setPromoForm] = useState({
     isOnSale: false,
+    promoPercent: 20,
     salePrice: 0,
-    saleType: "time",
+    saleType: "both" as "time" | "quantity" | "both",
     saleExpiresAt: "",
     saleMaxUnits: 10,
   });
@@ -203,11 +205,6 @@ export default function ProductosPage() {
       category: allCategories[0] || "General",
       stock: 15,
       active: true,
-      isOnSale: false,
-      salePrice: 0,
-      saleType: "time",
-      saleExpiresAt: "",
-      saleMaxUnits: 10,
     });
     setModalOpen(true);
   }
@@ -223,24 +220,107 @@ export default function ProductosPage() {
       category: product.category,
       stock: product.stock,
       active: product.active,
-      isOnSale: !!product.isOnSale,
-      salePrice: product.salePrice || 0,
-      saleType: product.saleType || "time",
-      saleExpiresAt: product.saleExpiresAt || "",
-      saleMaxUnits: product.saleMaxUnits || 10,
     });
     setModalOpen(true);
   }
+
+  function handleOpenPromoModal(product: ProductItem) {
+    const hasExistingPromo = Boolean(product.isOnSale && product.salePrice && product.salePrice < product.price);
+    const defaultPromoPrice = hasExistingPromo
+      ? product.salePrice!
+      : Math.max(1000, Math.round((product.price * 0.8) / 1000) * 1000);
+    const defaultPercent = Math.round(((product.price - defaultPromoPrice) / product.price) * 100);
+
+    const inOneWeek = new Date();
+    inOneWeek.setDate(inOneWeek.getDate() + 7);
+    const defaultExpiry = inOneWeek.toISOString().slice(0, 16);
+
+    setPromoForm({
+      isOnSale: hasExistingPromo,
+      promoPercent: Math.max(1, Math.min(99, defaultPercent)),
+      salePrice: defaultPromoPrice,
+      saleType: product.saleType || "both",
+      saleExpiresAt: product.saleExpiresAt || defaultExpiry,
+      saleMaxUnits: product.saleMaxUnits || Math.min(10, product.stock || 10),
+    });
+    setPromoModalProduct(product);
+  }
+
+  function handlePromoPercentChange(pct: number) {
+    if (!promoModalProduct) return;
+    const clamped = Math.max(1, Math.min(99, pct));
+    const calculatedPrice = Math.max(1000, Math.round((promoModalProduct.price * (1 - clamped / 100)) / 1000) * 1000);
+    setPromoForm((prev) => ({
+      ...prev,
+      promoPercent: clamped,
+      salePrice: calculatedPrice,
+    }));
+  }
+
+  function handlePromoPriceChange(rawPrice: number) {
+    if (!promoModalProduct) return;
+    const price = Math.max(0, rawPrice);
+    const calculatedPct = promoModalProduct.price > 0
+      ? Math.round(((promoModalProduct.price - price) / promoModalProduct.price) * 100)
+      : 0;
+    setPromoForm((prev) => ({
+      ...prev,
+      salePrice: price,
+      promoPercent: Math.max(1, Math.min(99, calculatedPct)),
+    }));
+  }
+
+  function handleSavePromo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!promoModalProduct) return;
+
+    if (promoForm.isOnSale && (!promoForm.salePrice || promoForm.salePrice >= promoModalProduct.price)) {
+      pushToast("error", "El precio de oferta debe ser menor al precio normal");
+      return;
+    }
+
+    updateProduct(promoModalProduct.id, {
+      isOnSale: promoForm.isOnSale,
+      salePrice: promoForm.isOnSale ? Number(promoForm.salePrice) : undefined,
+      saleType: promoForm.isOnSale ? promoForm.saleType : undefined,
+      saleExpiresAt: promoForm.isOnSale && (promoForm.saleType === "time" || promoForm.saleType === "both")
+        ? promoForm.saleExpiresAt
+        : undefined,
+      saleMaxUnits: promoForm.isOnSale && (promoForm.saleType === "quantity" || promoForm.saleType === "both")
+        ? Number(promoForm.saleMaxUnits)
+        : undefined,
+    });
+
+    if (promoForm.isOnSale) {
+      pushToast("success", `Oferta activada para ${promoModalProduct.name}`);
+    } else {
+      pushToast("success", `Oferta desactivada para ${promoModalProduct.name}`);
+    }
+    setPromoModalProduct(null);
+  }
+
+  // Listen to Guided Tour events for promo modal
+  useEffect(() => {
+    const handleOpenPromo = () => {
+      if (products.length > 0) {
+        handleOpenPromoModal(products[0]);
+      }
+    };
+    const handleClosePromo = () => {
+      setPromoModalProduct(null);
+    };
+    window.addEventListener("agendate-open-product-promo-modal", handleOpenPromo);
+    window.addEventListener("agendate-close-product-promo-modal", handleClosePromo);
+    return () => {
+      window.removeEventListener("agendate-open-product-promo-modal", handleOpenPromo);
+      window.removeEventListener("agendate-close-product-promo-modal", handleClosePromo);
+    };
+  }, [products]);
 
   function handleSaveProduct(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
       pushToast("error", "El nombre del producto es obligatorio");
-      return;
-    }
-
-    if (form.isOnSale && (!form.salePrice || form.salePrice >= form.price)) {
-      pushToast("error", "El precio de oferta debe ser menor al precio normal");
       return;
     }
 
@@ -253,11 +333,13 @@ export default function ProductosPage() {
       category: form.category,
       stock: Number(form.stock),
       active: form.active,
-      isOnSale: form.isOnSale,
-      salePrice: form.isOnSale ? Number(form.salePrice) : undefined,
-      saleType: form.isOnSale ? form.saleType : undefined,
-      saleExpiresAt: form.isOnSale && (form.saleType === "time" || form.saleType === "both") ? form.saleExpiresAt : undefined,
-      saleMaxUnits: form.isOnSale && (form.saleType === "quantity" || form.saleType === "both") ? Number(form.saleMaxUnits) : undefined,
+      ...(editingProduct ? {
+        isOnSale: editingProduct.isOnSale,
+        salePrice: editingProduct.salePrice,
+        saleType: editingProduct.saleType,
+        saleExpiresAt: editingProduct.saleExpiresAt,
+        saleMaxUnits: editingProduct.saleMaxUnits,
+      } : {}),
     };
 
     if (editingProduct) {
@@ -630,7 +712,7 @@ export default function ProductosPage() {
                     <button
                       type="button"
                       data-tour={index === 0 ? "productos-promo-btn" : undefined}
-                      onClick={() => openEditModal(p)}
+                      onClick={() => handleOpenPromoModal(p)}
                       className={`w-full flex items-center justify-between rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
                         p.isOnSale && p.salePrice && p.salePrice < p.price
                           ? "border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
@@ -809,121 +891,6 @@ export default function ProductosPage() {
             </div>
           )}
 
-          {/* Special Offer / Promotional Campaign Section */}
-          <div data-tour="product-offer-section" className="rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 p-3.5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white font-black shadow-xs">
-                  <Tag className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Poner este producto en Oferta</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                    Descuento con límite de tiempo o cupo máximo de unidades
-                  </p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isOnSale}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setForm({
-                      ...form,
-                      isOnSale: checked,
-                      salePrice: checked && (!form.salePrice || form.salePrice >= form.price)
-                        ? Math.max(1000, Math.round(form.price * 0.8 / 1000) * 1000)
-                        : form.salePrice,
-                    });
-                  }}
-                  className="sr-only peer"
-                />
-                <div className="w-10 h-5.5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-amber-500" />
-              </label>
-            </div>
-
-            {form.isOnSale && (
-              <div className="space-y-3 pt-2.5 border-t border-amber-500/20 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                      Precio de Oferta Promocional (Gs.) *
-                    </label>
-                    <input
-                      type="number"
-                      step={5000}
-                      min={1000}
-                      required={form.isOnSale}
-                      value={form.salePrice || ""}
-                      onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })}
-                      placeholder="Ej: 45000"
-                      className="mt-1 w-full rounded-xl border border-amber-400/80 dark:border-amber-500/40 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-black text-amber-600 dark:text-amber-400 outline-none focus:border-amber-500 shadow-xs"
-                    />
-                    {form.price > 0 && form.salePrice > 0 && form.salePrice < form.price && (
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
-                        Ahorro del {Math.round(((form.price - form.salePrice) / form.price) * 100)}% ({formatGs(form.price - form.salePrice)} menos)
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                      Modalidad del Límite de Oferta
-                    </label>
-                    <select
-                      value={form.saleType}
-                      onChange={(e) => setForm({ ...form, saleType: e.target.value as any })}
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
-                    >
-                      <option value="time">Por Tiempo (Fecha y hora de expiración)</option>
-                      <option value="quantity">Por Cantidad Máxima de Unidades</option>
-                      <option value="both">Ambos (Tiempo y Cantidad)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {(form.saleType === "time" || form.saleType === "both") && (
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-amber-500" />
-                      <span>Fecha y hora límite de la oferta</span>
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={form.saleExpiresAt}
-                      onChange={(e) => setForm({ ...form, saleExpiresAt: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      Cumplida esta fecha, la tienda volverá al precio regular automáticamente.
-                    </p>
-                  </div>
-                )}
-
-                {(form.saleType === "quantity" || form.saleType === "both") && (
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <Package className="h-3.5 w-3.5 text-amber-500" />
-                      <span>Cantidad máxima de unidades en oferta</span>
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={form.saleMaxUnits || ""}
-                      onChange={(e) => setForm({ ...form, saleMaxUnits: Number(e.target.value) })}
-                      placeholder="Ej: 10 unidades"
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      Al venderse el cupo asignado, el precio se normalizará de forma automática.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Descripción Breve</label>
             <textarea
@@ -954,6 +921,259 @@ export default function ProductosPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Dedicated Special Offer & Discount Modal */}
+      <Modal
+        open={!!promoModalProduct}
+        onClose={() => setPromoModalProduct(null)}
+        maxWidth="max-w-lg"
+        title={promoModalProduct ? `Descuento & Oferta: ${promoModalProduct.name}` : "Oferta"}
+      >
+        {promoModalProduct && (
+          <form onSubmit={handleSavePromo} className="space-y-4 text-xs" data-tour="product-offer-section">
+            {/* Promo Header & Switch */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-white font-black shadow-xs">
+                  <Tag className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
+                    Activar Precio Promocional / Oferta
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Precio normal: <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(promoModalProduct.price)}</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Toggle Switch */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={promoForm.isOnSale}
+                onClick={() => {
+                  const nextState = !promoForm.isOnSale;
+                  setPromoForm((prev) => ({
+                    ...prev,
+                    isOnSale: nextState,
+                    salePrice: nextState && (!prev.salePrice || prev.salePrice >= promoModalProduct.price)
+                      ? Math.max(1000, Math.round((promoModalProduct.price * 0.8) / 1000) * 1000)
+                      : prev.salePrice,
+                  }));
+                }}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  promoForm.isOnSale ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    promoForm.isOnSale ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {promoForm.isOnSale ? (
+              <div className="space-y-4 pt-1">
+                {/* Quick Preset Discount Pills */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Atajos rápidos de descuento
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[10, 15, 20, 25, 30, 40, 50].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => handlePromoPercentChange(pct)}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                          promoForm.promoPercent === pct
+                            ? "bg-amber-500 text-white border-amber-500 shadow-xs"
+                            : "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-amber-400"
+                        }`}
+                      >
+                        -{pct}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dual Inputs: % vs Monto */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                      Porcentaje de Descuento (%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={promoForm.promoPercent}
+                        onChange={(e) => handlePromoPercentChange(Number(e.target.value))}
+                        className="w-full rounded-xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 pl-3 pr-8 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-amber-600">
+                        %
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Calcula el monto final en Gs. automáticamente.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                      Precio de Oferta (Gs.) *
+                    </label>
+                    <input
+                      type="number"
+                      min="1000"
+                      step="1000"
+                      value={promoForm.salePrice}
+                      onChange={(e) => handlePromoPriceChange(Number(e.target.value))}
+                      className="w-full rounded-xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                    />
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Calcula el % de descuento automáticamente.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Live Preview Card */}
+                <div className="p-3 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-600 dark:text-slate-300 font-medium">Comparación en catálogo público:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400 line-through font-mono">
+                        {formatGs(promoModalProduct.price)}
+                      </span>
+                      <span className="text-sm font-black text-amber-600 dark:text-amber-400 font-mono">
+                        {formatGs(promoForm.salePrice)}
+                      </span>
+                      <span className="bg-amber-500 text-white font-extrabold text-[10px] px-1.5 py-0.5 rounded-md">
+                        -{promoForm.promoPercent}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-amber-500/20 text-slate-500 dark:text-slate-400">
+                    <span>
+                      Ahorro para el cliente: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{formatGs(Math.max(0, promoModalProduct.price - promoForm.salePrice))}</strong>
+                    </span>
+                    <span>
+                      Margen con promo: <strong className="text-slate-800 dark:text-slate-200">{promoForm.salePrice > 0 ? Math.round(((promoForm.salePrice - promoModalProduct.cost) / promoForm.salePrice) * 100) : 0}%</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Limiting modality: Time or Quantity */}
+                <div className="pt-2 border-t border-slate-100 dark:border-white/10 space-y-2.5">
+                  <label className="block font-bold text-slate-700 dark:text-slate-200">
+                    Modalidad de Límite de la Oferta
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPromoForm({ ...promoForm, saleType: "time" })}
+                      className={`p-2.5 rounded-xl border text-center transition cursor-pointer ${
+                        promoForm.saleType === "time"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Clock className="h-4 w-4 mx-auto mb-1 text-amber-500" />
+                      <span className="block text-[11px] font-black">Por Tiempo</span>
+                      <span className="text-[9px] opacity-75">Fecha límite</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPromoForm({ ...promoForm, saleType: "quantity" })}
+                      className={`p-2.5 rounded-xl border text-center transition cursor-pointer ${
+                        promoForm.saleType === "quantity"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Package className="h-4 w-4 mx-auto mb-1 text-amber-500" />
+                      <span className="block text-[11px] font-black">Por Cantidad</span>
+                      <span className="text-[9px] opacity-75">Cupo de unidades</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPromoForm({ ...promoForm, saleType: "both" })}
+                      className={`p-2.5 rounded-xl border text-center transition cursor-pointer ${
+                        promoForm.saleType === "both"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Percent className="h-4 w-4 mx-auto mb-1 text-amber-500" />
+                      <span className="block text-[11px] font-black">Ambos</span>
+                      <span className="text-[9px] opacity-75">Tiempo y cupo</span>
+                    </button>
+                  </div>
+
+                  {(promoForm.saleType === "time" || promoForm.saleType === "both") && (
+                    <div className="pt-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1">
+                        <Clock className="h-3.5 w-3.5 text-amber-500" />
+                        <span>Fecha y hora de expiración de la oferta</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={promoForm.saleExpiresAt}
+                        onChange={(e) => setPromoForm({ ...promoForm, saleExpiresAt: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
+                      />
+                    </div>
+                  )}
+
+                  {(promoForm.saleType === "quantity" || promoForm.saleType === "both") && (
+                    <div className="pt-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1">
+                        <Package className="h-3.5 w-3.5 text-amber-500" />
+                        <span>Cantidad máxima de unidades en oferta</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={promoForm.saleMaxUnits || ""}
+                        onChange={(e) => setPromoForm({ ...promoForm, saleMaxUnits: Number(e.target.value) })}
+                        placeholder="Ej: 10 unidades"
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 text-center text-slate-500 dark:text-slate-400">
+                <p className="font-semibold text-xs">La oferta está actualmente desactivada para este producto.</p>
+                <p className="text-[11px] mt-1">El producto se venderá al precio estándar de {formatGs(promoModalProduct.price)}.</p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => setPromoModalProduct(null)}
+                className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="rounded-xl bg-amber-500 hover:bg-amber-600 px-5 py-2 font-bold text-white shadow-md shadow-amber-500/20 transition cursor-pointer"
+              >
+                {promoForm.isOnSale ? "Guardar Oferta" : "Guardar Desactivación"}
+              </button>
+            </div>
+          </form>
+        )}
       </Modal>
 
       {/* Web Modal for Delete Product Confirmation */}

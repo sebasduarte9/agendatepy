@@ -419,11 +419,11 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 5,
-        taskTitle: "Ofertas Especiales & Descuentos",
+        taskTitle: "Promociones Flash & Descuentos",
         instruction:
-          "Activá 'Poner este producto en Oferta' para configurar un precio promocional con límite por fecha/hora de expiración o por cupo máximo de unidades.",
-        tip: "Tus clientes verán el precio anterior tachado, el porcentaje de descuento y el contador de unidades.",
-        targetSelector: '[data-tour="product-offer-section"]',
+          "Hacé clic en 'Poner en oferta' o 'Modificar oferta' en la tarjeta para abrir el calculador independiente de descuentos por porcentaje o monto, con límites de tiempo o cupo de unidades.",
+        tip: "El producto de ejemplo ya viene listo para que pruebes los descuentos y veas cómo impacta en tu catálogo.",
+        targetSelector: '[data-tour="productos-promo-btn"]',
       },
       {
         stepNumber: 6,
@@ -435,11 +435,11 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 7,
-        taskTitle: "Ajuste de Stock Rápido & Ofertas Flash",
+        taskTitle: "Ajuste táctil rápido (-1, +1, +5) y catálogo",
         instruction:
-          "En cada tarjeta tenés botones rápidos (-1, +1, +5) para actualizar stock en mostrador y el botón 'Poner en oferta' para lanzar promociones inmediatas.",
-        tip: "El producto de ejemplo ya viene listo para que pruebes los descuentos y veas cómo impacta en tu catálogo.",
-        targetSelector: '[data-tour="productos-promo-btn"]',
+          "En cada tarjeta de producto tenés botones rápidos para descontar cuando vendés al mostrador o sumar cuando llega una reposición del distribuidor.",
+        tip: "Tocá el botón de edición para cambiar fotos o precios, o la papelera para eliminar productos de forma segura.",
+        targetSelector: '[data-tour="productos-grid"]',
       },
     ],
   },
@@ -1007,7 +1007,7 @@ export default function GuidedTour() {
     if (typeof window !== "undefined") {
       const isProductModalStep =
         currentStep.actionPath === "open-product-modal" ||
-        (currentSection?.id === "productos" && [2, 3, 4, 5].includes(currentStep.stepNumber));
+        (currentSection?.id === "productos" && [2, 3, 4].includes(currentStep.stepNumber));
 
       if (isProductModalStep) {
         window.dispatchEvent(new CustomEvent("agendate-open-product-modal"));
@@ -1138,6 +1138,7 @@ export default function GuidedTour() {
         window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "estilos" } }));
       }
       window.dispatchEvent(new CustomEvent("agendate-close-product-modal"));
+      window.dispatchEvent(new CustomEvent("agendate-close-product-promo-modal"));
     }
     closeTour();
   }, [selectedSectionKey, closeTour]);
@@ -1147,6 +1148,7 @@ export default function GuidedTour() {
     return () => {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("agendate-close-product-modal"));
+        window.dispatchEvent(new CustomEvent("agendate-close-product-promo-modal"));
       }
     };
   }, []);
