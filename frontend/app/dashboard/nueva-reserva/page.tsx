@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   Scissors,
@@ -23,682 +24,1027 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Check,
+  AlertCircle,
+  Ban,
+  CalendarDays,
 } from "lucide-react";
+import { format, parseISO, addMinutes } from "date-fns";
+import { es } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
-import MiniCalendar from "@/components/landing/MiniCalendar";
-import { formatGs, phoneWa } from "@/lib/dashboard-dates";
+import { formatGs } from "@/lib/dashboard-dates";
 import type { PaymentMethod } from "@/lib/dashboard-types";
 
-const TIMES = ["08:30", "09:30", "10:30", "11:30", "14:00", "15:00", "16:30", "17:30", "18:30"];
+export interface CountryOption {
+  code: string;
+  name: string;
+  flag: string;
+  dialCode: string;
+  maxDigits: number;
+  minDigits: number;
+  placeholder: string;
+}
 
-export default function NuevaReservaPage() {
+const COUNTRY_LIST: CountryOption[] = [
+  { code: "PY", name: "Paraguay", flag: "🇵🇾", dialCode: "+595", maxDigits: 10, minDigits: 9, placeholder: "0981 123 456" },
+  { code: "AR", name: "Argentina", flag: "🇦🇷", dialCode: "+54", maxDigits: 11, minDigits: 10, placeholder: "9 11 2345 6789" },
+  { code: "BR", name: "Brasil", flag: "🇧🇷", dialCode: "+55", maxDigits: 11, minDigits: 10, placeholder: "11 91234 5678" },
+  { code: "UY", name: "Uruguay", flag: "🇺🇾", dialCode: "+598", maxDigits: 9, minDigits: 8, placeholder: "099 123 456" },
+  { code: "CL", name: "Chile", flag: "🇨🇱", dialCode: "+56", maxDigits: 9, minDigits: 9, placeholder: "9 1234 5678" },
+  { code: "BO", name: "Bolivia", flag: "🇧🇴", dialCode: "+591", maxDigits: 8, minDigits: 8, placeholder: "7123 4567" },
+  { code: "PE", name: "Perú", flag: "🇵🇪", dialCode: "+51", maxDigits: 9, minDigits: 9, placeholder: "912 345 678" },
+  { code: "CO", name: "Colombia", flag: "🇨🇴", dialCode: "+57", maxDigits: 10, minDigits: 10, placeholder: "300 123 4567" },
+  { code: "ES", name: "España", flag: "🇪🇸", dialCode: "+34", maxDigits: 9, minDigits: 9, placeholder: "612 345 678" },
+  { code: "US", name: "Estados Unidos", flag: "🇺🇸", dialCode: "+1", maxDigits: 10, minDigits: 10, placeholder: "202 555 0123" },
+  { code: "MX", name: "México", flag: "🇲🇽", dialCode: "+52", maxDigits: 10, minDigits: 10, placeholder: "55 1234 5678" },
+  { code: "EC", name: "Ecuador", flag: "🇪🇨", dialCode: "+593", maxDigits: 9, minDigits: 9, placeholder: "99 123 4567" },
+  { code: "VE", name: "Venezuela", flag: "🇻🇪", dialCode: "+58", maxDigits: 10, minDigits: 10, placeholder: "412 123 4567" },
+  { code: "PA", name: "Panamá", flag: "🇵🇦", dialCode: "+507", maxDigits: 8, minDigits: 8, placeholder: "6123 4567" },
+  { code: "CR", name: "Costa Rica", flag: "🇨🇷", dialCode: "+506", maxDigits: 8, minDigits: 8, placeholder: "8123 4567" },
+  { code: "DO", name: "Rep. Dominicana", flag: "🇩🇴", dialCode: "+1", maxDigits: 10, minDigits: 10, placeholder: "809 123 4567" },
+  { code: "GT", name: "Guatemala", flag: "🇬🇹", dialCode: "+502", maxDigits: 8, minDigits: 8, placeholder: "5123 4567" },
+  { code: "HN", name: "Honduras", flag: "🇭🇳", dialCode: "+504", maxDigits: 8, minDigits: 8, placeholder: "9123 4567" },
+  { code: "SV", name: "El Salvador", flag: "🇸🇻", dialCode: "+503", maxDigits: 8, minDigits: 8, placeholder: "7123 4567" },
+  { code: "NI", name: "Nicaragua", flag: "🇳🇮", dialCode: "+505", maxDigits: 8, minDigits: 8, placeholder: "8123 4567" },
+  { code: "CA", name: "Canadá", flag: "🇨🇦", dialCode: "+1", maxDigits: 10, minDigits: 10, placeholder: "416 123 4567" },
+  { code: "IT", name: "Italia", flag: "🇮🇹", dialCode: "+39", maxDigits: 10, minDigits: 9, placeholder: "312 345 6789" },
+  { code: "FR", name: "Francia", flag: "🇫🇷", dialCode: "+33", maxDigits: 9, minDigits: 9, placeholder: "6 12 34 56 78" },
+  { code: "DE", name: "Alemania", flag: "🇩🇪", dialCode: "+49", maxDigits: 11, minDigits: 10, placeholder: "151 1234 5678" },
+  { code: "GB", name: "Reino Unido", flag: "🇬🇧", dialCode: "+44", maxDigits: 10, minDigits: 10, placeholder: "7123 456789" },
+  { code: "PT", name: "Portugal", flag: "🇵🇹", dialCode: "+351", maxDigits: 9, minDigits: 9, placeholder: "912 345 678" },
+];
+
+const APPOINTMENT_TIME_SLOTS = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+];
+
+function formatPhoneInput(val: string, country: CountryOption): string {
+  let digits = val.replace(/\D/g, "");
+  if (!digits) return "";
+
+  if (country.code === "PY") {
+    if (digits.startsWith("595")) {
+      digits = digits.slice(3);
+    }
+    if (digits.length > 10) {
+      digits = digits.slice(0, 10);
+    }
+    if (digits.startsWith("0")) {
+      if (digits.length <= 4) return digits;
+      if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+      return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+    } else {
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+    }
+  }
+
+  if (digits.length > country.maxDigits) {
+    digits = digits.slice(0, country.maxDigits);
+  }
+  return digits;
+}
+
+function validateRealPhone(val: string, country: CountryOption): boolean {
+  const digits = val.replace(/\D/g, "");
+  if (country.code === "PY") {
+    let clean = digits;
+    if (clean.startsWith("595")) clean = clean.slice(3);
+    if (clean.startsWith("0")) clean = clean.slice(1);
+    return clean.startsWith("9") && clean.length === 9;
+  }
+  return digits.length >= country.minDigits && digits.length <= country.maxDigits;
+}
+
+function NuevaReservaContent() {
+  const searchParams = useSearchParams();
   const services = useDashboardStore((s) => s.services);
   const staff = useDashboardStore((s) => s.staff);
   const clients = useDashboardStore((s) => s.clients);
   const business = useDashboardStore((s) => s.business);
-  const appointments = useDashboardStore((s) => s.appointments);
   const addAppointment = useDashboardStore((s) => s.addAppointment);
+  const addBlock = useDashboardStore((s) => s.addBlock);
   const pushToast = useDashboardStore((s) => s.pushToast);
-  const activeStaff = staff.filter((s) => s.active);
-  const skipStaff = activeStaff.length === 1;
 
-  const [step, setStep] = useState(1);
-  const [query, setQuery] = useState("");
-  const [serviceId, setServiceId] = useState<string | null>(null);
-  const [staffId, setStaffId] = useState(skipStaff ? activeStaff[0]?.id : null);
-  const [date, setDate] = useState<Date | null>(new Date());
-  const [time, setTime] = useState<string | null>("10:30");
-  const [payment, setPayment] = useState<PaymentMethod>("efectivo");
-  const [receiptName, setReceiptName] = useState("");
-  const [consentWa, setConsentWa] = useState(true);
-  const [client, setClient] = useState({ name: "", email: "", phone: "", notes: "" });
-  const [clientSuggestOpen, setClientSuggestOpen] = useState(false);
+  const tz = business.timezone || "America/Asuncion";
+  const todayStr = useMemo(() => formatInTimeZone(new Date(), tz, "yyyy-MM-dd"), [tz]);
 
-  const clientMatches = useMemo(() => {
-    if (!client.name.trim()) return [];
-    const q = client.name.toLowerCase().trim();
+  // Mode switcher: "appointment" vs "block"
+  const [mode, setMode] = useState<"appointment" | "block">("appointment");
+
+  // Client info state
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientNotes, setClientNotes] = useState("");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("PY");
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
+
+  // Appointment configuration state
+  const [serviceId, setServiceId] = useState(services[0]?.id || "");
+  const [staffId, setStaffId] = useState(staff[0]?.id || "");
+  const [date, setDate] = useState(todayStr);
+  const [time, setTime] = useState("10:00");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
+
+  // Dropdown states
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [staffDropdownOpen, setStaffDropdownOpen] = useState(false);
+  const [timeDropdownOpen, setTimeDropdownOpen] = useState(false);
+
+  // Submitting state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdAppointment, setCreatedAppointment] = useState<{
+    clientName: string;
+    clientPhone: string;
+    serviceName: string;
+    staffName: string;
+    date: string;
+    time: string;
+    end: string;
+  } | null>(null);
+
+  // Block state
+  const [blockStaffId, setBlockStaffId] = useState<string>("all");
+  const [blockStart, setBlockStart] = useState("13:00");
+  const [blockEnd, setBlockEnd] = useState("14:00");
+  const [blockReason, setBlockReason] = useState("Almuerzo / Descanso");
+
+  // Read URL query params (e.g. from CRM)
+  useEffect(() => {
+    const qName = searchParams.get("clientName");
+    const qPhone = searchParams.get("clientPhone");
+    if (qName) setClientName(qName);
+    if (qPhone) setClientPhone(qPhone);
+  }, [searchParams]);
+
+  const activeCountry = useMemo(() => {
+    return COUNTRY_LIST.find((c) => c.code === selectedCountryCode) || COUNTRY_LIST[0];
+  }, [selectedCountryCode]);
+
+  const filteredCountries = useMemo(() => {
+    if (!countrySearchQuery.trim()) return COUNTRY_LIST;
+    const q = countrySearchQuery.toLowerCase().trim();
+    return COUNTRY_LIST.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.dialCode.includes(q) ||
+        c.code.toLowerCase().includes(q)
+    );
+  }, [countrySearchQuery]);
+
+  const isPhoneValid = useMemo(() => {
+    return validateRealPhone(clientPhone, activeCountry);
+  }, [clientPhone, activeCountry]);
+
+  // Client autocomplete matches
+  const matchingClients = useMemo(() => {
+    if (!clientName.trim() || clientName.trim().length < 2) return [];
+    const q = clientName.toLowerCase().trim();
     return clients.filter(
       (c) => c.name.toLowerCase().includes(q) || (c.phone && c.phone.includes(q))
     ).slice(0, 5);
-  }, [clients, client.name]);
+  }, [clients, clientName]);
 
-  const filtered = services.filter((s) =>
-    s.name.toLowerCase().includes(query.toLowerCase()) ||
-    (s.category && s.category.toLowerCase().includes(query.toLowerCase()))
-  );
-  const service = services.find((s) => s.id === serviceId);
-  const selectedStaff = staff.find((s) => s.id === staffId);
+  const currentService = useMemo(() => {
+    return services.find((s) => s.id === serviceId) || services[0];
+  }, [services, serviceId]);
 
-  const civilDate = date
-    ? formatInTimeZone(date.toISOString(), business.timezone, "yyyy-MM-dd")
-    : "";
+  const currentStaff = useMemo(() => {
+    return staff.find((s) => s.id === staffId) || staff[0];
+  }, [staff, staffId]);
 
-  const occupiedSlots = useMemo(() => {
-    if (!staffId || !civilDate) return new Set<string>();
-    const occupied = new Set<string>();
-    appointments.forEach((a) => {
-      if (a.staffId === staffId && a.status !== "cancelled") {
-        const aDate = a.start.slice(0, 10);
-        if (aDate === civilDate) {
-          const aTime = formatInTimeZone(a.start, business.timezone || "America/Asuncion", "HH:mm");
-          occupied.add(aTime);
-        }
-      }
-    });
-    return occupied;
-  }, [appointments, staffId, civilDate, business.timezone]);
+  // Calculated End Time based on Service Duration
+  const appointmentEndTime = useMemo(() => {
+    if (!time || !currentService) return "10:45";
+    try {
+      const [h, m] = time.split(":").map(Number);
+      const startMinutes = h * 60 + m;
+      const endMinutes = startMinutes + (currentService.durationMin || 45);
+      const endH = String(Math.floor(endMinutes / 60)).padStart(2, "0");
+      const endM = String(endMinutes % 60).padStart(2, "0");
+      return `${endH}:${endM}`;
+    } catch {
+      return "10:45";
+    }
+  }, [time, currentService]);
 
-  const canConfirm = client.name.trim() && client.phone.trim() && payment && consentWa;
-
-  function confirm() {
-    if (!serviceId || !staffId || !date || !time || !service) return;
-
-    const [hh, mm] = time.split(":");
-    const local = `${civilDate}T${hh}:${mm}:00`;
-    const start = new Date(local);
-    const end = new Date(start.getTime() + service.durationMin * 60000);
-
-    addAppointment({
-      id: `ap-${Date.now()}`,
-      clientName: client.name.trim(),
-      clientEmail: client.email.trim() || `${client.name.toLowerCase().replace(/\s+/g, ".")}@cliente.py`,
-      clientPhone: client.phone.trim(),
-      serviceId,
-      staffId,
-      start: start.toISOString(),
-      end: end.toISOString(),
-      paymentMethod: payment,
-      status: payment === "sipap" ? "pending" : "confirmed",
-      notes: client.notes.trim() || "Reserva manual desde Dashboard",
-      receiptUrl: receiptName || undefined,
-    });
-
-    pushToast("success", `¡Turno para ${client.name} reservado con éxito!`);
-    setStep(6);
+  // Steppers for Date & Time
+  function stepDate(days: number) {
+    const d = parseISO(`${date}T12:00:00`);
+    const next = addMinutes(d, days * 24 * 60);
+    setDate(format(next, "yyyy-MM-dd"));
   }
 
-  const steps = skipStaff ? [1, 3, 4] : [1, 2, 3, 4];
-  const visualStep = useMemo(() => {
-    if (step === 1) return 1;
-    if (step === 2) return 2;
-    if (step === 3) return skipStaff ? 2 : 3;
-    if (step === 4) return skipStaff ? 3 : 4;
-    return skipStaff ? 3 : 4;
-  }, [step, skipStaff]);
+  function stepTime(currentTime: string, minutes: number): string {
+    const [h, m] = currentTime.split(":").map(Number);
+    let total = h * 60 + m + minutes;
+    if (total < 8 * 60) total = 8 * 60;
+    if (total > 20 * 60) total = 20 * 60;
+    const nextH = String(Math.floor(total / 60)).padStart(2, "0");
+    const nextM = String(total % 60).padStart(2, "0");
+    return `${nextH}:${nextM}`;
+  }
 
-  // Google Calendar URL generator
-  const googleCalendarUrl = useMemo(() => {
-    if (!date || !time || !service) return "#";
-    const [hh, mm] = time.split(":");
-    const startStr = `${civilDate.replace(/-/g, "")}T${hh}${mm}00`;
-    const endMinutes = Number(hh) * 60 + Number(mm) + service.durationMin;
-    const endH = String(Math.floor(endMinutes / 60)).padStart(2, "0");
-    const endM = String(endMinutes % 60).padStart(2, "0");
-    const endStr = `${civilDate.replace(/-/g, "")}T${endH}${endM}00`;
-    const title = encodeURIComponent(`${service.name} - ${business.name}`);
+  const formattedDateTitle = useMemo(() => {
+    try {
+      const parsed = parseISO(`${date}T12:00:00`);
+      return format(parsed, "EEEE d 'de' MMMM", { locale: es });
+    } catch {
+      return date;
+    }
+  }, [date]);
+
+  // Handle appointment creation and SQL sync
+  async function handleCreateAppointment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!clientName.trim()) {
+      pushToast("error", "Ingresá el nombre del cliente.");
+      return;
+    }
+    if (!serviceId) {
+      pushToast("error", "Seleccioná un servicio para el turno.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const service = currentService;
+      const duration = service?.durationMin || 45;
+      const startDateTime = parseISO(`${date}T${time}:00`);
+      const endDateTime = addMinutes(startDateTime, duration);
+
+      // Clean standardized phone with dial code
+      let formattedFullPhone = clientPhone.trim();
+      if (formattedFullPhone) {
+        const digits = formattedFullPhone.replace(/\D/g, "");
+        if (activeCountry.code === "PY") {
+          let core = digits;
+          if (core.startsWith("595")) core = core.slice(3);
+          if (core.startsWith("0")) core = core.slice(1);
+          formattedFullPhone = `+595${core}`;
+        } else if (!formattedFullPhone.startsWith("+")) {
+          formattedFullPhone = `${activeCountry.dialCode}${digits}`;
+        }
+      }
+
+      await addAppointment({
+        id: `ap-${Date.now()}`,
+        clientName: clientName.trim(),
+        clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, ".")}@cliente.py`,
+        clientPhone: formattedFullPhone || "+595981000000",
+        serviceId: service?.id || "",
+        staffId: staffId || staff[0]?.id || "",
+        start: startDateTime.toISOString(),
+        end: endDateTime.toISOString(),
+        paymentMethod,
+        status: "confirmed",
+        notes: clientNotes.trim() || "Reserva manual desde Dashboard",
+      });
+
+      setCreatedAppointment({
+        clientName: clientName.trim(),
+        clientPhone: formattedFullPhone || clientPhone,
+        serviceName: service?.name || "Servicio",
+        staffName: currentStaff?.name || "Equipo",
+        date,
+        time,
+        end: appointmentEndTime,
+      });
+
+      pushToast("success", `¡Turno para ${clientName} guardado en base de datos!`);
+    } catch (err) {
+      console.error("Error creating appointment:", err);
+      pushToast("error", "Error al guardar turno en base de datos.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  // Handle schedule block creation
+  function handleCreateBlock(e: React.FormEvent) {
+    e.preventDefault();
+    addBlock({
+      staffId: blockStaffId,
+      date,
+      start: blockStart,
+      end: blockEnd,
+      reason: blockReason.trim() || "Bloqueo operativo",
+    });
+
+    pushToast("success", "Bloqueo horario guardado en la agenda.");
+    setMode("appointment");
+  }
+
+  // WhatsApp reminder URL for created appointment
+  const waReminderUrl = useMemo(() => {
+    if (!createdAppointment) return "#";
+    const phoneClean = createdAppointment.clientPhone.replace(/[^0-9]/g, "");
+    const msg = encodeURIComponent(
+      `¡Hola ${createdAppointment.clientName}! Tu turno para *${createdAppointment.serviceName}* con *${createdAppointment.staffName}* en *${business.name}* quedó agendado para el *${createdAppointment.date} a las ${createdAppointment.time} hs*.\n\n📍 Ubicación: ${business.address || "Asunción"}\n¡Te esperamos!`
+    );
+    return `https://wa.me/${phoneClean}?text=${msg}`;
+  }, [createdAppointment, business]);
+
+  // Google Calendar export link for created appointment
+  const googleCalUrl = useMemo(() => {
+    if (!createdAppointment) return "#";
+    const [hh, mm] = createdAppointment.time.split(":");
+    const startStr = `${createdAppointment.date.replace(/-/g, "")}T${hh}${mm}00`;
+    const [endH, endM] = createdAppointment.end.split(":");
+    const endStr = `${createdAppointment.date.replace(/-/g, "")}T${endH}${endM}00`;
+    const title = encodeURIComponent(`${createdAppointment.serviceName} - ${business.name}`);
     const details = encodeURIComponent(
-      `Turno confirmado con ${selectedStaff?.name || "nuestro equipo"}.\nDirección: ${business.address}\nWhatsApp: ${business.phone}`
+      `Turno agendado con ${createdAppointment.staffName}.\nCliente: ${createdAppointment.clientName}\nTeléfono: ${createdAppointment.clientPhone}`
     );
     const location = encodeURIComponent(business.address || "Asunción, Paraguay");
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
-  }, [date, time, service, civilDate, selectedStaff, business]);
-
-  // WhatsApp reminder message URL
-  const waUrl = useMemo(() => {
-    if (!client.phone || !service) return "#";
-    const phoneClean = client.phone.replace(/[^0-9]/g, "");
-    const msg = encodeURIComponent(
-      `¡Hola ${client.name}! Tu turno para *${service.name}* con *${selectedStaff?.name || "nuestro equipo"}* en *${business.name}* está agendado para el *${civilDate} a las ${time} hs*.\n\nUbicación: ${business.address}\n¡Te esperamos!`
-    );
-    return `https://wa.me/${phoneClean}?text=${msg}`;
-  }, [client, service, selectedStaff, business, civilDate, time]);
+  }, [createdAppointment, business]);
 
   return (
-    <div data-tour="nueva-reserva-form" className="mx-auto max-w-3xl space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-          Agendar Nuevo Turno
+    <div className="mx-auto max-w-2xl space-y-6">
+      {/* Top Header */}
+      <div data-tour="nueva-reserva-header">
+        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
+          <span>Agendar Turno Rápido</span>
+          <CalendarPlus className="h-6 w-6 text-primary" />
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-          Registrá una cita presencial o telefónica con sincronización inmediata a la agenda y recordatorios WhatsApp.
+          Carga de turnos presenciales o telefónicos con sincronización directa en base de datos SQL.
         </p>
       </div>
 
-      {/* Stepper Progress Bar */}
-      {step < 6 && (
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            {steps.map((item, index) => (
-              <span
-                key={item}
-                className={`h-2 flex-1 rounded-full transition-all duration-300 ${
-                  visualStep > index
-                    ? "bg-primary shadow-[0_0_12px_rgba(99,102,241,0.5)]"
-                    : "bg-slate-200 dark:bg-slate-800"
-                }`}
-              />
-            ))}
-          </div>
-          <div className="flex justify-between text-[11px] font-semibold text-slate-400">
-            <span>Paso {visualStep} de {steps.length}</span>
-            <span>
-              {step === 1 && "Selección de Servicio"}
-              {step === 2 && "Elección de Profesional"}
-              {step === 3 && "Fecha & Horario"}
-              {step === 4 && "Datos del Cliente & Pago"}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 1: SELECT SERVICE */}
-      {step === 1 && (
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar servicio por nombre o categoría..."
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 py-2.5 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none backdrop-blur-xl"
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {filtered.map((item) => {
-              const isSelected = serviceId === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setServiceId(item.id)}
-                  className={`flex items-start gap-3.5 rounded-3xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 ${
-                    isSelected
-                      ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-[0_4px_20px_rgba(99,102,241,0.15)] ring-2 ring-primary/20"
-                      : "border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                  }`}
-                >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    {item.image === "scissors" ? (
-                      <Scissors className="h-5 w-5" />
-                    ) : (
-                      <Sparkles className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-bold text-slate-900 dark:text-white text-sm">
-                        {item.name}
-                      </p>
-                      {item.category && (
-                        <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-bold text-slate-500">
-                          {item.category}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                      {item.description || "Servicio profesional."}
-                    </p>
-                    <div className="mt-2 flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {item.durationMin} min
-                      </span>
-                      <span className="text-primary font-bold">
-                        {formatGs(item.price)}
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="button"
-              disabled={!serviceId}
-              onClick={() => setStep(skipStaff ? 3 : 2)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 disabled:opacity-40 transition"
-            >
-              <span>Continuar</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 2: SELECT STAFF */}
-      {step === 2 && (
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {activeStaff.map((person) => {
-              const isSelected = staffId === person.id;
-              return (
-                <button
-                  key={person.id}
-                  type="button"
-                  onClick={() => setStaffId(person.id)}
-                  className={`flex items-start gap-3.5 rounded-3xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 ${
-                    isSelected
-                      ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-[0_4px_20px_rgba(99,102,241,0.15)] ring-2 ring-primary/20"
-                      : "border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                  }`}
-                >
-                  <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-black text-white shadow-sm"
-                    style={{ background: person.color }}
-                  >
-                    {person.avatar}
-                  </span>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm">
-                      {person.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {person.role}
-                    </p>
-                    <p className="mt-1 text-[11px] font-medium text-slate-400">
-                      Horario: {person.hours}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Atrás</span>
-            </button>
-            <button
-              type="button"
-              disabled={!staffId}
-              onClick={() => setStep(3)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 disabled:opacity-40 transition"
-            >
-              <span>Continuar a Fecha & Hora</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3: DATE & TIME */}
-      {step === 3 && (
-        <Card className="space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
-            <div>
-              <h2 className="font-bold text-slate-900 dark:text-white text-sm">
-                Elegí la Fecha y Franja Horaria
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Horario local de Paraguay ({business.timezone}).
-              </p>
-            </div>
-            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-              {civilDate} {time && `· ${time} hs`}
-            </span>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                Fecha del Turno:
-              </label>
-              <MiniCalendar selected={date} onSelect={setDate} />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                Horarios Disponibles:
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {TIMES.map((slot) => {
-                  const isSelected = time === slot;
-                  const isOccupied = occupiedSlots.has(slot);
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      disabled={isOccupied}
-                      onClick={() => setTime(slot)}
-                      className={`rounded-2xl border py-2.5 text-xs font-bold transition duration-150 ${
-                        isOccupied
-                          ? "border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-slate-800/20 text-slate-400 dark:text-slate-600 cursor-not-allowed line-through"
-                          : isSelected
-                            ? "border-primary bg-primary text-white shadow-md shadow-primary/25"
-                            : "border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 hover:border-primary"
-                      }`}
-                    >
-                      {slot} hs {isOccupied ? "(Ocupado)" : ""}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-3">
-            <button
-              type="button"
-              onClick={() => setStep(skipStaff ? 1 : 2)}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Atrás</span>
-            </button>
-            <button
-              type="button"
-              disabled={!date || !time}
-              onClick={() => setStep(4)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 disabled:opacity-40 transition"
-            >
-              <span>Continuar a Datos del Cliente</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </Card>
-      )}
-
-      {/* STEP 4: CLIENT INFO & PAYMENT */}
-      {step === 4 && (
-        <Card className="space-y-4">
-          <div className="rounded-2xl bg-primary/5 border border-primary/15 p-3.5 flex items-center justify-between">
-            <div>
-              <p className="font-bold text-slate-900 dark:text-white text-xs">
-                {service?.name} · {selectedStaff?.name}
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {civilDate} a las {time} hs ({service?.durationMin} min)
-              </p>
-            </div>
-            <span className="text-base font-black text-primary">
-              {formatGs(service?.price ?? 0)}
-            </span>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="relative">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                Nombre del Cliente *
-              </label>
-              <div className="relative">
-                <User className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej: Marcelo Rojas (escribí para buscar)"
-                  value={client.name}
-                  onFocus={() => setClientSuggestOpen(true)}
-                  onChange={(e) => {
-                    setClient({ ...client, name: e.target.value });
-                    setClientSuggestOpen(true);
-                  }}
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
-              </div>
-
-              {/* Suggestions popover */}
-              {clientSuggestOpen && clientMatches.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 z-20 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl backdrop-blur-xl p-1.5 space-y-1 max-h-48 overflow-y-auto">
-                  <span className="text-[10px] font-bold text-slate-400 px-2 py-0.5 block">
-                    Clientes frecuentes encontrados:
-                  </span>
-                  {clientMatches.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        setClient({
-                          ...client,
-                          name: c.name,
-                          phone: c.phone || "",
-                          email: c.email || client.email,
-                        });
-                        setClientSuggestOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-primary/10 transition cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-[10px]">
-                          {c.name.slice(0, 2).toUpperCase()}
-                        </span>
-                        <div>
-                          <p className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</p>
-                          <p className="text-[10.5px] text-slate-400 font-mono">{c.phone || "Sin teléfono"}</p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                        Elegir
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                WhatsApp del Cliente *
-              </label>
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
-                  <span>🇵🇾</span>
-                  <span>+595</span>
-                </div>
-                <div className="relative flex-1">
-                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="tel"
-                    required
-                    placeholder="0981 123 456"
-                    value={client.phone.replace(/^\+595\s*/, "")}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/[^0-9\s]/g, "");
-                      setClient({ ...client, phone: raw ? `+595 ${raw}` : "" });
-                    }}
-                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
-            </div>
+      {createdAppointment ? (
+        /* Confirmation Screen */
+        <Card className="p-6 text-center space-y-5 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="h-8 w-8" />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Email (opcional para recibo y calendar sync)
-            </label>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="email"
-                placeholder="cliente@ejemplo.com"
-                value={client.email}
-                onChange={(e) => setClient({ ...client, email: e.target.value })}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Payment Method Selector */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
-              Método de Pago
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
-                { id: "sipap" as const, label: "SIPAP", icon: Landmark },
-                { id: "pos_bancard" as const, label: "POS Tarjeta", icon: CreditCard },
-                { id: "billetera_py" as const, label: "Billetera", icon: Smartphone },
-              ].map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setPayment(id)}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border py-2.5 px-3 text-xs font-bold transition ${
-                    payment === id
-                      ? "border-primary bg-primary text-white shadow-sm"
-                      : "border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 hover:border-primary"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* SIPAP Details if selected */}
-          {payment === "sipap" && (
-            <div className="rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-500/5 p-4 text-xs space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
-                <Landmark className="h-4 w-4" />
-                <span>Datos SIPAP para Pago:</span>
-              </div>
-              <p className="text-slate-600 dark:text-slate-300">
-                Banco: <strong>Banco Itaú Paraguay</strong> · Titular: <strong>{business.name}</strong> · Alias SIPAP: <strong>agendate.py</strong>
-              </p>
-              <label className="block pt-1 text-slate-600 dark:text-slate-300">
-                <span>Comprobante adjunto (opcional):</span>
-                <input
-                  type="file"
-                  className="mt-1 block w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white"
-                  onChange={(e) => setReceiptName(e.target.files?.[0]?.name ?? "")}
-                />
-              </label>
-            </div>
-          )}
-
-          {/* Consent Checkbox */}
-          <label className="flex items-start gap-2.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3 text-xs cursor-pointer">
-            <input
-              type="checkbox"
-              checked={consentWa}
-              onChange={(e) => setConsentWa(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded text-primary focus:ring-primary"
-            />
-            <span className="text-slate-600 dark:text-slate-300">
-              Autoriza recibir confirmación y recordatorios automáticos por WhatsApp 24h y 2h antes de la cita.
-            </span>
-          </label>
-
-          <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-3">
-            <button
-              type="button"
-              onClick={() => setStep(3)}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Atrás</span>
-            </button>
-            <button
-              type="button"
-              disabled={!canConfirm}
-              onClick={confirm}
-              className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-7 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-500 disabled:opacity-40 transition"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Confirmar Turno</span>
-            </button>
-          </div>
-        </Card>
-      )}
-
-      {/* STEP 6: CONFIRMATION SUCCESS */}
-      {step === 6 && (
-        <Card className="text-center py-8 space-y-6">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 shadow-md">
-            <CheckCircle2 className="h-10 w-10 animate-pulse" />
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-              ¡Turno Agendado con Éxito!
+            <h2 className="text-xl font-black text-slate-900 dark:text-white">
+              ¡Turno Confirmado con Éxito!
             </h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-              La reserva quedó asentada en el calendario operativo del local.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Guardado en la base de datos SQL y sincronizado en la agenda del local.
             </p>
           </div>
 
           {/* Details Pill */}
-          <div className="mx-auto max-w-md rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-5 text-left text-xs space-y-2">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-4 text-xs text-left space-y-2">
             <div className="flex justify-between">
-              <span className="text-slate-400">Cliente:</span>
-              <strong className="text-slate-900 dark:text-white">{client.name}</strong>
+              <span className="text-slate-500">Cliente:</span>
+              <span className="font-bold text-slate-900 dark:text-white">{createdAppointment.clientName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Servicio:</span>
-              <strong className="text-slate-900 dark:text-white">{service?.name}</strong>
+              <span className="text-slate-500">Servicio:</span>
+              <span className="font-bold text-primary">{createdAppointment.serviceName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Profesional:</span>
-              <strong className="text-slate-900 dark:text-white">{selectedStaff?.name}</strong>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Fecha y Hora:</span>
-              <strong className="text-primary">{civilDate} a las {time} hs</strong>
+              <span className="text-slate-500">Profesional:</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">{createdAppointment.staffName}</span>
             </div>
             <div className="flex justify-between border-t border-slate-200/60 dark:border-white/10 pt-2">
-              <span className="text-slate-400">Monto:</span>
-              <strong className="text-base font-black text-slate-900 dark:text-white">
-                {formatGs(service?.price ?? 0)}
-              </strong>
+              <span className="text-slate-500">Fecha y Hora:</span>
+              <span className="font-black text-slate-900 dark:text-white">
+                {createdAppointment.date} · {createdAppointment.time} a {createdAppointment.end} hs
+              </span>
             </div>
           </div>
 
-          {/* Calendar & WhatsApp Action Links */}
-          <div className="mx-auto max-w-md space-y-2.5">
+          {/* WhatsApp & Google Calendar actions */}
+          <div className="flex flex-col sm:flex-row gap-2.5">
             <a
-              href={googleCalendarUrl}
+              href={waReminderUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 py-2.5 px-4 text-xs font-bold text-slate-800 dark:text-white shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-            >
-              <CalendarPlus className="h-4 w-4 text-emerald-500" />
-              <span>Agregar a Google Calendar (Android / Web)</span>
-              <ExternalLink className="h-3 w-3 opacity-60" />
-            </a>
-
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-2.5 px-4 text-xs font-bold text-white shadow-md hover:bg-emerald-500 transition"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-3 px-4 text-xs font-bold text-white shadow-md shadow-emerald-600/25 transition cursor-pointer"
             >
               <MessageCircle className="h-4 w-4" />
-              <span>Enviar Confirmación por WhatsApp al Cliente</span>
+              <span>Enviar WhatsApp al Cliente</span>
+            </a>
+            <a
+              href={googleCalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/80 py-3 px-4 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+            >
+              <Calendar className="h-4 w-4 text-primary" />
+              <span>Google Calendar</span>
             </a>
           </div>
 
-          <div className="pt-2 flex justify-center gap-3">
+          {/* Reset / Return actions */}
+          <div className="flex items-center justify-center gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
-                setStep(1);
-                setClient({ name: "", email: "", phone: "", notes: "" });
+                setCreatedAppointment(null);
+                setClientName("");
+                setClientPhone("");
+                setClientNotes("");
               }}
-              className="rounded-2xl border border-slate-200/80 dark:border-white/10 px-5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="text-xs font-bold text-primary hover:underline cursor-pointer"
             >
-              Nueva Reserva
+              + Agendar otro turno
             </button>
+            <span className="text-slate-300">·</span>
             <Link
               href="/dashboard/calendario"
-              className="rounded-2xl bg-primary px-6 py-2 text-xs font-bold text-white shadow-md hover:opacity-95 transition"
+              className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
             >
-              Ver en el Calendario
+              Ver en la Agenda
             </Link>
           </div>
         </Card>
+      ) : (
+        /* Main Card Form */
+        <Card className="p-5 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 space-y-4">
+          {/* Segmented Mode Switcher */}
+          <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+            <button
+              type="button"
+              onClick={() => setMode("appointment")}
+              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                mode === "appointment"
+                  ? "bg-white dark:bg-slate-900 text-primary shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Agendar Turno</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("block")}
+              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                mode === "block"
+                  ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Ban className="h-3.5 w-3.5 text-amber-500" />
+              <span>Bloquear Horario</span>
+            </button>
+          </div>
+
+          {mode === "appointment" ? (
+            <form onSubmit={handleCreateAppointment} className="space-y-4 text-xs">
+              {/* SECTION 1: CLIENTE (NOMBRE Y WHATSAPP CON SELECTOR DE PAÍS) */}
+              <div data-tour="nueva-reserva-client" className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Name Input with Autocomplete */}
+                  <div className="relative">
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Cliente *
+                    </label>
+                    <div className="relative">
+                      <User className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Nombre y Apellido"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Autocomplete suggestions */}
+                    {matchingClients.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1.5 space-y-0.5 max-h-44 overflow-y-auto">
+                        <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-bold">
+                          Clientes Registrados:
+                        </span>
+                        {matchingClients.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setClientName(c.name);
+                              setClientPhone(c.phone || "");
+                              setClientEmail(c.email || "");
+                            }}
+                            className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-primary/10 transition cursor-pointer"
+                          >
+                            <span className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</span>
+                            <span className="text-[11px] text-slate-400 font-mono">{c.phone || ""}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* International WhatsApp Input */}
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      WhatsApp *
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      {/* Country Selector Dropdown */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCountryDropdownOpen(!countryDropdownOpen);
+                            setServiceDropdownOpen(false);
+                            setStaffDropdownOpen(false);
+                            setTimeDropdownOpen(false);
+                          }}
+                          className="flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                          title="Seleccionar país"
+                        >
+                          <span className="text-sm leading-none">{activeCountry.flag}</span>
+                          <span className="font-mono text-xs">{activeCountry.dialCode}</span>
+                          <ChevronDown
+                            className={`h-3 w-3 text-slate-400 transition-transform ${
+                              countryDropdownOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+
+                        {countryDropdownOpen && (
+                          <div className="absolute top-full left-0 mt-1 z-40 w-64 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2">
+                            <div className="relative mb-1.5">
+                              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                              <input
+                                type="text"
+                                autoFocus
+                                placeholder="Buscar país o código..."
+                                value={countrySearchQuery}
+                                onChange={(e) => setCountrySearchQuery(e.target.value)}
+                                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 pl-8 pr-2.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                              />
+                            </div>
+                            <div className="max-h-44 overflow-y-auto space-y-0.5">
+                              {filteredCountries.map((c) => (
+                                <button
+                                  key={c.code}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCountryCode(c.code);
+                                    setCountryDropdownOpen(false);
+                                    setCountrySearchQuery("");
+                                    setClientPhone((prev) => formatPhoneInput(prev, c));
+                                  }}
+                                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
+                                    selectedCountryCode === c.code
+                                      ? "bg-primary/10 text-primary font-bold"
+                                      : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 truncate">
+                                    <span className="text-base leading-none">{c.flag}</span>
+                                    <span className="truncate">{c.name}</span>
+                                  </div>
+                                  <span className="font-mono text-[11px] text-slate-400 shrink-0">
+                                    {c.dialCode}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Phone Input with real-time formatting */}
+                      <div className="relative flex-1">
+                        <input
+                          type="tel"
+                          placeholder={activeCountry.placeholder}
+                          value={clientPhone}
+                          onChange={(e) =>
+                            setClientPhone(formatPhoneInput(e.target.value, activeCountry))
+                          }
+                          className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Phone Validation indicator */}
+                    {clientPhone.trim().length > 0 && (
+                      <div className="flex items-center gap-1 mt-1 text-[10.5px] font-normal">
+                        {isPhoneValid ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                            <Check className="h-3 w-3 shrink-0" />
+                            <span>Número válido para WhatsApp</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1 opacity-75">
+                            <AlertCircle className="h-3 w-3 shrink-0" />
+                            <span>Verificá que el número sea real</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: SERVICIO & ESPECIALISTA */}
+              <div data-tour="nueva-reserva-service" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Custom Service Selector */}
+                <div className="relative">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Servicio *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setServiceDropdownOpen(!serviceDropdownOpen);
+                      setStaffDropdownOpen(false);
+                      setTimeDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                  >
+                    <div className="min-w-0 flex-1 truncate pr-2">
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {currentService?.name}
+                      </span>
+                      <span className="text-slate-400 ml-1.5 font-medium">
+                        ({currentService?.durationMin}m · {formatGs(currentService?.price || 0)})
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${
+                        serviceDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {serviceDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
+                      {services.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setServiceId(s.id);
+                            setServiceDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer ${
+                            serviceId === s.id
+                              ? "bg-primary/10 text-primary font-bold"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <span className="truncate pr-2">{s.name}</span>
+                          <span className="text-[11px] font-mono shrink-0 text-slate-500 dark:text-slate-400">
+                            {formatGs(s.price)} · {s.durationMin}m
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Staff Selector */}
+                <div className="relative">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Profesional Asignado *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStaffDropdownOpen(!staffDropdownOpen);
+                      setServiceDropdownOpen(false);
+                      setTimeDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
+                        style={{ background: currentStaff?.color || "#6366f1" }}
+                      >
+                        {currentStaff?.avatar || "P"}
+                      </span>
+                      <span className="font-bold text-slate-900 dark:text-white truncate">
+                        {currentStaff?.name}
+                      </span>
+                      <span className="text-slate-400 text-[11px]">({currentStaff?.role})</span>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${
+                        staffDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {staffDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
+                      {staff.filter((s) => s.active).map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setStaffId(p.id);
+                            setStaffDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-2 p-2 rounded-xl text-left transition cursor-pointer ${
+                            staffId === p.id
+                              ? "bg-primary/10 text-primary font-bold"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <span
+                            className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shrink-0"
+                            style={{ background: p.color }}
+                          >
+                            {p.avatar}
+                          </span>
+                          <span className="flex-1 truncate">{p.name}</span>
+                          <span className="text-[11px] text-slate-400">{p.role}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 3: FECHA Y HORA (INTERACTIVE BAR) */}
+              <div data-tour="nueva-reserva-datetime">
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Fecha y Horario *
+                </label>
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3">
+                  {/* Date Stepper */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => stepDate(-1)}
+                      className="p-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      title="Día anterior"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    </button>
+                    <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                      {formattedDateTitle}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => stepDate(1)}
+                      className="p-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      title="Día siguiente"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDate(todayStr)}
+                      className="text-[10.5px] font-bold text-primary hover:underline px-2 py-0.5 rounded hover:bg-primary/10 transition cursor-pointer"
+                    >
+                      Hoy
+                    </button>
+                  </div>
+
+                  {/* Time Stepper & Popover */}
+                  <div className="flex items-center gap-1.5 relative">
+                    <button
+                      type="button"
+                      onClick={() => setTime((t) => stepTime(t, -15))}
+                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                    >
+                      -15m
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeDropdownOpen(!timeDropdownOpen);
+                        setServiceDropdownOpen(false);
+                        setStaffDropdownOpen(false);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-black text-xs text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
+                    >
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                      <span>{time} hs</span>
+                      <ChevronDown className="h-3 w-3 text-slate-400 ml-0.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTime((t) => stepTime(t, 15))}
+                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                    >
+                      +15m
+                    </button>
+
+                    <span className="text-[11px] text-slate-400 hidden sm:inline">
+                      hasta <strong>{appointmentEndTime} hs</strong>
+                    </span>
+
+                    {/* Time dropdown popover */}
+                    {timeDropdownOpen && (
+                      <div className="absolute right-0 bottom-full mb-1.5 z-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
+                        {APPOINTMENT_TIME_SLOTS.map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => {
+                              setTime(t);
+                              setTimeDropdownOpen(false);
+                            }}
+                            className={`py-1.5 px-2 rounded-xl text-center font-mono text-[11px] font-bold transition cursor-pointer ${
+                              time === t
+                                ? "bg-primary text-white shadow-xs"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: MÉTODO DE PAGO */}
+              <div data-tour="nueva-reserva-payment">
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Método de Pago
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
+                    { id: "sipap" as const, label: "SIPAP", icon: Landmark },
+                    { id: "pos_bancard" as const, label: "POS Bancard", icon: CreditCard },
+                    { id: "billetera_py" as const, label: "Billetera", icon: Smartphone },
+                  ].map(({ id, label, icon: Icon }) => {
+                    const isSelected = paymentMethod === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setPaymentMethod(id)}
+                        className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 px-2 text-xs font-bold transition cursor-pointer ${
+                          isSelected
+                            ? "border-primary bg-primary text-white shadow-xs"
+                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SECTION 5: NOTAS OPCIONALES */}
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Notas / Observaciones (opcional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Viene con su hijo / Prefiere atención rápida"
+                  value={clientNotes}
+                  onChange={(e) => setClientNotes(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              {/* FOOTER ACTIONS & CONFIRM BUTTON */}
+              <div
+                data-tour="nueva-reserva-confirm"
+                className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/10"
+              >
+                <div>
+                  <span className="text-[10.5px] text-slate-400 block font-medium">Tarifa del Servicio:</span>
+                  <span className="text-base font-black text-primary">
+                    {formatGs(currentService?.price || 0)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/dashboard/calendario"
+                    className="rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  >
+                    Ver Agenda
+                  </Link>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !clientName.trim()}
+                    className="rounded-2xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
+                  >
+                    {isSubmitting ? "Guardando en SQL..." : "Confirmar Turno"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : (
+            /* Mode 2: Schedule Block Form */
+            <form onSubmit={handleCreateBlock} className="space-y-4 text-xs">
+              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                <Ban className="h-4 w-4 shrink-0 text-amber-600" />
+                <span>Bloqueá un intervalo de descanso, almuerzo o reunión para evitar reservas.</span>
+              </div>
+
+              {/* Professional Affected */}
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Profesional Afectado
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setBlockStaffId("all")}
+                    className={`px-3 py-1.5 rounded-2xl border text-xs font-bold transition cursor-pointer ${
+                      blockStaffId === "all"
+                        ? "border-amber-500 bg-amber-500 text-white shadow-xs"
+                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    Todo el salón
+                  </button>
+                  {staff.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setBlockStaffId(p.id)}
+                      className={`px-3 py-1.5 rounded-2xl border text-xs font-bold transition cursor-pointer ${
+                        blockStaffId === p.id
+                          ? "border-primary bg-primary text-white shadow-xs"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Interval & Reason */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Hora Inicio
+                  </label>
+                  <input
+                    type="time"
+                    value={blockStart}
+                    onChange={(e) => setBlockStart(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Hora Fin
+                  </label>
+                  <input
+                    type="time"
+                    value={blockEnd}
+                    onChange={(e) => setBlockEnd(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Motivo de Bloqueo
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Almuerzo / Descanso / Capacitación interna"
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end pt-3 border-t border-slate-100 dark:border-white/10">
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-amber-600 hover:bg-amber-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-600/25 transition cursor-pointer"
+                >
+                  Guardar Bloqueo
+                </button>
+              </div>
+            </form>
+          )}
+        </Card>
       )}
     </div>
+  );
+}
+
+export default function NuevaReservaPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Cargando reserva...</div>}>
+      <NuevaReservaContent />
+    </Suspense>
   );
 }

@@ -176,32 +176,50 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Seleccionar o crear al cliente",
+        taskTitle: "Panel de Nueva Reserva",
         instruction:
-          "Escribí el nombre o número de teléfono. Si ya vino antes, sus datos aparecerán solos; si es nuevo, se creará su ficha al instante.",
-        targetSelector: '[data-tour="nueva-reserva-form"]',
+          "Agendá citas presenciales o telefónicas en menos de 30 segundos con sincronización inmediata a la base de datos SQL.",
+        tip: "También podés bloquear horarios de descanso o almuerzo con la pestaña 'Bloquear Horario'.",
+        targetSelector: '[data-tour="nueva-reserva-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Elegir el servicio y profesional",
+        taskTitle: "Cliente & WhatsApp Internacional",
         instruction:
-          "Marcá el servicio que solicita (ej: Corte + Barba). El sistema calcula automáticamente la duración en minutos y el precio en Guaraníes.",
-        targetSelector: '[data-tour="nueva-reserva-form"]',
+          "Ingresá el nombre y teléfono del cliente. Podés buscarlo entre tus clientes habituales o registrar uno nuevo eligiendo el país y validando su número en vivo.",
+        tip: "El selector incluye Paraguay y más de 20 países con banderas y códigos de área.",
+        targetSelector: '[data-tour="nueva-reserva-client"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Elegir fecha y horario disponible",
+        taskTitle: "Servicio & Especialista",
         instruction:
-          "El sistema solo te mostrará los horarios realmente libres del profesional seleccionado, evitando que se superpongan citas.",
-        targetSelector: '[data-tour="nueva-reserva-form"]',
+          "Seleccioná el corte, tratamiento o paquete y a qué profesional de tu equipo asignarle el turno.",
+        tip: "La duración y la tarifa en Guaraníes se calculan automáticamente.",
+        targetSelector: '[data-tour="nueva-reserva-service"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Confirmar y disparar WhatsApp",
+        taskTitle: "Fecha & Horario",
         instruction:
-          "Tocá 'Confirmar Reserva'. El turno se guardará en la agenda y el cliente recibirá su confirmación oficial con el enlace a su calendario.",
-        tip: "Podés marcar si el cliente ya pagó una seña por SIPAP o pagará al finalizar.",
-        targetSelector: '[data-tour="nueva-reserva-form"]',
+          "Elegí el día y la hora de inicio. Podés ajustar los minutos con los botones rápidos ±15m o seleccionar la hora exacta.",
+        tip: "La hora de finalización se calcula de forma automática según la duración del servicio.",
+        targetSelector: '[data-tour="nueva-reserva-datetime"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Método de Pago",
+        instruction:
+          "Definí cómo abonará el cliente: Efectivo en caja, Transferencia SIPAP, POS Bancard o Billetera Móvil.",
+        targetSelector: '[data-tour="nueva-reserva-payment"]',
+      },
+      {
+        stepNumber: 6,
+        taskTitle: "Confirmar & Disparar WhatsApp",
+        instruction:
+          "Hacé clic en 'Confirmar Turno'. La cita se guarda en la base de datos SQL y te dará el botón listo para avisarle al cliente por WhatsApp con el mensaje ya redactado.",
+        tip: "Podés añadir notas adicionales para el profesional antes de guardar.",
+        targetSelector: '[data-tour="nueva-reserva-confirm"]',
       },
     ],
   },
