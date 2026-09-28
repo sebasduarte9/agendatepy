@@ -48,6 +48,7 @@ import {
 import { compressClientImage } from "@/lib/media-compression";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 import {
   THEME_PRESETS,
   DEFAULT_THEME,
@@ -1238,20 +1239,20 @@ export default function AparienciaPage() {
                     />
                   </div>
 
-                  <select
+                  <CustomSelect
                     value={theme.fontFamily}
-                    onChange={(e) => {
-                      setTheme({ ...theme, fontFamily: e.target.value });
+                    onChange={(val) => {
+                      setTheme({ ...theme, fontFamily: val });
                       setHasUnsavedChanges(true);
                     }}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-bold outline-none focus:border-primary"
-                  >
-                    {filteredFonts.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name} ({f.category})
-                      </option>
-                    ))}
-                  </select>
+                    options={filteredFonts.map((f) => ({
+                      value: f.id,
+                      label: f.name,
+                      badge: f.category,
+                    }))}
+                    className="w-full"
+                    buttonClassName="w-full py-2 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-bold"
+                  />
                 </div>
 
                 {/* Typography Live Cards Grid with Real Font Previews */}
@@ -1743,15 +1744,17 @@ export default function AparienciaPage() {
                               </div>
 
                               <div className="sm:col-span-4">
-                                <select
-                                  value={link.style}
-                                  onChange={(e) => handleUpdateCustomLink(link.id, { style: e.target.value as any })}
-                                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent px-2 py-1 text-xs"
-                                >
-                                  <option value="default">Estilo Normal</option>
-                                  <option value="highlight">Destacado (Pulsante)</option>
-                                  <option value="outline">Delineado Sutil</option>
-                                </select>
+                                <CustomSelect
+                                  value={link.style || "default"}
+                                  onChange={(val) => handleUpdateCustomLink(link.id, { style: val as any })}
+                                  options={[
+                                    { value: "default", label: "Estilo Normal" },
+                                    { value: "highlight", label: "Destacado (Pulsante)" },
+                                    { value: "outline", label: "Delineado Sutil" },
+                                  ]}
+                                  className="w-full"
+                                  buttonClassName="w-full py-1.5 rounded-lg border-slate-200 dark:border-slate-700 bg-transparent"
+                                />
                               </div>
                             </div>
                           </div>
@@ -1884,38 +1887,42 @@ export default function AparienciaPage() {
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                         Sombra y Efecto 3D
                       </label>
-                      <select
+                      <CustomSelect
                         value={theme.buttonShadow}
-                        onChange={(e) => {
-                          setTheme({ ...theme, buttonShadow: e.target.value as ButtonShadowType });
+                        onChange={(val) => {
+                          setTheme({ ...theme, buttonShadow: val as ButtonShadowType });
                           setHasUnsavedChanges(true);
                         }}
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold"
-                      >
-                        <option value="none">Sin sombra (Plano)</option>
-                        <option value="soft">Sombra Suave</option>
-                        <option value="medium">Sombra Media</option>
-                        <option value="hard">Sólida Retro 3D</option>
-                        <option value="glow">Aura Luminosa</option>
-                      </select>
+                        options={[
+                          { value: "none", label: "Sin sombra (Plano)" },
+                          { value: "soft", label: "Sombra Suave" },
+                          { value: "medium", label: "Sombra Media" },
+                          { value: "hard", label: "Sólida Retro 3D" },
+                          { value: "glow", label: "Aura Luminosa" },
+                        ]}
+                        className="w-full"
+                        buttonClassName="w-full py-2 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-semibold"
+                      />
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                         Alineación del Texto
                       </label>
-                      <select
+                      <CustomSelect
                         value={theme.buttonAlignment}
-                        onChange={(e) => {
-                          setTheme({ ...theme, buttonAlignment: e.target.value as ButtonAlignment });
+                        onChange={(val) => {
+                          setTheme({ ...theme, buttonAlignment: val as ButtonAlignment });
                           setHasUnsavedChanges(true);
                         }}
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold"
-                      >
-                        <option value="center">Centrado</option>
-                        <option value="spread">Extremos (Icono y Texto separados)</option>
-                        <option value="left">Alineado a la Izquierda</option>
-                      </select>
+                        options={[
+                          { value: "center", label: "Centrado" },
+                          { value: "spread", label: "Extremos (Icono y Texto)" },
+                          { value: "left", label: "Alineado a la Izquierda" },
+                        ]}
+                        className="w-full"
+                        buttonClassName="w-full py-2 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-semibold"
+                      />
                     </div>
                   </div>
                 </Card>

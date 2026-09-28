@@ -24,6 +24,7 @@ import {
   Mail,
   User,
 } from "lucide-react";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 
 const CATEGORIES = [
   { id: "barberia", label: "Barbería / Peluquería", icon: Scissors },
@@ -318,19 +319,20 @@ export default function OnboardingPage() {
                       Duración
                     </label>
                     <div className="relative mt-1.5">
-                      <Clock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <select
+                      <CustomSelect
                         id="service-duration-select"
                         value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-200/90 bg-white py-3 pl-10 pr-4 text-xs font-semibold text-slate-800 focus:border-brand focus:outline-none"
-                      >
-                        <option value="15">15 min</option>
-                        <option value="30">30 min</option>
-                        <option value="45">45 min</option>
-                        <option value="60">60 min (1 h)</option>
-                        <option value="90">90 min</option>
-                      </select>
+                        onChange={(val) => setDuration(val)}
+                        options={[
+                          { value: "15", label: "15 min" },
+                          { value: "30", label: "30 min" },
+                          { value: "45", label: "45 min" },
+                          { value: "60", label: "60 min (1 h)" },
+                          { value: "90", label: "90 min" },
+                        ]}
+                        className="w-full"
+                        buttonClassName="w-full py-3 pl-3 pr-4 rounded-2xl border-slate-200/90 bg-white text-xs font-semibold text-slate-800"
+                      />
                     </div>
                   </div>
 

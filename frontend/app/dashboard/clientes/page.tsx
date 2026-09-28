@@ -23,6 +23,7 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import StatCard from "@/components/dashboard/ui/StatCard";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
 import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
@@ -541,15 +542,17 @@ export default function ClientesPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700">Categoría</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              <CustomSelect
+                className="mt-1 w-full"
+                buttonClassName="py-2.5 text-sm bg-white dark:bg-slate-900 border-border"
                 value={form.tags}
-                onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              >
-                <option value="Nuevo">Nuevo</option>
-                <option value="Frecuente">Frecuente</option>
-                <option value="VIP">VIP</option>
-              </select>
+                onChange={(val) => setForm({ ...form, tags: val })}
+                options={[
+                  { value: "Nuevo", label: "Nuevo" },
+                  { value: "Frecuente", label: "Frecuente" },
+                  { value: "VIP", label: "VIP" },
+                ]}
+              />
             </div>
           </div>
 

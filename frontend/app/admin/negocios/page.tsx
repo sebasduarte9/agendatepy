@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 
 export default function AdminTenantsDirectoryPage() {
   const [tenants, setTenants] = useState<any[]>([]);
@@ -163,53 +164,56 @@ export default function AdminTenantsDirectoryPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Plan Filter */}
-          <select
+          <CustomSelect
             value={planFilter}
-            onChange={(e) => {
-              setPlanFilter(e.target.value);
+            onChange={(val) => {
+              setPlanFilter(val);
               setPage(1);
             }}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 font-medium"
-          >
-            <option value="ALL">💳 Todos los Planes</option>
-            <option value="FREE">🔘 Cuentas FREE</option>
-            <option value="PAID">💎 Cuentas de Pago</option>
-            <option value="PROFESIONAL">PROFESIONAL</option>
-            <option value="EMPRESA">EMPRESA</option>
-          </select>
+            options={[
+              { value: "ALL", label: "💳 Todos los Planes" },
+              { value: "FREE", label: "🔘 Cuentas FREE" },
+              { value: "PAID", label: "💎 Cuentas de Pago" },
+              { value: "PROFESIONAL", label: "PROFESIONAL" },
+              { value: "EMPRESA", label: "EMPRESA" },
+            ]}
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 min-w-[160px]"
+          />
 
           {/* Status filter */}
-          <select
+          <CustomSelect
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onChange={(val) => {
+              setStatusFilter(val);
               setPage(1);
             }}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">Estado: Todos</option>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="PAUSED">PAUSED</option>
-            <option value="SUSPENDED">SUSPENDED</option>
-          </select>
+            options={[
+              { value: "ALL", label: "Estado: Todos" },
+              { value: "ACTIVE", label: "ACTIVE" },
+              { value: "PAUSED", label: "PAUSED" },
+              { value: "SUSPENDED", label: "SUSPENDED" },
+            ]}
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 min-w-[130px]"
+          />
 
           {/* Sort By */}
-          <select
+          <CustomSelect
             value={`${sortBy}-${sortOrder}`}
-            onChange={(e) => {
-              const [sb, so] = e.target.value.split("-");
+            onChange={(val) => {
+              const [sb, so] = val.split("-");
               setSortBy(sb);
               setSortOrder(so);
               setPage(1);
             }}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="createdAt-desc">📅 Más recientes primero</option>
-            <option value="createdAt-asc">📅 Más antiguos primero</option>
-            <option value="name-asc">🔤 Nombre (A - Z)</option>
-            <option value="name-desc">🔤 Nombre (Z - A)</option>
-            <option value="lastActivity-desc">⚡ Mayor actividad reciente</option>
-          </select>
+            options={[
+              { value: "createdAt-desc", label: "📅 Más recientes primero" },
+              { value: "createdAt-asc", label: "📅 Más antiguos primero" },
+              { value: "name-asc", label: "🔤 Nombre (A - Z)" },
+              { value: "name-desc", label: "🔤 Nombre (Z - A)" },
+              { value: "lastActivity-desc", label: "⚡ Mayor actividad reciente" },
+            ]}
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 min-w-[190px]"
+          />
         </div>
       </div>
 

@@ -36,6 +36,7 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { StaffMember, CommissionPayoutRecord, Appointment } from "@/lib/dashboard-types";
 
@@ -415,6 +416,54 @@ export default function ComisionesPage() {
     setIsRulesModalOpen(false);
   };
 
+  // Custom select options
+  const staffFilterOptions = useMemo(
+    () => [
+      {
+        value: "ALL",
+        label: `👥 Todo el equipo (${staff.length})`,
+      },
+      ...staff.map((s) => ({
+        value: s.id,
+        label: s.name,
+        subtitle: `${s.commissionPercentage}% serv. / ${s.productCommissionPercentage ?? 10}% prod.`,
+        color: s.color,
+      })),
+    ],
+    [staff]
+  );
+
+  const periodFilterOptions = useMemo(
+    () => [
+      { value: "today", label: "Hoy" },
+      { value: "7d", label: "Últimos 7 días" },
+      { value: "15d", label: "Esta quincena" },
+      { value: "30d", label: "Últimos 30 días" },
+      { value: "all", label: "Todo el historial" },
+    ],
+    []
+  );
+
+  const liqStaffOptions = useMemo(
+    () =>
+      staff.map((s) => ({
+        value: s.id,
+        label: `${s.name} — ${s.role}`,
+        subtitle: `${s.commissionPercentage}% serv. / ${s.productCommissionPercentage ?? 10}% prod.`,
+        color: s.color,
+      })),
+    [staff]
+  );
+
+  const liqPaymentMethodOptions = useMemo(
+    () => [
+      { value: "SIPAP", label: "Transferencia Bancaria SIPAP" },
+      { value: "Efectivo", label: "Efectivo (Caja Mostrador)" },
+      { value: "POS Bancard", label: "POS Bancard / Tarjeta" },
+    ],
+    []
+  );
+
   return (
     <div className="space-y-6">
       {/* 1. Header with Filters & Primary Actions */}
@@ -440,38 +489,21 @@ export default function ComisionesPage() {
 
         {/* Global Filters & Buttons */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Staff Filter */}
-          <div className="relative">
-            <select
-              value={selectedStaffId}
-              onChange={(e) => setSelectedStaffId(e.target.value)}
-              className="text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-white/10 rounded-xl px-3 py-2 pr-8 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary cursor-pointer appearance-none"
-            >
-              <option value="ALL">👥 Todo el equipo ({staff.length})</option>
-              {staff.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.commissionPercentage}% serv. / {s.productCommissionPercentage ?? 10}% prod.)
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="h-3.5 w-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          </div>
+          {/* Custom Staff Filter */}
+          <CustomSelect
+            value={selectedStaffId}
+            onChange={(val) => setSelectedStaffId(val)}
+            options={staffFilterOptions}
+            buttonClassName="min-w-[210px]"
+          />
 
-          {/* Period Filter */}
-          <div className="relative">
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-white/10 rounded-xl px-3 py-2 pr-8 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary cursor-pointer appearance-none"
-            >
-              <option value="today">Hoy</option>
-              <option value="7d">Últimos 7 días</option>
-              <option value="15d">Esta quincena</option>
-              <option value="30d">Últimos 30 días</option>
-              <option value="all">Todo el historial</option>
-            </select>
-            <ChevronDown className="h-3.5 w-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          </div>
+          {/* Custom Period Filter */}
+          <CustomSelect
+            value={period}
+            onChange={(val) => setPeriod(val)}
+            options={periodFilterOptions}
+            buttonClassName="min-w-[135px]"
+          />
 
           {/* Configure Rules Button */}
           <button
@@ -974,22 +1006,17 @@ export default function ComisionesPage() {
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
               Seleccionar Colaborador *
             </label>
-            <select
+            <CustomSelect
               value={liqStaffId}
-              onChange={(e) => {
-                setLiqStaffId(e.target.value);
-                const s = staffMap.get(e.target.value);
+              onChange={(val) => {
+                setLiqStaffId(val);
+                const s = staffMap.get(val);
                 setLiqAdvancesDeducted(s?.advanceBalance || 0);
               }}
-              required
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-primary"
-            >
-              {staff.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} — {s.role} ({s.commissionPercentage}% serv. / {s.productCommissionPercentage ?? 10}% prod.)
-                </option>
-              ))}
-            </select>
+              options={liqStaffOptions}
+              className="w-full"
+              buttonClassName="w-full bg-white dark:bg-slate-800"
+            />
           </div>
 
           {/* Breakdown calculation card: SERVICIOS VS PRODUCTOS */}
@@ -1077,15 +1104,13 @@ export default function ComisionesPage() {
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Medio de Pago *
               </label>
-              <select
+              <CustomSelect
                 value={liqPaymentMethod}
-                onChange={(e) => setLiqPaymentMethod(e.target.value as any)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-primary"
-              >
-                <option value="SIPAP">Transferencia Bancaria SIPAP</option>
-                <option value="Efectivo">Efectivo (Caja Mostrador)</option>
-                <option value="POS Bancard">POS Bancard / Tarjeta</option>
-              </select>
+                onChange={(val) => setLiqPaymentMethod(val as any)}
+                options={liqPaymentMethodOptions}
+                className="w-full"
+                buttonClassName="w-full bg-white dark:bg-slate-800"
+              />
             </div>
 
             {/* Auto Cash Movement Switch */}
