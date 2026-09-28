@@ -90,6 +90,16 @@ export default async function ReservarPage({ params }: PageProps) {
           where: { active: true },
           select: { id: true, name: true },
         },
+        products: {
+          where: { isActive: true },
+          orderBy: { name: "asc" },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            isActive: true,
+          },
+        },
       },
     });
   } catch (error) {
@@ -267,6 +277,7 @@ export default async function ReservarPage({ params }: PageProps) {
         avatarBorder: theme.avatarBorder,
       }}
       services={enrichedServices}
+      products={tenant.products}
     />
     <WebAnalyticsTracker tenantSlug={tenant.subdomain || tenant.slug} pagePath={`/${tenant.subdomain || tenant.slug}/reservar`} />
     </>

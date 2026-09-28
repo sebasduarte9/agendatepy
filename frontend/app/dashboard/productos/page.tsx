@@ -177,7 +177,7 @@ export default function ProductosPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="productos-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             Productos, Tienda & Inventario
@@ -191,7 +191,7 @@ export default function ProductosPage() {
           <button
             type="button"
             onClick={copyStoreLink}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             {copiedLink ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-slate-400" />}
             <span>Copiar Enlace Tienda</span>
@@ -208,8 +208,9 @@ export default function ProductosPage() {
 
           <button
             type="button"
+            data-tour="productos-new-btn"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-brand/25 hover:brightness-110 transition"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:brightness-110 transition cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Nuevo Producto</span>
@@ -218,7 +219,7 @@ export default function ProductosPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div data-tour="productos-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Total Unidades en Stock"
           value={`${totalStock} u.`}
@@ -243,7 +244,7 @@ export default function ProductosPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="productos-filters" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
@@ -251,7 +252,7 @@ export default function ProductosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por producto, categoría o descripción..."
-            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs outline-none focus:border-brand"
+            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs outline-none focus:border-primary"
           />
         </div>
 
@@ -275,7 +276,7 @@ export default function ProductosPage() {
 
       {/* Products Grid */}
       {filteredProducts.length === 0 ? (
-        <Card className="py-12 text-center">
+        <Card data-tour="productos-grid" className="py-12 text-center">
           <ShoppingBag className="mx-auto h-12 w-12 text-slate-300" />
           <h3 className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-200">No se encontraron productos</h3>
           <p className="mt-1 text-xs text-slate-500">
@@ -284,21 +285,21 @@ export default function ProductosPage() {
           <button
             type="button"
             onClick={openCreateModal}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-xs"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-primary/90 transition cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             Crear Producto
           </button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div data-tour="productos-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProducts.map((p) => {
             const isLowStock = p.stock <= 5;
             const marginPercent = Math.round(((p.price - p.cost) / p.price) * 100);
             const isBroken = brokenImages[p.id] || !p.imageUrl;
 
             return (
-              <Card key={p.id} className="flex flex-col justify-between overflow-hidden p-0 border border-slate-200/90 dark:border-white/10 shadow-xs hover:border-brand/40 transition">
+              <Card key={p.id} className="flex flex-col justify-between overflow-hidden p-0 border border-slate-200/90 dark:border-white/10 shadow-xs hover:border-primary/40 transition">
                 {/* Image and badges */}
                 <div className="relative h-44 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                   {isBroken ? (
@@ -329,7 +330,7 @@ export default function ProductosPage() {
                       type="button"
                       onClick={() => openEditModal(p)}
                       aria-label="Editar producto"
-                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 shadow-sm hover:text-brand transition"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 shadow-sm hover:text-primary transition cursor-pointer"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
@@ -337,7 +338,7 @@ export default function ProductosPage() {
                       type="button"
                       onClick={() => handleDelete(p.id, p.name)}
                       aria-label="Eliminar producto"
-                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/95 dark:bg-slate-900/95 text-rose-600 shadow-sm hover:bg-rose-50 transition"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/95 dark:bg-slate-900/95 text-rose-600 shadow-sm hover:bg-rose-50 transition cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -382,21 +383,21 @@ export default function ProductosPage() {
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, -1)}
-                          className="h-7 w-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition active:scale-95"
+                          className="h-7 w-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition active:scale-95 cursor-pointer"
                         >
                           -1
                         </button>
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, 1)}
-                          className="h-7 w-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition active:scale-95"
+                          className="h-7 w-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition active:scale-95 cursor-pointer"
                         >
                           +1
                         </button>
                         <button
                           type="button"
                           onClick={() => updateProductStock(p.id, 5)}
-                          className="h-7 px-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-xs transition active:scale-95"
+                          className="h-7 px-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-xs transition active:scale-95 cursor-pointer"
                         >
                           +5
                         </button>
@@ -425,25 +426,37 @@ export default function ProductosPage() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Ej. Cera Capilar Mate 100ml"
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Categoría</label>
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
-              >
-                {CATEGORIES.filter((c) => c !== "Todas").map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Categoría del Producto
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {CATEGORIES.filter((c) => c !== "Todas").map((cat) => {
+                const isSelected = form.category === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setForm({ ...form, category: cat })}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary shadow-xs"
+                        : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <Package className={`h-3.5 w-3.5 ${isSelected ? "text-primary" : "text-slate-400"}`} />
+                    <span className="truncate">{cat}</span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Stock Inicial (unidades)</label>
               <input
@@ -452,45 +465,64 @@ export default function ProductosPage() {
                 required
                 value={form.stock}
                 onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">URL Imagen (opcional)</label>
+              <input
+                type="url"
+                value={form.imageUrl}
+                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                placeholder="https://images.unsplash..."
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Precio Venta (Gs.) *</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Precio Venta al Público (Gs.) *</label>
               <input
                 type="number"
                 step={5000}
                 required
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Costo de Compra (Gs.)</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Costo de Compra Proveedor (Gs.)</label>
               <input
                 type="number"
                 step={5000}
                 value={form.cost}
                 onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">URL Imagen del Producto</label>
-            <input
-              type="url"
-              value={form.imageUrl}
-              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-              placeholder="https://..."
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
-            />
-          </div>
+          {/* Real-time Profit Preview */}
+          {form.price > 0 && (
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
+                <span className="text-slate-600 dark:text-slate-400">Ganancia neta estimada:</span>
+                <span className="font-bold text-slate-900 dark:text-white font-mono">
+                  {formatGs(Math.max(0, form.price - form.cost))} / u.
+                </span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-lg text-[11px] font-bold ${
+                form.price > form.cost
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+              }`}>
+                Margen: {form.price > 0 ? Math.round(((form.price - form.cost) / form.price) * 100) : 0}%
+              </span>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Descripción Breve</label>
@@ -499,7 +531,7 @@ export default function ProductosPage() {
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Fijación mate, aroma a menta, para todo tipo de cabello..."
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-3 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-3 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
             />
           </div>
 
@@ -509,14 +541,14 @@ export default function ProductosPage() {
                 type="checkbox"
                 checked={form.active}
                 onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                className="h-4 w-4 rounded text-brand focus:ring-brand"
+                className="h-4 w-4 rounded text-primary focus:ring-primary accent-primary"
               />
               <span>Producto Activo en Catálogo</span>
             </label>
 
             <button
               type="submit"
-              className="rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-brand/20 hover:brightness-110 transition"
+              className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/20 hover:brightness-110 transition cursor-pointer"
             >
               {editingProduct ? "Guardar Cambios" : "Crear Producto"}
             </button>

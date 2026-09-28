@@ -229,7 +229,7 @@ async function run() {
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: cookieA },
         body: {
-          name: "Marcos Barbero Pro",
+          name: "Marcos Barbero",
           role: "Master Barber",
           commissionPercentage: 55,
           color: "#4f46e5",
@@ -248,7 +248,7 @@ async function run() {
       const pass =
         staffRes.status === 201 &&
         Boolean(foundStaff) &&
-        foundStaff.name === "Marcos Barbero Pro" &&
+        foundStaff.name === "Marcos Barbero" &&
         foundStaff.commissionPercentage === 55;
 
       record(

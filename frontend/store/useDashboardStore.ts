@@ -74,7 +74,7 @@ const staff: StaffMember[] = [
   {
     id: "st-diego",
     name: "Diego Franco",
-    role: "Barbero Profesional",
+    role: "Barbero",
     systemRole: "barbero",
     description: "Cortes modernos, fade, diseños y cuidado facial.",
     avatar: "DF",

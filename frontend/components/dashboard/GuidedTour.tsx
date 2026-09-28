@@ -384,22 +384,35 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Cargar un producto con costo y precio",
+        taskTitle: "Cabecera & Enlace directo a tu Tienda",
         instruction:
-          "Tocá '+ Nuevo Producto'. Ingresá el nombre, categoría, costo de compra (lo que te cuesta del proveedor) y precio de venta al público.",
-        tip: "El sistema calcula automáticamente el porcentaje de ganancia neta en verde (ej: Margen: 55%).",
+          "Copiá el enlace público para mandar por WhatsApp a tus clientes o abrí 'Ver Tienda Web' para ver cómo piden tus productos online con dos clics.",
+        tip: "En tu tienda web los clientes pueden pedir con mensaje automático a tu WhatsApp o dejar sus datos para que los contactes.",
+        targetSelector: '[data-tour="productos-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Ajuste rápido de unidades de stock",
+        taskTitle: "Cargar nuevo producto con cálculo de margen",
         instruction:
-          "En cada tarjeta tenés los botones táctiles '-1', '+1' y '+5'. Cuando llega un pedido del distribuidor o vendés un producto al mostrador, sumá o restá con un toque.",
+          "Tocá '+ Nuevo Producto'. Ingresá el nombre, elegí la categoría táctil, stock inicial, costo de compra del proveedor y precio de venta al público.",
+        tip: "El sistema calcula automáticamente la ganancia neta en guaraníes y el porcentaje de margen en vivo.",
+        targetSelector: '[data-tour="productos-new-btn"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Copiar el enlace de tu Tienda Web",
+        taskTitle: "Control de inventario y alertas de stock bajo",
         instruction:
-          "Tocá 'Copiar Enlace Tienda' arriba. Tus clientes pueden mirar tu catálogo de productos y pedir directamente a tu WhatsApp.",
+          "Monitoreá el total de unidades físicas, valor de venta estimado, margen proyectado y productos en estado crítico (≤5 unidades) para reponer a tiempo.",
+        tip: "Los productos con stock bajo muestran una insignia de advertencia para no quedarte sin mercadería.",
+        targetSelector: '[data-tour="productos-kpis"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Ajuste táctil rápido (-1, +1, +5) y edición",
+        instruction:
+          "En cada tarjeta de producto tenés botones rápidos para descontar cuando vendés al mostrador o sumar cuando llega una caja del distribuidor.",
+        tip: "Tocá el botón de edición para cambiar fotos o precios, o la papelera para eliminar productos de forma segura.",
+        targetSelector: '[data-tour="productos-grid"]',
       },
     ],
   },
@@ -1225,16 +1238,27 @@ export default function GuidedTour() {
     );
   }, [searchFilter]);
 
-  // Smart Card positioning: Keep the card directly adjacent ("pegado") to the illuminated target
-  const cardWidth = Math.min(windowDimensions.width - 32, 370);
-  const cardHeightEstimate = 185;
+  // Measured height of the tour card via ref to guarantee exact placement without overflow
+  const tourCardRef = useRef<HTMLDivElement>(null);
+  const [cardMeasuredHeight, setCardMeasuredHeight] = useState(330);
+
+  useEffect(() => {
+    if (tourCardRef.current) {
+      const h = tourCardRef.current.offsetHeight;
+      if (h > 120) setCardMeasuredHeight(h);
+    }
+  }, [currentStepIndex, selectedSectionKey, isTourOpen]);
+
+  // Smart Card positioning: NEVER overlap the spotlight target and NEVER cut off outside the viewport
+  const cardWidth = Math.min(windowDimensions.width - 32, 380);
+  const cardHeight = Math.max(cardMeasuredHeight, 330);
 
   let cardStyle: React.CSSProperties = {};
 
   if (!targetRect) {
     cardStyle = {
       position: "fixed",
-      left: Math.max(16, (windowDimensions.width - cardWidth) / 2),
+      left: Math.max(16, Math.round((windowDimensions.width - cardWidth) / 2)),
       bottom: 24,
       width: cardWidth,
       zIndex: 99999,
@@ -1252,74 +1276,80 @@ export default function GuidedTour() {
         bottom: 16,
         width: "auto",
         maxWidth: "calc(100vw - 32px)",
+        maxHeight: "calc(100vh - 80px)",
         zIndex: 99999,
       };
     } else {
       const gap = 16;
+      const navOffset = 74; // top navbar clearance
 
-      // 4 adjacent candidate directions relative to targetRect:
+      // 1. Below target
+      const candBelow = {
+        l: Math.max(16, Math.min(W - cardWidth - 16, targetRect.left)),
+        t: targetRect.bottom + gap,
+        fits: targetRect.bottom + gap + cardHeight <= H - 16,
+      };
+
+      // 2. Above target (guaranteed zero overlap: ends gap px ABOVE targetRect.top)
+      const candAbove = {
+        l: Math.max(16, Math.min(W - cardWidth - 16, targetRect.left)),
+        t: targetRect.top - cardHeight - gap,
+        fits: targetRect.top - cardHeight - gap >= navOffset,
+      };
+
+      // 3. Right of target
       const candRight = {
         l: targetRect.right + gap,
-        t: Math.max(84, Math.min(H - cardHeightEstimate - 20, targetRect.top)),
-        fits: targetRect.right + gap + cardWidth <= W - 20,
+        t: Math.max(navOffset, Math.min(H - cardHeight - 16, targetRect.top)),
+        fits: targetRect.right + gap + cardWidth <= W - 16,
       };
 
-      const candBelow = {
-        l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.left)),
-        t: targetRect.bottom + gap,
-        fits: targetRect.bottom + gap + cardHeightEstimate <= H - 20,
-      };
-
+      // 4. Left of target
       const candLeft = {
         l: targetRect.left - cardWidth - gap,
-        t: Math.max(84, Math.min(H - cardHeightEstimate - 20, targetRect.top)),
-        fits: targetRect.left - cardWidth - gap >= 20,
-      };
-
-      const candAbove = {
-        l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.left)),
-        t: targetRect.top - cardHeightEstimate - gap,
-        fits: targetRect.top - cardHeightEstimate - gap >= 84,
+        t: Math.max(navOffset, Math.min(H - cardHeight - 16, targetRect.top)),
+        fits: targetRect.left - cardWidth - gap >= 16,
       };
 
       let chosen: { l: number; t: number };
 
-      // 1. If target is on the far right (like Save button in top-right):
-      if (targetRect.left > W * 0.6) {
+      const targetCenterY = targetRect.top + targetRect.height / 2;
+
+      // Prioritize placement based on where the element is on the screen:
+      if (targetCenterY < H * 0.45) {
+        // Element is in the upper area: prefer below, then right/left, then above
         if (candBelow.fits) {
-          chosen = {
-            l: Math.max(20, Math.min(W - cardWidth - 20, targetRect.right - cardWidth)),
-            t: candBelow.t,
-          };
+          chosen = { l: candBelow.l, t: candBelow.t };
+        } else if (candRight.fits) {
+          chosen = { l: candRight.l, t: candRight.t };
         } else if (candLeft.fits) {
           chosen = { l: candLeft.l, t: candLeft.t };
+        } else if (candAbove.fits) {
+          chosen = { l: candAbove.l, t: candAbove.t };
         } else {
-          chosen = { l: candBelow.l, t: candBelow.t };
+          // Fallback: place safely at bottom
+          chosen = {
+            l: Math.max(16, Math.round((W - cardWidth) / 2)),
+            t: Math.max(navOffset, H - cardHeight - 16),
+          };
         }
-      }
-      // 2. Main content and tab bar on the left: prioritize right-adjacent placement (candRight)
-      else if (candRight.fits) {
-        chosen = { l: candRight.l, t: candRight.t };
-      }
-      // 3. Otherwise try below with comfortable margin
-      else if (candBelow.fits) {
-        chosen = { l: candBelow.l, t: candBelow.t };
-      }
-      // 4. Try left
-      else if (candLeft.fits) {
-        chosen = { l: candLeft.l, t: candLeft.t };
-      }
-      // 5. Try above
-      else if (candAbove.fits) {
-        chosen = { l: candAbove.l, t: candAbove.t };
-      }
-      // 6. Safe fallback: if none of the 4 adjacent sides comfortably fit,
-      // place card safely in top or bottom center where it remains 100% visible and readable
-      else {
-        chosen = {
-          l: Math.max(20, Math.round((W - cardWidth) / 2)),
-          t: targetRect.top > H * 0.4 ? 84 : Math.max(84, Math.round(H - cardHeightEstimate - 24)),
-        };
+      } else {
+        // Element is in the middle or lower area: prefer above, then right/left, then below
+        if (candAbove.fits) {
+          chosen = { l: candAbove.l, t: candAbove.t };
+        } else if (candRight.fits) {
+          chosen = { l: candRight.l, t: candRight.t };
+        } else if (candLeft.fits) {
+          chosen = { l: candLeft.l, t: candLeft.t };
+        } else if (candBelow.fits) {
+          chosen = { l: candBelow.l, t: candBelow.t };
+        } else {
+          // Fallback: place safely at top
+          chosen = {
+            l: Math.max(16, Math.round((W - cardWidth) / 2)),
+            t: navOffset + 8,
+          };
+        }
       }
 
       cardStyle = {
@@ -1328,9 +1358,9 @@ export default function GuidedTour() {
         top: chosen.t,
         width: cardWidth,
         maxWidth: "calc(100vw - 32px)",
-        maxHeight: "calc(100vh - 32px)",
+        maxHeight: "min(520px, calc(100vh - 90px))",
         zIndex: 99999,
-        transition: "left 300ms cubic-bezier(0.25, 1, 0.5, 1), top 300ms cubic-bezier(0.25, 1, 0.5, 1)",
+        transition: "left 260ms cubic-bezier(0.25, 1, 0.5, 1), top 260ms cubic-bezier(0.25, 1, 0.5, 1)",
       };
     }
   }
@@ -1443,11 +1473,12 @@ export default function GuidedTour() {
               className="z-[99999] pointer-events-auto"
             >
               <motion.div
+                ref={tourCardRef}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="relative w-full overflow-visible rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-4 sm:p-5 shadow-2xl flex flex-col ring-1 ring-black/5 dark:ring-white/10"
+                className="relative w-full max-h-[min(520px,calc(100vh-100px))] overflow-y-auto scrollbar-thin rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-4 sm:p-5 shadow-2xl flex flex-col ring-1 ring-black/5 dark:ring-white/10"
               >
                 {showExitConfirm ? (
                   <div className="py-2 px-1 text-center space-y-3">

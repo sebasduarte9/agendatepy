@@ -35,6 +35,11 @@ import {
   Flame,
   Timer,
   BadgePercent,
+  PhoneCall,
+  Send,
+  CheckCircle2,
+  UserCheck,
+  X,
 } from "lucide-react";
 
 function InstagramIcon({ className = "h-4 w-4" }: { className?: string }) {
@@ -90,9 +95,10 @@ import BookingCalendar from "./BookingCalendar";
 type BookingWizardProps = {
   tenant: PublicTenant;
   services: PublicService[];
+  products?: any[];
 };
 
-export default function BookingWizard({ tenant, services }: BookingWizardProps) {
+export default function BookingWizard({ tenant, services, products }: BookingWizardProps) {
   const router = useRouter();
   const requestId = useRef(0);
 
@@ -117,6 +123,15 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
   const [storeCustomerName, setStoreCustomerName] = useState("");
   const [copiedSipap, setCopiedSipap] = useState(false);
 
+  // Shop ordering & contact request modal state
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactNotes, setContactNotes] = useState("");
+  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [selectedProductCategory, setSelectedProductCategory] = useState("Todas");
+
   // Selected photo for quick zoom/preview
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showBioBooking, setShowBioBooking] = useState(false);
@@ -136,15 +151,42 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
   const layout = tenant.layoutStyle || "panoramic";
   const gallery = tenant.galleryUrls && tenant.galleryUrls.length > 0 ? tenant.galleryUrls : DEFAULT_GALLERY_PHOTOS;
 
+  // Normalized products list merging tenant DB products or fallback
+  const allProducts: ProductItem[] = useMemo(() => {
+    if (products && Array.isArray(products) && products.length > 0) {
+      return products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: Number(p.price) || 0,
+        cost: Number(p.cost) || Math.round(Number(p.price) * 0.5),
+        stock: p.stock ?? 10,
+        imageUrl: p.imageUrl || "https://images.unsplash.com/photo-1597354984706-aec992b7d0d1?w=500&auto=format&fit=crop&q=80",
+        category: p.category || "General",
+        description: p.description || "",
+        active: p.isActive !== false,
+      }));
+    }
+    return initialProducts;
+  }, [products]);
+
+  // Product categories list
+  const productCategories = useMemo(() => {
+    const set = new Set<string>(["Todas"]);
+    allProducts.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return Array.from(set);
+  }, [allProducts]);
+
   // Cart calculations
   const cartItems = useMemo(() => {
     return Object.entries(cart)
       .map(([id, qty]) => {
-        const prod = initialProducts.find((p) => p.id === id);
+        const prod = allProducts.find((p) => p.id === id);
         return prod && qty > 0 ? { product: prod, qty } : null;
       })
       .filter((item): item is { product: ProductItem; qty: number } => item !== null);
-  }, [cart]);
+  }, [cart, allProducts]);
 
   const totalCartPrice = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.product.price * item.qty, 0);
@@ -165,6 +207,58 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
       }
       return { ...prev, [productId]: next };
     });
+  }
+
+  // Generate prefilled WhatsApp URL for the complete order
+  function getWhatsAppOrderUrl(singleProduct?: ProductItem) {
+    const rawPhone = (tenant.whatsapp || "595981700800").replace(/\D/g, "");
+    if (singleProduct) {
+      const text = encodeURIComponent(
+        `¡Hola ${tenant.name}! 👋 Quiero consultar o pedir este producto de su tienda online:\n\n` +
+        `🛍️ *${singleProduct.name}*\n` +
+        `💰 *Precio:* Gs. ${singleProduct.price.toLocaleString("es-PY")}\n\n` +
+        `¿Tienen disponibilidad para retiro o delivery? ¡Muchas gracias!`
+      );
+      return `https://wa.me/${rawPhone}?text=${text}`;
+    }
+
+    const lines = cartItems.map(
+      (item) => `• ${item.qty}x ${item.product.name} (Gs. ${(item.product.price * item.qty).toLocaleString("es-PY")})`
+    );
+    const clientSignature = name.trim() ? `\n👤 *Cliente:* ${name.trim()} (${phone.trim()})` : "";
+    const text = encodeURIComponent(
+      `¡Hola ${tenant.name}! 👋 Quiero realizar un pedido desde la tienda online:${clientSignature}\n\n` +
+      `🛍️ *Productos solicitados:*\n${lines.join("\n")}\n\n` +
+      `💰 *Total del pedido:* Gs. ${totalCartPrice.toLocaleString("es-PY")}\n\n` +
+      `¿Tienen stock disponible para retiro o delivery? ¡Muchas gracias!`
+    );
+    return `https://wa.me/${rawPhone}?text=${text}`;
+  }
+
+  async function handleConfirmContactRequest(e: React.FormEvent) {
+    e.preventDefault();
+    if (!contactPhone.trim() || contactPhone.replace(/\D/g, "").length < 8) return;
+    setIsSubmittingContact(true);
+    try {
+      await fetch("/api/leads/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenant.slug,
+          customerName: contactName.trim() || name.trim() || "Cliente Tienda",
+          customerPhone: contactPhone.trim() || phone.trim(),
+          notes: contactNotes.trim(),
+          items: cartItems.map((i) => ({
+            name: i.product.name,
+            qty: i.qty,
+            price: i.product.price,
+          })),
+          total: totalCartPrice,
+        }),
+      }).catch(() => {});
+    } catch {}
+    setIsSubmittingContact(false);
+    setContactSubmitted(true);
   }
 
   function handleSelectDate(civilDate: string) {
@@ -698,80 +792,304 @@ export default function BookingWizard({ tenant, services }: BookingWizardProps) 
       ) : (
         /* Tienda de Productos Tab */
         <div className="mt-5 space-y-4">
-          <p className={`text-xs ${secondaryTextClass}`}>
-            Productos disponibles para retirar en tu visita a {tenant.name}.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-sm">Tienda Oficial · {tenant.name}</h3>
+              <p className={`text-xs ${secondaryTextClass}`}>
+                Elegí tus productos para retirar en tu cita o pedir con delivery.
+              </p>
+            </div>
+            {totalCartCount > 0 && (
+              <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-black text-primary">
+                {totalCartCount} en carrito
+              </span>
+            )}
+          </div>
 
-          <div className="space-y-2.5">
-            {initialProducts.map((p) => {
-              const qty = cart[p.id] || 0;
-              return (
-                <div
-                  key={p.id}
-                  className={`flex items-center justify-between rounded-2xl border p-3 transition ${itemBgClass}`}
+          {/* Categories Selector */}
+          {productCategories.length > 2 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {productCategories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedProductCategory(cat)}
+                  className={`rounded-xl px-2.5 py-1 text-[11px] font-bold transition whitespace-nowrap cursor-pointer ${
+                    selectedProductCategory === cat
+                      ? "bg-primary text-white shadow-xs"
+                      : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:opacity-80"
+                  }`}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={p.imageUrl}
-                      alt={p.name}
-                      className="h-12 w-12 rounded-xl object-cover"
-                    />
-                    <div>
-                      <p className="text-xs font-bold leading-tight">{p.name}</p>
-                      <p className="text-xs font-black text-primary mt-0.5">
-                        Gs. {p.price.toLocaleString("es-PY")}
-                      </p>
-                    </div>
-                  </div>
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
 
-                  <div className="flex items-center gap-2">
-                    {qty > 0 ? (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => updateCartQty(p.id, -1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/5 dark:bg-white/10"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="w-5 text-center text-xs font-bold">{qty}</span>
+          {/* Product Items List */}
+          <div className="space-y-3">
+            {allProducts
+              .filter(
+                (p) =>
+                  selectedProductCategory === "Todas" ||
+                  p.category.toLowerCase() === selectedProductCategory.toLowerCase()
+              )
+              .map((p) => {
+                const qty = cart[p.id] || 0;
+                return (
+                  <div
+                    key={p.id}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border p-3.5 transition ${itemBgClass}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="h-14 w-14 rounded-2xl object-cover shrink-0 shadow-xs border border-black/5 dark:border-white/5"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs font-bold leading-tight truncate">{p.name}</p>
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10 text-slate-500">
+                            {p.category}
+                          </span>
+                        </div>
+                        <p className="text-sm font-black text-primary mt-1">
+                          Gs. {p.price.toLocaleString("es-PY")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/5 dark:border-white/5">
+                      {/* Individual quick order via WhatsApp button */}
+                      <a
+                        href={getWhatsAppOrderUrl(p)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition inline-flex items-center gap-1 cursor-pointer"
+                        title="Pedir o consultar este producto por WhatsApp"
+                      >
+                        <MessageCircle className="h-3 w-3" />
+                        <span>Pedir</span>
+                      </a>
+
+                      {/* Quantity Controls */}
+                      {qty > 0 ? (
+                        <div className="flex items-center gap-1.5 bg-black/5 dark:bg-white/10 p-0.5 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => updateCartQty(p.id, -1)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xs cursor-pointer"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-6 text-center text-xs font-black">{qty}</span>
+                          <button
+                            type="button"
+                            onClick={() => updateCartQty(p.id, 1)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white shadow-xs cursor-pointer"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
                         <button
                           type="button"
                           onClick={() => updateCartQty(p.id, 1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white"
+                          className="rounded-xl bg-primary text-white px-3 py-1.5 text-xs font-bold shadow-xs hover:opacity-95 transition cursor-pointer"
                         >
-                          <Plus className="h-3 w-3" />
+                          + Agregar
                         </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => updateCartQty(p.id, 1)}
-                        className={`rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-white transition`}
-                      >
-                        Agregar
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
 
+          {/* Checkout & Action Buttons Card */}
           {totalCartCount > 0 && (
-            <div className={`mt-4 rounded-2xl border p-4 ${itemBgClass}`}>
-              <div className="flex items-center justify-between border-b pb-2 border-black/5 dark:border-white/5">
-                <span className="font-bold text-xs">Total del pedido:</span>
-                <span className="font-black text-sm text-primary">
-                  Gs. {totalCartPrice.toLocaleString("es-PY")}
-                </span>
+            <div className={`mt-5 rounded-3xl border p-4.5 shadow-lg space-y-3.5 ${itemBgClass}`}>
+              <div className="flex items-center justify-between border-b pb-3 border-black/10 dark:border-white/10">
+                <div>
+                  <span className="font-bold text-xs uppercase tracking-wider text-slate-500">
+                    Tu Pedido ({totalCartCount} items):
+                  </span>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                    {cartItems.map((c) => `${c.qty}x ${c.product.name}`).join(", ")}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] text-slate-400 block">Total a pagar:</span>
+                  <span className="font-black text-base text-primary">
+                    Gs. {totalCartPrice.toLocaleString("es-PY")}
+                  </span>
+                </div>
               </div>
-              <p className={`mt-2 text-[11px] ${secondaryTextClass}`}>
-                Podés pagar y retirar directamente en caja el día de tu turno.
+
+              {/* Los 2 Botones Solicitados: WhatsApp Directo + Que se contacten conmigo */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {/* BOTÓN 1: Enviar mensaje por WhatsApp */}
+                <a
+                  href={getWhatsAppOrderUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white py-3 px-4 text-xs font-bold shadow-md shadow-emerald-900/20 transition cursor-pointer text-center"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Enviar mensaje por WhatsApp</span>
+                </a>
+
+                {/* BOTÓN 2: Quiero que se contacten conmigo */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setContactName(name);
+                    setContactPhone(phone);
+                    setShowContactModal(true);
+                  }}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-primary hover:opacity-95 text-white py-3 px-4 text-xs font-bold shadow-md shadow-primary/25 transition cursor-pointer text-center"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  <span>Quiero que se contacten conmigo</span>
+                </button>
+              </div>
+
+              <p className={`text-center text-[11px] ${secondaryTextClass}`}>
+                Al tramitar tu pedido, el equipo de {tenant.name} coordinará los detalles contigo al instante.
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal / Dialog: Quiero que se contacten conmigo */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`w-full max-w-md rounded-3xl border p-5 shadow-2xl space-y-4 ${itemBgClass}`}>
+            <div className="flex items-center justify-between border-b pb-3 border-black/10 dark:border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <PhoneCall className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">Tramitar Pedido de Productos</h4>
+                  <p className="text-[11px] text-slate-500">Un asesor se comunicará contigo</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowContactModal(false);
+                  setContactSubmitted(false);
+                }}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {contactSubmitted ? (
+              <div className="py-6 text-center space-y-3">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-emerald-500/15 text-emerald-500">
+                  <CheckCircle2 className="h-8 w-8" />
+                </div>
+                <h4 className="font-bold text-base">¡Solicitud Enviada con Éxito!</h4>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  Registramos tu pedido de Gs. {totalCartPrice.toLocaleString("es-PY")}. Un asesor de {tenant.name} te escribirá por WhatsApp a la brevedad.
+                </p>
+                <div className="pt-2 flex flex-col gap-2">
+                  <a
+                    href={getWhatsAppOrderUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white py-2.5 text-xs font-bold hover:bg-emerald-500 transition cursor-pointer"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Abrir chat de WhatsApp directamente</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowContactModal(false);
+                      setContactSubmitted(false);
+                    }}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-black/5"
+                  >
+                    Cerrar ventana
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleConfirmContactRequest} className="space-y-3 text-xs">
+                <div className="p-3 rounded-2xl bg-black/5 dark:bg-white/5 space-y-1">
+                  <div className="flex justify-between font-bold">
+                    <span>Total a abonar:</span>
+                    <span className="text-primary font-black">
+                      Gs. {totalCartPrice.toLocaleString("es-PY")}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {cartItems.map((c) => `${c.qty}x ${c.product.name}`).join(", ")}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">Tu Nombre Completo *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Marcos Benítez"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-xs outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">Tu Número de WhatsApp *</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Ej: 0981 123 456"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-xs outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">Dirección de entrega o nota (opcional)</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Ej: Para retirar el sábado / Delivery a barrio Villa Morra..."
+                    value={contactNotes}
+                    onChange={(e) => setContactNotes(e.target.value)}
+                    className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs outline-none focus:border-primary resize-none"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowContactModal(false)}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-black/5"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingContact || !contactPhone.trim()}
+                    className="rounded-xl bg-primary text-white px-5 py-2 text-xs font-bold shadow-md shadow-primary/20 hover:opacity-95 disabled:opacity-50 transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    <span>{isSubmittingContact ? "Enviando..." : "Confirmar y Solicitar Contacto"}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       )}
     </div>

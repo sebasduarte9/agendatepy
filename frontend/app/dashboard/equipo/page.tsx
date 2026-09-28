@@ -59,8 +59,8 @@ const ROLE_DEFINITIONS: {
   },
   {
     role: "barbero",
-    title: "Profesional / Barbero",
-    shortTitle: "Barbero Pro",
+    title: "Barbero / Especialista",
+    shortTitle: "Barbero",
     badgeColor: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
     icon: Scissors,
     desc: "Visualización de agenda personal, bloqueo de descansos, fichas de clientes y comisiones.",
@@ -123,7 +123,7 @@ export default function EquipoRolesPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "Barbero Profesional",
+    role: "Barbero",
     systemRole: "barbero" as UserRole,
     description: "",
     hours: "09:00 – 19:00",
@@ -148,7 +148,7 @@ export default function EquipoRolesPage() {
     setFormData({
       name: "",
       email: "",
-      role: "Barbero Profesional",
+      role: "Barbero",
       systemRole: "barbero",
       description: "",
       hours: "09:00 – 19:00",
