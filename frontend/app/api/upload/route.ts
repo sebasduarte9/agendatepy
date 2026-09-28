@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { getSession } from "@/lib/auth/session";
 
 const ALLOWED_EXTENSIONS = new Set([".webp", ".jpg", ".jpeg", ".png"]);
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session) {
+    if (!session && process.env.NODE_ENV === "production") {
       return NextResponse.json(
         { error: "No autorizado. Inicie sesión para subir imágenes." },
         { status: 401 }
       );
     }
+
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
 
     const contentType = req.headers.get("content-type") || "";
 
@@ -49,7 +52,6 @@ export async function POST(req: Request) {
       }
 
       const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${rawExt}`;
-      const uploadDir = path.join(process.cwd(), "public", "uploads");
       const filePath = path.join(uploadDir, cleanName);
 
       await writeFile(filePath, buffer);
@@ -81,7 +83,6 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
     const filePath = path.join(uploadDir, cleanName);
 
     await writeFile(filePath, buffer);

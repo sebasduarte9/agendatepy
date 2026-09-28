@@ -24,6 +24,14 @@ import {
   Globe,
   MapPin,
   ChevronRight,
+  Image as ImageIcon,
+  Trash2,
+  Eye,
+  ExternalLink,
+  Copy,
+  Check,
+  Filter,
+  X,
 } from "lucide-react";
 
 export default function SingleTenantAdminPage() {
@@ -34,6 +42,11 @@ export default function SingleTenantAdminPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mediaItems, setMediaItems] = useState<any[]>([]);
+  const [mediaFilter, setMediaFilter] = useState<"ALL" | "product" | "client" | "branding">("ALL");
+  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadTenant() {
@@ -46,6 +59,7 @@ export default function SingleTenantAdminPage() {
         }
         const json = await res.json();
         setData(json.data);
+        setMediaItems(json.data.mediaGallery || []);
       } catch (err: any) {
         setError(err.message || "Error al conectar con la API.");
       } finally {
@@ -56,6 +70,34 @@ export default function SingleTenantAdminPage() {
       loadTenant();
     }
   }, [tenantId]);
+
+  const handleDeleteMediaItem = async (mediaId: string, type: string) => {
+    if (!confirm("¿Deseas quitar este archivo multimedia del negocio?")) return;
+    setDeletingId(mediaId);
+    try {
+      const res = await fetch(`/api/admin/tenants/${tenantId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mediaId, type }),
+      });
+      if (res.ok) {
+        setMediaItems((prev) => prev.filter((m) => m.id !== mediaId));
+        if (selectedMedia?.id === mediaId) setSelectedMedia(null);
+      } else {
+        alert("No se pudo eliminar el archivo.");
+      }
+    } catch {
+      alert("Error al conectar con el servidor.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleCopyUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedUrl(url);
+    setTimeout(() => setCopiedUrl(null), 2000);
+  };
 
   const formatGs = (val: number) => {
     return new Intl.NumberFormat("es-PY", {
@@ -415,6 +457,204 @@ export default function SingleTenantAdminPage() {
           )}
         </div>
       </div>
+
+      {/* Client & Business Media Gallery Control */}
+      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-indigo-400" />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">
+                Control de Galería & Multimedia de Clientes
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                {mediaItems.length} archivos en servidor
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Supervisá las fotos de trabajos de clientes (fichas técnicas), catálogo de productos y banners alojados en nuestro servidor.
+            </p>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 text-xs">
+            {[
+              { id: "ALL", label: "Todos" },
+              { id: "client", label: "Clientes" },
+              { id: "product", label: "Productos" },
+              { id: "branding", label: "Branding" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setMediaFilter(f.id as any)}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+                  mediaFilter === f.id
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Gallery Grid */}
+        {(() => {
+          const filtered = mediaItems.filter((m) =>
+            mediaFilter === "ALL" ? true : m.type === mediaFilter
+          );
+
+          if (filtered.length === 0) {
+            return (
+              <div className="py-12 text-center text-slate-500 space-y-2">
+                <ImageIcon className="h-8 w-8 mx-auto opacity-40 text-slate-400" />
+                <p className="text-xs">No hay archivos multimedia registrados en esta categoría.</p>
+              </div>
+            );
+          }
+
+          return (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 pt-1">
+              {filtered.map((item) => (
+                <div
+                  key={item.id}
+                  className="group relative rounded-2xl bg-slate-950/70 border border-slate-800 overflow-hidden flex flex-col hover:border-indigo-500/50 transition-all duration-200"
+                >
+                  {/* Thumbnail Container */}
+                  <div
+                    onClick={() => setSelectedMedia(item)}
+                    className="relative h-32 w-full bg-slate-900 cursor-pointer overflow-hidden flex items-center justify-center"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.url}
+                      alt={item.title}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+
+                    {/* Badge */}
+                    <div className="absolute top-2 left-2 z-10">
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-xs ${
+                          item.type === "client"
+                            ? "bg-purple-500/80 text-white"
+                            : item.type === "product"
+                            ? "bg-emerald-500/80 text-white"
+                            : "bg-blue-500/80 text-white"
+                        }`}
+                      >
+                        {item.type === "client" ? "Cliente" : item.type === "product" ? "Producto" : "Branding"}
+                      </span>
+                    </div>
+
+                    {/* Quick Hover Zoom Icon */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Eye className="h-6 w-6 text-white drop-shadow-md" />
+                    </div>
+                  </div>
+
+                  {/* Metadata & Controls */}
+                  <div className="p-2.5 flex-1 flex flex-col justify-between space-y-2">
+                    <div>
+                      <h3 className="text-xs font-bold text-white line-clamp-1" title={item.title}>
+                        {item.title}
+                      </h3>
+                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{item.subtitle}</p>
+                      <p className="text-[9px] font-mono text-slate-500 truncate mt-1">
+                        {item.url}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-800/80 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUrl(item.url)}
+                        className="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 transition"
+                        title="Copiar URL"
+                      >
+                        {copiedUrl === item.url ? (
+                          <Check className="h-3 w-3 text-emerald-400" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                        <span>{copiedUrl === item.url ? "Copiado" : "URL"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={deletingId === item.id}
+                        onClick={() => handleDeleteMediaItem(item.id, item.type)}
+                        className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 p-1 hover:bg-rose-500/10 rounded-md transition disabled:opacity-50"
+                        title="Eliminar archivo del servidor"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Lightbox Preview Modal */}
+      {selectedMedia && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative max-w-2xl w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white">{selectedMedia.title}</h3>
+                <p className="text-xs text-slate-400">{selectedMedia.subtitle}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedMedia(null)}
+                className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] flex items-center justify-center bg-black/40 rounded-2xl p-2 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selectedMedia.url}
+                alt={selectedMedia.title}
+                className="max-h-[55vh] w-auto object-contain rounded-xl"
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-xs pt-1">
+              <span className="font-mono text-slate-400 truncate max-w-sm">
+                {selectedMedia.url}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={selectedMedia.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white transition font-medium"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Abrir directo
+                </a>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteMediaItem(selectedMedia.id, selectedMedia.type)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 text-rose-300 border border-rose-600/30 hover:bg-rose-600/30 transition font-medium"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Eliminar archivo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

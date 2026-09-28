@@ -35,6 +35,15 @@ export async function GET(
         services: {
           select: { id: true, name: true, price: true, durationMinutes: true, active: true },
         },
+        products: {
+          select: { id: true, name: true, imageUrl: true, price: true, category: true, createdAt: true },
+          orderBy: { createdAt: "desc" },
+        },
+        clients: {
+          select: { id: true, name: true, phone: true, notes: true, formula: true, createdAt: true },
+          take: 60,
+          orderBy: { createdAt: "desc" },
+        },
         _count: {
           select: {
             staff: true,
@@ -207,6 +216,94 @@ export async function GET(
         price: a.service?.price || 0,
         staffName: a.staff?.name || "Staff",
       })),
+      mediaGallery: (() => {
+        const list: Array<{
+          id: string;
+          type: "product" | "client" | "branding";
+          title: string;
+          url: string;
+          subtitle: string;
+          createdAt: string;
+        }> = [];
+
+        // 1. Products
+        (tenant.products || []).forEach((p) => {
+          if (p.imageUrl && p.imageUrl.trim()) {
+            list.push({
+              id: `prod-${p.id}`,
+              type: "product",
+              title: p.name,
+              url: p.imageUrl,
+              subtitle: `Producto de Tienda · Gs. ${p.price.toLocaleString("es-PY")}`,
+              createdAt: p.createdAt.toISOString(),
+            });
+          }
+        });
+
+        // 2. Branding (logo, cover, gallery from themeSettings)
+        const theme = (tenant.themeSettings as any) || {};
+        if (theme.logoUrl && typeof theme.logoUrl === "string" && theme.logoUrl.trim()) {
+          list.push({
+            id: "brand-logo",
+            type: "branding",
+            title: "Logo Oficial",
+            url: theme.logoUrl,
+            subtitle: "Avatar / Logo del Salón",
+            createdAt: tenant.createdAt.toISOString(),
+          });
+        }
+        if (theme.coverUrl && typeof theme.coverUrl === "string" && theme.coverUrl.trim()) {
+          list.push({
+            id: "brand-cover",
+            type: "branding",
+            title: "Foto de Portada",
+            url: theme.coverUrl,
+            subtitle: "Banner Principal del Portal",
+            createdAt: tenant.createdAt.toISOString(),
+          });
+        }
+        if (Array.isArray(theme.gallery)) {
+          theme.gallery.forEach((g: any, idx: number) => {
+            const url = typeof g === "string" ? g : g?.url;
+            if (url && typeof url === "string" && url.trim()) {
+              list.push({
+                id: `brand-gallery-${idx}`,
+                type: "branding",
+                title: g?.title || `Foto de Galería #${idx + 1}`,
+                url,
+                subtitle: "Galería Pública del Salón",
+                createdAt: g?.createdAt || tenant.createdAt.toISOString(),
+              });
+            }
+          });
+        }
+
+        // 3. Client Gallery (fichas técnicas)
+        (tenant.clients || []).forEach((c) => {
+          if (c.notes) {
+            try {
+              const parsed = JSON.parse(c.notes);
+              if (Array.isArray(parsed?.gallery)) {
+                parsed.gallery.forEach((m: any, idx: number) => {
+                  const url = typeof m === "string" ? m : m?.url;
+                  if (url) {
+                    list.push({
+                      id: `client-${c.id}-${idx}`,
+                      type: "client",
+                      title: `Ficha: ${c.name}`,
+                      url,
+                      subtitle: m?.caption || `Tel: ${c.phone}`,
+                      createdAt: m?.createdAt || c.createdAt.toISOString(),
+                    });
+                  }
+                });
+              }
+            } catch {}
+          }
+        });
+
+        return list;
+      })(),
     };
 
     return NextResponse.json({
@@ -225,5 +322,49 @@ export async function GET(
       { ok: false, error: "SERVER_ERROR", message: "Error al obtener detalle del negocio." },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const auth = await requireSuperAdminSession(request);
+    if (isGuardError(auth)) return auth;
+
+    const { id } = await params;
+    const body = await request.json();
+    const { mediaId, type } = body;
+
+    if (type === "product" && mediaId.startsWith("prod-")) {
+      const prodId = mediaId.replace("prod-", "");
+      await prisma.product.update({
+        where: { id: prodId, tenantId: id },
+        data: { imageUrl: null },
+      });
+    } else if (type === "branding") {
+      const tenant = await prisma.tenant.findUnique({ where: { id } });
+      if (tenant) {
+        const theme = (tenant.themeSettings as any) || {};
+        if (mediaId === "brand-logo") theme.logoUrl = "";
+        if (mediaId === "brand-cover") theme.coverUrl = "";
+        if (mediaId.startsWith("brand-gallery-")) {
+          const idx = parseInt(mediaId.replace("brand-gallery-", ""), 10);
+          if (Array.isArray(theme.gallery)) {
+            theme.gallery.splice(idx, 1);
+          }
+        }
+        await prisma.tenant.update({
+          where: { id },
+          data: { themeSettings: theme },
+        });
+      }
+    }
+
+    return NextResponse.json({ ok: true, message: "Archivo multimedia moderado con éxito." });
+  } catch (error) {
+    console.error("Error eliminando multimedia:", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
 }

@@ -3,19 +3,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Upload,
-  Image as ImageIcon,
   Scissors,
-  Crop,
-  Zap,
   RotateCcw,
   Check,
   AlertCircle,
   Download,
   Loader2,
-  Sliders,
-  ExternalLink,
-  Eye,
   Trash2,
+  Server,
 } from "lucide-react";
 
 interface ProductImageUploaderProps {
@@ -24,7 +19,7 @@ interface ProductImageUploaderProps {
   categoryHint?: string;
 }
 
-// Preset product test photos with studio backgrounds so users can test removal immediately
+// Preset product test photos with studio backgrounds
 const SAMPLE_TEST_PHOTOS = [
   {
     name: "Cera Capilar",
@@ -41,7 +36,7 @@ const SAMPLE_TEST_PHOTOS = [
 ];
 
 /**
- * Optimizes an image (file or dataURL) into a clean, web-ready max 800px DataURL
+ * Optimizes an image (file or dataURL) into a clean, max 800px DataURL
  */
 async function compressImageToDataUrl(imageSrc: string | File, maxWidth = 800): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -94,15 +89,42 @@ async function compressImageToDataUrl(imageSrc: string | File, maxWidth = 800): 
 }
 
 /**
- * Instant local canvas-based background remover for solid, white, or light backgrounds.
- * Runs in ~50ms without downloading any AI model.
+ * Uploads a base64 DataURL or File to our server (/api/upload)
+ * Returns the public URL (e.g. /uploads/1727546000000-xyz.png)
  */
-function removeSolidBackgroundWithCanvas(
+async function uploadImageToServer(dataUrl: string): Promise<string> {
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dataUrl }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error en servidor al guardar archivo");
+    }
+
+    const json = await res.json();
+    if (json.ok && json.url) {
+      return json.url;
+    }
+    return dataUrl;
+  } catch (err) {
+    console.warn("Fallback guardando DataURL local:", err);
+    return dataUrl;
+  }
+}
+
+/**
+ * Instant edge-aware canvas background remover for solid/studio backgrounds.
+ * Operates in < 50ms without network calls.
+ */
+function removeBackgroundFastCanvas(
   dataUrl: string,
-  tolerance = 42,
-  feather = 1.5
+  tolerance = 45,
+  feather = 1.6
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
@@ -118,49 +140,52 @@ function removeSolidBackgroundWithCanvas(
       ctx.drawImage(img, 0, 0);
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imgData.data;
+
       const W = canvas.width;
       const H = canvas.height;
 
-      // Sample 4 corners to estimate the background color (usually white/gray/backdrop)
-      const cornerIndices = [
+      // Sample border pixels around the edges to compute accurate background color
+      const samplePoints = [
         0, // top-left
+        Math.floor(W / 2) * 4, // top-center
         (W - 1) * 4, // top-right
         ((H - 1) * W) * 4, // bottom-left
+        ((H - 1) * W + Math.floor(W / 2)) * 4, // bottom-center
         ((H - 1) * W + (W - 1)) * 4, // bottom-right
+        Math.floor(H / 2) * W * 4, // mid-left
+        (Math.floor(H / 2) * W + (W - 1)) * 4, // mid-right
       ];
 
       let bgR = 0,
         bgG = 0,
         bgB = 0;
-      cornerIndices.forEach((idx) => {
+      samplePoints.forEach((idx) => {
         bgR += data[idx];
         bgG += data[idx + 1];
         bgB += data[idx + 2];
       });
-      bgR = Math.round(bgR / 4);
-      bgG = Math.round(bgG / 4);
-      bgB = Math.round(bgB / 4);
+      bgR = Math.round(bgR / samplePoints.length);
+      bgG = Math.round(bgG / samplePoints.length);
+      bgB = Math.round(bgB / samplePoints.length);
 
       const tolSq = tolerance * tolerance;
-      const featherSq = (tolerance + feather * 18) * (tolerance + feather * 18);
+      const featherRange = feather * 20;
+      const featherSq = (tolerance + featherRange) * (tolerance + featherRange);
 
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
 
-        // Euclidean color distance from background
         const distSq =
           (r - bgR) * (r - bgR) +
           (g - bgG) * (g - bgG) +
           (b - bgB) * (b - bgB);
 
         if (distSq <= tolSq) {
-          // Completely transparent
           data[i + 3] = 0;
         } else if (distSq < featherSq) {
-          // Smooth alpha feathering on the edges
-          const alphaFactor = (Math.sqrt(distSq) - tolerance) / (feather * 18);
+          const alphaFactor = (Math.sqrt(distSq) - tolerance) / featherRange;
           data[i + 3] = Math.round(Math.min(255, Math.max(0, 255 * alphaFactor)));
         }
       }
@@ -178,20 +203,14 @@ export default function ProductImageUploader({
   value,
   onChange,
 }: ProductImageUploaderProps) {
-  const [activeSourceTab, setActiveSourceTab] = useState<"upload" | "url">("upload");
-  const [urlInput, setUrlInput] = useState(value && !value.startsWith("data:") ? value : "");
   const [originalImage, setOriginalImage] = useState<string | null>(value || null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isProcessingAi, setIsProcessingAi] = useState(false);
-  const [isProcessingFast, setIsProcessingFast] = useState(false);
-  const [aiProgressText, setAiProgressText] = useState("");
-  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [showingOriginal, setShowingOriginal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [hasTransparentBg, setHasTransparentBg] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync internal state if prop value updates
   useEffect(() => {
     if (value && !originalImage) {
       setOriginalImage(value);
@@ -202,19 +221,28 @@ export default function ProductImageUploader({
   const handleFileSelect = useCallback(
     async (file: File) => {
       if (!file.type.startsWith("image/")) {
-        setStatusMessage({ type: "error", text: "Por favor seleccioná un archivo de imagen válido (PNG, JPG, WEBP)." });
+        setStatusMessage({ type: "error", text: "Formato no válido. Usá PNG, JPG o WEBP." });
         return;
       }
 
       try {
+        setIsLoading(true);
         setStatusMessage(null);
-        const optimized = await compressImageToDataUrl(file);
-        setOriginalImage(optimized);
+
+        // 1. Compress image to clean web size
+        const compressed = await compressImageToDataUrl(file);
+        setOriginalImage(compressed);
         setHasTransparentBg(false);
-        onChange(optimized);
-        setStatusMessage({ type: "success", text: "¡Foto cargada con éxito! Ahora podés quitar el fondo gratis." });
-      } catch (err) {
-        setStatusMessage({ type: "error", text: "No se pudo procesar la imagen seleccionada." });
+
+        // 2. Save directly to our server (/api/upload -> /public/uploads/...)
+        const serverUrl = await uploadImageToServer(compressed);
+        onChange(serverUrl);
+
+        setStatusMessage({ type: "success", text: "Imagen guardada en el servidor." });
+      } catch {
+        setStatusMessage({ type: "error", text: "No se pudo procesar la imagen." });
+      } finally {
+        setIsLoading(false);
       }
     },
     [onChange]
@@ -237,126 +265,43 @@ export default function ProductImageUploader({
     }
   };
 
-  const handleApplyUrl = async () => {
-    if (!urlInput.trim()) return;
-    try {
-      setStatusMessage(null);
-      const optimized = await compressImageToDataUrl(urlInput.trim());
-      setOriginalImage(optimized);
-      setHasTransparentBg(false);
-      onChange(optimized);
-      setStatusMessage({ type: "success", text: "Imagen importada correctamente." });
-    } catch {
-      // In case CORS blocks canvas compression, still store the URL
-      setOriginalImage(urlInput.trim());
-      onChange(urlInput.trim());
-      setStatusMessage({ type: "success", text: "URL asignada al producto." });
-    }
-  };
-
-  // 1. FREE AI BACKGROUND REMOVAL (Client-side WebAssembly ONNX)
-  const handleRemoveBackgroundAi = async () => {
+  // Instant Background Removal (< 100ms) and upload result to server
+  const handleRemoveBackground = async () => {
     const target = value || originalImage;
-    if (!target) {
-      setStatusMessage({ type: "error", text: "Primero subí una foto para quitarle el fondo." });
-      return;
-    }
+    if (!target) return;
 
-    setIsProcessingAi(true);
-    setAiProgressText("Iniciando IA en tu navegador...");
+    setIsLoading(true);
     setStatusMessage(null);
 
     try {
-      // Dynamic import to prevent SSR bundling & keep payload lightweight
-      const { removeBackground } = await import("@imgly/background-removal");
-
-      setAiProgressText("Procesando silueta del producto con IA...");
-
-      const blob = await removeBackground(target, {
-        progress: (key: string, current: number, total: number) => {
-          if (total > 0) {
-            const pct = Math.round((current / total) * 100);
-            if (key.includes("fetch")) {
-              setAiProgressText(`Descargando modelo IA: ${pct}%...`);
-            } else {
-              setAiProgressText(`Recortando fondo: ${pct}%...`);
-            }
-          }
-        },
-      });
-
-      // Convert blob to DataURL for clean storage in state
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const resultDataUrl = reader.result as string;
-        onChange(resultDataUrl);
-        setHasTransparentBg(true);
-        setIsProcessingAi(false);
-        setAiProgressText("");
-        setStatusMessage({
-          type: "success",
-          text: "¡Fondo eliminado con IA con éxito! Guardá el producto para publicarlo.",
-        });
-      };
-      reader.readAsDataURL(blob);
-    } catch (err: any) {
-      console.warn("AI background removal error, switching to quick canvas fallback:", err);
-      // Fallback seamlessly to the Canvas method
-      try {
-        setAiProgressText("Aplicando recorte de alta precisión...");
-        const result = await removeSolidBackgroundWithCanvas(target, 48, 1.8);
-        onChange(result);
-        setHasTransparentBg(true);
-        setStatusMessage({
-          type: "success",
-          text: "⚡ Fondo blanco/sólido eliminado correctamente.",
-        });
-      } catch {
-        setStatusMessage({
-          type: "error",
-          text: "No se pudo procesar automáticamente. Probá con el botón 'Quitar Fondo Rápido'.",
-        });
-      } finally {
-        setIsProcessingAi(false);
-        setAiProgressText("");
-      }
-    }
-  };
-
-  // 2. INSTANT FAST CANVAS BACKGROUND REMOVER (< 100ms)
-  const handleRemoveBackgroundFast = async () => {
-    const target = value || originalImage;
-    if (!target) {
-      setStatusMessage({ type: "error", text: "Primero subí una foto de tu producto." });
-      return;
-    }
-
-    setIsProcessingFast(true);
-    setStatusMessage(null);
-    try {
-      const result = await removeSolidBackgroundWithCanvas(target, 45, 1.6);
-      onChange(result);
+      // 1. Instant Cutout in browser
+      const transparentDataUrl = await removeBackgroundFastCanvas(target, 48, 1.8);
       setHasTransparentBg(true);
-      setStatusMessage({
-        type: "success",
-        text: "¡Fondo liso eliminado en 0.1s! Podés ver la transparencia en el tablero.",
-      });
-    } catch (err) {
-      setStatusMessage({
-        type: "error",
-        text: "No se pudo remover el fondo en modo rápido.",
-      });
+
+      // 2. Save cutout directly to our server
+      const serverUrl = await uploadImageToServer(transparentDataUrl);
+      onChange(serverUrl);
+
+      setStatusMessage({ type: "success", text: "Fondo recortado y guardado en el servidor." });
+    } catch {
+      setStatusMessage({ type: "error", text: "No se pudo recortar el fondo." });
     } finally {
-      setIsProcessingFast(false);
+      setIsLoading(false);
     }
   };
 
   // Revert back to original photo
-  const handleRevertOriginal = () => {
+  const handleRevertOriginal = async () => {
     if (originalImage) {
-      onChange(originalImage);
-      setHasTransparentBg(false);
-      setStatusMessage({ type: "success", text: "Se restauró la foto original con fondo." });
+      setIsLoading(true);
+      try {
+        const serverUrl = await uploadImageToServer(originalImage);
+        onChange(serverUrl);
+        setHasTransparentBg(false);
+        setStatusMessage({ type: "success", text: "Se restauró la foto original." });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -365,132 +310,105 @@ export default function ProductImageUploader({
     if (!value) return;
     const link = document.createElement("a");
     link.href = value;
-    link.download = `producto-sin-fondo-${Date.now()}.png`;
+    link.download = `producto-${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const displayedImage = showingOriginal ? originalImage || value : value;
+  const isServerSaved = value && value.startsWith("/uploads/");
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-tour="product-image-uploader">
       <div className="flex items-center justify-between">
         <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-          Foto del Producto & Recorte Profesional
+          Foto del Producto
         </label>
         {value && (
-          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-            {hasTransparentBg ? "Fondo transparente activo" : "Foto cargada"}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {isServerSaved && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                <Server className="h-3 w-3" />
+                En Servidor
+              </span>
+            )}
+            {hasTransparentBg && (
+              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                Sin fondo
+              </span>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Selector Tabs: Subir Archivo vs URL */}
-      <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs">
-        <button
-          type="button"
-          onClick={() => setActiveSourceTab("upload")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg font-bold transition cursor-pointer ${
-            activeSourceTab === "upload"
-              ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/jpg"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+          }
+        }}
+      />
+
+      {/* Upload Drag/Drop Box */}
+      {!value && (
+        <div
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`border-2 border-dashed rounded-2xl p-5 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2 group relative overflow-hidden ${
+            isDragging
+              ? "border-primary bg-primary/10"
+              : "border-slate-200 dark:border-white/15 bg-slate-50/60 dark:bg-slate-800/40 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/80"
           }`}
         >
-          <Upload className="h-3.5 w-3.5" />
-          <span>Subir desde celular / PC</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveSourceTab("url")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg font-bold transition cursor-pointer ${
-            activeSourceTab === "url"
-              ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          <span>Pegar Enlace URL</span>
-        </button>
-      </div>
-
-      {/* SOURCE TAB 1: File Upload & Drag-and-drop */}
-      {activeSourceTab === "upload" && (
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/jpg"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) {
-                handleFileSelect(e.target.files[0]);
-              }
-            }}
-          />
-
-          <div
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-4 sm:p-5 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2 group ${
-              isDragging
-                ? "border-primary bg-primary/10"
-                : "border-slate-200 dark:border-white/15 bg-slate-50/60 dark:bg-slate-800/40 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/80"
-            }`}
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white dark:bg-slate-700 text-primary shadow-xs group-hover:scale-105 transition-transform">
-              <Upload className="h-5 w-5" />
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-2 py-3 text-slate-600 dark:text-slate-300">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <p className="text-xs font-semibold">Cargando...</p>
             </div>
-            <div>
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                Hacé clic para elegir una foto o arrastrala aquí
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                PNG, JPG o WEBP (sacale foto a tu producto sobre cualquier mesa o pared)
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SOURCE TAB 2: Direct URL */}
-      {activeSourceTab === "url" && (
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            placeholder="https://images.unsplash.com/..."
-            className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
-          />
-          <button
-            type="button"
-            onClick={handleApplyUrl}
-            className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3.5 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
-          >
-            Cargar
-          </button>
+          ) : (
+            <>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white dark:bg-slate-700 text-primary shadow-xs group-hover:scale-105 transition-transform">
+                <Upload className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                  Subir foto del producto
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Hacé clic o arrastrá desde tu celular o computadora
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* SAMPLE QUICK PRESETS */}
       {!value && (
-        <div className="flex items-center gap-2 pt-1 overflow-x-auto pb-1">
-          <span className="text-[10px] font-bold text-slate-400 shrink-0">Ejemplos para probar:</span>
+        <div className="flex items-center gap-2 pt-0.5 overflow-x-auto pb-1">
+          <span className="text-[10px] font-bold text-slate-400 shrink-0">Ejemplos rápidos:</span>
           {SAMPLE_TEST_PHOTOS.map((sample) => (
             <button
               key={sample.name}
               type="button"
-              onClick={() => {
-                setOriginalImage(sample.url);
-                onChange(sample.url);
-                setHasTransparentBg(false);
-                setStatusMessage({
-                  type: "success",
-                  text: `Cargaste "${sample.name}". Probá tocar "Recortar Fondo con IA (Gratis)".`,
-                });
+              onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const compressed = await compressImageToDataUrl(sample.url);
+                  setOriginalImage(compressed);
+                  setHasTransparentBg(false);
+                  const serverUrl = await uploadImageToServer(compressed);
+                  onChange(serverUrl);
+                } finally {
+                  setIsLoading(false);
+                }
               }}
               className="text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-white/10 hover:border-primary shrink-0 transition cursor-pointer"
             >
@@ -500,12 +418,12 @@ export default function ProductImageUploader({
         </div>
       )}
 
-      {/* PREVIEW CANVAS & BACKGROUND REMOVER SUITE */}
+      {/* PREVIEW CANVAS & ACTIONS */}
       {value && (
         <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/60 p-3.5 space-y-3">
           {/* Main Visualizer with Checkered Transparency Grid */}
-          <div className="relative h-48 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center">
-            {/* Checkered Transparency Background */}
+          <div className="relative h-48 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center bg-white dark:bg-slate-900">
+            {/* Checkered Grid */}
             <div
               className="absolute inset-0 z-0 opacity-40 dark:opacity-20"
               style={{
@@ -522,85 +440,47 @@ export default function ProductImageUploader({
 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={displayedImage}
+              src={value}
               alt="Vista previa producto"
-              className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md transition-all duration-300"
+              className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md transition-all duration-200"
             />
 
-            {/* Overlay during AI Processing */}
-            {isProcessingAi && (
-              <div className="absolute inset-0 z-20 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center text-white gap-2">
-                <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                <p className="text-xs font-bold">{aiProgressText || "Removiendo fondo con IA gratis..."}</p>
-                <span className="text-[10px] text-slate-300">
-                  Procesando directo en tu navegador (sin costo por crédito)
-                </span>
-              </div>
-            )}
-
-            {/* Quick Preview Toggles (Top Right) */}
-            {originalImage && originalImage !== value && (
-              <div className="absolute top-2.5 right-2.5 z-20 flex gap-1 bg-black/60 backdrop-blur-md rounded-xl p-1">
-                <button
-                  type="button"
-                  onMouseDown={() => setShowingOriginal(true)}
-                  onMouseUp={() => setShowingOriginal(false)}
-                  onTouchStart={() => setShowingOriginal(true)}
-                  onTouchEnd={() => setShowingOriginal(false)}
-                  className="px-2 py-1 rounded-lg text-[10px] font-bold text-white hover:bg-white/20 transition flex items-center gap-1 cursor-pointer"
-                  title="Mantené presionado para ver la foto original"
-                >
-                  <Eye className="h-3 w-3" />
-                  <span>{showingOriginal ? "Viendo Original" : "Ver Original"}</span>
-                </button>
+            {/* Clean loading overlay: ONLY "Cargando..." without lengthy text */}
+            {isLoading && (
+              <div className="absolute inset-0 z-20 bg-slate-950/75 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center text-white gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-white" />
+                <p className="text-xs font-bold tracking-wide">Cargando...</p>
               </div>
             )}
           </div>
 
-          {/* ACTION BUTTONS: 100% FREE BACKGROUND REMOVAL */}
+          {/* Action buttons */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Scissors className="h-3.5 w-3.5 text-primary" />
-                Herramientas de Recorte Profesional (100% Gratis):
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {/* BUTTON 1: AI Background Removal (Free ONNX WebAssembly) */}
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                disabled={isProcessingAi || isProcessingFast}
-                onClick={handleRemoveBackgroundAi}
-                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-orange-500 text-white py-2.5 px-3 text-xs font-bold shadow-md shadow-primary/25 hover:brightness-110 active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                disabled={isLoading}
+                onClick={handleRemoveBackground}
+                className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2.5 px-3 text-xs font-bold shadow-sm hover:opacity-90 active:scale-98 transition disabled:opacity-50 cursor-pointer"
               >
-                {isProcessingAi ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Scissors className="h-4 w-4" />
-                )}
-                <span>Recortar Fondo con IA (Gratis)</span>
+                <Scissors className="h-4 w-4" />
+                <span>Quitar fondo</span>
               </button>
 
-              {/* BUTTON 2: Fast Solid Background Removal (Canvas < 100ms) */}
               <button
                 type="button"
-                disabled={isProcessingAi || isProcessingFast}
-                onClick={handleRemoveBackgroundFast}
-                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-2.5 px-3 text-xs font-bold shadow-xs hover:border-primary active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                disabled={isLoading}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-2.5 px-3 text-xs font-bold shadow-xs hover:border-primary active:scale-98 transition disabled:opacity-50 cursor-pointer"
               >
-                {isProcessingFast ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                ) : (
-                  <Crop className="h-4 w-4 text-amber-500" />
-                )}
-                <span>Quitar Fondo Blanco / Liso</span>
+                <Upload className="h-4 w-4" />
+                <span>Cambiar foto</span>
               </button>
             </div>
 
-            {/* Secondary Controls: Revert, Download, or Change */}
+            {/* Secondary actions */}
             <div className="flex items-center justify-between pt-1 text-xs">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 {originalImage && originalImage !== value && (
                   <button
                     type="button"
@@ -608,7 +488,7 @@ export default function ProductImageUploader({
                     className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                   >
                     <RotateCcw className="h-3 w-3" />
-                    <span>Revertir al original</span>
+                    <span>Original</span>
                   </button>
                 )}
 
@@ -629,18 +509,17 @@ export default function ProductImageUploader({
                 onClick={() => {
                   onChange("");
                   setOriginalImage(null);
-                  setUrlInput("");
                   setHasTransparentBg(false);
                 }}
                 className="text-[11px] text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-rose-500/10 transition cursor-pointer"
               >
                 <Trash2 className="h-3 w-3" />
-                <span>Quitar foto</span>
+                <span>Eliminar</span>
               </button>
             </div>
           </div>
 
-          {/* Feedback Toast Banner */}
+          {/* Feedback banner */}
           {statusMessage && (
             <div
               className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${

@@ -393,22 +393,40 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 2,
-        taskTitle: "Cargar nuevo producto con cálculo de margen",
+        taskTitle: "Formulario de Producto: Nombre y Categorías",
         instruction:
-          "Tocá '+ Nuevo Producto'. Ingresá el nombre, elegí la categoría táctil, stock inicial, costo de compra del proveedor y precio de venta al público.",
-        tip: "El sistema calcula automáticamente la ganancia neta en guaraníes y el porcentaje de margen en vivo.",
-        targetSelector: '[data-tour="productos-new-btn"]',
+          "Al abrir '+ Nuevo Producto' se despliega el formulario interactivo. Asigná el nombre y seleccioná una categoría existente o creá una nueva categoría al instante.",
+        tip: "Podés crear y gestionar tantas categorías como necesites para organizar tu inventario.",
+        targetSelector: '[data-tour="product-category-selector"]',
+        actionLabel: "Abrir Formulario de Producto",
+        actionPath: "open-product-modal",
       },
       {
         stepNumber: 3,
-        taskTitle: "Control de inventario y alertas de stock bajo",
+        taskTitle: "Subida de Foto & Recorte en Servidor",
+        instruction:
+          "Subí la foto de tu producto desde tu celular o computadora. Con el botón 'Quitar Fondo', el sistema recorta el fondo al instante y aloja la imagen directamente en nuestro servidor.",
+        tip: "Las fotos sin fondo quedan nítidas y listas para tu catálogo web.",
+        targetSelector: '[data-tour="product-image-uploader"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Costos, Precios & Margen en Vivo",
+        instruction:
+          "Ingresá el stock de unidades, costo de compra del proveedor y precio al público. La plataforma calcula tu ganancia neta en guaraníes y el porcentaje de margen comercial en tiempo real.",
+        tip: "Mantené actualizados tus costos para ver tu rentabilidad neta.",
+        targetSelector: '[data-tour="product-pricing-inputs"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Control de Inventario y Alertas de Stock Bajo",
         instruction:
           "Monitoreá el total de unidades físicas, valor de venta estimado, margen proyectado y productos en estado crítico (≤5 unidades) para reponer a tiempo.",
         tip: "Los productos con stock bajo muestran una insignia de advertencia para no quedarte sin mercadería.",
         targetSelector: '[data-tour="productos-kpis"]',
       },
       {
-        stepNumber: 4,
+        stepNumber: 6,
         taskTitle: "Ajuste táctil rápido (-1, +1, +5) y edición",
         instruction:
           "En cada tarjeta de producto tenés botones rápidos para descontar cuando vendés al mostrador o sumar cuando llega una caja del distribuidor.",
@@ -975,6 +993,15 @@ export default function GuidedTour() {
           },
         })
       );
+    }
+
+    // Auto-open product creation modal if needed for product tour steps
+    if (
+      typeof window !== "undefined" &&
+      (currentStep.actionPath === "open-product-modal" ||
+        (currentSection?.id === "productos" && [2, 3, 4].includes(currentStep.stepNumber)))
+    ) {
+      window.dispatchEvent(new CustomEvent("agendate-open-product-modal"));
     }
 
     let retriesLeft = 20;
@@ -1673,6 +1700,20 @@ export default function GuidedTour() {
                       )}
 
                       <div className="flex items-center gap-2">
+                        {currentStep.actionLabel && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (currentStep.actionPath === "open-product-modal" && typeof window !== "undefined") {
+                                window.dispatchEvent(new CustomEvent("agendate-open-product-modal"));
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-xs font-bold text-primary hover:bg-primary/20 transition cursor-pointer"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            <span>{currentStep.actionLabel}</span>
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={handleNext}
