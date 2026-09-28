@@ -359,7 +359,7 @@ export default function PhoneMockup() {
         {/* Outer Glass Bezel */}
         <div className="relative overflow-hidden rounded-[34px] xs:rounded-[38px] sm:rounded-[42px] bg-black p-[2px] sm:p-[2.5px] shadow-inner">
           {/* Inner Display Canvas */}
-          <div className="relative flex h-[520px] xs:h-[580px] sm:h-[660px] flex-col overflow-hidden rounded-[32px] xs:rounded-[36px] sm:rounded-[42px] bg-[#efeae2]">
+          <div className="relative flex h-[480px] xs:h-[560px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-[32px] xs:rounded-[36px] sm:rounded-[42px] bg-[#efeae2]">
             {/* ========================================================= */}
             {/* iOS iMessage Push Notification Banner */}
             {/* ========================================================= */}

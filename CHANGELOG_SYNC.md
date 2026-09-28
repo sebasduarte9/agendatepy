@@ -1315,5 +1315,8 @@ Cada entrada debe detallar:
 - `npm run build` -> **Compilación Turbopack exitosa (código 0)**
 - Pruebas automatizadas globales: **100% PASS**
 
-
-
+### 6. Optimización de Densidad de Contenido Mobile & Interaction QA
+- **Mobile Content Density**: Variantes responsivas concisas en móviles (320px–430px) que reducen la densidad visual sin perder propuesta de valor ni contenido de negocio en desktop.
+- **Pricing Cards Adaptables**: Botón interactivo *"Ver más características (+4)"* / *"Ver menos"* en móviles para mantener las tarjetas compactas y escaneables.
+- **FAQ Colapsado por Defecto**: Inicia en estado neutro (`open = null`) para máxima limpieza visual.
+- **Suite de QA Interactivo (`interaction-qa-suite.mjs`)**: Validación de 18 fases de interacción, navegación por anchors, sliders reactivos, toggles, sticky CTA coordinado con WhatsApp y carga directa por hash.

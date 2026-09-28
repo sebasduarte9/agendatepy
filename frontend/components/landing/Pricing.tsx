@@ -222,11 +222,13 @@ function PriceCard({
   badge?: string;
   highlighted?: boolean;
 }) {
+  const [showAllMobile, setShowAllMobile] = useState(false);
+
   return (
     <motion.article
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
-      className={`relative rounded-3xl p-5 sm:p-7 lg:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
+      className={`relative rounded-3xl p-4.5 xs:p-5 sm:p-7 lg:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
         highlighted
           ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(255,79,43,0.3)] ring-4 ring-brand/10 dark:ring-brand/20"
           : "border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:border-brand/40"
@@ -299,10 +301,15 @@ function PriceCard({
           </div>
         </div>
 
-        {/* Lista de características */}
+        {/* Lista de características (reducida en móvil por defecto, completa en desktop) */}
         <ul className="space-y-3 text-xs">
-          {features.map((item) => (
-            <li key={item.label} className="flex items-start gap-2.5">
+          {features.map((item, idx) => (
+            <li
+              key={item.label}
+              className={`items-start gap-2.5 ${
+                idx >= 4 && !showAllMobile ? "hidden sm:flex" : "flex"
+              }`}
+            >
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] mt-0.5 ${
                   item.ok
@@ -324,9 +331,21 @@ function PriceCard({
             </li>
           ))}
         </ul>
+
+        {features.length > 4 && (
+          <button
+            type="button"
+            onClick={() => setShowAllMobile(!showAllMobile)}
+            className="mt-3 text-[11px] font-bold text-brand hover:underline sm:hidden cursor-pointer"
+          >
+            {showAllMobile
+              ? "Ver menos características"
+              : `Ver más características (+${features.length - 4})`}
+          </button>
+        )}
       </div>
 
-      <div className="relative z-10 pt-8">
+      <div className="relative z-10 pt-6 sm:pt-8">
         {isExternal ? (
           <a
             href={href}

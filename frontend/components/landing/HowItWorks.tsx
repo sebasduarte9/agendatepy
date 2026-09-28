@@ -71,19 +71,22 @@ export default function HowItWorks() {
             step="1"
             icon={<Zap className="h-4.5 w-4.5 text-brand" />}
             title="Reserva en 30 Segundos"
-            text="Tu cliente elige el servicio, día y horario disponible sin crear contraseñas ni descargar aplicaciones pesadas."
+            mobileText="Reserva directa por cliente sin descargar apps ni contraseñas."
+            desktopText="Tu cliente elige el servicio, día y horario disponible sin crear contraseñas ni descargar aplicaciones pesadas."
           />
           <WorkflowStep
             step="2"
             icon={<MessageSquareCheck className="h-4.5 w-4.5 text-emerald-600" />}
             title="Aviso y Recordatorio WhatsApp"
-            text="Confirmación al instante y recordatorio 24h antes con botones interactivos que reducen ausencias hasta un 80%."
+            mobileText="Confirmación inmediata y recordatorios 24h antes por WhatsApp."
+            desktopText="Confirmación al instante y recordatorio 24h antes con botones interactivos que reducen ausencias hasta un 80%."
           />
           <WorkflowStep
             step="3"
             icon={<WalletCards className="h-4.5 w-4.5 text-brand" />}
             title="Caja y Comisiones Cuadradas"
-            text="Al finalizar el turno, el monto ingresa al arqueo del día y la comisión del colaborador queda calculada automáticamente."
+            mobileText="Monto al arqueo diario y comisión calculada al instante."
+            desktopText="Al finalizar el turno, el monto ingresa al arqueo del día y la comisión del colaborador queda calculada automáticamente."
           />
         </motion.div>
       </div>
@@ -302,12 +305,14 @@ function WorkflowStep({
   step,
   icon,
   title,
-  text,
+  mobileText,
+  desktopText,
 }: {
   step: string;
   icon: ReactNode;
   title: string;
-  text: string;
+  mobileText: string;
+  desktopText: string;
 }) {
   return (
     <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 p-4 shadow-xs backdrop-blur-xl hover:border-brand/40 transition">
@@ -320,7 +325,10 @@ function WorkflowStep({
         </div>
         <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{title}</h3>
       </div>
-      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-1">{text}</p>
+      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-1">
+        <span className="block sm:hidden">{mobileText}</span>
+        <span className="hidden sm:block">{desktopText}</span>
+      </p>
     </div>
   );
 }

@@ -168,9 +168,9 @@ export default function RoiCalculator() {
                 className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand transition-all touch-pan-y"
               />
               <div className="flex justify-between text-[10px] sm:text-[11px] text-slate-400 mt-1 font-medium">
-                <span>16 días (medio tiempo)</span>
-                <span>24 días (estándar L a S)</span>
-                <span>30 días (todos los días)</span>
+                <span>16 días <span className="hidden sm:inline">(medio tiempo)</span></span>
+                <span>24 días <span className="hidden sm:inline">(estándar L a S)</span></span>
+                <span>30 días <span className="hidden sm:inline">(todos los días)</span></span>
               </div>
             </div>
 
@@ -247,7 +247,8 @@ export default function RoiCalculator() {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                  Invertís Gs. 250.000/mes y recuperás {formatGs(dineroRecuperado)}. El software se autofinancia desde la primera semana.
+                  <span className="block sm:hidden">El software se autofinancia desde la primera semana recuperando 1 o 2 citas.</span>
+                  <span className="hidden sm:block">Invertís Gs. 250.000/mes y recuperás {formatGs(dineroRecuperado)}. El software se autofinancia desde la primera semana.</span>
                 </p>
               </div>
             </div>

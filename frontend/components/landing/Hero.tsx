@@ -49,7 +49,10 @@ export default function Hero() {
           {/* Geolocation & Validation Pill */}
           <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-brand/20 bg-white/90 dark:bg-slate-900/90 px-3 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-brand shadow-xs backdrop-blur-sm w-fit max-w-full">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
-            <span className="truncate">Diseñado en Paraguay para negocios locales</span>
+            <span className="truncate">
+              <span className="inline sm:hidden">Diseñado en Paraguay</span>
+              <span className="hidden sm:inline">Diseñado en Paraguay para negocios locales</span>
+            </span>
           </div>
 
           {/* Hard-Hitting Pain & Benefit Headline */}
@@ -61,7 +64,8 @@ export default function Hero() {
           </h1>
 
           <p className="mt-3 sm:mt-4 max-w-2xl text-xs xs:text-sm sm:text-base lg:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-            Tus clientes reservan 24/7 sin que pases horas respondiendo mensajes. Confirmaciones inmediatas, recordatorios inteligentes que sí leen y comisiones de tu equipo calculadas sin planillas.
+            <span className="block sm:hidden">Tus clientes reservan 24/7 por WhatsApp con recordatorios automáticos. Sin pasar horas respondiendo mensajes.</span>
+            <span className="hidden sm:block">Tus clientes reservan 24/7 sin que pases horas respondiendo mensajes. Confirmaciones inmediatas, recordatorios inteligentes que sí leen y comisiones de tu equipo calculadas sin planillas.</span>
           </p>
 
           {/* Interactive Category Selector */}
@@ -128,15 +132,18 @@ export default function Hero() {
 
           {/* Risk Reversal Guarantee */}
           <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" /> 14 días sin costo
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" />
+              <span className="inline sm:hidden">14 días gratis</span>
+              <span className="hidden sm:inline">14 días sin costo</span>
             </span>
             <span>·</span>
             <span>Sin tarjeta</span>
             <span>·</span>
-            <span>Activación en 3 min</span>
-            <span>·</span>
-            <span>Soporte en Guaraníes</span>
+            <span className="inline sm:hidden">En 3 min</span>
+            <span className="hidden sm:inline">Activación en 3 min</span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">Soporte en Guaraníes</span>
           </div>
 
           {/* Social Proof & Metrics */}
@@ -151,7 +158,8 @@ export default function Hero() {
                 4.9 / 5 estrellas
               </span>
               <span className="text-[11px] sm:text-xs text-slate-500">
-                · Más de 40 salones y clínicas en Asunción, CDE y Encarnación
+                <span className="inline sm:hidden">· 40+ salones en Paraguay</span>
+                <span className="hidden sm:inline">· Más de 40 salones y clínicas en Asunción, CDE y Encarnación</span>
               </span>
             </div>
 

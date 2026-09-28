@@ -32,7 +32,7 @@ const FAQS = [
 ];
 
 export default function FAQ() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
     <section id="faq" className="mx-auto max-w-3xl px-3 sm:px-6 py-12 sm:py-20 scroll-mt-20">

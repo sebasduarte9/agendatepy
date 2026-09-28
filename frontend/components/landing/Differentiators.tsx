@@ -7,22 +7,26 @@ const ITEMS = [
   {
     icon: Percent,
     title: "0% Comisión por reserva",
-    text: "Suscripción fija en Guaraníes. Cada guaraní que factura tu negocio ingresa íntegro a tu cuenta.",
+    mobileText: "Suscripción fija en Guaraníes. Sin comisiones por turno.",
+    desktopText: "Suscripción fija en Guaraníes. Cada guaraní que factura tu negocio ingresa íntegro a tu cuenta.",
   },
   {
     icon: Smartphone,
     title: "Tus clientes no descargan ninguna app",
-    text: "Reservan desde el celular a cualquier hora, desde tu enlace en Instagram o hablando con el asistente de WhatsApp.",
+    mobileText: "Reservan desde Instagram o WhatsApp sin instalar apps.",
+    desktopText: "Reservan desde el celular a cualquier hora, desde tu enlace en Instagram o hablando con el asistente de WhatsApp.",
   },
   {
     icon: ShieldCheck,
     title: "Prueba gratuitamente durante 14 días",
-    text: "Creás tu agenda en 3 minutos, compartís tu enlace y empezás a recibir turnos de inmediato sin ingresar tarjeta.",
+    mobileText: "Configuración en 3 min sin ingresar tarjeta de crédito.",
+    desktopText: "Creás tu agenda en 3 minutos, compartís tu enlace y empezás a recibir turnos de inmediato sin ingresar tarjeta.",
   },
   {
     icon: Wallet,
     title: "Cobrás directo a tu cuenta bancaria",
-    text: "Transferencias SIPAP a cualquier banco de plaza, cobro con QR Bancard o efectivo al momento de la cita.",
+    mobileText: "Transferencias SIPAP, QR Bancard o efectivo en el local.",
+    desktopText: "Transferencias SIPAP a cualquier banco de plaza, cobro con QR Bancard o efectivo al momento de la cita.",
   },
 ];
 
@@ -44,7 +48,7 @@ export default function Differentiators() {
         </h2>
       </motion.div>
       <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 md:grid-cols-2">
-        {ITEMS.map(({ icon: Icon, title, text }, index) => {
+        {ITEMS.map(({ icon: Icon, title, mobileText, desktopText }, index) => {
           return (
             <motion.article
               key={title}
@@ -58,7 +62,10 @@ export default function Differentiators() {
                 <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               </div>
               <h3 className="mt-3.5 sm:mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
-              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{text}</p>
+              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                <span className="block sm:hidden">{mobileText}</span>
+                <span className="hidden sm:block">{desktopText}</span>
+              </p>
             </motion.article>
           );
         })}

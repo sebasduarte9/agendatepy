@@ -47,7 +47,8 @@ export default function Integrations() {
               Canales de Captura de Clientes
             </h3>
             <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              Compartí tu enlace donde tus clientes pasan el día. Reservan sin intermediarios desde tus redes sociales o directamente por chat.
+              <span className="block sm:hidden">Reserva directa desde redes sociales o WhatsApp.</span>
+              <span className="hidden sm:block">Compartí tu enlace donde tus clientes pasan el día. Reservan sin intermediarios desde tus redes sociales o directamente por chat.</span>
             </p>
             <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-2 sm:gap-2.5">
               {CHANNELS.map(({ name, icon: Icon }) => (
@@ -74,7 +75,8 @@ export default function Integrations() {
               Cobros Locales & Calendarios
             </h3>
             <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              Confirmación automática de transferencias bancarias locales y sincronización bidireccional con el teléfono de cada cliente.
+              <span className="block sm:hidden">Sincronización con bancos locales y calendarios.</span>
+              <span className="hidden sm:block">Confirmación automática de transferencias bancarias locales y sincronización bidireccional con el teléfono de cada cliente.</span>
             </p>
             <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-2 sm:gap-2.5">
               {PAYMENTS_AND_CAL.map(({ name, icon: Icon }) => (

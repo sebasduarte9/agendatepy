@@ -77,7 +77,7 @@ export default function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="md:col-span-12 lg:col-span-7 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
+          className="md:col-span-12 lg:col-span-7 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between">
@@ -93,7 +93,8 @@ export default function Features() {
               Tus clientes reservan directamente por WhatsApp en segundos
             </h3>
             <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Sin formularios lentos ni descargas de apps. Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.
+              <span className="block sm:hidden">Citas confirmadas al instante en tu agenda por WhatsApp sin instalar nada.</span>
+              <span className="hidden sm:block">Sin formularios lentos ni descargas de apps. Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.</span>
             </p>
           </div>
 
@@ -126,7 +127,7 @@ export default function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="md:col-span-12 lg:col-span-5 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
+          className="md:col-span-12 lg:col-span-5 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between">
@@ -142,7 +143,8 @@ export default function Features() {
               Control de Caja y Arqueo
             </h3>
             <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Registro automático de cobros en efectivo y transferencias. Cierre de turno diario sin descuadres ni planillas manuales.
+              <span className="block sm:hidden">Cobros en efectivo y transferencias sin descuadres al cerrar turno.</span>
+              <span className="hidden sm:block">Registro automático de cobros en efectivo y transferencias. Cierre de turno diario sin descuadres ni planillas manuales.</span>
             </p>
           </div>
 
@@ -192,7 +194,8 @@ export default function Features() {
               Google & Apple Calendar
             </h3>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Detección de dispositivo: añade el turno con alarma 24h y 2h antes en Android y iPhone.
+              <span className="block sm:hidden">Turnos sincronizados con alarmas en Android y iPhone.</span>
+              <span className="hidden sm:block">Detección de dispositivo: añade el turno con alarma 24h y 2h antes en Android y iPhone.</span>
             </p>
           </div>
 
@@ -229,7 +232,8 @@ export default function Features() {
               Fidelización Digital
             </h3>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Tus clientes acumulan sellos virtuales. Al completar 5 turnos, desbloquean beneficios sin cupones.
+              <span className="block sm:hidden">Sellos virtuales que premian a tus clientes frecuentes.</span>
+              <span className="hidden sm:block">Tus clientes acumulan sellos virtuales. Al completar 5 turnos, desbloquean beneficios sin cupones.</span>
             </p>
           </div>
 
@@ -272,7 +276,8 @@ export default function Features() {
               Comisiones de Equipo
             </h3>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Liquidá comisiones de estilistas o colaboradores con un clic según turnos atendidos.
+              <span className="block sm:hidden">Cálculo de comisiones con 1 solo clic.</span>
+              <span className="hidden sm:block">Liquidá comisiones de estilistas o colaboradores con un clic según turnos atendidos.</span>
             </p>
           </div>
 
