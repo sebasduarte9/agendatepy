@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Info,
   AlertTriangle,
+  Download,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -324,21 +325,31 @@ export default function CajaPage() {
               Registro cronológico de entradas y salidas de dinero.
             </p>
           </div>
-          <div className="flex gap-1.5 overflow-x-auto">
-            {["todos", "efectivo", "pos", "transferencia"].map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setFilterMethod(m)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${
-                  filterMethod === m
-                    ? "bg-primary text-white shadow-xs"
-                    : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                }`}
-              >
-                {m === "todos" ? "Todos los Medios" : m}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href="/api/reports/cash?type=movements&format=csv"
+              download
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200"
+            >
+              <Download className="h-3.5 w-3.5 text-slate-500" />
+              Exportar CSV
+            </a>
+            <div className="flex gap-1.5 overflow-x-auto">
+              {["todos", "efectivo", "pos", "transferencia"].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setFilterMethod(m)}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${
+                    filterMethod === m
+                      ? "bg-primary text-white shadow-xs"
+                      : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {m === "todos" ? "Todos los Medios" : m}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -442,7 +453,7 @@ export default function CajaPage() {
 
       {/* Historial de Arqueos / Cierres de Caja */}
       <Card className="p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
               Historial de Arqueos & Cierres de Caja
@@ -451,6 +462,14 @@ export default function CajaPage() {
               Registro histórico inmutable de cierres diarios persistidos en PostgreSQL.
             </p>
           </div>
+          <a
+            href="/api/reports/cash?type=closures&format=csv"
+            download
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <Download className="h-3.5 w-3.5 text-slate-500" />
+            Exportar Cierres CSV
+          </a>
         </div>
 
         {closures.length === 0 ? (

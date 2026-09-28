@@ -69,6 +69,7 @@ model Tenant {
   cashMovements      CashMovement[]
   cashRegisterCloses CashRegisterClose[]
   commissions        Commission[]
+  commissionPayouts  CommissionPayout[]
   loyaltyRewards LoyaltyReward[]
   scheduleBlocks ScheduleBlock[]
 
@@ -146,6 +147,7 @@ model CashMovement {
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
 
   tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commissionPayouts CommissionPayout[]
 
   @@index([tenantId, createdAt])
   @@index([tenantId, appointmentId])
@@ -220,6 +222,7 @@ model Staff {
   services       StaffService[]
   appointments   Appointment[]
   commissions    Commission[]
+  commissionPayouts CommissionPayout[]
   scheduleBlocks ScheduleBlock[]
   user           User?
 
@@ -335,3 +338,60 @@ model ScheduleBlock {
   @@index([tenantId, staffId, startTime])
   @@map("schedule_blocks")
 }
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  CANCELLED
+
+  @@map("payout_status")
+}
+
+model CommissionPayout {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  staffId         String         @map("staff_id") @db.Uuid
+  periodStart     DateTime       @map("period_start") @db.Timestamptz(3)
+  periodEnd       DateTime       @map("period_end") @db.Timestamptz(3)
+  grossCommission Int            @map("gross_commission")
+  amountPaid      Int            @map("amount_paid")
+  paymentMethod   String         @default("Efectivo") @map("payment_method")
+  cashMovementId  String?        @map("cash_movement_id") @db.Uuid
+  status          PayoutStatus   @default(PAID)
+  paidAt          DateTime?      @map("paid_at") @db.Timestamptz(3)
+  paidBy          String?        @map("paid_by")
+  notes           String?
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff           Staff          @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  cashMovement    CashMovement?  @relation(fields: [cashMovementId], references: [id], onDelete: SetNull)
+  items           CommissionPayoutItem[]
+
+  @@index([tenantId, staffId])
+  @@index([tenantId, status])
+  @@index([tenantId, periodStart, periodEnd])
+  @@map("commission_payouts")
+}
+
+model CommissionPayoutItem {
+  id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payoutId             String           @map("payout_id") @db.Uuid
+  appointmentId        String           @map("appointment_id") @db.Uuid
+  serviceName          String           @map("service_name")
+  clientName           String           @map("client_name")
+  appointmentDate      DateTime         @map("appointment_date") @db.Timestamptz(3)
+  chargedAmount        Int              @map("charged_amount")
+  commissionPercentage Int              @map("commission_percentage")
+  commissionAmount     Int              @map("commission_amount")
+  status               PayoutStatus     @default(PAID) @map("status")
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  payout               CommissionPayout @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+
+  @@unique([payoutId, appointmentId])
+  @@index([appointmentId])
+  @@index([appointmentId, status])
+  @@map("commission_payout_items")
+}
+

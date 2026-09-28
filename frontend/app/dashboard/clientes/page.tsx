@@ -397,7 +397,7 @@ export default function ClientesPage() {
                     <span className="font-medium text-slate-600 dark:text-slate-300">
                       {client.lastVisit && client.totalVisits > 0
                         ? formatInTimeZone(client.lastVisit, business.timezone || "America/Asuncion", "dd/MM/yyyy")
-                        : "Sin visitas registradas"}
+                        : "Sin visitas"}
                     </span>
                   </div>
                 </div>
@@ -413,7 +413,7 @@ export default function ClientesPage() {
                   </button>
 
                   <Link
-                    href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                    href={`/dashboard/calendario?newForClient=${client.id}`}
                     className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-primary hover:bg-primary/10 transition"
                     title="Nueva Cita para este cliente"
                   >

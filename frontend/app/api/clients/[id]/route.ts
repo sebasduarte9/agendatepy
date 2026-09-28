@@ -72,9 +72,10 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
     let totalSpent = 0;
     for (const cm of cashMovements) {
       if (cm.appointmentId) {
+        const prev = cashByAppointment.get(cm.appointmentId);
         cashByAppointment.set(cm.appointmentId, {
-          amount: cm.amount,
-          method: cm.paymentMethod,
+          amount: (prev?.amount || 0) + cm.amount,
+          method: prev ? `${prev.method}, ${cm.paymentMethod}` : cm.paymentMethod,
         });
         totalSpent += cm.amount;
       }
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
         instagram: client.instagram || "",
         totalVisits,
         totalSpent,
-        lastVisit: lastVisit || client.createdAt.toISOString(),
+        lastVisit,
         nextAppointment: nextApt
           ? {
               id: nextApt.id,
@@ -261,7 +262,30 @@ export async function DELETE(request: NextRequest, { params }: RouteProps) {
       );
     }
 
-    // Al eliminar el cliente, las citas históricas NO se borran (onDelete: SetNull en schema)
+    // Comprobar si el cliente tiene citas o historial operativo registrado
+    const appointmentsCount = await prisma.appointment.count({
+      where: {
+        tenantId: auth.tenantId,
+        OR: [
+          { clientId: existing.id },
+          { clientPhone: existing.phone },
+        ],
+      },
+    });
+
+    if (appointmentsCount > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "CLIENT_HAS_HISTORY",
+          message:
+            "No se puede eliminar un cliente con historial operativo o citas registradas. El borrado destructivo está bloqueado para preservar el historial financiero.",
+        },
+        { status: 409 }
+      );
+    }
+
+    // Solo se permite eliminar si el cliente no posee ningún historial operativo
     await prisma.client.delete({ where: { id } });
 
     return NextResponse.json({ ok: true, message: "Ficha de cliente eliminada." });

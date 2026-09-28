@@ -995,6 +995,282 @@ Cada entrada debe detallar:
   - Total pruebas acumuladas: **117 / 117 tests PASSED (100% de éxito)**
   - `npx tsc --noEmit` -> **0 errores**
   - `npm run build` -> **Compilación limpia Turbopack (código 0)**
+---
 
+### [2026-09-28] - FASE 5.4.1: HARDENING DEL CRM + CORRECCIONES DE COHERENCIA
+
+- **Responsable:** Antigravity AI
+- **Sección:** Hardening de CRM, Bloqueo de Borrado Destructivo, Eliminación de PII en URLs, Semántica Estricta de Última Visita, Auditoría de Cobros Divididos y Multi-tenant
+- **Archivos Modificados / Creados:**
+  - `frontend/app/api/clients/[id]/route.ts` (MODIFICADO):
+    - Bloqueo de borrado destructivo: `DELETE` verifica si el cliente tiene citas asociadas en PostgreSQL (`appointmentsCount > 0`). Si tiene historial, responde `HTTP 409 Conflict` con código `CLIENT_HAS_HISTORY`, evitando la pérdida de registros operativos o financieros.
+    - Corrección en desglose de cobro por cita (`cashByAppointment`): acumulador en lugar de sobrescritura, soportando pagos divididos (split payments) legítimos con suma consolidada del monto cobrado y métodos de pago concatenados.
+  - `frontend/components/dashboard/ClientFichaModal.tsx` y `frontend/app/dashboard/clientes/page.tsx` (MODIFICADOS):
+    - Navegación segura hacia el calendario sin PII: reemplazado `/dashboard/calendario?newForClient=1&clientName=...&clientPhone=...` por `/dashboard/calendario?newForClient=${client.id}` (únicamente UUID opaco del cliente).
+    - Eliminado cualquier botón o mecanismo de eliminación destructiva de clientes en la interfaz de usuario.
+    - Representación semántica rigurosa de "Última Visita": muestra `"Sin visitas"` cuando el cliente no posee turnos con estado `COMPLETED` (eliminando fallbacks visuales a fechas de creación o valores ambiguos).
+  - `frontend/components/dashboard/CalendarBoard.tsx` (MODIFICADO):
+    - Carga de cliente preseleccionado a partir del parámetro seguro `newForClient=<clientId>`: consulta el cliente en memoria (`useDashboardStore.clients`) o mediante `/api/clients/${clientId}` protegido con sesión, rellenando `newClientId`, `newClientName` y `newClientPhone` sin exponerlos en la barra de direcciones.
+    - Vinculación explícita de `clientId` en la llamada a `addAppointment` para garantizar que la cita creada en el calendario persista asociada al UUID en PostgreSQL.
+  - `frontend/app/api/clients/route.ts` y `frontend/app/api/dashboard/sync/route.ts` (MODIFICADOS):
+    - `lastVisit` se computa exclusivamente si existe al menos una cita con estado `COMPLETED`. Si no hay visitas completadas, el valor retornado es `null`.
+    - Eliminado el fallback que asignaba `client.createdAt` o la primera fecha registrada como sustituto de visita real.
+  - `frontend/lib/dashboard-types.ts` (MODIFICADO):
+    - Corrección de tipo en la interfaz `Client`: `lastVisit: string | null;` para reflejar con precisión la ausencia de visitas completadas.
+  - `frontend/store/useDashboardStore.ts` (MODIFICADO):
+    - Inicialización optimista de clientes con `totalVisits: 0`, `totalSpent: 0` y `lastVisit: null`.
+  - `frontend/scripts/test-phase5-4-1-suite.js` (CREADO):
+    - Suite automatizada de 24 pruebas de hardening:
+      - 01: Cliente sin visitas muestra `lastVisit === null` ("Sin visitas").
+      - 02: Cliente con cita `COMPLETED` muestra última visita real.
+      - 03: `createdAt` nunca se presenta como visita.
+      - 04: Nueva cita desde cliente usa `clientId`.
+      - 05: URL no contiene `clientName`.
+      - 06: URL no contiene `clientPhone`.
+      - 07: CashMovement simple suma correctamente al total gastado.
+      - 08: CashMovement dividido (split: 50k + 50k) suma correctamente (100k).
+      - 09: EXPENSE no incrementa el total gastado.
+      - 10: Cobro de otro cliente no afecta el total gastado del cliente auditado.
+      - 11: Cita sin movimiento de caja no inventa gasto.
+      - 12: Doble cobro concurrente/duplicado es rechazado con `HTTP 409 ALREADY_CHARGED`.
+      - 13: Cita cancelada no cuenta como visita.
+      - 14: Cita `NO_SHOW` no cuenta como visita.
+      - 15: Cita `EXPIRED` no cuenta como visita.
+      - 16: Próxima cita válida aparece en ficha.
+      - 17: Próxima cita cancelada no aparece en ficha.
+      - 18: Tenant A no puede acceder a Cliente B (404/403 anti-IDOR).
+      - 19: API anónima pública no expone información privada de clientes (401).
+      - 20: Recarga (F5) conserva todas las métricas operativas intactas.
+      - 21: Creación de cita vinculada conserva `clientId` en PostgreSQL.
+      - 22: Edición (PATCH) de cliente persiste en base de datos.
+      - 23: Teléfonos en formato paraguayo no duplican cliente.
+      - 24: Cliente con historial operativo no puede ser eliminado destructivamente (409).
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-4-1-suite.js` -> **24 de 24 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-3-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **141 / 141 tests PASSED (100% de éxito)**
+---
+
+### [2026-09-28] - FASE 5.5: COMISIONES OPERATIVAS + RENDIMIENTO DE STAFF
+
+- **Responsable:** Antigravity AI
+- **Sección:** Comisiones Operativas, Base Comisionable Derivada de Caja, Rendimiento de Staff, Seguridad Multi-Rol y Liquidaciones
+- **Archivos Modificados / Creados:**
+  - `frontend/lib/commission-dates.ts` (CREADO):
+    - Helper de cálculo de rangos temporales en timezone oficial paraguayo (`America/Asuncion`): `getCommissionDateRange` para períodos `today`, `week`, `month`, `all` y `custom`.
+  - `frontend/app/api/commissions/route.ts` (CREADO):
+    - Endpoint transaccional y agregado para comisiones operativas en tiempo real.
+    - Seguridad de roles estricta: usuarios con rol `STAFF` solo pueden consultar sus propias comisiones (`user.staffId === requestedStaffId`), respondiendo `HTTP 403 Forbidden` ante intentos de acceso a comisiones globales o de otros colaboradores. Usuarios con rol `OWNER` o `SUPERADMIN` acceden a todo el equipo o filtrado por colaborador.
+    - Regla fundamental: una comisión válida requiere cita con `status === 'COMPLETED'`, `staffId` válido y movimientos de caja `type === 'INCOME'` vinculados por `appointmentId`.
+    - Base comisionable derivada 100% de `CashMovement` (no de `Service.price`), acumulando split payments y descartando movimientos de egreso (`EXPENSE`).
+    - Cálculo determinista en memoria sin N+1 (1 query de citas completadas y 1 query de movimientos de caja vinculados).
+    - Retorna métricas de resumen (`totalCharged`, `commissionableBase`, `totalCommission`, `completedServicesCount`), lista de ítems detallados para auditoría turno por turno, y desglose agrupado por colaborador (`byStaff`).
+  - `frontend/app/dashboard/comisiones/page.tsx` (MODIFICADO):
+    - Rediseño operacional conectado a `/api/commissions`.
+    - Selector dinámico de períodos: "Hoy", "Esta semana", "Este mes", "Todo el historial" y "Personalizado" con inputs de fecha.
+    - Filtro por colaborador alimentado con la lista de staff real del tenant (sin nombres mock).
+    - Tarjetas KPI de Resumen: Total Cobrado, Base Comisionable, Comisión Total y Servicios Completados.
+    - Desglose consolidado por colaborador con turnos, facturación y comisión.
+    - Tabla de auditoría detallada con Fecha & Hora en Asunción, Colaborador, Cliente, Servicio (comparando cobrado real vs precio de lista), Cobrado en Caja con métodos de pago, % de Comisión y fórmula auditada (`Cobrado × % = Comisión`).
+  - `frontend/scripts/test-phase5-5-suite.js` (CREADO):
+    - Suite automatizada de 20 pruebas cubriendo:
+      - 01: COMPLETED + cobro genera comisión.
+      - 02: CONFIRMED no genera comisión.
+      - 03: CANCELLED no genera comisión.
+      - 04: NO_SHOW no genera comisión.
+      - 05: COMPLETED sin cobro no genera comisión.
+      - 06: Cálculo exacto: 100.000 × 40% = 40.000 Gs.
+      - 07: Split payment (50k + 50k) consolida base comisionable de 100k.
+      - 08: EXPENSE no afecta base comisionable.
+      - 09: Cash de otra cita no afecta la comisión de la cita auditada.
+      - 10: Refresh / recarga no duplica comisiones.
+      - 11: Sync repetido del dashboard no duplica registros.
+      - 12: Filtro por staffId funciona de forma estricta.
+      - 13: Filtro por período temporal opera correctamente.
+      - 14: Timezone evaluada en America/Asuncion.
+      - 15: Tenant A aislado de Tenant B (anti-IDOR financiero).
+      - 16: OWNER puede consultar todo el equipo.
+      - 17: STAFF respeta restricciones de seguridad (403 ajeno, 200 propio).
+      - 18: Cada comisión puede rastrearse a su appointmentId, servicio y cliente.
+      - 19: Monto coincide con CashMovement y no con Service.price.
+      - 20: Varias citas producen suma agregada exacta sin pérdidas.
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-5-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-1-suite.js` -> **24 de 24 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-3-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **161 / 161 tests PASSED (100% de éxito)**
+  - `npx tsc --noEmit` -> **0 errores**
+  - `npm run build` -> **Compilación limpia Turbopack (código 0)**
+
+---
+
+### [2026-09-28] - FASE 5.6: LIQUIDACIÓN + CIERRE + PAGO DE COMISIONES
+
+- **Responsable:** Antigravity AI
+- **Sección:** Liquidación de Comisiones, Snapshot Inmutable, Integración Contable con Caja (EXPENSE), Prevención de Doble Pago y Auditoría
+- **Archivos Modificados / Creados:**
+  - `frontend/prisma/schema.prisma` (MODIFICADO):
+    - Agregado enum `PayoutStatus` (`PENDING`, `PAID`, `CANCELLED`).
+    - Agregado modelo `CommissionPayout`: cabecera de liquidación con `id`, `tenantId`, `staffId`, `periodStart`, `periodEnd`, `grossCommission`, `amountPaid`, `paymentMethod`, `cashMovementId`, `status`, `notes`, `paidAt`, `paidBy`, `createdAt`.
+    - Agregado modelo `CommissionPayoutItem`: desglose auditado con snapshot inmutable de `appointmentId`, `chargedAmount`, `commissionPercentage` y `commissionAmount`.
+    - Relaciones en `Tenant`, `Staff`, `CashMovement` (`CommissionPayout?`).
+  - `frontend/prisma/migrations/20260928014714_commission_payouts/migration.sql` (CREADO Y APLICADO):
+    - Migración ejecutada exitosamente en PostgreSQL `agendatepy_test`.
+  - `frontend/app/api/commissions/route.ts` (MODIFICADO):
+    - Detección de comisiones ya liquidadas mediante cruce con `CommissionPayoutItem` en liquidaciones `PAID`.
+    - Cada ítem reporta `isPaid`, `payoutId` y `paidAt`.
+    - Métricas diferenciadas: `grossCommission` (devengado total), `paidCommission` (ya liquidado/pagado) y `pendingCommission` (pendiente de liquidar).
+  - `frontend/app/api/commission-payouts/route.ts` (CREADO):
+    - `GET`: Listado de liquidaciones del tenant, filtrable por `staffId`, con control de roles (`STAFF` solo ve sus liquidaciones, `OWNER` ve todas).
+    - `POST`: Creación y pago atómico de liquidación en una única transacción PostgreSQL (`prisma.$transaction`).
+      - Valida rol (`OWNER` o `SUPERADMIN`).
+      - Identifica citas candidatas no liquidadas en el período.
+      - Previene doble pago / colisión concurrente: si alguna cita ya fue pagada en una liquidación `PAID`, rechaza con `HTTP 409 ALREADY_PAID`.
+      - Crea `CashMovement` (`type: EXPENSE`, categoría `Comisiones`, descripción `"Pago de comisiones — [Staff] — [Período]"`).
+      - Crea `CommissionPayout` (`status: PAID`, vinculando `cashMovementId`).
+      - Inserta snapshots de `CommissionPayoutItem` preservando porcentaje y montos históricos.
+  - `frontend/app/api/commission-payouts/[id]/route.ts` (CREADO):
+    - `GET`: Detalle auditado de la liquidación con verificación anti-IDOR multi-tenant y rol. Devuelve snapshot de items, profesional, cita, cliente y movimiento de caja asociado.
+  - `frontend/app/dashboard/comisiones/page.tsx` (MODIFICADO):
+    - Pestañas "Cálculo & Devengado" e "Historial de Liquidaciones".
+    - Resumen KPI con Devengado, Ya Pagado, Pendiente y Servicios.
+    - Botón "Liquidar Comisiones" en tarjetas de colaboradores con pendientes.
+    - Modal de liquidación con resumen financiero, selección de método de pago de caja y confirmación de pago.
+    - Tabla histórica con filtro de staff y botón de Auditoría detallada por turno.
+  - `frontend/scripts/test-phase5-6-suite.js` (CREADO):
+    - Suite de 30 tests unitarios y de integración para la Fase 5.6 (30/30 PASS).
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-6-suite.js` -> **30 de 30 tests PASSED (100%)**
+  - `node scripts/test-phase5-5-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-1-suite.js` -> **24 de 24 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-3-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **191 / 191 tests PASSED (100% de éxito)**
+  - `npx tsc --noEmit` -> **0 errores**
+  - `npm run build` -> **Compilación limpia Turbopack (código 0)**
+
+---
+
+### [2026-09-28] - FASE 5.6.1: HARDENING FINANCIERO DE LIQUIDACIONES
+
+- **Responsable:** Antigravity AI
+- **Sección:** Hardening Concurrente, Protección Anti Doble Pago, Restricción Física PostgreSQL e Integridad Transaccional
+- **Archivos Modificados / Creados:**
+  - `frontend/prisma/schema.prisma` (MODIFICADO):
+    - Campo `status PayoutStatus @default(PAID) @map("status")` en `CommissionPayoutItem`.
+    - Índice compuesto `@@index([appointmentId, status])`.
+  - `frontend/prisma/migrations/20260928030000_payout_item_unique_status/migration.sql` (CREADO Y APLICADO):
+    - Migración PostgreSQL que agrega columna `status` con default `'PAID'`.
+    - Índice parcial único físico: `CREATE UNIQUE INDEX "commission_payout_items_appointment_paid_unique" ON "commission_payout_items"("appointment_id") WHERE "status" = 'PAID';`
+  - `frontend/app/api/commission-payouts/route.ts` (MODIFICADO):
+    - Validación estricta de `paymentMethod`: rechaza cualquier método no autorizado (`Efectivo`, `Tarjeta POS`, `Transferencia`, `Billetera`) con HTTP 400 `VALIDATION_ERROR`.
+    - Derivación estricta de montos en backend: `amountPaid` enviado por frontend es ignorado por completo.
+    - Bloqueo exclusivo a nivel de motor PostgreSQL (`SELECT id FROM appointments WHERE id::text IN (...) FOR UPDATE;`) que serializa peticiones concurrentes sobre las mismas citas.
+    - Filtrado de períodos superpuestos: citas ya pagadas en períodos solapados se excluyen de la liquidación actual sin duplicar cobros.
+    - Manejo de excepción de unicidad (código Prisma `P2002` o violación de índice único parcial) devolviendo HTTP 409 `ALREADY_PAID`.
+  - `frontend/scripts/test-phase5-6-1-suite.js` (CREADO):
+    - Suite automatizada de 25 pruebas de concurrencia e integridad financiera:
+      - 01: Doble payout concurrente (`Promise.all` simultáneo).
+      - 02: Dos OWNER simultáneos: exactamente uno triunfa (201) y el otro es rechazado (409 `ALREADY_PAID`).
+      - 03: Solo 1 `CommissionPayout` persistido tras la carrera concurrente.
+      - 04: Solo 1 `CommissionPayoutItem` persistido por cita.
+      - 05: Solo 1 egreso `EXPENSE` en caja.
+      - 06: `payout.amountPaid` idéntico a la suma de ítems.
+      - 07: `payout.amountPaid` coincide con `CashMovement.amount`.
+      - 08: Rollback transaccional atómico ante fallo: 0 egresos de caja huérfanos.
+      - 09: Rollback transaccional ante fallo de liquidación: 0 payouts huérfanos.
+      - 10: Cita en liquidación `PAID` no puede volver a pagarse (HTTP 409).
+      - 11: Período superpuesto excluye citas ya pagadas y solo liquida nuevas citas pendientes.
+      - 12: Cambio posterior del porcentaje del staff no altera snapshot histórico.
+      - 13: Liquidaciones de un staff no contaminan a otros colaboradores.
+      - 14: Staff de otro tenant es rechazado con HTTP 404 `NOT_FOUND`.
+      - 15: Monto enviado por frontend es ignorado; backend calcula comisión real.
+      - 16: `periodStart > periodEnd` rechazado con HTTP 400 `VALIDATION_ERROR`.
+      - 17: Método de pago inválido ('Bitcoin_Cripto') rechazado con HTTP 400 `VALIDATION_ERROR`.
+      - 18: Tenant B no puede auditar ni consultar liquidaciones de Tenant A (anti-IDOR 404).
+      - 19: Consulta posterior a F5 conserva el historial íntegro.
+      - 20: Auditoría de liquidación conserva datos exactos turno por turno.
+      - 21: Múltiples citas en un solo período liquidan con suma exacta sin pérdidas.
+      - 22: Múltiples colaboradores se liquidan independientemente sin interferencias.
+      - 23: Split payment (60k Efectivo + 40k Transferencia) consolida 100k en base y comisión exacta.
+      - 24: Staff con comisión 0% no genera pago (HTTP 400 `NO_COMMISSIONS_TO_PAY`).
+      - 25: Staff con UUID inexistente es rechazado con HTTP 404 `NOT_FOUND`.
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-6-1-suite.js` -> **25 de 25 tests PASSED (100%)**
+  - `node scripts/test-phase5-6-suite.js` -> **30 de 30 tests PASSED (100%)**
+  - `node scripts/test-phase5-5-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-1-suite.js` -> **24 de 24 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-3-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **216 / 216 tests PASSED (100% de éxito)**
+  - `npx tsc --noEmit` -> **0 errores**
+  - `npm run build` -> **Compilación limpia Turbopack (código 0)**
+
+---
+
+### [2026-09-28] - FASE 5.7: REPORTES + EXPORTACIÓN CONTABLE
+
+- **Objetivo Principal:**
+  - Proporcionar herramientas robustas de exportación contable y reportes financieros sin alterar el core transaccional ni introducir librerías externas pesadas.
+  - Exportación de movimientos de caja y cierres de arqueo en formato CSV estándar (RFC 4180) con soporte UTF-8 BOM (`\uFEFF`) para compatibilidad directa con Microsoft Excel y Google Sheets.
+  - Exportación de comisiones operativas (devengado, pagado, pendiente) por período y colaborador.
+  - Exportación de liquidaciones históricas y detalle individual de ítems auditados.
+  - Recibo imprimible de liquidación (`PayoutReceiptModal`) con CSS `@media print` para A4/Carta y exportación a PDF nativo desde el navegador.
+  - Aislamiento multi-tenant y control de acceso basado en roles (OWNER/SUPERADMIN acceso completo, STAFF solo sus propias comisiones).
+  - Operaciones estrictamente de solo lectura (READ-ONLY) garantizando cero mutaciones en PostgreSQL.
+
+- **Componentes y Módulos Creados / Modificados:**
+  - `frontend/lib/csv-helper.ts` (CREADO: Generador CSV RFC 4180 con escape de comillas, comas, saltos de línea y UTF-8 BOM).
+  - `frontend/app/api/reports/cash/route.ts` (CREADO: Endpoint de reportes de caja para movimientos y cierres, formatos CSV y JSON).
+  - `frontend/app/api/reports/commissions/route.ts` (CREADO: Endpoint de reportes de comisiones devengadas, pagadas y pendientes, formatos CSV y JSON).
+  - `frontend/app/api/reports/payouts/route.ts` (CREADO: Endpoint de historial de liquidaciones y detalle unitario de liquidación con items).
+  - `frontend/components/dashboard/PayoutReceiptModal.tsx` (CREADO: Modal y vista de recibo imprimible con estilos CSS `@media print` para A4/Carta, firma y descarga CSV directa).
+  - `frontend/app/dashboard/caja/page.tsx` (MODIFICADO: Botones de exportación CSV para movimientos y cierres de caja).
+  - `frontend/app/dashboard/comisiones/page.tsx` (MODIFICADO: Botones de exportación CSV para devengado e historial, botón 'Recibo' con modal imprimible).
+  - `frontend/scripts/test-phase5-7-suite.js` (CREADO: Suite de 30 tests automatizados + 3 validaciones de integridad financiera cruzada).
+
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-7-suite.js` -> **30 de 30 tests PASSED + Integridad Financiera PASS (100%)**
+  - `node scripts/test-phase5-6-1-suite.js` -> **25 de 25 tests PASSED (100%)**
+  - `node scripts/test-phase5-6-suite.js` -> **30 de 30 tests PASSED (100%)**
+  - `node scripts/test-phase5-5-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-1-suite.js` -> **24 de 24 tests PASSED (100%)**
+  - `node scripts/test-phase5-4-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-3-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **246 / 246 tests PASSED (100% de éxito acumulado)**
+  - `npx tsc --noEmit` -> **0 errores (TypeScript limpio)**
+  - `npm run build` -> **Compilación limpia Turbopack (código 0)**
 
 

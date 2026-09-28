@@ -19,7 +19,7 @@ REGLAS ABSOLUTAS (nunca romper):
 1. Nunca crear datos ficticios o mocks para usuarios reales.
 2. Toda mutacion: UI -> API -> PostgreSQL -> respuesta -> store -> UI.
 3. No implementar: WhatsApp/Evolution API, Billing real, Bancard/Pagopar, Analytics avanzado.
-4. No romper las 117 pruebas que ya pasan (Fases 2, 4, 5.1, 5.2, 5.3, 5.4 y Release).
+4. No romper las 216 pruebas que ya pasan (Fases 2, 4, 5.1, 5.2, 5.3, 5.4, 5.4.1, 5.5, 5.6, 5.6.1 y Release).
 5. TypeScript estricto: 0 errores con npx tsc --noEmit.
 6. Cada cambio debe justificar: menos clicks, menos navegacion, menos confusion, o mayor coherencia.
 
@@ -134,7 +134,12 @@ Client: id(uuid), tenantId, phone(normalizado), formula(ficha tecnica), tags[], 
 Appointment: id(uuid), tenantId, staffId, clientId(nullable), startTime(Timestamptz), endTime(Timestamptz), status(PENDING_ACTION/CONFIRMED/CANCELLED/COMPLETED/EXPIRED/NO_SHOW)
   -- GiST exclusion constraint: evita double-booking fisico en PostgreSQL
 
-CashMovement: id(uuid), tenantId, type(INCOME/EXPENSE), amount(PYG), paymentMethod(Efectivo/Tarjeta POS/SIPAP/Billetera), appointmentId(nullable, para idempotencia)
+CashMovement: id(uuid), tenantId, type(INCOME/EXPENSE), amount(PYG), paymentMethod(Efectivo/Tarjeta POS/SIPAP/Billetera), appointmentId(nullable, para idempotencia), commissionPayout(relation nullable)
+
+CommissionPayout: id(uuid), tenantId, staffId, periodStart, periodEnd, grossCommission, amountPaid, paymentMethod, cashMovementId, status(PENDING/PAID/CANCELLED), notes, paidAt, paidBy, createdAt, items[]
+
+CommissionPayoutItem: id(uuid), payoutId, appointmentId, status(PAID/CANCELLED), chargedAmount, commissionPercentage(Float snapshot), commissionAmount
+  -- PostgreSQL Partial Unique Index: CREATE UNIQUE INDEX ON commission_payout_items(appointment_id) WHERE status = 'PAID'; (garantiza unicidad física anti doble pago)
 
 CashRegisterClose: id(uuid), tenantId, date(Date), totalIncome, totalExpense, closedAt
 
@@ -243,7 +248,60 @@ Patron rollback optimista: Si la API falla, se filtra el ID temporal del store (
 
 ---
 
-## 8. ESTADO DE PRUEBAS (97/97 — TODAS PASAN)
+## 8. ESTADO DE PRUEBAS (161/161 — TODAS PASAN)
+
+### Suite Fase 5.5 — 20/20 PASS (scripts/test-phase5-5-suite.js)
+- OK COMPLETED + cobro genera comisión
+- OK CONFIRMED no genera comisión
+- OK CANCELLED no genera comisión
+- OK NO_SHOW no genera comisión
+- OK COMPLETED sin cobro no genera comisión
+- OK 100.000 × 40% = 40.000 Gs exacto
+- OK split payment 50k + 50k = base 100k
+- OK EXPENSE no afecta base comisionable
+- OK Cash de otra cita no afecta
+- OK refresh no duplica comisiones
+- OK sync repetido no duplica
+- OK filtro por staff funciona
+- OK filtro por período funciona
+- OK timezone America/Asuncion correcta
+- OK Tenant A aislado de B
+- OK OWNER puede consultar comisiones
+- OK STAFF respeta restricciones de seguridad (403 ajeno, 200 propio)
+- OK comisión puede rastrearse al appointmentId
+- OK monto coincide con CashMovement (no con Service.price)
+- OK varias citas producen suma agregada correcta
+
+### Suite Fase 5.4.1 — 24/24 PASS (scripts/test-phase5-4-1-suite.js)
+- OK Cliente sin visitas muestra última visita como "Sin visitas" (lastVisit === null)
+- OK Cliente COMPLETED muestra última visita real
+- OK createdAt nunca se presenta como visita
+- OK Nueva cita desde cliente usa clientId
+- OK URL no contiene clientName
+- OK URL no contiene clientPhone
+- OK CashMovement simple suma correctamente al total gastado
+- OK CashMovement dividido (split 50k + 50k) suma correctamente (100k)
+- OK EXPENSE no incrementa el total gastado
+- OK Cobro de otro cliente no afecta el total gastado
+- OK Appointment sin cobro no inventa gasto
+- OK Doble cobro no duplica ingreso (HTTP 409 ALREADY_CHARGED)
+- OK Cita cancelada no cuenta como visita
+- OK Cita NO_SHOW no cuenta como visita
+- OK Cita EXPIRED no cuenta como visita
+- OK Próxima cita válida aparece en ficha
+- OK Próxima cita cancelada no aparece en ficha
+- OK Tenant A no accede a Client B (404/403 anti-IDOR)
+- OK API pública anónima no expone información privada
+- OK F5 conserva todas las métricas operativas
+- OK Nueva cita conserva clientId en PostgreSQL
+- OK Edición (PATCH) de cliente persiste
+- OK Teléfonos paraguayos normalizados no duplican cliente
+- OK Cliente con historial NO puede ser eliminado destructivamente (HTTP 409)
+
+### Suite Fase 5.4 — 20/20 PASS (scripts/test-phase5-4-suite.js)
+- OK CRM operacional, Ficha de Cliente y métricas reales
+- OK Prevención de doble conteo de cobros y retención histórica
+- OK Búsqueda insensible y filtros de cliente en PostgreSQL
 
 ### Suite Fase 5.3 — 20/20 PASS (scripts/test-phase5-3-suite.js)
 - OK Tenant valido abre portal publico (HTTP 200)
@@ -289,7 +347,7 @@ Patron rollback optimista: Si la API falla, se filtra el ID temporal del store (
 - OK Double-booking concurrente rechazado
 
 ### Suite HTTP — 11/11 PASS | Suite Contratos — 13/13 PASS
-Total acumulado: 97/97 (100% de exito)
+Total acumulado: 161/161 (100% de exito)
 
 ---
 
@@ -586,11 +644,11 @@ Regla 6 — TypeScript:
 | /dashboard/clientes | Funcional (Ficha Operacional CRM 5.4) |
 | /dashboard/servicios | Funcional |
 | /dashboard/equipo | Funcional |
-| /dashboard/caja | Funcional |
+| /dashboard/caja | Funcional (Exportación CSV movimientos y cierres Fase 5.7) |
 | /dashboard/estadisticas | Funcional |
 | /dashboard/configuracion | Funcional |
 | /dashboard/apariencia | Funcional |
-| /dashboard/comisiones | Parcial |
+| /dashboard/comisiones | Funcional (Fases 5.5, 5.6 & 5.7: Devengado, Liquidación, Pago, Auditoría, Recibo Imprimible y Exportación CSV) |
 | /dashboard/suscripcion | Sin billing real |
 | /dashboard/whatsapp | Sin Evolution API |
 | /dashboard/fidelizacion | Sin implementar |

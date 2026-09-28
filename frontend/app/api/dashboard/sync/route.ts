@@ -130,9 +130,7 @@ export async function GET(request: NextRequest) {
       const totalVisits = completedApts.length;
       const lastVisit = completedApts.length > 0
         ? completedApts[0].startTime.toISOString()
-        : c.lastVisit
-        ? c.lastVisit.toISOString()
-        : c.createdAt.toISOString();
+        : null;
       let totalSpent = 0;
       for (const a of clientApts) {
         totalSpent += cashByAppointment.get(a.id) || 0;

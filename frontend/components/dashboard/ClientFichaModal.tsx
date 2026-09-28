@@ -316,7 +316,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
 
             <div className="flex items-center gap-2 shrink-0">
               <Link
-                href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                href={`/dashboard/calendario?newForClient=${client.id}`}
                 onClick={onClose}
                 className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-bold shadow-md transition"
               >
@@ -356,7 +356,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
               <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate">
                 {lastCompletedApp
                   ? formatInTimeZone(lastCompletedApp.start, business.timezone || "America/Asuncion", "dd MMM yyyy · HH:mm 'hs'")
-                  : "Sin visitas registradas"}
+                  : "Sin visitas"}
               </p>
               <span className="text-[10px] text-slate-500 font-medium">Histórico</span>
             </div>
@@ -416,7 +416,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                 <span>Sin próximas citas agendadas</span>
               </span>
               <Link
-                href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                href={`/dashboard/calendario?newForClient=${client.id}`}
                 onClick={onClose}
                 className="font-bold text-primary hover:underline"
               >
