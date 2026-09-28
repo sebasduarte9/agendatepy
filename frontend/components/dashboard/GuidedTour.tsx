@@ -126,29 +126,43 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Cómo agendar un turno manual (mostrador o teléfono)",
+        taskTitle: "Control de Fechas & Vistas",
         instruction:
-          "Hacé clic en el botón '+ Nuevo Turno' o tocá directamente cualquier horario libre en la cuadrícula del calendario. Seleccioná el cliente, el servicio y el profesional.",
-        tip: "Si es un cliente nuevo, escribí su nombre y número; el sistema lo registrará automáticamente sin pasos extra.",
+          "Cambiá entre vista de Día, Semana o Mes, navegá rápidamente entre fechas pasadas o futuras y volvé a 'Hoy' con un solo toque.",
+        tip: "Podés alternar a vista semanal para ver la ocupación completa de tu equipo.",
+        targetSelector: '[data-tour="calendar-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Filtrar por profesional del local",
+        taskTitle: "Filtro por Colaborador",
         instruction:
-          "Usá el selector de profesionales arriba para ver la agenda individual de cada barbero o estilista, o mirá la agenda combinada de todo el local.",
-        tip: "Cada profesional tiene un color propio para identificar sus citas de un vistazo rápido.",
+          "Tocá en 'Todo el equipo' para ver todos los turnos juntos o seleccioná a un profesional específico para ver únicamente su agenda individual.",
+        tip: "Cada colaborador tiene un color distintivo para identificar sus citas al instante en la cuadrícula.",
+        targetSelector: '[data-tour="calendar-staff-filter"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Mover o reprogramar una cita",
+        taskTitle: "Agendar Turno Rápido",
         instruction:
-          "Hacé clic sobre cualquier turno ya agendado para abrir sus detalles y cambiar la hora, el día o el profesional asignado en segundos.",
+          "Hacé clic en '+ Crear Cita' o tocá directamente cualquier horario libre en la cuadrícula. Se abrirá el formulario customizado ultra rápido para registrar al cliente sin recargas.",
+        tip: "Podés buscar un cliente frecuente o tipear uno nuevo con su WhatsApp paraguayo en 5 segundos.",
+        targetSelector: '[data-tour="calendar-create-btn"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Bloquear horarios libres o almuerzos",
+        taskTitle: "Bloqueos Operativos & Descansos",
         instruction:
-          "Si un profesional sale a almorzar o tiene una urgencia, tocá el horario correspondiente y seleccioná 'Bloquear Horario'. Así ningún cliente podrá reservar en ese intervalo.",
+          "Si alguien sale a almorzar, tiene un trámite o el salón cierra por feriado, usá '+ Bloquear Horario' para pausar reservas en ese intervalo.",
+        tip: "Los clientes no podrán agendar turnos online durante los horarios bloqueados.",
+        targetSelector: '[data-tour="calendar-block-btn"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Cuadrícula Interactiva de Turnos",
+        instruction:
+          "Hacé clic en cualquier turno agendado para ver su detalle, cobrarlo en caja, contactar al cliente por WhatsApp o reprogramar el horario fácilmente.",
+        tip: "Podés mover citas o reprogramarlas con un solo clic sin perder los datos del cliente.",
+        targetSelector: '[data-tour="calendar-grid"]',
       },
     ],
   },
@@ -165,18 +179,21 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         taskTitle: "Seleccionar o crear al cliente",
         instruction:
           "Escribí el nombre o número de teléfono. Si ya vino antes, sus datos aparecerán solos; si es nuevo, se creará su ficha al instante.",
+        targetSelector: '[data-tour="nueva-reserva-form"]',
       },
       {
         stepNumber: 2,
         taskTitle: "Elegir el servicio y profesional",
         instruction:
           "Marcá el servicio que solicita (ej: Corte + Barba). El sistema calcula automáticamente la duración en minutos y el precio en Guaraníes.",
+        targetSelector: '[data-tour="nueva-reserva-form"]',
       },
       {
         stepNumber: 3,
         taskTitle: "Elegir fecha y horario disponible",
         instruction:
           "El sistema solo te mostrará los horarios realmente libres del profesional seleccionado, evitando que se superpongan citas.",
+        targetSelector: '[data-tour="nueva-reserva-form"]',
       },
       {
         stepNumber: 4,
@@ -184,6 +201,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         instruction:
           "Tocá 'Confirmar Reserva'. El turno se guardará en la agenda y el cliente recibirá su confirmación oficial con el enlace a su calendario.",
         tip: "Podés marcar si el cliente ya pagó una seña por SIPAP o pagará al finalizar.",
+        targetSelector: '[data-tour="nueva-reserva-form"]',
       },
     ],
   },

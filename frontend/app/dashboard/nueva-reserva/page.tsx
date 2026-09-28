@@ -36,6 +36,7 @@ const TIMES = ["08:30", "09:30", "10:30", "11:30", "14:00", "15:00", "16:30", "1
 export default function NuevaReservaPage() {
   const services = useDashboardStore((s) => s.services);
   const staff = useDashboardStore((s) => s.staff);
+  const clients = useDashboardStore((s) => s.clients);
   const business = useDashboardStore((s) => s.business);
   const appointments = useDashboardStore((s) => s.appointments);
   const addAppointment = useDashboardStore((s) => s.addAppointment);
@@ -53,6 +54,15 @@ export default function NuevaReservaPage() {
   const [receiptName, setReceiptName] = useState("");
   const [consentWa, setConsentWa] = useState(true);
   const [client, setClient] = useState({ name: "", email: "", phone: "", notes: "" });
+  const [clientSuggestOpen, setClientSuggestOpen] = useState(false);
+
+  const clientMatches = useMemo(() => {
+    if (!client.name.trim()) return [];
+    const q = client.name.toLowerCase().trim();
+    return clients.filter(
+      (c) => c.name.toLowerCase().includes(q) || (c.phone && c.phone.includes(q))
+    ).slice(0, 5);
+  }, [clients, client.name]);
 
   const filtered = services.filter((s) =>
     s.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -146,7 +156,7 @@ export default function NuevaReservaPage() {
   }, [client, service, selectedStaff, business, civilDate, time]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div data-tour="nueva-reserva-form" className="mx-auto max-w-3xl space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -416,7 +426,7 @@ export default function NuevaReservaPage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div>
+            <div className="relative">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                 Nombre del Cliente *
               </label>
@@ -425,28 +435,79 @@ export default function NuevaReservaPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Ej: Marcelo Rojas"
+                  placeholder="Ej: Marcelo Rojas (escribí para buscar)"
                   value={client.name}
-                  onChange={(e) => setClient({ ...client, name: e.target.value })}
+                  onFocus={() => setClientSuggestOpen(true)}
+                  onChange={(e) => {
+                    setClient({ ...client, name: e.target.value });
+                    setClientSuggestOpen(true);
+                  }}
                   className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
                 />
               </div>
+
+              {/* Suggestions popover */}
+              {clientSuggestOpen && clientMatches.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 z-20 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl backdrop-blur-xl p-1.5 space-y-1 max-h-48 overflow-y-auto">
+                  <span className="text-[10px] font-bold text-slate-400 px-2 py-0.5 block">
+                    Clientes frecuentes encontrados:
+                  </span>
+                  {clientMatches.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setClient({
+                          ...client,
+                          name: c.name,
+                          phone: c.phone || "",
+                          email: c.email || client.email,
+                        });
+                        setClientSuggestOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-primary/10 transition cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-[10px]">
+                          {c.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</p>
+                          <p className="text-[10.5px] text-slate-400 font-mono">{c.phone || "Sin teléfono"}</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        Elegir
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                 WhatsApp del Cliente *
               </label>
-              <div className="relative">
-                <Phone className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="tel"
-                  required
-                  placeholder="+595 981 123 456"
-                  value={client.phone}
-                  onChange={(e) => setClient({ ...client, phone: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                  <span>🇵🇾</span>
+                  <span>+595</span>
+                </div>
+                <div className="relative flex-1">
+                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="tel"
+                    required
+                    placeholder="0981 123 456"
+                    value={client.phone.replace(/^\+595\s*/, "")}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9\s]/g, "");
+                      setClient({ ...client, phone: raw ? `+595 ${raw}` : "" });
+                    }}
+                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
               </div>
             </div>
           </div>

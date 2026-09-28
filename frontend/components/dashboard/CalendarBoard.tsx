@@ -21,6 +21,14 @@ import {
   Ban,
   DollarSign,
   Users,
+  Search,
+  Check,
+  Sparkles,
+  Banknote,
+  Landmark,
+  CreditCard,
+  Smartphone,
+  UserPlus,
 } from "lucide-react";
 import { format, parseISO, addMinutes, setHours, setMinutes } from "date-fns";
 import { es } from "date-fns/locale";
@@ -34,6 +42,20 @@ import Card from "./ui/Card";
 const START_HOUR = 8;
 const END_HOUR = 20;
 const HOUR_PX = 56;
+
+const APPOINTMENT_TIME_SLOTS = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+];
+
+const BLOCK_DURATION_PRESETS = [
+  { label: "30 min", minutes: 30 },
+  { label: "1 hora", minutes: 60 },
+  { label: "1h 30m", minutes: 90 },
+  { label: "2 horas", minutes: 120 },
+  { label: "Medio día (4h)", minutes: 240 },
+];
 
 export default function CalendarBoard() {
   const appointments = useDashboardStore((s) => s.appointments);
@@ -90,16 +112,111 @@ export default function CalendarBoard() {
   const [newClientName, setNewClientName] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [newClientId, setNewClientId] = useState<string | null>(null);
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
+
   const [newServiceId, setNewServiceId] = useState(services[0]?.id || "");
   const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>("efectivo");
 
   // Schedule Block Modal State
   const [blockModalOpen, setBlockModalOpen] = useState(false);
-  const [blockStaffId, setBlockStaffId] = useState(staff[0]?.id || "");
+  const [blockStaffId, setBlockStaffId] = useState<string>("all");
   const [blockDate, setBlockDate] = useState(calendarDate);
   const [blockStart, setBlockStart] = useState("13:00");
   const [blockEnd, setBlockEnd] = useState("14:00");
   const [blockReason, setBlockReason] = useState("Almuerzo / Descanso");
+
+  // Sync blockModalOpen if called externally
+  useEffect(() => {
+    if (blockModalOpen) {
+      setNewModalMode("block");
+      setNewModalOpen(true);
+      setBlockModalOpen(false);
+    }
+  }, [blockModalOpen]);
+
+  // Time manipulation helper
+  function stepTime(current: string, deltaMinutes: number): string {
+    const [h, m] = current.split(":").map(Number);
+    const totalMinutes = (isNaN(h) ? 10 : h) * 60 + (isNaN(m) ? 0 : m) + deltaMinutes;
+    const clamped = Math.max(0, Math.min(23 * 60 + 45, totalMinutes));
+    const nh = String(Math.floor(clamped / 60)).padStart(2, "0");
+    const nm = String(clamped % 60).padStart(2, "0");
+    return `${nh}:${nm}`;
+  }
+
+  // Current selected service & calculated appointment end time
+  const currentService = useMemo(() => {
+    return services.find((s) => s.id === newServiceId) || services[0];
+  }, [services, newServiceId]);
+
+  const appointmentEndTime = useMemo(() => {
+    if (!newSlotData.time || !currentService) return "";
+    return stepTime(newSlotData.time, currentService.durationMin || 45);
+  }, [newSlotData.time, currentService]);
+
+  // Matching clients for autocomplete
+  const matchingClients = useMemo(() => {
+    if (!clientSearchQuery.trim()) return clients.slice(0, 5);
+    const q = clientSearchQuery.toLowerCase().trim();
+    return clients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(q))
+    ).slice(0, 6);
+  }, [clients, clientSearchQuery]);
+
+  // Date steppers
+  function stepSlotDate(days: number) {
+    setNewSlotData((prev) => ({
+      ...prev,
+      date: addDaysIso(prev.date, days),
+    }));
+  }
+
+  function stepBlockDate(days: number) {
+    setBlockDate((prev) => addDaysIso(prev, days));
+  }
+
+  const formattedSlotDate = useMemo(() => {
+    try {
+      return format(parseISO(`${newSlotData.date}T12:00:00`), "EEEE d 'de' MMMM", { locale: es });
+    } catch {
+      return newSlotData.date;
+    }
+  }, [newSlotData.date]);
+
+  const formattedBlockDate = useMemo(() => {
+    try {
+      return format(parseISO(`${blockDate}T12:00:00`), "EEEE d 'de' MMMM", { locale: es });
+    } catch {
+      return blockDate;
+    }
+  }, [blockDate]);
+
+  function handleSelectClient(c: { id: string; name: string; phone?: string }) {
+    setNewClientId(c.id);
+    setNewClientName(c.name);
+    setNewClientPhone(c.phone || "");
+    setClientSearchQuery(c.name);
+    setClientSearchOpen(false);
+  }
+
+  function handleCreateNewClientFromQuery(name: string) {
+    const cleanName = name.trim();
+    setNewClientId(null);
+    setNewClientName(cleanName);
+    setClientSearchQuery(cleanName);
+    setClientSearchOpen(false);
+  }
+
+  function handleClearClient() {
+    setNewClientId(null);
+    setNewClientName("");
+    setNewClientPhone("");
+    setClientSearchQuery("");
+    setClientSearchOpen(true);
+  }
 
   // Query parameter handling for "Ver en agenda" and "Nueva cita desde cliente"
   const searchParams = useSearchParams();
@@ -126,6 +243,7 @@ export default function CalendarBoard() {
         setNewClientId(match.id);
         setNewClientName(match.name);
         setNewClientPhone(match.phone);
+        setClientSearchQuery(match.name);
         setNewModalMode("appointment");
         setNewModalOpen(true);
       } else if (queryNewForClient.length > 10) {
@@ -137,6 +255,7 @@ export default function CalendarBoard() {
               setNewClientId(d.client.id);
               setNewClientName(d.client.name);
               setNewClientPhone(d.client.phone);
+              setClientSearchQuery(d.client.name);
               setNewModalMode("appointment");
               setNewModalOpen(true);
             }
@@ -171,6 +290,8 @@ export default function CalendarBoard() {
     setNewClientId(null);
     setNewClientName("");
     setNewClientPhone("");
+    setClientSearchQuery("");
+    setClientSearchOpen(false);
     setNewServiceId(services[0]?.id || "");
     setBlockDate(dateStr);
     setBlockStart(timeStr);
@@ -248,21 +369,32 @@ export default function CalendarBoard() {
       <p className="sr-only">{timezoneNote}</p>
 
       {/* Google Calendar-Style Top Command Toolbar */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-200/80 dark:border-white/10 pb-4">
+      <div
+        data-tour="calendar-header"
+        className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-200/80 dark:border-white/10 pb-4"
+      >
         {/* Left: + Create Button & Date Navigators */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Google-like "+ Crear Cita" Pill Button */}
+          {/* "+ Crear Cita" Pill Button */}
           <button
             type="button"
+            data-tour="calendar-create-btn"
             onClick={() => {
               setNewSlotData({
                 date: calendarDate,
                 time: "10:00",
                 staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
               });
+              setNewClientId(null);
+              setNewClientName("");
+              setNewClientPhone("");
+              setClientSearchQuery("");
+              setClientSearchOpen(false);
+              setNewServiceId(services[0]?.id || "");
+              setNewModalMode("appointment");
               setNewModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Crear Cita</span>
@@ -271,12 +403,17 @@ export default function CalendarBoard() {
           {/* "+ Bloquear Horario" Button */}
           <button
             type="button"
+            data-tour="calendar-block-btn"
             onClick={() => {
-              setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "");
+              setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : "all");
               setBlockDate(calendarDate);
-              setBlockModalOpen(true);
+              setBlockStart("13:00");
+              setBlockEnd("14:00");
+              setBlockReason("Almuerzo / Descanso");
+              setNewModalMode("block");
+              setNewModalOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-amber-500 hover:text-amber-600 transition"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-amber-500 hover:text-amber-600 transition cursor-pointer"
           >
             <Ban className="h-4 w-4 text-amber-500" />
             <span>Bloquear Horario</span>
@@ -285,7 +422,7 @@ export default function CalendarBoard() {
           {/* Hoy button */}
           <button
             type="button"
-            className="rounded-xl border border-slate-200/80 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="rounded-xl border border-slate-200/80 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             onClick={() =>
               setCalendarDate(
                 formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
@@ -299,7 +436,7 @@ export default function CalendarBoard() {
           <div className="flex items-center">
             <button
               type="button"
-              className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1))}
               aria-label="Anterior"
             >
@@ -307,7 +444,7 @@ export default function CalendarBoard() {
             </button>
             <button
               type="button"
-              className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1))}
               aria-label="Siguiente"
             >
@@ -329,7 +466,7 @@ export default function CalendarBoard() {
                 key={view}
                 type="button"
                 onClick={() => setCalendarView(view)}
-                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition ${
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition cursor-pointer ${
                   calendarView === view
                     ? "bg-primary text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -344,13 +481,16 @@ export default function CalendarBoard() {
 
       {/* Staff Filter Bar with Avatars */}
       {currentUserRole === "admin" || currentUserRole === "cajero" ? (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div
+          data-tour="calendar-staff-filter"
+          className="flex items-center gap-2 overflow-x-auto pb-1"
+        >
           <button
             type="button"
             onClick={() => setSelectedStaffId("all")}
-            className={`rounded-2xl border px-3 py-1.5 text-xs font-bold transition shrink-0 ${
+            className={`rounded-2xl border px-3 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
               selectedStaffId === "all"
-                ? "border-primary bg-primary/10 text-primary"
+                ? "border-primary bg-primary/10 text-primary shadow-xs"
                 : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
@@ -361,9 +501,9 @@ export default function CalendarBoard() {
               key={person.id}
               type="button"
               onClick={() => setSelectedStaffId(person.id)}
-              className={`flex items-center gap-2 rounded-2xl border px-3 py-1.5 text-xs transition shrink-0 ${
+              className={`flex items-center gap-2 rounded-2xl border px-3 py-1.5 text-xs transition shrink-0 cursor-pointer ${
                 selectedStaffId === person.id
-                  ? "border-primary bg-primary/10 font-bold text-primary"
+                  ? "border-primary bg-primary/10 font-bold text-primary shadow-xs"
                   : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
@@ -386,36 +526,41 @@ export default function CalendarBoard() {
       )}
 
       {/* Main Calendar View Displays */}
-      {calendarView === "dia" && (
-        <GoogleCalendarDayView
-          date={calendarDate}
-          timezone={business.timezone}
-          appointments={filtered}
-          staffList={selectedStaffId === "all" ? staff : staff.filter((s) => s.id === selectedStaffId)}
-          onSelectAppointment={setSelectedApp}
-          onEmptySlotClick={handleEmptySlotClick}
-        />
-      )}
+      <div
+        data-tour="calendar-grid"
+        className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden p-1 shadow-xs"
+      >
+        {calendarView === "dia" && (
+          <GoogleCalendarDayView
+            date={calendarDate}
+            timezone={business.timezone}
+            appointments={filtered}
+            staffList={selectedStaffId === "all" ? staff : staff.filter((s) => s.id === selectedStaffId)}
+            onSelectAppointment={setSelectedApp}
+            onEmptySlotClick={handleEmptySlotClick}
+          />
+        )}
 
-      {calendarView === "semana" && (
-        <GoogleCalendarWeekView
-          date={calendarDate}
-          timezone={business.timezone}
-          appointments={filtered}
-          onSelectAppointment={setSelectedApp}
-          onEmptySlotClick={handleEmptySlotClick}
-        />
-      )}
+        {calendarView === "semana" && (
+          <GoogleCalendarWeekView
+            date={calendarDate}
+            timezone={business.timezone}
+            appointments={filtered}
+            onSelectAppointment={setSelectedApp}
+            onEmptySlotClick={handleEmptySlotClick}
+          />
+        )}
 
-      {calendarView === "mes" && (
-        <GoogleCalendarMonthView
-          date={calendarDate}
-          timezone={business.timezone}
-          appointments={filtered}
-          onSelectAppointment={setSelectedApp}
-          onEmptySlotClick={handleEmptySlotClick}
-        />
-      )}
+        {calendarView === "mes" && (
+          <GoogleCalendarMonthView
+            date={calendarDate}
+            timezone={business.timezone}
+            appointments={filtered}
+            onSelectAppointment={setSelectedApp}
+            onEmptySlotClick={handleEmptySlotClick}
+          />
+        )}
+      </div>
 
       {/* Rich Reschedule & Edit Appointment Modal */}
       {selectedApp && (
@@ -463,11 +608,12 @@ export default function CalendarBoard() {
         />
       )}
 
-      {/* Quick Booking & Schedule Block Modal */}
+      {/* Quick Booking & Schedule Block Custom Modal */}
       <Modal
         id="quickBookingModal"
+        maxWidth="max-w-xl"
         open={newModalOpen}
-        title={newModalMode === "appointment" ? "Agendar Nueva Cita Rápida" : "Bloquear Horario en Agenda"}
+        title={newModalMode === "appointment" ? "Agendar Nueva Cita" : "Bloquear Horario en Agenda"}
         onClose={() => setNewModalOpen(false)}
       >
         <div className="space-y-4 text-xs">
@@ -476,162 +622,386 @@ export default function CalendarBoard() {
             <button
               type="button"
               onClick={() => setNewModalMode("appointment")}
-              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 newModalMode === "appointment"
-                  ? "bg-white dark:bg-slate-900 text-primary shadow-xs"
+                  ? "bg-white dark:bg-slate-900 text-primary shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Agendar Cita</span>
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Agendar Turno</span>
             </button>
             <button
               type="button"
               onClick={() => setNewModalMode("block")}
-              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 newModalMode === "block"
-                  ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs"
+                  ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Ban className="h-3.5 w-3.5" />
+              <Ban className="h-3.5 w-3.5 text-amber-500" />
               <span>Bloquear Horario</span>
             </button>
           </div>
 
           {newModalMode === "appointment" ? (
             <form onSubmit={handleCreateAppointment} className="space-y-4">
-              <div className="rounded-2xl bg-primary/5 border border-primary/20 p-3 space-y-1">
-                <span className="font-bold text-primary block">Horario seleccionado en Agenda:</span>
-                <p className="text-slate-700 dark:text-slate-300">
-                  Fecha: <strong className="text-slate-900 dark:text-white">{newSlotData.date}</strong> a las{" "}
-                  <strong className="text-slate-900 dark:text-white">{newSlotData.time} hs</strong>
-                </p>
-              </div>
-
+              {/* Contextual Date & Time Selector */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Nombre del Cliente *
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Fecha y Horario de la Cita
                 </label>
-                <input
-                  type="text"
-                  list="clientsDatalist"
-                  required
-                  placeholder="Escribí o seleccioná un cliente..."
-                  value={newClientName}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setNewClientName(val);
-                    const match = clients.find((c) => c.name.toLowerCase() === val.toLowerCase());
-                    if (match && match.phone) {
-                      setNewClientPhone(match.phone);
-                    }
-                  }}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
-                <datalist id="clientsDatalist">
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.name}>
-                      {c.phone}
-                    </option>
-                  ))}
-                </datalist>
-                <span className="text-[10.5px] text-slate-400 block mt-0.5">
-                  Autocompleta clientes registrados o crea uno nuevo automáticamente.
-                </span>
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/60 p-3 space-y-3">
+                  {/* Date Navigation Row */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => stepSlotDate(-1)}
+                        className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                        title="Día anterior"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                      </button>
+                      <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                        {formattedSlotDate}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => stepSlotDate(1)}
+                        className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                        title="Día siguiente"
+                      >
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNewSlotData((prev) => ({
+                          ...prev,
+                          date: formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"),
+                        }))
+                      }
+                      className="text-[11px] font-bold text-primary hover:underline px-2 py-0.5 rounded-lg hover:bg-primary/10 transition cursor-pointer"
+                    >
+                      Hoy
+                    </button>
+                  </div>
+
+                  {/* Time Display & Stepper */}
+                  <div className="flex items-center justify-between border-t border-slate-200/60 dark:border-white/5 pt-2.5">
+                    <div>
+                      <span className="text-[11px] text-slate-400 block font-medium">Horario Inicio:</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-xs">
+                          {newSlotData.time} hs
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          hasta <strong className="text-slate-700 dark:text-slate-200">{appointmentEndTime} hs</strong> ({currentService?.durationMin || 45} min)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, -15) }))}
+                        className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                      >
+                        -15m
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, 15) }))}
+                        className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                      >
+                        +15m
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Time Slot Chips */}
+                  <div>
+                    <span className="text-[10.5px] text-slate-400 block mb-1.5 font-medium">Atajos de hora:</span>
+                    <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                      {APPOINTMENT_TIME_SLOTS.map((t) => {
+                        const isSelected = newSlotData.time === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setNewSlotData((prev) => ({ ...prev, time: t }))}
+                            className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition cursor-pointer ${
+                              isSelected
+                                ? "bg-primary text-white shadow-xs"
+                                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-primary"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
 
+              {/* Custom Client Selector (Combobox + Quick Create + WhatsApp Phone) */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Teléfono (WhatsApp PY)
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Cliente *
                 </label>
-                <input
-                  type="tel"
-                  placeholder="+595 981 123 456"
-                  value={newClientPhone}
-                  onChange={(e) => setNewClientPhone(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
-                />
+
+                {!newClientName ? (
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Buscar por nombre o tipear para crear uno nuevo..."
+                        value={clientSearchQuery}
+                        onFocus={() => setClientSearchOpen(true)}
+                        onChange={(e) => {
+                          setClientSearchQuery(e.target.value);
+                          setClientSearchOpen(true);
+                        }}
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Autocomplete Dropdown */}
+                    {clientSearchOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 z-30 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 shadow-xl backdrop-blur-xl p-1.5 space-y-1 max-h-56 overflow-y-auto">
+                        {matchingClients.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => handleSelectClient(c)}
+                            className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-primary/5 dark:hover:bg-primary/10 transition cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs shrink-0">
+                                {c.name.slice(0, 2).toUpperCase()}
+                              </span>
+                              <div>
+                                <p className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</p>
+                                <p className="text-[11px] text-slate-400 font-mono">{c.phone || "Sin teléfono"}</p>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                              Frecuente
+                            </span>
+                          </button>
+                        ))}
+
+                        {/* Quick Create Card if typing */}
+                        {clientSearchQuery.trim().length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleCreateNewClientFromQuery(clientSearchQuery)}
+                            className="w-full flex items-center gap-2.5 p-2 rounded-xl text-left bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition cursor-pointer"
+                          >
+                            <UserPlus className="h-4 w-4 shrink-0 text-emerald-600" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-xs truncate">
+                                Registrar nuevo cliente: &quot;{clientSearchQuery.trim()}&quot;
+                              </p>
+                              <p className="text-[10.5px] text-emerald-600/80 dark:text-emerald-400">
+                                Se creará su ficha automáticamente al confirmar la cita
+                              </p>
+                            </div>
+                          </button>
+                        )}
+
+                        {matchingClients.length === 0 && !clientSearchQuery.trim() && (
+                          <div className="p-3 text-center text-slate-400 text-xs">
+                            Comenzá a escribir el nombre del cliente...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white font-bold text-xs shadow-xs">
+                          {newClientName.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div>
+                          <p className="font-black text-slate-900 dark:text-white text-xs">{newClientName}</p>
+                          <span className="text-[10px] font-bold text-primary">
+                            {newClientId ? "Cliente Registrado" : "Nuevo Cliente"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleClearClient}
+                        className="text-[11px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white underline cursor-pointer"
+                      >
+                        Cambiar
+                      </button>
+                    </div>
+
+                    {/* WhatsApp Phone input */}
+                    <div>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1">
+                        Teléfono WhatsApp (para recordatorios automáticos):
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                          <span>🇵🇾</span>
+                          <span>+595</span>
+                        </div>
+                        <div className="relative flex-1">
+                          <input
+                            type="tel"
+                            placeholder="0981 123 456"
+                            value={newClientPhone.replace(/^\+595\s*/, "")}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/[^0-9\s]/g, "");
+                              setNewClientPhone(raw ? `+595 ${raw}` : "");
+                            }}
+                            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                          />
+                          <Phone className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Servicio
+              {/* Custom Service Selector Cards */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300">
+                    Servicio a Realizar
                   </label>
-                  <select
-                    value={newServiceId}
-                    onChange={(e) => setNewServiceId(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                  >
-                    {services.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({formatGs(s.price)})
-                      </option>
-                    ))}
-                  </select>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    {services.length} disponibles
+                  </span>
                 </div>
-
-                <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Profesional
-                  </label>
-                  <select
-                    value={newSlotData.staffId}
-                    onChange={(e) => setNewSlotData({ ...newSlotData, staffId: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                  >
-                    {staff.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Hora de Inicio
-                  </label>
-                  <input
-                    type="time"
-                    value={newSlotData.time}
-                    onChange={(e) => setNewSlotData({ ...newSlotData, time: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Método de Pago
-                  </label>
-                  <select
-                    value={newPaymentMethod}
-                    onChange={(e) => setNewPaymentMethod(e.target.value as PaymentMethod)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                  >
-                    <option value="efectivo">Efectivo en Local</option>
-                    <option value="sipap">Transferencia SIPAP</option>
-                    <option value="pos_bancard">Tarjeta / POS Bancard</option>
-                    <option value="billetera_py">Billetera Móvil</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                  {services.map((s) => {
+                    const isSelected = newServiceId === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setNewServiceId(s.id)}
+                        className={`flex items-start justify-between p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "border-primary bg-primary/10 shadow-xs ring-2 ring-primary/20"
+                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-white/20"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1 pr-2">
+                          <p className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                            {s.name}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                              <Clock className="h-3 w-3" /> {s.durationMin}m
+                            </span>
+                            <span className="text-[11px] font-bold text-primary">
+                              {formatGs(s.price)}
+                            </span>
+                          </div>
+                        </div>
+                        {isSelected ? (
+                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        ) : (
+                          <div className="h-4 w-4 rounded-full border border-slate-300 dark:border-slate-700 shrink-0 mt-0.5" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* Custom Staff Selector Chips */}
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Profesional Asignado
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {staff.filter((s) => s.active).map((p) => {
+                    const isSelected = newSlotData.staffId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setNewSlotData((prev) => ({ ...prev, staffId: p.id }))}
+                        className={`flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs transition cursor-pointer ${
+                          isSelected
+                            ? "border-primary bg-primary/10 text-primary font-bold shadow-xs ring-2 ring-primary/20"
+                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                        }`}
+                      >
+                        <span
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
+                          style={{ background: p.color }}
+                        >
+                          {p.avatar}
+                        </span>
+                        <span>{p.name.split(" ")[0]}</span>
+                        {isSelected && <Check className="h-3 w-3 text-primary ml-0.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom Payment Method Chips */}
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Método de Pago
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "efectivo" as const, label: "Efectivo", icon: Banknote, color: "text-emerald-500" },
+                    { id: "sipap" as const, label: "SIPAP", icon: Landmark, color: "text-blue-500" },
+                    { id: "pos_bancard" as const, label: "POS Tarjeta", icon: CreditCard, color: "text-amber-500" },
+                    { id: "billetera_py" as const, label: "Billetera", icon: Smartphone, color: "text-purple-500" },
+                  ].map(({ id, label, icon: Icon, color }) => {
+                    const isSelected = newPaymentMethod === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setNewPaymentMethod(id)}
+                        className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2 px-2.5 text-xs font-bold transition cursor-pointer ${
+                          isSelected
+                            ? "border-primary bg-primary/10 text-primary shadow-xs ring-2 ring-primary/20"
+                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                        }`}
+                      >
+                        <Icon className={`h-3.5 w-3.5 ${color}`} />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer Actions */}
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setNewModalOpen(false)}
-                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmittingQuick}
-                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50"
+                  disabled={isSubmittingQuick || !newClientName.trim()}
+                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmittingQuick ? "Guardando cita..." : "Confirmar Turno"}
                 </button>
@@ -641,60 +1011,161 @@ export default function CalendarBoard() {
             <form onSubmit={handleCreateBlock} className="space-y-4">
               <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-1">
                 <span className="font-bold text-amber-700 dark:text-amber-400 block flex items-center gap-1.5">
-                  <Ban className="h-4 w-4" /> Bloqueo de Horario Contextual
+                  <Ban className="h-4 w-4" /> Bloqueo de Horario Operativo
                 </span>
-                <p className="text-slate-600 dark:text-slate-300">
-                  Bloqueá un intervalo de tiempo directamente desde este slot para evitar reservas indebidas.
+                <p className="text-slate-600 dark:text-slate-300 text-[11.5px]">
+                  Evita que los clientes reserven en este intervalo de tiempo (online o presencial).
                 </p>
               </div>
 
+              {/* Staff to Block */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Profesional Afectado
                 </label>
-                <select
-                  value={blockStaffId}
-                  onChange={(e) => setBlockStaffId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                >
-                  <option value="all">Todo el equipo (Cierre general)</option>
-                  {staff.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Hora Desde
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={blockStart}
-                    onChange={(e) => setBlockStart(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Hora Hasta
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={blockEnd}
-                    onChange={(e) => setBlockEnd(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
-                  />
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBlockStaffId("all")}
+                    className={`flex items-center gap-1.5 rounded-2xl border px-3 py-2 text-xs transition cursor-pointer ${
+                      blockStaffId === "all"
+                        ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold ring-2 ring-amber-500/20"
+                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                    }`}
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    <span>Todo el local (Cierre general)</span>
+                  </button>
+                  {staff.map((p) => {
+                    const isSelected = blockStaffId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setBlockStaffId(p.id)}
+                        className={`flex items-center gap-1.5 rounded-2xl border px-3 py-2 text-xs transition cursor-pointer ${
+                          isSelected
+                            ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold ring-2 ring-amber-500/20"
+                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                        }`}
+                      >
+                        <span
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
+                          style={{ background: p.color }}
+                        >
+                          {p.avatar}
+                        </span>
+                        <span>{p.name.split(" ")[0]}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* Date and Time block */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/60 p-3 space-y-3">
+                {/* Date Stepper */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => stepBlockDate(-1)}
+                      className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    </button>
+                    <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                      {formattedBlockDate}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => stepBlockDate(1)}
+                      className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBlockDate(formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"))
+                    }
+                    className="text-[11px] font-bold text-amber-600 hover:underline px-2 py-0.5 rounded-lg hover:bg-amber-500/10 transition cursor-pointer"
+                  >
+                    Hoy
+                  </button>
+                </div>
+
+                {/* Time interval from and to */}
+                <div className="grid grid-cols-2 gap-3 border-t border-slate-200/60 dark:border-white/5 pt-2.5">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium mb-1">Hora Desde:</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 flex-1 text-center">
+                        {blockStart} hs
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setBlockStart((prev) => stepTime(prev, -15))}
+                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
+                      >
+                        -15m
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlockStart((prev) => stepTime(prev, 15))}
+                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
+                      >
+                        +15m
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium mb-1">Hora Hasta:</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 flex-1 text-center">
+                        {blockEnd} hs
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setBlockEnd((prev) => stepTime(prev, -15))}
+                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
+                      >
+                        -15m
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlockEnd((prev) => stepTime(prev, 15))}
+                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
+                      >
+                        +15m
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preset Duration Buttons */}
+                <div>
+                  <span className="text-[10.5px] text-slate-400 block mb-1 font-medium">Duración rápida:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {BLOCK_DURATION_PRESETS.map((p) => (
+                      <button
+                        key={p.minutes}
+                        type="button"
+                        onClick={() => setBlockEnd(stepTime(blockStart, p.minutes))}
+                        className="text-[11px] rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-2.5 py-1 font-medium text-slate-600 dark:text-slate-300 hover:border-amber-500 hover:text-amber-600 transition cursor-pointer"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reason chips & input */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Motivo del Bloqueo
                 </label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -703,16 +1174,16 @@ export default function CalendarBoard() {
                     "Reunión de Equipo",
                     "Trámite Personal",
                     "Mantenimiento",
-                    "No disponible",
+                    "Feriado / Cierre",
                   ].map((chip) => (
                     <button
                       key={chip}
                       type="button"
                       onClick={() => setBlockReason(chip)}
-                      className={`text-[11px] rounded-lg px-2.5 py-1 border transition ${
+                      className={`text-[11px] rounded-xl px-2.5 py-1 border transition cursor-pointer ${
                         blockReason === chip
-                          ? "bg-amber-500 text-white border-amber-600 font-bold"
-                          : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? "bg-amber-500 text-white border-amber-600 font-bold shadow-xs"
+                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                       }`}
                     >
                       {chip}
@@ -722,10 +1193,10 @@ export default function CalendarBoard() {
                 <input
                   type="text"
                   required
-                  placeholder="Ej. Almuerzo o capacitación"
+                  placeholder="Ej. Almuerzo o trámite"
                   value={blockReason}
                   onChange={(e) => setBlockReason(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -733,14 +1204,14 @@ export default function CalendarBoard() {
                 <button
                   type="button"
                   onClick={() => setNewModalOpen(false)}
-                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingQuick}
-                  className="rounded-xl bg-amber-600 hover:bg-amber-700 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-600/25 transition disabled:opacity-50"
+                  className="rounded-xl bg-amber-600 hover:bg-amber-500 px-5 py-2 text-xs font-bold text-white shadow-md hover:opacity-95 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmittingQuick ? "Guardando bloqueo..." : "Guardar Bloqueo"}
                 </button>
@@ -748,112 +1219,6 @@ export default function CalendarBoard() {
             </form>
           )}
         </div>
-      </Modal>
-
-      {/* Quick Schedule Block Modal */}
-      <Modal
-        id="quickBlockModal"
-        open={blockModalOpen}
-        title="Bloquear Horario en Agenda"
-        onClose={() => setBlockModalOpen(false)}
-      >
-        <form onSubmit={handleCreateBlock} className="space-y-4 text-xs">
-          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-1">
-            <span className="font-bold text-amber-700 dark:text-amber-400 block flex items-center gap-1.5">
-              <Ban className="h-4 w-4" /> Bloqueo de Excepción / Descanso
-            </span>
-            <p className="text-slate-600 dark:text-slate-300">
-              Impide que los clientes reserven en este intervalo de tiempo para el profesional seleccionado.
-            </p>
-          </div>
-
-          <div>
-            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-              Profesional
-            </label>
-            <select
-              value={blockStaffId}
-              onChange={(e) => setBlockStaffId(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-            >
-              <option value="all">Todo el salón / Todos los profesionales</option>
-              {staff.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Fecha
-              </label>
-              <input
-                type="date"
-                required
-                value={blockDate}
-                onChange={(e) => setBlockDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Desde
-              </label>
-              <input
-                type="time"
-                required
-                value={blockStart}
-                onChange={(e) => setBlockStart(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Hasta
-              </label>
-              <input
-                type="time"
-                required
-                value={blockEnd}
-                onChange={(e) => setBlockEnd(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-              Motivo del Bloqueo
-            </label>
-            <input
-              type="text"
-              required
-              value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
-              placeholder="Ej. Almuerzo, Trámite personal, Mantenimiento"
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
-            <button
-              type="button"
-              onClick={() => setBlockModalOpen(false)}
-              className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="rounded-xl bg-amber-600 px-5 py-2 font-bold text-white shadow-md hover:bg-amber-700 transition"
-            >
-              Confirmar Bloqueo
-            </button>
-          </div>
-        </form>
       </Modal>
     </div>
   );
