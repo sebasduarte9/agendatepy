@@ -62,6 +62,9 @@ export default function ServiciosPage() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState("");
 
+  // Delete Confirmation Modal State
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
   // Service Modal state
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
@@ -340,11 +343,11 @@ export default function ServiciosPage() {
     );
   }
 
-  function handleDeleteService(id: string, name: string) {
-    if (confirm(`¿Eliminar el servicio "${name}" del menú?`)) {
-      removeService(id);
-      pushToast("success", "Servicio eliminado");
-    }
+  function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    removeService(deleteTarget.id);
+    pushToast("success", `Servicio "${deleteTarget.name}" eliminado`);
+    setDeleteTarget(null);
   }
 
   async function handleCopyServiceLink(serviceId: string, serviceName: string) {
@@ -384,7 +387,7 @@ export default function ServiciosPage() {
           className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer w-fit"
         >
           <Plus className="h-4 w-4" />
-          <span>+ Nuevo Servicio</span>
+          <span>Nuevo Servicio</span>
         </button>
       </div>
 
@@ -492,10 +495,10 @@ export default function ServiciosPage() {
             <button
               type="button"
               onClick={() => setIsAddingCategory(true)}
-              className="inline-flex items-center gap-1 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-800/50 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-800/50 px-3.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition shrink-0 cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>+ Categoría</span>
+              <span>Nueva Categoría</span>
             </button>
           )}
         </div>
@@ -532,7 +535,7 @@ export default function ServiciosPage() {
             className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            <span>+ Crear primer servicio</span>
+            <span>Crear primer servicio</span>
           </button>
         </div>
       ) : (
@@ -560,24 +563,28 @@ export default function ServiciosPage() {
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
                         {item.category || "General"}
                       </span>
 
-                      {/* Visibility Pill */}
+                      {/* Interactive Visibility Button with Live Status Dot */}
                       <button
                         type="button"
                         onClick={() => handleToggleVisibility(item)}
-                        title={isVisible ? "Visible online (Clic para ocultar)" : "Oculto (Clic para publicar)"}
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition cursor-pointer ${
+                        title={isVisible ? "Servicio publicado en tu web. Clic para ocultar." : "Servicio oculto. Clic para hacerlo visible online."}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold border transition-all cursor-pointer ${
                           isVisible
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                            : "bg-slate-200 dark:bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        {isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                        <span>{isVisible ? "Online" : "Oculto"}</span>
+                        <span
+                          className={`h-2 w-2 rounded-full transition-colors ${
+                            isVisible ? "bg-emerald-500" : "bg-slate-400"
+                          }`}
+                        />
+                        <span>{isVisible ? "Visible online" : "Pausado"}</span>
                       </button>
                     </div>
 
@@ -640,8 +647,8 @@ export default function ServiciosPage() {
                           : "Activar descuento"}
                       </span>
                     </span>
-                    <span className="text-[10px] opacity-75">
-                      {item.hasPromo ? "Modificar" : "+"}
+                    <span className="text-[10px] opacity-75 font-bold">
+                      {item.hasPromo ? "Modificar" : "Activar"}
                     </span>
                   </button>
 
@@ -681,7 +688,7 @@ export default function ServiciosPage() {
 
                     <button
                       type="button"
-                      onClick={() => handleDeleteService(item.id, item.name)}
+                      onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
                       className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer"
                       title="Eliminar servicio"
                     >
@@ -1113,6 +1120,46 @@ export default function ServiciosPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Custom Web Modal: Delete Service Confirmation */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="¿Eliminar servicio del catálogo?"
+      >
+        <div className="space-y-4 text-xs">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-bold">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-900 dark:text-white">
+                {deleteTarget?.name}
+              </p>
+              <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5 leading-relaxed">
+                Este servicio se quitará de tu menú. Los turnos agendados previamente no se verán afectados.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDelete}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+            >
+              Eliminar definitivamente
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
