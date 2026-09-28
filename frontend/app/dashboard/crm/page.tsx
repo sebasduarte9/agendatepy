@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -28,12 +28,18 @@ import {
   Radio,
   Sliders,
   CheckCircle2,
+  ShoppingBag,
+  Package,
+  Tag,
+  Truck,
+  Store,
+  AlertCircle,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import { formatGs } from "@/lib/dashboard-dates";
-import type { CrmChannel, CrmConversation } from "@/lib/dashboard-types";
+import type { CrmChannel, CrmConversation, ProductOrderStatus } from "@/lib/dashboard-types";
 
 // Official vector channel icons / badges
 function ChannelIcon({ channel, size = "md" }: { channel: CrmChannel; size?: "sm" | "md" | "lg" }) {
@@ -83,7 +89,13 @@ export default function CrmOmnichannelPage() {
     resolveCrmConversation,
     reopenCrmConversation,
     pushToast,
+    productOrders,
+    updateProductOrderStatus,
   } = useDashboardStore();
+
+  const [mainSection, setMainSection] = useState<"mensajes" | "pedidos">("mensajes");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | ProductOrderStatus>("all");
+  const [orderSearch, setOrderSearch] = useState("");
 
   const [channelFilter, setChannelFilter] = useState<"todos" | CrmChannel>("todos");
   const [statusFilter, setStatusFilter] = useState<"open" | "resolved" | "all">("open");
@@ -91,6 +103,36 @@ export default function CrmOmnichannelPage() {
   const [selectedId, setSelectedId] = useState<string>(crmConversations[0]?.id || "");
   const [replyText, setReplyText] = useState("");
   const [configModalOpen, setConfigModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("tab") === "pedidos") {
+        setMainSection("pedidos");
+      }
+    }
+  }, []);
+
+  const filteredOrders = useMemo(() => {
+    return productOrders.filter((ord) => {
+      const matchStatus = orderStatusFilter === "all" || ord.status === orderStatusFilter;
+      const matchSearch =
+        !orderSearch.trim() ||
+        ord.clientName.toLowerCase().includes(orderSearch.toLowerCase()) ||
+        ord.orderNumber.toLowerCase().includes(orderSearch.toLowerCase()) ||
+        ord.clientPhone.includes(orderSearch) ||
+        ord.items.some((i) => i.productName.toLowerCase().includes(orderSearch.toLowerCase()));
+      return matchStatus && matchSearch;
+    });
+  }, [productOrders, orderStatusFilter, orderSearch]);
+
+  const pendingOrdersCount = productOrders.filter((o) => o.status === "pending").length;
+  const totalOrderRevenue = productOrders
+    .filter((o) => o.status !== "cancelled")
+    .reduce((sum, o) => sum + o.totalAmount, 0);
+  const totalOnSaleItemsSold = productOrders
+    .filter((o) => o.status !== "cancelled")
+    .reduce((sum, o) => sum + o.items.filter((i) => i.isOnSale).reduce((s, i) => s + i.qty, 0), 0);
 
   // Quick reply snippet templates
   const quickReplies = [
@@ -201,8 +243,48 @@ export default function CrmOmnichannelPage() {
         </div>
       </div>
 
-      {/* Main CRM Grid Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[680px]">
+      {/* View Switcher: Mensajes Omnicanal vs Órdenes de Tienda */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-fit border border-slate-200/80 dark:border-white/10">
+        <button
+          type="button"
+          onClick={() => setMainSection("mensajes")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+            mainSection === "mensajes"
+              ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <MessageSquare className="h-4 w-4 text-emerald-500" />
+          <span>Mensajes Omnicanal</span>
+          {unreadTotal > 0 && (
+            <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
+              {unreadTotal}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainSection("pedidos")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+            mainSection === "pedidos"
+              ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <ShoppingBag className="h-4 w-4 text-primary" />
+          <span>Órdenes & Pedidos de Tienda</span>
+          {pendingOrdersCount > 0 && (
+            <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
+              {pendingOrdersCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {mainSection === "mensajes" ? (
+        /* Main CRM Grid Container */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[680px]">
         {/* LEFT COLUMN: Conversation List & Filter Bar (4 cols) */}
         <div className="lg:col-span-4 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
           {/* Channel Selector Pills */}
@@ -761,6 +843,294 @@ export default function CrmOmnichannelPage() {
           </div>
         </div>
       </div>
+      ) : (
+        /* Orders & Store Sales Management View */
+        <div className="space-y-6">
+          {/* Orders KPIs */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Total Pedidos</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{productOrders.length}</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <ShoppingBag className="h-5 w-5" />
+              </div>
+            </Card>
+
+            <Card className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Pendientes de Despacho</p>
+                <p className="text-2xl font-black text-amber-600 mt-1">{pendingOrdersCount}</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600">
+                <Clock className="h-5 w-5" />
+              </div>
+            </Card>
+
+            <Card className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Facturación en Tienda</p>
+                <p className="text-2xl font-black text-emerald-600 mt-1 font-mono">{formatGs(totalOrderRevenue)}</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+                <CreditCard className="h-5 w-5" />
+              </div>
+            </Card>
+
+            <Card className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Productos en Oferta</p>
+                <p className="text-2xl font-black text-indigo-600 mt-1">{totalOnSaleItemsSold} u. vendidas</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600">
+                <Tag className="h-5 w-5" />
+              </div>
+            </Card>
+          </div>
+
+          {/* Orders Filter & Search Bar */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              {[
+                { id: "all", label: "Todos", count: productOrders.length },
+                { id: "pending", label: "Pendientes", count: pendingOrdersCount },
+                { id: "confirmed", label: "Confirmados", count: productOrders.filter((o) => o.status === "confirmed").length },
+                { id: "delivered", label: "Entregados", count: productOrders.filter((o) => o.status === "delivered").length },
+                { id: "cancelled", label: "Cancelados", count: productOrders.filter((o) => o.status === "cancelled").length },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setOrderStatusFilter(tab.id as any)}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                    orderStatusFilter === tab.id
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                      : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className="text-[10px] opacity-70">({tab.count})</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por cliente, pedido o teléfono..."
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-10 pr-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary shadow-2xs"
+              />
+            </div>
+          </div>
+
+          {/* Orders Cards Grid */}
+          {filteredOrders.length === 0 ? (
+            <Card className="p-12 text-center">
+              <ShoppingBag className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" />
+              <h3 className="mt-3 text-sm font-bold text-slate-800 dark:text-slate-200">
+                No se encontraron pedidos
+              </h3>
+              <p className="mt-1 text-xs text-slate-400">
+                Los pedidos y reservas de productos realizados desde tu tienda web aparecerán aquí en vivo.
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredOrders.map((ord) => {
+                const isPending = ord.status === "pending";
+                const isConfirmed = ord.status === "confirmed";
+                const isDelivered = ord.status === "delivered";
+                const isCancelled = ord.status === "cancelled";
+
+                const rawPhone = ord.clientPhone.replace(/\D/g, "");
+                const waMessage = encodeURIComponent(
+                  `¡Hola ${ord.clientName}! 👋 Te escribo de ${business.name || "la barbería"} respecto a tu pedido *${ord.orderNumber}* por Gs. ${ord.totalAmount.toLocaleString("es-PY")}. ¿Podemos coordinar la entrega o retiro?`
+                );
+
+                return (
+                  <Card key={ord.id} className="p-4 flex flex-col justify-between space-y-4 hover:border-primary/40 transition">
+                    <div>
+                      {/* Top Header */}
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-3">
+                        <div>
+                          <span className="font-mono text-sm font-black text-slate-900 dark:text-white">
+                            {ord.orderNumber}
+                          </span>
+                          <span className="block text-[10px] text-slate-400 mt-0.5">
+                            {new Date(ord.createdAt).toLocaleDateString("es-PY", {
+                              day: "2-digit",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            isPending
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                              : isConfirmed
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                              : isDelivered
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                              : "bg-slate-100 text-slate-500 dark:bg-slate-800"
+                          }`}
+                        >
+                          {isPending
+                            ? "Pendiente"
+                            : isConfirmed
+                            ? "Confirmado"
+                            : isDelivered
+                            ? "Entregado"
+                            : "Cancelado"}
+                        </span>
+                      </div>
+
+                      {/* Client info & WhatsApp button */}
+                      <div className="flex items-center justify-between gap-2 pt-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {ord.clientName}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                            {ord.clientPhone}
+                          </p>
+                        </div>
+
+                        <a
+                          href={`https://wa.me/${rawPhone}?text=${waMessage}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white border border-emerald-500/20 px-2.5 py-1.5 text-xs font-bold transition cursor-pointer shrink-0"
+                          title="Contactar al cliente por WhatsApp"
+                        >
+                          <ChannelIcon channel="whatsapp" size="sm" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </div>
+
+                      {/* Delivery and payment badges */}
+                      <div className="flex items-center gap-2 pt-2 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5">
+                          {ord.deliveryType === "delivery" ? (
+                            <Truck className="h-3 w-3 text-indigo-500" />
+                          ) : (
+                            <Store className="h-3 w-3 text-primary" />
+                          )}
+                          <span>{ord.deliveryType === "delivery" ? "Delivery" : "Retiro en local"}</span>
+                        </span>
+
+                        <span className="flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5">
+                          <CreditCard className="h-3 w-3 text-emerald-500" />
+                          <span className="capitalize">{ord.paymentMethod}</span>
+                        </span>
+                      </div>
+
+                      {/* Item list */}
+                      <div className="mt-3 space-y-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-2.5 text-xs border border-slate-100 dark:border-white/5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Items del Pedido ({ord.items.reduce((s, i) => s + i.qty, 0)})
+                        </p>
+                        {ord.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">
+                                {item.qty}x
+                              </span>
+                              <span className="truncate text-slate-800 dark:text-slate-200">
+                                {item.productName}
+                              </span>
+                              {item.isOnSale && (
+                                <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                                  OFERTA
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-mono text-slate-600 dark:text-slate-400 font-semibold shrink-0">
+                              {formatGs(item.unitPrice * item.qty)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {ord.notes && (
+                        <p className="mt-2 text-[11px] text-slate-500 italic bg-amber-500/5 border border-amber-500/10 p-2 rounded-lg">
+                          Nota: {ord.notes}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Bottom: Total & Actions */}
+                    <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-2.5">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs text-slate-500">Total del pedido:</span>
+                        <span className="text-base font-black text-slate-900 dark:text-white font-mono">
+                          {formatGs(ord.totalAmount)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {isPending && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateProductOrderStatus(ord.id, "confirmed");
+                              pushToast("success", `Pedido ${ord.orderNumber} marcado como Confirmado`);
+                            }}
+                            className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 text-xs transition cursor-pointer"
+                          >
+                            Confirmar
+                          </button>
+                        )}
+
+                        {(isPending || isConfirmed) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateProductOrderStatus(ord.id, "delivered");
+                              pushToast("success", `Pedido ${ord.orderNumber} marcado como Entregado & Cobrado`);
+                            }}
+                            className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 text-xs transition cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            <span>Entregado</span>
+                          </button>
+                        )}
+
+                        {!isCancelled && !isDelivered && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateProductOrderStatus(ord.id, "cancelled");
+                              pushToast("error", `Pedido ${ord.orderNumber} cancelado`);
+                            }}
+                            className="rounded-xl border border-slate-200 dark:border-white/10 px-2.5 py-1.5 text-xs text-slate-500 hover:text-rose-500 transition cursor-pointer"
+                            title="Cancelar pedido"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+
+                        {isDelivered && (
+                          <span className="w-full text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 py-1 bg-emerald-500/10 rounded-xl flex items-center justify-center gap-1">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>Pedido Completado</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CHANNEL CONFIGURATION MODAL */}
       <Modal

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, useMemo, type ReactNode } from "react";
+import { useRef, useState, useTransition, useMemo, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatInTimeZone } from "date-fns-tz";
@@ -162,14 +162,37 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
         price: Number(p.price) || 0,
         cost: Number(p.cost) || Math.round(Number(p.price) * 0.5),
         stock: p.stock ?? 10,
-        imageUrl: p.imageUrl || "https://images.unsplash.com/photo-1597354984706-aec992b7d0d1?w=500&auto=format&fit=crop&q=80",
+        imageUrl: p.imageUrl || "",
         category: p.category || "General",
         description: p.description || "",
         active: p.isActive !== false,
+        isOnSale: (p as any).isOnSale,
+        salePrice: (p as any).salePrice ? Number((p as any).salePrice) : undefined,
+        saleType: (p as any).saleType,
+        saleExpiresAt: (p as any).saleExpiresAt,
+        saleMaxUnits: (p as any).saleMaxUnits,
+        saleUnitsSold: (p as any).saleUnitsSold,
       }));
     }
     return initialProducts;
   }, [products]);
+
+  // Check if an offer is currently active
+  const isProductOfferActive = useCallback((p: ProductItem) => {
+    if (!p.isOnSale || !p.salePrice || p.salePrice >= p.price) return false;
+    if (p.saleExpiresAt) {
+      const exp = new Date(p.saleExpiresAt).getTime();
+      if (!isNaN(exp) && Date.now() > exp) return false;
+    }
+    if (p.saleMaxUnits && (p.saleUnitsSold || 0) >= p.saleMaxUnits) {
+      return false;
+    }
+    return true;
+  }, []);
+
+  const getProductPrice = useCallback((p: ProductItem) => {
+    return isProductOfferActive(p) && p.salePrice ? p.salePrice : p.price;
+  }, [isProductOfferActive]);
 
   // Product categories list
   const productCategories = useMemo(() => {
@@ -191,8 +214,8 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
   }, [cart, allProducts]);
 
   const totalCartPrice = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.product.price * item.qty, 0);
-  }, [cartItems]);
+    return cartItems.reduce((sum, item) => sum + getProductPrice(item.product) * item.qty, 0);
+  }, [cartItems, getProductPrice]);
 
   const totalCartCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.qty, 0);
@@ -215,18 +238,23 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
   function getWhatsAppOrderUrl(singleProduct?: ProductItem) {
     const rawPhone = (tenant.whatsapp || "595981700800").replace(/\D/g, "");
     if (singleProduct) {
+      const price = getProductPrice(singleProduct);
+      const isOffer = isProductOfferActive(singleProduct);
+      const offerTag = isOffer ? " 🔥 (EN OFERTA)" : "";
       const text = encodeURIComponent(
         `¡Hola ${tenant.name}! 👋 Quiero consultar o pedir este producto de su tienda online:\n\n` +
-        `🛍️ *${singleProduct.name}*\n` +
-        `💰 *Precio:* Gs. ${singleProduct.price.toLocaleString("es-PY")}\n\n` +
+        `🛍️ *${singleProduct.name}*${offerTag}\n` +
+        `💰 *Precio:* Gs. ${price.toLocaleString("es-PY")}\n\n` +
         `¿Tienen disponibilidad para retiro o delivery? ¡Muchas gracias!`
       );
       return `https://wa.me/${rawPhone}?text=${text}`;
     }
 
-    const lines = cartItems.map(
-      (item) => `• ${item.qty}x ${item.product.name} (Gs. ${(item.product.price * item.qty).toLocaleString("es-PY")})`
-    );
+    const lines = cartItems.map((item) => {
+      const pPrice = getProductPrice(item.product);
+      const isOffer = isProductOfferActive(item.product) ? " (Oferta)" : "";
+      return `• ${item.qty}x ${item.product.name}${isOffer} (Gs. ${(pPrice * item.qty).toLocaleString("es-PY")})`;
+    });
     const clientSignature = name.trim() ? `\n👤 *Cliente:* ${name.trim()} (${phone.trim()})` : "";
     const text = encodeURIComponent(
       `¡Hola ${tenant.name}! 👋 Quiero realizar un pedido desde la tienda online:${clientSignature}\n\n` +
@@ -889,10 +917,24 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                           </p>
                         )}
 
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-sm sm:text-base font-black text-primary">
-                            Gs. {p.price.toLocaleString("es-PY")}
-                          </p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {isProductOfferActive(p) && p.salePrice ? (
+                            <>
+                              <span className="text-[10px] font-black uppercase text-white bg-amber-500 px-2 py-0.5 rounded-full shadow-xs">
+                                OFERTA
+                              </span>
+                              <p className="text-sm sm:text-base font-black text-amber-500">
+                                Gs. {p.salePrice.toLocaleString("es-PY")}
+                              </p>
+                              <span className="text-xs text-slate-400 line-through">
+                                Gs. {p.price.toLocaleString("es-PY")}
+                              </span>
+                            </>
+                          ) : (
+                            <p className="text-sm sm:text-base font-black text-primary">
+                              Gs. {p.price.toLocaleString("es-PY")}
+                            </p>
+                          )}
                           {isOutOfStock ? (
                             <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded">
                               Agotado

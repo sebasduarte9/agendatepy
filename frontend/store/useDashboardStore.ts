@@ -24,6 +24,9 @@ import type {
   ClientMedia,
   ClientMediaType,
   ClientMediaTag,
+  ProductOrder,
+  ProductOrderStatus,
+  ProductOfferType,
 } from "@/lib/dashboard-types";
 
 const TIMEZONE_NOTE =
@@ -156,6 +159,12 @@ export const initialProducts: ProductItem[] = [
     category: "Peinado",
     stock: 18,
     active: true,
+    isOnSale: true,
+    salePrice: 50000,
+    saleType: "both",
+    saleExpiresAt: "2026-10-15T23:59",
+    saleMaxUnits: 10,
+    saleUnitsSold: 4,
   },
   {
     id: "pr-2",
@@ -178,6 +187,10 @@ export const initialProducts: ProductItem[] = [
     category: "Lavado & Cuidado",
     stock: 9,
     active: true,
+    isOnSale: true,
+    salePrice: 65000,
+    saleType: "time",
+    saleExpiresAt: "2026-10-10T20:00",
   },
   {
     id: "pr-4",
@@ -200,6 +213,79 @@ export const initialProducts: ProductItem[] = [
     category: "Fragancias",
     stock: 8,
     active: true,
+  },
+];
+
+export const initialProductOrders: ProductOrder[] = [
+  {
+    id: "ord-1",
+    orderNumber: "#PED-501",
+    clientName: "Rodrigo Caballero",
+    clientPhone: "+595 981 445 120",
+    items: [
+      {
+        productId: "pr-1",
+        productName: "Cera Capilar Efecto Mate Extreme",
+        qty: 1,
+        unitPrice: 50000,
+        isOnSale: true,
+      },
+      {
+        productId: "pr-2",
+        productName: "Aceite para Barba Sandalwood & Argán",
+        qty: 1,
+        unitPrice: 55000,
+        isOnSale: false,
+      },
+    ],
+    totalAmount: 105000,
+    status: "pending",
+    paymentMethod: "transferencia",
+    deliveryType: "retirar_en_local",
+    createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    notes: "Pasa a retirar a las 18:30 hs al salir del trabajo.",
+  },
+  {
+    id: "ord-2",
+    orderNumber: "#PED-502",
+    clientName: "Gonzalo Almirón",
+    clientPhone: "+595 971 889 332",
+    items: [
+      {
+        productId: "pr-3",
+        productName: "Shampoo Anticaída & Biotina Profesional",
+        qty: 2,
+        unitPrice: 65000,
+        isOnSale: true,
+      },
+    ],
+    totalAmount: 130000,
+    status: "confirmed",
+    paymentMethod: "pos",
+    deliveryType: "delivery",
+    createdAt: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
+    notes: "Enviar por moto delivery a Villa Morra.",
+  },
+  {
+    id: "ord-3",
+    orderNumber: "#PED-503",
+    clientName: "Esteban Rivas",
+    clientPhone: "+595 982 710 445",
+    items: [
+      {
+        productId: "pr-1",
+        productName: "Cera Capilar Efecto Mate Extreme",
+        qty: 1,
+        unitPrice: 50000,
+        isOnSale: true,
+      },
+    ],
+    totalAmount: 50000,
+    status: "delivered",
+    paymentMethod: "efectivo",
+    deliveryType: "retirar_en_local",
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    notes: "Entregado y cobrado en mostrador.",
   },
 ];
 
@@ -476,6 +562,9 @@ type DashboardState = {
   staff: StaffMember[];
   services: ServiceItem[];
   products: ProductItem[];
+  productOrders: ProductOrder[];
+  updateProductOrderStatus: (orderId: string, status: ProductOrderStatus) => void;
+  createProductOrder: (order: Omit<ProductOrder, "id" | "orderNumber" | "createdAt">) => void;
   appointments: Appointment[];
   blocks: TimeBlock[];
   receipts: Receipt[];
@@ -590,6 +679,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   staff: [],
   services: [],
   products: [],
+  productOrders: initialProductOrders,
   appointments: [],
   clients: [],
   cashMovements: [],
@@ -1280,6 +1370,24 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }),
       }).catch((e) => console.error("Error syncing stock update in DB:", e));
     }
+  },
+  updateProductOrderStatus: (orderId, status) => {
+    set({
+      productOrders: get().productOrders.map((o) =>
+        o.id === orderId ? { ...o, status } : o
+      ),
+    });
+  },
+  createProductOrder: (orderData) => {
+    const newOrder: ProductOrder = {
+      ...orderData,
+      id: `ord-${Date.now()}`,
+      orderNumber: `#PED-${Math.floor(100 + Math.random() * 900)}`,
+      createdAt: new Date().toISOString(),
+    };
+    set({
+      productOrders: [newOrder, ...get().productOrders],
+    });
   },
 
   addClient: async (item) => {

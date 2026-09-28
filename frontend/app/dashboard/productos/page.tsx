@@ -18,6 +18,7 @@ import {
   Tag,
   X,
   FolderPlus,
+  Clock,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -74,7 +75,21 @@ export default function ProductosPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   // Form state
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string;
+    description: string;
+    price: number;
+    cost: number;
+    imageUrl: string;
+    category: string;
+    stock: number;
+    active: boolean;
+    isOnSale: boolean;
+    salePrice: number;
+    saleType: "time" | "quantity" | "both";
+    saleExpiresAt: string;
+    saleMaxUnits: number;
+  }>({
     name: "",
     description: "",
     price: 60000,
@@ -83,6 +98,11 @@ export default function ProductosPage() {
     category: "Peinado",
     stock: 10,
     active: true,
+    isOnSale: false,
+    salePrice: 0,
+    saleType: "time",
+    saleExpiresAt: "",
+    saleMaxUnits: 10,
   });
 
   // Unique list of categories combining defaults, custom, and product categories
@@ -153,7 +173,11 @@ export default function ProductosPage() {
         p.category.toLowerCase().includes(search.toLowerCase());
 
       const matchesCat =
-        selectedCategory === "Todas" || p.category.toLowerCase() === selectedCategory.toLowerCase();
+        selectedCategory === "Todas"
+          ? true
+          : selectedCategory === "ofertas"
+          ? Boolean(p.isOnSale && p.salePrice && p.salePrice < p.price)
+          : p.category.toLowerCase() === selectedCategory.toLowerCase();
 
       return matchesSearch && matchesCat;
     });
@@ -179,6 +203,11 @@ export default function ProductosPage() {
       category: allCategories[0] || "General",
       stock: 15,
       active: true,
+      isOnSale: false,
+      salePrice: 0,
+      saleType: "time",
+      saleExpiresAt: "",
+      saleMaxUnits: 10,
     });
     setModalOpen(true);
   }
@@ -194,6 +223,11 @@ export default function ProductosPage() {
       category: product.category,
       stock: product.stock,
       active: product.active,
+      isOnSale: !!product.isOnSale,
+      salePrice: product.salePrice || 0,
+      saleType: product.saleType || "time",
+      saleExpiresAt: product.saleExpiresAt || "",
+      saleMaxUnits: product.saleMaxUnits || 10,
     });
     setModalOpen(true);
   }
@@ -205,29 +239,32 @@ export default function ProductosPage() {
       return;
     }
 
+    if (form.isOnSale && (!form.salePrice || form.salePrice >= form.price)) {
+      pushToast("error", "El precio de oferta debe ser menor al precio normal");
+      return;
+    }
+
+    const payload = {
+      name: form.name.trim(),
+      description: form.description.trim(),
+      price: Number(form.price),
+      cost: Number(form.cost),
+      imageUrl: form.imageUrl.trim(),
+      category: form.category,
+      stock: Number(form.stock),
+      active: form.active,
+      isOnSale: form.isOnSale,
+      salePrice: form.isOnSale ? Number(form.salePrice) : undefined,
+      saleType: form.isOnSale ? form.saleType : undefined,
+      saleExpiresAt: form.isOnSale && (form.saleType === "time" || form.saleType === "both") ? form.saleExpiresAt : undefined,
+      saleMaxUnits: form.isOnSale && (form.saleType === "quantity" || form.saleType === "both") ? Number(form.saleMaxUnits) : undefined,
+    };
+
     if (editingProduct) {
-      updateProduct(editingProduct.id, {
-        name: form.name.trim(),
-        description: form.description.trim(),
-        price: Number(form.price),
-        cost: Number(form.cost),
-        imageUrl: form.imageUrl.trim(),
-        category: form.category,
-        stock: Number(form.stock),
-        active: form.active,
-      });
+      updateProduct(editingProduct.id, payload);
       pushToast("success", "Producto actualizado correctamente");
     } else {
-      addProduct({
-        name: form.name.trim(),
-        description: form.description.trim(),
-        price: Number(form.price),
-        cost: Number(form.cost),
-        imageUrl: form.imageUrl.trim() || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=80",
-        category: form.category,
-        stock: Number(form.stock),
-        active: form.active,
-      });
+      addProduct(payload);
       pushToast("success", "Producto agregado al catálogo");
     }
     setModalOpen(false);
@@ -355,6 +392,19 @@ export default function ProductosPage() {
             Todas
           </button>
 
+          <button
+            type="button"
+            onClick={() => setSelectedCategory("ofertas")}
+            className={`rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+              selectedCategory === "ofertas"
+                ? "bg-amber-500 text-white shadow-xs"
+                : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20"
+            }`}
+          >
+            <Tag className="h-3.5 w-3.5" />
+            <span>En Oferta</span>
+          </button>
+
           {allCategories.map((cat) => {
             const isSelected = selectedCategory === cat;
             const isCustom = !DEFAULT_CATEGORIES.includes(cat);
@@ -477,10 +527,16 @@ export default function ProductosPage() {
                     />
                   )}
 
-                  <div className="absolute top-3 left-3 flex gap-1.5 z-20">
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
                     <span className="rounded-lg bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md">
                       {p.category}
                     </span>
+                    {p.isOnSale && p.salePrice && p.salePrice < p.price && (
+                      <span className="rounded-lg bg-amber-500 px-2 py-1 text-[10px] font-black text-white shadow-xs uppercase tracking-wide flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        <span>OFERTA</span>
+                      </span>
+                    )}
                     {!p.active && (
                       <span className="rounded-lg bg-rose-500/90 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
                         Pausado
@@ -520,11 +576,42 @@ export default function ProductosPage() {
                   {/* Financials & Stock */}
                   <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/5">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-base font-black text-slate-900 dark:text-white font-mono">{formatGs(p.price)}</span>
+                      {p.isOnSale && p.salePrice && p.salePrice < p.price ? (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-base font-black text-amber-600 dark:text-amber-400 font-mono">
+                            {formatGs(p.salePrice)}
+                          </span>
+                          <span className="text-xs text-slate-400 line-through font-mono">
+                            {formatGs(p.price)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-base font-black text-slate-900 dark:text-white font-mono">
+                          {formatGs(p.price)}
+                        </span>
+                      )}
                       <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-500/20">
                         Margen: {marginPercent}%
                       </span>
                     </div>
+
+                    {/* Promotion limit status */}
+                    {p.isOnSale && p.salePrice && p.salePrice < p.price && (
+                      <div className="flex items-center justify-between text-[10px] bg-amber-500/10 px-2 py-1 rounded-lg text-amber-700 dark:text-amber-300 font-semibold gap-1">
+                        {(p.saleType === "time" || p.saleType === "both") && p.saleExpiresAt ? (
+                          <span className="flex items-center gap-1 truncate">
+                            <Clock className="h-3 w-3 shrink-0" />
+                            <span>Expira: {new Date(p.saleExpiresAt).toLocaleDateString("es-PY", { day: "2-digit", month: "short" })}</span>
+                          </span>
+                        ) : null}
+                        {(p.saleType === "quantity" || p.saleType === "both") && p.saleMaxUnits ? (
+                          <span className="flex items-center gap-1 truncate">
+                            <Package className="h-3 w-3 shrink-0" />
+                            <span>Promo: {p.saleUnitsSold || 0}/{p.saleMaxUnits} vendidas</span>
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500 dark:text-slate-400">Costo compra: {formatGs(p.cost)}</span>
@@ -697,6 +784,121 @@ export default function ProductosPage() {
               </span>
             </div>
           )}
+
+          {/* Special Offer / Promotional Campaign Section */}
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white font-black shadow-xs">
+                  <Tag className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Poner este producto en Oferta</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Descuento con límite de tiempo o cupo máximo de unidades
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.isOnSale}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setForm({
+                      ...form,
+                      isOnSale: checked,
+                      salePrice: checked && (!form.salePrice || form.salePrice >= form.price)
+                        ? Math.max(1000, Math.round(form.price * 0.8 / 1000) * 1000)
+                        : form.salePrice,
+                    });
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-5.5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-amber-500" />
+              </label>
+            </div>
+
+            {form.isOnSale && (
+              <div className="space-y-3 pt-2.5 border-t border-amber-500/20 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                      Precio de Oferta Promocional (Gs.) *
+                    </label>
+                    <input
+                      type="number"
+                      step={5000}
+                      min={1000}
+                      required={form.isOnSale}
+                      value={form.salePrice || ""}
+                      onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })}
+                      placeholder="Ej: 45000"
+                      className="mt-1 w-full rounded-xl border border-amber-400/80 dark:border-amber-500/40 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-black text-amber-600 dark:text-amber-400 outline-none focus:border-amber-500 shadow-xs"
+                    />
+                    {form.price > 0 && form.salePrice > 0 && form.salePrice < form.price && (
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                        Ahorro del {Math.round(((form.price - form.salePrice) / form.price) * 100)}% ({formatGs(form.price - form.salePrice)} menos)
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                      Modalidad del Límite de Oferta
+                    </label>
+                    <select
+                      value={form.saleType}
+                      onChange={(e) => setForm({ ...form, saleType: e.target.value as any })}
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
+                    >
+                      <option value="time">Por Tiempo (Fecha y hora de expiración)</option>
+                      <option value="quantity">Por Cantidad Máxima de Unidades</option>
+                      <option value="both">Ambos (Tiempo y Cantidad)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {(form.saleType === "time" || form.saleType === "both") && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Fecha y hora límite de la oferta</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={form.saleExpiresAt}
+                      onChange={(e) => setForm({ ...form, saleExpiresAt: e.target.value })}
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Cumplida esta fecha, la tienda volverá al precio regular automáticamente.
+                    </p>
+                  </div>
+                )}
+
+                {(form.saleType === "quantity" || form.saleType === "both") && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Package className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Cantidad máxima de unidades en oferta</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={form.saleMaxUnits || ""}
+                      onChange={(e) => setForm({ ...form, saleMaxUnits: Number(e.target.value) })}
+                      placeholder="Ej: 10 unidades"
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Al venderse el cupo asignado, el precio se normalizará de forma automática.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Descripción Breve</label>

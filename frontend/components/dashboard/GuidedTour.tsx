@@ -1497,7 +1497,7 @@ export default function GuidedTour() {
               }}
             />
 
-            {/* Clean, sharp spotlight ring over highlighted element with animated action beacon */}
+            {/* Clean, sharp spotlight ring over highlighted element: only pure illumination */}
             {targetRect && (
               <div
                 style={{
@@ -1507,18 +1507,8 @@ export default function GuidedTour() {
                   width: targetRect.width + 16,
                   height: targetRect.height + 12,
                 }}
-                className="pointer-events-none z-[99993] rounded-2xl ring-2 ring-primary dark:ring-primary shadow-[0_0_20px_rgba(99,102,241,0.4)]"
-              >
-                {/* Animated action beacon tag: shows exactly what to press */}
-                <div className="absolute -top-3.5 left-3 sm:left-4 flex items-center gap-1.5 bg-slate-950 text-white dark:bg-white dark:text-slate-950 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide shadow-xl ring-1 ring-white/20 animate-bounce">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-                  </span>
-                  <span>Apretá acá</span>
-                  <span className="text-xs select-none">👇</span>
-                </div>
-              </div>
+                className="pointer-events-none z-[99993] rounded-2xl ring-2 ring-primary dark:ring-primary shadow-[0_0_25px_rgba(99,102,241,0.45)]"
+              />
             )}
 
             {/* Floating Popover / Tooltip Card positioned in a free, non-overlapping zone (Always on top: z-[99999]) */}

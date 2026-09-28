@@ -44,6 +44,8 @@ export type ServiceItem = {
   prepaymentInstructions?: string; // Instrucciones de pago
 };
 
+export type ProductOfferType = "time" | "quantity" | "both";
+
 export type ProductItem = {
   id: string;
   name: string;
@@ -54,6 +56,37 @@ export type ProductItem = {
   category: string;
   stock: number;
   active: boolean;
+  // Promociones y Ofertas especiales
+  isOnSale?: boolean;
+  salePrice?: number; // Precio de oferta en Gs.
+  saleType?: ProductOfferType; // 'time' (por tiempo), 'quantity' (por cantidad máxima) o 'both'
+  saleExpiresAt?: string; // Fecha/hora límite de la oferta
+  saleMaxUnits?: number; // Límite de unidades en oferta
+  saleUnitsSold?: number; // Cantidad ya vendida en oferta
+};
+
+export type ProductOrderStatus = "pending" | "confirmed" | "delivered" | "cancelled";
+
+export type ProductOrderItem = {
+  productId: string;
+  productName: string;
+  qty: number;
+  unitPrice: number;
+  isOnSale?: boolean;
+};
+
+export type ProductOrder = {
+  id: string;
+  orderNumber: string; // ej: #PED-804
+  clientName: string;
+  clientPhone: string;
+  items: ProductOrderItem[];
+  totalAmount: number;
+  status: ProductOrderStatus;
+  paymentMethod: "efectivo" | "transferencia" | "pos" | "sipap";
+  deliveryType: "retirar_en_local" | "delivery";
+  createdAt: string;
+  notes?: string;
 };
 
 export type Appointment = {
