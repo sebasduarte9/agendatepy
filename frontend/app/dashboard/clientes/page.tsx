@@ -14,7 +14,7 @@ import {
   Edit2,
   Trash2,
   UserCheck,
-  Star,
+  Crown,
   MessagesSquare,
   CalendarPlus,
 } from "lucide-react";
@@ -452,7 +452,7 @@ export default function ClientesPage() {
                     className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-amber-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                     title="Tarjeta Digital VIP"
                   >
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <Crown className="h-3.5 w-3.5" />
                   </Link>
 
                   <button

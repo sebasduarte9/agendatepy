@@ -166,6 +166,29 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
         },
       });
 
+      if (existing.status !== AppointmentStatus.COMPLETED && targetStatus === AppointmentStatus.COMPLETED) {
+        if (existing.clientId) {
+          await prisma.client.update({
+            where: { id: existing.clientId },
+            data: {
+              points: { increment: 1 },
+              lastVisit: new Date(),
+            },
+          });
+        } else if (existing.clientPhone) {
+          await prisma.client.updateMany({
+            where: {
+              tenantId: auth.tenantId,
+              phone: existing.clientPhone,
+            },
+            data: {
+              points: { increment: 1 },
+              lastVisit: new Date(),
+            },
+          });
+        }
+      }
+
       return NextResponse.json({
         ok: true,
         appointment: {

@@ -654,6 +654,7 @@ export default function ServiciosPage() {
                   {/* Standalone Promo Flash Button */}
                   <button
                     type="button"
+                    data-tour={index === 0 ? "servicios-promo-btn" : undefined}
                     onClick={() => handleOpenPromoModal(item)}
                     className={`w-full flex items-center justify-between rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
                       item.hasPromo

@@ -22,10 +22,15 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
     }
 
     const body = await request.json();
-    const { name, durationMinutes, price, active } = body;
+    const { name, durationMinutes, price, active, category, staffIds, hasPromo, promoPrice, promoBadge, promoDisplayType } = body;
 
     const existing = await prisma.service.findFirst({
       where: { id, tenantId: auth.tenantId },
+      include: {
+        staff: {
+          select: { staffId: true },
+        },
+      },
     });
 
     if (!existing) {
@@ -73,9 +78,67 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
       updateData.active = Boolean(active);
     }
 
-    const updated = await prisma.service.update({
-      where: { id },
-      data: updateData,
+    // Actualizar servicio y colaboradores asignados en PostgreSQL
+    const updated = await prisma.$transaction(async (tx) => {
+      const svc = await tx.service.update({
+        where: { id },
+        data: updateData,
+      });
+
+      if (Array.isArray(staffIds)) {
+        await tx.staffService.deleteMany({ where: { serviceId: id } });
+        if (staffIds.length > 0) {
+          await tx.staffService.createMany({
+            data: staffIds.map((stId: string) => ({
+              staffId: stId,
+              serviceId: id,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      // Persistir category y promociones en tenant.settings.serviceExtras
+      const tenant = await tx.tenant.findUnique({
+        where: { id: auth.tenantId },
+        select: { settings: true },
+      });
+      const tenantSettings = (tenant?.settings as Record<string, any>) || {};
+      const serviceExtras = (tenantSettings.serviceExtras as Record<string, any>) || {};
+      const prevExtra = serviceExtras[id] || {};
+
+      const nextExtra = {
+        ...prevExtra,
+        ...(category !== undefined ? { category: String(category).trim() } : {}),
+        ...(Array.isArray(staffIds) ? { staffIds } : {}),
+        ...(hasPromo !== undefined ? { hasPromo: Boolean(hasPromo) } : {}),
+        ...(promoPrice !== undefined ? { promoPrice: Number(promoPrice) } : {}),
+        ...(promoBadge !== undefined ? { promoBadge: String(promoBadge).trim() } : {}),
+        ...(promoDisplayType !== undefined ? { promoDisplayType } : {}),
+      };
+
+      serviceExtras[id] = nextExtra;
+
+      await tx.tenant.update({
+        where: { id: auth.tenantId },
+        data: {
+          settings: {
+            ...tenantSettings,
+            serviceExtras,
+          },
+        },
+      });
+
+      return {
+        ...svc,
+        durationMin: svc.durationMinutes,
+        category: nextExtra.category || "Peluquería",
+        staffIds: Array.isArray(staffIds) ? staffIds : prevExtra.staffIds || existing.staff.map((st) => st.staffId),
+        hasPromo: Boolean(nextExtra.hasPromo),
+        promoPrice: nextExtra.promoPrice,
+        promoBadge: nextExtra.promoBadge,
+        promoDisplayType: nextExtra.promoDisplayType,
+      };
     });
 
     return NextResponse.json({ ok: true, service: updated });
@@ -130,6 +193,19 @@ export async function DELETE(request: NextRequest, { params }: RouteProps) {
     await prisma.$transaction(async (tx) => {
       await tx.staffService.deleteMany({ where: { serviceId: id } });
       await tx.service.delete({ where: { id } });
+
+      const tenant = await tx.tenant.findUnique({
+        where: { id: auth.tenantId },
+        select: { settings: true },
+      });
+      const tenantSettings = (tenant?.settings as Record<string, any>) || {};
+      if (tenantSettings.serviceExtras && tenantSettings.serviceExtras[id]) {
+        delete tenantSettings.serviceExtras[id];
+        await tx.tenant.update({
+          where: { id: auth.tenantId },
+          data: { settings: tenantSettings },
+        });
+      }
     });
 
     return NextResponse.json({ ok: true, message: "Servicio eliminado correctamente." });

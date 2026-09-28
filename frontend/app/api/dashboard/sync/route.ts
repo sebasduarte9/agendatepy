@@ -52,7 +52,13 @@ export async function GET(request: NextRequest) {
         id: tenantIdToQuery,
       },
       include: {
-        services: true,
+        services: {
+          include: {
+            staff: {
+              select: { staffId: true },
+            },
+          },
+        },
         staff: true,
         clients: true,
         products: true,
@@ -167,13 +173,22 @@ export async function GET(request: NextRequest) {
         settings: tenantSettings,
       },
       appointments: formattedAppointments,
-      services: tenant.services.map((s) => ({
-        id: s.id,
-        name: s.name,
-        durationMin: s.durationMinutes,
-        price: s.price,
-        active: s.active,
-      })),
+      services: tenant.services.map((s) => {
+        const extra = (tenantSettings.serviceExtras as Record<string, any>)?.[s.id] || {};
+        return {
+          id: s.id,
+          name: s.name,
+          durationMin: s.durationMinutes,
+          price: s.price,
+          active: s.active,
+          category: extra.category || "Peluquería",
+          staffIds: extra.staffIds || s.staff?.map((st: any) => st.staffId) || [],
+          hasPromo: Boolean(extra.hasPromo),
+          promoPrice: extra.promoPrice !== undefined ? extra.promoPrice : undefined,
+          promoBadge: extra.promoBadge || undefined,
+          promoDisplayType: extra.promoDisplayType || undefined,
+        };
+      }),
       staff: tenant.staff.map((m) => ({
         id: m.id,
         name: m.name,
@@ -433,6 +448,30 @@ export async function POST(request: NextRequest) {
           where: { id: appointmentId, tenantId: tenant.id },
           data: { status: prismaStatus },
         });
+
+        // Recompensa automática de fidelización solo si el cliente efectivamente asistió (COMPLETED)
+        if (existingApp && existingApp.status !== AppointmentStatus.COMPLETED && prismaStatus === AppointmentStatus.COMPLETED) {
+          if (existingApp.clientId) {
+            await prisma.client.update({
+              where: { id: existingApp.clientId },
+              data: {
+                points: { increment: 1 },
+                lastVisit: new Date(),
+              },
+            });
+          } else if (existingApp.clientPhone) {
+            await prisma.client.updateMany({
+              where: {
+                tenantId: tenant.id,
+                phone: existingApp.clientPhone,
+              },
+              data: {
+                points: { increment: 1 },
+                lastVisit: new Date(),
+              },
+            });
+          }
+        }
       }
 
       return NextResponse.json({ ok: true, status: prismaStatus });

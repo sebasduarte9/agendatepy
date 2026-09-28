@@ -214,6 +214,10 @@ async function handleUpdate(request: NextRequest, { params }: RouteProps) {
     if (formula !== undefined) updateData.formula = formula ? String(formula).trim() : null;
     if (instagram !== undefined) updateData.instagram = instagram ? String(instagram).trim() : null;
     if (Array.isArray(tags)) updateData.tags = tags;
+    const rawPoints = body.points !== undefined ? body.points : body.loyaltyPoints;
+    if (rawPoints !== undefined && !Number.isNaN(Number(rawPoints))) {
+      updateData.points = Math.max(0, Math.round(Number(rawPoints)));
+    }
 
     const updated = await prisma.client.update({
       where: { id },

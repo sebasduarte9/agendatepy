@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  Star,
+  Crown,
   Gift,
   Sparkles,
   Calendar,
@@ -261,7 +261,7 @@ export default function TarjetaClienteView({
             <div className="relative z-10 mt-5 space-y-2.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                  <Star className="h-3.5 w-3.5 fill-current" style={{ color: brandColor }} />
+                  <Crown className="h-3.5 w-3.5" style={{ color: brandColor }} />
                   <span>Sellos por Asistencias</span>
                 </span>
                 <span className="font-mono text-xs font-black" style={{ color: brandColor }}>
@@ -294,11 +294,10 @@ export default function TarjetaClienteView({
                         backgroundColor: isStamped ? `${brandColor}20` : undefined,
                       }}
                     >
-                      <Star
+                      <Award
                         className="h-4.5 w-4.5 transition-transform"
                         style={{
                           color: isStamped ? brandColor : "#64748b",
-                          fill: isStamped ? brandColor : "none",
                         }}
                       />
                       <span

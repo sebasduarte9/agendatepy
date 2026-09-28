@@ -9,12 +9,43 @@ export async function GET(request: NextRequest) {
     const auth = await requireTenantSession(request);
     if (isGuardError(auth)) return auth;
 
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: auth.tenantId },
+      select: { settings: true },
+    });
+    const tenantSettings = (tenant?.settings as Record<string, any>) || {};
+    const serviceExtras = (tenantSettings.serviceExtras as Record<string, any>) || {};
+
     const services = await prisma.service.findMany({
       where: { tenantId: auth.tenantId },
+      include: {
+        staff: {
+          select: { staffId: true },
+        },
+      },
       orderBy: { createdAt: "asc" },
     });
 
-    return NextResponse.json({ ok: true, services });
+    const enriched = services.map((s) => {
+      const extra = serviceExtras[s.id] || {};
+      const staffIds = extra.staffIds || s.staff.map((st) => st.staffId);
+      return {
+        id: s.id,
+        name: s.name,
+        durationMin: s.durationMinutes,
+        durationMinutes: s.durationMinutes,
+        price: s.price,
+        active: s.active,
+        category: extra.category || "Peluquería",
+        staffIds,
+        hasPromo: Boolean(extra.hasPromo),
+        promoPrice: extra.promoPrice !== undefined ? extra.promoPrice : undefined,
+        promoBadge: extra.promoBadge || undefined,
+        promoDisplayType: extra.promoDisplayType || undefined,
+      };
+    });
+
+    return NextResponse.json({ ok: true, services: enriched });
   } catch (error) {
     console.error("Error en GET /api/services:", error);
     return NextResponse.json(
@@ -30,7 +61,7 @@ export async function POST(request: NextRequest) {
     if (isGuardError(auth)) return auth;
 
     const body = await request.json();
-    const { name, durationMinutes, price, active } = body;
+    const { name, durationMinutes, price, active, category, staffIds, hasPromo, promoPrice, promoBadge, promoDisplayType } = body;
 
     if (!name || typeof name !== "string" || name.trim().length < 2) {
       return NextResponse.json(
@@ -67,23 +98,65 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Asociar a todos los colaboradores del tenant para que sea inmediatamente reservable
-      const staffMembers = await tx.staff.findMany({
-        where: { tenantId: auth.tenantId, active: true },
-        select: { id: true },
-      });
+      // Asociar a colaboradores seleccionados o todos los activos
+      let targetStaffIds: string[] = [];
+      if (Array.isArray(staffIds) && staffIds.length > 0) {
+        targetStaffIds = staffIds;
+      } else {
+        const staffMembers = await tx.staff.findMany({
+          where: { tenantId: auth.tenantId, active: true },
+          select: { id: true },
+        });
+        targetStaffIds = staffMembers.map((st) => st.id);
+      }
 
-      if (staffMembers.length > 0) {
+      if (targetStaffIds.length > 0) {
         await tx.staffService.createMany({
-          data: staffMembers.map((st) => ({
-            staffId: st.id,
+          data: targetStaffIds.map((stId) => ({
+            staffId: stId,
             serviceId: created.id,
           })),
           skipDuplicates: true,
         });
       }
 
-      return created;
+      // Persistir metadata de categoría y promociones en tenant.settings.serviceExtras
+      const tenant = await tx.tenant.findUnique({
+        where: { id: auth.tenantId },
+        select: { settings: true },
+      });
+      const tenantSettings = (tenant?.settings as Record<string, any>) || {};
+      const serviceExtras = (tenantSettings.serviceExtras as Record<string, any>) || {};
+
+      serviceExtras[created.id] = {
+        category: category || "Peluquería",
+        staffIds: targetStaffIds,
+        hasPromo: Boolean(hasPromo),
+        promoPrice: promoPrice !== undefined ? Number(promoPrice) : undefined,
+        promoBadge: promoBadge || undefined,
+        promoDisplayType: promoDisplayType || undefined,
+      };
+
+      await tx.tenant.update({
+        where: { id: auth.tenantId },
+        data: {
+          settings: {
+            ...tenantSettings,
+            serviceExtras,
+          },
+        },
+      });
+
+      return {
+        ...created,
+        durationMin: created.durationMinutes,
+        category: category || "Peluquería",
+        staffIds: targetStaffIds,
+        hasPromo: Boolean(hasPromo),
+        promoPrice: promoPrice !== undefined ? Number(promoPrice) : undefined,
+        promoBadge: promoBadge || undefined,
+        promoDisplayType: promoDisplayType || undefined,
+      };
     });
 
     return NextResponse.json({ ok: true, service: newService }, { status: 201 });

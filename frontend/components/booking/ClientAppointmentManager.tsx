@@ -15,7 +15,6 @@ import {
   Award,
   Copy,
   Check,
-  Star,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
@@ -215,7 +214,7 @@ export default function ClientAppointmentManager({ appointment }: Props) {
                       : "border-2 border-dashed border-amber-300 bg-white/60 text-amber-300"
                   }`}
                 >
-                  <Star className={`h-4 w-4 ${s <= 4 ? "fill-slate-950 text-slate-950" : "text-amber-300"}`} />
+                  <Award className={`h-4 w-4 ${s <= 4 ? "text-slate-950" : "text-amber-300"}`} />
                 </div>
               ))}
             </div>

@@ -17,7 +17,8 @@ import {
   Scissors,
   Phone,
   MessageCircle,
-  Star,
+  Crown,
+  Check,
   Play,
   Maximize2,
   Zap,
@@ -969,7 +970,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-400 text-slate-950 px-3.5 py-2 text-xs font-black hover:bg-amber-300 transition shadow-sm cursor-pointer"
                   >
-                    <Star className="h-3.5 w-3.5 fill-slate-950" />
+                    <Crown className="h-3.5 w-3.5" />
                     <span>Ver Tarjeta Digital</span>
                     <ExternalLink className="h-3 w-3 opacity-70" />
                   </a>
@@ -1016,7 +1017,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                                 : "border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-400"
                             }`}
                           >
-                            {isCompleted ? <Star className="h-5 w-5 fill-current" /> : s}
+                            {isCompleted ? <Award className="h-5 w-5 fill-current" /> : s}
                           </div>
                           <span className="text-[10px] font-bold text-slate-500">Sello {s}</span>
                         </div>

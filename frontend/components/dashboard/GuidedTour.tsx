@@ -324,14 +324,22 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 4,
-        taskTitle: "Tarjetas de Servicio & Promociones",
+        taskTitle: "Tarjetas de Servicio & Visibilidad",
         instruction:
-          "Cada tarjeta muestra el tiempo de turno, el precio estándar y si tiene un descuento o promoción flash activa.",
-        tip: "Podés activar o editar promociones en 1 clic tocando el botón 'Activar descuento' en cualquier tarjeta.",
+          "Cada tarjeta muestra el tiempo de turno, el precio en Guaraníes y un botón para activar o pausar su visibilidad en tu web de reservas.",
+        tip: "Podés pausar un servicio temporalmente sin eliminarlo para que no aparezca en tu portal.",
         targetSelector: '[data-tour="servicios-card"]',
       },
       {
         stepNumber: 5,
+        taskTitle: "Promociones Flash & Descuentos",
+        instruction:
+          "Hacé clic en 'Activar promo flash' en cualquier tarjeta para abrir el calculador automático de descuentos por porcentaje o monto, con vista previa en vivo.",
+        tip: "Podés elegir si querés mostrar el porcentaje (-20% OFF) o el monto ahorrado en Guaraníes a tus clientes.",
+        targetSelector: '[data-tour="servicios-promo-btn"]',
+      },
+      {
+        stepNumber: 6,
         taskTitle: "Compartir Enlace Directo",
         instruction:
           "Tocá 'Copiar Link' en cualquier servicio para enviárselo a un cliente por WhatsApp o ponerlo en tus historias. Entrarán directo con ese servicio seleccionado.",
@@ -339,11 +347,11 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         targetSelector: '[data-tour="servicios-share-btn"]',
       },
       {
-        stepNumber: 6,
+        stepNumber: 7,
         taskTitle: "Agregar un Nuevo Servicio",
         instruction:
-          "Hacé clic en '+ Nuevo Servicio' para cargar un corte, tratamiento o paquete con su duración y tarifa.",
-        tip: "Podés editar o pausar cualquier servicio en el momento que desees con el ícono del lápiz.",
+          "Hacé clic en 'Nuevo Servicio' para cargar un corte, tratamiento o paquete con su duración, tarifa y especialistas asignados.",
+        tip: "Podés editar cualquier servicio en el momento que desees con el ícono del lápiz.",
         targetSelector: '[data-tour="servicios-new-btn"]',
       },
     ],

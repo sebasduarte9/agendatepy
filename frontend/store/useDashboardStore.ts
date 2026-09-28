@@ -657,16 +657,28 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           };
         }
 
+        if (data.tenant?.settings?.loyalty) {
+          nextState.loyalty = {
+            ...state.loyalty,
+            ...data.tenant.settings.loyalty,
+          };
+        }
+
         if (Array.isArray(data.services)) {
-          nextState.services = data.services.map((s: { id: string; name: string; durationMin?: number; price?: number; active?: boolean }) => ({
+          nextState.services = data.services.map((s: any) => ({
             id: s.id,
             name: s.name,
-            category: "Peluquería",
+            category: s.category || "Peluquería",
             durationMin: s.durationMin ?? 45,
             price: s.price ?? 80000,
-            description: "",
-            image: "scissors",
+            description: s.description || "",
+            image: s.image || "scissors",
             active: s.active ?? true,
+            staffIds: s.staffIds || [],
+            hasPromo: Boolean(s.hasPromo),
+            promoPrice: s.promoPrice,
+            promoBadge: s.promoBadge,
+            promoDisplayType: s.promoDisplayType,
           }));
         }
 
@@ -1099,6 +1111,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           durationMin: item.durationMin,
           price: item.price,
           description: item.description,
+          active: item.active !== false,
+          staffIds: item.staffIds,
+          hasPromo: item.hasPromo,
+          promoPrice: item.promoPrice,
+          promoBadge: item.promoBadge,
+          promoDisplayType: item.promoDisplayType,
         }),
       });
       const data = await res.json();
@@ -1115,6 +1133,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
               description: data.service.description || item.description || "",
               image: item.image || "scissors",
               active: data.service.active ?? true,
+              staffIds: data.service.staffIds || item.staffIds || [],
+              hasPromo: Boolean(data.service.hasPromo ?? item.hasPromo),
+              promoPrice: data.service.promoPrice ?? item.promoPrice,
+              promoBadge: data.service.promoBadge ?? item.promoBadge,
+              promoDisplayType: data.service.promoDisplayType ?? item.promoDisplayType,
             },
           ],
         });
@@ -1314,27 +1337,56 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  updateLoyalty: (patch) =>
-    set({ loyalty: { ...get().loyalty, ...patch } }),
-  addClientLoyaltyPoint: (clientId) =>
+  updateLoyalty: (patch) => {
+    const nextLoyalty = { ...get().loyalty, ...patch };
+    set({ loyalty: nextLoyalty });
+    fetch("/api/tenant/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        settings: { loyalty: nextLoyalty },
+      }),
+    }).catch((err) => console.warn("Error guardando loyalty en tenant.settings:", err));
+  },
+  addClientLoyaltyPoint: (clientId) => {
+    const prev = get().clients;
+    const target = prev.find((c) => c.id === clientId);
+    if (!target) return;
+    const newPoints = (target.loyaltyPoints || 0) + 1;
     set({
-      clients: get().clients.map((c) =>
-        c.id === clientId ? { ...c, loyaltyPoints: c.loyaltyPoints + 1 } : c,
+      clients: prev.map((c) =>
+        c.id === clientId ? { ...c, loyaltyPoints: newPoints } : c
       ),
-    }),
+    });
+    fetch(`/api/clients/${clientId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ points: newPoints }),
+    }).catch((err) => console.warn("Error actualizando puntos de cliente:", err));
+  },
   redeemClientReward: (clientId) => {
     const threshold = get().loyalty.rewardThreshold;
+    const prev = get().clients;
+    const target = prev.find((c) => c.id === clientId);
+    if (!target) return;
+    const newPoints = Math.max(0, (target.loyaltyPoints || 0) - threshold);
+    const newRedeemed = (target.loyaltyRedeemed || 0) + 1;
     set({
-      clients: get().clients.map((c) =>
+      clients: prev.map((c) =>
         c.id === clientId
           ? {
               ...c,
-              loyaltyPoints: Math.max(0, c.loyaltyPoints - threshold),
-              loyaltyRedeemed: c.loyaltyRedeemed + 1,
+              loyaltyPoints: newPoints,
+              loyaltyRedeemed: newRedeemed,
             }
-          : c,
+          : c
       ),
     });
+    fetch(`/api/clients/${clientId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ points: newPoints }),
+    }).catch((err) => console.warn("Error canjeando puntos de cliente:", err));
   },
 
   updateSipap: (patch) =>

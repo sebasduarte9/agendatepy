@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Award,
-  Star,
+  Crown,
   Gift,
   CheckCircle2,
   Sparkles,
@@ -109,7 +109,7 @@ export default function FidelizacionPage() {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
             <span>Fidelización & Tarjeta Digital VIP</span>
-            <Star className="h-5 w-5 text-amber-500 fill-amber-400" />
+            <Crown className="h-5 w-5 text-amber-500 fill-amber-400" />
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Enviá a tus clientes su tarjeta digital con sellos para agregar a su Apple Wallet o Google Wallet.
@@ -201,7 +201,7 @@ export default function FidelizacionPage() {
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
+                    <Award className="h-4 w-4 text-amber-500" />
                     <span className="font-bold text-slate-900 dark:text-white">Tarjeta de Sellos</span>
                   </div>
                   <p className="text-[11px] text-slate-500 font-normal">
@@ -329,7 +329,7 @@ export default function FidelizacionPage() {
         <StatCard
           label="Sellos Acumulados Activos"
           value={`${totalPointsAwarded} sellos`}
-          icon={Star}
+          icon={ShieldCheck}
         />
         <StatCard
           label="Clientes con Premio Listo"
@@ -417,9 +417,9 @@ export default function FidelizacionPage() {
                               : "bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600"
                           }`}
                         >
-                          <Star
+                          <Award
                             className={`h-3.5 w-3.5 ${
-                              filled ? "fill-slate-950 text-slate-950" : "text-slate-300 dark:text-slate-600"
+                              filled ? "text-slate-950" : "text-slate-300 dark:text-slate-600"
                             }`}
                           />
                         </span>
