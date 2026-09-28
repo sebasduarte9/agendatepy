@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -17,13 +18,16 @@ import {
   Phone,
   Trash2,
   CalendarDays,
+  Ban,
+  DollarSign,
+  Users,
 } from "lucide-react";
 import { format, parseISO, addMinutes, setHours, setMinutes } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import type { Appointment, PaymentMethod, AppointmentStatus } from "@/lib/dashboard-types";
-import { addDaysIso, phoneWa, formatGs } from "@/lib/dashboard-dates";
+import { addDaysIso, phoneWa, formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import Modal from "./ui/Modal";
 import Card from "./ui/Card";
 
@@ -35,6 +39,8 @@ export default function CalendarBoard() {
   const appointments = useDashboardStore((s) => s.appointments);
   const staff = useDashboardStore((s) => s.staff);
   const services = useDashboardStore((s) => s.services);
+  const clients = useDashboardStore((s) => s.clients);
+  const blocks = useDashboardStore((s) => s.blocks);
   const business = useDashboardStore((s) => s.business);
   const calendarDate = useDashboardStore((s) => s.calendarDate);
   const calendarView = useDashboardStore((s) => s.calendarView);
@@ -45,6 +51,9 @@ export default function CalendarBoard() {
   const cancelAppointment = useDashboardStore((s) => s.cancelAppointment);
   const updateAppointment = useDashboardStore((s) => s.updateAppointment);
   const addAppointment = useDashboardStore((s) => s.addAppointment);
+  const addBlock = useDashboardStore((s) => s.addBlock);
+  const addCashMovement = useDashboardStore((s) => s.addCashMovement);
+  const cashMovements = useDashboardStore((s) => s.cashMovements);
   const currentUserRole = useDashboardStore((s) => s.currentUserRole);
   const currentStaffId = useDashboardStore((s) => s.currentStaffId);
   const pushToast = useDashboardStore((s) => s.pushToast);
@@ -64,8 +73,10 @@ export default function CalendarBoard() {
   // Selected appointment for Editing / Rescheduling modal
   const [selectedApp, setSelectedApp] = useState<Appointment | null>(null);
 
-  // Quick New Appointment modal state
+  // Quick New Appointment & Block modal state
   const [newModalOpen, setNewModalOpen] = useState(false);
+  const [newModalMode, setNewModalMode] = useState<"appointment" | "block">("appointment");
+  const [isSubmittingQuick, setIsSubmittingQuick] = useState(false);
   const [newSlotData, setNewSlotData] = useState<{
     date: string;
     time: string;
@@ -81,6 +92,42 @@ export default function CalendarBoard() {
   const [newServiceId, setNewServiceId] = useState(services[0]?.id || "");
   const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>("efectivo");
 
+  // Schedule Block Modal State
+  const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [blockStaffId, setBlockStaffId] = useState(staff[0]?.id || "");
+  const [blockDate, setBlockDate] = useState(calendarDate);
+  const [blockStart, setBlockStart] = useState("13:00");
+  const [blockEnd, setBlockEnd] = useState("14:00");
+  const [blockReason, setBlockReason] = useState("Almuerzo / Descanso");
+
+  // Query parameter handling for "Ver en agenda" and "Nueva cita desde cliente"
+  const searchParams = useSearchParams();
+  const queryAppointmentId = searchParams?.get("appointmentId");
+  const queryNewForClient = searchParams?.get("newForClient");
+  const queryClientName = searchParams?.get("clientName");
+  const queryClientPhone = searchParams?.get("clientPhone");
+
+  useEffect(() => {
+    if (queryAppointmentId && appointments.length > 0) {
+      const match = appointments.find((a) => a.id === queryAppointmentId);
+      if (match) {
+        const tz = business.timezone || "America/Asuncion";
+        const aptDate = formatInTimeZone(match.start, tz, "yyyy-MM-dd");
+        setCalendarDate(aptDate);
+        setSelectedApp(match);
+      }
+    }
+  }, [queryAppointmentId, appointments, business.timezone, setCalendarDate]);
+
+  useEffect(() => {
+    if (queryNewForClient) {
+      if (queryClientName) setNewClientName(queryClientName);
+      if (queryClientPhone) setNewClientPhone(queryClientPhone);
+      setNewModalMode("appointment");
+      setNewModalOpen(true);
+    }
+  }, [queryNewForClient, queryClientName, queryClientPhone]);
+
   // Filtered appointments
   const filtered = appointments.filter((item) => {
     if (item.status === "cancelled") return false;
@@ -92,9 +139,12 @@ export default function CalendarBoard() {
     locale: es,
   });
 
-  // Open Quick Booking modal pre-filling slot
+  // Open Quick Booking/Block modal pre-filling slot
   function handleEmptySlotClick(dateStr: string, hour: number, staffId: string) {
     const timeStr = `${String(hour).padStart(2, "0")}:00`;
+    const endH = hour + 1 <= 23 ? hour + 1 : 23;
+    const endTimeStr = `${String(endH).padStart(2, "0")}:00`;
+
     setNewSlotData({
       date: dateStr,
       time: timeStr,
@@ -103,11 +153,38 @@ export default function CalendarBoard() {
     setNewClientName("");
     setNewClientPhone("");
     setNewServiceId(services[0]?.id || "");
+    setBlockDate(dateStr);
+    setBlockStart(timeStr);
+    setBlockEnd(endTimeStr);
+    setBlockStaffId(staffId || "all");
+    setBlockReason("Almuerzo / Descanso");
+    setNewModalMode("appointment");
     setNewModalOpen(true);
   }
 
+  async function handleCreateBlock(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmittingQuick(true);
+    try {
+      const ok = await addBlock({
+        staffId: blockStaffId === "all" ? "all" : blockStaffId,
+        date: blockDate,
+        start: blockStart,
+        end: blockEnd,
+        reason: blockReason,
+      });
+      if (ok) {
+        pushToast("success", "Bloqueo de horario registrado correctamente");
+        setBlockModalOpen(false);
+        setNewModalOpen(false);
+      }
+    } finally {
+      setIsSubmittingQuick(false);
+    }
+  }
+
   // Handle Quick Create Appointment submit
-  function handleCreateAppointment(e: React.FormEvent) {
+  async function handleCreateAppointment(e: React.FormEvent) {
     e.preventDefault();
     if (!newClientName.trim()) {
       pushToast("error", "Por favor ingresá el nombre del cliente");
@@ -119,23 +196,31 @@ export default function CalendarBoard() {
 
     const startDateTime = parseISO(`${newSlotData.date}T${newSlotData.time}:00`);
     const endDateTime = addMinutes(startDateTime, duration);
+    const normPhone = normalizeParaguayPhone(newClientPhone.trim() || "+595981000000");
 
     const newApp: Appointment = {
       id: `app-${Date.now()}`,
       clientName: newClientName.trim(),
-      clientPhone: newClientPhone.trim() || "+595981000000",
+      clientPhone: normPhone,
       clientEmail: `${newClientName.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
       serviceId: service.id,
-      staffId: newSlotData.staffId || staff[0].id,
+      staffId: newSlotData.staffId || staff[0]?.id || "",
       start: startDateTime.toISOString(),
       end: endDateTime.toISOString(),
       paymentMethod: newPaymentMethod,
       status: "confirmed",
     };
 
-    addAppointment(newApp);
-    pushToast("success", `Turno agendado con éxito para ${newClientName}`);
-    setNewModalOpen(false);
+    setIsSubmittingQuick(true);
+    try {
+      const res = await addAppointment(newApp);
+      if (res) {
+        pushToast("success", `Turno agendado con éxito para ${newClientName}`);
+        setNewModalOpen(false);
+      }
+    } finally {
+      setIsSubmittingQuick(false);
+    }
   }
 
   return (
@@ -161,6 +246,20 @@ export default function CalendarBoard() {
           >
             <Plus className="h-4 w-4" />
             <span>Crear Cita</span>
+          </button>
+
+          {/* "+ Bloquear Horario" Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "");
+              setBlockDate(calendarDate);
+              setBlockModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-amber-500 hover:text-amber-600 transition"
+          >
+            <Ban className="h-4 w-4 text-amber-500" />
+            <span>Bloquear Horario</span>
           </button>
 
           {/* Hoy button */}
@@ -294,6 +393,7 @@ export default function CalendarBoard() {
           timezone={business.timezone}
           appointments={filtered}
           onSelectAppointment={setSelectedApp}
+          onEmptySlotClick={handleEmptySlotClick}
         />
       )}
 
@@ -305,6 +405,7 @@ export default function CalendarBoard() {
           services={services}
           timezone={business.timezone}
           businessName={business.name}
+          cashMovements={cashMovements}
           onClose={() => setSelectedApp(null)}
           onUpdate={async (patch) => {
             const ok = await updateAppointment(selectedApp.id, patch);
@@ -320,131 +421,416 @@ export default function CalendarBoard() {
               pushToast("success", "Cita cancelada con éxito");
             }
           }}
+          onCharge={async (amount, method) => {
+            const assignedService = services.find((s) => s.id === selectedApp.serviceId);
+            const ok = await addCashMovement({
+              type: "ingreso",
+              amount,
+              method: method as any,
+              concept: `Cobro turno: ${assignedService?.name || "Servicio"} - ${selectedApp.clientName}`,
+              category: "Servicios",
+              date: new Date().toISOString(),
+              appointmentId: selectedApp.id,
+            });
+            if (ok) {
+              await updateAppointment(selectedApp.id, { status: "completed" });
+              setSelectedApp(null);
+              pushToast("success", `Cobro de ${formatGs(amount)} registrado en caja y turno completado.`);
+              return true;
+            }
+            return false;
+          }}
         />
       )}
 
-      {/* Quick Booking Modal */}
+      {/* Quick Booking & Schedule Block Modal */}
       <Modal
         id="quickBookingModal"
         open={newModalOpen}
-        title="Agendar Nueva Cita Rápida"
+        title={newModalMode === "appointment" ? "Agendar Nueva Cita Rápida" : "Bloquear Horario en Agenda"}
         onClose={() => setNewModalOpen(false)}
       >
-        <form onSubmit={handleCreateAppointment} className="space-y-4 text-xs">
-          <div className="rounded-2xl bg-primary/5 border border-primary/20 p-3 space-y-1">
-            <span className="font-bold text-primary block">Horario seleccionado en Google Calendar:</span>
-            <p className="text-slate-700 dark:text-slate-300">
-              Fecha: <strong className="text-slate-900 dark:text-white">{newSlotData.date}</strong> a las{" "}
-              <strong className="text-slate-900 dark:text-white">{newSlotData.time} hs</strong>
+        <div className="space-y-4 text-xs">
+          {/* Segmented Switch: Agendar Cita vs Bloquear Horario */}
+          <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+            <button
+              type="button"
+              onClick={() => setNewModalMode("appointment")}
+              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 ${
+                newModalMode === "appointment"
+                  ? "bg-white dark:bg-slate-900 text-primary shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Agendar Cita</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewModalMode("block")}
+              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 ${
+                newModalMode === "block"
+                  ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Ban className="h-3.5 w-3.5" />
+              <span>Bloquear Horario</span>
+            </button>
+          </div>
+
+          {newModalMode === "appointment" ? (
+            <form onSubmit={handleCreateAppointment} className="space-y-4">
+              <div className="rounded-2xl bg-primary/5 border border-primary/20 p-3 space-y-1">
+                <span className="font-bold text-primary block">Horario seleccionado en Agenda:</span>
+                <p className="text-slate-700 dark:text-slate-300">
+                  Fecha: <strong className="text-slate-900 dark:text-white">{newSlotData.date}</strong> a las{" "}
+                  <strong className="text-slate-900 dark:text-white">{newSlotData.time} hs</strong>
+                </p>
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Nombre del Cliente *
+                </label>
+                <input
+                  type="text"
+                  list="clientsDatalist"
+                  required
+                  placeholder="Escribí o seleccioná un cliente..."
+                  value={newClientName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNewClientName(val);
+                    const match = clients.find((c) => c.name.toLowerCase() === val.toLowerCase());
+                    if (match && match.phone) {
+                      setNewClientPhone(match.phone);
+                    }
+                  }}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+                <datalist id="clientsDatalist">
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.phone}
+                    </option>
+                  ))}
+                </datalist>
+                <span className="text-[10.5px] text-slate-400 block mt-0.5">
+                  Autocompleta clientes registrados o crea uno nuevo automáticamente.
+                </span>
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Teléfono (WhatsApp PY)
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+595 981 123 456"
+                  value={newClientPhone}
+                  onChange={(e) => setNewClientPhone(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Servicio
+                  </label>
+                  <select
+                    value={newServiceId}
+                    onChange={(e) => setNewServiceId(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  >
+                    {services.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({formatGs(s.price)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Profesional
+                  </label>
+                  <select
+                    value={newSlotData.staffId}
+                    onChange={(e) => setNewSlotData({ ...newSlotData, staffId: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  >
+                    {staff.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Hora de Inicio
+                  </label>
+                  <input
+                    type="time"
+                    value={newSlotData.time}
+                    onChange={(e) => setNewSlotData({ ...newSlotData, time: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Método de Pago
+                  </label>
+                  <select
+                    value={newPaymentMethod}
+                    onChange={(e) => setNewPaymentMethod(e.target.value as PaymentMethod)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  >
+                    <option value="efectivo">Efectivo en Local</option>
+                    <option value="sipap">Transferencia SIPAP</option>
+                    <option value="pos_bancard">Tarjeta / POS Bancard</option>
+                    <option value="billetera_py">Billetera Móvil</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setNewModalOpen(false)}
+                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingQuick}
+                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50"
+                >
+                  {isSubmittingQuick ? "Guardando cita..." : "Confirmar Turno"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleCreateBlock} className="space-y-4">
+              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-1">
+                <span className="font-bold text-amber-700 dark:text-amber-400 block flex items-center gap-1.5">
+                  <Ban className="h-4 w-4" /> Bloqueo de Horario Contextual
+                </span>
+                <p className="text-slate-600 dark:text-slate-300">
+                  Bloqueá un intervalo de tiempo directamente desde este slot para evitar reservas indebidas.
+                </p>
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Profesional Afectado
+                </label>
+                <select
+                  value={blockStaffId}
+                  onChange={(e) => setBlockStaffId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                >
+                  <option value="all">Todo el equipo (Cierre general)</option>
+                  {staff.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Hora Desde
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={blockStart}
+                    onChange={(e) => setBlockStart(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Hora Hasta
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={blockEnd}
+                    onChange={(e) => setBlockEnd(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Motivo del Bloqueo
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    "Almuerzo / Descanso",
+                    "Reunión de Equipo",
+                    "Trámite Personal",
+                    "Mantenimiento",
+                    "No disponible",
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setBlockReason(chip)}
+                      className={`text-[11px] rounded-lg px-2.5 py-1 border transition ${
+                        blockReason === chip
+                          ? "bg-amber-500 text-white border-amber-600 font-bold"
+                          : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Almuerzo o capacitación"
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setNewModalOpen(false)}
+                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingQuick}
+                  className="rounded-xl bg-amber-600 hover:bg-amber-700 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-600/25 transition disabled:opacity-50"
+                >
+                  {isSubmittingQuick ? "Guardando bloqueo..." : "Guardar Bloqueo"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </Modal>
+
+      {/* Quick Schedule Block Modal */}
+      <Modal
+        id="quickBlockModal"
+        open={blockModalOpen}
+        title="Bloquear Horario en Agenda"
+        onClose={() => setBlockModalOpen(false)}
+      >
+        <form onSubmit={handleCreateBlock} className="space-y-4 text-xs">
+          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-1">
+            <span className="font-bold text-amber-700 dark:text-amber-400 block flex items-center gap-1.5">
+              <Ban className="h-4 w-4" /> Bloqueo de Excepción / Descanso
+            </span>
+            <p className="text-slate-600 dark:text-slate-300">
+              Impide que los clientes reserven en este intervalo de tiempo para el profesional seleccionado.
             </p>
           </div>
 
           <div>
             <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-              Nombre del Cliente *
+              Profesional
             </label>
-            <input
-              type="text"
-              required
-              placeholder="Ej. Rodrigo Giménez"
-              value={newClientName}
-              onChange={(e) => setNewClientName(e.target.value)}
+            <select
+              value={blockStaffId}
+              onChange={(e) => setBlockStaffId(e.target.value)}
               className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-            />
+            >
+              <option value="all">Todo el salón / Todos los profesionales</option>
+              {staff.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                Fecha
+              </label>
+              <input
+                type="date"
+                required
+                value={blockDate}
+                onChange={(e) => setBlockDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                Desde
+              </label>
+              <input
+                type="time"
+                required
+                value={blockStart}
+                onChange={(e) => setBlockStart(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                Hasta
+              </label>
+              <input
+                type="time"
+                required
+                value={blockEnd}
+                onChange={(e) => setBlockEnd(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+              />
+            </div>
           </div>
 
           <div>
             <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-              Teléfono (WhatsApp)
+              Motivo del Bloqueo
             </label>
             <input
-              type="tel"
-              placeholder="+595 981 123 456"
-              value={newClientPhone}
-              onChange={(e) => setNewClientPhone(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+              type="text"
+              required
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              placeholder="Ej. Almuerzo, Trámite personal, Mantenimiento"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Servicio
-              </label>
-              <select
-                value={newServiceId}
-                onChange={(e) => setNewServiceId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              >
-                {services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({formatGs(s.price)})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Profesional
-              </label>
-              <select
-                value={newSlotData.staffId}
-                onChange={(e) => setNewSlotData({ ...newSlotData, staffId: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              >
-                {staff.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Hora de Inicio
-              </label>
-              <input
-                type="time"
-                value={newSlotData.time}
-                onChange={(e) => setNewSlotData({ ...newSlotData, time: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Método de Pago
-              </label>
-              <select
-                value={newPaymentMethod}
-                onChange={(e) => setNewPaymentMethod(e.target.value as PaymentMethod)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-              >
-                <option value="efectivo">Efectivo en Local</option>
-                <option value="sipap">Transferencia SIPAP</option>
-                <option value="pos_bancard">Tarjeta / POS Bancard</option>
-                <option value="billetera_py">Billetera Móvil</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
             <button
               type="button"
-              onClick={() => setNewModalOpen(false)}
-              className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              onClick={() => setBlockModalOpen(false)}
+              className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95"
+              className="rounded-xl bg-amber-600 px-5 py-2 font-bold text-white shadow-md hover:bg-amber-700 transition"
             >
-              Confirmar Turno
+              Confirmar Bloqueo
             </button>
           </div>
         </form>
@@ -472,6 +858,7 @@ function GoogleCalendarDayView({
   onEmptySlotClick: (dateStr: string, hour: number, staffId: string) => void;
 }) {
   const services = useDashboardStore((s) => s.services);
+  const blocks = useDashboardStore((s) => s.blocks);
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
 
   // Current time position in minutes
@@ -482,13 +869,29 @@ function GoogleCalendarDayView({
   const isToday =
     formatInTimeZone(now, timezone || "America/Asuncion", "yyyy-MM-dd") === date;
   const showRedIndicator = isToday && minutesFromStart >= 0 && minutesFromStart <= (END_HOUR - START_HOUR + 1) * 60;
+  if (staffList.length === 0) {
+    return (
+      <Card className="p-12 text-center border border-slate-200/80 dark:border-white/10 rounded-3xl bg-white dark:bg-slate-900 shadow-sm">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3">
+          <Users className="h-6 w-6" />
+        </div>
+        <h3 className="font-bold text-slate-900 dark:text-white text-base">
+          No hay profesionales en este filtro
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+          Seleccioná &quot;Todo el salón&quot; en el selector superior o administrá tus colaboradores desde la sección Equipo.
+        </p>
+      </Card>
+    );
+  }
+
   const redLineTop = (minutesFromStart / 60) * HOUR_PX;
 
   return (
     <Card className="p-0 border border-slate-200/80 dark:border-white/10 shadow-sm rounded-3xl bg-white dark:bg-slate-900/90 overflow-hidden">
       {/* Staff Columns Header */}
       <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-950/60 sticky top-0 z-20">
-        <div className="w-16 shrink-0 border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[10px] font-bold text-slate-400">
+        <div className="w-16 shrink-0 border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[10px] font-bold text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-950 z-30">
           HORA
         </div>
         <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${staffList.length}, minmax(180px, 1fr))` }}>
@@ -521,7 +924,7 @@ function GoogleCalendarDayView({
               className="absolute left-0 right-0 z-30 flex items-center pointer-events-none transition-all duration-500"
               style={{ top: redLineTop }}
             >
-              <div className="w-16 shrink-0 flex items-center justify-end pr-1">
+              <div className="w-16 shrink-0 flex items-center justify-end pr-1 sticky left-0 z-20">
                 <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white font-mono shadow-xs">
                   {String(currentHours).padStart(2, "0")}:{String(currentMinutes).padStart(2, "0")}
                 </span>
@@ -538,8 +941,8 @@ function GoogleCalendarDayView({
               className="flex border-b border-slate-100 dark:border-white/5 relative"
               style={{ height: HOUR_PX }}
             >
-              {/* Hour Label */}
-              <div className="w-16 shrink-0 border-r border-slate-100 dark:border-white/10 px-2 pt-1 font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 text-right">
+              {/* Sticky Hour Label */}
+              <div className="w-16 shrink-0 border-r border-slate-100 dark:border-white/10 px-2 pt-1 font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 text-right sticky left-0 bg-white/95 dark:bg-slate-900/95 z-10">
                 {String(hour).padStart(2, "0")}:00
               </div>
 
@@ -554,7 +957,7 @@ function GoogleCalendarDayView({
                     type="button"
                     onClick={() => onEmptySlotClick(date, hour, person.id)}
                     className="border-r border-slate-100 dark:border-white/5 last:border-r-0 h-full w-full text-left p-1 group hover:bg-primary/[0.04] transition relative"
-                    title={`Click para agendar con ${person.name} a las ${hour}:00`}
+                    title={`Click para agendar o bloquear con ${person.name} a las ${hour}:00`}
                   >
                     <span className="opacity-0 group-hover:opacity-100 text-[10px] text-primary font-bold pl-2">
                       + Agendar
@@ -564,6 +967,59 @@ function GoogleCalendarDayView({
               </div>
             </div>
           ))}
+
+          {/* Schedule Blocks absolute overlays */}
+          {blocks
+            .filter((b) => b.date === date)
+            .map((b) => {
+              const [startH, startM] = b.start.split(":").map(Number);
+              const [endH, endM] = b.end.split(":").map(Number);
+              const startMinutes = (startH - START_HOUR) * 60 + (startM || 0);
+              const durationMinutes = Math.max(30, (endH * 60 + (endM || 0)) - startMinutes);
+              if (startMinutes < 0 && startMinutes + durationMinutes <= 0) return null;
+
+              const top = Math.max(0, (startMinutes / 60) * HOUR_PX);
+              const height = Math.max(36, (durationMinutes / 60) * HOUR_PX - 2);
+
+              const isAllStaff = !b.staffId || b.staffId === "all";
+              const targetStaffIndex = staffList.findIndex((s) => s.id === b.staffId);
+              if (!isAllStaff && targetStaffIndex === -1) return null;
+
+              const colWidthPercent = 100 / staffList.length;
+              const leftPercent = isAllStaff ? 0 : targetStaffIndex * colWidthPercent;
+              const width = isAllStaff ? "calc(100% - 4.5rem)" : `calc(${colWidthPercent}% - 8px)`;
+              const left = isAllStaff ? "4.25rem" : `calc(4rem + ${leftPercent}% + 4px)`;
+
+              return (
+                <div
+                  key={b.id}
+                  className="absolute z-15 overflow-hidden rounded-2xl p-2 text-left border border-amber-400/60 dark:border-amber-500/40 bg-amber-50/95 dark:bg-amber-950/80 shadow-xs flex flex-col justify-between"
+                  style={{
+                    top,
+                    height,
+                    left,
+                    width,
+                    borderLeftWidth: "4px",
+                    borderLeftColor: "#f59e0b",
+                    backgroundImage:
+                      "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(245, 158, 11, 0.08) 10px, rgba(245, 158, 11, 0.08) 20px)",
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="inline-flex items-center gap-1 font-black text-xs text-amber-900 dark:text-amber-200 truncate">
+                      <Ban className="h-3 w-3 shrink-0 text-amber-600" />
+                      {b.reason || "Bloqueo operativo"}
+                    </span>
+                    <span className="font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400 shrink-0">
+                      {b.start} - {b.end}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-amber-800/80 dark:text-amber-300/80 font-medium truncate">
+                    {isAllStaff ? "Todo el equipo" : staffList[targetStaffIndex]?.name}
+                  </span>
+                </div>
+              );
+            })}
 
           {/* Appointments absolute overlays in respective columns */}
           {staffList.map((person, staffColIndex) => {
@@ -646,6 +1102,7 @@ function GoogleCalendarWeekView({
   onEmptySlotClick: (dateStr: string, hour: number, staffId: string) => void;
 }) {
   const staff = useDashboardStore((s) => s.staff);
+  const blocks = useDashboardStore((s) => s.blocks);
   const start = parseISO(`${date}T12:00:00`);
   const days = Array.from({ length: 7 }, (_, i) => addDaysIso(date, i - start.getDay()));
   const today = formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
@@ -659,6 +1116,7 @@ function GoogleCalendarWeekView({
           const items = appointments.filter(
             (item) => formatInTimeZone(item.start, timezone, "yyyy-MM-dd") === day
           );
+          const dayBlocks = blocks.filter((b) => b.date === day);
 
           return (
             <Card
@@ -690,7 +1148,27 @@ function GoogleCalendarWeekView({
               </div>
 
               <div className="mt-3 flex-1 space-y-2 overflow-y-auto">
-                {items.length === 0 ? (
+                {/* Visual Schedule Blocks in Day Card */}
+                {dayBlocks.length > 0 && (
+                  <div className="space-y-1 mb-2">
+                    {dayBlocks.map((b) => (
+                      <div
+                        key={b.id}
+                        className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50/90 dark:bg-amber-950/70 p-1.5 text-slate-800 dark:text-slate-200 shadow-2xs flex items-center justify-between gap-1"
+                      >
+                        <span className="flex items-center gap-1 font-bold text-[10px] text-amber-900 dark:text-amber-200 truncate">
+                          <Ban className="h-3 w-3 shrink-0 text-amber-600" />
+                          {b.reason || "Bloqueo"}
+                        </span>
+                        <span className="font-mono text-[9px] font-bold text-amber-700 dark:text-amber-400 shrink-0">
+                          {b.start}-{b.end}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {items.length === 0 && dayBlocks.length === 0 ? (
                   <p className="pt-8 text-center text-[11px] text-slate-400 italic">
                     Sin citas
                   </p>
@@ -745,11 +1223,13 @@ function GoogleCalendarMonthView({
   timezone,
   appointments,
   onSelectAppointment,
+  onEmptySlotClick,
 }: {
   date: string;
   timezone: string;
   appointments: Appointment[];
   onSelectAppointment: (app: Appointment) => void;
+  onEmptySlotClick?: (dateStr: string, hour: number, staffId: string) => void;
 }) {
   const parsed = parseISO(`${date}T12:00:00`);
   const year = parsed.getFullYear();
@@ -780,10 +1260,23 @@ function GoogleCalendarMonthView({
           return (
             <div
               key={iso}
-              className="min-h-24 rounded-2xl border border-slate-100 dark:border-white/5 p-2 text-left bg-slate-50/50 dark:bg-slate-950/40"
+              className="min-h-24 rounded-2xl border border-slate-100 dark:border-white/5 p-2 text-left bg-slate-50/50 dark:bg-slate-950/40 group hover:border-primary/30 transition flex flex-col justify-between"
             >
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{day}</span>
-              <div className="mt-1 space-y-1">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{day}</span>
+                  {onEmptySlotClick && (
+                    <button
+                      type="button"
+                      onClick={() => onEmptySlotClick(iso, 10, "")}
+                      className="opacity-0 group-hover:opacity-100 h-5 w-5 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-white flex items-center justify-center text-[10px] font-bold transition"
+                      title="Agendar turno en este día"
+                    >
+                      +
+                    </button>
+                  )}
+                </div>
+                <div className="mt-1 space-y-1">
                 {items.slice(0, 3).map((item) => (
                   <button
                     key={item.id}
@@ -799,6 +1292,7 @@ function GoogleCalendarMonthView({
                     +{extra} más
                   </span>
                 )}
+                </div>
               </div>
             </div>
           );
@@ -817,18 +1311,22 @@ function RescheduleEditModal({
   services,
   timezone,
   businessName,
+  cashMovements,
   onClose,
   onUpdate,
   onCancel,
+  onCharge,
 }: {
   appointment: Appointment;
   staff: any[];
   services: any[];
   timezone: string;
   businessName: string;
+  cashMovements?: any[];
   onClose: () => void;
   onUpdate: (patch: Partial<Appointment>) => void;
   onCancel: () => void;
+  onCharge?: (amount: number, method: string) => Promise<boolean>;
 }) {
   const currentStart = parseISO(appointment.start);
   const currentEnd = parseISO(appointment.end);
@@ -838,6 +1336,61 @@ function RescheduleEditModal({
   const [staffId, setStaffId] = useState(appointment.staffId);
   const [serviceId, setServiceId] = useState(appointment.serviceId);
   const [status, setStatus] = useState<AppointmentStatus>(appointment.status);
+
+  // Status transitions state machine
+  const allowedNextStatuses: { value: AppointmentStatus; label: string }[] = useMemo(() => {
+    const current = appointment.status;
+    if (current === "pending") {
+      return [
+        { value: "pending", label: "Pendiente de Aprobación" },
+        { value: "confirmed", label: "Confirmada" },
+        { value: "cancelled", label: "Cancelada" },
+      ];
+    }
+    if (current === "confirmed") {
+      return [
+        { value: "confirmed", label: "Confirmada" },
+        { value: "completed", label: "Completada / Atendida" },
+        { value: "no_show", label: "No asistió / Ausente" },
+        { value: "cancelled", label: "Cancelada" },
+      ];
+    }
+    if (current === "completed") {
+      return [{ value: "completed", label: "Completada / Atendida" }];
+    }
+    if (current === "cancelled") {
+      return [
+        { value: "cancelled", label: "Cancelada" },
+        { value: "confirmed", label: "Reactivar Turno (Confirmada)" },
+      ];
+    }
+    if (current === "no_show") {
+      return [
+        { value: "no_show", label: "No asistió / Ausente" },
+        { value: "confirmed", label: "Reactivar Turno (Confirmada)" },
+        { value: "cancelled", label: "Cancelada" },
+      ];
+    }
+    return [{ value: current, label: String(current) }];
+  }, [appointment.status]);
+
+  // Direct checkout state
+  const assignedPerson = staff.find((s) => s.id === staffId);
+  const assignedService = services.find((s) => s.id === serviceId);
+  const isAlreadyCharged = cashMovements?.some((m) => m.appointmentId === appointment.id);
+  const [chargeAmount, setChargeAmount] = useState<number>(assignedService?.price || 0);
+  const [chargeMethod, setChargeMethod] = useState<string>("efectivo");
+  const [isCharging, setIsCharging] = useState(false);
+
+  async function handleChargeNow() {
+    if (isCharging || !onCharge) return;
+    setIsCharging(true);
+    try {
+      await onCharge(chargeAmount, chargeMethod);
+    } finally {
+      setIsCharging(false);
+    }
+  }
 
   // Quick 1-tap reschedule helpers
   function addMinutesToAppointment(mins: number) {
@@ -869,8 +1422,6 @@ function RescheduleEditModal({
   }
 
   // Pre-filled WhatsApp notification message
-  const assignedPerson = staff.find((s) => s.id === staffId);
-  const assignedService = services.find((s) => s.id === serviceId);
   const waPhone = appointment.clientPhone.replace(/[^0-9]/g, "");
   const waMsg = encodeURIComponent(
     `¡Hola ${appointment.clientName}! Te confirmamos que tu cita para *${assignedService?.name || "Servicio"}* en *${businessName}* ha sido reprogramada con éxito para el día *${date}* a las *${time} hs* con ${assignedPerson?.name || "nuestro equipo"}. ¡Te esperamos con gusto!`
@@ -995,7 +1546,11 @@ function RescheduleEditModal({
             </label>
             <select
               value={serviceId}
-              onChange={(e) => setServiceId(e.target.value)}
+              onChange={(e) => {
+                setServiceId(e.target.value);
+                const s = services.find((srv) => srv.id === e.target.value);
+                if (s?.price) setChargeAmount(s.price);
+              }}
               className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
             >
               {services.map((s) => (
@@ -1007,7 +1562,7 @@ function RescheduleEditModal({
           </div>
         </div>
 
-        {/* Status Switcher */}
+        {/* Status Switcher with state machine restrictions */}
         <div>
           <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
             Estado de la Cita
@@ -1017,11 +1572,104 @@ function RescheduleEditModal({
             onChange={(e) => setStatus(e.target.value as AppointmentStatus)}
             className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
           >
-            <option value="confirmed">Confirmada</option>
-            <option value="completed">Completada / Atendida</option>
-            <option value="pending">Pendiente de Aprobación</option>
-            <option value="cancelled">Cancelada</option>
+            {allowedNextStatuses.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
+        </div>
+
+        {/* Quick No-Show Button if confirmed */}
+        {appointment.status === "confirmed" && (
+          <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/20 p-2.5">
+            <span className="text-amber-800 dark:text-amber-300 font-semibold">¿El cliente no se presentó?</span>
+            <button
+              type="button"
+              onClick={() => {
+                onUpdate({
+                  start: appointment.start,
+                  end: appointment.end,
+                  staffId: appointment.staffId,
+                  serviceId: appointment.serviceId,
+                  status: "no_show",
+                });
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 transition"
+            >
+              <AlertCircle className="h-3.5 w-3.5" />
+              <span>Marcar Ausente</span>
+            </button>
+          </div>
+        )}
+
+        {/* Cobrar en Caja Section */}
+        <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-3 bg-slate-50/70 dark:bg-slate-800/50 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <DollarSign className="h-4 w-4 text-emerald-500" />
+              Cobrar Turno en Caja
+            </span>
+            {isAlreadyCharged ? (
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" /> Cobrado en Caja
+              </span>
+            ) : (
+              <span className="text-[10px] text-slate-500">
+                Sugerido: {formatGs(assignedService?.price || 0)}
+              </span>
+            )}
+          </div>
+
+          {appointment.status === "cancelled" || appointment.status === "no_show" ? (
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+              No se puede cobrar un turno cancelado o marcado como ausente. Si el cliente asistió, reactivá el estado de la cita a &quot;Confirmada&quot;.
+            </div>
+          ) : !isAlreadyCharged ? (
+            <div className="space-y-2 pt-1 border-t border-slate-200/60 dark:border-white/5">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">
+                    Importe (Gs.)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={chargeAmount}
+                    onChange={(e) => setChargeAmount(Number(e.target.value))}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 font-bold text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">
+                    Método de Pago
+                  </label>
+                  <select
+                    value={chargeMethod}
+                    onChange={(e) => setChargeMethod(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 text-slate-900 dark:text-white"
+                  >
+                    <option value="efectivo">Efectivo</option>
+                    <option value="pos">POS / Tarjeta</option>
+                    <option value="transferencia">SIPAP / Transferencia</option>
+                    <option value="billetera">Billetera Móvil</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={isCharging || chargeAmount <= 0}
+                onClick={handleChargeNow}
+                className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-2 shadow-sm transition flex items-center justify-center gap-1.5"
+              >
+                <DollarSign className="h-4 w-4" />
+                <span>{isCharging ? "Procesando cobro..." : `Cobrar ${formatGs(chargeAmount)} e Ingresar a Caja`}</span>
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-500">Este turno ya cuenta con movimiento registrado en caja.</p>
+          )}
         </div>
 
         {/* WhatsApp Notification Trigger */}

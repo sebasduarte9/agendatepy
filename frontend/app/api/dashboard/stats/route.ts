@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requireTenantSession(request);
+    const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN"]);
     if (isGuardError(auth)) return auth;
 
     const tenant = await prisma.tenant.findUnique({

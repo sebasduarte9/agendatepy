@@ -827,3 +827,174 @@ Cada entrada debe detallar:
      - La barra flotante de "Tenés cambios sin guardar" se oculta automáticamente durante la visita guiada.
 - **Verificación:**
   - `npx tsc --noEmit` ejecutado con **0 errores**.
+
+---
+
+### [2026-09-27] - FASE 5.1: CORRECCIÓN DE BUGS CRÍTICOS Y COHERENCIA DEL CORE
+
+- **Archivos Modificados / Creados:**
+  - `frontend/app/api/auth/logout/route.ts` (CREADO: Logout seguro con revocación de cookies de sesión)
+  - `frontend/app/api/cash/route.ts` (MODIFICADO: Restricción estricta de permisos OWNER/SUPERADMIN -> 403 STAFF, soporte de appointmentId e idempotencia 409)
+  - `frontend/app/api/cash/close/route.ts` (CREADO: Endpoint GET y POST para persistencia real de arqueos de caja en PostgreSQL)
+  - `frontend/app/api/appointments/[id]/route.ts` (MODIFICADO: Máquina de estados estricta, validación de NO_SHOW y aliases start/end)
+  - `frontend/app/api/dashboard/sync/route.ts` (MODIFICADO: Retorno de UUID real canónico, mapeo completo de estados y soporte de payloads flexibles)
+  - `frontend/prisma/schema.prisma` (MODIFICADO: Modelo `CashRegisterClose`, campo `appointmentId` en `CashMovement`)
+  - `frontend/prisma/migrations/20260927230000_cash_register_close/migration.sql` (CREADO Y APLICADO: Migración PostgreSQL en `agendatepy_test`)
+  - `frontend/store/useDashboardStore.ts` (MODIFICADO: Resolución de UUID real en `addAppointment`, bandera `isInitialSyncDone`)
+  - `frontend/components/dashboard/Header.tsx` (MODIFICADO: Logout real vía fetch a `/api/auth/logout`, eliminación de nombres mock en selector de rol, header responsive <400px)
+  - `frontend/components/dashboard/CalendarBoard.tsx` (MODIFICADO: Flujo de cobro desde modal de cita con idempotencia, transiciones permitidas, botón rápido "+ Bloquear Horario", scroll horizontal controlado)
+  - `frontend/app/dashboard/page.tsx` (MODIFICADO: Skeletons de carga inicial antes de sync, eliminación de "Google Sync Activo" mock)
+  - `frontend/app/dashboard/caja/page.tsx` (MODIFICADO: Empty state con CTA, tabla de historial de arqueos y cierres persistidos)
+  - `frontend/app/dashboard/clientes/page.tsx` (MODIFICADO: Empty state con CTA de alta conversión)
+  - `frontend/app/dashboard/servicios/page.tsx` (MODIFICADO: Empty states para servicios y colaboradores con CTAs)
+  - `frontend/app/dashboard/equipo/page.tsx` (MODIFICADO: Empty state con CTA de invitación)
+  - `frontend/app/dashboard/estadisticas/page.tsx` (MODIFICADO: Loading skeletons, eliminación de deltas falsos, banner de error + reintentar)
+  - `frontend/app/dashboard/suscripcion/page.tsx` (MODIFICADO: Eliminación de facturas mock, mensaje de estado vacío honesto)
+  - `frontend/scripts/test-phase5-suite.js` (CREADO: Suite automatizada de 14 tests de core operativo)
+
+- **Resultados de Validación:**
+  - `npx prisma generate` -> Exitoso
+  - `npx prisma migrate deploy` -> Exitoso (6 migraciones aplicadas)
+  - `npx tsc --noEmit` -> 0 errores
+  - `npm run build` -> Compilación Next.js limpia y optimizada (100% páginas y rutas API generadas)
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED** (100% éxito)
+
+---
+
+### [2026-09-27] - FASE 5.2: OPTIMIZACIÓN OPERATIVA Y PRODUCTIVIDAD DEL DASHBOARD
+
+- **Responsable:** Antigravity AI
+- **Sección:** Productividad Operativa, UX de Agenda, Flujo de Cobro, Caja y Sincronización Real
+- **Archivos Modificados / Creados:**
+  - `frontend/lib/dashboard-dates.ts`:
+    - Normalización canónica de números paraguayos a formato compacto E.164 (`+595981xxxxxx`) tanto para ingresos `0981...` como `595...` o `+595...`.
+    - Función de formato legible paraguayo `formatParaguayPhone` (`+595 981 123 456`) para UI.
+  - `frontend/app/api/dashboard/sync/route.ts`:
+    - Corrección crítica de persistencia de caja: inclusión explícita de `appointmentId: cm.appointmentId` en la lista devuelta por `GET /api/dashboard/sync`. Evita que tras recargar el navegador (F5) la UI olvide que la cita ya fue cobrada y desactive el botón o genere conflicto 409.
+    - Normalización de teléfono paraguayo en lookup y auto-creación de clientes al crear citas.
+  - `frontend/app/api/clients/route.ts`:
+    - Normalización de números con `normalizeParaguayPhone` en `POST /api/clients` y búsqueda insensible para evitar duplicación entre formatos locales e internacionales.
+  - `frontend/components/dashboard/Header.tsx`:
+    - Desacoplamiento entre el selector de staff de la agenda (`selectedStaffId`) y el rol de usuario autenticado (`currentUserRole`). Evita que al filtrar turnos por barbero el administrador pierda visualmente los accesos a Caja y Configuración en el Sidebar.
+  - `frontend/app/dashboard/page.tsx`:
+    - Manejo asíncrono y protección de idempotencia en `handleCompleteAndPay`: chequeo `isAlreadyCharged`, pase de `appointmentId: app.id` a `addCashMovement`.
+  - `frontend/app/dashboard/servicios/page.tsx`:
+    - Alineación exacta de textos de empty state ("No tenés servicios todavía", botón "+ Crear servicio") garantizando coherencia con suites de validación.
+  - `frontend/components/dashboard/CalendarBoard.tsx`:
+    - Conexión del callback `onEmptySlotClick` en la vista mensual (`GoogleCalendarMonthView`), permitiendo agendar citas y bloqueos directamente desde cualquier celda del mes.
+    - Card de estado vacío en la vista diaria (`GoogleCalendarDayView`) cuando aún no hay colaboradores registrados, protegiendo el layout de cuadrículas rotas.
+  - `frontend/scripts/test-phase5-2-suite.js`:
+    - Suite automatizada de 18 pruebas de regresión cubriendo los 18 requisitos de la Fase 5.2.
+
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **77 / 77 tests PASSED (100% de éxito)**
+  - `npx tsc --noEmit` -> **0 errores**
+  - `npm run build` -> **Compilación limpia y optimizada (código 0)**
+
+---
+
+### [2026-09-27] - FASE 5.3: ACTIVACIÓN DEL NEGOCIO Y PORTAL PÚBLICO DE RESERVAS
+
+- **Responsable:** Antigravity AI
+- **Sección:** Activación, Portal Público de Reservas, Normalización de Clientes, Generación Local de QR y Disponibilidad Real
+- **Archivos Modificados / Creados:**
+  - `frontend/lib/business-readiness.ts` (CREADO):
+    - Fuente única de verdad operacional para determinar si un negocio está listo para recibir reservas online (`isBusinessReadyForBooking` y `getBusinessReadiness`).
+    - Valida: Nombre/Slug, >=1 servicio activo con duración/precio válido, >=1 profesional activo, disponibilidad y horarios configurados, y estado activo de tenant.
+  - `frontend/components/dashboard/PublicBookingLink.tsx` (CREADO):
+    - Componente unificado y reutilizable para desplegar el link público `agendate.py/[slug]/reservar` en variantes `banner`, `compact` e `inline`.
+    - Botones de "Copiar enlace" con feedback táctil inmediato, "Ver como cliente" (`target="_blank"`) y modal de Código QR local generado sin dependencias de servicios externos.
+  - `frontend/components/dashboard/ActivationChecklist.tsx` (CREADO):
+    - Widget interactivo de activación del negocio integrado en el Dashboard central.
+    - Barra de progreso real (0-100%) conectada a PostgreSQL, checklist colapsable y tarjeta celebratoria de primer turno ("🎉 ¡Llegó tu primera reserva!").
+  - `frontend/app/[tenant]/reservar/page.tsx` (MODIFICADO):
+    - Metadata dinámica para SEO y OpenGraph (`generateMetadata`) con nombre comercial y descripción del negocio.
+    - Consulta de servicios restringida estrictamente a `active: true` (los servicios inactivos ya no aparecen en el portal público).
+    - Gestión semántica de estados de negocio: B (Pausado/Desactivado), C (Sin servicios activos) y D (Sin personal disponible).
+  - `frontend/app/[tenant]/reservar/listo/page.tsx` (MODIFICADO):
+    - Eliminación de fallback demo a "Martín Benítez" para negocios reales (únicamente preservado si el slug es exactamente "barberia"). Si el turno no existe en PostgreSQL, lanza `notFound()`.
+  - `frontend/lib/scheduling/actions.ts` (MODIFICADO):
+    - Integración de `normalizeParaguayPhone` en `createPendingAppointment`: normaliza el teléfono del cliente al estándar E.164 (`+595981...`) y reutiliza clientes existentes evitando duplicaciones.
+    - Validación de servicio activo y estado activo del negocio en `resolveTenant`.
+  - `frontend/app/api/appointments/route.ts` (CREADO):
+    - Endpoint público unificado con `GET` para consulta de disponibilidad de franjas horarias y `POST` para reservas públicas con manejo de concurrencia e idempotencia.
+  - `frontend/app/dashboard/extras/page.tsx` (MODIFICADO):
+    - Reemplazo de la API externa `api.qrserver.com` por generación local y offline con la librería liviana `qrcode`.
+  - `frontend/app/dashboard/page.tsx` (MODIFICADO):
+    - Integración del componente `ActivationChecklist` y visualización del enlace público.
+  - `frontend/app/dashboard/layout.tsx` (MODIFICADO):
+    - Metadata `robots: { index: false, follow: false }` para proteger la privacidad del panel interno.
+  - `frontend/scripts/test-phase5-3-suite.js` (CREADO):
+    - Suite de 20 pruebas de regresión automatizadas que valida de punta a punta la activación, el portal público, la concurrencia y la persistencia en PostgreSQL.
+
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-3-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **97 / 97 tests PASSED (100% de éxito)**
+---
+
+### [2026-09-28] - FASE 5.4: CRM OPERACIONAL + FICHA DE CLIENTE
+
+- **Responsable:** Antigravity AI
+- **Sección:** CRM Operacional, Ficha de Cliente (`ClientFichaModal`), Métricas Operativas de Cliente, Normalización Paraguay e Historial con Caja Real
+- **Archivos Modificados / Creados:**
+  - `frontend/app/api/clients/route.ts` (MODIFICADO):
+    - `GET`: Implementación de 3 consultas agregadas a nivel de tenant (clientes, appointments y cashMovements de ingresos) eliminando consultas N+1.
+    - Cálculo de métricas operacionales de cada cliente:
+      - `totalVisits`: estrictamente citas con estado `COMPLETED`.
+      - `lastVisit`: fecha de la última cita `COMPLETED`.
+      - `nextAppointment`: primer turno futuro válido no cancelado (`startTime > now`, no CANCELLED, NO_SHOW, EXPIRED).
+      - `totalSpent`: sumatoria de cobros reales de caja (`CashMovement` `INCOME`) vinculados por `appointmentId`.
+    - Filtro de búsqueda backend por parámetro `search` o `q` insensible a mayúsculas y con soporte de teléfono normalizado.
+    - `POST`: Normalización de teléfonos con `normalizeParaguayPhone` (`+5959...`), validación de duplicados en el tenant y actualización idempotente sin crear duplicados.
+  - `frontend/app/api/clients/[id]/route.ts` (MODIFICADO):
+    - `GET`: Ficha de cliente detallada incluyendo historial cronológico con servicio, profesional, estado y cobro real (`chargedAmount` y `paymentMethod` tomados de `CashMovement`). Validación estricta anti-IDOR (`client.tenantId === auth.tenantId`).
+    - `PUT` y `PATCH`: Edición de nombre, teléfono normalizado, email, notas internas, fórmula técnica, tags e Instagram.
+    - `DELETE`: Eliminación segura de ficha de cliente con retención histórica de citas (`onDelete: SetNull`).
+  - `frontend/app/api/dashboard/sync/route.ts` (MODIFICADO):
+    - `create_appointment`: vinculación directa de `clientId` en `prisma.appointment.create`.
+    - Mapeo de `no_show` y `expired`, y cálculo en tiempo real de métricas operacionales de clientes a partir de PostgreSQL.
+  - `frontend/lib/dashboard-types.ts` (MODIFICADO):
+    - Agregado el campo opcional `clientId?: string;` a la interfaz `Appointment`.
+  - `frontend/components/dashboard/ClientFichaModal.tsx` (MODIFICADO):
+    - Rediseño operacional siguiendo la jerarquía requerida: Quién es -> Cuántas veces vino -> Cuándo vino -> Qué servicios usa -> Cuánto pagó -> Qué tiene agendado -> Qué información técnica hay.
+    - Resumen Deck con métricas reales: Visitas Realizadas, Última Visita, Total Gastado.
+    - Banner de Próxima Cita con botón de acción directa "Ver en agenda →" que abre y enfoca la cita en el calendario.
+    - Historial cronológico con badges de estado y diferenciación clara entre "Cobrado: Gs. ..." (caja) y "Precio: Gs. ..." (lista).
+    - Editor rápido con persistencia instantánea para Notas Internas y Fórmula Técnica.
+    - Botones de acción directa: "Nueva Cita" (lleva al calendario con el cliente preseleccionado) y "Editar Cliente".
+  - `frontend/components/dashboard/CalendarBoard.tsx` (MODIFICADO):
+    - Integración de `useSearchParams` para responder a `appointmentId` (navega a la fecha y abre el modal de la cita enfocada) y a `newForClient` (abre modal de nueva cita con nombre y teléfono pre-cargados).
+  - `frontend/app/dashboard/calendario/page.tsx` (MODIFICADO):
+    - Envoltorio de `<CalendarBoard />` con `<Suspense>` para renderizado y compilación segura en Next.js App Router.
+  - `frontend/app/dashboard/clientes/page.tsx` (MODIFICADO):
+    - Filtro de búsqueda con normalización de dígitos telefónicos de Paraguay.
+    - Cards operacionales mostrando Próxima Cita, Última Visita, Visitas Realizadas y Gasto Total, con acción rápida "+ Nueva Cita".
+  - `frontend/scripts/test-phase5-4-suite.js` (CREADO):
+    - Suite automatizada de 20 pruebas cubriendo: creación, persistencia tras F5, búsqueda por nombre y teléfono, creación de cita vinculada, historial, reglas de visitas (COMPLETED suma, CANCELLED/NO_SHOW/EXPIRED no suman), total gastado desde CashMovement, prevención de doble conteo, próxima cita y su cancelación, persistencia de notas y fórmulas, deduplicación de teléfonos, aislamiento multi-tenant anti-IDOR, protección de datos privados y cita con Client correcto.
+- **Resultados de Validación:**
+  - `node scripts/test-phase5-4-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-3-suite.js` -> **20 de 20 tests PASSED (100%)**
+  - `node scripts/test-phase5-2-suite.js` -> **18 de 18 tests PASSED (100%)**
+  - `node scripts/test-phase5-suite.js` -> **14 de 14 tests PASSED (100%)**
+  - `node scripts/test-phase4-suite.js` -> **12 de 12 tests PASSED (100%)**
+  - `node scripts/test-phase2-suite.js` -> **11 de 11 tests PASSED (100%)**
+  - `node scripts/run-all-tests.js` -> **13 de 13 tests PASSED (100%)**
+  - `node scripts/execute-release-validation.js` -> **9 de 9 tests PASSED (100%)**
+  - Total pruebas acumuladas: **117 / 117 tests PASSED (100% de éxito)**
+  - `npx tsc --noEmit` -> **0 errores**
+  - `npm run build` -> **Compilación limpia Turbopack (código 0)**
+
+
+

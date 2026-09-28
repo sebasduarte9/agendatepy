@@ -72,11 +72,7 @@ const PLANS = [
   },
 ];
 
-const INVOICES = [
-  { id: "FAC-001-002-00481", date: "01/09/2026", concept: "Suscripción Plan Pro (Septiembre 2026)", amount: 250000, status: "Pagado" },
-  { id: "FAC-001-002-00392", date: "01/08/2026", concept: "Suscripción Plan Pro (Agosto 2026)", amount: 250000, status: "Pagado" },
-  { id: "FAC-001-002-00301", date: "01/07/2026", concept: "Suscripción Plan Básico (Julio 2026)", amount: 100000, status: "Pagado" },
-];
+const invoices: Array<{ id: string; date: string; concept: string; amount: number; status: string }> = [];
 
 export default function SuscripcionPage() {
   const { business, updateBusiness, pushToast } = useDashboardStore();
@@ -250,35 +246,43 @@ export default function SuscripcionPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {INVOICES.map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition">
-                  <td className="py-3 pl-2 font-mono font-bold text-slate-900 dark:text-white">
-                    {inv.id}
-                  </td>
-                  <td className="py-3 text-slate-500 dark:text-slate-400">{inv.date}</td>
-                  <td className="py-3 font-medium text-slate-800 dark:text-slate-200">
-                    {inv.concept}
-                  </td>
-                  <td className="py-3 text-right font-black text-slate-900 dark:text-white">
-                    {formatGs(inv.amount)}
-                  </td>
-                  <td className="py-3 text-center">
-                    <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="py-3 pr-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => pushToast("success", `Descargando ${inv.id}.pdf...`)}
-                      className="inline-flex items-center gap-1 text-primary hover:underline font-semibold"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      <span>PDF</span>
-                    </button>
+              {invoices.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-400 italic text-xs">
+                    No hay facturas emitidas todavía. Las facturas electrónicas aparecerán aquí cuando actives tu plan.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                invoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition">
+                    <td className="py-3 pl-2 font-mono font-bold text-slate-900 dark:text-white">
+                      {inv.id}
+                    </td>
+                    <td className="py-3 text-slate-500 dark:text-slate-400">{inv.date}</td>
+                    <td className="py-3 font-medium text-slate-800 dark:text-slate-200">
+                      {inv.concept}
+                    </td>
+                    <td className="py-3 text-right font-black text-slate-900 dark:text-white">
+                      {formatGs(inv.amount)}
+                    </td>
+                    <td className="py-3 text-center">
+                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => pushToast("success", `Descargando ${inv.id}.pdf...`)}
+                        className="inline-flex items-center gap-1 text-primary hover:underline font-semibold"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>PDF</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

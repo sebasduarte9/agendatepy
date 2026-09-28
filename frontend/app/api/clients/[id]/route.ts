@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireTenantSession, isGuardError, UUID_REGEX } from "@/lib/api-guard";
+import { normalizeParaguayPhone } from "@/lib/dashboard-dates";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,156 @@ type RouteProps = {
   params: Promise<{ id: string }>;
 };
 
-export async function PUT(request: NextRequest, { params }: RouteProps) {
+export async function GET(request: NextRequest, { params }: RouteProps) {
+  try {
+    const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN", "STAFF"]);
+    if (isGuardError(auth)) return auth;
+
+    const { id } = await params;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { ok: false, error: "VALIDATION_ERROR", message: "ID de cliente inválido." },
+        { status: 400 }
+      );
+    }
+
+    const client = await prisma.client.findFirst({
+      where: { id, tenantId: auth.tenantId },
+    });
+
+    if (!client) {
+      return NextResponse.json(
+        { ok: false, error: "NOT_FOUND", message: "Cliente no encontrado." },
+        { status: 404 }
+      );
+    }
+
+    const clientNormPhone = normalizeParaguayPhone(client.phone) || client.phone;
+
+    // Buscar citas del cliente por ID o teléfono
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        tenantId: auth.tenantId,
+        OR: [
+          { clientId: client.id },
+          { clientPhone: client.phone },
+          { clientPhone: clientNormPhone },
+        ],
+      },
+      include: {
+        service: { select: { id: true, name: true, durationMinutes: true, price: true } },
+        staff: { select: { id: true, name: true } },
+      },
+      orderBy: { startTime: "desc" },
+    });
+
+    // Consultar cobros de caja de estas citas
+    const aptIds = appointments.map((a) => a.id);
+    const cashMovements = await prisma.cashMovement.findMany({
+      where: {
+        tenantId: auth.tenantId,
+        type: "INCOME",
+        appointmentId: { in: aptIds },
+      },
+      select: {
+        amount: true,
+        appointmentId: true,
+        paymentMethod: true,
+        createdAt: true,
+      },
+    });
+
+    const cashByAppointment = new Map<string, { amount: number; method: string }>();
+    let totalSpent = 0;
+    for (const cm of cashMovements) {
+      if (cm.appointmentId) {
+        cashByAppointment.set(cm.appointmentId, {
+          amount: cm.amount,
+          method: cm.paymentMethod,
+        });
+        totalSpent += cm.amount;
+      }
+    }
+
+    const now = Date.now();
+    const completedApts = appointments.filter((a) => a.status === "COMPLETED");
+    const totalVisits = completedApts.length;
+    const lastVisit = completedApts.length > 0 ? completedApts[0].startTime.toISOString() : null;
+
+    const futureApts = appointments
+      .filter(
+        (a) =>
+          new Date(a.startTime).getTime() > now &&
+          a.status !== "CANCELLED" &&
+          a.status !== "NO_SHOW" &&
+          a.status !== "EXPIRED"
+      )
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    const nextApt = futureApts[0] || null;
+
+    const history = appointments.map((a) => {
+      const paymentInfo = cashByAppointment.get(a.id);
+      return {
+        id: a.id,
+        start: a.startTime.toISOString(),
+        end: a.endTime.toISOString(),
+        status: a.status.toLowerCase(),
+        service: a.service
+          ? {
+              id: a.service.id,
+              name: a.service.name,
+              price: a.service.price,
+              durationMinutes: a.service.durationMinutes,
+            }
+          : null,
+        staff: a.staff
+          ? {
+              id: a.staff.id,
+              name: a.staff.name,
+            }
+          : null,
+        chargedAmount: paymentInfo?.amount ?? null,
+        paymentMethod: paymentInfo?.method ?? null,
+      };
+    });
+
+    return NextResponse.json({
+      ok: true,
+      client: {
+        id: client.id,
+        name: client.name,
+        phone: client.phone,
+        email: client.email || "",
+        notes: client.notes || "",
+        formula: client.formula || "",
+        tags: client.tags || ["Nuevo"],
+        instagram: client.instagram || "",
+        totalVisits,
+        totalSpent,
+        lastVisit: lastVisit || client.createdAt.toISOString(),
+        nextAppointment: nextApt
+          ? {
+              id: nextApt.id,
+              date: nextApt.startTime.toISOString(),
+              serviceName: nextApt.service?.name || "Servicio",
+              staffName: nextApt.staff?.name || "Profesional",
+            }
+          : null,
+        loyaltyPoints: client.points,
+        loyaltyRedeemed: 0,
+        history,
+      },
+    });
+  } catch (error) {
+    console.error("Error en GET /api/clients/[id]:", error);
+    return NextResponse.json(
+      { ok: false, error: "DB_UNAVAILABLE", message: "Error al consultar cliente." },
+      { status: 500 }
+    );
+  }
+}
+
+async function handleUpdate(request: NextRequest, { params }: RouteProps) {
   try {
     const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN", "STAFF"]);
     if (isGuardError(auth)) return auth;
@@ -47,14 +197,15 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
     }
 
     if (phone !== undefined) {
-      const clean = String(phone).replace(/\D/g, "");
+      const raw = String(phone).trim();
+      const clean = raw.replace(/\D/g, "");
       if (clean.length < 8 || clean.length > 15) {
         return NextResponse.json(
-          { ok: false, error: "VALIDATION_ERROR", message: "Teléfono inválido." },
+          { ok: false, error: "VALIDATION_ERROR", message: "Teléfono inválido (debe contener 8 a 15 dígitos)." },
           { status: 400 }
         );
       }
-      updateData.phone = clean;
+      updateData.phone = normalizeParaguayPhone(raw) || clean;
     }
 
     if (email !== undefined) updateData.email = email ? String(email).trim() : null;
@@ -70,12 +221,20 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
 
     return NextResponse.json({ ok: true, client: updated });
   } catch (error) {
-    console.error("Error en PUT /api/clients/[id]:", error);
+    console.error("Error en PUT/PATCH /api/clients/[id]:", error);
     return NextResponse.json(
       { ok: false, error: "DB_UNAVAILABLE", message: "No se pudo actualizar el cliente." },
       { status: 500 }
     );
   }
+}
+
+export async function PUT(request: NextRequest, props: RouteProps) {
+  return handleUpdate(request, props);
+}
+
+export async function PATCH(request: NextRequest, props: RouteProps) {
+  return handleUpdate(request, props);
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteProps) {

@@ -1,5 +1,5 @@
 export type PaymentMethod = "efectivo" | "sipap" | "pos_bancard" | "billetera_py";
-export type AppointmentStatus = "confirmed" | "pending" | "cancelled" | "completed";
+export type AppointmentStatus = "confirmed" | "pending" | "cancelled" | "completed" | "no_show" | "expired";
 export type PlanId = "basico" | "pro" | "premium" | "empresa";
 export type CalendarView = "dia" | "semana" | "mes";
 export type UserRole = "admin" | "cajero" | "barbero" | "estilista";
@@ -50,6 +50,7 @@ export type ProductItem = {
 
 export type Appointment = {
   id: string;
+  clientId?: string;
   clientName: string;
   clientEmail: string;
   clientPhone: string;

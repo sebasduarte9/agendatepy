@@ -302,7 +302,28 @@ export default function EquipoRolesPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {staff.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/40">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand mb-3">
+              <Users className="h-6 w-6" />
+            </div>
+            <h3 className="font-bold text-slate-900 dark:text-white text-base">
+              No tenés colaboradores en tu equipo
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+              Invitá a tus barberos, estilistas o cajeros para que accedan al sistema con sus permisos personalizados.
+            </p>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:brightness-110 transition"
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Invitar colaborador</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {staff.map((person) => {
             const memberEmail = (person as any).email || `${person.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`;
             const roleDef = ROLE_DEFINITIONS.find((r) => r.role === person.systemRole) || ROLE_DEFINITIONS[2];
@@ -388,6 +409,7 @@ export default function EquipoRolesPage() {
             );
           })}
         </div>
+        )}
       </Card>
 
       {/* Permissions Matrix */}

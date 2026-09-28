@@ -109,7 +109,6 @@ export default function ComisionesPage() {
           label="Total Facturado (Equipo)"
           value={formatGs(totalBilledAll)}
           icon={TrendingUp}
-          delta={14}
         />
         <StatCard
           label="Comisiones a Pagar"
@@ -120,7 +119,6 @@ export default function ComisionesPage() {
           label="Ganancia Neta del Salón"
           value={formatGs(totalSalonProfitAll)}
           icon={ArrowUpRight}
-          delta={10}
         />
       </div>
 

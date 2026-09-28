@@ -35,6 +35,8 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
 
     const body = await request.json();
     const { startTime, endTime, staffId, status } = body;
+    const incomingStart = startTime || body.start;
+    const incomingEnd = endTime || body.end;
 
     const targetStaffId = staffId || existing.staffId;
     if (!UUID_REGEX.test(targetStaffId)) {
@@ -55,8 +57,8 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
       );
     }
 
-    const newStart = startTime ? new Date(startTime) : existing.startTime;
-    const newEnd = endTime ? new Date(endTime) : existing.endTime;
+    const newStart = incomingStart ? new Date(incomingStart) : existing.startTime;
+    const newEnd = incomingEnd ? new Date(incomingEnd) : existing.endTime;
 
     if (Number.isNaN(newStart.getTime()) || Number.isNaN(newEnd.getTime()) || newEnd <= newStart) {
       return NextResponse.json(
@@ -67,11 +69,43 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
 
     let targetStatus = existing.status;
     if (status) {
-      const upper = String(status).toUpperCase();
+      const upper = String(status).toUpperCase().replace(/[\s-]/g, "_");
       if (upper === "CONFIRMED" || upper === "CONFIRMADO") targetStatus = AppointmentStatus.CONFIRMED;
       else if (upper === "CANCELLED" || upper === "CANCELADO") targetStatus = AppointmentStatus.CANCELLED;
       else if (upper === "COMPLETED" || upper === "COMPLETADO") targetStatus = AppointmentStatus.COMPLETED;
-      else if (upper === "PENDING" || upper === "PENDING_ACTION") targetStatus = AppointmentStatus.PENDING_ACTION;
+      else if (upper === "PENDING" || upper === "PENDING_ACTION" || upper === "PENDIENTE") targetStatus = AppointmentStatus.PENDING_ACTION;
+      else if (upper === "NO_SHOW" || upper === "NOSHOW" || upper === "AUSENTE" || upper === "NO_ASISTIO") targetStatus = AppointmentStatus.NO_SHOW;
+      else if (upper === "EXPIRED" || upper === "EXPIRADO") targetStatus = AppointmentStatus.EXPIRED;
+      else {
+        return NextResponse.json(
+          { ok: false, error: "VALIDATION_ERROR", message: "Estado de cita inválido." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Valid transitions enforcement: prevent invalid moves (e.g., COMPLETED -> PENDING)
+    if (existing.status !== targetStatus) {
+      if (existing.status === AppointmentStatus.COMPLETED) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "INVALID_STATUS_TRANSITION",
+            message: "Una cita completada no puede cambiar a otro estado.",
+          },
+          { status: 400 }
+        );
+      }
+      if (existing.status === AppointmentStatus.NO_SHOW && targetStatus === AppointmentStatus.COMPLETED) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "INVALID_STATUS_TRANSITION",
+            message: "Una cita marcada como ausente (no show) no puede completarse directamente.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Si la cita va a estar activa, verificar disponibilidad contra colisiones y bloqueos

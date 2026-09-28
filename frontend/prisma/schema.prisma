@@ -66,8 +66,9 @@ model Tenant {
   appointments   Appointment[]
   users          User[]
   clients        Client[]
-  cashMovements  CashMovement[]
-  commissions    Commission[]
+  cashMovements      CashMovement[]
+  cashRegisterCloses CashRegisterClose[]
+  commissions        Commission[]
   loyaltyRewards LoyaltyReward[]
   scheduleBlocks ScheduleBlock[]
 
@@ -141,12 +142,33 @@ model CashMovement {
   description   String
   paymentMethod String           @default("Efectivo") @map("payment_method")
   createdBy     String?          @map("created_by")
+  appointmentId String?          @map("appointment_id") @db.Uuid
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
 
   tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, createdAt])
+  @@index([tenantId, appointmentId])
   @@map("cash_movements")
+}
+
+model CashRegisterClose {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  openedAt     DateTime @map("opened_at") @db.Timestamptz(3)
+  closedAt     DateTime @default(now()) @map("closed_at") @db.Timestamptz(3)
+  openingCash  Int      @map("opening_cash")
+  expectedCash Int      @map("expected_cash")
+  countedCash  Int      @map("counted_cash")
+  difference   Int
+  notes        String?
+  closedBy     String   @map("closed_by")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, closedAt])
+  @@map("cash_register_closes")
 }
 
 model Commission {

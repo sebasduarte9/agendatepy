@@ -23,7 +23,7 @@ import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
-import { formatGs } from "@/lib/dashboard-dates";
+import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import type { Client } from "@/lib/dashboard-types";
 
 export default function ClientesPage() {
@@ -53,12 +53,22 @@ export default function ClientesPage() {
   });
 
   const filteredClients = useMemo(() => {
+    const cleanSearch = search.trim();
+    const normSearch = cleanSearch ? normalizeParaguayPhone(cleanSearch) : "";
+    const searchDigits = cleanSearch.replace(/\D/g, "");
+
     return clients.filter((c) => {
+      const cNormPhone = normalizeParaguayPhone(c.phone) || c.phone;
+      const cDigits = c.phone.replace(/\D/g, "");
+
       const matchesSearch =
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.phone.includes(search) ||
-        (c.formula && c.formula.toLowerCase().includes(search.toLowerCase())) ||
-        (c.notes && c.notes.toLowerCase().includes(search.toLowerCase()));
+        !cleanSearch ||
+        c.name.toLowerCase().includes(cleanSearch.toLowerCase()) ||
+        c.phone.includes(cleanSearch) ||
+        (normSearch && cNormPhone.includes(normSearch)) ||
+        (searchDigits.length >= 4 && cDigits.includes(searchDigits)) ||
+        (c.formula && c.formula.toLowerCase().includes(cleanSearch.toLowerCase())) ||
+        (c.notes && c.notes.toLowerCase().includes(cleanSearch.toLowerCase()));
 
       const matchesTag =
         selectedTag === "todos" ||
@@ -108,10 +118,12 @@ export default function ClientesPage() {
       return;
     }
 
+    const normPhone = normalizeParaguayPhone(form.phone.trim());
+
     if (editingClient) {
       updateClient(editingClient.id, {
         name: form.name.trim(),
-        phone: form.phone.trim(),
+        phone: normPhone,
         email: form.email.trim(),
         instagram: form.instagram.trim() || undefined,
         messengerId: form.messengerId.trim() || undefined,
@@ -123,7 +135,7 @@ export default function ClientesPage() {
     } else {
       addClient({
         name: form.name.trim(),
-        phone: form.phone.trim(),
+        phone: normPhone,
         email: form.email.trim(),
         instagram: form.instagram.trim() || undefined,
         messengerId: form.messengerId.trim() || undefined,
@@ -201,13 +213,11 @@ export default function ClientesPage() {
           label="Total de Clientes"
           value={String(clients.length)}
           icon={Users}
-          delta={15}
         />
         <StatCard
           label="Clientes VIP / Frecuentes"
           value={String(vipCount)}
           icon={Sparkles}
-          delta={8}
         />
         <StatCard
           label="Gasto Promedio Acumulado"
@@ -332,23 +342,64 @@ export default function ClientesPage() {
                   </div>
                 )}
 
+                {/* Upcoming Appointment Indicator if scheduled */}
+                {(() => {
+                  const clientNormPhone = normalizeParaguayPhone(client.phone) || client.phone;
+                  const clientApps = appointments.filter(
+                    (a) =>
+                      (a.clientId && a.clientId === client.id) ||
+                      a.clientPhone === client.phone ||
+                      normalizeParaguayPhone(a.clientPhone) === clientNormPhone ||
+                      a.clientName.toLowerCase() === client.name.toLowerCase()
+                  );
+                  const nextApp = clientApps
+                    .filter((a) => new Date(a.start).getTime() > Date.now() && a.status !== "cancelled" && a.status !== "no_show" && a.status !== "expired")
+                    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())[0];
+
+                  if (nextApp) {
+                    return (
+                      <div className="mt-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                        <span className="truncate">
+                          Próximo turno: <strong>{formatInTimeZone(nextApp.start, business.timezone || "America/Asuncion", "dd/MM HH:mm")} hs</strong>
+                        </span>
+                        <Link href={`/dashboard/calendario?appointmentId=${nextApp.id}`} className="text-emerald-600 font-bold hover:underline shrink-0 ml-1">
+                          Ver →
+                        </Link>
+                      </div>
+                    );
+                  }
+                  return (
+                    <p className="mt-2 text-[11px] text-slate-400 italic">Sin turnos próximos agendados</p>
+                  );
+                })()}
+
                 {/* Notes */}
                 {client.notes && (
                   <p className="mt-2 text-xs text-slate-500 line-clamp-2">
-                    <span className="font-medium text-slate-700">Nota:</span> {client.notes}
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Nota:</span> {client.notes}
                   </p>
                 )}
               </div>
 
               {/* Stats & Actions */}
               <div className="border-t border-border pt-3">
-                <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
-                  <span>
-                    Visitas: <strong className="text-slate-900">{client.totalVisits}</strong>
-                  </span>
-                  <span>
-                    Invertido: <strong className="text-primary">{formatGs(client.totalSpent)}</strong>
-                  </span>
+                <div className="mb-3 space-y-1 text-xs text-slate-500">
+                  <div className="flex items-center justify-between">
+                    <span>
+                      Visitas: <strong className="text-slate-900 dark:text-white">{client.totalVisits}</strong>
+                    </span>
+                    <span>
+                      Invertido: <strong className="text-primary">{formatGs(client.totalSpent)}</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Última visita:</span>
+                    <span className="font-medium text-slate-600 dark:text-slate-300">
+                      {client.lastVisit && client.totalVisits > 0
+                        ? formatInTimeZone(client.lastVisit, business.timezone || "America/Asuncion", "dd/MM/yyyy")
+                        : "Sin visitas registradas"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -358,8 +409,16 @@ export default function ClientesPage() {
                     className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-primary/90 transition"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    <span>Ver Ficha Técnica</span>
+                    <span>Ver Ficha</span>
                   </button>
+
+                  <Link
+                    href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-primary hover:bg-primary/10 transition"
+                    title="Nueva Cita para este cliente"
+                  >
+                    <Calendar className="h-3.5 w-3.5" />
+                  </Link>
 
                   <Link
                     href="/dashboard/crm"
@@ -396,10 +455,24 @@ export default function ClientesPage() {
       {filteredClients.length === 0 && (
         <Card className="py-12 text-center">
           <Users className="mx-auto h-12 w-12 text-slate-300" />
-          <h3 className="mt-3 font-bold text-slate-900">No encontramos clientes</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Probá con otro término de búsqueda o agregá un nuevo cliente al registro.
+          <h3 className="mt-3 font-bold text-slate-900 dark:text-white">
+            {search ? "No encontramos clientes con ese criterio" : "No tenés clientes registrados todavía"}
+          </h3>
+          <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
+            {search
+              ? "Probá con otro término de búsqueda o limpiá los filtros."
+              : "Registrá tu primer cliente para llevar su ficha técnica, historial de citas y puntos de fidelización."}
           </p>
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition"
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Crear Cliente</span>
+            </button>
+          </div>
         </Card>
       )}
 

@@ -30,6 +30,7 @@ import {
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
+import ActivationChecklist from "@/components/dashboard/ActivationChecklist";
 import { formatGs, phoneWa } from "@/lib/dashboard-dates";
 import type { Appointment } from "@/lib/dashboard-types";
 
@@ -44,6 +45,7 @@ export default function DashboardHomePage() {
   const updateAppointment = useDashboardStore((s) => s.updateAppointment);
   const addCashMovement = useDashboardStore((s) => s.addCashMovement);
   const pushToast = useDashboardStore((s) => s.pushToast);
+  const isInitialSyncDone = useDashboardStore((s) => s.isInitialSyncDone);
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [filterTab, setFilterTab] = useState<"hoy" | "pendientes" | "todos">("hoy");
@@ -123,20 +125,29 @@ export default function DashboardHomePage() {
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
-  const handleCompleteAndPay = (app: Appointment) => {
+  const handleCompleteAndPay = async (app: Appointment) => {
+    const isAlreadyCharged = cashMovements.some((m) => m.appointmentId === app.id);
+    if (isAlreadyCharged) {
+      pushToast("error", "Esta cita ya fue cobrada en caja anteriormente.");
+      return;
+    }
+
     const service = services.find((s) => s.id === app.serviceId);
     const price = service?.price ?? 80000;
 
-    updateAppointment(app.id, { status: "completed" });
-    addCashMovement({
+    const ok = await addCashMovement({
       type: "ingreso",
       amount: price,
       method: app.paymentMethod === "sipap" ? "transferencia" : app.paymentMethod === "pos_bancard" ? "pos" : "efectivo",
       concept: `Cobro turno: ${service?.name || "Servicio"} - ${app.clientName}`,
       date: new Date().toISOString(),
+      appointmentId: app.id,
     });
 
-    pushToast("success", `Turno de ${app.clientName} completado y cobrado (${formatGs(price)} en caja).`);
+    if (ok) {
+      await updateAppointment(app.id, { status: "completed" });
+      pushToast("success", `Turno de ${app.clientName} completado y cobrado (${formatGs(price)} en caja).`);
+    }
   };
 
   return (
@@ -218,10 +229,13 @@ export default function DashboardHomePage() {
           </div>
 
           <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-semibold">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> PostgreSQL & Google Sync Activo
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Base de Datos PostgreSQL Conectada
           </span>
         </div>
       </div>
+
+      {/* Checklist de Activación del Negocio & Hitos Operacionales */}
+      <ActivationChecklist />
 
       {/* 4 Clean Operational KPI Cards (Real Data Calculated) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -235,9 +249,13 @@ export default function DashboardHomePage() {
               <Banknote className="h-4 w-4" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            {formatGs(revenueToday)}
-          </p>
+          {!isInitialSyncDone ? (
+            <div className="h-8 w-32 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+          ) : (
+            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              {formatGs(revenueToday)}
+            </p>
+          )}
           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
             <span className="font-bold text-emerald-600 dark:text-emerald-400">{confirmedToday.length} turnos</span>
             <span>cobrados / confirmados</span>
@@ -255,9 +273,13 @@ export default function DashboardHomePage() {
               <CalendarDays className="h-4 w-4" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            {appointmentsToday.length} <span className="text-sm font-semibold text-slate-400">turnos</span>
-          </p>
+          {!isInitialSyncDone ? (
+            <div className="h-8 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+          ) : (
+            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              {appointmentsToday.length} <span className="text-sm font-semibold text-slate-400">turnos</span>
+            </p>
+          )}
           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
             <span className="font-bold text-emerald-600">{confirmedToday.length} confirmados</span>
             <span>·</span>
@@ -276,9 +298,13 @@ export default function DashboardHomePage() {
               <TrendingUp className="h-4 w-4" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            {occupancyRate}%
-          </p>
+          {!isInitialSyncDone ? (
+            <div className="h-8 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+          ) : (
+            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              {occupancyRate}%
+            </p>
+          )}
           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
             <span>{staff.filter((s) => s.active).length} profesionales atendiendo hoy</span>
           </div>
@@ -295,9 +321,13 @@ export default function DashboardHomePage() {
               <User className="h-4 w-4" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            {clients.length} <span className="text-sm font-semibold text-slate-400">fichas</span>
-          </p>
+          {!isInitialSyncDone ? (
+            <div className="h-8 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+          ) : (
+            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              {clients.length} <span className="text-sm font-semibold text-slate-400">fichas</span>
+            </p>
+          )}
           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
             <span className="font-bold text-amber-600">{clients.filter((c) => c.tags?.includes("VIP")).length} VIP</span>
             <span>con historial técnico</span>

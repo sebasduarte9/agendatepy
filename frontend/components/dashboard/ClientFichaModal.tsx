@@ -31,7 +31,7 @@ import {
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Modal from "./ui/Modal";
-import { formatGs } from "@/lib/dashboard-dates";
+import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import {
   compressClientImage,
   readClientVideo,
@@ -56,6 +56,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
     services,
     staff,
     business,
+    cashMovements,
     updateClient,
     addClientMedia,
     deleteClientMedia,
@@ -91,33 +92,70 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
     setIsEditingFormula(true);
   }
 
-  // Client visits history sorted from newest to oldest
-  const clientVisits = useMemo(() => {
+  const clientNormPhone = client ? normalizeParaguayPhone(client.phone) : "";
+
+  // Todas las citas pertenecientes a este cliente ordenadas de más reciente a más antigua
+  const clientAppointments = useMemo(() => {
     if (!client) return [];
     return appointments
-      .filter(
-        (a) =>
+      .filter((a) => {
+        if (a.clientId && a.clientId === client.id) return true;
+        if (clientNormPhone && normalizeParaguayPhone(a.clientPhone) === clientNormPhone) return true;
+        return (
           a.clientPhone === client.phone ||
           a.clientName.toLowerCase() === client.name.toLowerCase()
-      )
+        );
+      })
       .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
-  }, [client, appointments]);
+  }, [client, appointments, clientNormPhone]);
+
+  // Citas completadas (regla estricta: solo COMPLETED cuenta como visita)
+  const completedVisits = useMemo(() => {
+    return clientAppointments.filter((a) => a.status === "completed");
+  }, [clientAppointments]);
+
+  // Última visita completada
+  const lastCompletedApp = completedVisits[0] || null;
+
+  // Próxima cita futura válida (no cancelada, no ausente, no expirada)
+  const nextApp = useMemo(() => {
+    const now = Date.now();
+    const future = clientAppointments
+      .filter(
+        (a) =>
+          new Date(a.start).getTime() > now &&
+          a.status !== "cancelled" &&
+          a.status !== "no_show" &&
+          a.status !== "expired"
+      )
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    return future[0] || null;
+  }, [clientAppointments]);
+
+  // Total gastado: cobros reales de caja (CashMovement) asociados a las citas de este cliente
+  const clientTotalSpent = useMemo(() => {
+    const appIds = new Set(clientAppointments.map((a) => a.id));
+    let total = 0;
+    for (const cm of cashMovements) {
+      if (cm.type === "ingreso" && cm.appointmentId && appIds.has(cm.appointmentId)) {
+        total += cm.amount;
+      }
+    }
+    return total;
+  }, [clientAppointments, cashMovements]);
 
   // Visit statistics
   const visitStats = useMemo(() => {
-    if (clientVisits.length === 0) {
+    if (completedVisits.length === 0) {
       return { preferredStaff: "Sin visitas", topService: "Sin visitas", avgTicket: 0 };
     }
 
     const staffCounts: Record<string, number> = {};
     const serviceCounts: Record<string, number> = {};
-    let totalPaid = 0;
 
-    for (const v of clientVisits) {
+    for (const v of completedVisits) {
       staffCounts[v.staffId] = (staffCounts[v.staffId] || 0) + 1;
       serviceCounts[v.serviceId] = (serviceCounts[v.serviceId] || 0) + 1;
-      const s = services.find((serv) => serv.id === v.serviceId);
-      if (s) totalPaid += s.price;
     }
 
     const topStaffId = Object.entries(staffCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
@@ -129,9 +167,12 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
     return {
       preferredStaff: staffObj?.name || "Varios profesionales",
       topService: serviceObj?.name || "Varios servicios",
-      avgTicket: Math.round(totalPaid / clientVisits.length),
+      avgTicket: completedVisits.length > 0 ? Math.round(clientTotalSpent / completedVisits.length) : 0,
     };
-  }, [clientVisits, services, staff]);
+  }, [completedVisits, clientTotalSpent, services, staff]);
+
+  // Alias para retrocompatibilidad
+  const clientVisits = clientAppointments;
 
   // Filtered gallery
   const filteredGallery = useMemo(() => {
@@ -275,11 +316,12 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
 
             <div className="flex items-center gap-2 shrink-0">
               <Link
-                href={`/dashboard/nueva-reserva?clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                onClick={onClose}
                 className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-bold shadow-md transition"
               >
                 <Calendar className="h-3.5 w-3.5" />
-                <span>Agendar Cita</span>
+                <span>Nueva Cita</span>
               </Link>
 
               <button
@@ -295,6 +337,94 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
             </div>
           </div>
 
+          {/* Resumen Operacional: Visitas (COMPLETED), Última Visita, Total Gastado */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs">
+              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                Visitas Realizadas
+              </span>
+              <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
+                {completedVisits.length}
+              </p>
+              <span className="text-[10px] text-slate-500 font-medium">Turnos completados</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs">
+              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                Última Visita
+              </span>
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate">
+                {lastCompletedApp
+                  ? formatInTimeZone(lastCompletedApp.start, business.timezone || "America/Asuncion", "dd MMM yyyy · HH:mm 'hs'")
+                  : "Sin visitas registradas"}
+              </p>
+              <span className="text-[10px] text-slate-500 font-medium">Histórico</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs">
+              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                Total Gastado
+              </span>
+              <p className="text-xl font-black text-primary mt-0.5">
+                {formatGs(clientTotalSpent)}
+              </p>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium font-mono">Cobrado en caja</span>
+            </div>
+          </div>
+
+          {/* Próxima Cita Banner */}
+          {nextApp ? (
+            <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                      Próxima Cita Programada
+                    </span>
+                    <span className="rounded-full bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100 text-[10px] font-extrabold px-2 py-0.5">
+                      {nextApp.status === "confirmed" ? "Confirmado" : nextApp.status}
+                    </span>
+                  </div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
+                    {services.find((s) => s.id === nextApp.serviceId)?.name || "Servicio"} ·{" "}
+                    <span className="font-semibold text-slate-600 dark:text-slate-300">
+                      {staff.find((st) => st.id === nextApp.staffId)?.name || "Profesional"}
+                    </span>
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {formatInTimeZone(nextApp.start, business.timezone || "America/Asuncion", "EEEE dd 'de' MMMM · HH:mm 'hs'")}
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href={`/dashboard/calendario?appointmentId=${nextApp.id}`}
+                onClick={onClose}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition shrink-0"
+              >
+                <span>Ver en agenda</span>
+                <span>→</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                <span>Sin próximas citas agendadas</span>
+              </span>
+              <Link
+                href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                onClick={onClose}
+                className="font-bold text-primary hover:underline"
+              >
+                + Agendar cita
+              </Link>
+            </div>
+          )}
+
           {/* Navigation Tabs */}
           <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200/70 dark:border-white/5 text-xs font-bold">
             <button
@@ -307,7 +437,20 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
               }`}
             >
               <Clock className="h-3.5 w-3.5" />
-              <span>Últimas Visitas ({clientVisits.length})</span>
+              <span>Historial ({clientAppointments.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("formula")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl transition ${
+                activeTab === "formula"
+                  ? "bg-white dark:bg-slate-800 text-primary dark:text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <span>Ficha Técnica & Notas</span>
             </button>
 
             <button
@@ -321,19 +464,6 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
             >
               <Camera className="h-3.5 w-3.5 text-pink-500" />
               <span>Galería & Videos ({client.gallery?.length || 0})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("formula")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl transition ${
-                activeTab === "formula"
-                  ? "bg-white dark:bg-slate-800 text-primary dark:text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <span>Ficha Técnica & Fórmula</span>
             </button>
 
             <button
@@ -385,14 +515,25 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
 
               {/* Visit Timeline List */}
               <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                {clientVisits.length === 0 ? (
-                  <div className="text-center py-8 text-xs text-slate-400">
-                    No se registran visitas pasadas para este cliente.
+                {clientAppointments.length === 0 ? (
+                  <div className="text-center py-8 text-xs text-slate-400 space-y-2">
+                    <p>No se registran citas pasadas ni futuras para este cliente.</p>
+                    <Link
+                      href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
+                      onClick={onClose}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3 py-1.5 text-xs font-bold"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Agendar primera cita</span>
+                    </Link>
                   </div>
                 ) : (
-                  clientVisits.map((visit, index) => {
+                  clientAppointments.map((visit, index) => {
                     const service = services.find((s) => s.id === visit.serviceId);
                     const staffMember = staff.find((st) => st.id === visit.staffId);
+                    const payment = cashMovements.find(
+                      (cm) => cm.appointmentId === visit.id && cm.type === "ingreso"
+                    );
 
                     return (
                       <div
@@ -402,7 +543,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-100 dark:border-white/5">
                           <div className="flex items-center gap-2">
                             <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary font-black text-[11px]">
-                              #{clientVisits.length - index}
+                              #{clientAppointments.length - index}
                             </span>
                             <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
                               {service?.name || "Servicio"}
@@ -414,31 +555,49 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
                           </div>
 
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="font-mono font-bold text-primary">
-                              {formatGs(service?.price || 0)}
-                            </span>
+                            {payment ? (
+                              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                Cobrado: {formatGs(payment.amount)}
+                              </span>
+                            ) : (
+                              <span className="font-mono font-medium text-slate-500">
+                                {formatGs(service?.price || 0)}
+                              </span>
+                            )}
                             <span
                               className={`rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${
-                                visit.status === "confirmed"
+                                visit.status === "completed"
                                   ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400"
+                                  : visit.status === "confirmed"
+                                  ? "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400"
                                   : visit.status === "cancelled"
                                   ? "bg-red-100 text-red-700"
+                                  : visit.status === "no_show"
+                                  ? "bg-rose-100 text-rose-800 font-extrabold"
                                   : "bg-amber-100 text-amber-700"
                               }`}
                             >
-                              {visit.status === "confirmed" ? "Realizado" : visit.status}
+                              {visit.status === "completed"
+                                ? "Completado"
+                                : visit.status === "confirmed"
+                                ? "Confirmado"
+                                : visit.status === "cancelled"
+                                ? "Cancelado"
+                                : visit.status === "no_show"
+                                ? "No Asistió"
+                                : visit.status}
                             </span>
                           </div>
                         </div>
 
-                        {/* Details row: Date, Staff, Payment */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 dark:text-slate-300">
-                          <div className="flex items-center gap-1.5">
+                        {/* Details row: Date, Staff, Payment, Link */}
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                          <div className="flex items-center gap-1.5 sm:col-span-2">
                             <Calendar className="h-3.5 w-3.5 text-slate-400" />
                             <span>
                               {formatInTimeZone(
                                 visit.start,
-                                business.timezone,
+                                business.timezone || "America/Asuncion",
                                 "dd 'de' MMMM, yyyy · HH:mm 'hs'"
                               )}
                             </span>
@@ -446,14 +605,18 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit }: Props)
 
                           <div className="flex items-center gap-1.5">
                             <User className="h-3.5 w-3.5 text-indigo-500" />
-                            <span>Atendido por: <strong>{staffMember?.name || "Profesional"}</strong></span>
+                            <span>Atendido: <strong>{staffMember?.name || "Profesional"}</strong></span>
                           </div>
 
-                          <div className="flex items-center gap-1.5">
-                            <CreditCard className="h-3.5 w-3.5 text-emerald-500" />
-                            <span className="capitalize">
-                              Pago: {visit.paymentMethod.replace("_", " ")}
-                            </span>
+                          <div className="flex items-center justify-end">
+                            <Link
+                              href={`/dashboard/calendario?appointmentId=${visit.id}`}
+                              onClick={onClose}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                            >
+                              <span>Ver en agenda</span>
+                              <span>→</span>
+                            </Link>
                           </div>
                         </div>
 

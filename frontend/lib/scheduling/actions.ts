@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { getAvailableSlots } from "@/lib/scheduling/availability";
 import { SchedulingError } from "@/lib/scheduling/errors";
 import { HOLD_MINUTES, type AvailableSlot } from "@/lib/scheduling/types";
+import { normalizeParaguayPhone } from "@/lib/dashboard-dates";
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -137,6 +138,7 @@ async function insertPendingAppointment(
   if (phoneDigits.length < 8 || phoneDigits.length > 15) {
     return { ok: false, message: "Ingresá un teléfono válido, con código de país." };
   }
+  const normalizedPhone = normalizeParaguayPhone(clientPhone);
 
   const startMs = Date.parse(input.start);
   if (Number.isNaN(startMs) || startMs <= Date.now()) {
@@ -145,11 +147,11 @@ async function insertPendingAppointment(
 
   const tenant = await resolveTenant(input.tenantSlug);
   const service = await prisma.service.findFirst({
-    where: { id: input.serviceId, tenantId: tenant.id },
+    where: { id: input.serviceId, tenantId: tenant.id, active: true },
     select: { id: true, durationMinutes: true },
   });
   if (!service) {
-    return { ok: false, message: "Ese servicio no existe." };
+    return { ok: false, message: "Ese servicio no está disponible en este momento." };
   }
 
   const start = new Date(startMs);
@@ -209,16 +211,26 @@ async function insertPendingAppointment(
           data: { status: "EXPIRED" },
         });
 
-        // Buscar o crear cliente del tenant por teléfono para evitar duplicados
+        // Buscar o crear cliente del tenant por teléfono normalizado para evitar duplicados
+        const phoneVariants = [
+          normalizedPhone,
+          phoneDigits,
+          `+${phoneDigits}`,
+          phoneDigits.startsWith("595") ? `0${phoneDigits.slice(3)}` : `595${phoneDigits.startsWith("0") ? phoneDigits.slice(1) : phoneDigits}`,
+        ];
+
         let client = await tx.client.findFirst({
-          where: { tenantId: tenant.id, phone: phoneDigits },
+          where: {
+            tenantId: tenant.id,
+            phone: { in: phoneVariants },
+          },
         });
         if (!client) {
           client = await tx.client.create({
             data: {
               tenantId: tenant.id,
               name: clientName,
-              phone: phoneDigits,
+              phone: normalizedPhone,
               lastVisit: start,
               tags: ["Nuevo"],
             },
@@ -229,6 +241,7 @@ async function insertPendingAppointment(
             data: {
               lastVisit: start,
               name: client.name || clientName,
+              phone: normalizedPhone,
             },
           });
         }
@@ -240,7 +253,7 @@ async function insertPendingAppointment(
             serviceId: service.id,
             clientId: client.id,
             clientName,
-            clientPhone: phoneDigits,
+            clientPhone: normalizedPhone,
             startTime: start,
             endTime: end,
             status: "PENDING_ACTION",
@@ -276,10 +289,13 @@ async function resolveTenant(tenantSlug: string) {
 
   const tenant = await prisma.tenant.findUnique({
     where: { subdomain: tenantSlug },
-    select: { id: true, timezone: true },
+    select: { id: true, timezone: true, status: true },
   });
   if (!tenant) {
     throw new SchedulingError("TENANT_NOT_FOUND", "Local inexistente", 404);
+  }
+  if (tenant.status && tenant.status !== "ACTIVE") {
+    throw new SchedulingError("TENANT_INACTIVE", "El negocio se encuentra temporalmente en pausa.", 403);
   }
   return tenant;
 }

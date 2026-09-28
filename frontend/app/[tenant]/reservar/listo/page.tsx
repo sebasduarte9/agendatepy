@@ -54,34 +54,38 @@ export default async function ReservaListaPage({ params, searchParams }: PagePro
     console.warn(`[ReservaListaPage] DB offline para "${slug}", usando datos demo:`, error);
   }
 
-  // Fallback demo appointment si PostgreSQL está offline o reserva demo
+  // Fallback demo appointment SOLO para la ruta explícita "barberia"
   if (!appointment) {
-    const now = new Date();
-    const demoStart = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    demoStart.setHours(15, 30, 0, 0);
-    const demoEnd = new Date(demoStart.getTime() + 45 * 60 * 1000);
-    appointment = {
-      clientName: "Martín Benítez",
-      status: "PENDING_ACTION",
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-      startTime: demoStart,
-      endTime: demoEnd,
-      service: {
-        name: "Corte Clásico / Fade",
-        price: 80000,
-        durationMinutes: 45,
-      },
-      staff: {
-        name: "Marcos Benítez",
-      },
-      tenant: {
-        name: slug === "barberia" ? "Barbería Los Muchachos" : slug,
-        timezone: "America/Asuncion",
-        settings: {
-          whatsappPhone: "595981700800",
+    if (slug === "barberia") {
+      const now = new Date();
+      const demoStart = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      demoStart.setHours(15, 30, 0, 0);
+      const demoEnd = new Date(demoStart.getTime() + 45 * 60 * 1000);
+      appointment = {
+        clientName: "Martín Benítez",
+        status: "PENDING_ACTION",
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        startTime: demoStart,
+        endTime: demoEnd,
+        service: {
+          name: "Corte Clásico / Fade",
+          price: 80000,
+          durationMinutes: 45,
         },
-      },
-    };
+        staff: {
+          name: "Marcos Benítez",
+        },
+        tenant: {
+          name: "Barbería Los Muchachos",
+          timezone: "America/Asuncion",
+          settings: {
+            whatsappPhone: "595981700800",
+          },
+        },
+      };
+    } else {
+      notFound();
+    }
   }
 
   const expired = checkIsExpired(appointment.status, appointment.expiresAt);

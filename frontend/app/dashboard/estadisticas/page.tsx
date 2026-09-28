@@ -38,16 +38,39 @@ export default function EstadisticasPage() {
   const { appointments, services, business } = useDashboardStore();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("Esta Semana");
   const [dbStats, setDbStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  function loadStats() {
+    setLoading(true);
+    setError(null);
     fetch("/api/dashboard/stats")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(
+            res.status === 403
+              ? "Acceso restringido: las estadísticas financieras solo están disponibles para el dueño."
+              : "No se pudieron calcular las estadísticas en este momento."
+          );
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.ok && data.stats) {
           setDbStats(data.stats);
+        } else {
+          setError(data.message || "Error al calcular estadísticas.");
         }
       })
-      .catch((err) => console.error("Error fetching stats:", err));
+      .catch((err) => {
+        console.error("Error fetching stats:", err);
+        setError(err.message || "Error de conexión al cargar estadísticas.");
+      })
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadStats();
   }, []);
 
   const confirmed = appointments.filter((a) => a.status === "confirmed" || a.status === "completed");
@@ -55,11 +78,11 @@ export default function EstadisticasPage() {
   const total = appointments.length;
   const attendanceRate = dbStats?.attendanceRate ?? (total > 0 ? Math.round((confirmed.length / total) * 100) : 100);
 
-  const revenue = dbStats?.confirmedRevenue ?? confirmed.reduce(
+  const revenue = dbStats?.totalRevenue ?? confirmed.reduce(
     (sum, item) => sum + (services.find((s) => s.id === item.serviceId)?.price ?? 0),
     0,
   );
-  const uniqueClients = new Set(appointments.map((a) => a.clientEmail || a.clientPhone)).size;
+  const uniqueClients = dbStats?.totalClients ?? new Set(appointments.map((a) => a.clientEmail || a.clientPhone)).size;
 
   const areaData = useMemo(() => {
     if (dbStats?.areaData && dbStats.areaData.length > 0) {
@@ -139,32 +162,56 @@ export default function EstadisticasPage() {
         </div>
       </div>
 
+      {/* Error state with retry */}
+      {error && (
+        <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 flex items-center justify-between">
+          <div>
+            <p className="font-bold text-sm text-rose-900 dark:text-rose-200">Error al cargar estadísticas</p>
+            <p className="text-xs text-rose-700 dark:text-rose-300">{error}</p>
+          </div>
+          <button
+            type="button"
+            onClick={loadStats}
+            className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-1.5 text-xs shadow-xs transition"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* KPI Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Facturación Confirmada"
-          value={formatGs(revenue)}
-          icon={Wallet}
-          delta={18}
-        />
-        <StatCard
-          label="Tasa de Asistencia (Show-up)"
-          value={`${attendanceRate}%`}
-          icon={CheckCircle2}
-          delta={6}
-        />
-        <StatCard
-          label="Clientes Únicos Atendidos"
-          value={`${uniqueClients} personas`}
-          icon={UserRound}
-          delta={12}
-        />
-        <StatCard
-          label="Turnos Cancelados"
-          value={`${cancelled.length} cancelados`}
-          icon={Ban}
-          delta={cancelled.length > 0 ? -cancelled.length : 0}
-        />
+        {loading ? (
+          <>
+            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
+            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
+            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
+            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Facturación Confirmada"
+              value={formatGs(revenue)}
+              icon={Wallet}
+            />
+            <StatCard
+              label="Tasa de Asistencia (Show-up)"
+              value={`${attendanceRate}%`}
+              icon={CheckCircle2}
+            />
+            <StatCard
+              label="Clientes Únicos Atendidos"
+              value={`${uniqueClients} personas`}
+              icon={UserRound}
+            />
+            <StatCard
+              label="Turnos Cancelados"
+              value={`${cancelled.length} cancelados`}
+              icon={Ban}
+            />
+          </>
+        )}
       </div>
 
       {/* Charts Section */}

@@ -884,6 +884,7 @@ type DashboardState = {
   addClientMedia: (clientId: string, media: Omit<ClientMedia, "id" | "createdAt">) => void;
   deleteClientMedia: (clientId: string, mediaId: string) => void;
   syncFromDatabase: (tenantSlug?: string) => Promise<void>;
+  isInitialSyncDone: boolean;
   isTourOpen: boolean;
   tourSectionKey: string;
   openTour: (sectionKey?: string) => void;
@@ -908,6 +909,7 @@ function splitOvernightBlock(block: Omit<TimeBlock, "id">): Omit<TimeBlock, "id"
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   timezoneNote: TIMEZONE_NOTE,
+  isInitialSyncDone: false,
   splitComment: "Si un bloque cruza medianoche en TZ de Asunción, se parte en dos fechas civiles.",
   business: {
     name: "Barbería & Studio AgendatePY",
@@ -1074,6 +1076,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             concept: cm.concept,
             date: cm.date,
             category: cm.category,
+            appointmentId: cm.appointmentId,
           }));
         }
 
@@ -1106,6 +1109,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Error al sincronizar con PostgreSQL:", err);
+    } finally {
+      set({ isInitialSyncDone: true });
     }
   },
   updateAppointment: async (id, patch) => {
@@ -1144,7 +1149,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return false;
     }
   },
-  addAppointment: (item) => {
+  addAppointment: async (item) => {
+    const tempId = item.id;
     const apps = [...get().appointments, item];
     const existing = get().clients.find(
       (c) => c.phone === item.clientPhone || c.name.toLowerCase() === item.clientName.toLowerCase(),
@@ -1153,32 +1159,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     const price = service?.price ?? 0;
     const addPoints = get().loyalty.enabled ? get().loyalty.pointsPerVisit : 0;
 
-    // Asynchronously sync with PostgreSQL
-    fetch("/api/dashboard/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "create_appointment",
-        tenantSlug: get().business.slug || "barberia",
-        data: item,
-      }),
-    }).catch((e) => console.error("Error syncing new appointment to DB:", e));
-
+    let updatedClients = get().clients;
     if (existing) {
-      set({
-        appointments: apps,
-        clients: get().clients.map((c) =>
-          c.id === existing.id
-            ? {
-                ...c,
-                totalVisits: c.totalVisits + 1,
-                totalSpent: c.totalSpent + price,
-                lastVisit: item.start,
-                loyaltyPoints: c.loyaltyPoints + addPoints,
-              }
-            : c,
-        ),
-      });
+      updatedClients = get().clients.map((c) =>
+        c.id === existing.id
+          ? {
+              ...c,
+              totalVisits: c.totalVisits + 1,
+              totalSpent: c.totalSpent + price,
+              lastVisit: item.start,
+              loyaltyPoints: c.loyaltyPoints + addPoints,
+            }
+          : c,
+      );
     } else {
       const newClient: Client = {
         id: `cl-${Date.now()}`,
@@ -1193,10 +1186,49 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         loyaltyPoints: addPoints,
         loyaltyRedeemed: 0,
       };
-      set({
-        appointments: apps,
-        clients: [newClient, ...get().clients],
+      updatedClients = [newClient, ...get().clients];
+    }
+
+    // Optimistically update store
+    set({
+      appointments: apps,
+      clients: updatedClients,
+    });
+
+    // Synchronize with PostgreSQL and replace temporary ID with real database UUID
+    try {
+      const res = await fetch("/api/dashboard/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create_appointment",
+          tenantSlug: get().business.slug || "barberia",
+          data: item,
+        }),
       });
+      const data = await res.json();
+      if (data.ok && data.appointmentId) {
+        const realId = data.appointmentId;
+        set({
+          appointments: get().appointments.map((a) =>
+            a.id === tempId ? { ...a, id: realId } : a,
+          ),
+        });
+        return realId;
+      } else {
+        set({
+          appointments: get().appointments.filter((a) => a.id !== tempId),
+        });
+        get().pushToast("error", data.message || "No se pudo registrar la cita.");
+        return null;
+      }
+    } catch (e) {
+      console.error("Error syncing new appointment to DB:", e);
+      set({
+        appointments: get().appointments.filter((a) => a.id !== tempId),
+      });
+      get().pushToast("error", "Error de conexión al guardar la cita.");
+      return null;
     }
   },
   cancelAppointment: async (id) => {
@@ -1655,6 +1687,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           description: item.concept,
           category: (item as any).category || (item.type === "ingreso" ? "Cobro Servicio" : "Gasto Operativo"),
           createdAt: item.date,
+          appointmentId: item.appointmentId,
         }),
       });
       const data = await res.json();
@@ -1664,13 +1697,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           cashMovements: [
             {
               id: m.id,
-              type: m.type === "INCOME" ? "ingreso" : "egreso",
+              type: m.type === "INCOME" || m.type === "ingreso" ? "ingreso" : "egreso",
               amount: m.amount,
-              method: (m.paymentMethod.toLowerCase() || "efectivo") as any,
-              concept: m.description,
-              date: m.createdAt,
+              method: (m.paymentMethod?.toLowerCase() || m.method?.toLowerCase() || "efectivo") as any,
+              concept: m.description || m.concept,
+              date: m.createdAt || m.date || new Date().toISOString(),
               category: m.category,
               voucherNumber: item.voucherNumber,
+              appointmentId: m.appointmentId,
             },
             ...get().cashMovements,
           ],

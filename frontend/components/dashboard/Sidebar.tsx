@@ -42,26 +42,29 @@ type SidebarLink = {
 
 const PRIMARY_LINKS: SidebarLink[] = [
   { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
-  { href: "/dashboard/nueva-reserva", label: "Nueva Reserva", icon: CalendarPlus, roles: ["admin", "cajero"] },
-  { href: "/dashboard/calendario", label: "Calendario", icon: CalendarDays },
-  { href: "/dashboard/crm", label: "CRM Omnicanal", icon: MessagesSquare, badge: "3 Canales", roles: ["admin", "cajero"] },
+  { href: "/dashboard/calendario", label: "Agenda & Turnos", icon: CalendarDays },
   { href: "/dashboard/clientes", label: "Clientes & Ficha", icon: Users, badge: "Fichas" },
+  { href: "/dashboard/servicios", label: "Servicios & Precios", icon: Scissors, roles: ["admin"] },
+  { href: "/dashboard/caja", label: "Caja & Arqueo", icon: Banknote, roles: ["admin", "cajero"] },
+];
+
+const OPERATIONS_LINKS: SidebarLink[] = [
+  { href: "/dashboard/nueva-reserva", label: "Nueva Reserva", icon: CalendarPlus, roles: ["admin", "cajero"] },
+  { href: "/dashboard/equipo", label: "Equipo & Roles", icon: Users, badge: "Permisos", roles: ["admin"] },
+  { href: "/dashboard/bloquear-horario", label: "Bloquear Horario", icon: Ban, roles: ["admin", "barbero", "estilista"] },
   { href: "/dashboard/productos", label: "Productos & Tienda", icon: ShoppingBag, badge: "Web", roles: ["admin", "cajero"] },
   { href: "/dashboard/comisiones", label: "Comisiones", icon: Coins, badge: "Pagos", roles: ["admin", "barbero", "estilista"] },
-  { href: "/dashboard/caja", label: "Caja & Arqueo", icon: Banknote, roles: ["admin", "cajero"] },
+  { href: "/dashboard/transferencias", label: "Transferencias SIPAP", icon: Receipt, roles: ["admin", "cajero"] },
+  { href: "/dashboard/crm", label: "CRM Omnicanal", icon: MessagesSquare, badge: "3 Canales", roles: ["admin", "cajero"] },
   { href: "/dashboard/fidelizacion", label: "Fidelización VIP", icon: Award, badge: "Puntos", roles: ["admin", "cajero"] },
   { href: "/dashboard/whatsapp", label: "WhatsApp Hub", icon: MessageSquare, badge: "Auto", roles: ["admin"] },
   { href: "/dashboard/estadisticas", label: "Estadísticas", icon: BarChart3, roles: ["admin"] },
 ];
 
-const SECONDARY_LINKS: SidebarLink[] = [
-  { href: "/dashboard/equipo", label: "Equipo & Roles", icon: Users, badge: "Permisos", roles: ["admin"] },
-  { href: "/dashboard/apariencia", label: "Diseño & Marca", icon: Palette, roles: ["admin"] },
-  { href: "/dashboard/servicios", label: "Servicios", icon: Scissors, roles: ["admin"] },
-  { href: "/dashboard/bloquear-horario", label: "Bloquear Horario", icon: Ban, roles: ["admin", "barbero", "estilista"] },
-  { href: "/dashboard/transferencias", label: "Transferencias SIPAP", icon: Receipt, roles: ["admin", "cajero"] },
-  { href: "/dashboard/extras", label: "Kit Marketing & QR", icon: QrCode, roles: ["admin"] },
+const CONFIG_LINKS: SidebarLink[] = [
   { href: "/dashboard/configuracion", label: "Configuración", icon: Settings, roles: ["admin"] },
+  { href: "/dashboard/apariencia", label: "Diseño & Marca", icon: Palette, roles: ["admin"] },
+  { href: "/dashboard/extras", label: "Kit Marketing & QR", icon: QrCode, roles: ["admin"] },
   { href: "/dashboard/suscripcion", label: "Mi Suscripción", icon: Crown, roles: ["admin"] },
 ];
 
@@ -119,7 +122,10 @@ export default function Sidebar() {
   const visiblePrimary = PRIMARY_LINKS.filter(
     (item) => !item.roles || item.roles.includes(currentUserRole)
   );
-  const visibleSecondary = SECONDARY_LINKS.filter(
+  const visibleOperations = OPERATIONS_LINKS.filter(
+    (item) => !item.roles || item.roles.includes(currentUserRole)
+  );
+  const visibleConfig = CONFIG_LINKS.filter(
     (item) => !item.roles || item.roles.includes(currentUserRole)
   );
 
@@ -218,7 +224,7 @@ export default function Sidebar() {
 
         {/* Navigation links */}
         <nav className="flex-1 space-y-3 overflow-y-auto px-2.5 py-3 scrollbar-none">
-          {/* Section 1: Operación */}
+          {/* Section 1: Operación Diaria */}
           <div>
             <div className="h-6 flex items-center px-1.5 my-1 overflow-hidden">
               {expanded ? (
@@ -248,12 +254,10 @@ export default function Sidebar() {
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
-                    {/* Active accent pill */}
                     {active && (
                       <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
                     )}
 
-                    {/* Fixed Icon container - stationary across states */}
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
                       <Icon
                         className={`h-4 w-4 transition-transform duration-150 group-hover:scale-110 ${
@@ -264,7 +268,6 @@ export default function Sidebar() {
                       />
                     </div>
 
-                    {/* Smooth sliding label and badge */}
                     <div
                       className="flex items-center justify-between min-w-0 flex-1 overflow-hidden transition-all duration-250 ease-out"
                       style={{
@@ -289,13 +292,13 @@ export default function Sidebar() {
             </div>
           </div>
 
-          {/* Section 2: Gestión & Negocio */}
-          {visibleSecondary.length > 0 && (
+          {/* Section 2: Gestión & Módulos */}
+          {visibleOperations.length > 0 && (
             <div>
               <div className="h-6 flex items-center px-1.5 my-1 overflow-hidden">
                 {expanded ? (
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap truncate animate-in fade-in duration-200">
-                    Gestión & Negocio
+                    Gestión & Operaciones
                   </span>
                 ) : (
                   <div className="w-full h-px bg-slate-200/80 dark:bg-white/10" />
@@ -303,7 +306,74 @@ export default function Sidebar() {
               </div>
 
               <div className="space-y-1">
-                {visibleSecondary.map(({ href, label, icon: Icon, badge }) => {
+                {visibleOperations.map(({ href, label, icon: Icon, badge }) => {
+                  const active = pathname.startsWith(href);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setOpen(false)}
+                      title={!expanded ? label : undefined}
+                      className={`group relative flex h-10 w-full items-center rounded-xl px-1.5 transition-colors duration-150 ${
+                        active
+                          ? "bg-primary/10 text-primary font-bold shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      {active && (
+                        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
+                      )}
+
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+                        <Icon
+                          className={`h-4 w-4 transition-transform duration-150 group-hover:scale-110 ${
+                            active
+                              ? "text-primary"
+                              : "text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200"
+                          }`}
+                        />
+                      </div>
+
+                      <div
+                        className="flex items-center justify-between min-w-0 flex-1 overflow-hidden transition-all duration-250 ease-out"
+                        style={{
+                          opacity: expanded ? 1 : 0,
+                          maxWidth: expanded ? 180 : 0,
+                          marginLeft: expanded ? 6 : 0,
+                          transform: expanded ? "translateX(0)" : "translateX(-6px)",
+                        }}
+                      >
+                        <span className="truncate text-xs font-semibold">
+                          {label}
+                        </span>
+                        {badge && (
+                          <span className="shrink-0 rounded-md bg-primary/10 dark:bg-primary/20 px-1.5 py-0.5 text-[9px] font-bold text-primary ml-1.5">
+                            {badge}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Section 3: Configuración */}
+          {visibleConfig.length > 0 && (
+            <div>
+              <div className="h-6 flex items-center px-1.5 my-1 overflow-hidden">
+                {expanded ? (
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap truncate animate-in fade-in duration-200">
+                    Configuración
+                  </span>
+                ) : (
+                  <div className="w-full h-px bg-slate-200/80 dark:bg-white/10" />
+                )}
+              </div>
+
+              <div className="space-y-1">
+                {visibleConfig.map(({ href, label, icon: Icon, badge }) => {
                   const active = pathname.startsWith(href);
                   return (
                     <Link

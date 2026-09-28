@@ -228,7 +228,6 @@ export default function ProductosPage() {
           label="Margen Bruto Estimado"
           value={formatGs(estimatedProfit)}
           icon={TrendingUp}
-          delta={22}
         />
         <StatCard
           label="Stock Bajo o Crítico (≤5)"

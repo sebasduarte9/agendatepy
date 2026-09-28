@@ -3,6 +3,7 @@ export type SchedulingErrorCode =
   | "TENANT_NOT_FOUND"
   | "SERVICE_NOT_FOUND"
   | "TENANT_CONTEXT_MISSING"
+  | "TENANT_INACTIVE"
   | "DB_UNAVAILABLE"
   | "SLOT_TAKEN";
 

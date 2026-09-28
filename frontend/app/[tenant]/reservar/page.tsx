@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AlertCircle, Store, Calendar, Phone } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { maxAdvanceDaysFromSettings } from "@/lib/scheduling/tenant-settings";
 import { parseTheme } from "@/lib/theme";
@@ -12,8 +14,33 @@ type PageProps = {
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { tenant } = await params;
-  return { title: `Reservar Cita · ${tenant}` };
+  const { tenant: slug } = await params;
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { subdomain: slug },
+      select: { name: true, themeSettings: true },
+    });
+    if (tenant) {
+      const theme = parseTheme(tenant.themeSettings);
+      return {
+        title: `Reservar Turno · ${tenant.name}`,
+        description:
+          theme.bio ||
+          theme.slogan ||
+          `Agendá tu turno online en ${tenant.name} en 30 segundos.`,
+        openGraph: {
+          title: `Reservar en ${tenant.name}`,
+          description:
+            theme.bio ||
+            theme.slogan ||
+            `Turnos online 24/7 en ${tenant.name}`,
+        },
+      };
+    }
+  } catch (error) {
+    console.warn(`[ReservarPage.metadata] Error leyendo tenant "${slug}":`, error);
+  }
+  return { title: `Reservar Cita · ${slug}` };
 }
 
 const DEMO_SERVICES = [
@@ -35,18 +62,6 @@ const DEMO_SERVICES = [
     durationMinutes: 30,
     price: 55000,
   },
-  {
-    id: "d4e5f6a7-b8c9-4d8e-1f2a-3b4c5d6e7f8a",
-    name: "Colorimetría / Platinado Express",
-    durationMinutes: 90,
-    price: 250000,
-  },
-  {
-    id: "e5f6a7b8-c9d0-4e9f-2a3b-4c5d6e7f8a9b",
-    name: "Tratamiento Capilar / Detox Anticaída",
-    durationMinutes: 45,
-    price: 110000,
-  },
 ];
 
 export default async function ReservarPage({ params }: PageProps) {
@@ -57,27 +72,36 @@ export default async function ReservarPage({ params }: PageProps) {
     tenant = await prisma.tenant.findUnique({
       where: { subdomain: slug },
       select: {
+        id: true,
         name: true,
+        slug: true,
         subdomain: true,
+        status: true,
         timezone: true,
         settings: true,
         themeSettings: true,
         services: {
+          where: { active: true },
           orderBy: { name: "asc" },
-          select: { id: true, name: true, durationMinutes: true, price: true },
+          select: { id: true, name: true, durationMinutes: true, price: true, active: true },
+        },
+        staff: {
+          where: { active: true },
+          select: { id: true, name: true },
         },
       },
     });
   } catch (error) {
-    console.warn(`[ReservarPage] Base de datos no disponible para "${slug}", usando demo fallback.`);
+    console.warn(`[ReservarPage] Base de datos no disponible para "${slug}", usando demo fallback si aplica.`);
   }
 
-  // Fallback demo tenant SOLO para la ruta explícita "barberia"
+  // Fallback demo SOLO para la ruta explícita "barberia"
   if (!tenant) {
     if (slug === "barberia") {
       tenant = {
         name: "Barbería Los Muchachos (Demo)",
         subdomain: "barberia",
+        status: "ACTIVE",
         timezone: "America/Asuncion",
         settings: {
           whatsappPhone: "595981700800",
@@ -97,10 +121,78 @@ export default async function ReservarPage({ params }: PageProps) {
           logoUrl: "",
         },
         services: DEMO_SERVICES,
+        staff: [{ id: "demo-staff-1", name: "Marcos Barbero" }],
       };
     } else {
       notFound();
     }
+  }
+
+  // ESTADO B: Negocio Pausado o Desactivado
+  if (tenant.status === "PAUSED" || tenant.status === "SUSPENDED") {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-500/10 text-amber-500 mb-4">
+          <Store className="h-8 w-8" />
+        </div>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+          {tenant.name}
+        </h1>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Este local no está recibiendo reservas en línea temporalmente.
+        </p>
+        <div className="mt-6">
+          <Link
+            href="/"
+            className="inline-flex items-center rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 text-xs font-semibold hover:opacity-90 transition"
+          >
+            Volver al inicio
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ESTADO C: Negocio sin servicios activos publicados
+  if (!tenant.services || tenant.services.length === 0) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary mb-4">
+          <Calendar className="h-8 w-8" />
+        </div>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+          {tenant.name}
+        </h1>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Actualmente el negocio está actualizando su catálogo de servicios. Volvé a consultar en unos minutos.
+        </p>
+        <div className="mt-6 flex flex-col gap-2 w-full">
+          <Link
+            href="/"
+            className="rounded-xl border border-slate-200 dark:border-slate-800 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition"
+          >
+            Ir a AgendatePY
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ESTADO D: Negocio sin colaboradores activos
+  if (!tenant.staff || tenant.staff.length === 0) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-500/10 text-blue-500 mb-4">
+          <AlertCircle className="h-8 w-8" />
+        </div>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+          {tenant.name}
+        </h1>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          No hay profesionales disponibles en este momento. Podés contactar directamente al comercio para coordinar tu atención.
+        </p>
+      </div>
+    );
   }
 
   const theme = parseTheme(tenant.themeSettings);
