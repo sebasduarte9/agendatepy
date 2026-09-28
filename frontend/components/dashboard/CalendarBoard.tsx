@@ -58,6 +58,98 @@ const BLOCK_DURATION_PRESETS = [
   { label: "Medio día (4h)", minutes: 240 },
 ];
 
+export interface CountryOption {
+  code: string;
+  name: string;
+  flag: string;
+  dialCode: string;
+  maxDigits: number;
+  minDigits: number;
+  placeholder: string;
+}
+
+const COUNTRY_LIST: CountryOption[] = [
+  { code: "PY", name: "Paraguay", flag: "🇵🇾", dialCode: "+595", maxDigits: 10, minDigits: 9, placeholder: "0981 123 456" },
+  { code: "AR", name: "Argentina", flag: "🇦🇷", dialCode: "+54", maxDigits: 11, minDigits: 10, placeholder: "9 11 2345 6789" },
+  { code: "BR", name: "Brasil", flag: "🇧🇷", dialCode: "+55", maxDigits: 11, minDigits: 10, placeholder: "11 91234 5678" },
+  { code: "UY", name: "Uruguay", flag: "🇺🇾", dialCode: "+598", maxDigits: 9, minDigits: 8, placeholder: "099 123 456" },
+  { code: "CL", name: "Chile", flag: "🇨🇱", dialCode: "+56", maxDigits: 9, minDigits: 9, placeholder: "9 1234 5678" },
+  { code: "BO", name: "Bolivia", flag: "🇧🇴", dialCode: "+591", maxDigits: 8, minDigits: 8, placeholder: "7123 4567" },
+  { code: "PE", name: "Perú", flag: "🇵🇪", dialCode: "+51", maxDigits: 9, minDigits: 9, placeholder: "912 345 678" },
+  { code: "CO", name: "Colombia", flag: "🇨🇴", dialCode: "+57", maxDigits: 10, minDigits: 10, placeholder: "300 123 4567" },
+  { code: "ES", name: "España", flag: "🇪🇸", dialCode: "+34", maxDigits: 9, minDigits: 9, placeholder: "612 345 678" },
+  { code: "US", name: "Estados Unidos", flag: "🇺🇸", dialCode: "+1", maxDigits: 10, minDigits: 10, placeholder: "202 555 0123" },
+  { code: "MX", name: "México", flag: "🇲🇽", dialCode: "+52", maxDigits: 10, minDigits: 10, placeholder: "55 1234 5678" },
+  { code: "EC", name: "Ecuador", flag: "🇪🇨", dialCode: "+593", maxDigits: 9, minDigits: 9, placeholder: "99 123 4567" },
+  { code: "VE", name: "Venezuela", flag: "🇻🇪", dialCode: "+58", maxDigits: 10, minDigits: 10, placeholder: "412 123 4567" },
+  { code: "PA", name: "Panamá", flag: "🇵🇦", dialCode: "+507", maxDigits: 8, minDigits: 8, placeholder: "6123 4567" },
+  { code: "CR", name: "Costa Rica", flag: "🇨🇷", dialCode: "+506", maxDigits: 8, minDigits: 8, placeholder: "8123 4567" },
+  { code: "DO", name: "Rep. Dominicana", flag: "🇩🇴", dialCode: "+1", maxDigits: 10, minDigits: 10, placeholder: "809 123 4567" },
+  { code: "GT", name: "Guatemala", flag: "🇬🇹", dialCode: "+502", maxDigits: 8, minDigits: 8, placeholder: "5123 4567" },
+  { code: "HN", name: "Honduras", flag: "🇭🇳", dialCode: "+504", maxDigits: 8, minDigits: 8, placeholder: "9123 4567" },
+  { code: "SV", name: "El Salvador", flag: "🇸🇻", dialCode: "+503", maxDigits: 8, minDigits: 8, placeholder: "7123 4567" },
+  { code: "NI", name: "Nicaragua", flag: "🇳🇮", dialCode: "+505", maxDigits: 8, minDigits: 8, placeholder: "8123 4567" },
+  { code: "CA", name: "Canadá", flag: "🇨🇦", dialCode: "+1", maxDigits: 10, minDigits: 10, placeholder: "416 123 4567" },
+  { code: "IT", name: "Italia", flag: "🇮🇹", dialCode: "+39", maxDigits: 10, minDigits: 9, placeholder: "312 345 6789" },
+  { code: "FR", name: "Francia", flag: "🇫🇷", dialCode: "+33", maxDigits: 9, minDigits: 9, placeholder: "6 12 34 56 78" },
+  { code: "DE", name: "Alemania", flag: "🇩🇪", dialCode: "+49", maxDigits: 11, minDigits: 10, placeholder: "151 1234 5678" },
+  { code: "GB", name: "Reino Unido", flag: "🇬🇧", dialCode: "+44", maxDigits: 10, minDigits: 10, placeholder: "7123 456789" },
+  { code: "PT", name: "Portugal", flag: "🇵🇹", dialCode: "+351", maxDigits: 9, minDigits: 9, placeholder: "912 345 678" },
+];
+
+function formatPhoneInput(val: string, country: CountryOption): string {
+  let digits = val.replace(/\D/g, "");
+  if (!digits) return "";
+
+  if (country.code === "PY") {
+    // If pasted with 595, strip it
+    if (digits.startsWith("595")) {
+      digits = digits.slice(3);
+    }
+    // Limit to 10 digits max
+    if (digits.length > 10) {
+      digits = digits.slice(0, 10);
+    }
+    // Format nicely
+    if (digits.startsWith("0")) {
+      if (digits.length <= 4) return digits;
+      if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+      return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+    } else {
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+    }
+  }
+
+  // Other countries: clamp to maxDigits
+  if (digits.length > country.maxDigits) {
+    digits = digits.slice(0, country.maxDigits);
+  }
+  if (digits.length > 6) {
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  } else if (digits.length > 3) {
+    return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+  }
+  return digits;
+}
+
+function validateRealPhone(rawPhone: string, country: CountryOption): boolean {
+  if (!rawPhone) return false;
+  const digits = rawPhone.replace(/\D/g, "");
+  if (!digits) return false;
+
+  if (country.code === "PY") {
+    let core = digits;
+    if (core.startsWith("595")) core = core.slice(3);
+    if (core.startsWith("0")) core = core.slice(1);
+    // Paraguay mobile operators use 96, 97, 98, 99 and have 9 digits total
+    return core.length === 9 && /^9[6-9]\d{7}$/.test(core);
+  }
+
+  return digits.length >= country.minDigits && digits.length <= country.maxDigits;
+}
+
 export default function CalendarBoard() {
   const appointments = useDashboardStore((s) => s.appointments);
   const staff = useDashboardStore((s) => s.staff);
@@ -113,6 +205,10 @@ export default function CalendarBoard() {
   const [newClientName, setNewClientName] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [newClientId, setNewClientId] = useState<string | null>(null);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("PY");
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
+
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [staffDropdownOpen, setStaffDropdownOpen] = useState(false);
   const [timeDropdownOpen, setTimeDropdownOpen] = useState(false);
@@ -120,12 +216,33 @@ export default function CalendarBoard() {
   const [newServiceId, setNewServiceId] = useState(services[0]?.id || "");
   const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>("efectivo");
 
+  const activeCountry = useMemo(() => {
+    return COUNTRY_LIST.find((c) => c.code === selectedCountryCode) || COUNTRY_LIST[0];
+  }, [selectedCountryCode]);
+
+  const filteredCountries = useMemo(() => {
+    if (!countrySearchQuery.trim()) return COUNTRY_LIST;
+    const q = countrySearchQuery.toLowerCase().trim();
+    return COUNTRY_LIST.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.dialCode.includes(q) ||
+        c.code.toLowerCase().includes(q)
+    );
+  }, [countrySearchQuery]);
+
+  const isPhoneValid = useMemo(() => {
+    return validateRealPhone(newClientPhone, activeCountry);
+  }, [newClientPhone, activeCountry]);
+
   // Close dropdowns on modal close
   useEffect(() => {
     if (!newModalOpen) {
       setServiceDropdownOpen(false);
       setStaffDropdownOpen(false);
       setTimeDropdownOpen(false);
+      setCountryDropdownOpen(false);
+      setCountrySearchQuery("");
     }
   }, [newModalOpen]);
 
@@ -208,7 +325,19 @@ export default function CalendarBoard() {
   function handleSelectClient(c: { id: string; name: string; phone?: string }) {
     setNewClientId(c.id);
     setNewClientName(c.name);
-    setNewClientPhone(c.phone || "");
+    if (c.phone) {
+      const raw = c.phone.trim();
+      const matched = COUNTRY_LIST.find((cntry) => raw.startsWith(cntry.dialCode));
+      if (matched) {
+        setSelectedCountryCode(matched.code);
+        setNewClientPhone(formatPhoneInput(raw.slice(matched.dialCode.length).trim(), matched));
+      } else {
+        setSelectedCountryCode("PY");
+        setNewClientPhone(formatPhoneInput(raw.replace(/^\+?595\s*/, ""), COUNTRY_LIST[0]));
+      }
+    } else {
+      setNewClientPhone("");
+    }
   }
 
   function handleCreateNewClientFromQuery(name: string) {
@@ -221,6 +350,7 @@ export default function CalendarBoard() {
     setNewClientId(null);
     setNewClientName("");
     setNewClientPhone("");
+    setSelectedCountryCode("PY");
   }
 
   // Query parameter handling for "Ver en agenda" and "Nueva cita desde cliente"
@@ -247,7 +377,19 @@ export default function CalendarBoard() {
       if (match) {
         setNewClientId(match.id);
         setNewClientName(match.name);
-        setNewClientPhone(match.phone);
+        if (match.phone) {
+          const raw = match.phone.trim();
+          const matched = COUNTRY_LIST.find((cntry) => raw.startsWith(cntry.dialCode));
+          if (matched) {
+            setSelectedCountryCode(matched.code);
+            setNewClientPhone(formatPhoneInput(raw.slice(matched.dialCode.length).trim(), matched));
+          } else {
+            setSelectedCountryCode("PY");
+            setNewClientPhone(formatPhoneInput(raw.replace(/^\+?595\s*/, ""), COUNTRY_LIST[0]));
+          }
+        } else {
+          setNewClientPhone("");
+        }
         setNewModalMode("appointment");
         setNewModalOpen(true);
       } else if (queryNewForClient.length > 10) {
@@ -258,7 +400,19 @@ export default function CalendarBoard() {
             if (d.ok && d.client) {
               setNewClientId(d.client.id);
               setNewClientName(d.client.name);
-              setNewClientPhone(d.client.phone);
+              if (d.client.phone) {
+                const raw = d.client.phone.trim();
+                const matched = COUNTRY_LIST.find((cntry) => raw.startsWith(cntry.dialCode));
+                if (matched) {
+                  setSelectedCountryCode(matched.code);
+                  setNewClientPhone(formatPhoneInput(raw.slice(matched.dialCode.length).trim(), matched));
+                } else {
+                  setSelectedCountryCode("PY");
+                  setNewClientPhone(formatPhoneInput(raw.replace(/^\+?595\s*/, ""), COUNTRY_LIST[0]));
+                }
+              } else {
+                setNewClientPhone("");
+              }
               setNewModalMode("appointment");
               setNewModalOpen(true);
             }
@@ -293,6 +447,9 @@ export default function CalendarBoard() {
     setNewClientId(null);
     setNewClientName("");
     setNewClientPhone("");
+    setSelectedCountryCode("PY");
+    setCountryDropdownOpen(false);
+    setCountrySearchQuery("");
     setNewServiceId(services[0]?.id || "");
     setBlockDate(dateStr);
     setBlockStart(timeStr);
@@ -337,7 +494,14 @@ export default function CalendarBoard() {
 
     const startDateTime = parseISO(`${newSlotData.date}T${newSlotData.time}:00`);
     const endDateTime = addMinutes(startDateTime, duration);
-    const normPhone = normalizeParaguayPhone(newClientPhone.trim() || "+595981000000");
+
+    let normPhone = "";
+    if (activeCountry.code === "PY") {
+      normPhone = normalizeParaguayPhone(newClientPhone.trim() || "+595981000000");
+    } else {
+      const cleanDigits = newClientPhone.replace(/\D/g, "");
+      normPhone = cleanDigits ? `${activeCountry.dialCode}${cleanDigits}` : `${activeCountry.dialCode}0000000`;
+    }
 
     const newApp: Appointment = {
       id: `app-${Date.now()}`,
@@ -389,6 +553,9 @@ export default function CalendarBoard() {
               setNewClientId(null);
               setNewClientName("");
               setNewClientPhone("");
+              setSelectedCountryCode("PY");
+              setCountryDropdownOpen(false);
+              setCountrySearchQuery("");
               setNewServiceId(services[0]?.id || "");
               setNewModalMode("appointment");
               setNewModalOpen(true);
@@ -692,24 +859,97 @@ export default function CalendarBoard() {
 
                 <div>
                   <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    WhatsApp (PY)
+                    WhatsApp
                   </label>
                   <div className="flex items-center gap-1.5">
-                    <div className="flex items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0">
-                      <span>🇵🇾</span>
-                      <span>+595</span>
+                    {/* Country Selector Dropdown */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCountryDropdownOpen(!countryDropdownOpen);
+                          setServiceDropdownOpen(false);
+                          setStaffDropdownOpen(false);
+                          setTimeDropdownOpen(false);
+                        }}
+                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                        title="Seleccionar país"
+                      >
+                        <span className="text-sm leading-none">{activeCountry.flag}</span>
+                        <span className="font-mono text-xs">{activeCountry.dialCode}</span>
+                        <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${countryDropdownOpen ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {countryDropdownOpen && (
+                        <div className="absolute top-full left-0 mt-1 z-40 w-64 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2">
+                          <div className="relative mb-1.5">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                            <input
+                              type="text"
+                              autoFocus
+                              placeholder="Buscar país o código..."
+                              value={countrySearchQuery}
+                              onChange={(e) => setCountrySearchQuery(e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 pl-8 pr-2.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                            />
+                          </div>
+                          <div className="max-h-44 overflow-y-auto space-y-0.5">
+                            {filteredCountries.map((c) => (
+                              <button
+                                key={c.code}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCountryCode(c.code);
+                                  setCountryDropdownOpen(false);
+                                  setCountrySearchQuery("");
+                                  setNewClientPhone((prev) => formatPhoneInput(prev, c));
+                                }}
+                                className={`w-full flex items-center justify-between p-1.5 rounded-lg text-left text-xs transition cursor-pointer ${
+                                  selectedCountryCode === c.code
+                                    ? "bg-primary/10 text-primary font-bold"
+                                    : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <span className="text-base leading-none">{c.flag}</span>
+                                  <span className="truncate">{c.name}</span>
+                                </div>
+                                <span className="font-mono text-[11px] text-slate-400 shrink-0">{c.dialCode}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <input
-                      type="tel"
-                      placeholder="0981 123 456"
-                      value={newClientPhone.replace(/^\+595\s*/, "")}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9\s]/g, "");
-                        setNewClientPhone(raw ? `+595 ${raw}` : "");
-                      }}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
-                    />
+
+                    {/* Phone Input with max digits and real-time formatting */}
+                    <div className="relative flex-1">
+                      <input
+                        type="tel"
+                        placeholder={activeCountry.placeholder}
+                        value={newClientPhone}
+                        onChange={(e) => setNewClientPhone(formatPhoneInput(e.target.value, activeCountry))}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                      />
+                    </div>
                   </div>
+
+                  {/* Subtle Real Phone Validation Hint */}
+                  {newClientPhone.trim().length > 0 && (
+                    <div className="flex items-center gap-1 mt-1 text-[10.5px] font-normal">
+                      {isPhoneValid ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <Check className="h-3 w-3 shrink-0" />
+                          <span>Número válido</span>
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1 opacity-75">
+                          <AlertCircle className="h-3 w-3 shrink-0 text-slate-400 dark:text-slate-500" />
+                          <span>Verificá que el número sea real</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -896,9 +1136,9 @@ export default function CalendarBoard() {
                       hasta <strong>{appointmentEndTime} hs</strong>
                     </span>
 
-                    {/* Time dropdown popover */}
+                    {/* Time dropdown popover: opens upward within the modal */}
                     {timeDropdownOpen && (
-                      <div className="absolute right-0 top-full mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-2 w-48 max-h-48 overflow-y-auto grid grid-cols-2 gap-1">
+                      <div className="absolute right-0 bottom-full mb-1.5 z-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
                         {APPOINTMENT_TIME_SLOTS.map((t) => (
                           <button
                             key={t}
@@ -907,9 +1147,9 @@ export default function CalendarBoard() {
                               setNewSlotData((prev) => ({ ...prev, time: t }));
                               setTimeDropdownOpen(false);
                             }}
-                            className={`py-1 px-2 rounded-lg text-center font-mono text-[11px] font-bold transition cursor-pointer ${
+                            className={`py-1.5 px-2 rounded-lg text-center font-mono text-[11px] font-bold transition cursor-pointer ${
                               newSlotData.time === t
-                                ? "bg-primary text-white"
+                                ? "bg-primary text-white shadow-xs"
                                 : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                             }`}
                           >
