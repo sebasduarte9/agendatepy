@@ -11,6 +11,7 @@ import {
   type ThemeSettings,
 } from "@/lib/theme";
 import { Sun, Moon, Store } from "lucide-react";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 
 export default function AppearanceEditor({ initial }: { initial: ThemeSettings }) {
   const [theme, setTheme] = useState(initial);
@@ -80,42 +81,44 @@ export default function AppearanceEditor({ initial }: { initial: ThemeSettings }
 
           {/* Distribución / Layout */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700">Distribución de Fotos & Layout</label>
-            <select
-              name="layoutStyle"
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Distribución de Fotos & Layout</label>
+            <input type="hidden" name="layoutStyle" value={theme.layoutStyle} />
+            <CustomSelect
               value={theme.layoutStyle}
-              onChange={(e) => setTheme((t) => ({ ...t, layoutStyle: e.target.value as LayoutStyle }))}
-              className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs outline-none focus:border-slate-400"
-            >
-              <option value="panoramic">Portada Panorámica (Clásico)</option>
-              <option value="split-gallery">Mosaico & Galería Dividida</option>
-              <option value="floating-card">Tarjeta Flotante & Stories</option>
-              <option value="minimal-editorial">Minimalista Editorial (Lookbook)</option>
-            </select>
+              onChange={(val) => setTheme((t) => ({ ...t, layoutStyle: val as LayoutStyle }))}
+              options={[
+                { value: "panoramic", label: "Portada Panorámica (Clásico)" },
+                { value: "split-gallery", label: "Mosaico & Galería Dividida" },
+                { value: "floating-card", label: "Tarjeta Flotante & Stories" },
+                { value: "minimal-editorial", label: "Minimalista Editorial (Lookbook)" },
+              ]}
+              className="w-full"
+              buttonClassName="w-full py-2.5 rounded-2xl border-slate-200 bg-slate-50 text-xs"
+            />
           </div>
 
           {/* Google Fonts */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Tipografía Oficial (Google Fonts)
             </label>
-            <select
-              name="fontFamily"
+            <input type="hidden" name="fontFamily" value={theme.fontFamily} />
+            <CustomSelect
               value={theme.fontFamily}
-              onChange={(event) =>
+              onChange={(val) =>
                 setTheme((current) => ({
                   ...current,
-                  fontFamily: event.target.value,
+                  fontFamily: val,
                 }))
               }
-              className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs outline-none focus:border-slate-400"
-            >
-              {GOOGLE_FONTS.map((font) => (
-                <option key={font.id} value={font.id}>
-                  {font.name} ({font.category}) — {font.description}
-                </option>
-              ))}
-            </select>
+              options={GOOGLE_FONTS.map((font) => ({
+                value: font.id,
+                label: `${font.name} (${font.category})`,
+                subtitle: font.description,
+              }))}
+              className="w-full"
+              buttonClassName="w-full py-2.5 rounded-2xl border-slate-200 bg-slate-50 text-xs font-bold"
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

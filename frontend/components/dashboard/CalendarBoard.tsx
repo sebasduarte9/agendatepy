@@ -39,6 +39,7 @@ import type { Appointment, PaymentMethod, AppointmentStatus } from "@/lib/dashbo
 import { addDaysIso, phoneWa, formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import Modal from "./ui/Modal";
 import Card from "./ui/Card";
+import CustomSelect from "./ui/CustomSelect";
 
 const START_HOUR = 8;
 const END_HOUR = 20;
@@ -2090,38 +2091,30 @@ function RescheduleEditModal({
             <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
               Profesional Asignado
             </label>
-            <select
+            <CustomSelect
               value={staffId}
-              onChange={(e) => setStaffId(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-            >
-              {staff.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setStaffId(val)}
+              options={staff.map((p) => ({ value: p.id, label: p.name, color: p.color }))}
+              className="w-full"
+              buttonClassName="w-full py-2.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10"
+            />
           </div>
 
           <div>
             <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
               Servicio
             </label>
-            <select
+            <CustomSelect
               value={serviceId}
-              onChange={(e) => {
-                setServiceId(e.target.value);
-                const s = services.find((srv) => srv.id === e.target.value);
+              onChange={(val) => {
+                setServiceId(val);
+                const s = services.find((srv) => srv.id === val);
                 if (s?.price) setChargeAmount(s.price);
               }}
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-            >
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({formatGs(s.price)})
-                </option>
-              ))}
-            </select>
+              options={services.map((s) => ({ value: s.id, label: s.name, subtitle: formatGs(s.price) }))}
+              className="w-full"
+              buttonClassName="w-full py-2.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10"
+            />
           </div>
         </div>
 
@@ -2130,17 +2123,13 @@ function RescheduleEditModal({
           <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
             Estado de la Cita
           </label>
-          <select
+          <CustomSelect
             value={status}
-            onChange={(e) => setStatus(e.target.value as AppointmentStatus)}
-            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-          >
-            {allowedNextStatuses.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setStatus(val as AppointmentStatus)}
+            options={allowedNextStatuses.map((opt) => ({ value: opt.value, label: opt.label }))}
+            className="w-full"
+            buttonClassName="w-full py-2.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 font-bold"
+          />
         </div>
 
         {/* Quick No-Show Button if confirmed */}
@@ -2207,16 +2196,18 @@ function RescheduleEditModal({
                   <label className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">
                     Método de Pago
                   </label>
-                  <select
+                  <CustomSelect
                     value={chargeMethod}
-                    onChange={(e) => setChargeMethod(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 text-slate-900 dark:text-white"
-                  >
-                    <option value="efectivo">Efectivo</option>
-                    <option value="pos">POS / Tarjeta</option>
-                    <option value="transferencia">SIPAP / Transferencia</option>
-                    <option value="billetera">Billetera Móvil</option>
-                  </select>
+                    onChange={(val) => setChargeMethod(val)}
+                    options={[
+                      { value: "efectivo", label: "Efectivo" },
+                      { value: "pos", label: "POS / Tarjeta" },
+                      { value: "transferencia", label: "SIPAP / Transferencia" },
+                      { value: "billetera", label: "Billetera Móvil" },
+                    ]}
+                    className="w-full"
+                    buttonClassName="w-full py-1.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10"
+                  />
                 </div>
               </div>
 

@@ -20,6 +20,7 @@ import {
   Building2,
   PieChart,
 } from "lucide-react";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 
 interface HeatmapData {
   ok: boolean;
@@ -209,32 +210,30 @@ export default function WebHeatmapAdminPage() {
         {/* Global Filters */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Tenant Selector */}
-          <select
+          <CustomSelect
             value={tenantId}
-            onChange={(e) => setTenantId(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 font-medium"
-          >
-            <option value="ALL">🏢 Todos los Negocios</option>
-            {tenants.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setTenantId(val)}
+            options={[
+              { value: "ALL", label: "Todos los Negocios" },
+              ...tenants.map((t) => ({ value: t.id, label: t.name })),
+            ]}
+            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 min-w-[170px]"
+          />
 
           {/* Page Selector */}
-          <select
+          <CustomSelect
             value={pagePath}
-            onChange={(e) => setPagePath(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 font-mono"
-          >
-            <option value="all">🌐 Todas las Páginas</option>
-            {data?.availablePages?.map((p) => (
-              <option key={p.path} value={p.path}>
-                {p.path} ({p.count} ses)
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setPagePath(val)}
+            options={[
+              { value: "all", label: "Todas las Páginas" },
+              ...(data?.availablePages?.map((p) => ({
+                value: p.path,
+                label: p.path,
+                badge: `${p.count} ses`,
+              })) || []),
+            ]}
+            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 font-mono min-w-[170px]"
+          />
 
           {/* Device Filter */}
           <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs">
@@ -267,15 +266,16 @@ export default function WebHeatmapAdminPage() {
           </div>
 
           {/* Period Selector */}
-          <select
+          <CustomSelect
             value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="7d">Últimos 7 días</option>
-            <option value="30d">Últimos 30 días</option>
-            <option value="90d">Últimos 90 días</option>
-          </select>
+            onChange={(val) => setPeriod(val)}
+            options={[
+              { value: "7d", label: "Últimos 7 días" },
+              { value: "30d", label: "Últimos 30 días" },
+              { value: "90d", label: "Últimos 90 días" },
+            ]}
+            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 min-w-[140px]"
+          />
         </div>
       </div>
 

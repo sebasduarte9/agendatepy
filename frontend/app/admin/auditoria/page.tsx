@@ -11,6 +11,7 @@ import {
   FileText,
   Activity,
 } from "lucide-react";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 
 export default function AdminAuditPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -64,24 +65,25 @@ export default function AdminAuditPage() {
 
         {/* Filters */}
         <div className="flex items-center gap-2">
-          <select
+          <CustomSelect
             value={eventTypeFilter}
-            onChange={(e) => {
-              setEventTypeFilter(e.target.value);
+            onChange={(val) => {
+              setEventTypeFilter(val);
               setPage(1);
             }}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="">Todos los eventos</option>
-            <option value="TENANT_CREATED">TENANT_CREATED</option>
-            <option value="ONBOARDING_COMPLETED">ONBOARDING_COMPLETED</option>
-            <option value="FIRST_BOOKING">FIRST_BOOKING</option>
-            <option value="APPOINTMENT_CREATED">APPOINTMENT_CREATED</option>
-            <option value="APPOINTMENT_COMPLETED">APPOINTMENT_COMPLETED</option>
-            <option value="CASH_MOVEMENT_CREATED">CASH_MOVEMENT_CREATED</option>
-            <option value="PAYOUT_PAID">PAYOUT_PAID</option>
-            <option value="EXPORT_CREATED">EXPORT_CREATED</option>
-          </select>
+            options={[
+              { value: "", label: "Todos los eventos" },
+              { value: "TENANT_CREATED", label: "TENANT_CREATED" },
+              { value: "ONBOARDING_COMPLETED", label: "ONBOARDING_COMPLETED" },
+              { value: "FIRST_BOOKING", label: "FIRST_BOOKING" },
+              { value: "APPOINTMENT_CREATED", label: "APPOINTMENT_CREATED" },
+              { value: "APPOINTMENT_COMPLETED", label: "APPOINTMENT_COMPLETED" },
+              { value: "CASH_MOVEMENT_CREATED", label: "CASH_MOVEMENT_CREATED" },
+              { value: "PAYOUT_PAID", label: "PAYOUT_PAID" },
+              { value: "EXPORT_CREATED", label: "EXPORT_CREATED" },
+            ]}
+            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 min-w-[190px]"
+          />
         </div>
       </div>
 

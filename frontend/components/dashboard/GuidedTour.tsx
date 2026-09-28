@@ -515,46 +515,70 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Liquidación",
     icon: Coins,
     summary:
-      "Cálculo automático de comisiones por cada servicio y venta de productos para pagar a barberos y estilistas sin discusiones ni errores.",
+      "Cálculo automático de comisiones por servicios y productos para pagar a tu equipo de forma rápida, clara y sin errores.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Cabecera y Filtros de Liquidación",
+        taskTitle: "Filtros de Equipo y Fecha",
         instruction:
-          "Seleccioná a un profesional específico o a todo el equipo, y definí el período de corte (esta quincena, mes o últimos 7 días).",
-        tip: "Podés auditar a un colaborador individualmente o ver el consolidado general de tu salón.",
+          "Elegí si querés ver a un colaborador en específico o a todo el equipo, y definí las fechas de corte (hoy, 7 días, quincena o mes).",
+        tip: "Te permite ver exactamente lo que corresponde a cada persona.",
         targetSelector: '[data-tour="comisiones-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Métricas y Comisiones Pendientes",
+        taskTitle: "Resumen de Dinero",
         instruction:
-          "Monitoreá en tiempo real la comisión total devengada, saldos pendientes por liquidar, montos ya pagados y la facturación global generada por tu equipo.",
-        tip: "Muestra la correlación exacta entre lo facturado en caja y lo adeudado a profesionales.",
+          "Mirá de un vistazo las ganancias del equipo, cuánto tenés pendiente por pagar, lo ya pagado y las ventas totales generadas.",
+        tip: "Todo se actualiza al instante con cada cobro en el sistema.",
         targetSelector: '[data-tour="comisiones-kpis"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Reglas & Porcentajes Configurables",
+        taskTitle: "Porcentajes de Ganancia",
         instruction:
-          "Hacé clic en 'Reglas & %' para definir comisiones diferenciadas para servicios y venta de productos de mostrador para cada rol (dueño, cajera, barbero, estilista).",
-        tip: "Cada profesional puede tener un porcentaje personalizado para adaptarse a su categoría.",
+          "Hacé clic en 'Porcentajes' para definir cuánto gana cada miembro del equipo por servicios (ej. 50%) y por productos vendidos (ej. 10%).",
+        tip: "Podés personalizar la comisión de cada rol según tu negocio.",
         targetSelector: '[data-tour="comisiones-rules"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Liquidar Comisiones con Egreso en Caja",
+        taskTitle: "Pestañas de Navegación",
         instruction:
-          "Hacé clic en 'Liquidar Comisiones' para calcular el monto neto, descontar vales o adelantos, elegir el medio de pago (SIPAP/Efectivo) y registrar el egreso contable en tu Caja Diaria de forma automática.",
-        tip: "Incluye la opción de emitir el comprobante de liquidación y enviarlo directo por WhatsApp.",
-        targetSelector: '[data-tour="comisiones-liquidar-btn"]',
+          "Utilizá estas pestañas para acceder directamente al equipo y sus ganancias, al detalle de turnos y ventas, y al historial de pagos.",
+        tip: "Te permite moverte de forma ágil entre las diferentes áreas del módulo.",
+        targetSelector: '[data-tour="comisiones-tabs"]',
       },
       {
         stepNumber: 5,
-        taskTitle: "Historial de Liquidaciones & Comprobantes",
+        taskTitle: "Perfil y Ganancias (% Servicios vs % Productos)",
         instruction:
-          "Revisá el historial con número de recibo oficial (#LIQ-2026-XXX), fecha de pago y botón directo para imprimir o compartir el comprobante.",
-        tip: "Garantiza total transparencia contable y respaldo legal para tus colaboradores.",
+          "En la tarjeta de cada profesional podés ver qué porcentaje de su dinero viene de servicios y qué porcentaje viene de productos vendidos.",
+        tip: "Incluye una barra visual con el desglose y montos en Guaraníes.",
+        targetSelector: '[data-tour="comisiones-staff-list"]',
+      },
+      {
+        stepNumber: 6,
+        taskTitle: "Pagar al Colaborador",
+        instruction:
+          "Hacé clic en 'Pagar Comisión' para pagarle a un profesional, descontar adelantos o vales si los tuviera, y asentar la salida de caja.",
+        tip: "Al confirmar, se genera el recibo oficial con el desglose completo.",
+        targetSelector: '[data-tour="comisiones-liquidar-btn"]',
+      },
+      {
+        stepNumber: 7,
+        taskTitle: "Detalle de Servicios y Ventas",
+        instruction:
+          "Revisá cada servicio realizado y cada producto vendido con el monto cobrado y la ganancia calculada para el colaborador.",
+        tip: "Sirve para revisar turno por turno antes de hacer el pago.",
+        targetSelector: '[data-tour="comisiones-turnos-table"]',
+      },
+      {
+        stepNumber: 8,
+        taskTitle: "Historial de Pagos y Recibos",
+        instruction:
+          "Consultá todos los pagos realizados e imprimí o compartí por WhatsApp el recibo oficial con el desglose de servicios y productos.",
+        tip: "Cada pago queda registrado con su número de recibo oficial.",
         targetSelector: '[data-tour="comisiones-payouts-table"]',
       },
     ],

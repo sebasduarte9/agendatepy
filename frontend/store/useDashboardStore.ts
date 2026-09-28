@@ -197,6 +197,7 @@ export const initialProductOrders: ProductOrder[] = [
     orderNumber: "#PED-501",
     clientName: "Rodrigo Caballero",
     clientPhone: "+595 981 445 120",
+    sellerStaffId: "st-marcos",
     items: [
       {
         productId: "pr-1",
@@ -214,17 +215,18 @@ export const initialProductOrders: ProductOrder[] = [
       },
     ],
     totalAmount: 105000,
-    status: "pending",
+    status: "delivered",
     paymentMethod: "transferencia",
     deliveryType: "retirar_en_local",
     createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    notes: "Pasa a retirar a las 18:30 hs al salir del trabajo.",
+    notes: "Vendido por Marcos Benítez en sillón tras corte.",
   },
   {
     id: "ord-2",
     orderNumber: "#PED-502",
     clientName: "Gonzalo Almirón",
     clientPhone: "+595 971 889 332",
+    sellerStaffId: "st-sofia",
     items: [
       {
         productId: "pr-3",
@@ -235,17 +237,18 @@ export const initialProductOrders: ProductOrder[] = [
       },
     ],
     totalAmount: 130000,
-    status: "confirmed",
+    status: "delivered",
     paymentMethod: "pos",
-    deliveryType: "delivery",
+    deliveryType: "retirar_en_local",
     createdAt: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-    notes: "Enviar por moto delivery a Villa Morra.",
+    notes: "Recomendado y vendido por Sofía en peinado.",
   },
   {
     id: "ord-3",
     orderNumber: "#PED-503",
     clientName: "Esteban Rivas",
     clientPhone: "+595 982 710 445",
+    sellerStaffId: "st-leticia",
     items: [
       {
         productId: "pr-1",
@@ -260,7 +263,29 @@ export const initialProductOrders: ProductOrder[] = [
     paymentMethod: "efectivo",
     deliveryType: "retirar_en_local",
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    notes: "Entregado y cobrado en mostrador.",
+    notes: "Vendido en caja por Leticia Romero.",
+  },
+  {
+    id: "ord-4",
+    orderNumber: "#PED-504",
+    clientName: "Carlos Méndez",
+    clientPhone: "+595 983 221 990",
+    sellerStaffId: "st-diego",
+    items: [
+      {
+        productId: "pr-2",
+        productName: "Aceite para Barba Sandalwood & Argán",
+        qty: 1,
+        unitPrice: 55000,
+        isOnSale: false,
+      },
+    ],
+    totalAmount: 55000,
+    status: "delivered",
+    paymentMethod: "efectivo",
+    deliveryType: "retirar_en_local",
+    createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+    notes: "Vendido por Diego Franco.",
   },
 ];
 
@@ -526,6 +551,10 @@ export const initialCommissionPayouts: CommissionPayoutRecord[] = [
     periodEnd: "2026-09-15T23:59:59.000Z",
     servicesAmount: 1850000,
     productsAmount: 210000,
+    servicesCommission: 925000,
+    productsCommission: 21000,
+    servicesSharePercent: 98,
+    productsSharePercent: 2,
     grossCommission: 946000,
     advancesDeducted: 100000,
     amountPaid: 846000,
@@ -546,6 +575,10 @@ export const initialCommissionPayouts: CommissionPayoutRecord[] = [
     periodEnd: "2026-09-15T23:59:59.000Z",
     servicesAmount: 2400000,
     productsAmount: 140000,
+    servicesCommission: 1080000,
+    productsCommission: 14000,
+    servicesSharePercent: 99,
+    productsSharePercent: 1,
     grossCommission: 1094000,
     advancesDeducted: 0,
     amountPaid: 1094000,
@@ -566,6 +599,10 @@ export const initialCommissionPayouts: CommissionPayoutRecord[] = [
     periodEnd: "2026-09-15T23:59:59.000Z",
     servicesAmount: 1100000,
     productsAmount: 70000,
+    servicesCommission: 440000,
+    productsCommission: 7000,
+    servicesSharePercent: 98,
+    productsSharePercent: 2,
     grossCommission: 447000,
     advancesDeducted: 0,
     amountPaid: 447000,
@@ -1298,6 +1335,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       commissionPayouts: updatedPayouts,
       cashMovements: [cashExpense, ...get().cashMovements],
     });
+
+    // 3. Deduct advanceBalance from staff member if advance was deducted
+    if (newPayout.advancesDeducted && newPayout.advancesDeducted > 0) {
+      const currentStaff = get().staff.find((s) => s.id === newPayout.staffId);
+      if (currentStaff && (currentStaff.advanceBalance ?? 0) > 0) {
+        const remaining = Math.max(0, (currentStaff.advanceBalance || 0) - newPayout.advancesDeducted);
+        get().updateStaff(newPayout.staffId, { advanceBalance: remaining });
+      }
+    }
 
     // Also attempt POST to backend if running with Postgres
     fetch("/api/commission-payouts", {

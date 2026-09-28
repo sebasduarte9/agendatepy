@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { TIMEZONES, useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 
 const AVAILABLE_PAYMENT_METHODS = [
   {
@@ -383,17 +384,13 @@ export default function ConfiguracionPage() {
                 <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1 flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5 text-slate-400" /> Zona Horaria (TZ)
                 </label>
-                <select
+                <CustomSelect
                   value={business.timezone}
-                  onChange={(e) => updateBusiness({ timezone: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                >
-                  {TIMEZONES.map((tz) => (
-                    <option key={tz} value={tz}>
-                      {tz}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => updateBusiness({ timezone: val })}
+                  options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
+                  className="w-full"
+                  buttonClassName="w-full py-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-white/10"
+                />
               </div>
             </div>
 

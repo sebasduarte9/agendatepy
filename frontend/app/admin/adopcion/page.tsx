@@ -20,6 +20,7 @@ import {
   ArrowRight,
   CalendarCheck,
 } from "lucide-react";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 
 export default function AdoptionPage() {
   const [loading, setLoading] = useState(true);
@@ -131,19 +132,20 @@ export default function AdoptionPage() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
           <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <select
+          <CustomSelect
             value={featureFilter}
-            onChange={(e) => setFeatureFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">Todas las funcionalidades</option>
-            <option value="calendar">Con Agenda / Citas</option>
-            <option value="cash">Con Cobros en Caja</option>
-            <option value="cashRegister">Con Cierres de Caja</option>
-            <option value="commissions">Con Comisiones</option>
-            <option value="payouts">Con Liquidaciones</option>
-            <option value="portal">Con Portal Público</option>
-          </select>
+            onChange={(val) => setFeatureFilter(val)}
+            options={[
+              { value: "ALL", label: "Todas las funcionalidades" },
+              { value: "calendar", label: "Con Agenda / Citas" },
+              { value: "cash", label: "Con Cobros en Caja" },
+              { value: "cashRegister", label: "Con Cierres de Caja" },
+              { value: "commissions", label: "Con Comisiones" },
+              { value: "payouts", label: "Con Liquidaciones" },
+              { value: "portal", label: "Con Portal Público" },
+            ]}
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-200 min-w-[190px]"
+          />
         </div>
       </div>
 
