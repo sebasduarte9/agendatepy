@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Plus,
   Calendar as CalendarIcon,
   Clock,
@@ -112,11 +113,21 @@ export default function CalendarBoard() {
   const [newClientName, setNewClientName] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [newClientId, setNewClientId] = useState<string | null>(null);
-  const [clientSearchQuery, setClientSearchQuery] = useState("");
-  const [clientSearchOpen, setClientSearchOpen] = useState(false);
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [staffDropdownOpen, setStaffDropdownOpen] = useState(false);
+  const [timeDropdownOpen, setTimeDropdownOpen] = useState(false);
 
   const [newServiceId, setNewServiceId] = useState(services[0]?.id || "");
   const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>("efectivo");
+
+  // Close dropdowns on modal close
+  useEffect(() => {
+    if (!newModalOpen) {
+      setServiceDropdownOpen(false);
+      setStaffDropdownOpen(false);
+      setTimeDropdownOpen(false);
+    }
+  }, [newModalOpen]);
 
   // Schedule Block Modal State
   const [blockModalOpen, setBlockModalOpen] = useState(false);
@@ -157,14 +168,14 @@ export default function CalendarBoard() {
 
   // Matching clients for autocomplete
   const matchingClients = useMemo(() => {
-    if (!clientSearchQuery.trim()) return clients.slice(0, 5);
-    const q = clientSearchQuery.toLowerCase().trim();
+    if (!newClientName.trim() || newClientId) return [];
+    const q = newClientName.toLowerCase().trim();
     return clients.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.phone && c.phone.includes(q))
-    ).slice(0, 6);
-  }, [clients, clientSearchQuery]);
+    ).slice(0, 4);
+  }, [clients, newClientName, newClientId]);
 
   // Date steppers
   function stepSlotDate(days: number) {
@@ -198,24 +209,18 @@ export default function CalendarBoard() {
     setNewClientId(c.id);
     setNewClientName(c.name);
     setNewClientPhone(c.phone || "");
-    setClientSearchQuery(c.name);
-    setClientSearchOpen(false);
   }
 
   function handleCreateNewClientFromQuery(name: string) {
     const cleanName = name.trim();
     setNewClientId(null);
     setNewClientName(cleanName);
-    setClientSearchQuery(cleanName);
-    setClientSearchOpen(false);
   }
 
   function handleClearClient() {
     setNewClientId(null);
     setNewClientName("");
     setNewClientPhone("");
-    setClientSearchQuery("");
-    setClientSearchOpen(true);
   }
 
   // Query parameter handling for "Ver en agenda" and "Nueva cita desde cliente"
@@ -243,7 +248,6 @@ export default function CalendarBoard() {
         setNewClientId(match.id);
         setNewClientName(match.name);
         setNewClientPhone(match.phone);
-        setClientSearchQuery(match.name);
         setNewModalMode("appointment");
         setNewModalOpen(true);
       } else if (queryNewForClient.length > 10) {
@@ -255,7 +259,6 @@ export default function CalendarBoard() {
               setNewClientId(d.client.id);
               setNewClientName(d.client.name);
               setNewClientPhone(d.client.phone);
-              setClientSearchQuery(d.client.name);
               setNewModalMode("appointment");
               setNewModalOpen(true);
             }
@@ -290,8 +293,6 @@ export default function CalendarBoard() {
     setNewClientId(null);
     setNewClientName("");
     setNewClientPhone("");
-    setClientSearchQuery("");
-    setClientSearchOpen(false);
     setNewServiceId(services[0]?.id || "");
     setBlockDate(dateStr);
     setBlockStart(timeStr);
@@ -388,8 +389,6 @@ export default function CalendarBoard() {
               setNewClientId(null);
               setNewClientName("");
               setNewClientPhone("");
-              setClientSearchQuery("");
-              setClientSearchOpen(false);
               setNewServiceId(services[0]?.id || "");
               setNewModalMode("appointment");
               setNewModalOpen(true);
@@ -611,9 +610,9 @@ export default function CalendarBoard() {
       {/* Quick Booking & Schedule Block Custom Modal */}
       <Modal
         id="quickBookingModal"
-        maxWidth="max-w-xl"
+        maxWidth="max-w-lg"
         open={newModalOpen}
-        title={newModalMode === "appointment" ? "Agendar Nueva Cita" : "Bloquear Horario en Agenda"}
+        title={newModalMode === "appointment" ? "Agendar Turno" : "Bloquear Horario"}
         onClose={() => setNewModalOpen(false)}
       >
         <div className="space-y-4 text-xs">
@@ -622,7 +621,7 @@ export default function CalendarBoard() {
             <button
               type="button"
               onClick={() => setNewModalMode("appointment")}
-              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 newModalMode === "appointment"
                   ? "bg-white dark:bg-slate-900 text-primary shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -634,7 +633,7 @@ export default function CalendarBoard() {
             <button
               type="button"
               onClick={() => setNewModalMode("block")}
-              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 newModalMode === "block"
                   ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -646,36 +645,207 @@ export default function CalendarBoard() {
           </div>
 
           {newModalMode === "appointment" ? (
-            <form onSubmit={handleCreateAppointment} className="space-y-4">
-              {/* Contextual Date & Time Selector */}
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Fecha y Horario de la Cita
-                </label>
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/60 p-3 space-y-3">
-                  {/* Date Navigation Row */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => stepSlotDate(-1)}
-                        className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
-                        title="Día anterior"
-                      >
-                        <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
-                      </button>
-                      <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
-                        {formattedSlotDate}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => stepSlotDate(1)}
-                        className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
-                        title="Día siguiente"
-                      >
-                        <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
-                      </button>
+            <form onSubmit={handleCreateAppointment} className="space-y-3.5">
+              {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="relative">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Cliente *
+                  </label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Nombre y Apellido"
+                      value={newClientName}
+                      onChange={(e) => {
+                        setNewClientName(e.target.value);
+                        setNewClientId(null);
+                      }}
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Autocomplete suggestions popover ONLY if matches found and typing */}
+                  {matchingClients.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 space-y-0.5 max-h-40 overflow-y-auto">
+                      <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-medium">Sugerencias:</span>
+                      {matchingClients.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setNewClientId(c.id);
+                            setNewClientName(c.name);
+                            setNewClientPhone(c.phone || "");
+                          }}
+                          className="w-full flex items-center justify-between p-1.5 rounded-lg text-left hover:bg-primary/10 transition cursor-pointer"
+                        >
+                          <span className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</span>
+                          <span className="text-[11px] text-slate-400 font-mono">{c.phone || ""}</span>
+                        </button>
+                      ))}
                     </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    WhatsApp (PY)
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0">
+                      <span>🇵🇾</span>
+                      <span>+595</span>
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder="0981 123 456"
+                      value={newClientPhone.replace(/^\+595\s*/, "")}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9\s]/g, "");
+                        setNewClientPhone(raw ? `+595 ${raw}` : "");
+                      }}
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ROW 2: SERVICIO & PROFESIONAL */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Custom Service Selector */}
+                <div className="relative">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Servicio
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setServiceDropdownOpen(!serviceDropdownOpen);
+                      setStaffDropdownOpen(false);
+                      setTimeDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                  >
+                    <div className="min-w-0 flex-1 truncate pr-2">
+                      <span className="font-bold text-slate-900 dark:text-white">{currentService?.name}</span>
+                      <span className="text-slate-400 ml-1.5 font-medium">({currentService?.durationMin}m · {formatGs(currentService?.price || 0)})</span>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${serviceDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {serviceDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
+                      {services.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setNewServiceId(s.id);
+                            setServiceDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition cursor-pointer ${
+                            newServiceId === s.id ? "bg-primary/10 text-primary font-bold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <span className="truncate pr-2">{s.name}</span>
+                          <span className="text-[11px] font-mono shrink-0 text-slate-500 dark:text-slate-400">{formatGs(s.price)} · {s.durationMin}m</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Staff Selector */}
+                <div className="relative">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Profesional
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStaffDropdownOpen(!staffDropdownOpen);
+                      setServiceDropdownOpen(false);
+                      setTimeDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                  >
+                    {(() => {
+                      const assigned = staff.find((s) => s.id === newSlotData.staffId) || staff[0];
+                      return (
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span
+                            className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
+                            style={{ background: assigned?.color || "#6366f1" }}
+                          >
+                            {assigned?.avatar || "P"}
+                          </span>
+                          <span className="font-bold text-slate-900 dark:text-white truncate">{assigned?.name}</span>
+                          <span className="text-slate-400 text-[11px]">({assigned?.role})</span>
+                        </div>
+                      );
+                    })()}
+                    <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${staffDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {staffDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
+                      {staff.filter((s) => s.active).map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setNewSlotData((prev) => ({ ...prev, staffId: p.id }));
+                            setStaffDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-2 p-2 rounded-lg text-left transition cursor-pointer ${
+                            newSlotData.staffId === p.id ? "bg-primary/10 text-primary font-bold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <span
+                            className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shrink-0"
+                            style={{ background: p.color }}
+                          >
+                            {p.avatar}
+                          </span>
+                          <span className="flex-1 truncate">{p.name}</span>
+                          <span className="text-[11px] text-slate-400">{p.role}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ROW 3: FECHA Y HORA (COMPACT BAR) */}
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Fecha y Horario
+                </label>
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-2.5">
+                  {/* Date Navigator */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => stepSlotDate(-1)}
+                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      title="Día anterior"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    </button>
+                    <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                      {formattedSlotDate}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => stepSlotDate(1)}
+                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      title="Día siguiente"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    </button>
                     <button
                       type="button"
                       onClick={() =>
@@ -684,304 +854,99 @@ export default function CalendarBoard() {
                           date: formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"),
                         }))
                       }
-                      className="text-[11px] font-bold text-primary hover:underline px-2 py-0.5 rounded-lg hover:bg-primary/10 transition cursor-pointer"
+                      className="text-[10.5px] font-bold text-primary hover:underline px-1.5 py-0.5 rounded hover:bg-primary/10 transition cursor-pointer"
                     >
                       Hoy
                     </button>
                   </div>
 
-                  {/* Time Display & Stepper */}
-                  <div className="flex items-center justify-between border-t border-slate-200/60 dark:border-white/5 pt-2.5">
-                    <div>
-                      <span className="text-[11px] text-slate-400 block font-medium">Horario Inicio:</span>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-xs">
-                          {newSlotData.time} hs
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          hasta <strong className="text-slate-700 dark:text-slate-200">{appointmentEndTime} hs</strong> ({currentService?.durationMin || 45} min)
-                        </span>
-                      </div>
-                    </div>
+                  {/* Time display & Stepper */}
+                  <div className="flex items-center gap-1.5 relative">
+                    <button
+                      type="button"
+                      onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, -15) }))}
+                      className="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                    >
+                      -15m
+                    </button>
 
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, -15) }))}
-                        className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
-                      >
-                        -15m
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, 15) }))}
-                        className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
-                      >
-                        +15m
-                      </button>
-                    </div>
-                  </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeDropdownOpen(!timeDropdownOpen);
+                        setServiceDropdownOpen(false);
+                        setStaffDropdownOpen(false);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-black text-xs text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
+                    >
+                      <Clock className="h-3 w-3 text-primary" />
+                      <span>{newSlotData.time} hs</span>
+                      <ChevronDown className="h-3 w-3 text-slate-400 ml-0.5" />
+                    </button>
 
-                  {/* Quick Time Slot Chips */}
-                  <div>
-                    <span className="text-[10.5px] text-slate-400 block mb-1.5 font-medium">Atajos de hora:</span>
-                    <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-                      {APPOINTMENT_TIME_SLOTS.map((t) => {
-                        const isSelected = newSlotData.time === t;
-                        return (
+                    <button
+                      type="button"
+                      onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, 15) }))}
+                      className="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                    >
+                      +15m
+                    </button>
+
+                    <span className="text-[11px] text-slate-400 hidden sm:inline">
+                      hasta <strong>{appointmentEndTime} hs</strong>
+                    </span>
+
+                    {/* Time dropdown popover */}
+                    {timeDropdownOpen && (
+                      <div className="absolute right-0 top-full mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-2 w-48 max-h-48 overflow-y-auto grid grid-cols-2 gap-1">
+                        {APPOINTMENT_TIME_SLOTS.map((t) => (
                           <button
                             key={t}
                             type="button"
-                            onClick={() => setNewSlotData((prev) => ({ ...prev, time: t }))}
-                            className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition cursor-pointer ${
-                              isSelected
-                                ? "bg-primary text-white shadow-xs"
-                                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-primary"
+                            onClick={() => {
+                              setNewSlotData((prev) => ({ ...prev, time: t }));
+                              setTimeDropdownOpen(false);
+                            }}
+                            className={`py-1 px-2 rounded-lg text-center font-mono text-[11px] font-bold transition cursor-pointer ${
+                              newSlotData.time === t
+                                ? "bg-primary text-white"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                             }`}
                           >
                             {t}
                           </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Custom Client Selector (Combobox + Quick Create + WhatsApp Phone) */}
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Cliente *
-                </label>
-
-                {!newClientName ? (
-                  <div className="relative">
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type="text"
-                        autoFocus
-                        placeholder="Buscar por nombre o tipear para crear uno nuevo..."
-                        value={clientSearchQuery}
-                        onFocus={() => setClientSearchOpen(true)}
-                        onChange={(e) => {
-                          setClientSearchQuery(e.target.value);
-                          setClientSearchOpen(true);
-                        }}
-                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Autocomplete Dropdown */}
-                    {clientSearchOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1.5 z-30 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 shadow-xl backdrop-blur-xl p-1.5 space-y-1 max-h-56 overflow-y-auto">
-                        {matchingClients.map((c) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => handleSelectClient(c)}
-                            className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-primary/5 dark:hover:bg-primary/10 transition cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs shrink-0">
-                                {c.name.slice(0, 2).toUpperCase()}
-                              </span>
-                              <div>
-                                <p className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</p>
-                                <p className="text-[11px] text-slate-400 font-mono">{c.phone || "Sin teléfono"}</p>
-                              </div>
-                            </div>
-                            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                              Frecuente
-                            </span>
-                          </button>
                         ))}
-
-                        {/* Quick Create Card if typing */}
-                        {clientSearchQuery.trim().length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleCreateNewClientFromQuery(clientSearchQuery)}
-                            className="w-full flex items-center gap-2.5 p-2 rounded-xl text-left bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition cursor-pointer"
-                          >
-                            <UserPlus className="h-4 w-4 shrink-0 text-emerald-600" />
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-xs truncate">
-                                Registrar nuevo cliente: &quot;{clientSearchQuery.trim()}&quot;
-                              </p>
-                              <p className="text-[10.5px] text-emerald-600/80 dark:text-emerald-400">
-                                Se creará su ficha automáticamente al confirmar la cita
-                              </p>
-                            </div>
-                          </button>
-                        )}
-
-                        {matchingClients.length === 0 && !clientSearchQuery.trim() && (
-                          <div className="p-3 text-center text-slate-400 text-xs">
-                            Comenzá a escribir el nombre del cliente...
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="rounded-2xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-3 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white font-bold text-xs shadow-xs">
-                          {newClientName.slice(0, 2).toUpperCase()}
-                        </span>
-                        <div>
-                          <p className="font-black text-slate-900 dark:text-white text-xs">{newClientName}</p>
-                          <span className="text-[10px] font-bold text-primary">
-                            {newClientId ? "Cliente Registrado" : "Nuevo Cliente"}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleClearClient}
-                        className="text-[11px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white underline cursor-pointer"
-                      >
-                        Cambiar
-                      </button>
-                    </div>
-
-                    {/* WhatsApp Phone input */}
-                    <div>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1">
-                        Teléfono WhatsApp (para recordatorios automáticos):
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
-                          <span>🇵🇾</span>
-                          <span>+595</span>
-                        </div>
-                        <div className="relative flex-1">
-                          <input
-                            type="tel"
-                            placeholder="0981 123 456"
-                            value={newClientPhone.replace(/^\+595\s*/, "")}
-                            onChange={(e) => {
-                              const raw = e.target.value.replace(/[^0-9\s]/g, "");
-                              setNewClientPhone(raw ? `+595 ${raw}` : "");
-                            }}
-                            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
-                          />
-                          <Phone className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Custom Service Selector Cards */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="font-semibold text-slate-700 dark:text-slate-300">
-                    Servicio a Realizar
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {services.length} disponibles
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
-                  {services.map((s) => {
-                    const isSelected = newServiceId === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setNewServiceId(s.id)}
-                        className={`flex items-start justify-between p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                          isSelected
-                            ? "border-primary bg-primary/10 shadow-xs ring-2 ring-primary/20"
-                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-white/20"
-                        }`}
-                      >
-                        <div className="min-w-0 flex-1 pr-2">
-                          <p className="font-bold text-slate-900 dark:text-white text-xs truncate">
-                            {s.name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
-                              <Clock className="h-3 w-3" /> {s.durationMin}m
-                            </span>
-                            <span className="text-[11px] font-bold text-primary">
-                              {formatGs(s.price)}
-                            </span>
-                          </div>
-                        </div>
-                        {isSelected ? (
-                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                        ) : (
-                          <div className="h-4 w-4 rounded-full border border-slate-300 dark:border-slate-700 shrink-0 mt-0.5" />
-                        )}
-                      </button>
-                    );
-                  })}
                 </div>
               </div>
 
-              {/* Custom Staff Selector Chips */}
+              {/* ROW 4: MÉTODO DE PAGO */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Profesional Asignado
-                </label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {staff.filter((s) => s.active).map((p) => {
-                    const isSelected = newSlotData.staffId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setNewSlotData((prev) => ({ ...prev, staffId: p.id }))}
-                        className={`flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs transition cursor-pointer ${
-                          isSelected
-                            ? "border-primary bg-primary/10 text-primary font-bold shadow-xs ring-2 ring-primary/20"
-                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300"
-                        }`}
-                      >
-                        <span
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
-                          style={{ background: p.color }}
-                        >
-                          {p.avatar}
-                        </span>
-                        <span>{p.name.split(" ")[0]}</span>
-                        {isSelected && <Check className="h-3 w-3 text-primary ml-0.5" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Custom Payment Method Chips */}
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Método de Pago
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1.5">
                   {[
-                    { id: "efectivo" as const, label: "Efectivo", icon: Banknote, color: "text-emerald-500" },
-                    { id: "sipap" as const, label: "SIPAP", icon: Landmark, color: "text-blue-500" },
-                    { id: "pos_bancard" as const, label: "POS Tarjeta", icon: CreditCard, color: "text-amber-500" },
-                    { id: "billetera_py" as const, label: "Billetera", icon: Smartphone, color: "text-purple-500" },
-                  ].map(({ id, label, icon: Icon, color }) => {
+                    { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
+                    { id: "sipap" as const, label: "SIPAP", icon: Landmark },
+                    { id: "pos_bancard" as const, label: "POS", icon: CreditCard },
+                    { id: "billetera_py" as const, label: "Billetera", icon: Smartphone },
+                  ].map(({ id, label, icon: Icon }) => {
                     const isSelected = newPaymentMethod === id;
                     return (
                       <button
                         key={id}
                         type="button"
                         onClick={() => setNewPaymentMethod(id)}
-                        className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2 px-2.5 text-xs font-bold transition cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 px-2 text-xs font-bold transition cursor-pointer ${
                           isSelected
-                            ? "border-primary bg-primary/10 text-primary shadow-xs ring-2 ring-primary/20"
-                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                            ? "border-primary bg-primary text-white shadow-xs"
+                            : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
                         }`}
                       >
-                        <Icon className={`h-3.5 w-3.5 ${color}`} />
+                        <Icon className="h-3.5 w-3.5" />
                         <span>{label}</span>
                       </button>
                     );
@@ -989,88 +954,88 @@ export default function CalendarBoard() {
                 </div>
               </div>
 
-              {/* Footer Actions */}
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setNewModalOpen(false)}
-                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingQuick || !newClientName.trim()}
-                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmittingQuick ? "Guardando cita..." : "Confirmar Turno"}
-                </button>
+              {/* FOOTER ACTIONS & TOTAL */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10">
+                <div>
+                  <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
+                  <span className="text-sm font-black text-primary">
+                    {formatGs(currentService?.price || 0)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewModalOpen(false)}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingQuick || !newClientName.trim()}
+                    className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmittingQuick ? "Guardando..." : "Confirmar Turno"}
+                  </button>
+                </div>
               </div>
             </form>
           ) : (
-            <form onSubmit={handleCreateBlock} className="space-y-4">
-              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-1">
-                <span className="font-bold text-amber-700 dark:text-amber-400 block flex items-center gap-1.5">
-                  <Ban className="h-4 w-4" /> Bloqueo de Horario Operativo
-                </span>
-                <p className="text-slate-600 dark:text-slate-300 text-[11.5px]">
-                  Evita que los clientes reserven en este intervalo de tiempo (online o presencial).
-                </p>
+            <form onSubmit={handleCreateBlock} className="space-y-3.5">
+              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                <Ban className="h-4 w-4 shrink-0 text-amber-600" />
+                <span>Impide que se agenden turnos en este intervalo de tiempo.</span>
               </div>
 
-              {/* Staff to Block */}
+              {/* Profesional Afectado */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Profesional Afectado
                 </label>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
                     onClick={() => setBlockStaffId("all")}
-                    className={`flex items-center gap-1.5 rounded-2xl border px-3 py-2 text-xs transition cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
                       blockStaffId === "all"
-                        ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold ring-2 ring-amber-500/20"
-                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                        ? "border-amber-500 bg-amber-500 text-white shadow-xs"
+                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
                     }`}
                   >
-                    <Users className="h-3.5 w-3.5" />
-                    <span>Todo el local (Cierre general)</span>
+                    Todo el salón
                   </button>
-                  {staff.map((p) => {
-                    const isSelected = blockStaffId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setBlockStaffId(p.id)}
-                        className={`flex items-center gap-1.5 rounded-2xl border px-3 py-2 text-xs transition cursor-pointer ${
-                          isSelected
-                            ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold ring-2 ring-amber-500/20"
-                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300"
-                        }`}
+                  {staff.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setBlockStaffId(p.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs transition cursor-pointer ${
+                        blockStaffId === p.id
+                          ? "border-amber-500 bg-amber-500 text-white font-bold shadow-xs"
+                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      <span
+                        className="flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white shrink-0"
+                        style={{ background: p.color }}
                       >
-                        <span
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
-                          style={{ background: p.color }}
-                        >
-                          {p.avatar}
-                        </span>
-                        <span>{p.name.split(" ")[0]}</span>
-                      </button>
-                    );
-                  })}
+                        {p.avatar}
+                      </span>
+                      <span>{p.name.split(" ")[0]}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Date and Time block */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/60 p-3 space-y-3">
-                {/* Date Stepper */}
+              {/* Fecha y Rango Horario */}
+              <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => stepBlockDate(-1)}
-                      className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
                     >
                       <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                     </button>
@@ -1080,7 +1045,7 @@ export default function CalendarBoard() {
                     <button
                       type="button"
                       onClick={() => stepBlockDate(1)}
-                      className="p-1 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
                     >
                       <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                     </button>
@@ -1090,100 +1055,72 @@ export default function CalendarBoard() {
                     onClick={() =>
                       setBlockDate(formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"))
                     }
-                    className="text-[11px] font-bold text-amber-600 hover:underline px-2 py-0.5 rounded-lg hover:bg-amber-500/10 transition cursor-pointer"
+                    className="text-[10.5px] font-bold text-amber-600 hover:underline px-1.5 py-0.5 rounded hover:bg-amber-500/10 transition cursor-pointer"
                   >
                     Hoy
                   </button>
                 </div>
 
-                {/* Time interval from and to */}
-                <div className="grid grid-cols-2 gap-3 border-t border-slate-200/60 dark:border-white/5 pt-2.5">
-                  <div>
-                    <span className="text-[11px] text-slate-400 block font-medium mb-1">Hora Desde:</span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 flex-1 text-center">
-                        {blockStart} hs
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setBlockStart((prev) => stepTime(prev, -15))}
-                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
-                      >
-                        -15m
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBlockStart((prev) => stepTime(prev, 15))}
-                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
-                      >
-                        +15m
-                      </button>
-                    </div>
+                <div className="flex items-center justify-between border-t border-slate-200/60 dark:border-white/5 pt-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 text-[11px]">Desde:</span>
+                    <button
+                      type="button"
+                      onClick={() => setBlockStart((prev) => stepTime(prev, -15))}
+                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="font-mono font-black text-xs px-2 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-white/10">
+                      {blockStart}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setBlockStart((prev) => stepTime(prev, 15))}
+                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                    >
+                      +
+                    </button>
                   </div>
 
-                  <div>
-                    <span className="text-[11px] text-slate-400 block font-medium mb-1">Hora Hasta:</span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs font-black text-slate-900 dark:text-white font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 flex-1 text-center">
-                        {blockEnd} hs
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setBlockEnd((prev) => stepTime(prev, -15))}
-                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
-                      >
-                        -15m
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBlockEnd((prev) => stepTime(prev, 15))}
-                        className="px-1.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-bold hover:bg-white dark:hover:bg-slate-800 cursor-pointer"
-                      >
-                        +15m
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Preset Duration Buttons */}
-                <div>
-                  <span className="text-[10.5px] text-slate-400 block mb-1 font-medium">Duración rápida:</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {BLOCK_DURATION_PRESETS.map((p) => (
-                      <button
-                        key={p.minutes}
-                        type="button"
-                        onClick={() => setBlockEnd(stepTime(blockStart, p.minutes))}
-                        className="text-[11px] rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-2.5 py-1 font-medium text-slate-600 dark:text-slate-300 hover:border-amber-500 hover:text-amber-600 transition cursor-pointer"
-                      >
-                        {p.label}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 text-[11px]">Hasta:</span>
+                    <button
+                      type="button"
+                      onClick={() => setBlockEnd((prev) => stepTime(prev, -15))}
+                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="font-mono font-black text-xs px-2 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-white/10">
+                      {blockEnd}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setBlockEnd((prev) => stepTime(prev, 15))}
+                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Reason chips & input */}
+              {/* Motivo */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Motivo del Bloqueo
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Motivo
                 </label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {[
-                    "Almuerzo / Descanso",
-                    "Reunión de Equipo",
-                    "Trámite Personal",
-                    "Mantenimiento",
-                    "Feriado / Cierre",
-                  ].map((chip) => (
+                  {["Almuerzo", "Reunión", "Trámite", "Cierre"].map((chip) => (
                     <button
                       key={chip}
                       type="button"
                       onClick={() => setBlockReason(chip)}
-                      className={`text-[11px] rounded-xl px-2.5 py-1 border transition cursor-pointer ${
+                      className={`text-[11px] rounded-lg px-2.5 py-1 border transition cursor-pointer ${
                         blockReason === chip
-                          ? "bg-amber-500 text-white border-amber-600 font-bold shadow-xs"
-                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          ? "bg-amber-500 text-white border-amber-600 font-bold"
+                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
                       }`}
                     >
                       {chip}
@@ -1193,13 +1130,14 @@ export default function CalendarBoard() {
                 <input
                   type="text"
                   required
-                  placeholder="Ej. Almuerzo o trámite"
+                  placeholder="Ej: Almuerzo o capacitación"
                   value={blockReason}
                   onChange={(e) => setBlockReason(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
+              {/* Footer */}
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
                 <button
                   type="button"
@@ -1213,7 +1151,7 @@ export default function CalendarBoard() {
                   disabled={isSubmittingQuick}
                   className="rounded-xl bg-amber-600 hover:bg-amber-500 px-5 py-2 text-xs font-bold text-white shadow-md hover:opacity-95 disabled:opacity-50 cursor-pointer"
                 >
-                  {isSubmittingQuick ? "Guardando bloqueo..." : "Guardar Bloqueo"}
+                  {isSubmittingQuick ? "Guardando..." : "Guardar Bloqueo"}
                 </button>
               </div>
             </form>
