@@ -117,6 +117,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    await prisma.platformEvent.create({
+      data: {
+        event: "CASH_MOVEMENT_CREATED",
+        tenantId: auth.tenantId,
+        entityType: "CashMovement",
+        entityId: created.id,
+        metadata: {
+          type: created.type,
+          amount: created.amount,
+          category: created.category,
+          hasAppointment: !!created.appointmentId,
+        },
+      },
+    });
+
     const movementData = {
       id: created.id,
       type: created.type === CashMovementType.INCOME ? "ingreso" : "egreso",

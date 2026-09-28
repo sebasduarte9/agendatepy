@@ -67,11 +67,12 @@ export default function StickyMobileCta() {
               {/* Botón Principal: Prueba gratis */}
               <Link
                 href="/onboarding"
-                className="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-3.5 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition"
+                className="flex h-9 items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-2.5 sm:px-3.5 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition"
               >
-                <Sparkles className="h-3 w-3 text-amber-200" />
-                <span>Crear mi agenda</span>
-                <ArrowRight className="h-3 w-3" />
+                <Sparkles className="h-3 w-3 text-amber-200 shrink-0" />
+                <span className="hidden xs:inline">Crear mi agenda</span>
+                <span className="xs:hidden">Empezar</span>
+                <ArrowRight className="h-3 w-3 shrink-0" />
               </Link>
             </div>
           </div>

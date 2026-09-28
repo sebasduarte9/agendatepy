@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Shield, Zap, Settings2, Check, Sparkles, MessageSquareCheck, WalletCards } from "lucide-react";
+import { Zap, Check, Sparkles, MessageSquareCheck, WalletCards } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 import MiniCalendar from "./MiniCalendar";
 
@@ -20,11 +20,11 @@ export default function HowItWorks() {
   return (
     <section
       id="como-funciona"
-      className="relative overflow-hidden mx-auto max-w-6xl px-4 py-14 sm:py-20 lg:py-24 sm:px-6 scroll-mt-24"
+      className="relative overflow-hidden mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20 lg:py-24 scroll-mt-24"
     >
       {/* Luces y orbes ambientales de fondo */}
-      <div className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-brand/10 blur-[100px] dark:bg-brand/15" />
-      <div className="pointer-events-none absolute -right-20 top-1/4 h-80 w-80 rounded-full bg-orange-500/10 blur-[100px] dark:bg-orange-500/15" />
+      <div className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-brand/10 blur-[100px] dark:bg-brand/15 max-w-full" />
+      <div className="pointer-events-none absolute -right-20 top-1/4 h-80 w-80 rounded-full bg-orange-500/10 blur-[100px] dark:bg-orange-500/15 max-w-full" />
 
       <motion.div
         initial={{ opacity: 0, y: 25 }}
@@ -33,16 +33,16 @@ export default function HowItWorks() {
         transition={{ duration: 0.6 }}
         className="max-w-2xl mb-6 sm:mb-8 space-y-2"
       >
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
           <Sparkles className="h-3.5 w-3.5" /> Flujo Ágil y Sin Fricción
         </span>
-        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+        <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
           De la reserva a la atención,{" "}
           <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
             en segundos
           </span>
         </h2>
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
           Probá la experiencia en vivo tal como la vivirán tus clientes al agendar en tu negocio.
         </p>
       </motion.div>
@@ -65,7 +65,7 @@ export default function HowItWorks() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-5 space-y-3"
+          className="lg:col-span-5 space-y-2.5 sm:space-y-3"
         >
           <WorkflowStep
             step="1"
@@ -102,10 +102,10 @@ function BookingWidget() {
   const service = category.services.find((item) => item.id === serviceId);
 
   return (
-    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-5 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl transition-all">
+    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-4 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl transition-all">
       {/* Pasos / Indicador superior */}
       <div className="mb-4 flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+        <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300">
           Simulador de Reserva en Vivo
         </span>
         <div className="flex items-center gap-1.5 text-xs font-semibold">

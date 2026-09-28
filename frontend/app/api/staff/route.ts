@@ -100,6 +100,19 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      await tx.platformEvent.create({
+        data: {
+          event: "STAFF_CREATED",
+          tenantId: auth.tenantId,
+          entityType: "Staff",
+          entityId: created.id,
+          metadata: {
+            name: created.name,
+            commissionPercentage: created.commissionPercentage,
+          },
+        },
+      });
+
       return created;
     });
 

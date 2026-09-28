@@ -101,6 +101,7 @@ export default function Header() {
   ) => {
     e.preventDefault();
     setActiveTab(itemId);
+    const wasMobileOpen = mobileMenuOpen;
     if (mobileMenuOpen) {
       setMobileMenuOpen(false);
     }
@@ -114,7 +115,13 @@ export default function Header() {
       }
     }
 
-    scrollToSection(itemId, "smooth");
+    if (wasMobileOpen) {
+      setTimeout(() => {
+        scrollToSection(itemId, "smooth");
+      }, 50);
+    } else {
+      scrollToSection(itemId, "smooth");
+    }
   };
 
   const navItems = [
@@ -128,10 +135,10 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-3 z-50 px-3 sm:px-6 transition-all duration-300">
+    <header className="sticky top-2 sm:top-3 z-50 px-2 sm:px-4 md:px-6 transition-all duration-300">
       <nav
         aria-label="Navegación principal"
-        className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 rounded-full border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 px-4 sm:px-6 shadow-[0_12px_32px_-10px_rgba(0,0,0,0.08)] backdrop-blur-xl"
+        className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between gap-2 sm:gap-3 rounded-full border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 px-3 sm:px-5 md:px-6 shadow-[0_12px_32px_-10px_rgba(0,0,0,0.08)] backdrop-blur-xl"
       >
         {/* Brand Logo */}
         <Link href="/" className="flex items-center shrink-0">
@@ -139,7 +146,7 @@ export default function Header() {
             whileHover={{ scale: 1.04 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <BrandLogo variant="horizontal" iconClassName="h-9 w-9" />
+            <BrandLogo variant="horizontal" iconClassName="h-7 w-7 sm:h-8.5 sm:w-8.5" />
           </motion.div>
         </Link>
 
@@ -171,7 +178,7 @@ export default function Header() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Subtle Live Demo Link */}
           <Link
             href="/barberia/reservar"
@@ -186,26 +193,27 @@ export default function Header() {
           {/* Login Button */}
           <Link
             href="/login"
-            className="hidden sm:inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs font-semibold transition-colors border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 h-9 px-3 rounded-full text-slate-700 dark:text-slate-200 shadow-2xs"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs font-semibold transition-colors border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 h-8.5 sm:h-9 px-3 rounded-full text-slate-700 dark:text-slate-200 shadow-2xs"
           >
             <LogIn className="h-3.5 w-3.5 text-slate-400" />
             <span>Acceder</span>
           </Link>
 
-          {/* High-Converting Primary CTA: Prueba gratuitamente */}
+          {/* High-Converting Primary CTA: Adaptive Text on Small Mobile */}
           <Link
             href="/onboarding"
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-9 px-4 sm:px-5 rounded-full shadow-md shadow-brand/25"
+            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-8.5 sm:h-9 px-3 sm:px-4.5 rounded-full shadow-md shadow-brand/25"
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-            <span>Prueba gratuitamente</span>
+            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300 shrink-0" />
+            <span className="hidden xs:inline">Prueba gratuitamente</span>
+            <span className="xs:hidden">Probar gratis</span>
           </Link>
 
           {/* Mobile Hamburger Toggle */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xs lg:hidden"
+            className="flex h-8.5 w-8.5 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xs lg:hidden"
             aria-label="Abrir menú"
           >
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

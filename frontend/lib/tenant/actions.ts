@@ -148,9 +148,8 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
       const baseDate = new Date("2026-01-01T00:00:00Z");
       const startTime = new Date(baseDate);
       startTime.setUTCHours(8, 0, 0, 0);
-
       const endTime = new Date(baseDate);
-      endTime.setUTCHours(20, 0, 0, 0);
+      endTime.setUTCHours(18, 0, 0, 0);
 
       for (let day = 1; day <= 6; day++) {
         await tx.staffSchedule.create({
@@ -162,6 +161,33 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
           },
         });
       }
+
+      // 7. Registrar eventos de plataforma de forma atómica
+      await tx.platformEvent.create({
+        data: {
+          event: "TENANT_CREATED",
+          tenantId: tenant.id,
+          entityType: "Tenant",
+          entityId: tenant.id,
+          metadata: {
+            slug: tenant.slug,
+            category: input.category,
+          },
+        },
+      });
+
+      await tx.platformEvent.create({
+        data: {
+          event: "ONBOARDING_COMPLETED",
+          tenantId: tenant.id,
+          entityType: "Tenant",
+          entityId: tenant.id,
+          metadata: {
+            serviceId: service.id,
+            staffId: staffMember.id,
+          },
+        },
+      });
 
       return { tenant, user: userRecord };
     });

@@ -185,6 +185,20 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      await tx.platformEvent.create({
+        data: {
+          event: "SERVICE_CREATED",
+          tenantId: auth.tenantId,
+          entityType: "Service",
+          entityId: created.id,
+          metadata: {
+            name: created.name,
+            price: created.price,
+            durationMinutes: created.durationMinutes,
+          },
+        },
+      });
+
       return {
         ...created,
         durationMin: created.durationMinutes,

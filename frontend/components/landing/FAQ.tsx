@@ -35,20 +35,20 @@ export default function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="mx-auto max-w-3xl px-4 py-20 sm:px-6 scroll-mt-20">
+    <section id="faq" className="mx-auto max-w-3xl px-3 sm:px-6 py-12 sm:py-20 scroll-mt-20">
       <div className="text-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
           <HelpCircle className="h-3.5 w-3.5" /> Resolvemos tus Dudas
         </span>
-        <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+        <h2 className="mt-3 text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
           Preguntas frecuentes
         </h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
           Todo lo que necesitás saber para poner en marcha tu agenda online en Paraguay.
         </p>
       </div>
 
-      <div className="mt-8 space-y-3">
+      <div className="mt-6 sm:mt-8 space-y-2.5 sm:space-y-3">
         {FAQS.map((item, index) => {
           const isOpen = open === index;
           return (
@@ -59,11 +59,11 @@ export default function FAQ() {
               <button
                 type="button"
                 onClick={() => setOpen(isOpen ? null : index)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition"
+                className="flex w-full items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition cursor-pointer"
               >
-                <span className="pr-3">{item.q}</span>
+                <span className="pr-3 leading-snug">{item.q}</span>
                 <ChevronDown
-                  className={`h-4 w-4 shrink-0 transition ${
+                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
                     isOpen ? "rotate-180 text-brand" : "text-slate-400"
                   }`}
                 />
@@ -76,7 +76,7 @@ export default function FAQ() {
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <p className="px-5 pb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                    <p className="px-4 sm:px-5 pb-3.5 sm:pb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80 pt-3">
                       {item.a}
                     </p>
                   </motion.div>

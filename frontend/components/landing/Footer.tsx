@@ -56,20 +56,20 @@ const COLUMNS = [
 export default function Footer() {
   return (
     <footer id="contacto" className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 transition-colors">
-      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-        <div className="grid gap-10 md:grid-cols-5">
-          <div>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14 sm:px-6">
+        <div className="grid gap-8 sm:gap-10 grid-cols-2 md:grid-cols-5">
+          <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-block">
-              <BrandLogo variant="horizontal" iconClassName="h-8 w-8" />
+              <BrandLogo variant="horizontal" iconClassName="h-7 w-7 sm:h-8 sm:w-8" />
             </Link>
-            <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+            <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400 max-w-sm">
               La plataforma de agendamiento online, asistente por WhatsApp y control de comisiones preferida por negocios y profesionales en Paraguay.
             </p>
           </div>
           {COLUMNS.map((column) => (
-            <div key={column.title}>
+            <div key={column.title} className="col-span-1">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">{column.title}</p>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-2.5 sm:mt-3 space-y-2">
                 {column.links.map((link) => (
                   <li key={link.label}>
                     {link.isExternal ? (
@@ -104,9 +104,9 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-6 text-xs text-slate-400 dark:text-slate-500 sm:flex-row gap-2">
+        <div className="mt-8 sm:mt-12 flex flex-col items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-5 sm:pt-6 text-xs text-slate-400 dark:text-slate-500 sm:flex-row gap-2 text-center sm:text-left">
           <p>© 2026 AgendatePY. Hecho en Asunción, Paraguay.</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             <span>Soporte local SIPAP</span>
             <span>·</span>
             <span>Precios en Guaraníes</span>

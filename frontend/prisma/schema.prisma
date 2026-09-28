@@ -72,6 +72,9 @@ model Tenant {
   commissionPayouts  CommissionPayout[]
   loyaltyRewards LoyaltyReward[]
   scheduleBlocks ScheduleBlock[]
+  platformEvents PlatformEvent[]
+  webAnalyticsSessions WebAnalyticsSession[]
+  webAnalyticsEvents   WebAnalyticsEvent[]
 
   @@index([subdomain])
   @@map("tenants")
@@ -394,4 +397,79 @@ model CommissionPayoutItem {
   @@index([appointmentId, status])
   @@map("commission_payout_items")
 }
+
+model PlatformEvent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String?  @map("tenant_id") @db.Uuid
+  event      String   // TENANT_CREATED, ONBOARDING_COMPLETED, FIRST_BOOKING, APPOINTMENT_COMPLETED, CASH_RECORDED, PAYOUT_PAID, EXPORT_CREATED, ADMIN_ACTION
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([event, createdAt])
+  @@index([createdAt])
+  @@map("platform_events")
+}
+
+enum WebEventType {
+  CLICK
+  MOUSE_MOVE
+  SCROLL
+
+  @@map("web_event_type")
+}
+
+model WebAnalyticsSession {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String              @map("tenant_id") @db.Uuid
+  sessionId      String              @map("session_id")
+  pagePath       String              @map("page_path")
+  deviceType     String              @default("desktop") @map("device_type")
+  viewportWidth  Int                 @default(1280) @map("viewport_width")
+  viewportHeight Int                 @default(800) @map("viewport_height")
+  userAgent      String?             @map("user_agent")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  events         WebAnalyticsEvent[]
+
+  @@unique([tenantId, sessionId, pagePath])
+  @@index([tenantId, createdAt])
+  @@index([sessionId])
+  @@map("web_analytics_sessions")
+}
+
+model WebAnalyticsEvent {
+  id              String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String               @map("tenant_id") @db.Uuid
+  sessionId       String               @map("session_id")
+  sessionRecordId String?              @map("session_record_id") @db.Uuid
+  eventType       WebEventType         @map("event_type")
+  pagePath        String               @map("page_path")
+  x               Float                @default(0)
+  y               Float                @default(0)
+  scrollDepth     Float                @default(0) @map("scroll_depth")
+  viewportWidth   Int                  @default(1280) @map("viewport_width")
+  viewportHeight  Int                  @default(800) @map("viewport_height")
+  elementSelector String?              @map("element_selector")
+  elementTag      String?              @map("element_tag")
+  elementText     String?              @map("element_text")
+  metadata        Json                 @default("{}")
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant          Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  session         WebAnalyticsSession? @relation(fields: [sessionRecordId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, eventType, createdAt])
+  @@index([tenantId, pagePath])
+  @@index([sessionId])
+  @@map("web_analytics_events")
+}
+
+
 

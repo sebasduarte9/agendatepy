@@ -84,8 +84,11 @@ function LoginForm() {
     startTransition(async () => {
       const res = await verifyOtpAction(email, otpCode, optInMarketing);
       if (res.ok && res.user) {
-        if (res.user.role === "SUPERADMIN") {
-          router.push("/superadmin");
+        const callback = searchParams.get("callbackUrl");
+        if (callback && (res.user.role === "SUPERADMIN" || !callback.startsWith("/admin"))) {
+          router.push(callback);
+        } else if (res.user.role === "SUPERADMIN") {
+          router.push("/admin");
         } else {
           router.push("/dashboard");
         }
@@ -101,8 +104,11 @@ function LoginForm() {
     startTransition(async () => {
       const res = await switchRoleDemoAction(role);
       if (res.ok && res.user) {
-        if (role === "SUPERADMIN") {
-          router.push("/superadmin");
+        const callback = searchParams.get("callbackUrl");
+        if (callback && (role === "SUPERADMIN" || !callback.startsWith("/admin"))) {
+          router.push(callback);
+        } else if (role === "SUPERADMIN") {
+          router.push("/admin");
         } else {
           router.push("/dashboard");
         }

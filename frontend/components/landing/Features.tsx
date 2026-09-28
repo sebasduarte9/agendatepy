@@ -71,13 +71,13 @@ export default function Features() {
 
       {/* Grid of Core Modules with alternating entrance animations */}
       <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 md:grid-cols-12">
-        {/* Module 1: WhatsApp Bot (Col 7 - enters from left) */}
+        {/* Module 1: WhatsApp Bot (Col 7 on desktop, 12 on tablet) */}
         <motion.div
           initial={{ opacity: 0, x: -60 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="md:col-span-7 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
+          className="md:col-span-12 lg:col-span-7 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between">
@@ -120,13 +120,13 @@ export default function Features() {
           </div>
         </motion.div>
 
-        {/* Module 2: Control de Caja y Arqueo (Col 5 - enters from right) */}
+        {/* Module 2: Control de Caja y Arqueo (Col 5 on desktop, 12 on tablet) */}
         <motion.div
           initial={{ opacity: 0, x: 60 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="md:col-span-5 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
+          className="md:col-span-12 lg:col-span-5 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between">
@@ -171,13 +171,13 @@ export default function Features() {
           </div>
         </motion.div>
 
-        {/* Module 3: Google & Apple Calendar Sync (Col 4 - enters from left) */}
+        {/* Module 3: Google & Apple Calendar Sync (Col 4 on desktop, 6 on tablet) */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="md:col-span-4 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+          className="md:col-span-6 lg:col-span-4 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center gap-2">
@@ -208,13 +208,13 @@ export default function Features() {
           </div>
         </motion.div>
 
-        {/* Module 4: Tarjeta de Fidelización (Col 4 - enters with scale and fade) */}
+        {/* Module 4: Tarjeta de Fidelización (Col 4 on desktop, 6 on tablet) */}
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="md:col-span-4 relative overflow-hidden rounded-3xl border border-amber-200/80 dark:border-amber-900/40 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white dark:to-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+          className="md:col-span-6 lg:col-span-4 relative overflow-hidden rounded-3xl border border-amber-200/80 dark:border-amber-900/40 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white dark:to-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between">
@@ -256,13 +256,13 @@ export default function Features() {
           </div>
         </motion.div>
 
-        {/* Module 5: Liquidación de Comisiones (Col 4 - enters from right) */}
+        {/* Module 5: Liquidación de Comisiones (Col 4 on desktop, 12 on tablet) */}
         <motion.div
           initial={{ opacity: 0, x: 50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="md:col-span-4 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+          className="md:col-span-12 lg:col-span-4 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
         >
           <div>
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand/10 text-brand dark:text-[#FF6B4A]">

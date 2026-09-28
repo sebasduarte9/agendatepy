@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     // 6. Redirigir según el rol y si ya tiene negocio creado
     if (sessionUser.role === "SUPERADMIN") {
-      return NextResponse.redirect(`${baseUrl}/superadmin`);
+      return NextResponse.redirect(`${baseUrl}/admin`);
     }
 
     // Si es un dueño nuevo sin negocio vinculado, enviarlo al onboarding

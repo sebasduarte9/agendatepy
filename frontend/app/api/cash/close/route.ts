@@ -86,6 +86,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    await prisma.platformEvent.create({
+      data: {
+        event: "CASH_REGISTER_CLOSED",
+        tenantId: auth.tenantId,
+        entityType: "CashRegisterClose",
+        entityId: created.id,
+        metadata: {
+          openingCash: created.openingCash,
+          countedCash: created.countedCash,
+          difference: created.difference,
+        },
+      },
+    });
+
     const closureData = {
       id: created.id,
       openedAt: created.openedAt.toISOString(),

@@ -28,7 +28,7 @@ const ITEMS = [
 
 export default function Differentiators() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20 sm:px-6">
+    <section className="mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -36,10 +36,10 @@ export default function Differentiators() {
         transition={{ duration: 0.6 }}
         className="max-w-2xl"
       >
-        <span className="rounded-full bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+        <span className="rounded-full bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
           Ventajas Clave
         </span>
-        <h2 className="mt-3 text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+        <h2 className="mt-3 text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
           Por qué salones y consultorios en Paraguay eligen AgendatePY
         </h2>
       </motion.div>
@@ -53,13 +53,13 @@ export default function Differentiators() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: (index % 2) * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs hover:border-brand/40 transition"
+              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs hover:border-brand/40 transition"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-                <Icon className="h-5 w-5" />
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               </div>
-              <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
-              <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{text}</p>
+              <h3 className="mt-3.5 sm:mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
+              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{text}</p>
             </motion.article>
           );
         })}

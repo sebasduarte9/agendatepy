@@ -330,10 +330,10 @@ export default function PhoneMockup() {
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative mx-auto flex items-center justify-center p-4 [perspective:1400px]"
+      className="relative mx-auto flex w-full items-center justify-center p-2 sm:p-4 [perspective:1400px] overflow-hidden sm:overflow-visible"
     >
       {/* Ambient Halo behind iPhone in warm brand tones */}
-      <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/30 via-orange-500/20 to-emerald-500/20 blur-3xl opacity-75" />
+      <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/30 via-orange-500/20 to-emerald-500/20 blur-3xl opacity-75 max-w-full" />
 
       {/* 3D Tiltable iPhone 16 Pro Container */}
       <motion.div
@@ -342,7 +342,7 @@ export default function PhoneMockup() {
           rotateY,
           transformStyle: "preserve-3d",
         }}
-        className="relative w-[340px] sm:w-[360px] rounded-[50px] p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
+        className="relative w-full max-w-[320px] xs:max-w-[340px] sm:max-w-[360px] rounded-[42px] sm:rounded-[50px] p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
       >
         {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel) */}
         {/* Left Side: Action Button */}
@@ -357,9 +357,9 @@ export default function PhoneMockup() {
         <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
         {/* Outer Glass Bezel */}
-        <div className="relative overflow-hidden rounded-[42px] bg-black p-[2.5px] shadow-inner">
+        <div className="relative overflow-hidden rounded-[36px] sm:rounded-[42px] bg-black p-[2px] sm:p-[2.5px] shadow-inner">
           {/* Inner Display Canvas */}
-          <div className="relative flex h-[660px] flex-col overflow-hidden rounded-[42px] bg-[#efeae2]">
+          <div className="relative flex h-[580px] xs:h-[620px] sm:h-[660px] flex-col overflow-hidden rounded-[36px] sm:rounded-[42px] bg-[#efeae2]">
             {/* ========================================================= */}
             {/* iOS iMessage Push Notification Banner */}
             {/* ========================================================= */}

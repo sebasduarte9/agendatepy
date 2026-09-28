@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { maxAdvanceDaysFromSettings } from "@/lib/scheduling/tenant-settings";
 import { parseTheme } from "@/lib/theme";
 import BookingWizard from "@/components/booking/BookingWizard";
+import WebAnalyticsTracker from "@/components/analytics/WebAnalyticsTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -221,6 +222,7 @@ export default async function ReservarPage({ params }: PageProps) {
   });
 
   return (
+    <>
     <BookingWizard
       tenant={{
         slug: tenant.subdomain,
@@ -266,5 +268,7 @@ export default async function ReservarPage({ params }: PageProps) {
       }}
       services={enrichedServices}
     />
+    <WebAnalyticsTracker tenantSlug={tenant.subdomain || tenant.slug} pagePath={`/${tenant.subdomain || tenant.slug}/reservar`} />
+    </>
   );
 }

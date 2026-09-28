@@ -246,7 +246,7 @@ async function insertPendingAppointment(
           });
         }
 
-        return tx.appointment.create({
+        const appCreated = await tx.appointment.create({
           data: {
             tenantId: tenant.id,
             staffId,
@@ -261,6 +261,22 @@ async function insertPendingAppointment(
           },
           select: { id: true },
         });
+
+        await tx.platformEvent.create({
+          data: {
+            event: "PUBLIC_BOOKING_CREATED",
+            tenantId: tenant.id,
+            entityType: "Appointment",
+            entityId: appCreated.id,
+            metadata: {
+              serviceId: service.id,
+              staffId,
+              source: "public_portal",
+            },
+          },
+        });
+
+        return appCreated;
       });
       return { ok: true, appointmentId: created.id };
     } catch (error) {

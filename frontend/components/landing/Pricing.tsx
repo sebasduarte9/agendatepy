@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, X, Shield, Sparkles, Zap } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 const BASIC_FEATURES = [
@@ -57,28 +57,28 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto space-y-3"
+          className="text-center max-w-2xl mx-auto space-y-2.5 sm:space-y-3"
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-4 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
             <Sparkles className="h-3.5 w-3.5" /> Precios Transparentes en Guaraníes (PYG)
           </span>
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+          <h2 className="text-2xl xs:text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
             Planes a tu medida,{" "}
             <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
               sin comisiones ocultas
             </span>
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
             Cobramos una suscripción fija en guaraníes. Todo lo que facturás en tu negocio es 100% tuyo.
           </p>
         </motion.div>
 
         {/* Toggle Switch Facturación Mensual vs Anual */}
-        <div className="mt-8 flex items-center justify-center gap-3.5 text-sm font-semibold">
+        <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 text-xs sm:text-sm font-semibold">
           <button
             type="button"
             onClick={() => setAnnual(false)}
-            className={`transition-colors ${!annual ? "text-brand dark:text-white font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"}`}
+            className={`transition-colors cursor-pointer ${!annual ? "text-brand dark:text-white font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"}`}
           >
             Facturación Mensual
           </button>
@@ -86,7 +86,7 @@ export default function Pricing() {
           <button
             type="button"
             onClick={() => setAnnual((value) => !value)}
-            className={`relative h-8 w-15 rounded-full p-1 transition-all duration-300 shadow-inner ${
+            className={`relative h-7 sm:h-8 w-13 sm:w-15 rounded-full p-1 transition-all duration-300 shadow-inner cursor-pointer ${
               annual ? "bg-gradient-to-r from-brand to-[#FF6B4A]" : "bg-slate-300 dark:bg-slate-700"
             }`}
             aria-label="Cambiar facturación mensual o anual"
@@ -94,26 +94,26 @@ export default function Pricing() {
             <motion.div
               layout
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className={`h-6 w-6 rounded-full bg-white shadow-md ${annual ? "ml-auto" : "mr-auto"}`}
+              className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-white shadow-md ${annual ? "ml-auto" : "mr-auto"}`}
             />
           </button>
 
           <button
             type="button"
             onClick={() => setAnnual(true)}
-            className={`flex items-center gap-1.5 transition-colors ${
+            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
               annual ? "text-brand dark:text-[#FF6B4A] font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <span>Pago Anual</span>
-            <span className="rounded-full bg-brand/10 dark:bg-brand/20 border border-brand/30 px-2 py-0.5 text-[10px] font-black text-brand dark:text-[#FF6B4A] shadow-2xs">
+            <span className="rounded-full bg-brand/10 dark:bg-brand/20 border border-brand/30 px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-brand dark:text-[#FF6B4A] shadow-2xs">
               2 Meses Gratis
             </span>
           </button>
         </div>
 
         {/* Grilla de Planes con animaciones direccionales */}
-        <div className="mt-12 grid gap-6 lg:grid-cols-3 items-stretch">
+        <div className="mt-8 sm:mt-12 grid gap-5 sm:gap-6 lg:grid-cols-3 items-stretch">
           <motion.div
             initial={{ opacity: 0, x: -60 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -182,7 +182,7 @@ export default function Pricing() {
         </div>
 
         {/* Garantía y Formas de Pago */}
-        <div className="mt-12 text-center text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-8 sm:mt-12 text-center text-xs text-slate-500 dark:text-slate-400">
           <p className="flex items-center justify-center gap-2 font-medium">
             <Shield className="h-4 w-4 text-brand dark:text-[#FF6B4A]" />
             14 días de prueba sin ingresar tarjeta de crédito · Pagá después con QR Bancard, SIPAP o Tigo Money.
@@ -226,7 +226,7 @@ function PriceCard({
     <motion.article
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
-      className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
+      className={`relative rounded-3xl p-5 sm:p-7 lg:p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
         highlighted
           ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_25px_50px_-12px_rgba(255,79,43,0.3)] ring-4 ring-brand/10 dark:ring-brand/20"
           : "border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:border-brand/40"
@@ -250,9 +250,9 @@ function PriceCard({
         </p>
 
         {/* Precio y desglose de ahorro con altura reservada estable */}
-        <div className="my-5 border-b border-slate-100 dark:border-slate-800 pb-5">
+        <div className="my-4 sm:my-5 border-b border-slate-100 dark:border-slate-800 pb-4 sm:pb-5">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
+            <span className="text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
               {price}
             </span>
             <span className="text-xs font-semibold text-slate-400">{period}</span>

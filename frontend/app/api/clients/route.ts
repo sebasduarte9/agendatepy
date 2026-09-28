@@ -223,6 +223,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    await prisma.platformEvent.create({
+      data: {
+        event: "CLIENT_CREATED",
+        tenantId: auth.tenantId,
+        entityType: "Client",
+        entityId: newClient.id,
+        metadata: {
+          hasEmail: !!newClient.email,
+          hasNotes: !!newClient.notes,
+        },
+      },
+    });
+
     return NextResponse.json({ ok: true, client: newClient }, { status: 201 });
   } catch (error) {
     console.error("Error en POST /api/clients:", error);

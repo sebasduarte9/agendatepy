@@ -1273,4 +1273,47 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` -> **0 errores (TypeScript limpio)**
   - `npm run build` -> **Compilación limpia Turbopack (código 0)**
 
+---
+
+## [2026-09-28] — Plataforma SaaS Admin, Heatmap Web y Landing Full Responsive
+
+### 1. Panel Administrativo SaaS Centralizado (`/admin`)
+- **Directorio Central de Negocios:** Vista unificada de tenants registrados en PostgreSQL con conteo en tiempo real de cuentas **FREE vs DE PAGO (PAID)**.
+- **Filtros y Búsqueda Avanzada:** Búsqueda instantánea por nombre o slug, filtrado por plan (FREE/PAID) y estado (ACTIVE/INACTIVE), con paginación optimizada.
+- **Seguridad y Control de Acceso:** Autorización estricta para rol `SUPERADMIN` con middleware `api-guard.ts` y sanitización de datos (sin exposición de PII ni contraseñas).
+- **Métricas Reales:** Derivación fiel desde la base de datos sin métricas inventadas ni simulaciones ficticias.
+- **Suite de Pruebas:** `scripts/test-phase-saas-admin-suite.js` (12/12 PASS) y `scripts/test-phase-admin-suite.js` (34/34 PASS).
+
+### 2. Heatmap Web de Comportamiento de Visitantes
+- **Módulo de Analítica Visual:** Registro y renderizado de mapas de calor tipo Hotjar/Microsoft Clarity para la landing pública y páginas de reserva.
+- **Tracking Multicapa:** Captura de clics por coordenadas normalizadas, zonas de mayor interacción, profundidad de scroll y diferenciación por dispositivo (Mobile vs Desktop).
+- **Suite de Pruebas:** `scripts/test-phase5-9-web-heatmap-suite.js` (17/17 PASS).
+
+### 3. Navegación por Anchors Dinámica y Posicionamiento de Viewport
+- **Motor Centralizado (`smoothScroll.ts`):** Medición en tiempo real de la altura del navbar flotante (`getHeaderOffset()`) y localización visual directa del elemento `<h2>`.
+- **Encuadre Exacto:** Desplazamiento fluido que ubica los títulos de `#caracteristicas`, `#calculadora` y `#precios` a 16px (Desktop) / 12px (Mobile) debajo del header, garantizando que los controles interactivos y tarjetas inferiores queden visibles dentro de la pantalla.
+- **Sincronización de URL:** Compatibilidad con enlaces directos por hash y transiciones al cerrar el menú móvil.
+
+### 4. Landing Page Full Responsive (320px – 1920px+)
+- **Soporte Universal de Pantallas:** Optimización visual integral para móviles pequeños (320px), estándares (360px–430px), tablets (768px–820px), laptops (1024px–1440px) y pantallas ultra-wide (1920px+).
+- **Componentes Perfeccionados:**
+  - `Header.tsx`: CTA adaptable (`"Probar gratis"` / `"Prueba gratuitamente"`) y logo fluido sin desbordes.
+  - `Hero.tsx` & `PhoneMockup.tsx`: iPhone 16 Pro fluido con escala dinámica sin overflow horizontal.
+  - `HowItWorks.tsx` & `MiniCalendar.tsx`: Simulador y calendario con celdas táctiles accesibles.
+  - `WhatsAppShowcase.tsx`: Botones de respuesta interactiva con wrapping seguro para 320px.
+  - `Features.tsx`: Reorganización responsive de grilla en tablet (12/12 y 6/6) y desktop (7/5 y 4/4/4).
+  - `RoiCalculator.tsx`: Sliders con `touch-pan-y` y cifras monetarias escalables.
+  - `Pricing.tsx`: Toggle mensual/anual y tarjetas con altura fija reservada para alineación homogénea.
+  - `Integrations.tsx` & `Differentiators.tsx`: Chips de canales con `truncate` y padding adaptativo.
+  - `FAQ.tsx`: Acordeones táctiles sin saltos de layout.
+  - `Footer.tsx`: Distribución en 2 columnas en mobile y 5 en desktop.
+  - `StickyMobileCta.tsx` & `WhatsAppFloatingButton.tsx`: Soporte para `env(safe-area-inset-bottom)` y botón flotante coordinado.
+  - `layout.tsx`: Configuración nativa de `Viewport` con `viewportFit: "cover"` para iOS Safari.
+
+### 5. Validación y Compilación
+- `npx tsc --noEmit` -> **0 errores**
+- `npm run build` -> **Compilación Turbopack exitosa (código 0)**
+- Pruebas automatizadas globales: **100% PASS**
+
+
 

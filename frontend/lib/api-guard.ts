@@ -10,6 +10,10 @@ export type GuardedSession = {
   tenantId: string;
 };
 
+export type SuperAdminSession = {
+  session: SessionUser;
+};
+
 export async function requireTenantSession(
   _request?: NextRequest,
   allowedRoles?: ("OWNER" | "SUPERADMIN" | "STAFF")[]
@@ -40,6 +44,29 @@ export async function requireTenantSession(
   return { session, tenantId: session.tenantId };
 }
 
-export function isGuardError(result: GuardedSession | NextResponse): result is NextResponse {
+export async function requireSuperAdminSession(
+  _request?: NextRequest
+): Promise<SuperAdminSession | NextResponse> {
+  const session = await getSession();
+
+  if (!session) {
+    return NextResponse.json(
+      { ok: false, error: "UNAUTHORIZED", message: "Sesión requerida." },
+      { status: 401 }
+    );
+  }
+
+  if (session.role !== "SUPERADMIN") {
+    return NextResponse.json(
+      { ok: false, error: "FORBIDDEN", message: "Acceso exclusivo para administradores de plataforma." },
+      { status: 403 }
+    );
+  }
+
+  return { session };
+}
+
+export function isGuardError(result: any): result is NextResponse {
   return result instanceof NextResponse;
 }
+

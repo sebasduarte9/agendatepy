@@ -201,28 +201,42 @@ export async function switchRoleDemoAction(role: UserRole): Promise<AuthResponse
 
   if (role === "SUPERADMIN") {
     targetEmail = "admin@agendate.py";
-    targetName = "Administrador General";
+    targetName = "SuperAdmin Plataforma";
   } else if (role === "STAFF") {
     targetEmail = "luis@barberia.py";
     targetName = "Luis Ayala (Colaborador)";
   }
 
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { email: targetEmail },
     include: { tenant: { select: { slug: true, subdomain: true } } },
   });
 
   if (!user) {
-    return { ok: false, error: "Usuario de prueba no encontrado." };
+    user = await prisma.user.create({
+      data: {
+        email: targetEmail,
+        name: targetName,
+        role: role,
+        optInMarketing: true,
+      },
+      include: { tenant: { select: { slug: true, subdomain: true } } },
+    });
+  } else if (user.role !== role) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { role: role },
+      include: { tenant: { select: { slug: true, subdomain: true } } },
+    });
   }
 
   const sessionUser: SessionUser = {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role as UserRole,
-    tenantId: user.tenantId,
-    tenantSlug: user.tenant?.subdomain || user.tenant?.slug || (role === "SUPERADMIN" ? null : "barberia"),
+    role: role,
+    tenantId: role === "SUPERADMIN" ? null : user.tenantId,
+    tenantSlug: role === "SUPERADMIN" ? null : (user.tenant?.subdomain || user.tenant?.slug || "barberia"),
     phone: user.phone,
     optInMarketing: user.optInMarketing,
   };
