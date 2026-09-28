@@ -28,7 +28,7 @@ const ITEMS = [
 
 export default function Differentiators() {
   return (
-    <section className="mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20">
+    <section className="relative overflow-hidden mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -45,15 +45,14 @@ export default function Differentiators() {
       </motion.div>
       <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 md:grid-cols-2">
         {ITEMS.map(({ icon: Icon, title, text }, index) => {
-          const fromLeft = index % 2 === 0;
           return (
             <motion.article
               key={title}
-              initial={{ opacity: 0, x: fromLeft ? -50 : 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: (index % 2) * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs hover:border-brand/40 transition"
+              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs hover:border-brand/40 transition min-w-0"
             >
               <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
                 <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />

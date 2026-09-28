@@ -50,22 +50,22 @@ export default function HowItWorks() {
       <div className="grid items-center gap-6 sm:gap-8 lg:grid-cols-12">
         {/* Left: Interactive Booking Simulator Widget (7 cols) */}
         <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-7"
+          className="lg:col-span-7 min-w-0"
         >
           <BookingWidget key={category.id} />
         </motion.div>
 
         {/* Right: 3 Reorganized Workflow Benefits (5 cols) */}
         <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-5 space-y-2.5 sm:space-y-3"
+          className="lg:col-span-5 space-y-2.5 sm:space-y-3 min-w-0"
         >
           <WorkflowStep
             step="1"
@@ -102,7 +102,7 @@ function BookingWidget() {
   const service = category.services.find((item) => item.id === serviceId);
 
   return (
-    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-4 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl transition-all">
+    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-3.5 xs:p-4 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl transition-all max-w-full overflow-hidden">
       {/* Pasos / Indicador superior */}
       <div className="mb-4 flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -132,17 +132,17 @@ function BookingWidget() {
                 key={item.id}
                 type="button"
                 onClick={() => setServiceId(item.id)}
-                className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-xs transition cursor-pointer ${
+                className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 xs:px-3.5 xs:py-2.5 text-left text-xs transition cursor-pointer ${
                   serviceId === item.id
                     ? "border-brand bg-brand/5 dark:bg-brand/10 shadow-xs"
                     : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/60 hover:border-brand/40"
                 }`}
               >
-                <span>
-                  <strong className="text-slate-900 dark:text-white block">{item.name}</strong>
+                <span className="min-w-0 pr-1">
+                  <strong className="text-slate-900 dark:text-white block truncate">{item.name}</strong>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">{item.duration}</span>
                 </span>
-                <span className="font-bold text-brand font-mono text-xs">{item.price}</span>
+                <span className="font-bold text-brand font-mono text-xs shrink-0">{item.price}</span>
               </button>
             ))}
           </div>

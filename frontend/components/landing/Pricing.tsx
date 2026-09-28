@@ -115,11 +115,11 @@ export default function Pricing() {
         {/* Grilla de Planes con animaciones direccionales */}
         <div className="mt-8 sm:mt-12 grid gap-5 sm:gap-6 lg:grid-cols-3 items-stretch">
           <motion.div
-            initial={{ opacity: 0, x: -60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full"
+            className="flex flex-col h-full min-w-0"
           >
             <PriceCard
               name="Plan Básico"
@@ -136,11 +136,11 @@ export default function Pricing() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full"
+            className="flex flex-col h-full min-w-0"
           >
             <PriceCard
               name="Plan Pro"
@@ -159,11 +159,11 @@ export default function Pricing() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full"
+            className="flex flex-col h-full min-w-0"
           >
             <PriceCard
               name="Plan Empresa"
@@ -252,7 +252,7 @@ function PriceCard({
         {/* Precio y desglose de ahorro con altura reservada estable */}
         <div className="my-4 sm:my-5 border-b border-slate-100 dark:border-slate-800 pb-4 sm:pb-5">
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
+            <span className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-mono break-words">
               {price}
             </span>
             <span className="text-xs font-semibold text-slate-400">{period}</span>

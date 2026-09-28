@@ -152,13 +152,13 @@ export default function BrandLogo({
 
   // Variante: Horizontal Navbar Lockup (Isotipo a la izquierda + Wordmark a la derecha)
   return (
-    <div className={`flex items-center gap-2.5 shrink-0 ${className}`}>
+    <div className={`flex items-center gap-1.5 xs:gap-2.5 shrink-0 ${className}`}>
       <div className="relative flex items-center justify-center shrink-0">
         {renderIsotype()}
       </div>
 
       <div className="flex items-center font-bold tracking-tight">
-        <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">
+        <span className="text-base xs:text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">
           agendate<span className="text-[#FF4F2B]">py</span>
         </span>
       </div>

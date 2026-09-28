@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 
@@ -8,6 +8,15 @@ import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 export default function WhatsAppFloatingButton() {
   const [isDismissed, setIsDismissed] = useState(false);
+  const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolledPastHero(window.scrollY > 380);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const whatsappUrl = getCommercialWhatsAppUrl(
     "Hola, quisiera asesoramiento sobre AgendatePY para mi negocio"
@@ -16,7 +25,11 @@ export default function WhatsAppFloatingButton() {
   return (
     <aside
       aria-label="Contacto por WhatsApp"
-      className="fixed bottom-18 sm:bottom-6 right-4 sm:right-6 z-40 max-w-[calc(100vw-2rem)] select-none"
+      className={`fixed z-40 select-none transition-all duration-300 ${
+        hasScrolledPastHero
+          ? "hidden sm:block sm:bottom-6 sm:right-6"
+          : "bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 xs:right-4 sm:bottom-6 sm:right-6 max-w-[calc(100vw-1.5rem)] sm:max-w-md"
+      }`}
     >
       <AnimatePresence mode="wait">
         {!isDismissed ? (
@@ -27,29 +40,29 @@ export default function WhatsAppFloatingButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, y: 10 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="group relative flex items-center gap-3 rounded-2xl sm:rounded-full border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 py-2 pl-2 pr-3.5 shadow-[0_12px_36px_-6px_rgba(15,23,42,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-300 hover:border-emerald-500/40 hover:shadow-[0_16px_40px_-6px_rgba(37,211,102,0.22)]"
+            className="group relative flex items-center gap-2 xs:gap-3 rounded-2xl sm:rounded-full border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 py-1.5 xs:py-2 pl-1.5 xs:pl-2 pr-3 sm:pr-3.5 shadow-[0_12px_36px_-6px_rgba(15,23,42,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-300 hover:border-emerald-500/40 hover:shadow-[0_16px_40px_-6px_rgba(37,211,102,0.22)]"
           >
             {/* Enlace envolvente al chat de WhatsApp */}
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 min-w-0 flex-1 text-left"
+              className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 text-left"
               aria-label="Chatear con un asesor de AgendatePY en Asunción por WhatsApp"
             >
               {/* Botón circular verde integrado en el componente */}
-              <div className="relative flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md shadow-[#25D366]/30 transition-transform duration-200 group-hover:scale-105 active:scale-95">
+              <div className="relative flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md shadow-[#25D366]/30 transition-transform duration-200 group-hover:scale-105 active:scale-95">
                 <span className="absolute -inset-0.5 rounded-full bg-[#25D366]/40 animate-ping opacity-60" />
                 <MessageCircle className="relative z-10 h-5 w-5 sm:h-6 sm:w-6 fill-white stroke-none" />
-                <span className="absolute top-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-300" />
+                <span className="absolute top-0 right-0 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-300" />
               </div>
 
-              {/* Textos integrados exactos solicitados */}
+              {/* Textos integrados: en pantallas ultra-pequeñas se muestra solo el título para no tapar CTAs */}
               <div className="min-w-0 pr-1">
                 <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   ¿Dudas para tu local?
                 </p>
-                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-2">
+                <p className="hidden xs:block text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-1 sm:line-clamp-2">
                   Chateá con un asesor en Asunción ahora mismo.
                 </p>
               </div>

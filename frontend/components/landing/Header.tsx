@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CalendarCheck,
   LogIn,
   Menu,
   X,
@@ -18,7 +17,6 @@ import { scrollToSection } from "@/lib/smoothScroll";
 export default function Header() {
   const [activeTab, setActiveTab] = useState("inicio");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
   const sectionIds = [
     "inicio",
@@ -33,8 +31,6 @@ export default function Header() {
   // Sincronización con el scroll para marcar la pestaña activa
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-
       if (window.scrollY < 120) {
         setActiveTab("inicio");
         return;
@@ -72,9 +68,9 @@ export default function Header() {
     if (typeof window !== "undefined" && window.location.hash) {
       const initialHash = window.location.hash.replace("#", "");
       if (initialHash && sectionIds.includes(initialHash)) {
-        setActiveTab(initialHash);
         // Pequeño retardo para permitir que el DOM y el layout se estabilicen
         const timer = setTimeout(() => {
+          setActiveTab(initialHash);
           scrollToSection(initialHash, "smooth");
         }, 150);
         return () => clearTimeout(timer);
@@ -107,12 +103,8 @@ export default function Header() {
     }
 
     // Actualizar hash en la URL sin salto tosco del navegador
-    if (typeof window !== "undefined") {
-      if (window.history.pushState) {
-        window.history.pushState(null, "", href);
-      } else {
-        window.location.hash = href;
-      }
+    if (typeof window !== "undefined" && window.history?.pushState) {
+      window.history.pushState(null, "", href);
     }
 
     if (wasMobileOpen) {
@@ -138,7 +130,7 @@ export default function Header() {
     <header className="sticky top-2 sm:top-3 z-50 px-2 sm:px-4 md:px-6 transition-all duration-300">
       <nav
         aria-label="Navegación principal"
-        className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between gap-2 sm:gap-3 rounded-full border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 px-3 sm:px-5 md:px-6 shadow-[0_12px_32px_-10px_rgba(0,0,0,0.08)] backdrop-blur-xl"
+        className="mx-auto flex h-13 xs:h-14 sm:h-16 max-w-7xl items-center justify-between gap-1.5 xs:gap-2.5 sm:gap-3 rounded-full border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 px-2.5 xs:px-4 sm:px-5 md:px-6 shadow-[0_12px_32px_-10px_rgba(0,0,0,0.08)] backdrop-blur-xl"
       >
         {/* Brand Logo */}
         <Link href="/" className="flex items-center shrink-0">
@@ -146,7 +138,7 @@ export default function Header() {
             whileHover={{ scale: 1.04 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <BrandLogo variant="horizontal" iconClassName="h-7 w-7 sm:h-8.5 sm:w-8.5" />
+            <BrandLogo variant="horizontal" iconClassName="h-6 w-6 xs:h-7 xs:w-7 sm:h-8.5 sm:w-8.5" />
           </motion.div>
         </Link>
 
@@ -178,7 +170,7 @@ export default function Header() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 shrink-0">
           {/* Subtle Live Demo Link */}
           <Link
             href="/barberia/reservar"
@@ -202,7 +194,7 @@ export default function Header() {
           {/* High-Converting Primary CTA: Adaptive Text on Small Mobile */}
           <Link
             href="/onboarding"
-            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-8.5 sm:h-9 px-3 sm:px-4.5 rounded-full shadow-md shadow-brand/25"
+            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] xs:text-xs sm:text-sm font-bold transition-all duration-200 hover:brightness-110 active:scale-95 bg-gradient-to-r from-brand to-[#FF6B4A] text-white h-8 xs:h-8.5 sm:h-9 px-2.5 xs:px-3 sm:px-4.5 rounded-full shadow-md shadow-brand/25"
           >
             <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300 shrink-0" />
             <span className="hidden xs:inline">Prueba gratuitamente</span>
@@ -213,7 +205,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-8.5 w-8.5 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xs lg:hidden"
+            className="flex h-8 w-8 xs:h-8.5 xs:w-8.5 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xs lg:hidden shrink-0"
             aria-label="Abrir menú"
           >
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

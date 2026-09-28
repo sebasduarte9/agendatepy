@@ -342,7 +342,7 @@ export default function PhoneMockup() {
           rotateY,
           transformStyle: "preserve-3d",
         }}
-        className="relative w-full max-w-[320px] xs:max-w-[340px] sm:max-w-[360px] rounded-[42px] sm:rounded-[50px] p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
+        className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[360px] rounded-[38px] xs:rounded-[44px] sm:rounded-[50px] p-[6px] xs:p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
       >
         {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel) */}
         {/* Left Side: Action Button */}
@@ -357,9 +357,9 @@ export default function PhoneMockup() {
         <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
         {/* Outer Glass Bezel */}
-        <div className="relative overflow-hidden rounded-[36px] sm:rounded-[42px] bg-black p-[2px] sm:p-[2.5px] shadow-inner">
+        <div className="relative overflow-hidden rounded-[34px] xs:rounded-[38px] sm:rounded-[42px] bg-black p-[2px] sm:p-[2.5px] shadow-inner">
           {/* Inner Display Canvas */}
-          <div className="relative flex h-[580px] xs:h-[620px] sm:h-[660px] flex-col overflow-hidden rounded-[36px] sm:rounded-[42px] bg-[#efeae2]">
+          <div className="relative flex h-[520px] xs:h-[580px] sm:h-[660px] flex-col overflow-hidden rounded-[32px] xs:rounded-[36px] sm:rounded-[42px] bg-[#efeae2]">
             {/* ========================================================= */}
             {/* iOS iMessage Push Notification Banner */}
             {/* ========================================================= */}
@@ -712,7 +712,7 @@ export default function PhoneMockup() {
           y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           opacity: { duration: 0.8 },
         }}
-        className="pointer-events-none absolute -left-4 sm:-left-10 lg:-left-14 top-32 sm:top-40 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
+        className="pointer-events-none absolute -left-2 sm:-left-4 lg:-left-6 xl:-left-10 top-32 sm:top-40 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
           <Bell className="h-5 w-5 animate-pulse" />
@@ -734,7 +734,7 @@ export default function PhoneMockup() {
           y: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 },
           opacity: { duration: 0.8, delay: 0.2 },
         }}
-        className="pointer-events-none absolute -right-4 sm:-right-10 lg:-right-14 bottom-24 sm:bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
+        className="pointer-events-none absolute -right-2 sm:-right-4 lg:-right-6 xl:-right-10 bottom-24 sm:bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand dark:text-[#FF6B4A]">
           <Landmark className="h-5 w-5" />

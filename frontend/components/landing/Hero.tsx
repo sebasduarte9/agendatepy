@@ -14,7 +14,6 @@ import {
   ArrowRight,
   MessageCircle,
   Star,
-  CheckCircle2,
 } from "lucide-react";
 import { CATEGORIES, type CategoryId } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
@@ -42,26 +41,26 @@ export default function Hero() {
       <div className="mx-auto grid max-w-7xl items-center gap-8 sm:gap-12 px-3 sm:px-6 lg:grid-cols-12">
         {/* Left Column: High-Converting Value Proposition */}
         <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-7 flex flex-col justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:col-span-7 flex flex-col justify-center min-w-0"
         >
           {/* Geolocation & Validation Pill */}
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-brand/20 bg-white/90 dark:bg-slate-900/90 px-3 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-brand shadow-xs backdrop-blur-sm w-fit">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-brand/20 bg-white/90 dark:bg-slate-900/90 px-3 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-brand shadow-xs backdrop-blur-sm w-fit max-w-full">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
-            <span>Diseñado en Paraguay para negocios locales</span>
+            <span className="truncate">Diseñado en Paraguay para negocios locales</span>
           </div>
 
           {/* Hard-Hitting Pain & Benefit Headline */}
-          <h1 className="mt-4 sm:mt-5 text-2xl xs:text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1] sm:leading-[1.08]">
+          <h1 className="mt-4 sm:mt-5 text-[22px] xs:text-2xl sm:text-4xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08] break-words">
             Llená tu agenda en automático y reducí 80% las cancelaciones{" "}
             <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
               por WhatsApp.
             </span>
           </h1>
 
-          <p className="mt-3.5 sm:mt-5 max-w-2xl text-sm sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="mt-3 sm:mt-4 max-w-2xl text-xs xs:text-sm sm:text-base lg:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
             Tus clientes reservan 24/7 sin que pases horas respondiendo mensajes. Confirmaciones inmediatas, recordatorios inteligentes que sí leen y comisiones de tu equipo calculadas sin planillas.
           </p>
 
@@ -156,18 +155,18 @@ export default function Hero() {
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-3">
               <div>
-                <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">4.800+</p>
-                <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Turnos mensuales</p>
+                <p className="text-lg xs:text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">4.800+</p>
+                <p className="text-[9px] xs:text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Turnos mensuales</p>
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-black text-brand tracking-tight">85%</p>
-                <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Menos inasistencias</p>
+                <p className="text-lg xs:text-xl sm:text-2xl font-black text-brand tracking-tight">85%</p>
+                <p className="text-[9px] xs:text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Menos inasistencias</p>
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">0%</p>
-                <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Comisión x turno</p>
+                <p className="text-lg xs:text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">0%</p>
+                <p className="text-[9px] xs:text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Comisión x turno</p>
               </div>
             </div>
           </div>
@@ -175,10 +174,10 @@ export default function Hero() {
 
         {/* Right Column: Interactive Phone Mockup with WhatsApp UI */}
         <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-5 flex justify-center mt-6 lg:mt-0"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:col-span-5 flex justify-center mt-6 lg:mt-0 max-w-full"
         >
           <PhoneMockup />
         </motion.div>

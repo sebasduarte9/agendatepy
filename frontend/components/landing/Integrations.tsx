@@ -17,7 +17,7 @@ const PAYMENTS_AND_CAL = [
 
 export default function Integrations() {
   return (
-    <section id="integraciones" className="bg-slate-50/70 dark:bg-slate-950 py-12 sm:py-20 border-y border-slate-200/60 dark:border-white/10 scroll-mt-20">
+    <section id="integraciones" className="relative overflow-hidden bg-slate-50/70 dark:bg-slate-950 py-12 sm:py-20 border-y border-slate-200/60 dark:border-white/10 scroll-mt-20">
       <div className="mx-auto max-w-6xl px-3 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 25 }}
@@ -37,11 +37,11 @@ export default function Integrations() {
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
           {/* Card 1: Canales de Captura (entra por la izquierda) */}
           <motion.div
-            initial={{ opacity: 0, x: -60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 lg:p-8 shadow-xs"
+            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 lg:p-8 shadow-xs min-w-0"
           >
             <h3 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">
               Canales de Captura de Clientes
@@ -64,11 +64,11 @@ export default function Integrations() {
 
           {/* Card 2: Pagos y Calendario (entra por la derecha) */}
           <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 lg:p-8 shadow-xs"
+            className="relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-6 lg:p-8 shadow-xs min-w-0"
           >
             <h3 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">
               Cobros Locales & Calendarios

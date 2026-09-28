@@ -13,16 +13,16 @@ export default function WhatsAppShowcase() {
   return (
     <section
       id="whatsapp"
-      className="relative bg-white dark:bg-slate-950 py-12 sm:py-20 lg:py-24 border-t border-slate-100 dark:border-slate-800/80 scroll-mt-24"
+      className="relative overflow-hidden bg-white dark:bg-slate-950 py-12 sm:py-20 lg:py-24 border-t border-slate-100 dark:border-slate-800/80 scroll-mt-24"
     >
       <div className="mx-auto grid max-w-6xl items-center gap-8 sm:gap-12 px-3 sm:px-6 lg:grid-cols-12">
         {/* Left Column: Value Prop & Bullets */}
         <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-6"
+          className="lg:col-span-6 min-w-0"
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/40 px-3.5 py-1 text-[11px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-400">
             <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
@@ -75,13 +75,13 @@ export default function WhatsAppShowcase() {
 
         {/* Right Column: Authentic WhatsApp Message Sequence Card */}
         <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-6 flex justify-center"
+          className="lg:col-span-6 flex justify-center min-w-0"
         >
-          <div className="w-full max-w-md rounded-3xl border border-slate-200/90 dark:border-white/10 bg-[#efeae2] dark:bg-slate-900 p-3.5 sm:p-5 shadow-sm space-y-2 sm:space-y-2.5">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200/90 dark:border-white/10 bg-[#efeae2] dark:bg-slate-900 p-3 xs:p-3.5 sm:p-5 shadow-sm space-y-2 sm:space-y-2.5 overflow-hidden">
             {/* Header of WhatsApp Chat */}
             <div className="flex items-center justify-between pb-2.5 border-b border-black/5 dark:border-white/10">
               <div className="flex items-center gap-2 sm:gap-2.5">

@@ -94,11 +94,11 @@ export default function RoiCalculator() {
         <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 lg:grid-cols-12 items-stretch">
           {/* Columna Izquierda: Sliders interactivos (Col 7 - entra por la izquierda) */}
           <motion.div
-            initial={{ opacity: 0, x: -60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-4 sm:p-7 lg:p-9 shadow-xl shadow-slate-200/40 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between space-y-6 sm:space-y-7"
+            className="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-4 sm:p-7 lg:p-9 shadow-xl shadow-slate-200/40 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between space-y-6 sm:space-y-7 min-w-0 max-w-full overflow-hidden"
           >
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -188,11 +188,11 @@ export default function RoiCalculator() {
 
           {/* Columna Derecha: Tarjeta de Impacto Financiero y ROI (Col 5 - entra por la derecha) */}
           <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-5 relative rounded-3xl p-4 sm:p-7 lg:p-8 bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between overflow-hidden"
+            className="lg:col-span-5 relative rounded-3xl p-3.5 xs:p-4 sm:p-7 lg:p-8 bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl flex flex-col justify-between overflow-hidden min-w-0 max-w-full"
           >
             {/* Resplandor ambiental interno suave */}
             <div className="pointer-events-none absolute -top-20 -right-20 h-52 w-52 rounded-full bg-brand/10 blur-3xl" />
@@ -205,7 +205,7 @@ export default function RoiCalculator() {
                   <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <span>Dinero perdido en turnos vacíos</span>
                 </div>
-                <p className="mt-1.5 sm:mt-2 text-2xl xs:text-3xl sm:text-3xl font-black text-red-600 dark:text-red-400 tracking-tight font-mono">
+                <p className="mt-1.5 sm:mt-2 text-xl xs:text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400 tracking-tight font-mono break-words">
                   {formatGs(perdidaTotal)}
                   <span className="text-xs font-normal text-red-500/80 ml-1.5 font-sans">/ mes</span>
                 </p>
@@ -215,7 +215,7 @@ export default function RoiCalculator() {
               </div>
 
               {/* Tarjeta de Recupero con AgendatePY (Hero Feature en tonos oficiales del logo) */}
-              <div className="rounded-2xl bg-gradient-to-br from-brand via-[#FF623D] to-orange-500 text-white p-5 shadow-lg shadow-brand/25 relative overflow-hidden">
+              <div className="rounded-2xl bg-gradient-to-br from-brand via-[#FF623D] to-orange-500 text-white p-3.5 xs:p-4 sm:p-5 shadow-lg shadow-brand/25 relative overflow-hidden">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-xs font-bold text-white uppercase tracking-wider">
                     <TrendingUp className="h-4 w-4 text-white" />
@@ -225,7 +225,7 @@ export default function RoiCalculator() {
                     +80% Éxito
                   </span>
                 </div>
-                <p className="mt-2 text-3xl sm:text-4xl font-black text-white tracking-tight font-mono">
+                <p className="mt-2 text-2xl xs:text-3xl sm:text-4xl font-black text-white tracking-tight font-mono break-words">
                   {formatGs(dineroRecuperado)}
                   <span className="text-xs font-normal text-white/80 ml-1.5 font-sans">/ mes</span>
                 </p>

@@ -43,7 +43,7 @@ export default function Features() {
   return (
     <section
       id="caracteristicas"
-      className="relative mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:py-24 scroll-mt-24"
+      className="relative overflow-hidden mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:py-24 scroll-mt-24"
     >
       {/* Background glow halos */}
       <div className="pointer-events-none absolute left-1/2 top-10 -translate-x-1/2 h-96 w-96 rounded-full bg-brand/10 blur-3xl opacity-70" />
@@ -73,8 +73,8 @@ export default function Features() {
       <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 md:grid-cols-12">
         {/* Module 1: WhatsApp Bot (Col 7 on desktop, 12 on tablet) */}
         <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="md:col-span-12 lg:col-span-7 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
@@ -122,8 +122,8 @@ export default function Features() {
 
         {/* Module 2: Control de Caja y Arqueo (Col 5 on desktop, 12 on tablet) */}
         <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="md:col-span-12 lg:col-span-5 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between"
@@ -173,8 +173,8 @@ export default function Features() {
 
         {/* Module 3: Google & Apple Calendar Sync (Col 4 on desktop, 6 on tablet) */}
         <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="md:col-span-6 lg:col-span-4 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
@@ -258,8 +258,8 @@ export default function Features() {
 
         {/* Module 5: Liquidación de Comisiones (Col 4 on desktop, 12 on tablet) */}
         <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="md:col-span-12 lg:col-span-4 relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
