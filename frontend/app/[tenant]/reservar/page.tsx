@@ -97,7 +97,6 @@ export default async function ReservarPage({ params }: PageProps) {
             id: true,
             name: true,
             price: true,
-            cost: true,
             stock: true,
             category: true,
             description: true,

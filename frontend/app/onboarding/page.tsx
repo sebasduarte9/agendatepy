@@ -135,10 +135,15 @@ export default function OnboardingPage() {
               className="rounded-[28px] border border-slate-200/80 bg-white/90 p-8 shadow-[0_12px_40px_rgb(0,0,0,0.06)] backdrop-blur-xl"
             >
               <div className="mb-6">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold text-brand">
-                  <Building2 className="h-3.5 w-3.5" />
-                  Paso 1: Identidad
-                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold text-brand">
+                    <Building2 className="h-3.5 w-3.5" />
+                    Paso 1: Identidad
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700">
+                    <CheckCircle2 className="h-3 w-3" /> Plan Gratuito (20 turnos/mes)
+                  </span>
+                </div>
                 <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
                   ¿Cómo se llama tu negocio?
                 </h2>
@@ -456,12 +461,17 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-700" />
-                    <span className="text-xs font-bold text-emerald-900">WhatsApp Oficial Automático</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-700" />
+                      <span className="text-xs font-bold text-emerald-900">Plan Inicial Gratuito Activado</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                      Gs. 0 · Sin Tarjeta
+                    </span>
                   </div>
-                  <p className="mt-1 text-[11px] text-emerald-800">
-                    Podrás vincular tu número de WhatsApp escaneando el código QR directamente en tu panel de control.
+                  <p className="mt-1.5 text-[11px] text-emerald-800 leading-relaxed">
+                    Tu cuenta incluye <strong>20 turnos por mes para siempre</strong> y Sistema Anti-Plantón con cobro de seña SIPAP. Podrás conectar WhatsApp al ingresar.
                   </p>
                 </div>
 

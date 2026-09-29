@@ -21,6 +21,21 @@ import type { PlanId } from "@/lib/dashboard-types";
 
 const PLANS = [
   {
+    id: "gratis" as PlanId,
+    name: "Plan Inicial Gratuito",
+    price: 0,
+    period: "/mes para siempre",
+    description: "Ideal para dar los primeros pasos y digitalizar tu agenda con 0 costo de inicio.",
+    features: [
+      "1 profesional / agenda personal",
+      "Hasta 20 turnos por mes",
+      "Página web de reservas con logo",
+      "Confirmaciones por WhatsApp",
+      "0% de comisión por turno cobrado",
+      "Sin tarjeta de crédito requerida",
+    ],
+  },
+  {
     id: "basico" as PlanId,
     name: "Plan Básico",
     price: 100000,
@@ -98,7 +113,12 @@ export default function SuscripcionPage() {
     if (!selectedPlanForUpgrade) return;
     updateBusiness({
       plan: selectedPlanForUpgrade.id,
-      freeBookingLimit: selectedPlanForUpgrade.id === "basico" ? 100 : 9999,
+      freeBookingLimit:
+        selectedPlanForUpgrade.id === "gratis"
+          ? 20
+          : selectedPlanForUpgrade.id === "basico"
+            ? 100
+            : 9999,
     });
     pushToast("success", `¡Felicitaciones! Has actualizado al ${selectedPlanForUpgrade.name}.`);
     setCheckoutModalOpen(false);
@@ -116,6 +136,35 @@ export default function SuscripcionPage() {
         </p>
       </div>
 
+      {/* Upgrade Opportunity Banner when approaching limit */}
+      {business.usedBookings >= (business.freeBookingLimit * 0.7) && (
+        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
+              <Zap className="h-5 w-5 fill-amber-500 text-amber-500" />
+            </span>
+            <div>
+              <p className="text-xs font-black text-slate-900 dark:text-white">
+                ¡Tu negocio está creciendo con fuerza!
+              </p>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                Has utilizado {business.usedBookings} de tus {business.freeBookingLimit} turnos de este mes ({pct}% de tu cupo). Pasate a un plan superior para no frenar tus reservas.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const target = PLANS.find((p) => p.id === (currentPlan === "gratis" ? "basico" : "pro"));
+              if (target) handleSelectPlan(target);
+            }}
+            className="shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-bold text-white shadow-md hover:brightness-105 transition cursor-pointer"
+          >
+            Ver Planes de Expansión
+          </button>
+        </div>
+      )}
+
       {/* Current plan status Card */}
       <Card className="flex flex-col sm:flex-row items-center justify-between gap-5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
         <div className="space-y-1 text-center sm:text-left">
@@ -123,11 +172,13 @@ export default function SuscripcionPage() {
             <Crown className="h-3.5 w-3.5" /> Plan Activo
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white capitalize">
-            {currentPlan === "pro"
-              ? "Plan Pro (Recomendado)"
-              : currentPlan === "empresa"
-                ? "Plan Empresa"
-                : "Plan Básico"}
+            {currentPlan === "gratis"
+              ? "Plan Inicial Gratuito (20 turnos/mes)"
+              : currentPlan === "pro"
+                ? "Plan Pro (Recomendado)"
+                : currentPlan === "empresa"
+                  ? "Plan Empresa"
+                  : "Plan Básico"}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Uso actual: <strong className="text-slate-900 dark:text-white font-bold">{business.usedBookings}</strong> turnos registrados este ciclo mensual.
@@ -152,7 +203,7 @@ export default function SuscripcionPage() {
       </Card>
 
       {/* Plans Pricing Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {PLANS.map((plan) => {
           const isActive = currentPlan === plan.id;
 

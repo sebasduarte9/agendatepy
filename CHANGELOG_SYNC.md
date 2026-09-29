@@ -1349,3 +1349,33 @@ Cada entrada debe detallar:
   - No se tocaron APIs, esquemas de Prisma ni lógica interna de autenticación/dashboard.
   - La Landing Page quedó 100% cohesionada estéticamente, sin saltos de color ni inconsistencias en componentes responsive.
 
+---
+
+### [Modelo Freemium Estratégico (Plan Inicial Gratuito 20 Turnos/Mes)] — 2026-09-29
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Monetización, Landing Page, Onboarding y Dashboard de Suscripción (`/`, `/dashboard/suscripcion`, `/onboarding`)
+- **Archivos Modificados:**
+  - `frontend/lib/dashboard-types.ts` (MODIFICADO: Tipado de `PlanId` incluyendo `"gratis"`)
+  - `frontend/components/landing/Pricing.tsx` (MODIFICADO: Grilla de 4 planes responsive incorporando el **"Plan Gratuito"** permanente Gs. 0, 20 turnos/mes, confirmaciones por WhatsApp y 0% de comisión)
+  - `frontend/app/dashboard/suscripcion/page.tsx` (MODIFICADO: Visualización y activación del Plan Gratuito, medidor dinámico de capacidad de turnos mensuales y banner inteligente de alerta al superar el 70% de consumo)
+  - `frontend/app/onboarding/page.tsx` (MODIFICADO: Activación inmediata en Plan Gratuito sin solicitud de tarjeta de crédito)
+- **Descripción de Cambios y Razonamiento:**
+  1. **Modelo Freemium Estratégico (Hook ReservaSimple):**
+     - Se implementó un **Plan Inicial Gratuito para siempre** (Gs. 0 / mes, hasta 20 turnos/mes) para eliminar la fricción de entrada de nuevos profesionales y comercios en Paraguay.
+     - 0% comisión por turno cobrado, recordatorios de WhatsApp automáticos, 1 profesional y página web propia con logo.
+     - Indicador dinámico de consumo de turnos en el Dashboard con llamada a la acción hacia el Plan Básico (Gs. 100k) o Pro (Gs. 250k) cuando el negocio supera el 70% de su capacidad mensual (15/20 turnos).
+  2. **Retiro de Sistema Anti-Plantón / Señas:**
+     - A solicitud del usuario, se retiró el flujo de cobro forzoso de seña/anticipo bancario SIPAP en el proceso de reserva de clientes y en el panel de configuración, manteniendo la experiencia de agendamiento directa, rápida y sin fricción de pago previo.
+- **Validación y Compilación:**
+  - `npm run build` -> **Compilación limpia Turbopack exitosa (20/20 páginas, 0 errores)**
+  - `npx tsc --noEmit` -> **0 errores de TypeScript**
+  - Pruebas E2E de seguridad FASE 2 (`scripts/test-phase2-suite.js`): **11 / 11 PASS**
+- **Notas para el otro IDE / Desarrollador:**
+  - Los tipos de planes (`PlanId`) ahora soportan `"gratis"` de manera totalmente retrocompatible sin alterar los planes comerciales existentes (`"basico" | "pro" | "premium" | "empresa"`).
+  - En la sección `#precios`:
+    - El título *"Planes a tu medida, sin comisiones ocultas"* se optimizó con `lg:whitespace-nowrap` y ancho adaptativo para mantenerse en una sola línea en desktop.
+    - Se removió *"Recordatorios automáticos por WhatsApp"* del Plan Gratuito (manteniendo *"Confirmaciones por WhatsApp"*).
+    - Se recalibraron las 4 tarjetas a 7 ítems homogéneos cada una, con paddings optimizados y menor altura para que no se corten en la parte inferior y los botones de acción queden perfectamente visibles.
+
+
+

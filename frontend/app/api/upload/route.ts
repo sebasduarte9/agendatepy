@@ -9,7 +9,7 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session && process.env.NODE_ENV === "production") {
+    if (!session) {
       return NextResponse.json(
         { error: "No autorizado. Inicie sesión para subir imágenes." },
         { status: 401 }
