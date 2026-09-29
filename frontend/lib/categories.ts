@@ -142,17 +142,28 @@ export const CATEGORIES: CategoryContent[] = [
   },
 ];
 
-export const TICKER_ITEMS = [
-  { label: "Peluquerías", emoji: "✂️" },
-  { label: "Barberías", emoji: "💈" },
-  { label: "Odontología", emoji: "🦷" },
-  { label: "Estética & Spas", emoji: "💆" },
-  { label: "Pilates & Yoga", emoji: "🧘" },
-  { label: "Médicos & Especialistas", emoji: "🩺" },
-  { label: "Gimnasios & Fitness", emoji: "🏋️" },
-  { label: "Manicura & Uñas", emoji: "💅" },
-  { label: "Veterinarias", emoji: "🐾" },
-  { label: "Talleres & Servicios", emoji: "🔧" },
+export type TickerItem = {
+  label: string;
+  iconKey:
+    | "scissors"
+    | "smile"
+    | "sparkles"
+    | "activity"
+    | "stethoscope"
+    | "dumbbell"
+    | "paw"
+    | "wrench";
+};
+
+export const TICKER_ITEMS: TickerItem[] = [
+  { label: "Peluquerías & Barberías", iconKey: "scissors" },
+  { label: "Odontología & Salud Dental", iconKey: "smile" },
+  { label: "Estética & Spas", iconKey: "sparkles" },
+  { label: "Pilates & Fitness", iconKey: "activity" },
+  { label: "Médicos & Especialistas", iconKey: "stethoscope" },
+  { label: "Gimnasios & Entrenamiento", iconKey: "dumbbell" },
+  { label: "Veterinarias & Pet Shops", iconKey: "paw" },
+  { label: "Talleres & Servicios", iconKey: "wrench" },
 ];
 
 export function getCategory(id: CategoryId): CategoryContent {

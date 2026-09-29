@@ -10,14 +10,10 @@ import {
   Stethoscope,
   PawPrint,
   ShieldCheck,
-  Zap,
   ArrowRight,
-  MessageCircle,
-  Star,
 } from "lucide-react";
 import { CATEGORIES, type CategoryId } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
-import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import PhoneMockup from "./PhoneMockup";
 
 const ICONS: Record<CategoryId, typeof Scissors> = {
@@ -30,16 +26,10 @@ const ICONS: Record<CategoryId, typeof Scissors> = {
 };
 
 export default function Hero() {
-  const { selectedCategory, setSelectedCategory, category } = useCategory();
+  const { selectedCategory, setSelectedCategory } = useCategory();
 
   return (
-    <section id="inicio" className="relative overflow-hidden pt-4 sm:pt-8 pb-12 sm:pb-16 lg:pt-14 lg:pb-24 scroll-mt-20">
-      {/* Background ambient lighting centered with content for ultra-wide and TV displays */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto max-w-7xl h-full overflow-hidden">
-        <div className="absolute -top-32 right-4 sm:right-12 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-brand/20 via-orange-500/10 to-transparent blur-3xl" />
-        <div className="absolute top-1/2 -left-20 h-[450px] w-[450px] rounded-full bg-gradient-to-tr from-emerald-500/15 via-brand/10 to-transparent blur-3xl" />
-      </div>
-
+    <section id="inicio" className="relative pt-4 sm:pt-8 pb-12 sm:pb-16 lg:pt-14 lg:pb-24 scroll-mt-20">
       <div className="relative mx-auto grid max-w-7xl items-center gap-8 sm:gap-12 px-3 sm:px-6 lg:grid-cols-12">
         {/* Left Column: High-Converting Value Proposition */}
         <motion.div
@@ -48,17 +38,8 @@ export default function Hero() {
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="lg:col-span-7 flex flex-col justify-center min-w-0"
         >
-          {/* Geolocation & Validation Pill */}
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-brand/20 bg-white/90 dark:bg-slate-900/90 px-3 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-brand shadow-xs backdrop-blur-sm w-fit max-w-full">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
-            <span className="truncate">
-              <span className="inline sm:hidden">Diseñado en Paraguay</span>
-              <span className="hidden sm:inline">Diseñado en Paraguay para negocios locales</span>
-            </span>
-          </div>
-
           {/* Hard-Hitting Pain & Benefit Headline */}
-          <h1 className="mt-4 sm:mt-5 text-[22px] xs:text-2xl sm:text-4xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08] break-words">
+          <h1 className="text-[22px] xs:text-2xl sm:text-4xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08] break-words">
             Llená tu agenda en automático y reducí 80% las cancelaciones{" "}
             <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
               por WhatsApp.
@@ -70,41 +51,19 @@ export default function Hero() {
               Tu agenda llena 24/7 sin pasar horas respondiendo mensajes.{" "}
             </strong>
             <span className="text-slate-600 dark:text-slate-300">
-              Confirmaciones inmediatas, recordatorios automáticos por WhatsApp y comisiones de tu equipo calculadas sin planillas.
+              Confirmaciones inmediatas y recordatorios automáticos por WhatsApp.
             </span>
           </p>
 
           {/* High-Converting CTAs */}
-          <div className="mt-5 sm:mt-7 flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center">
-            {/* Primary Action Button */}
-            <motion.a
-              href="/onboarding"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand to-[#FF6B4A] px-5 sm:px-7 py-3 sm:py-3.5 text-sm sm:text-base font-bold text-white shadow-xl shadow-brand/35 hover:brightness-110 transition active:scale-98"
-              animate={{ scale: [1, 1.015, 1] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-            >
-              <Zap className="h-4 w-4 fill-amber-300 text-amber-300 shrink-0" />
-              <span>Prueba gratuitamente</span>
-            </motion.a>
-
-            {/* Direct WhatsApp Sales / Fast Track CTA */}
-            <a
-              href={getCommercialWhatsAppUrl(`Hola, quiero probar AgendatePY gratuitamente para mi negocio (${category.label})`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 px-4 sm:px-5 py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-xs transition"
-            >
-              <MessageCircle className="h-4 w-4 text-emerald-600 fill-emerald-600 shrink-0" />
-              <span>Hablar por WhatsApp</span>
-            </a>
-
-            {/* Live Web Demo Link */}
+          <div className="mt-5 sm:mt-7 flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Registration CTA Button */}
             <Link
-              href="/barberia/reservar"
-              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-brand transition"
+              href="/onboarding"
+              className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 text-sm sm:text-base font-bold bg-gradient-to-r from-brand to-[#FF6B4A] text-white rounded-full shadow-lg shadow-brand/25 hover:brightness-110 transition active:scale-98 w-full sm:w-fit"
             >
-              <span>Ver agenda en vivo</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <span>Registrate gratis ahora</span>
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
@@ -149,39 +108,6 @@ export default function Hero() {
                   </button>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Social Proof & Metrics */}
-          <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-slate-200/80 dark:border-white/10">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-3 sm:h-3.5 w-3 sm:w-3.5 fill-amber-400" />
-                ))}
-              </div>
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                4.9 / 5 estrellas
-              </span>
-              <span className="text-[11px] sm:text-xs text-slate-500">
-                <span className="inline sm:hidden">· 40+ salones en Paraguay</span>
-                <span className="hidden sm:inline">· Más de 40 salones y clínicas en Asunción, CDE y Encarnación</span>
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-3">
-              <div>
-                <p className="text-lg xs:text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">4.800+</p>
-                <p className="text-[9px] xs:text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Turnos mensuales</p>
-              </div>
-              <div>
-                <p className="text-lg xs:text-xl sm:text-2xl font-black text-brand tracking-tight">85%</p>
-                <p className="text-[9px] xs:text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Menos inasistencias</p>
-              </div>
-              <div>
-                <p className="text-lg xs:text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">0%</p>
-                <p className="text-[9px] xs:text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Comisión x turno</p>
-              </div>
             </div>
           </div>
         </motion.div>

@@ -5,6 +5,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
   type ReactNode,
 } from "react";
 import {
@@ -25,6 +26,24 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
   // Rubro activo en toda la landing (Hero, WhatsApp y widget).
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryId>("odontologia");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const rubroParam = params.get("rubro") as CategoryId;
+      const validCategories: CategoryId[] = [
+        "peluqueria",
+        "odontologia",
+        "pilates",
+        "spas",
+        "medicos",
+        "veterinarias",
+      ];
+      if (rubroParam && validCategories.includes(rubroParam)) {
+        setSelectedCategory(rubroParam);
+      }
+    }
+  }, []);
 
   const value = useMemo(
     () => ({

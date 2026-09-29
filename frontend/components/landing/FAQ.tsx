@@ -67,6 +67,7 @@ export default function FAQ() {
               <button
                 type="button"
                 onClick={() => setOpen(isOpen ? null : index)}
+                aria-expanded={isOpen}
                 className="flex w-full items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition cursor-pointer"
               >
                 <span className="pr-3 leading-snug">{item.q}</span>

@@ -9,7 +9,6 @@ const COLUMNS = [
     links: [
       { label: "Características", href: "#caracteristicas" },
       { label: "Cómo funciona", href: "#como-funciona" },
-      { label: "Calculadora de Ahorro", href: "#calculadora" },
       { label: "Precios", href: "#precios" },
       { label: "Galería de Diseños", href: "/showcase" },
       { label: "Web de Reservas", href: "/barberia/reservar" },
@@ -31,11 +30,11 @@ const COLUMNS = [
     title: "Rubros en Paraguay",
     links: [
       { label: "Peluquerías & Barberías", href: "/barberia/reservar" },
-      { label: "Centros de Estética & Spas", href: "/barberia/reservar" },
-      { label: "Consultorios & Salud", href: "/barberia/reservar" },
-      { label: "Odontología & Estética", href: "/barberia/reservar" },
-      { label: "Veterinarias & Pet Shops", href: "/barberia/reservar" },
-      { label: "Canchas & Pádel", href: "/barberia/reservar" },
+      { label: "Centros de Estética & Spas", href: "/?rubro=spas#inicio" },
+      { label: "Consultorios & Salud", href: "/?rubro=medicos#inicio" },
+      { label: "Odontología & Estética", href: "/?rubro=odontologia#inicio" },
+      { label: "Veterinarias & Pet Shops", href: "/?rubro=veterinarias#inicio" },
+      { label: "Canchas & Pádel", href: "/?rubro=pilates#inicio" },
     ],
   },
   {
@@ -55,7 +54,7 @@ const COLUMNS = [
 
 export default function Footer() {
   return (
-    <footer id="contacto" className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 transition-colors">
+    <footer id="contacto" className="border-t border-slate-200/60 dark:border-white/10 bg-white dark:bg-slate-950 transition-colors">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:py-14 sm:px-6">
         <div className="grid gap-6 sm:gap-10 grid-cols-2 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">

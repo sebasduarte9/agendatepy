@@ -72,26 +72,66 @@ export const metadata: Metadata = {
   },
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "AgendatePY — Sistema de Turnos Online y WhatsApp para Paraguay",
-  "alternateName": ["AgendatePY", "Agendate PY", "App Turnos Paraguay"],
-  "applicationCategory": "BusinessApplication",
-  "applicationSubCategory": "Scheduling Software",
-  "operatingSystem": "Web, iOS, Android",
-  "url": "https://agendatepy.com",
-  "description":
-    "Sistema de turnos online y agenda digital con WhatsApp para peluquerías, barberías, spas y consultorios en Paraguay. Recordatorios automáticos y cobro en Guaraníes.",
-  "offers": {
-    "@type": "Offer",
-    "price": "100000",
-    "priceCurrency": "PYG",
-    "availability": "https://schema.org/InStock",
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "AgendatePY — Sistema de Turnos Online y WhatsApp para Paraguay",
+    "alternateName": ["AgendatePY", "Agendate PY", "App Turnos Paraguay"],
+    "applicationCategory": "BusinessApplication",
+    "applicationSubCategory": "Scheduling Software",
+    "operatingSystem": "Web, iOS, Android",
+    "url": "https://agendatepy.com",
+    "description":
+      "Sistema de turnos online y agenda digital con WhatsApp para peluquerías, barberías, spas y consultorios en Paraguay. Recordatorios automáticos y cobro en Guaraníes.",
+    "offers": {
+      "@type": "Offer",
+      "price": "100000",
+      "priceCurrency": "PYG",
+      "availability": "https://schema.org/InStock",
+    },
+    "inLanguage": "es-PY",
+    "availableOnDevice": ["Desktop", "Mobile", "Tablet"],
   },
-  "inLanguage": "es-PY",
-  "availableOnDevice": ["Desktop", "Mobile", "Tablet"],
-};
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "¿Qué es AgendatePY y para qué tipo de negocios sirve en Paraguay?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "AgendatePY es la plataforma de agendamiento online y asistente por WhatsApp creada para negocios en Paraguay: peluquerías, barberías, salones de belleza, spas, consultorios médicos, odontología, canchas deportivas y profesionales independientes.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "¿AgendatePY cobra alguna comisión por mis reservas o ventas?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. En AgendatePY cobramos 0% de comisión sobre tus servicios, turnos o cobros. Pagás una suscripción mensual fija en Guaraníes y el 100% de lo que factura tu negocio va íntegro a tu cuenta bancaria.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "¿Mis clientes necesitan descargar alguna app para reservar?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Tus clientes acceden a tu enlace web personalizado o reservan conversando por WhatsApp. Sin descargar nada ni crear contraseñas.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué medios de pago puedo ofrecer a mis clientes en Paraguay?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Podés recibir transferencias bancarias SIPAP con confirmación por comprobante, cobros con QR Bancard o billeteras (Tigo Money, Personal Pay), o simplemente cobro presencial en efectivo o POS al momento de atenderlos.",
+        },
+      },
+    ],
+  },
+];
 
 export default function RootLayout({
   children,
@@ -101,6 +141,8 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${jakarta.variable} h-full scroll-smooth`} data-scroll-behavior="smooth">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

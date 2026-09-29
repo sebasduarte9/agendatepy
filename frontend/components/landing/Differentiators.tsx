@@ -32,7 +32,7 @@ const ITEMS = [
 
 export default function Differentiators() {
   return (
-    <section id="diferenciales" className="relative overflow-hidden mx-auto max-w-7xl px-3 sm:px-6 py-12 sm:py-20 scroll-mt-20">
+    <section id="diferenciales" className="relative mx-auto max-w-7xl px-3 sm:px-6 py-12 sm:py-20 scroll-mt-20">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}

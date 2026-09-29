@@ -5,7 +5,7 @@ import { MessageSquare, Share2, MapPin, QrCode, Landmark, CreditCard, Calendar, 
 
 export default function Integrations() {
   return (
-    <section id="integraciones" className="relative overflow-hidden bg-slate-50/70 dark:bg-slate-950 py-12 sm:py-20 border-y border-slate-200/60 dark:border-white/10 scroll-mt-20">
+    <section id="integraciones" className="relative py-12 sm:py-20 scroll-mt-20">
       <div className="mx-auto max-w-6xl px-3 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 25 }}

@@ -20,12 +20,8 @@ export default function HowItWorks() {
   return (
     <section
       id="como-funciona"
-      className="relative overflow-hidden mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20 lg:py-24 scroll-mt-24"
+      className="relative mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20 lg:py-24 scroll-mt-24"
     >
-      {/* Luces y orbes ambientales de fondo */}
-      <div className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-brand/10 blur-[100px] dark:bg-brand/15 max-w-full" />
-      <div className="pointer-events-none absolute -right-20 top-1/4 h-80 w-80 rounded-full bg-orange-500/10 blur-[100px] dark:bg-orange-500/15 max-w-full" />
-
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}

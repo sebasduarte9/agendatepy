@@ -18,7 +18,7 @@ export default function BottomCta() {
   );
 
   return (
-    <section className="relative overflow-hidden py-12 sm:py-20">
+    <section className="relative py-12 sm:py-20">
       <div className="mx-auto max-w-7xl px-3 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

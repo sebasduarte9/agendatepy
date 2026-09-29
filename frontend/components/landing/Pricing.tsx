@@ -45,19 +45,15 @@ export default function Pricing() {
   return (
     <section
       id="precios"
-      className="relative overflow-hidden bg-slate-50/80 dark:bg-slate-950 py-14 sm:py-20 lg:py-24 border-t border-slate-200/80 dark:border-white/10 transition-colors scroll-mt-24"
+      className="relative py-14 sm:py-20 lg:py-24 scroll-mt-24"
     >
-      {/* Luces y resplandores ambientales de fondo */}
-      <div className="pointer-events-none absolute -top-40 right-1/4 h-[500px] w-[500px] rounded-full bg-brand/10 blur-[130px] dark:bg-brand/20" />
-      <div className="pointer-events-none absolute bottom-0 left-10 h-96 w-96 rounded-full bg-orange-500/10 blur-[120px] dark:bg-orange-500/15" />
-
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto space-y-2.5 sm:space-y-3"
+          className="text-center max-w-3xl mx-auto space-y-2.5 sm:space-y-3"
         >
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
             <CheckCircle2 className="h-3.5 w-3.5" /> Precios Transparentes en Guaraníes (PYG)
@@ -68,7 +64,7 @@ export default function Pricing() {
               sin comisiones ocultas
             </span>
           </h2>
-          <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mx-auto [text-wrap:balance]">
             Cobramos una suscripción fija en guaraníes. Todo lo que facturás en tu negocio es 100% tuyo.
           </p>
         </motion.div>
@@ -129,7 +125,7 @@ export default function Pricing() {
               annual={annual}
               savings="Ahorrás Gs. 240.000 al año (2 meses gratis)"
               billedDetail="Gs. 960.000 facturado anual"
-              cta="Prueba gratuitamente"
+              cta="Probar 14 días gratis"
               href="/onboarding"
               features={BASIC_FEATURES}
             />
@@ -151,7 +147,7 @@ export default function Pricing() {
               annual={annual}
               savings="Ahorrás Gs. 600.000 al año (2 meses gratis)"
               billedDetail="Gs. 2.400.000 facturado anual"
-              cta="Prueba gratuitamente"
+              cta="Probar 14 días gratis"
               href="/onboarding"
               features={PRO_FEATURES}
               highlighted

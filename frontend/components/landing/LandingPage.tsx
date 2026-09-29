@@ -5,9 +5,8 @@ import Header from "./Header";
 import Hero from "./Hero";
 import Ticker from "./Ticker";
 import HowItWorks from "./HowItWorks";
-import WhatsAppShowcase from "./WhatsAppShowcase";
 import Features from "./Features";
-import RoiCalculator from "./RoiCalculator";
+import ComparisonSection from "./ComparisonSection";
 import Pricing from "./Pricing";
 import Integrations from "./Integrations";
 import Differentiators from "./Differentiators";
@@ -25,9 +24,8 @@ export default function LandingPage() {
         <Hero />
         <Ticker />
         <HowItWorks />
-        <WhatsAppShowcase />
         <Features />
-        <RoiCalculator />
+        <ComparisonSection />
         <Pricing />
         <Integrations />
         <Differentiators />

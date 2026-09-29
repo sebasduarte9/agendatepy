@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock, Bell, ArrowRight, MessageCircle, Calendar, CheckCheck, MapPin } from "lucide-react";
+import { CheckCircle2, Clock, Bell, ArrowRight, MessageCircle, Calendar, CheckCheck, MapPin, User, Sparkles, RefreshCw, Check } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
@@ -120,11 +120,11 @@ export default function WhatsAppShowcase() {
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 <span>¡Tu turno está confirmado!</span>
               </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2 text-[11px] font-medium space-y-0.5 border border-slate-100 dark:border-white/5">
-                <p>💈 <strong className="text-slate-900 dark:text-white">Servicio:</strong> {category.heroExample}</p>
-                <p>👤 <strong className="text-slate-900 dark:text-white">Profesional:</strong> Colaborador 1</p>
-                <p>🗓️ <strong className="text-slate-900 dark:text-white">Fecha:</strong> Este viernes · 16:30 hs</p>
-                <p>📍 <strong className="text-slate-900 dark:text-white">Lugar:</strong> {category.businessName} (Asunción)</p>
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2 text-[11px] font-medium space-y-1 border border-slate-100 dark:border-white/5">
+                <p className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-brand shrink-0" /> <strong className="text-slate-900 dark:text-white">Servicio:</strong> {category.heroExample}</p>
+                <p className="flex items-center gap-1.5"><User className="h-3 w-3 text-emerald-600 shrink-0" /> <strong className="text-slate-900 dark:text-white">Profesional:</strong> Colaborador 1</p>
+                <p className="flex items-center gap-1.5"><Calendar className="h-3 w-3 text-brand shrink-0" /> <strong className="text-slate-900 dark:text-white">Fecha:</strong> Este viernes · 16:30 hs</p>
+                <p className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-emerald-600 shrink-0" /> <strong className="text-slate-900 dark:text-white">Lugar:</strong> {category.businessName} (Asunción)</p>
               </div>
               <div className="pt-0.5 flex items-center justify-between text-[10px] text-slate-400">
                 <span className="flex items-center gap-1 text-brand font-semibold">
@@ -138,7 +138,10 @@ export default function WhatsAppShowcase() {
 
             {/* Bubble 2: 24h Interactive Reminder */}
             <div className="rounded-2xl rounded-tl-xs bg-white dark:bg-slate-800 p-2.5 sm:p-3 text-xs text-slate-800 dark:text-slate-200 shadow-xs space-y-1.5">
-              <p className="font-bold text-slate-900 dark:text-white text-[11px]">⏰ Recordatorio de Turno</p>
+              <p className="font-bold text-slate-900 dark:text-white text-[11px] flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span>Recordatorio de Turno</span>
+              </p>
               <p className="leading-snug text-[11px]">
                 Hola, te recordamos tu cita de <strong className="text-slate-900 dark:text-white">{category.heroExample}</strong> para mañana a las <strong className="text-slate-900 dark:text-white">16:30 hs</strong>.
               </p>
@@ -146,15 +149,17 @@ export default function WhatsAppShowcase() {
               <div className="flex gap-1.5 sm:gap-2 pt-0.5">
                 <button
                   type="button"
-                  className="flex-1 text-center rounded-xl bg-emerald-50 dark:bg-emerald-950/70 py-1.5 px-1.5 sm:px-2 text-[10px] xs:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 shadow-2xs hover:bg-emerald-100 transition"
+                  className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 py-1.5 px-1.5 sm:px-2 text-[10px] xs:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 shadow-2xs hover:bg-emerald-100 transition cursor-pointer"
                 >
-                  ✅ Sí, confirmo
+                  <Check className="h-3 w-3 text-emerald-600 shrink-0" />
+                  <span>Sí, confirmo</span>
                 </button>
                 <button
                   type="button"
-                  className="flex-1 text-center rounded-xl bg-slate-100 dark:bg-slate-700/80 py-1.5 px-1.5 sm:px-2 text-[10px] xs:text-[11px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 transition"
+                  className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-700/80 py-1.5 px-1.5 sm:px-2 text-[10px] xs:text-[11px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 transition cursor-pointer"
                 >
-                  🔄 Reprogramar
+                  <RefreshCw className="h-3 w-3 text-slate-500 shrink-0" />
+                  <span>Reprogramar</span>
                 </button>
               </div>
               <div className="pt-0.5 text-right text-[10px] text-slate-400 flex items-center justify-end gap-0.5">
