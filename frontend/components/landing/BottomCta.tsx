@@ -54,7 +54,7 @@ export default function BottomCta() {
 
             {/* Subtitle */}
             <p className="mt-3 sm:mt-4 text-sm sm:text-lg font-medium text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
-              Mejor control para tu negocio 24/7.
+              Mejor control para tu negocio y tus reservas 24/7
             </p>
 
             {/* Action Buttons */}

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   CheckCheck,
   RotateCcw,
@@ -120,31 +120,6 @@ export default function PhoneMockup() {
       });
     }
   };
-
-  // 3D tilt tracking for mouse over phone
-  const cardRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const springConfig = { damping: 20, stiffness: 180 };
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [7, -7]), springConfig);
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), springConfig);
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const xPct = (e.clientX - rect.left) / width - 0.5;
-    const yPct = (e.clientY - rect.top) / height - 0.5;
-    mouseX.set(xPct);
-    mouseY.set(yPct);
-  }
-
-  function handleMouseLeave() {
-    mouseX.set(0);
-    mouseY.set(0);
-  }
 
   const initialMessages: Message[] = [
     {
@@ -325,24 +300,9 @@ export default function PhoneMockup() {
   }
 
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative mx-auto flex w-full items-center justify-center p-2 sm:p-4 [perspective:1400px] overflow-hidden sm:overflow-visible"
-    >
-      {/* Ambient Halo behind iPhone in warm brand tones */}
-      <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/30 via-orange-500/20 to-emerald-500/20 blur-3xl opacity-75 max-w-full" />
-
-      {/* 3D Tiltable iPhone 16 Pro Container (Desktop) / Clean WhatsApp Chat Card (Mobile) */}
-      <motion.div
-        style={{
-          rotateX,
-          rotateY,
-          transformStyle: "preserve-3d",
-        }}
-        className="relative w-full max-w-[340px] xs:max-w-[360px] rounded-3xl sm:rounded-[50px] p-0 sm:p-[9px] bg-transparent sm:bg-gradient-to-b sm:from-[#3a3b40] sm:via-[#1e1f23] sm:to-[#111215] sm:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
-      >
+    <div className="relative mx-auto flex w-full items-center justify-center p-0 max-w-full">
+      {/* Phone Container on Desktop / Clean WhatsApp Chat Card on Mobile */}
+      <div className="relative w-full max-w-[340px] xs:max-w-[360px] rounded-3xl sm:rounded-[50px] p-0 sm:p-[9px] bg-transparent sm:bg-gradient-to-b sm:from-[#3a3b40] sm:via-[#1e1f23] sm:to-[#111215] sm:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.15)]">
         {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel - Desktop Only) */}
         {/* Left Side: Action Button */}
         <div className="hidden sm:block absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
@@ -701,9 +661,9 @@ export default function PhoneMockup() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Spatial 3D Floating Widget 1: Top-Left Reminder Alert */}
+      {/* Floating Widget 1: Top-Left Reminder Alert (Desktop Only) */}
       <motion.div
         initial={{ opacity: 0, x: -20, y: 10 }}
         animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
@@ -711,7 +671,7 @@ export default function PhoneMockup() {
           y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           opacity: { duration: 0.8 },
         }}
-        className="pointer-events-none absolute -left-2 sm:-left-4 lg:-left-6 xl:-left-10 top-32 sm:top-40 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
+        className="pointer-events-none absolute -left-2 sm:-left-4 lg:-left-6 xl:-left-10 top-32 sm:top-40 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl whitespace-nowrap"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
           <Bell className="h-5 w-5 animate-pulse" />
@@ -725,7 +685,7 @@ export default function PhoneMockup() {
         </div>
       </motion.div>
 
-      {/* Spatial 3D Floating Widget 2: Bottom-Right Instant Transfer */}
+      {/* Floating Widget 2: Bottom-Right Instant Transfer (Desktop Only) */}
       <motion.div
         initial={{ opacity: 0, x: 20, y: 10 }}
         animate={{ opacity: 1, x: 0, y: [0, 8, 0] }}
@@ -733,7 +693,7 @@ export default function PhoneMockup() {
           y: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 },
           opacity: { duration: 0.8, delay: 0.2 },
         }}
-        className="pointer-events-none absolute -right-2 sm:-right-4 lg:-right-6 xl:-right-10 bottom-24 sm:bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
+        className="pointer-events-none absolute -right-2 sm:-right-4 lg:-right-6 xl:-right-10 bottom-24 sm:bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl whitespace-nowrap"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand dark:text-[#FF6B4A]">
           <Landmark className="h-5 w-5" />

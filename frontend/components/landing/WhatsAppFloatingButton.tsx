@@ -22,14 +22,12 @@ export default function WhatsAppFloatingButton() {
     "Hola, quisiera asesoramiento sobre AgendatePY para mi negocio"
   );
 
+  if (!hasScrolledPastHero) return null;
+
   return (
     <aside
       aria-label="Contacto por WhatsApp"
-      className={`fixed z-40 select-none transition-all duration-300 ${
-        hasScrolledPastHero
-          ? "hidden sm:block sm:bottom-6 sm:right-6"
-          : "bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 xs:right-4 sm:bottom-6 sm:right-6 max-w-[calc(100vw-1.5rem)] sm:max-w-md"
-      }`}
+      className="fixed z-40 select-none transition-all duration-300 hidden sm:block sm:bottom-6 sm:right-6 max-w-md"
     >
       <AnimatePresence mode="wait">
         {!isDismissed ? (
