@@ -42,9 +42,61 @@ import {
   Mic,
   Share2,
   ChevronDown,
+  HelpCircle,
+  AlertCircle,
+  PhoneCall,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import type { BotMainMenuOption, BotKeywordRule } from "@/lib/dashboard-types";
+
+// Helper to determine next available unique key for action nodes
+function getNextAvailableKey(currentNodes: CanvasNode[]): string {
+  const usedKeys = new Set(
+    currentNodes
+      .map((n) => n.config?.key?.trim())
+      .filter((k): k is string => Boolean(k && !isNaN(Number(k))))
+      .map((k) => Number(k))
+  );
+  for (let i = 1; i <= 20; i++) {
+    if (!usedKeys.has(i)) return String(i);
+  }
+  return String(currentNodes.length + 1);
+}
+
+// Helper to migrate and sanitize nodes loaded from database / local storage
+function sanitizeNodes(loadedNodes: any[], initialDefaults: CanvasNode[]): CanvasNode[] {
+  if (!Array.isArray(loadedNodes) || loadedNodes.length === 0) {
+    return initialDefaults;
+  }
+
+  return loadedNodes.map((node) => {
+    let type = node.type as NodeType;
+    const title = (node.title || "").toLowerCase();
+    if (type === ("action" as any)) {
+      if (title.includes("link") || title.includes("reserva")) type = "action_link";
+      else if (title.includes("precio") || title.includes("servicio")) type = "action_prices";
+      else if (title.includes("sipap") || title.includes("banco") || title.includes("pago")) type = "action_sipap";
+      else if (title.includes("humano") || title.includes("asesor")) type = "action_human";
+      else if (title.includes("ubicacion") || title.includes("horario")) type = "action_location";
+      else type = "action_link";
+    }
+
+    return {
+      id: node.id,
+      type,
+      title: node.title,
+      x: typeof node.x === "number" ? node.x : 100,
+      y: typeof node.y === "number" ? node.y : 100,
+      enabled: node.enabled !== false,
+      config: {
+        ...node.config,
+        key: node.config?.key || undefined,
+        keywords: Array.isArray(node.config?.keywords) ? node.config.keywords : [],
+        response: node.config?.response || "",
+      },
+    };
+  });
+}
 
 // Dynamic message tags for templates (100% clean, zero emojis)
 const AVAILABLE_TAGS = [
@@ -414,14 +466,25 @@ export default function BotWhatsAppPage() {
     { id: "conn-12", fromNodeId: "node-remind-24h", toNodeId: "node-remind-2h" },
   ];
 
-  // Canvas State: Loaded from DB if present, otherwise initial nodes
+  // Canvas State: Loaded from DB/Local if present, otherwise initial nodes
   const [nodes, setNodes] = useState<CanvasNode[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedLocal = localStorage.getItem("agendate_canvas_nodes");
+        if (savedLocal) {
+          const parsed = JSON.parse(savedLocal);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return sanitizeNodes(parsed, buildInitialNodes());
+          }
+        }
+      } catch (e) {}
+    }
     if (
       evolutionConfig.canvasNodes &&
       Array.isArray(evolutionConfig.canvasNodes) &&
       evolutionConfig.canvasNodes.length > 0
     ) {
-      return evolutionConfig.canvasNodes;
+      return sanitizeNodes(evolutionConfig.canvasNodes, buildInitialNodes());
     }
     return buildInitialNodes();
   });
@@ -442,10 +505,26 @@ export default function BotWhatsAppPage() {
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
 
-  // Dragging state
+  // Canvas Pan & Dragging state (fluid position persistence)
+  const [pan, setPan] = useState<{ x: number; y: number }>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedPan = localStorage.getItem("agendate_canvas_pan");
+        if (savedPan) return JSON.parse(savedPan);
+      } catch (e) {}
+    }
+    return { x: 0, y: 0 };
+  });
+  const isPanningRef = useRef(false);
+  const panStartRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
+
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const dragStartRef = useRef<{ startX: number; startY: number; nodeStartX: number; nodeStartY: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
+
+  // New Modals State: Support & Ultra-detailed Guide
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
   // Templates tab state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
@@ -464,7 +543,7 @@ export default function BotWhatsAppPage() {
     evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800"
   );
 
-  // Simulator State (Pure WhatsApp text, zero API buttons)
+  // Simulator State: STARTS COMPLETELY EMPTY (Zero dummy messages)
   const [simChatMessages, setSimChatMessages] = useState<
     {
       id: string;
@@ -480,22 +559,7 @@ export default function BotWhatsAppPage() {
         location: string;
       };
     }[]
-  >([
-    {
-      id: "msg-1",
-      sender: "client",
-      type: "text",
-      text: "Hola buenas tardes",
-      time: "14:28",
-    },
-    {
-      id: "msg-2",
-      sender: "bot",
-      type: "text",
-      text: defaultWelcomeText,
-      time: "14:28",
-    },
-  ]);
+  >([]);
   const [simInput, setSimInput] = useState("");
   const [isBotTypingSim, setIsBotTypingSim] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
@@ -620,8 +684,9 @@ export default function BotWhatsAppPage() {
     pushToast("success", "Nodo eliminado del flujo.");
   }
 
-  // Create specialized action nodes directly
-  function createSpecializedNode(type: NodeType, title: string, defaultText: string, defaultKey: string) {
+  // Create specialized action nodes directly with auto-incremented non-duplicate key
+  function createSpecializedNode(type: NodeType, title: string, defaultText: string, suggestedKey?: string) {
+    const nextKey = suggestedKey || getNextAvailableKey(nodes);
     const newNodeId = `node-${type}-${Date.now()}`;
     const newNode: CanvasNode = {
       id: newNodeId,
@@ -631,13 +696,21 @@ export default function BotWhatsAppPage() {
       y: 100 + nodes.length * 35,
       enabled: true,
       config: {
-        key: defaultKey,
+        key: nextKey,
         response: defaultText,
-        keywords: [defaultKey],
+        keywords: [nextKey],
       },
     };
 
-    setNodes((prev) => [...prev, newNode]);
+    setNodes((prev) => {
+      const next = [...prev, newNode];
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("agendate_canvas_nodes", JSON.stringify(next));
+        }
+      } catch (e) {}
+      return next;
+    });
     setConnections((prev) => [
       ...prev,
       { id: `conn-${Date.now()}`, fromNodeId: "node-menu-router", toNodeId: newNodeId },
@@ -645,11 +718,30 @@ export default function BotWhatsAppPage() {
     setSelectedNodeId(newNodeId);
     setIsInspectorOpen(true);
     setAddMenuOpen(false);
-    pushToast("success", `Nodo '${title}' creado con éxito.`);
+    pushToast("success", `Nodo '${title}' creado con opción ${nextKey}.`);
   }
 
-  // Save flow and sync to DB
+  // Save flow, validate duplicate keys, and sync to DB
   function handleSaveCanvasFlow() {
+    // Validate uniqueness of option keys among enabled action nodes
+    const keyMap = new Map<string, string[]>();
+    for (const n of nodes) {
+      if (n.enabled && n.config?.key) {
+        const k = n.config.key.trim().toLowerCase();
+        if (!keyMap.has(k)) keyMap.set(k, []);
+        keyMap.get(k)!.push(n.title);
+      }
+    }
+    const duplicateEntries = Array.from(keyMap.entries()).filter(([_, titles]) => titles.length > 1);
+    if (duplicateEntries.length > 0) {
+      const [dupKey, dupTitles] = duplicateEntries[0];
+      pushToast(
+        "error",
+        `Conflicto de opciones: La opción '${dupKey}' está repetida en "${dupTitles.join('" y "')}". Cada opción del menú debe tener un número único.`
+      );
+      return;
+    }
+
     const actionNodes = nodes.filter((n) =>
       [
         "action_link",
@@ -708,10 +800,18 @@ export default function BotWhatsAppPage() {
       fallbackMessage: welcomeNode?.config.fallbackText || evolutionConfig.fallbackMessage,
     });
 
-    pushToast("success", "Flujo guardado con éxito y sincronizado en la base de datos.");
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("agendate_canvas_nodes", JSON.stringify(nodes));
+        localStorage.setItem("agendate_canvas_connections", JSON.stringify(connections));
+        localStorage.setItem("agendate_canvas_pan", JSON.stringify(pan));
+      } catch (e) {}
+    }
+
+    pushToast("success", "Flujo y posiciones guardadas con éxito en la base de datos.");
   }
 
-  // Node Drag Handlers
+  // Node Drag & Canvas Pan Handlers
   function handleNodePointerDown(e: React.PointerEvent, nodeId: string) {
     e.stopPropagation();
     setSelectedNodeId(nodeId);
@@ -729,28 +829,67 @@ export default function BotWhatsAppPage() {
     };
   }
 
+  function handleCanvasPointerDown(e: React.PointerEvent) {
+    // Only pan if clicking canvas background (not a node or interactive button)
+    if ((e.target as HTMLElement).closest("[data-canvas-node]")) return;
+    isPanningRef.current = true;
+    panStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialPanX: pan.x,
+      initialPanY: pan.y,
+    };
+  }
+
   const handleCanvasPointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!draggingNodeId || !dragStartRef.current) return;
-      const dx = (e.clientX - dragStartRef.current.startX) / zoom;
-      const dy = (e.clientY - dragStartRef.current.startY) / zoom;
+      if (draggingNodeId && dragStartRef.current) {
+        const dx = (e.clientX - dragStartRef.current.startX) / zoom;
+        const dy = (e.clientY - dragStartRef.current.startY) / zoom;
 
-      const newX = Math.max(10, Math.round((dragStartRef.current.nodeStartX + dx) / 10) * 10);
-      const newY = Math.max(10, Math.round((dragStartRef.current.nodeStartY + dy) / 10) * 10);
+        const newX = Math.max(10, Math.round((dragStartRef.current.nodeStartX + dx) / 10) * 10);
+        const newY = Math.max(10, Math.round((dragStartRef.current.nodeStartY + dy) / 10) * 10);
 
-      setNodes((prev) =>
-        prev.map((node) =>
-          node.id === draggingNodeId ? { ...node, x: newX, y: newY } : node
-        )
-      );
+        setNodes((prev) =>
+          prev.map((node) =>
+            node.id === draggingNodeId ? { ...node, x: newX, y: newY } : node
+          )
+        );
+      } else if (isPanningRef.current && panStartRef.current) {
+        const dx = e.clientX - panStartRef.current.startX;
+        const dy = e.clientY - panStartRef.current.startY;
+        setPan({
+          x: Math.round(panStartRef.current.initialPanX + dx),
+          y: Math.round(panStartRef.current.initialPanY + dy),
+        });
+      }
     },
     [draggingNodeId, zoom]
   );
 
   const handleCanvasPointerUp = useCallback(() => {
+    if (draggingNodeId) {
+      setNodes((currentNodes) => {
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("agendate_canvas_nodes", JSON.stringify(currentNodes));
+          }
+        } catch (e) {}
+        return currentNodes;
+      });
+    }
+    if (isPanningRef.current) {
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("agendate_canvas_pan", JSON.stringify(pan));
+        }
+      } catch (e) {}
+    }
     setDraggingNodeId(null);
     dragStartRef.current = null;
-  }, []);
+    isPanningRef.current = false;
+    panStartRef.current = null;
+  }, [draggingNodeId, pan]);
 
   // ═══════════════════════════════════════════════════════════════════
   // SIMULATOR ENGINE (Zero API Buttons, 100% Pure WhatsApp Text)
@@ -789,7 +928,12 @@ export default function BotWhatsAppPage() {
       const botTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
       // Special case: Simulation of interactive appointment confirmation card
-      if (lower === "confirmar" || lower === "confirmar turno" || lower === "mi turno") {
+      if (
+        lower === "confirmar" ||
+        lower === "confirmar turno" ||
+        lower === "mi turno" ||
+        lower.includes("confirmar")
+      ) {
         setSimChatMessages((prev) => [
           ...prev,
           {
@@ -813,44 +957,152 @@ export default function BotWhatsAppPage() {
       // Check Canvas Nodes
       const welcomeNode = nodes.find((n) => n.type === "welcome");
       const welcomeText = welcomeNode?.config.welcomeText || defaultWelcomeText;
-      const fallbackText = welcomeNode?.config.fallbackText || "Opción no reconocida. Por favor escribí el número correspondiente.";
+      const fallbackText =
+        welcomeNode?.config.fallbackText ||
+        "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo.";
 
-      const activeNodes = nodes.filter((n) =>
-        n.enabled &&
-        [
-          "action_link",
-          "action_prices",
-          "action_sipap",
-          "action_human",
-          "action_location",
-          "keyword",
-        ].includes(n.type)
+      const activeNodes = nodes.filter(
+        (n) =>
+          n.enabled !== false &&
+          (
+            n.type.startsWith("action") ||
+            (n.type as string) === "action" ||
+            n.type === "keyword" ||
+            Boolean(n.config.response)
+          )
       );
 
-      let replyText = "";
-
-      // Saludo inicial
-      if (
+      const isGreeting =
         lower === "hola" ||
         lower === "buenas" ||
         lower === "buen dia" ||
+        lower === "buen día" ||
+        lower === "buenas tardes" ||
+        lower === "buenas noches" ||
         lower === "menu" ||
-        lower === "inicio"
-      ) {
+        lower === "menú" ||
+        lower === "inicio" ||
+        lower === "empezar" ||
+        lower === "hola buenas";
+
+      let replyText = "";
+
+      if (isGreeting) {
         replyText = welcomeText;
       } else {
-        // Coincidencia por clave numérica o keywords
-        const matched = activeNodes.find((n) => {
-          const keyMatches = (n.config.key || "").toLowerCase().trim() === lower;
-          const keywordMatches = (n.config.keywords || []).some((kw) =>
-            lower.includes(kw.toLowerCase().trim())
-          );
-          const titleMatches = n.title.toLowerCase().includes(lower);
-          return keyMatches || keywordMatches || titleMatches;
+        const cleanMsg = lower.replace(/[^a-z0-9áéíóúüñ\s]/gi, "").trim();
+
+        // 1. Direct option number match ("1", "2", "3"...)
+        let matchedNode = activeNodes.find((n) => {
+          const nodeKey = (n.config.key || "").toLowerCase().trim();
+          if (!nodeKey) return false;
+          if (cleanMsg === nodeKey || lower === nodeKey) return true;
+          if (
+            cleanMsg.startsWith(`${nodeKey} `) ||
+            cleanMsg.endsWith(` ${nodeKey}`) ||
+            cleanMsg === `opcion ${nodeKey}` ||
+            cleanMsg === `opción ${nodeKey}` ||
+            cleanMsg === `la ${nodeKey}`
+          ) {
+            return true;
+          }
+          return false;
         });
 
-        if (matched) {
-          replyText = matched.config.response || "Información solicitada.";
+        // 2. Keyword match
+        if (!matchedNode) {
+          matchedNode = activeNodes.find((n) => {
+            const keywords = (n.config.keywords || []).map((k) => k.toLowerCase().trim()).filter(Boolean);
+            return keywords.some((kw) => cleanMsg === kw || cleanMsg.includes(kw) || kw.includes(cleanMsg));
+          });
+        }
+
+        // 3. Node title match
+        if (!matchedNode) {
+          matchedNode = activeNodes.find((n) => {
+            const title = (n.title || "").toLowerCase().trim();
+            return title.length > 3 && (cleanMsg.includes(title) || title.includes(cleanMsg));
+          });
+        }
+
+        // 4. Semantic fallback matches for common inquiries
+        if (!matchedNode) {
+          if (
+            cleanMsg.includes("precio") ||
+            cleanMsg.includes("costo") ||
+            cleanMsg.includes("tarifa") ||
+            cleanMsg.includes("cuanto") ||
+            cleanMsg.includes("servicio") ||
+            cleanMsg.includes("corte")
+          ) {
+            matchedNode = activeNodes.find(
+              (n) =>
+                n.type === "action_prices" ||
+                n.config.key === "2" ||
+                n.title.toLowerCase().includes("precio")
+            );
+          } else if (
+            cleanMsg.includes("persona") ||
+            cleanMsg.includes("humano") ||
+            cleanMsg.includes("asesor") ||
+            cleanMsg.includes("hablar") ||
+            cleanMsg.includes("alguien") ||
+            cleanMsg.includes("atencion")
+          ) {
+            matchedNode = activeNodes.find(
+              (n) =>
+                n.type === "action_human" ||
+                n.config.key === "4" ||
+                n.title.toLowerCase().includes("humano") ||
+                n.title.toLowerCase().includes("asesor")
+            );
+          } else if (
+            cleanMsg.includes("donde") ||
+            cleanMsg.includes("ubicacion") ||
+            cleanMsg.includes("ubicación") ||
+            cleanMsg.includes("direccion") ||
+            cleanMsg.includes("dirección") ||
+            cleanMsg.includes("horario") ||
+            cleanMsg.includes("llegar")
+          ) {
+            matchedNode = activeNodes.find(
+              (n) =>
+                n.type === "action_location" ||
+                n.config.key === "5" ||
+                n.title.toLowerCase().includes("ubicacion") ||
+                n.title.toLowerCase().includes("horario")
+            );
+          } else if (
+            cleanMsg.includes("reserva") ||
+            cleanMsg.includes("turno") ||
+            cleanMsg.includes("agendar") ||
+            cleanMsg.includes("cita") ||
+            cleanMsg.includes("link")
+          ) {
+            matchedNode = activeNodes.find(
+              (n) =>
+                n.type === "action_link" ||
+                n.config.key === "1" ||
+                n.title.toLowerCase().includes("reserva")
+            );
+          } else if (
+            cleanMsg.includes("sipap") ||
+            cleanMsg.includes("transfer") ||
+            cleanMsg.includes("banco") ||
+            cleanMsg.includes("pago") ||
+            cleanMsg.includes("cuenta")
+          ) {
+            matchedNode = activeNodes.find(
+              (n) =>
+                n.type === "action_sipap" ||
+                n.config.key === "3" ||
+                n.title.toLowerCase().includes("sipap")
+            );
+          }
+        }
+
+        if (matchedNode && matchedNode.config.response) {
+          replyText = matchedNode.config.response;
         } else {
           replyText = fallbackText;
         }
@@ -867,7 +1119,7 @@ export default function BotWhatsAppPage() {
         },
       ]);
       setIsBotTypingSim(false);
-    }, 1000);
+    }, 800);
   }
 
   function handleConnectSimulated() {
@@ -959,7 +1211,27 @@ export default function BotWhatsAppPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Help & Support Button */}
+          <button
+            type="button"
+            onClick={() => setIsHelpModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition active:scale-98 cursor-pointer shadow-2xs"
+          >
+            <PhoneCall className="h-3.5 w-3.5" />
+            <span>¿Necesitás ayuda? Contactanos</span>
+          </button>
+
+          {/* Ultra-Detailed Guide Button */}
+          <button
+            type="button"
+            onClick={() => setIsGuideModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition active:scale-98 cursor-pointer shadow-2xs"
+          >
+            <Layers className="h-3.5 w-3.5 text-sky-600" />
+            <span>Guía Paso a Paso</span>
+          </button>
+
           {/* Connection status badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-bold shadow-2xs">
             <span
@@ -1178,9 +1450,17 @@ export default function BotWhatsAppPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setZoom(1)}
+                  onClick={() => {
+                    setZoom(1);
+                    setPan({ x: 0, y: 0 });
+                    try {
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("agendate_canvas_pan", JSON.stringify({ x: 0, y: 0 }));
+                      }
+                    } catch (e) {}
+                  }}
                   className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
-                  title="Restablecer"
+                  title="Restablecer Vista y Centrar"
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
                 </button>
@@ -1206,8 +1486,7 @@ export default function BotWhatsAppPage() {
                         createSpecializedNode(
                           "action_link",
                           "Link de Reservas",
-                          `¡Excelente! Podés reservar tu turno acá:\n${bookingUrl}`,
-                          String(nodes.length + 1)
+                          `¡Excelente! Podés reservar tu turno acá:\n${bookingUrl}`
                         )
                       }
                       className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 transition cursor-pointer"
@@ -1222,8 +1501,7 @@ export default function BotWhatsAppPage() {
                         createSpecializedNode(
                           "action_prices",
                           "Servicios y Precios",
-                          defaultPricesText,
-                          String(nodes.length + 1)
+                          defaultPricesText
                         )
                       }
                       className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:text-sky-600 transition cursor-pointer"
@@ -1238,8 +1516,7 @@ export default function BotWhatsAppPage() {
                         createSpecializedNode(
                           "action_sipap",
                           "Datos SIPAP",
-                          defaultSipapText,
-                          String(nodes.length + 1)
+                          defaultSipapText
                         )
                       }
                       className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-600 transition cursor-pointer"
@@ -1254,8 +1531,7 @@ export default function BotWhatsAppPage() {
                         createSpecializedNode(
                           "action_human",
                           "Asesor Humano",
-                          "Un asesor humano te responderá a la brevedad.",
-                          String(nodes.length + 1)
+                          "Un asesor humano te responderá a la brevedad."
                         )
                       }
                       className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 transition cursor-pointer"
@@ -1270,8 +1546,7 @@ export default function BotWhatsAppPage() {
                         createSpecializedNode(
                           "action_location",
                           "Ubicación & Horarios",
-                          defaultLocationText,
-                          String(nodes.length + 1)
+                          defaultLocationText
                         )
                       }
                       className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition cursor-pointer"
@@ -1307,22 +1582,25 @@ export default function BotWhatsAppPage() {
 
           {/* Canvas Workspace + Inspector Drawer */}
           <div className="relative rounded-3xl border border-slate-200/90 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950 overflow-hidden flex min-h-[660px] shadow-sm">
-            {/* Viewport */}
+            {/* Viewport with Pan and Zoom */}
             <div
               ref={canvasRef}
+              onPointerDown={handleCanvasPointerDown}
               onPointerMove={handleCanvasPointerMove}
               onPointerUp={handleCanvasPointerUp}
-              className="flex-1 relative overflow-auto select-none [background-image:radial-gradient(#cbd5e1_1.2px,transparent_1.2px)] dark:[background-image:radial-gradient(#334155_1.2px,transparent_1.2px)] [background-size:20px_20px]"
+              className={`flex-1 relative overflow-auto select-none [background-image:radial-gradient(#cbd5e1_1.2px,transparent_1.2px)] dark:[background-image:radial-gradient(#334155_1.2px,transparent_1.2px)] [background-size:20px_20px] ${
+                isPanningRef.current ? "cursor-grabbing" : "cursor-grab"
+              }`}
               style={{ minHeight: "660px" }}
             >
               <div
                 className="relative"
                 style={{
-                  width: "1280px",
-                  height: "760px",
-                  transform: `scale(${zoom})`,
+                  width: "2200px",
+                  height: "1400px",
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transformOrigin: "top left",
-                  transition: draggingNodeId ? "none" : "transform 0.15s ease",
+                  transition: draggingNodeId || isPanningRef.current ? "none" : "transform 0.15s ease",
                 }}
               >
                 {/* SVG Connections Layer (Bezier Curves) */}
@@ -1397,6 +1675,7 @@ export default function BotWhatsAppPage() {
                     return (
                       <div
                         key={node.id}
+                        data-canvas-node="true"
                         onPointerDown={(e) => handleNodePointerDown(e, node.id)}
                         className={`absolute w-[210px] rounded-2xl p-3.5 transition-shadow cursor-grab active:cursor-grabbing border ${
                           isSelected
@@ -1497,20 +1776,89 @@ export default function BotWhatsAppPage() {
                     />
                   </div>
 
-                  {/* Option Key Number if applicable */}
-                  {selectedNode.config.key !== undefined && (
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Número de Opción en el Menú:
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedNode.config.key}
-                        onChange={(e) => updateNodeConfig(selectedNode.id, { key: e.target.value })}
-                        className="w-20 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-center"
-                      />
-                    </div>
-                  )}
+                  {/* Option Key Number with Duplicate Detection & Quick Selector */}
+                  {selectedNode.config.key !== undefined && (() => {
+                    const currentKey = selectedNode.config.key?.trim() || "";
+                    const duplicateNode = currentKey
+                      ? nodes.find(
+                          (n) =>
+                            n.id !== selectedNode.id &&
+                            n.enabled &&
+                            n.config.key &&
+                            n.config.key.trim().toLowerCase() === currentKey.toLowerCase()
+                        )
+                      : null;
+
+                    const otherUsedKeys = new Set(
+                      nodes
+                        .filter((n) => n.id !== selectedNode.id && n.enabled && n.config.key)
+                        .map((n) => n.config.key!.trim())
+                    );
+
+                    return (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                            Número de Opción en el Menú:
+                          </label>
+                          {duplicateNode && (
+                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900/50">
+                              Duplicado con &ldquo;{duplicateNode.title}&rdquo;
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={selectedNode.config.key}
+                            onChange={(e) => updateNodeConfig(selectedNode.id, { key: e.target.value })}
+                            className={`w-16 rounded-xl border p-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none text-center ${
+                              duplicateNode
+                                ? "border-rose-500 bg-rose-50/50 dark:bg-rose-950/20 focus:border-rose-600 ring-2 ring-rose-500/20"
+                                : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 focus:border-emerald-500"
+                            }`}
+                          />
+
+                          {/* Quick unique numbers picker */}
+                          <div className="flex-1 flex flex-wrap gap-1">
+                            {["1", "2", "3", "4", "5", "6", "7", "8"].map((num) => {
+                              const isTaken = otherUsedKeys.has(num);
+                              const isSelected = selectedNode.config.key === num;
+                              return (
+                                <button
+                                  key={num}
+                                  type="button"
+                                  disabled={isTaken}
+                                  onClick={() => updateNodeConfig(selectedNode.id, { key: num })}
+                                  className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer ${
+                                    isSelected
+                                      ? "bg-emerald-600 text-white shadow-xs"
+                                      : isTaken
+                                      ? "bg-slate-100 dark:bg-slate-800/40 text-slate-300 dark:text-slate-600 cursor-not-allowed line-through"
+                                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-500/10 hover:text-emerald-600 border border-slate-200/50 dark:border-white/5"
+                                  }`}
+                                  title={isTaken ? `Opción ${num} ya asignada a otro nodo` : `Asignar opción ${num}`}
+                                >
+                                  {num}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {duplicateNode ? (
+                          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                            Atención: La opción &ldquo;{selectedNode.config.key}&rdquo; ya está configurada en &ldquo;{duplicateNode.title}&rdquo;. Cada opción debe tener un número único para que el bot responda correctamente.
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-slate-400">
+                            Número que el cliente escribe para seleccionar esta acción en el menú.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Keywords for automatic matching */}
                   {selectedNode.config.keywords !== undefined && (
@@ -1757,24 +2105,10 @@ export default function BotWhatsAppPage() {
                           <Phone className="h-3.5 w-3.5" />
                           <button
                             type="button"
-                            onClick={() =>
-                              setSimChatMessages([
-                                {
-                                  id: `reset-${Date.now()}`,
-                                  sender: "client",
-                                  type: "text",
-                                  text: "Hola",
-                                  time: "14:28",
-                                },
-                                {
-                                  id: `reset-bot-${Date.now()}`,
-                                  sender: "bot",
-                                  type: "text",
-                                  text: defaultWelcomeText,
-                                  time: "14:28",
-                                },
-                              ])
-                            }
+                            onClick={() => {
+                              setSimChatMessages([]);
+                              pushToast("success", "Simulador reiniciado. Chat en blanco.");
+                            }}
                             title="Reiniciar chat"
                             className="rounded-full p-1 hover:bg-white/10 transition cursor-pointer"
                           >
@@ -1798,6 +2132,21 @@ export default function BotWhatsAppPage() {
                           <Lock className="h-2.5 w-2.5 shrink-0 text-[#54656f]" />
                           <span>Mensajes y llamadas cifrados de extremo a extremo.</span>
                         </div>
+
+                        {/* Empty chat state */}
+                        {simChatMessages.length === 0 && (
+                          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                            <div className="h-11 w-11 rounded-full bg-white shadow-xs flex items-center justify-center text-[#54656f] mb-2.5">
+                              <MessageSquare className="h-5 w-5 text-emerald-600" />
+                            </div>
+                            <p className="text-xs font-bold text-[#111b21]">
+                              Simulador en blanco
+                            </p>
+                            <p className="text-[11px] text-[#667781] mt-1 max-w-[210px] leading-relaxed">
+                              Escribí un mensaje abajo o tocá una de las opciones sugeridas a la derecha para ver cómo responde tu bot.
+                            </p>
+                          </div>
+                        )}
 
                         {simChatMessages.map((msg) => (
                           <div
@@ -1966,24 +2315,10 @@ export default function BotWhatsAppPage() {
                 <div className="pt-3 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between">
                   <button
                     type="button"
-                    onClick={() =>
-                      setSimChatMessages([
-                        {
-                          id: `reset-initial-${Date.now()}`,
-                          sender: "client",
-                          type: "text",
-                          text: "Hola",
-                          time: "14:28",
-                        },
-                        {
-                          id: `reset-bot-${Date.now()}`,
-                          sender: "bot",
-                          type: "text",
-                          text: defaultWelcomeText,
-                          time: "14:28",
-                        },
-                      ])
-                    }
+                    onClick={() => {
+                      setSimChatMessages([]);
+                      pushToast("success", "Simulador reiniciado. Chat en blanco.");
+                    }}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
@@ -2263,6 +2598,311 @@ export default function BotWhatsAppPage() {
                 className="w-full text-center py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
               >
                 Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 6. MODAL: ¿NECESITÁS AYUDA? CONTACTANOS ═══ */}
+      {isHelpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-5 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+                  <PhoneCall className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 dark:text-white">
+                    Centro de Asistencia & Soporte Oficial
+                  </h3>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Estamos listos para ayudarte con la configuración de {business.name}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsHelpModalOpen(false)}
+                className="rounded-full p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Direct Contact Button */}
+            <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
+              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
+                <MessageCircle className="h-4 w-4 text-emerald-600" />
+                <span>Atención Directa por WhatsApp</span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                ¿Tenés dudas sobre cómo estructurar tu flujo, cómo no desconectar la línea o cómo configurar los datos de pago SIPAP? Hablá directamente con nuestro equipo de soporte técnico.
+              </p>
+              <a
+                href={`https://wa.me/595981700800?text=${encodeURIComponent(
+                  `Hola equipo de Agendate.py, necesito asistencia con la configuración del Bot de WhatsApp para mi negocio "${business.name}".`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 text-xs shadow-md transition active:scale-98"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Chatear con Soporte (+595 981 700 800)</span>
+              </a>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                Recursos Rápidos:
+              </h4>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHelpModalOpen(false);
+                  setIsGuideModalOpen(true);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="h-4 w-4 text-sky-600" />
+                  <div>
+                    <p className="font-bold">Abrir Guía Paso a Paso Detallada</p>
+                    <p className="text-[11px] text-slate-400 font-normal">Explicación completa de QR, Canva, formatos y recordatorios.</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
+              </button>
+
+              {!isConnected && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsHelpModalOpen(false);
+                    setIsConnectModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-100 text-xs font-bold text-amber-900 dark:text-amber-300 transition cursor-pointer text-left"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <QrCode className="h-4 w-4 text-amber-600" />
+                    <div>
+                      <p className="font-bold">Escanear Código QR Ahora</p>
+                      <p className="text-[11px] text-amber-700 dark:text-amber-400 font-normal">Vinculá tu línea oficial en 20 segundos.</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-amber-500 shrink-0" />
+                </button>
+              )}
+            </div>
+
+            {/* FAQ Accordion Summary */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10 text-[11px] text-slate-500">
+              <p className="font-bold text-slate-700 dark:text-slate-300">Preguntas Clave:</p>
+              <p>• <strong>¿Mi celular debe estar prendido?</strong> Una vez escaneado el QR, la sesión multi-dispositivo corre en nuestra nube.</p>
+              <p>• <strong>¿Los recordatorios funcionan 24/7?</strong> Sí, se envían automáticamente 24 horas y 2 horas antes de cada cita.</p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setIsHelpModalOpen(false)}
+                className="w-full py-2 rounded-xl text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 7. MODAL: GUÍA ULTRA DETALLISTA PASO A PASO ═══ */}
+      {isGuideModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-6 shadow-2xl [scrollbar-width:thin]">
+            {/* Guide Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600">
+                  <Layers className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-white">
+                    Guía Detallada del Bot de WhatsApp & Canva
+                  </h3>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Configuración paso a paso para maximizar reservas y eliminar ausencias
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsGuideModalOpen(false)}
+                className="rounded-full p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Connection Status Banner in Guide */}
+            {isConnected ? (
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>Línea Oficial Conectada ({activeConnectedPhone}). Todo el flujo y los recordatorios están listos para operar.</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span><strong>Requisito Crítico:</strong> Tu línea aún no está vinculada. Necesitás vincularla para que el bot responda.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsGuideModalOpen(false);
+                    setIsConnectModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shrink-0 transition cursor-pointer shadow-xs"
+                >
+                  Escanear QR Ahora
+                </button>
+              </div>
+            )}
+
+            {/* Step-by-Step Sections */}
+            <div className="space-y-5 text-xs text-slate-700 dark:text-slate-300">
+              {/* Paso 1 */}
+              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs">
+                    1
+                  </span>
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Vinculación Oficial de la Línea (Código QR)
+                  </h4>
+                </div>
+                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+                  La conexión utiliza la tecnología oficial multi-dispositivo de WhatsApp. Esto significa que tu teléfono no necesita permanecer con la pantalla prendida ni conectado a la misma red Wi-Fi.
+                </p>
+                <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 space-y-1 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                  <p>1. En tu celular, abrí WhatsApp (WhatsApp normal o WhatsApp Business).</p>
+                  <p>2. Tocá Menú (tres puntos en Android) o Ajustes (en iPhone) &gt; Dispositivos vinculados.</p>
+                  <p>3. Tocá &ldquo;Vincular un dispositivo&rdquo; y apuntá la cámara al código QR de la pantalla.</p>
+                </div>
+              </div>
+
+              {/* Paso 2 */}
+              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-600 text-white font-mono font-bold text-xs">
+                    2
+                  </span>
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Canva de Flujo y Menú de Opciones Únicas (1 al 5)
+                  </h4>
+                </div>
+                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+                  El menú principal está estructurado mediante nodos visuales que podés arrastrar y organizar libremente.
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-600 dark:text-slate-400">
+                  <li><strong>Opciones Únicas:</strong> Cada nodo de acción debe tener un número de opción exclusivo (1, 2, 3, etc.). Si dos nodos comparten el mismo número, el sistema te alertará para evitar duplicados.</li>
+                  <li><strong>Formato Nativo de WhatsApp:</strong> Podés dar formato al texto usando *negrita*, _cursiva_, ~tachado~ y ```monospacio``` para que tus respuestas se vean profesionales.</li>
+                  <li><strong>Palabras Clave:</strong> Además del número, podés configurar términos clave (ej: &ldquo;precio&rdquo;, &ldquo;turno&rdquo;, &ldquo;transferencia&rdquo;) para que el bot responda aunque el cliente escriba una frase completa.</li>
+                </ul>
+              </div>
+
+              {/* Paso 3 */}
+              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-600 text-white font-mono font-bold text-xs">
+                    3
+                  </span>
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Nodos de Acción Separados y Creación Libre
+                  </h4>
+                </div>
+                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+                  Las respuestas automáticas están divididas en 5 tipos de nodos especializados:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
+                    <p className="font-bold text-emerald-700 dark:text-emerald-400">• Link de Reservas:</p>
+                    <p className="text-slate-500 mt-0.5">Envía el link directo al portal donde el cliente autogestiona su turno.</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
+                    <p className="font-bold text-sky-700 dark:text-sky-400">• Servicios y Precios:</p>
+                    <p className="text-slate-500 mt-0.5">Adaptado automáticamente a los servicios y precios en Guaraníes de tu negocio.</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
+                    <p className="font-bold text-purple-700 dark:text-purple-400">• Datos SIPAP:</p>
+                    <p className="text-slate-500 mt-0.5">Provee banco, RUC y alias para pagos por transferencia.</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
+                    <p className="font-bold text-amber-700 dark:text-amber-400">• Asesor Humano:</p>
+                    <p className="text-slate-500 mt-0.5">Pausa el bot y transfiere la conversación a tu equipo en el CRM.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Paso 4 */}
+              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-600 text-white font-mono font-bold text-xs">
+                    4
+                  </span>
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Recordatorios Automáticos 24h y 2h Antes
+                  </h4>
+                </div>
+                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+                  La reducción de ausencias funciona de manera sincronizada. Cada vez que entra un turno confirmado en tu web, el sistema programa el recordatorio de 24 horas previas y 2 horas previas.
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  <strong>Sincronización en Vivo:</strong> Si desactivás el interruptor del nodo de 24h en el Canva, se desactiva automáticamente en la pestaña de Plantillas, y viceversa.
+                </p>
+              </div>
+
+              {/* Paso 5 */}
+              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-700 text-white font-mono font-bold text-xs">
+                    5
+                  </span>
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Validación en el SIMULADOR
+                  </h4>
+                </div>
+                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+                  El simulador inicia completamente vacío para que puedas probar cualquier interacción escribiendo números de opción, saludos o preguntas cotidianas antes de desplegarlas a tus clientes reales.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="pt-4 border-t border-slate-100 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setIsGuideModalOpen(false)}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cerrar Guía
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsGuideModalOpen(false);
+                  setActiveTab("canva");
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-98 cursor-pointer"
+              >
+                Ir al Canva de Flujo
               </button>
             </div>
           </div>
