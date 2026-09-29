@@ -38,6 +38,9 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
         "spas",
         "medicos",
         "veterinarias",
+        "gimnasios",
+        "talleres",
+        "padel",
       ];
       if (rubroParam && validCategories.includes(rubroParam)) {
         setSelectedCategory(rubroParam);

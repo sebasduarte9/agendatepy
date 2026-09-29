@@ -40,7 +40,7 @@ export default function Integrations() {
               </h3>
               <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                 <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Reservas sin intermediarios. </strong>
-                <span>Tus clientes agendan donde pasan el día, desde redes sociales o directamente por chat.</span>
+                <span className="hidden sm:inline">Tus clientes agendan donde pasan el día, desde redes sociales o directamente por chat.</span>
               </p>
             </div>
 
@@ -81,7 +81,7 @@ export default function Integrations() {
               </h3>
               <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                 <strong className="font-bold text-slate-900 dark:text-white block sm:inline">0% comisión bancaria. </strong>
-                <span>Confirmación automática de transferencias y sincronización con alarmas en Android y iPhone.</span>
+                <span className="hidden sm:inline">Confirmación automática de transferencias y sincronización con alarmas en Android y iPhone.</span>
               </p>
             </div>
 

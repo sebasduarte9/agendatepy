@@ -24,36 +24,74 @@ const MODULE_TABS = [
   { id: "comisiones", label: "Comisiones", icon: Users },
 ] as const;
 
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 90 : -90,
+    opacity: 0,
+    scale: 0.96,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+    scale: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 90 : -90,
+    opacity: 0,
+    scale: 0.96,
+  }),
+};
+
 export default function Features() {
   const [activeStamp, setActiveStamp] = useState(4);
-  const [mobileIndex, setMobileIndex] = useState(0);
+  const [[page, direction], setPage] = useState([0, 0]);
+
+  // Infinite cyclic index so tab transitions always flow continuously
+  const mobileIndex = ((page % MODULE_TABS.length) + MODULE_TABS.length) % MODULE_TABS.length;
 
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const activeTabEl = tabRefs.current[mobileIndex];
-    if (activeTabEl) {
-      activeTabEl.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
+    if (activeTabEl && activeTabEl.parentElement) {
+      const parent = activeTabEl.parentElement;
+      const left = activeTabEl.offsetLeft - parent.offsetLeft - (parent.clientWidth - activeTabEl.clientWidth) / 2;
+      parent.scrollTo({ left, behavior: "smooth" });
     }
   }, [mobileIndex]);
 
   const handlePrev = () => {
-    setMobileIndex((prev) => (prev === 0 ? MODULE_TABS.length - 1 : prev - 1));
+    setPage([page - 1, -1]);
   };
 
   const handleNext = () => {
-    setMobileIndex((prev) => (prev === MODULE_TABS.length - 1 ? 0 : prev + 1));
+    setPage([page + 1, 1]);
+  };
+
+  const handleSelectTab = (targetIdx: number) => {
+    if (targetIdx === mobileIndex) return;
+    const diff = targetIdx - mobileIndex;
+    setPage([page + diff, diff > 0 ? 1 : -1]);
   };
 
   return (
     <section
       id="caracteristicas"
-      className="relative mx-auto max-w-7xl px-3 sm:px-6 py-14 sm:py-20 lg:py-24 scroll-mt-24"
+      className="relative mx-auto max-w-7xl px-3 sm:px-6 py-14 sm:py-20 lg:py-24 scroll-mt-24 overflow-x-clip"
     >
+      {/* Silicon Valley Ambient Wave Glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none -z-10">
+        <div className="animate-wave-2 absolute top-[20%] -left-[15%] w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-brand/10 to-transparent blur-3xl opacity-60" />
+        <div className="animate-wave-1 absolute -bottom-[10%] -right-[15%] w-[420px] h-[420px] rounded-full bg-gradient-to-bl from-amber-400/10 to-transparent blur-3xl opacity-50" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -78,7 +116,13 @@ export default function Features() {
       {/* ============================================================== */}
       {/* MÓVIL: Panel Interactivo Flotante con Pestañas y Flechas (< >) */}
       {/* ============================================================== */}
-      <div className="md:hidden mt-6">
+      <motion.div
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="md:hidden mt-6"
+      >
         {/* Pestañas Táctiles Rápidas con Auto-scroll al centro */}
         <div className="flex justify-center px-1">
           <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-1.5 shadow-sm max-w-full overflow-x-auto scrollbar-none scroll-smooth">
@@ -92,7 +136,7 @@ export default function Features() {
                     tabRefs.current[idx] = el;
                   }}
                   type="button"
-                  onClick={() => setMobileIndex(idx)}
+                  onClick={() => handleSelectTab(idx)}
                   className={`flex items-center gap-1.5 rounded-xl px-2.5 xs:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
                     isActive
                       ? "bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-xs font-black"
@@ -107,7 +151,7 @@ export default function Features() {
           </div>
         </div>
 
-        {/* Tarjeta Flotante con Botones Laterales (< >) */}
+        {/* Tarjeta Flotante con Botones Laterales (< >) e Infinite Slide */}
         <div className="relative mt-4 px-3 sm:px-6 max-w-md mx-auto">
           {/* Botón Lateral Izquierdo */}
           <button
@@ -129,27 +173,35 @@ export default function Features() {
             <ChevronRight className="h-5 w-5" />
           </button>
 
-          {/* Tarjeta del Módulo Activo en Móvil */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={MODULE_TABS[mobileIndex].id}
-              initial={{ opacity: 0, scale: 0.97, x: 15 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.97, x: -15 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 xs:p-5 shadow-sm min-h-[350px] flex flex-col justify-between"
-            >
-              {mobileIndex === 0 && <WhatsAppCardContent />}
-              {mobileIndex === 1 && <CashRegisterCardContent />}
-              {mobileIndex === 2 && (
-                <LoyaltyCardContent
-                  activeStamp={activeStamp}
-                  setActiveStamp={setActiveStamp}
-                />
-              )}
-              {mobileIndex === 3 && <CommissionsCardContent />}
-            </motion.div>
-          </AnimatePresence>
+          {/* Contenedor con overflow hidden para animaciones continuas */}
+          <div className="overflow-hidden min-h-[350px]">
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <motion.div
+                key={page}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 320, damping: 30 },
+                  opacity: { duration: 0.22 },
+                  scale: { duration: 0.22 },
+                }}
+                className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 xs:p-5 shadow-sm min-h-[350px] flex flex-col justify-between"
+              >
+                {mobileIndex === 0 && <WhatsAppCardContent />}
+                {mobileIndex === 1 && <CashRegisterCardContent />}
+                {mobileIndex === 2 && (
+                  <LoyaltyCardContent
+                    activeStamp={activeStamp}
+                    setActiveStamp={setActiveStamp}
+                  />
+                )}
+                {mobileIndex === 3 && <CommissionsCardContent />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           {/* Indicador de Posición en Puntos (Dots) */}
           <div className="mt-3.5 flex items-center justify-center gap-1.5">
@@ -157,7 +209,7 @@ export default function Features() {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setMobileIndex(idx)}
+                onClick={() => handleSelectTab(idx)}
                 className={`transition-all duration-300 rounded-full cursor-pointer ${
                   mobileIndex === idx
                     ? "h-2 w-6 bg-brand shadow-xs"
@@ -168,7 +220,7 @@ export default function Features() {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ============================================================== */}
       {/* DESKTOP: Cuadrícula Completa Bento Grid (md y superiores)       */}
@@ -277,7 +329,7 @@ function WhatsAppCardContent() {
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Sin formularios lentos ni descargas de apps. </strong>
-          <span>Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.</span>
+          <span className="hidden sm:inline">Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.</span>
         </p>
       </div>
 
@@ -324,7 +376,7 @@ function CashRegisterCardContent() {
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Cierre diario sin descuadres. </strong>
-          <span>Registro automático de cobros en efectivo y transferencias SIPAP sin planillas manuales.</span>
+          <span className="hidden sm:inline">Registro automático de cobros en efectivo y transferencias SIPAP sin planillas manuales.</span>
         </p>
       </div>
 
@@ -378,7 +430,7 @@ function LoyaltyCardContent({
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Sellos virtuales que premian visitas. </strong>
-          <span>Tus clientes acumulan sellos y desbloquean beneficios en cada reserva sin cupones en papel.</span>
+          <span className="hidden sm:inline">Tus clientes acumulan sellos y desbloquean beneficios en cada reserva sin cupones en papel.</span>
         </p>
       </div>
 
@@ -463,7 +515,7 @@ function CommissionsCardContent() {
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Liquidación sin planillas. </strong>
-          <span>Cálculo automático de comisiones de estilistas o colaboradores por turno atendido.</span>
+          <span className="hidden sm:inline">Cálculo automático de comisiones de estilistas o colaboradores por turno atendido.</span>
         </p>
       </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   CheckCheck,
   RotateCcw,
@@ -119,34 +119,7 @@ export default function PhoneMockup() {
         behavior: "smooth",
       });
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   };
-
-  // 3D tilt tracking for mouse over phone
-  const cardRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const springConfig = { damping: 20, stiffness: 180 };
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [7, -7]), springConfig);
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), springConfig);
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    if (typeof window !== "undefined" && window.innerWidth < 640) return;
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const xPct = (e.clientX - rect.left) / width - 0.5;
-    const yPct = (e.clientY - rect.top) / height - 0.5;
-    mouseX.set(xPct);
-    mouseY.set(yPct);
-  }
-
-  function handleMouseLeave() {
-    mouseX.set(0);
-    mouseY.set(0);
-  }
 
   const initialMessages: Message[] = [
     {
@@ -184,19 +157,23 @@ export default function PhoneMockup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category.id]);
 
-  function handleSelectService() {
+  function handleSelectService(selectedIdx = 0) {
     setStep(1);
-    const serviceName = category.services[0]?.name || "Corte Clásico";
+    const service = category.services[selectedIdx] || category.services[0];
     const userMsg: Message = {
       id: "u-service",
       incoming: false,
       type: "text",
-      text: serviceName,
+      text: `${service.name} (${service.price})`,
       time: "14:21",
     };
 
     setChat((prev) => [...prev, userMsg]);
     setIsTyping(true);
+
+    const slot1 = category.timeSlots?.[0] || "16:30 hs";
+    const slot2 = category.timeSlots?.[1] || "18:00 hs";
+    const staff = category.staffName || "Atención al Cliente";
 
     setTimeout(() => {
       setIsTyping(false);
@@ -204,24 +181,28 @@ export default function PhoneMockup() {
         id: "b-service",
         incoming: true,
         type: "text",
-        text: `Excelente. Tenemos estos horarios disponibles para hoy con *Marcos Benítez*:\n\n• 15:30 hs\n• 16:30 hs\n• 18:00 hs\n\n¿Cuál te queda más cómodo?`,
+        text: `Excelente elección. Disponibilidad hoy con *${staff}*:\n\n• ${slot1}\n• ${slot2}\n\n¿Cuál horario te queda mejor?`,
         time: "14:21",
         options: [
-          { label: "16:30 hs (Hoy)", action: () => handleSelectTime() },
-          { label: "18:00 hs (Hoy)", action: () => handleSelectTime() },
+          { label: slot1, action: () => handleSelectTime(service, slot1, staff) },
+          { label: slot2, action: () => handleSelectTime(service, slot2, staff) },
         ],
       };
       setChat((prev) => [...prev, botMsg]);
-    }, 900);
+    }, 800);
   }
 
-  function handleSelectTime() {
+  function handleSelectTime(
+    service: { name: string; price: string },
+    timeSlot: string,
+    staff: string
+  ) {
     setStep(2);
     const userMsg: Message = {
       id: "u-time",
       incoming: false,
       type: "text",
-      text: "16:30 hs",
+      text: timeSlot,
       time: "14:22",
     };
 
@@ -236,19 +217,18 @@ export default function PhoneMockup() {
         type: "card",
         time: "14:22",
         cardData: {
-          service: category.services[0]?.name || "Corte Clásico",
-          staff: "Marcos Benítez",
-          datetime: "Hoy a las 16:30 hs",
+          service: service.name,
+          staff: staff,
+          datetime: `Hoy · ${timeSlot}`,
           location: `${category.businessName} · Asunción`,
-          price: "Gs. 80.000",
+          price: service.price,
         },
         options: [
-          { label: "Escuchar audio de confirmación", action: () => handlePlayAudioNote() },
+          { label: "Escuchar audio de confirmación", action: () => handlePlayAudioNote(service) },
         ],
       };
       setChat((prev) => [...prev, confirmationCard]);
 
-      // Notificación push estilo iMessage al iPhone tras registrar el turno con éxito
       setTimeout(() => {
         setShowNotification(true);
         playiOSChime();
@@ -256,7 +236,7 @@ export default function PhoneMockup() {
     }, 700);
   }
 
-  function handlePlayAudioNote() {
+  function handlePlayAudioNote(service?: { name: string; price: string }) {
     setStep(3);
     setIsTyping(true);
 
@@ -269,7 +249,7 @@ export default function PhoneMockup() {
         time: "14:23",
         audioDuration: "0:12",
         options: [
-          { label: "Ver recordatorio previo", action: () => handleShowReminder() },
+          { label: "Ver recordatorio previo", action: () => handleShowReminder(service) },
         ],
       };
       setChat((prev) => [...prev, audioMsg]);
@@ -278,9 +258,10 @@ export default function PhoneMockup() {
     }, 800);
   }
 
-  function handleShowReminder() {
+  function handleShowReminder(service?: { name: string; price: string }) {
     setStep(4);
     setIsTyping(true);
+    const serviceName = service?.name || category.services[0]?.name || "Turno";
 
     setTimeout(() => {
       setIsTyping(false);
@@ -288,7 +269,7 @@ export default function PhoneMockup() {
         id: "r-reminder",
         incoming: true,
         type: "text",
-        text: `*Recordatorio de Turno*\n\n¡Hola Martín! Tu turno para *${category.services[0]?.name || "Corte"}* en *${category.businessName}* es en 2 horas (16:30 hs).\n\nDirección: Avda. España 1420 c/ San Rafael\n\n¿Nos confirmás tu asistencia? Respondé *SI* o reprogramá desde tu enlace de autogestión.`,
+        text: `*Recordatorio de Turno*\n\n¡Hola Martín! Tu reserva para *${serviceName}* en *${category.businessName}* es en 2 horas.\n\nDirección: Avda. España 1420 c/ San Rafael\n\n¿Confirmás tu asistencia? Respondé *SI* o reprogramá desde tu enlace de autogestión.`,
         time: "14:30",
       };
       setChat((prev) => [...prev, reminderMsg]);
@@ -309,43 +290,28 @@ export default function PhoneMockup() {
         id: "m1",
         incoming: false,
         type: "text",
-        text: `Hola, quiero consultar disponibilidad en *${category.businessName}*.`,
+        text: `Hola, quiero consultar en *${category.businessName}*.`,
         time: "14:20",
       },
       {
         id: "m2",
         incoming: true,
         type: "text",
-        text: `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción.\n\nSoy el asistente virtual de AgendatePY. Seleccioná el servicio que deseás agendar:`,
+        text: category.botIntro || `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción. Seleccioná una opción:`,
         time: "14:20",
-        options: [
-          { label: `${category.services[0]?.name || "Corte Clásico"} · Gs. 80.000`, action: () => handleSelectService() },
-          { label: `${category.services[1]?.name || "Servicio Completo"} · Gs. 120.000`, action: () => handleSelectService() },
-        ],
+        options: category.services.slice(0, 2).map((srv, idx) => ({
+          label: `${srv.name} · ${srv.price}`,
+          action: () => handleSelectService(idx),
+        })),
       },
     ]);
   }
 
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative mx-auto flex w-full items-center justify-center p-2 sm:p-4 [perspective:1400px] overflow-hidden sm:overflow-visible"
-    >
-      {/* Ambient Halo behind iPhone in warm brand tones */}
-      <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/30 via-orange-500/20 to-emerald-500/20 blur-3xl opacity-75 max-w-full" />
-
-      {/* 3D Tiltable iPhone 16 Pro Container (Expanded width on mobile) */}
-      <motion.div
-        style={{
-          rotateX,
-          rotateY,
-          transformStyle: "preserve-3d",
-        }}
-        className="relative w-full max-w-[340px] xs:max-w-[370px] sm:max-w-[360px] rounded-[30px] xs:rounded-[36px] sm:rounded-[50px] p-[3px] xs:p-[4px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.18)]"
-      >
-        {/* Precision Engineered Side Buttons (Desktop only to prevent horizontal overflow on mobile) */}
+    <div className="relative mx-auto flex w-full items-center justify-center p-0 max-w-full">
+      {/* Phone Container on Desktop / Clean WhatsApp Chat Card on Mobile */}
+      <div className="relative w-full max-w-[340px] xs:max-w-[360px] rounded-3xl sm:rounded-[50px] p-0 sm:p-[9px] bg-transparent sm:bg-gradient-to-b sm:from-[#3a3b40] sm:via-[#1e1f23] sm:to-[#111215] sm:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.15)]">
+        {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel - Desktop Only) */}
         {/* Left Side: Action Button */}
         <div className="hidden sm:block absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Left Side: Volume Up */}
@@ -357,10 +323,10 @@ export default function PhoneMockup() {
         {/* Right Side: Camera Control Sensor (iPhone 16 Pro style) */}
         <div className="hidden sm:block absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
-        {/* Outer Glass Bezel */}
-        <div className="relative overflow-hidden rounded-[28px] xs:rounded-[33px] sm:rounded-[42px] bg-black p-[1.5px] sm:p-[2.5px] shadow-inner">
+        {/* Outer Glass Bezel (Desktop frame only) */}
+        <div className="relative overflow-hidden rounded-3xl sm:rounded-[42px] bg-transparent sm:bg-black p-0 sm:p-[2.5px] sm:shadow-inner">
           {/* Inner Display Canvas */}
-          <div className="relative flex h-[500px] xs:h-[540px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-[26px] xs:rounded-[31px] sm:rounded-[42px] bg-[#efeae2]">
+          <div className="relative flex h-[480px] xs:h-[520px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-3xl sm:rounded-[42px] bg-[#efeae2] border border-slate-200/90 dark:border-white/10 sm:border-none shadow-xl shadow-slate-900/10 dark:shadow-black/50 sm:shadow-none">
             {/* ========================================================= */}
             {/* iOS iMessage Push Notification Banner */}
             {/* ========================================================= */}
@@ -428,9 +394,9 @@ export default function PhoneMockup() {
             />
 
             {/* ========================================================= */}
-            {/* 1. iOS 18 STATUS BAR */}
+            {/* 1. iOS 18 STATUS BAR (Desktop Only) */}
             {/* ========================================================= */}
-            <div className="relative z-30 flex h-11 items-center justify-between px-7 pt-2 text-[#000000] font-semibold text-[13px] tracking-tight select-none">
+            <div className="relative z-30 hidden sm:flex h-11 items-center justify-between px-7 pt-2 text-[#000000] font-semibold text-[13px] tracking-tight select-none">
               <span>9:41</span>
 
               {/* Dynamic Island */}
@@ -637,15 +603,15 @@ export default function PhoneMockup() {
                       </div>
                     )}
 
-                    {/* WhatsApp Interactive Action Buttons (Cloud API Native Style - Mobile Thumb Optimized) */}
+                    {/* WhatsApp Interactive Action Buttons (Cloud API Native Style) */}
                     {msg.options && (
-                      <div className="mt-1.5 flex flex-col gap-1.5 w-full max-w-[92%] sm:max-w-[86%]">
+                      <div className="mt-1.5 flex flex-col gap-1 w-full max-w-[86%]">
                         {msg.options.map((opt) => (
                           <button
                             key={opt.label}
                             type="button"
                             onClick={opt.action}
-                            className="w-full min-h-[42px] sm:min-h-0 rounded-xl border border-[#008069]/30 bg-white py-2.5 sm:py-2 px-3 text-[12px] sm:text-[11px] font-bold text-[#008069] shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer text-center"
+                            className="w-full rounded-xl border border-[#008069]/30 bg-white py-2 px-3 text-[11px] font-bold text-[#008069] shadow-[0_1px_1px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1.5"
                           >
                             <span>{opt.label}</span>
                           </button>
@@ -672,26 +638,6 @@ export default function PhoneMockup() {
               <div ref={messagesEndRef} className="h-1 w-full shrink-0" />
             </div>
 
-            {/* Interactive hint banner for mobile users */}
-            {step === 0 && (
-              <div className="relative z-20 mx-2.5 mb-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-2 py-1 text-center text-[10px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-center gap-1">
-                <span>👇 Tocá una opción del chat para probar el bot</span>
-              </div>
-            )}
-            {step >= 2 && (
-              <div className="relative z-20 mx-2.5 mb-1 flex items-center justify-between rounded-lg bg-emerald-50 dark:bg-slate-900 border border-emerald-500/20 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                <span>✨ Turno agendado en automático</span>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex items-center gap-1 text-brand hover:underline font-bold cursor-pointer"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  <span>Reiniciar</span>
-                </button>
-              </div>
-            )}
-
             {/* ========================================================= */}
             {/* 4. WHATSAPP BOTTOM INPUT BAR */}
             {/* ========================================================= */}
@@ -716,16 +662,16 @@ export default function PhoneMockup() {
             </div>
 
             {/* ========================================================= */}
-            {/* 5. iOS BOTTOM HOME INDICATOR */}
+            {/* 5. iOS BOTTOM HOME INDICATOR (Desktop Only) */}
             {/* ========================================================= */}
-            <div className="relative z-30 flex h-5 items-center justify-center bg-[#f0f2f5] pb-1">
+            <div className="relative z-30 hidden sm:flex h-5 items-center justify-center bg-[#f0f2f5] pb-1">
               <div className="h-1 w-32 rounded-full bg-black/40" />
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Spatial 3D Floating Widget 1: Top-Left Reminder Alert */}
+      {/* Floating Widget 1: Top-Left Reminder Alert (Desktop Only) */}
       <motion.div
         initial={{ opacity: 0, x: -20, y: 10 }}
         animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
@@ -733,7 +679,7 @@ export default function PhoneMockup() {
           y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           opacity: { duration: 0.8 },
         }}
-        className="pointer-events-none absolute -left-2 sm:-left-4 lg:-left-6 xl:-left-10 top-32 sm:top-40 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
+        className="pointer-events-none absolute -left-2 sm:-left-4 lg:-left-6 xl:-left-10 top-32 sm:top-40 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl whitespace-nowrap"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
           <Bell className="h-5 w-5 animate-pulse" />
@@ -747,7 +693,7 @@ export default function PhoneMockup() {
         </div>
       </motion.div>
 
-      {/* Spatial 3D Floating Widget 2: Bottom-Right Instant Transfer */}
+      {/* Floating Widget 2: Bottom-Right Instant Transfer (Desktop Only) */}
       <motion.div
         initial={{ opacity: 0, x: 20, y: 10 }}
         animate={{ opacity: 1, x: 0, y: [0, 8, 0] }}
@@ -755,7 +701,7 @@ export default function PhoneMockup() {
           y: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 },
           opacity: { duration: 0.8, delay: 0.2 },
         }}
-        className="pointer-events-none absolute -right-2 sm:-right-4 lg:-right-6 xl:-right-10 bottom-24 sm:bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl [transform:translateZ(60px)] whitespace-nowrap"
+        className="pointer-events-none absolute -right-2 sm:-right-4 lg:-right-6 xl:-right-10 bottom-24 sm:bottom-28 z-40 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] backdrop-blur-2xl whitespace-nowrap"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand dark:text-[#FF6B4A]">
           <Landmark className="h-5 w-5" />

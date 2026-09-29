@@ -20,8 +20,12 @@ export default function HowItWorks() {
   return (
     <section
       id="como-funciona"
-      className="relative mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20 lg:py-24 scroll-mt-24"
+      className="relative mx-auto max-w-6xl px-3 sm:px-6 py-12 sm:py-20 lg:py-24 scroll-mt-24 overflow-x-clip"
     >
+      {/* Silicon Valley Ambient Wave Glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none -z-10">
+        <div className="animate-wave-3 absolute top-[30%] -right-[15%] w-[420px] h-[420px] rounded-full bg-gradient-to-bl from-brand/10 via-amber-400/8 to-transparent blur-3xl opacity-60" />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -323,7 +327,7 @@ function WorkflowStep({
       </div>
       <div className="mt-2 text-xs leading-relaxed pl-1">
         <p className="font-semibold text-slate-800 dark:text-slate-200">{leadIn}</p>
-        <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{detail}</p>
+        <p className="hidden sm:block text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{detail}</p>
       </div>
     </div>
   );

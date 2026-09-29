@@ -65,7 +65,7 @@ export default function Differentiators() {
               <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
                 {valuePhrase}
               </p>
-              <p className="mt-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="hidden sm:block mt-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 {detail}
               </p>
             </motion.article>

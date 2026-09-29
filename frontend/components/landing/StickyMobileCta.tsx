@@ -5,11 +5,9 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarPlus, MessageCircle, ArrowRight } from "lucide-react";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
-import { useCategory } from "@/context/CategoryContext";
 
 export default function StickyMobileCta() {
   const [isVisible, setIsVisible] = useState(false);
-  const { category } = useCategory();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,8 +23,6 @@ export default function StickyMobileCta() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const whatsappMessage = "Hola AgendatePY, tengo un negocio de " + category.label.toLowerCase() + " y quiero información para activar mi agenda online";
-
   return (
     <AnimatePresence>
       {isVisible && (
@@ -39,7 +35,7 @@ export default function StickyMobileCta() {
           style={{ paddingBottom: "max(0.65rem, env(safe-area-inset-bottom))" }}
         >
           <div className="flex items-center justify-between gap-1.5 xs:gap-2.5">
-            {/* Mensaje de valor y garantía con rubro activo */}
+            {/* Mensaje de valor y garantía */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="flex h-2 w-2 rounded-full bg-brand animate-ping shrink-0" />
@@ -52,33 +48,19 @@ export default function StickyMobileCta() {
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
-                Sin tarjeta · 3 min · {category.label}
+                Sin tarjeta · 3 min
               </p>
             </div>
 
-            {/* Botones de acción rápida */}
+            {/* Botón Principal: Prueba gratis */}
             <div className="flex items-center gap-1.5 xs:gap-2 shrink-0">
-              {/* Botón WhatsApp de consulta rápida con mensaje dinámico según el rubro */}
-              <a
-                href={getCommercialWhatsAppUrl(whatsappMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-8.5 w-8.5 xs:h-9 xs:w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 active:scale-95 transition shrink-0"
-                aria-label="Consultar por WhatsApp"
-                title={"Consultar por WhatsApp para " + category.label}
-              >
-                <MessageCircle className="h-4 w-4 fill-emerald-500 text-emerald-500" />
-              </a>
-
-              {/* Botón Principal: Prueba gratis */}
               <Link
                 href="/onboarding"
-                className="flex h-8.5 xs:h-9 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-2.5 xs:px-3.5 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition shrink-0 whitespace-nowrap"
+                className="flex h-8.5 xs:h-9 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-3.5 xs:px-4 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition shrink-0 whitespace-nowrap"
               >
-                <CalendarPlus className="h-3 w-3 text-white shrink-0" />
-                <span className="hidden xs:inline">Crear agenda</span>
-                <span className="xs:hidden">Empezar</span>
-                <ArrowRight className="h-3 w-3 shrink-0" />
+                <CalendarPlus className="h-3.5 w-3.5 text-white shrink-0" />
+                <span>Empezar gratis</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0" />
               </Link>
             </div>
           </div>

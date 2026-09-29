@@ -30,6 +30,8 @@
 html,
 body {
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -159,4 +161,83 @@ body {
   -webkit-backdrop-filter: blur(28px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Silicon Valley Ambient Wave & Fluid Background Animations */
+@keyframes wave-flow-1 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(40px, -25px, 0) scale(1.1) rotate(3deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes wave-flow-2 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-35px, 30px, 0) scale(1.08) rotate(-4deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes wave-flow-3 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(25px, 20px, 0) scale(1.15);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes wave-drift {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(1.05);
+  }
+  100% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+}
+
+.animate-wave-1 {
+  animation: wave-flow-1 20s ease-in-out infinite;
+}
+
+.animate-wave-2 {
+  animation: wave-flow-2 24s ease-in-out infinite;
+}
+
+.animate-wave-3 {
+  animation: wave-flow-3 28s ease-in-out infinite;
+}
+
+.animate-wave-drift {
+  animation: wave-drift 18s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
+/* Silicon Valley Card Glow Micro-interactions */
+.sv-card {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.sv-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 79, 43, 0.2);
+}
+
+.dark .sv-card:hover {
+  box-shadow: 0 25px 50px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 79, 43, 0.3);
 }
