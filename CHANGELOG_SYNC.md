@@ -1320,3 +1320,32 @@ Cada entrada debe detallar:
 - **Pricing Cards Adaptables**: Botón interactivo *"Ver más características (+4)"* / *"Ver menos"* en móviles para mantener las tarjetas compactas y escaneables.
 - **FAQ Colapsado por Defecto**: Inicia en estado neutro (`open = null`) para máxima limpieza visual.
 - **Suite de QA Interactivo (`interaction-qa-suite.mjs`)**: Validación de 18 fases de interacción, navegación por anchors, sliders reactivos, toggles, sticky CTA coordinado con WhatsApp y carga directa por hash.
+
+---
+
+### [Rediseño UI/UX Landing Page 100%, Bento Grid Simétrico y Continuidad Visual] — 2026-09-28
+- **Responsable:** IDE 2 (Derlis Gimenez)
+- **Sección:** Landing Page Pública (`/`, `frontend/components/landing/*`)
+- **Archivos Modificados / Creados:**
+  - `frontend/components/landing/ComparisonSection.tsx` (CREADO: Matriz interactiva Antes vs Con AgendatePY con acento verde esmeralda y sin franjas cortadas)
+  - `frontend/components/landing/Features.tsx` (MODIFICADO: Rebalanceo a Bento Grid de 4 módulos simétricos, tono neutro en Fidelización, eliminación de tarjeta redundante de Google/Apple Calendar)
+  - `frontend/components/landing/Hero.tsx` (MODIFICADO: CTA principal "Registrate gratis ahora", adaptación táctil móvil `w-full sm:w-fit`, eliminación de orbes recortados con desborde en pantallas anchas)
+  - `frontend/components/landing/Header.tsx` (MODIFICADO: Navbar con doble acción "Acceder" + "Probar gratis", inclusión de CTA principal en el drawer móvil)
+  - `frontend/components/landing/Pricing.tsx` (MODIFICADO: Balanceo tipográfico anti-huérfanas con `[text-wrap:balance]`, eliminación de franjas grises cortadas)
+  - `frontend/components/landing/Ticker.tsx` (MODIFICADO: Suavizado de bordes para eliminar cortes duros)
+  - `frontend/components/landing/FAQ.tsx` (MODIFICADO: Accesibilidad semántica con `aria-expanded`)
+  - `frontend/components/landing/HowItWorks.tsx`, `Integrations.tsx`, `Differentiators.tsx`, `Footer.tsx` (MODIFICADO: Limpieza de franjas grises alternadas para lienzo visual continuo)
+- **Descripción de Cambios y Razonamiento:**
+  1. **Eliminación de Cortes de Color ("Lienzo Continuo"):** Se erradicaron todas las franjas grises alternadas (`bg-slate-50/70 border-y border-slate-200/60`) y cajas con `overflow-hidden` que generaban líneas verticales y horizontales abruptas en pantallas anchas. Toda la landing ahora fluye como un lienzo limpio, continuo y uniforme.
+  2. **Rebalanceo de Features a Bento Grid 4x4:** Se retiró el módulo repetitivo de "Google & Apple Calendar" (ya presente en Integraciones) y se reestructuró la grilla en 2 filas equilibradas: WhatsApp (7 cols) + Caja (5 cols) / Fidelización (6 cols) + Comisiones (6 cols). Se calibró la tarjeta de Fidelización a tonos sobrios (slate/white) para no desviar la atención prioritaria.
+  3. **Nueva Sección Comparativa Interactiva (Antes vs Con AgendatePY):** Se integró `ComparisonSection.tsx` con toggle móvil, contraste de Caos Manual vs Negocio Automatizado, y una tarjeta destacada con sutil fondo gradiente verde esmeralda (`from-emerald-50/80 via-emerald-50/30 to-white`) y reborde esmeralda.
+  4. **Embudo de Conversión & CTAs:** Se actualizó el Hero a `"Registrate gratis ahora"`, se integró `"Probar gratis"` en la barra de navegación superior (junto a `"Acceder"`), y se añadió el botón de registro directo en el drawer del menú móvil.
+  5. **Tipografía & Balance Visual:** Se solucionó la palabra huérfana `"tuyo."` en el subtítulo de Precios mediante `[text-wrap:balance]` y contenedor `max-w-3xl`.
+  6. **Accesibilidad y Calidad:** Atributos `aria-expanded` en FAQ, limpieza de dependencias de importación no utilizadas y compilación Next.js 16 sin advertencias críticas.
+- **Validación y Compilación:**
+  - `npm run build` -> **Compilación limpia Turbopack exitosa (20/20 páginas, 0 errores)**
+  - Servidor local activo en `http://localhost:3000` (código HTTP 200 OK)
+- **Notas para el otro IDE / Desarrollador:**
+  - No se tocaron APIs, esquemas de Prisma ni lógica interna de autenticación/dashboard.
+  - La Landing Page quedó 100% cohesionada estéticamente, sin saltos de color ni inconsistencias en componentes responsive.
+
