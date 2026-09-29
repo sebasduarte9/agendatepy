@@ -21,9 +21,11 @@ import {
   Dumbbell,
   Wrench,
   Trophy,
+  MessageCircle,
 } from "lucide-react";
 import { CATEGORIES, type CategoryId } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import PhoneMockup from "./PhoneMockup";
 
 const ICONS: Record<CategoryId, typeof Scissors> = {
@@ -93,7 +95,9 @@ const ROW2_CARDS = [
 ];
 
 export default function Hero() {
-  const { selectedCategory, setSelectedCategory } = useCategory();
+  const { selectedCategory, setSelectedCategory, category } = useCategory();
+
+  const whatsappMessage = `Hola AgendatePY, tengo un negocio de ${category?.label?.toLowerCase() || "servicios"} y quiero activar mi agenda online`;
 
   return (
     <section
@@ -143,7 +147,7 @@ export default function Hero() {
             </p>
 
             {/* CTA Desktop */}
-            <div className="mt-7 flex items-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link
                 href="/onboarding"
                 className="inline-flex items-center justify-center gap-2.5 px-8 lg:px-9 py-4 text-base lg:text-lg font-black bg-gradient-to-r from-brand to-[#FF6B4A] text-white rounded-full shadow-lg shadow-brand/25 hover:brightness-110 transition-all active:scale-98 w-fit"
@@ -151,6 +155,15 @@ export default function Hero() {
                 <span>Registrate gratis ahora</span>
                 <ArrowRight className="h-5 w-5" />
               </Link>
+              <a
+                href={getCommercialWhatsAppUrl(whatsappMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-4 text-base font-bold border border-emerald-500/30 dark:border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 rounded-full hover:bg-emerald-500/20 transition-all active:scale-98 w-fit"
+              >
+                <MessageCircle className="h-4.5 w-4.5 fill-emerald-500 text-emerald-500 shrink-0" />
+                <span>Consultar por WhatsApp</span>
+              </a>
             </div>
 
             {/* Garantías de confianza Desktop */}
@@ -320,7 +333,7 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* CTA Principal destacado */}
+            {/* CTA Principal y WhatsApp */}
             <div className="flex flex-col gap-2.5">
               <Link
                 href="/onboarding"
@@ -329,6 +342,15 @@ export default function Hero() {
                 <span>Registrate gratis ahora</span>
                 <ArrowRight className="h-5 w-5" />
               </Link>
+              <a
+                href={getCommercialWhatsAppUrl(whatsappMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold border border-emerald-500/30 dark:border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 rounded-full hover:bg-emerald-500/20 transition active:scale-98 w-full"
+              >
+                <MessageCircle className="h-4 w-4 fill-emerald-500 text-emerald-500 shrink-0" />
+                <span>Consultar por WhatsApp</span>
+              </a>
             </div>
 
             {/* Garantías y sellos de confianza distribuidos en 3 columnas */}
@@ -354,9 +376,18 @@ export default function Hero() {
 
           {/* Selector de Rubros Mobile: Empujado hacia el fondo */}
           <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 w-full">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 text-left">
-              Solución a medida para tu rubro:
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-left">
+                Solución a medida para tu rubro:
+              </p>
+              <a
+                href="#simulador-whatsapp"
+                className="text-xs font-bold text-brand hover:underline flex items-center gap-0.5"
+              >
+                <span>Ver bot en vivo</span>
+                <ArrowRight className="h-3 w-3" />
+              </a>
+            </div>
             <div className="relative overflow-hidden max-w-full ticker-mask py-0.5">
               <div className="ticker-track flex w-max gap-2 py-0.5 hover:[animation-play-state:paused] active:[animation-play-state:paused]">
                 {[...CATEGORIES, ...CATEGORIES].map((item, idx) => {
@@ -384,7 +415,7 @@ export default function Hero() {
         </div>
 
         {/* En mobile: La simulación interactiva de WhatsApp SOLO al scrollear hacia abajo, fuera del primer pantallazo */}
-        <div className="md:hidden relative mt-28 pt-16 border-t border-slate-200/60 dark:border-white/5 text-center">
+        <div id="simulador-whatsapp" className="md:hidden relative mt-28 pt-16 border-t border-slate-200/60 dark:border-white/5 text-center scroll-mt-20">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2.5 backdrop-blur-md">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Simulación Interactiva</span>
@@ -392,9 +423,13 @@ export default function Hero() {
           <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
             Mirá cómo reservan en segundos
           </h3>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-2">
             100% integrado a WhatsApp.
           </p>
+          <div className="mb-6 flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+            <span>Simulando bot para: <strong className="text-slate-800 dark:text-slate-200">{category?.label}</strong></span>
+          </div>
           <div className="w-full flex justify-center max-w-full">
             <PhoneMockup />
           </div>
