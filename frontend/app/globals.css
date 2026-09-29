@@ -241,3 +241,77 @@ body {
 .dark .sv-card:hover {
   box-shadow: 0 25px 50px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 79, 43, 0.3);
 }
+
+/* Hero Cards Vertical Ticker & Floating Stream */
+@keyframes cards-scroll-vertical {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-cards-vertical {
+  animation: cards-scroll-vertical 24s linear infinite;
+  will-change: transform;
+}
+
+.animate-cards-vertical:hover {
+  animation-play-state: paused;
+}
+
+.cards-vertical-mask {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cards-vertical,
+  .animate-ticker-left,
+  .animate-ticker-right {
+    animation: none;
+  }
+}
+
+/* 2-Row Horizontal Cards Animations on Mobile */
+@keyframes ticker-scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes ticker-scroll-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-ticker-left {
+  animation: ticker-scroll-left 25s linear infinite;
+  will-change: transform;
+}
+
+.animate-ticker-right {
+  animation: ticker-scroll-right 25s linear infinite;
+  will-change: transform;
+}
+
+.animate-ticker-left:hover,
+.animate-ticker-left:active,
+.animate-ticker-right:hover,
+.animate-ticker-right:active {
+  animation-play-state: paused;
+}
+
+.fade-to-letters-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 12%, rgba(0, 0, 0, 0.35) 30%, black 55%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, transparent 12%, rgba(0, 0, 0, 0.35) 30%, black 55%, black 95%, transparent 100%);
+}
+

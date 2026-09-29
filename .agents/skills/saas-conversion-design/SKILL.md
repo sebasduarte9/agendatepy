@@ -20,7 +20,7 @@ This skill provides expert design standards for creating world-class, premium li
 - **Secondary / Growth:** Teal/Cyan (`#0d9488` / `#14b8a6`, faded: `rgba(20, 184, 166, 0.08)`).
 - **Accent / Alert / Focus:** Magenta/Pink (`#db2777` / `#ec4899`, faded: `rgba(236, 72, 153, 0.08)`).
 - **Success / Positive Trend:** Emerald/Mint (`#059669` / `#10b981`, faded: `rgba(16, 185, 129, 0.1)`).
-- **Warning / Highlight:** Amber (`#d97706` / `#f59e0b`, faded: `rgba(245, 158, 11, 0.08)`).
+- **Warning / Highlight:** Amber (`#d97706` / `#f59e0b`, faded: `rgba(245, 159, 11, 0.58)`).
 
 ## 2. Typography Hierarchy
 
