@@ -135,15 +135,18 @@ export default function Pricing() {
   const [mobilePlanIndex, setMobilePlanIndex] = useState(0); // 0: gratis, 1: basico, 2: pro, 3: empresa
 
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const activeTabEl = tabRefs.current[mobilePlanIndex];
-    if (activeTabEl) {
-      activeTabEl.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
+    if (activeTabEl && activeTabEl.parentElement) {
+      const parent = activeTabEl.parentElement;
+      const left = activeTabEl.offsetLeft - parent.offsetLeft - (parent.clientWidth - activeTabEl.clientWidth) / 2;
+      parent.scrollTo({ left, behavior: "smooth" });
     }
   }, [mobilePlanIndex]);
 

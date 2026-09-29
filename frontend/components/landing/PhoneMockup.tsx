@@ -119,7 +119,6 @@ export default function PhoneMockup() {
         behavior: "smooth",
       });
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   };
 
   // 3D tilt tracking for mouse over phone

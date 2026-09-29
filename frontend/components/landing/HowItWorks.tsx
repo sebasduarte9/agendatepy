@@ -323,7 +323,7 @@ function WorkflowStep({
       </div>
       <div className="mt-2 text-xs leading-relaxed pl-1">
         <p className="font-semibold text-slate-800 dark:text-slate-200">{leadIn}</p>
-        <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{detail}</p>
+        <p className="hidden sm:block text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{detail}</p>
       </div>
     </div>
   );

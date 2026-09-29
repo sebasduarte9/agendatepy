@@ -40,7 +40,7 @@ export default function WhatsAppFloatingButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, y: 10 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="group relative flex items-center gap-2 xs:gap-3 rounded-2xl sm:rounded-full border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 py-1.5 xs:py-2 pl-1.5 xs:pl-2 pr-3 sm:pr-3.5 shadow-[0_12px_36px_-6px_rgba(15,23,42,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-300 hover:border-emerald-500/40 hover:shadow-[0_16px_40px_-6px_rgba(37,211,102,0.22)]"
+            className="group relative flex items-center gap-2 xs:gap-3 rounded-full border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 p-1 sm:py-1.5 sm:pl-1.5 sm:pr-3.5 shadow-[0_12px_36px_-6px_rgba(15,23,42,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-300 hover:border-emerald-500/40 hover:shadow-[0_16px_40px_-6px_rgba(37,211,102,0.22)]"
           >
             {/* Enlace envolvente al chat de WhatsApp */}
             <a
@@ -57,12 +57,12 @@ export default function WhatsAppFloatingButton() {
                 <span className="absolute top-0 right-0 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-300" />
               </div>
 
-              {/* Textos integrados: en pantallas ultra-pequeñas se muestra solo el título para no tapar CTAs */}
-              <div className="min-w-0 pr-1">
+              {/* Textos integrados: en pantallas móviles se oculta para no tapar el simulador ni botones */}
+              <div className="hidden sm:block min-w-0 pr-1">
                 <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   ¿Dudas para tu local?
                 </p>
-                <p className="hidden xs:block text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-1 sm:line-clamp-2">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-1 sm:line-clamp-2">
                   Chateá con un asesor en Asunción ahora mismo.
                 </p>
               </div>
@@ -75,7 +75,7 @@ export default function WhatsAppFloatingButton() {
                 e.stopPropagation();
                 setIsDismissed(true);
               }}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="hidden sm:flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               aria-label="Cerrar mensaje"
             >
               <X className="h-3.5 w-3.5" />

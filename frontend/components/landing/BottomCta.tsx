@@ -54,7 +54,8 @@ export default function BottomCta() {
 
             {/* Subtitle */}
             <p className="mt-3 sm:mt-4 text-xs xs:text-sm sm:text-base text-slate-300/90 leading-relaxed max-w-xl mx-auto">
-              Eliminá el tiempo perdido coordinando citas por WhatsApp. Brindale a tus clientes una experiencia de reserva moderna, directa y sin descargas.
+              <strong className="font-bold text-white block sm:inline">Eliminá el tiempo perdido coordinando citas por WhatsApp. </strong>
+              <span className="hidden sm:inline">Brindale a tus clientes una experiencia de reserva moderna, directa y sin descargas.</span>
             </p>
 
             {/* Action Buttons */}

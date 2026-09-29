@@ -26,8 +26,8 @@ export default function Ticker() {
   const loop = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
-    <section className="border-y border-slate-100 dark:border-white/5 bg-white dark:bg-slate-950 py-3 sm:py-4 transition-colors overflow-hidden">
-      <div className="ticker-mask overflow-hidden">
+    <section className="border-y border-slate-100 dark:border-white/5 bg-white dark:bg-slate-950 py-3 sm:py-4 transition-colors overflow-hidden overflow-x-clip max-w-full">
+      <div className="ticker-mask overflow-hidden max-w-full">
         <div className="ticker-track flex w-max gap-6 sm:gap-10 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">
           {loop.map((item, index) => {
             const IconComponent = ICON_MAP[item.iconKey] || Sparkles;

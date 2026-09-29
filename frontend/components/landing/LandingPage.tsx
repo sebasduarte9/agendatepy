@@ -20,7 +20,7 @@ export default function LandingPage() {
   return (
     <CategoryProvider>
       <Header />
-      <main>
+      <main className="pb-20 sm:pb-0">
         <Hero />
         <Ticker />
         <HowItWorks />

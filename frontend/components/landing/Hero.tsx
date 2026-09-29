@@ -29,7 +29,7 @@ export default function Hero() {
   const { selectedCategory, setSelectedCategory } = useCategory();
 
   return (
-    <section id="inicio" className="relative pt-4 sm:pt-8 pb-12 sm:pb-16 lg:pt-14 lg:pb-24 scroll-mt-20">
+    <section id="inicio" className="relative pt-20 sm:pt-24 pb-12 sm:pb-16 lg:pt-16 lg:pb-24 scroll-mt-24">
       <div className="relative mx-auto grid max-w-7xl items-center gap-8 sm:gap-12 px-3 sm:px-6 lg:grid-cols-12">
         {/* Left Column: High-Converting Value Proposition */}
         <motion.div
@@ -39,7 +39,7 @@ export default function Hero() {
           className="lg:col-span-7 flex flex-col justify-center min-w-0"
         >
           {/* Hard-Hitting Pain & Benefit Headline */}
-          <h1 className="text-[22px] xs:text-2xl sm:text-4xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08] break-words">
+          <h1 className="text-[26px] xs:text-3xl sm:text-4xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08] break-words">
             Llená tu agenda en automático y reducí 80% las cancelaciones{" "}
             <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
               por WhatsApp.
@@ -50,7 +50,7 @@ export default function Hero() {
             <strong className="font-bold text-slate-900 dark:text-white block sm:inline">
               Tu agenda llena 24/7 sin pasar horas respondiendo mensajes.{" "}
             </strong>
-            <span className="text-slate-600 dark:text-slate-300">
+            <span className="hidden sm:inline text-slate-600 dark:text-slate-300">
               Confirmaciones inmediatas y recordatorios automáticos por WhatsApp.
             </span>
           </p>

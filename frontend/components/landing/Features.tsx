@@ -29,15 +29,18 @@ export default function Features() {
   const [mobileIndex, setMobileIndex] = useState(0);
 
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const activeTabEl = tabRefs.current[mobileIndex];
-    if (activeTabEl) {
-      activeTabEl.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
+    if (activeTabEl && activeTabEl.parentElement) {
+      const parent = activeTabEl.parentElement;
+      const left = activeTabEl.offsetLeft - parent.offsetLeft - (parent.clientWidth - activeTabEl.clientWidth) / 2;
+      parent.scrollTo({ left, behavior: "smooth" });
     }
   }, [mobileIndex]);
 
@@ -277,7 +280,7 @@ function WhatsAppCardContent() {
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Sin formularios lentos ni descargas de apps. </strong>
-          <span>Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.</span>
+          <span className="hidden sm:inline">Las citas se confirman en tiempo real y quedan registradas al instante en tu agenda comercial.</span>
         </p>
       </div>
 
@@ -324,7 +327,7 @@ function CashRegisterCardContent() {
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Cierre diario sin descuadres. </strong>
-          <span>Registro automático de cobros en efectivo y transferencias SIPAP sin planillas manuales.</span>
+          <span className="hidden sm:inline">Registro automático de cobros en efectivo y transferencias SIPAP sin planillas manuales.</span>
         </p>
       </div>
 
@@ -378,7 +381,7 @@ function LoyaltyCardContent({
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Sellos virtuales que premian visitas. </strong>
-          <span>Tus clientes acumulan sellos y desbloquean beneficios en cada reserva sin cupones en papel.</span>
+          <span className="hidden sm:inline">Tus clientes acumulan sellos y desbloquean beneficios en cada reserva sin cupones en papel.</span>
         </p>
       </div>
 
@@ -463,7 +466,7 @@ function CommissionsCardContent() {
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Liquidación sin planillas. </strong>
-          <span>Cálculo automático de comisiones de estilistas o colaboradores por turno atendido.</span>
+          <span className="hidden sm:inline">Cálculo automático de comisiones de estilistas o colaboradores por turno atendido.</span>
         </p>
       </div>
 
