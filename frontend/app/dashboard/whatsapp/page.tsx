@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import QRCode from "qrcode";
 import {
   Bot,
@@ -24,7 +24,6 @@ import {
   Copy,
   X,
   CheckCheck,
-  SlidersHorizontal,
   ExternalLink,
   CreditCard,
   UserCheck,
@@ -32,11 +31,16 @@ import {
   RotateCcw,
   Layers,
   Phone,
-  Sliders,
-  Settings2,
-  CheckSquare,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  ChevronRight,
+  Play,
+  Share2,
+  Settings,
+  SlidersHorizontal,
 } from "lucide-react";
-import { useDashboardStore, defaultBotMenuOptions, defaultBotKeywords } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/store/useDashboardStore";
 import type { BotMainMenuOption, BotKeywordRule } from "@/lib/dashboard-types";
 
 // Dynamic message tags for templates (100% clean, no emojis)
@@ -53,10 +57,40 @@ const AVAILABLE_TAGS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-// CUSTOM UI COMPONENTS (Zero Native Web Controls, Zero Emojis)
+// N8N-STYLE CANVAS TYPES & MODELS
 // ═══════════════════════════════════════════════════════════════════
 
-/** Custom Switch / Toggle */
+export type NodeType = "trigger" | "welcome" | "menu" | "action" | "keyword";
+
+export interface CanvasNode {
+  id: string;
+  type: NodeType;
+  title: string;
+  x: number;
+  y: number;
+  enabled: boolean;
+  config: {
+    key?: string; // for menu options: "1", "2", etc.
+    actionType?: "none" | "send_link" | "send_sipap" | "human_handoff";
+    response?: string;
+    keywords?: string[];
+    welcomeText?: string;
+    fallbackText?: string;
+    options?: { id: string; key: string; label: string; targetNodeId: string }[];
+  };
+}
+
+export interface CanvasConnection {
+  id: string;
+  fromNodeId: string;
+  fromPort?: string;
+  toNodeId: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CUSTOM UI CONTROLS (Zero Basic HTML, Zero Emojis)
+// ═══════════════════════════════════════════════════════════════════
+
 function CustomSwitch({
   checked,
   onChange,
@@ -93,7 +127,6 @@ function CustomSwitch({
   );
 }
 
-/** Custom Action Selector (Replaces native <select>) */
 function ActionSelector({
   value,
   onChange,
@@ -105,36 +138,15 @@ function ActionSelector({
     id: "none" | "send_link" | "send_sipap" | "human_handoff";
     label: string;
     icon: typeof MessageSquare;
-    description: string;
   }[] = [
-    {
-      id: "none",
-      label: "Solo Texto",
-      icon: MessageSquare,
-      description: "Envía la respuesta redactada",
-    },
-    {
-      id: "send_link",
-      label: "Link Reservas",
-      icon: ExternalLink,
-      description: "Adjunta enlace de turnos",
-    },
-    {
-      id: "send_sipap",
-      label: "Datos SIPAP",
-      icon: CreditCard,
-      description: "Adjunta datos de pago",
-    },
-    {
-      id: "human_handoff",
-      label: "Asesor Humano",
-      icon: UserCheck,
-      description: "Transfiere a un asesor",
-    },
+    { id: "none", label: "Solo Texto", icon: MessageSquare },
+    { id: "send_link", label: "Link Reservas", icon: ExternalLink },
+    { id: "send_sipap", label: "Datos SIPAP", icon: CreditCard },
+    { id: "human_handoff", label: "Asesor Humano", icon: UserCheck },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/5">
+    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/5">
       {actions.map((act) => {
         const isSelected = value === act.id;
         const Icon = act.icon;
@@ -150,7 +162,7 @@ function ActionSelector({
             }`}
           >
             <Icon className={`h-3.5 w-3.5 shrink-0 ${isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`} />
-            <span className="truncate">{act.label}</span>
+            <span className="truncate text-[11px]">{act.label}</span>
           </button>
         );
       })}
@@ -158,86 +170,140 @@ function ActionSelector({
   );
 }
 
-/** Custom Cadence Selector (Replaces native <input type="range">) */
-function CustomCadenceSelector({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (val: number) => void;
-}) {
-  const presets = [
-    { sec: 1, label: "1s · Inmediato", icon: Zap },
-    { sec: 2, label: "2s · Dinámico", icon: Clock },
-    { sec: 3, label: "3s · Equilibrado", icon: CheckCircle2 },
-    { sec: 5, label: "5s · Natural", icon: MessageSquare },
-    { sec: 8, label: "8s · Pausado", icon: SlidersHorizontal },
-  ];
+// ═══════════════════════════════════════════════════════════════════
+// INITIAL WORKFLOW NODES & CONNECTIONS (N8N STYLE)
+// ═══════════════════════════════════════════════════════════════════
 
-  return (
-    <div className="space-y-4">
-      {/* Preset pills */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-        {presets.map((p) => {
-          const isSelected = value === p.sec;
-          const Icon = p.icon;
-          return (
-            <button
-              key={p.sec}
-              type="button"
-              onClick={() => onChange(p.sec)}
-              className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
-                isSelected
-                  ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500/30"
-                  : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20"
-              }`}
-            >
-              <Icon className={`h-4 w-4 mb-1 ${isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`} />
-              <span className="text-xs font-bold leading-tight">{p.label}</span>
-            </button>
-          );
-        })}
-      </div>
+const DEFAULT_CANVAS_NODES: CanvasNode[] = [
+  {
+    id: "node-trigger-entry",
+    type: "trigger",
+    title: "Mensaje Entrante",
+    x: 40,
+    y: 190,
+    enabled: true,
+    config: {},
+  },
+  {
+    id: "node-welcome-hub",
+    type: "welcome",
+    title: "Saludo & Menú",
+    x: 280,
+    y: 160,
+    enabled: true,
+    config: {
+      welcomeText: "¡Hola! Bienvenido/a a nuestro canal oficial. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor\n\n_Escribí el número de la opción o tu consulta._",
+      fallbackText: "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo.",
+    },
+  },
+  {
+    id: "node-menu-router",
+    type: "menu",
+    title: "Enrutador de Opciones",
+    x: 560,
+    y: 130,
+    enabled: true,
+    config: {
+      options: [
+        { id: "opt-1", key: "1", label: "1. Agendar Turno Online", targetNodeId: "node-act-link" },
+        { id: "opt-2", key: "2", label: "2. Servicios y Precios", targetNodeId: "node-act-prices" },
+        { id: "opt-3", key: "3", label: "3. Ubicación y Horarios", targetNodeId: "node-act-location" },
+        { id: "opt-4", key: "4", label: "4. Datos Pago SIPAP", targetNodeId: "node-act-sipap" },
+        { id: "opt-5", key: "5", label: "5. Asesor Humano", targetNodeId: "node-act-human" },
+      ],
+    },
+  },
+  {
+    id: "node-act-link",
+    type: "action",
+    title: "Link de Reservas",
+    x: 900,
+    y: 30,
+    enabled: true,
+    config: {
+      key: "1",
+      actionType: "send_link",
+      response: "¡Excelente! Podés elegir tu servicio, ver los profesionales y reservar tu turno con confirmación inmediata acá:",
+    },
+  },
+  {
+    id: "node-act-prices",
+    type: "action",
+    title: "Servicios y Tarifas",
+    x: 900,
+    y: 150,
+    enabled: true,
+    config: {
+      key: "2",
+      actionType: "send_link",
+      response: "Nuestros servicios más pedidos:\n• Corte Clásico / Fade: Gs. 60.000\n• Perfilado & Barba VIP: Gs. 45.000\n• Combo Corte + Barba: Gs. 95.000\n\nPodés ver la carta completa y promociones aquí:",
+    },
+  },
+  {
+    id: "node-act-location",
+    type: "action",
+    title: "Ubicación & Horarios",
+    x: 900,
+    y: 270,
+    enabled: true,
+    config: {
+      key: "3",
+      actionType: "none",
+      response: "Estamos en Avda. Santa Teresa 1420 c/ Denis Roa, Asunción.\nHorario de atención: Lunes a Sábado de 09:00 a 20:00 hs.\nContamos con estacionamiento exclusivo para clientes.",
+    },
+  },
+  {
+    id: "node-act-sipap",
+    type: "action",
+    title: "Datos SIPAP",
+    x: 900,
+    y: 390,
+    enabled: true,
+    config: {
+      key: "4",
+      actionType: "send_sipap",
+      response: "Datos para transferencias bancarias:\nBanco: Banco Itaú Paraguay\nTitular: AgendatePY Studio\nCta Cte: 0123456789\nRUC: 80012345-6\nAlias SIPAP: pagos@agendate.py\n\nPor favor envianos tu comprobante para validarlo.",
+    },
+  },
+  {
+    id: "node-act-human",
+    type: "action",
+    title: "Derivación a Humano",
+    x: 900,
+    y: 510,
+    enabled: true,
+    config: {
+      key: "5",
+      actionType: "human_handoff",
+      response: "¡Claro que sí! Un integrante de nuestro equipo tomará la conversación en breve. Por favor dejanos tu consulta detallada.",
+    },
+  },
+  {
+    id: "node-keywords-trigger",
+    type: "keyword",
+    title: "Palabras Clave",
+    x: 280,
+    y: 430,
+    enabled: true,
+    config: {
+      keywords: ["precio", "costo", "turno", "donde", "ubicacion", "sipap"],
+      response: "Gracias por consultarnos. Consultá nuestros horarios y reservá en tiempo real aquí:",
+      actionType: "send_link",
+    },
+  },
+];
 
-      {/* Stepped Interactive Timeline */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-slate-600 dark:text-slate-400">
-            Cadencia Seleccionada:
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-xs">
-            <Clock className="h-3.5 w-3.5" />
-            {value} {value === 1 ? "segundo" : "segundos"}
-          </span>
-        </div>
-
-        {/* Stepped bar selector */}
-        <div className="grid grid-cols-10 gap-1 pt-1">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((sec) => {
-            const isFilled = sec <= value;
-            const isExact = sec === value;
-            return (
-              <button
-                key={sec}
-                type="button"
-                onClick={() => onChange(sec)}
-                className={`group relative h-9 rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center ${
-                  isExact
-                    ? "bg-emerald-600 text-white font-mono font-bold shadow-xs scale-105 z-10"
-                    : isFilled
-                    ? "bg-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-mono font-semibold"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-400 font-mono hover:bg-slate-200 dark:hover:bg-slate-700"
-                }`}
-              >
-                <span className="text-[11px]">{sec}s</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
+const DEFAULT_CANVAS_CONNECTIONS: CanvasConnection[] = [
+  { id: "conn-1", fromNodeId: "node-trigger-entry", toNodeId: "node-welcome-hub" },
+  { id: "conn-2", fromNodeId: "node-welcome-hub", toNodeId: "node-menu-router" },
+  { id: "conn-3", fromNodeId: "node-menu-router", fromPort: "opt-1", toNodeId: "node-act-link" },
+  { id: "conn-4", fromNodeId: "node-menu-router", fromPort: "opt-2", toNodeId: "node-act-prices" },
+  { id: "conn-5", fromNodeId: "node-menu-router", fromPort: "opt-3", toNodeId: "node-act-location" },
+  { id: "conn-6", fromNodeId: "node-menu-router", fromPort: "opt-4", toNodeId: "node-act-sipap" },
+  { id: "conn-7", fromNodeId: "node-menu-router", fromPort: "opt-5", toNodeId: "node-act-human" },
+  { id: "conn-8", fromNodeId: "node-trigger-entry", toNodeId: "node-keywords-trigger" },
+  { id: "conn-9", fromNodeId: "node-keywords-trigger", toNodeId: "node-act-link" },
+];
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN PAGE COMPONENT
@@ -258,45 +324,20 @@ export default function BotWhatsAppPage() {
 
   const isConnected = Boolean(evolutionConfig.connected);
 
-  // Main tabs
-  const [activeTab, setActiveTab] = useState<"reglas" | "plantillas" | "simulador" | "business">("reglas");
+  // Main Tabs
+  const [activeTab, setActiveTab] = useState<"canva" | "simulador" | "plantillas" | "business">("canva");
 
-  // Sub-tabs inside "Flujo & Reglas del Bot"
-  const [rulesSubTab, setRulesSubTab] = useState<"menu" | "palabras" | "mensajes" | "velocidad">("menu");
+  // Canvas State (n8n style)
+  const [nodes, setNodes] = useState<CanvasNode[]>(DEFAULT_CANVAS_NODES);
+  const [connections, setConnections] = useState<CanvasConnection[]>(DEFAULT_CANVAS_CONNECTIONS);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>("node-menu-router");
+  const [zoom, setZoom] = useState(1);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
 
-  // Menu Options & Keywords state
-  const [menuOptions, setMenuOptions] = useState<BotMainMenuOption[]>(
-    evolutionConfig.mainMenuOptions && evolutionConfig.mainMenuOptions.length > 0
-      ? evolutionConfig.mainMenuOptions
-      : defaultBotMenuOptions
-  );
-
-  const [keywordRules, setKeywordRules] = useState<BotKeywordRule[]>(
-    evolutionConfig.keywordRules && evolutionConfig.keywordRules.length > 0
-      ? evolutionConfig.keywordRules
-      : defaultBotKeywords
-  );
-
-  const [welcomeMessage, setWelcomeMessage] = useState(
-    evolutionConfig.welcomeMessage ||
-      "¡Hola! Bienvenido/a a nuestro canal oficial. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor\n\n_Escribí el número de la opción o tu consulta._"
-  );
-  const [fallbackMessage, setFallbackMessage] = useState(
-    evolutionConfig.fallbackMessage ||
-      "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo."
-  );
-  const [outOfHoursEnabled, setOutOfHoursEnabled] = useState(
-    evolutionConfig.outOfHoursEnabled ?? true
-  );
-  const [outOfHoursMessage, setOutOfHoursMessage] = useState(
-    evolutionConfig.outOfHoursMessage ||
-      "¡Hola! En este momento nuestro local se encuentra cerrado. Podés reservar tu turno para el próximo día disponible directamente en nuestra agenda online:"
-  );
-
-  // Natural response delay in seconds (1 to 10s)
-  const [responseCadence, setResponseCadence] = useState<number>(
-    Math.min(10, Math.max(1, evolutionConfig.autoBotCadenceSeconds || 3))
-  );
+  // Dragging state for nodes
+  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
+  const dragStartRef = useRef<{ startX: number; startY: number; nodeStartX: number; nodeStartY: number } | null>(null);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Templates tab state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
@@ -316,7 +357,7 @@ export default function BotWhatsAppPage() {
     evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800"
   );
 
-  // Interactive Live Chat Simulator state (Clean formatting, zero emojis)
+  // Live Simulator state (Zero emojis)
   const [simChatMessages, setSimChatMessages] = useState<
     { sender: "client" | "bot"; text: string; time: string }[]
   >([
@@ -388,7 +429,7 @@ export default function BotWhatsAppPage() {
     }
   }, [isConnectModalOpen, generateQrCode]);
 
-  // Conditional tour logic
+  // Guided tour trigger
   function handleStartTour() {
     if (!isConnected) {
       setIsConnectModalOpen(true);
@@ -401,7 +442,254 @@ export default function BotWhatsAppPage() {
     }
   }
 
-  // Template editor helpers
+  // ═══════════════════════════════════════════════════════════════════
+  // NODE DRAG & DROP LOGIC
+  // ═══════════════════════════════════════════════════════════════════
+
+  function handleNodePointerDown(e: React.PointerEvent, nodeId: string) {
+    e.stopPropagation();
+    setSelectedNodeId(nodeId);
+    setIsInspectorOpen(true);
+
+    const targetNode = nodes.find((n) => n.id === nodeId);
+    if (!targetNode) return;
+
+    setDraggingNodeId(nodeId);
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      nodeStartX: targetNode.x,
+      nodeStartY: targetNode.y,
+    };
+  }
+
+  const handleCanvasPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!draggingNodeId || !dragStartRef.current) return;
+      const dx = (e.clientX - dragStartRef.current.startX) / zoom;
+      const dy = (e.clientY - dragStartRef.current.startY) / zoom;
+
+      const newX = Math.max(10, Math.round((dragStartRef.current.nodeStartX + dx) / 10) * 10);
+      const newY = Math.max(10, Math.round((dragStartRef.current.nodeStartY + dy) / 10) * 10);
+
+      setNodes((prev) =>
+        prev.map((node) =>
+          node.id === draggingNodeId ? { ...node, x: newX, y: newY } : node
+        )
+      );
+    },
+    [draggingNodeId, zoom]
+  );
+
+  const handleCanvasPointerUp = useCallback(() => {
+    setDraggingNodeId(null);
+    dragStartRef.current = null;
+  }, []);
+
+  // Update specific node config
+  function updateNode(nodeId: string, patch: Partial<CanvasNode>) {
+    setNodes((prev) =>
+      prev.map((node) => (node.id === nodeId ? { ...node, ...patch } : node))
+    );
+  }
+
+  function updateNodeConfig(nodeId: string, configPatch: Partial<CanvasNode["config"]>) {
+    setNodes((prev) =>
+      prev.map((node) =>
+        node.id === nodeId
+          ? { ...node, config: { ...node.config, ...configPatch } }
+          : node
+      )
+    );
+  }
+
+  function deleteNode(nodeId: string) {
+    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
+    setConnections((prev) =>
+      prev.filter((c) => c.fromNodeId !== nodeId && c.toNodeId !== nodeId)
+    );
+    if (selectedNodeId === nodeId) {
+      setSelectedNodeId(null);
+    }
+    pushToast("success", "Nodo eliminado del flujo.");
+  }
+
+  function addNewActionNode() {
+    const nextKey = String(nodes.filter((n) => n.type === "action").length + 1);
+    const newNodeId = `node-act-${Date.now()}`;
+    const newNode: CanvasNode = {
+      id: newNodeId,
+      type: "action",
+      title: `Opción ${nextKey}: Nueva Acción`,
+      x: 900,
+      y: 100 + nodes.length * 40,
+      enabled: true,
+      config: {
+        key: nextKey,
+        actionType: "send_link",
+        response: "Escribí aquí el texto que enviará este nodo de respuesta...",
+      },
+    };
+
+    setNodes((prev) => [...prev, newNode]);
+    setConnections((prev) => [
+      ...prev,
+      { id: `conn-${Date.now()}`, fromNodeId: "node-menu-router", toNodeId: newNodeId },
+    ]);
+    setSelectedNodeId(newNodeId);
+    setIsInspectorOpen(true);
+    pushToast("success", "Nuevo nodo de respuesta añadido al flujo.");
+  }
+
+  function handleSaveCanvasFlow() {
+    // Sincronizar nodos con evolutionConfig
+    const actionNodes = nodes.filter((n) => n.type === "action");
+    const keywordNodes = nodes.filter((n) => n.type === "keyword");
+    const welcomeNode = nodes.find((n) => n.type === "welcome");
+
+    const mappedMenuOptions: BotMainMenuOption[] = actionNodes.map((n, i) => ({
+      id: n.id,
+      key: n.config.key || String(i + 1),
+      title: n.title,
+      response: n.config.response || "Información solicitada.",
+      action: n.config.actionType || "none",
+      enabled: n.enabled,
+    }));
+
+    const mappedKeywordRules: BotKeywordRule[] = keywordNodes.map((n) => ({
+      id: n.id,
+      keywords: n.config.keywords || ["consulta"],
+      response: n.config.response || "Gracias por comunicarte.",
+      action: n.config.actionType || "none",
+      enabled: n.enabled,
+    }));
+
+    updateEvolutionConfig({
+      mainMenuOptions: mappedMenuOptions,
+      keywordRules: mappedKeywordRules,
+      welcomeMessage: welcomeNode?.config.welcomeText || evolutionConfig.welcomeMessage,
+      fallbackMessage: welcomeNode?.config.fallbackText || evolutionConfig.fallbackMessage,
+    });
+
+    pushToast("success", "¡Flujo del canva guardado y sincronizado con éxito!");
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SIMULATOR BOT RESPONSE (Rules Engine Driven by Canvas Nodes)
+  // ═══════════════════════════════════════════════════════════════════
+
+  function computeBotReply(userMsg: string): string {
+    const lower = userMsg.toLowerCase().trim();
+    const welcomeNode = nodes.find((n) => n.type === "welcome");
+    const welcomeText = welcomeNode?.config.welcomeText || "¡Hola! Bienvenido a nuestra agenda oficial.";
+    const fallbackText = welcomeNode?.config.fallbackText || "Opción no reconocida. Por favor ingresá un número.";
+
+    const actionNodes = nodes.filter((n) => n.type === "action" && n.enabled);
+    const keywordNodes = nodes.filter((n) => n.type === "keyword" && n.enabled);
+
+    // 1. Saludo inicial
+    if (
+      lower === "hola" ||
+      lower === "buenas" ||
+      lower === "buen dia" ||
+      lower === "menu" ||
+      lower === "inicio" ||
+      lower === "empezar"
+    ) {
+      let res = `${welcomeText}\n\n`;
+      if (actionNodes.length > 0) {
+        res += actionNodes.map((o) => `${o.config.key || "•"}. ${o.title}`).join("\n");
+        res += `\n\n_Escribí el número para elegir una opción._`;
+      }
+      return res;
+    }
+
+    // 2. Coincidencia numérica con nodo de acción
+    const matchedAction = actionNodes.find(
+      (n) => lower === (n.config.key || "").toLowerCase() || lower === n.title.toLowerCase()
+    );
+    if (matchedAction) {
+      let reply = matchedAction.config.response || "Aquí tenés la información:";
+      if (matchedAction.config.actionType === "send_link") {
+        reply += `\n\n*Reservar online:* ${bookingUrl}`;
+      } else if (matchedAction.config.actionType === "send_sipap") {
+        reply += `\n\n*Datos SIPAP:*\nBanco: Banco Itaú\nTitular: ${business.name}\nRUC: 80012345-6\nAlias: pagos@agendate.py`;
+      } else if (matchedAction.config.actionType === "human_handoff") {
+        reply += `\n\n*Atención:* Un integrante de nuestro equipo tomará la conversación en breve.`;
+      }
+      return reply;
+    }
+
+    // 3. Coincidencia con palabras clave
+    const matchedKw = keywordNodes.find((n) =>
+      (n.config.keywords || []).some((kw) => lower.includes(kw.toLowerCase().trim()))
+    );
+    if (matchedKw) {
+      let reply = matchedKw.config.response || "Información sobre tu consulta:";
+      if (matchedKw.config.actionType === "send_link") {
+        reply += `\n\n*Reservar online:* ${bookingUrl}`;
+      } else if (matchedKw.config.actionType === "send_sipap") {
+        reply += `\n\n*Datos SIPAP:*\nBanco: Banco Itaú\nTitular: ${business.name}\nRUC: 80012345-6\nAlias: pagos@agendate.py`;
+      } else if (matchedKw.config.actionType === "human_handoff") {
+        reply += `\n\n*Atención:* Derivando a un asesor humano...`;
+      }
+      return reply;
+    }
+
+    // 4. Fallback
+    let res = `${fallbackText}\n\n`;
+    if (actionNodes.length > 0) {
+      res += actionNodes.map((o) => `${o.config.key || "•"}. ${o.title}`).join("\n");
+    }
+    return res;
+  }
+
+  function handleSimSendMessage(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (!simInput.trim() || isBotTypingSim) return;
+
+    const userMsg = simInput.trim();
+    const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    setSimChatMessages((prev) => [
+      ...prev,
+      { sender: "client", text: userMsg, time: timeNow },
+    ]);
+    setSimInput("");
+    setIsBotTypingSim(true);
+
+    // Fixed sensible human pause (no user config needed)
+    setTimeout(() => {
+      const botResponse = computeBotReply(userMsg);
+      const botTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      setSimChatMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: botResponse, time: botTime },
+      ]);
+      setIsBotTypingSim(false);
+    }, 900);
+  }
+
+  function handleConnectSimulated() {
+    const phoneToSet = modalPhoneNumber.trim() || business.phone || "+595 981 700 800";
+    updateEvolutionConfig({
+      connected: true,
+      phoneNumber: phoneToSet,
+      lastSync: new Date().toISOString(),
+    });
+    updateBusiness({ whatsappNumber: phoneToSet });
+    setIsConnectModalOpen(false);
+    pushToast(
+      "success",
+      `WhatsApp vinculado con éxito (${phoneToSet}). Sesión compartida con el CRM.`
+    );
+  }
+
+  function handleDisconnect() {
+    updateEvolutionConfig({ connected: false, phoneNumber: "" });
+    pushToast("error", "WhatsApp desconectado. Todas las opciones han sido pausadas.");
+  }
+
   function insertTag(tag: string) {
     if (!currentTemplate) return;
     const updated = (currentTemplate.body || "") + " " + tag;
@@ -451,172 +739,10 @@ export default function BotWhatsAppPage() {
     }
   }
 
-  // Bot Rules Handlers
-  function handleSaveBotConfig() {
-    updateEvolutionConfig({
-      mainMenuOptions: menuOptions,
-      keywordRules: keywordRules,
-      welcomeMessage: welcomeMessage,
-      fallbackMessage: fallbackMessage,
-      outOfHoursEnabled: outOfHoursEnabled,
-      outOfHoursMessage: outOfHoursMessage,
-      autoBotCadenceSeconds: responseCadence,
-    });
-    pushToast("success", "Reglas del bot guardadas y sincronizadas con la base de datos.");
-  }
-
-  function handleAddMenuOption() {
-    const nextKey = String(menuOptions.length + 1);
-    const newOpt: BotMainMenuOption = {
-      id: `opt-${Date.now()}`,
-      key: nextKey,
-      title: "Nueva Opción",
-      response: "Detalle de la respuesta...",
-      action: "none",
-      enabled: true,
-    };
-    setMenuOptions([...menuOptions, newOpt]);
-  }
-
-  function handleUpdateMenuOption(id: string, patch: Partial<BotMainMenuOption>) {
-    setMenuOptions(menuOptions.map((o) => (o.id === id ? { ...o, ...patch } : o)));
-  }
-
-  function handleDeleteMenuOption(id: string) {
-    setMenuOptions(menuOptions.filter((o) => o.id !== id));
-  }
-
-  function handleAddKeywordRule() {
-    const newRule: BotKeywordRule = {
-      id: `kw-${Date.now()}`,
-      keywords: ["consulta"],
-      response: "Gracias por tu consulta. Podés reservar tu lugar directamente aquí:",
-      action: "send_link",
-      enabled: true,
-    };
-    setKeywordRules([...keywordRules, newRule]);
-  }
-
-  function handleUpdateKeywordRule(id: string, patch: Partial<BotKeywordRule>) {
-    setKeywordRules(keywordRules.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  }
-
-  function handleDeleteKeywordRule(id: string) {
-    setKeywordRules(keywordRules.filter((r) => r.id !== id));
-  }
-
-  // Simulator bot response engine (Rules & Keywords - 100% clean of emojis)
-  function computeBotReply(userMsg: string): string {
-    const lower = userMsg.toLowerCase().trim();
-
-    // 1. Saludo inicial o petición de menú
-    if (
-      lower === "hola" ||
-      lower === "buenas" ||
-      lower === "buen dia" ||
-      lower === "menu" ||
-      lower === "inicio" ||
-      lower === "empezar"
-    ) {
-      const activeOpts = menuOptions.filter((o) => o.enabled);
-      let res = `${welcomeMessage}\n\n`;
-      if (activeOpts.length > 0) {
-        res += activeOpts.map((o) => `${o.key}. ${o.title}`).join("\n");
-        res += `\n\n_Escribí el número para elegir una opción._`;
-      }
-      return res;
-    }
-
-    // 2. Coincidencia con opción numérica del menú
-    const matchedOption = menuOptions.find(
-      (o) => o.enabled && (lower === o.key.toLowerCase() || lower === o.title.toLowerCase())
-    );
-    if (matchedOption) {
-      let reply = matchedOption.response;
-      if (matchedOption.action === "send_link") {
-        reply += `\n\n*Reservar online:* ${bookingUrl}`;
-      } else if (matchedOption.action === "send_sipap") {
-        reply += `\n\n*Datos SIPAP:*\nBanco: Banco Itaú\nTitular: ${business.name}\nRUC: 80012345-6\nAlias: pagos@agendate.py`;
-      } else if (matchedOption.action === "human_handoff") {
-        reply += `\n\n*Atención:* Un integrante de nuestro equipo tomará la conversación en breve.`;
-      }
-      return reply;
-    }
-
-    // 3. Coincidencia con palabras clave
-    const matchedKeyword = keywordRules.find(
-      (r) => r.enabled && r.keywords.some((k) => lower.includes(k.toLowerCase().trim()))
-    );
-    if (matchedKeyword) {
-      let reply = matchedKeyword.response;
-      if (matchedKeyword.action === "send_link") {
-        reply += `\n\n*Reservar online:* ${bookingUrl}`;
-      } else if (matchedKeyword.action === "send_sipap") {
-        reply += `\n\n*Datos SIPAP:*\nBanco: Banco Itaú\nTitular: ${business.name}\nRUC: 80012345-6\nAlias: pagos@agendate.py`;
-      } else if (matchedKeyword.action === "human_handoff") {
-        reply += `\n\n*Atención:* Pausamos el bot automático y te transferimos a un asesor humano.`;
-      }
-      return reply;
-    }
-
-    // 4. Fallback: No coincide
-    const activeOpts = menuOptions.filter((o) => o.enabled);
-    let res = `${fallbackMessage}\n\n`;
-    if (activeOpts.length > 0) {
-      res += activeOpts.map((o) => `${o.key}. ${o.title}`).join("\n");
-    }
-    return res;
-  }
-
-  function handleSimSendMessage(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    if (!simInput.trim() || isBotTypingSim) return;
-
-    const userMsg = simInput.trim();
-    const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    // Append client message
-    setSimChatMessages((prev) => [
-      ...prev,
-      { sender: "client", text: userMsg, time: timeNow },
-    ]);
-    setSimInput("");
-    setIsBotTypingSim(true);
-
-    const delayMs = Math.max(500, Math.min(3000, responseCadence * 300));
-    setTimeout(() => {
-      const botResponse = computeBotReply(userMsg);
-      const botTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      setSimChatMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: botResponse, time: botTime },
-      ]);
-      setIsBotTypingSim(false);
-    }, delayMs);
-  }
-
-  function handleConnectSimulated() {
-    const phoneToSet = modalPhoneNumber.trim() || business.phone || "+595 981 700 800";
-    updateEvolutionConfig({
-      connected: true,
-      phoneNumber: phoneToSet,
-      lastSync: new Date().toISOString(),
-    });
-    updateBusiness({ whatsappNumber: phoneToSet });
-    setIsConnectModalOpen(false);
-    pushToast(
-      "success",
-      `WhatsApp vinculado con éxito (${phoneToSet}). Sesión compartida con el CRM.`
-    );
-  }
-
-  function handleDisconnect() {
-    updateEvolutionConfig({ connected: false, phoneNumber: "" });
-    pushToast("error", "WhatsApp desconectado. Todas las opciones han sido pausadas.");
-  }
-
   const activeConnectedPhone =
     evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
+
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
   return (
     <div className="space-y-6">
@@ -624,7 +750,7 @@ export default function BotWhatsAppPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
               <Bot className="h-5 w-5" />
             </div>
             <div>
@@ -634,13 +760,13 @@ export default function BotWhatsAppPage() {
                 </h1>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                   <Zap className="h-3 w-3" />
-                  Automatizado
+                  Flujo Visual Canva
                 </span>
               </div>
             </div>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Asistente automático para WhatsApp: menú interactivo por opciones, respuestas por palabras clave y recordatorios 24h y 2h antes.
+            Diseñá el flujo de atención interactivo en un canva visual configurable: conectá opciones, disparadores y respuestas automáticas.
           </p>
         </div>
 
@@ -729,10 +855,10 @@ export default function BotWhatsAppPage() {
                 Requisito Obligatorio
               </span>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                Vinculá tu WhatsApp para activar el Bot y las Opciones
+                Vinculá tu WhatsApp para activar el Canva del Bot
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Para configurar el menú automático, las respuestas por palabras clave y los recordatorios 24h y 2h antes, es obligatorio vincular la línea de WhatsApp de tu negocio.
+                Para configurar el flujo visual de nodos, las opciones de respuesta y los recordatorios automáticos 24h y 2h antes, es obligatorio vincular la línea oficial de tu negocio.
               </p>
             </div>
 
@@ -746,75 +872,26 @@ export default function BotWhatsAppPage() {
                 <span>Vincular mi WhatsApp Ahora (Escanear QR)</span>
               </button>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto pt-3 text-left">
-              <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/70 dark:border-white/5 space-y-1 text-xs">
-                <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Sin salir de aquí</span>
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Escaneás el código en un modal aquí mismo sin perder tu sesión ni navegar a otra pantalla.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/70 dark:border-white/5 space-y-1 text-xs">
-                <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <RefreshCw className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Misma sesión con CRM</span>
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  La sesión vinculada sirve automáticamente para este Bot y para la bandeja de mensajes del CRM.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/70 dark:border-white/5 space-y-1 text-xs">
-                <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                  <span>Cero ausencias</span>
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Tus clientes reciben confirmaciones y recordatorios automáticos 24h y 2h antes.
-                </p>
-              </div>
-            </div>
           </div>
         )}
       </div>
 
-      {/* ═══ 3. MAIN TABS (Custom Segmented Control) ═══ */}
+      {/* ═══ 3. MAIN TABS (Segmented Pill Group) ═══ */}
       <div className="p-1 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex flex-wrap gap-1">
         <button
           type="button"
-          onClick={() => isConnected && setActiveTab("reglas")}
+          onClick={() => isConnected && setActiveTab("canva")}
           disabled={!isConnected}
           className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
             !isConnected
               ? "opacity-40 cursor-not-allowed text-slate-400"
-              : activeTab === "reglas"
+              : activeTab === "canva"
               ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          <span>Flujo & Reglas del Bot</span>
-          {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => isConnected && setActiveTab("plantillas")}
-          disabled={!isConnected}
-          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-            !isConnected
-              ? "opacity-40 cursor-not-allowed text-slate-400"
-              : activeTab === "plantillas"
-              ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          <Layers className="h-3.5 w-3.5" />
-          <span>Plantillas & Recordatorios</span>
+          <Share2 className="h-3.5 w-3.5 text-emerald-600" />
+          <span>Canva de Flujo (Tipo n8n)</span>
           {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
 
@@ -832,6 +909,23 @@ export default function BotWhatsAppPage() {
         >
           <Smartphone className="h-3.5 w-3.5" />
           <span>Simulador en Celular</span>
+          {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => isConnected && setActiveTab("plantillas")}
+          disabled={!isConnected}
+          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            !isConnected
+              ? "opacity-40 cursor-not-allowed text-slate-400"
+              : activeTab === "plantillas"
+              ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <Layers className="h-3.5 w-3.5" />
+          <span>Plantillas & Recordatorios</span>
           {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
 
@@ -862,10 +956,10 @@ export default function BotWhatsAppPage() {
               <Lock className="h-6 w-6" />
             </div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-              Opciones Bloqueadas Temporalmente
+              Canva Bloqueado Temporalmente
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md">
-              Vinculá tu línea oficial de WhatsApp arriba para configurar el menú, las palabras clave y el simulador en vivo.
+              Vinculá tu WhatsApp arriba para poder arrastrar, editar y configurar el flujo interactivo de tu bot.
             </p>
             <button
               type="button"
@@ -878,385 +972,592 @@ export default function BotWhatsAppPage() {
           </div>
 
           <div className="opacity-20 pointer-events-none select-none filter blur-xs space-y-4">
-            <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-            <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+            <div className="h-40 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+            <div className="h-60 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
           </div>
         </div>
-      ) : activeTab === "reglas" ? (
-        /* ═══ TAB 1: FLUJO & REGLAS DEL BOT ═══ */
-        <div className="space-y-6" data-tour="bot-rules-card">
-          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/5">
+      ) : activeTab === "canva" ? (
+        /* ═══ TAB 1: VISUAL CANVAS BUILDER (n8n Style) ═══ */
+        <div className="space-y-4" data-tour="bot-rules-card">
+          {/* Canvas Top Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                <Share2 className="h-4 w-4" />
+              </span>
               <div>
-                <span className="text-[11px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider block">
-                  Configuración de Respuestas
+                <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight">
+                  Canva del Flujo Automático
+                </h3>
+                <span className="text-[11px] text-slate-400">
+                  Arrastrá los nodos y hacé clic para editar respuestas y acciones
                 </span>
-                <h2 className="text-base font-black text-slate-900 dark:text-white mt-0.5">
-                  Menú Automático & Respuestas por Palabras Clave
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Personalizá las opciones que se envían al cliente, las respuestas directas y las acciones automáticas.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleSaveBotConfig}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  <span>Guardar Cambios</span>
-                </button>
               </div>
             </div>
 
-            {/* Sub-Tabs: Menu, Keywords, Messages, Cadence (Custom Pills) */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200/70 dark:border-white/5">
+            <div className="flex items-center gap-2">
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setZoom((z) => Math.max(0.6, Number((z - 0.1).toFixed(1))))}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                  title="Alejar"
+                >
+                  <ZoomOut className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-[11px] font-mono font-bold px-1.5 text-slate-700 dark:text-slate-300">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setZoom((z) => Math.min(1.4, Number((z + 0.1).toFixed(1))))}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                  title="Acercar"
+                >
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoom(1)}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                  title="Restablecer"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Add Node Button */}
               <button
                 type="button"
-                onClick={() => setRulesSubTab("menu")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  rulesSubTab === "menu"
-                    ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs border border-slate-200/80 dark:border-white/10"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                onClick={addNewActionNode}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-xs font-bold transition active:scale-98 cursor-pointer"
               >
-                <ListOrdered className="h-3.5 w-3.5" />
-                <span>Opciones del Menú ({menuOptions.length})</span>
+                <Plus className="h-3.5 w-3.5" />
+                <span>Agregar Nodo</span>
               </button>
 
+              {/* Test in Simulator */}
               <button
                 type="button"
-                onClick={() => setRulesSubTab("palabras")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  rulesSubTab === "palabras"
-                    ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs border border-slate-200/80 dark:border-white/10"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                onClick={() => setActiveTab("simulador")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 text-xs font-bold transition active:scale-98 cursor-pointer"
               >
-                <Tag className="h-3.5 w-3.5" />
-                <span>Palabras Clave ({keywordRules.length})</span>
+                <Play className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Probar Flujo</span>
               </button>
 
+              {/* Save Workflow Button */}
               <button
                 type="button"
-                onClick={() => setRulesSubTab("mensajes")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  rulesSubTab === "mensajes"
-                    ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs border border-slate-200/80 dark:border-white/10"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                onClick={handleSaveCanvasFlow}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
               >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>Bienvenida & Fallback</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRulesSubTab("velocidad")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  rulesSubTab === "velocidad"
-                    ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs border border-slate-200/80 dark:border-white/10"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                <Clock className="h-3.5 w-3.5" />
-                <span>Pausa de Respuesta ({responseCadence}s)</span>
+                <Check className="h-3.5 w-3.5" />
+                <span>Guardar Flujo</span>
               </button>
             </div>
           </div>
 
-          {/* SUB-TAB 1: MENU BUILDER */}
-          {rulesSubTab === "menu" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                    Constructor del Menú Interactivo
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Opciones numéricas (1, 2, 3...) que se le envían al cliente para que elija con un solo número.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddMenuOption}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold text-xs px-3 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition cursor-pointer"
+          {/* Canvas Workspace + Inspector Drawer */}
+          <div className="relative rounded-3xl border border-slate-200/90 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950 overflow-hidden flex min-h-[640px] shadow-sm">
+            {/* Canvas Viewport */}
+            <div
+              ref={canvasRef}
+              onPointerMove={handleCanvasPointerMove}
+              onPointerUp={handleCanvasPointerUp}
+              className="flex-1 relative overflow-auto select-none [background-image:radial-gradient(#cbd5e1_1.2px,transparent_1.2px)] dark:[background-image:radial-gradient(#334155_1.2px,transparent_1.2px)] [background-size:20px_20px]"
+              style={{ minHeight: "640px" }}
+            >
+              {/* Scalable Container */}
+              <div
+                className="relative"
+                style={{
+                  width: "1280px",
+                  height: "720px",
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "top left",
+                  transition: draggingNodeId ? "none" : "transform 0.15s ease",
+                }}
+              >
+                {/* SVG Connections Layer (Bezier Curves) */}
+                <svg
+                  className="absolute inset-0 pointer-events-none w-full h-full"
+                  style={{ zIndex: 1 }}
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Agregar Opción</span>
-                </button>
-              </div>
+                  <defs>
+                    <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#059669" stopOpacity="0.8" />
+                    </linearGradient>
+                  </defs>
 
-              <div className="space-y-3">
-                {menuOptions.map((opt, idx) => (
-                  <div
-                    key={opt.id || idx}
-                    className="p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 space-y-3 shadow-2xs hover:border-slate-300 dark:hover:border-white/20 transition"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5 flex-1">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-mono font-bold text-xs shadow-2xs">
-                          {opt.key}
-                        </span>
-                        <input
-                          type="text"
-                          value={opt.title}
-                          onChange={(e) => handleUpdateMenuOption(opt.id, { title: e.target.value })}
-                          className="font-bold text-xs text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-white/20 focus:border-emerald-500 focus:outline-none flex-1 max-w-sm py-0.5"
-                          placeholder="Título de la opción..."
+                  {connections.map((conn) => {
+                    const fromNode = nodes.find((n) => n.id === conn.fromNodeId);
+                    const toNode = nodes.find((n) => n.id === conn.toNodeId);
+                    if (!fromNode || !toNode) return null;
+
+                    const nodeWidth = 200;
+                    const nodeHeight = 85;
+
+                    const x1 = fromNode.x + nodeWidth;
+                    const y1 = fromNode.y + nodeHeight / 2;
+                    const x2 = toNode.x;
+                    const y2 = toNode.y + nodeHeight / 2;
+
+                    const dx = Math.max(40, (x2 - x1) / 2);
+                    const pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+
+                    const isConnectedToSelected =
+                      selectedNodeId === fromNode.id || selectedNodeId === toNode.id;
+
+                    return (
+                      <g key={conn.id}>
+                        <path
+                          d={pathD}
+                          fill="none"
+                          stroke={isConnectedToSelected ? "#10b981" : "#94a3b8"}
+                          strokeWidth={isConnectedToSelected ? 3 : 2}
+                          strokeDasharray={isConnectedToSelected ? "none" : "5,4"}
+                          strokeOpacity={isConnectedToSelected ? 0.9 : 0.4}
+                          strokeLinecap="round"
                         />
-                      </div>
+                        {/* Port dots */}
+                        <circle cx={x1} cy={y1} r={4} fill="#10b981" />
+                        <circle cx={x2} cy={y2} r={4} fill={isConnectedToSelected ? "#10b981" : "#64748b"} />
+                      </g>
+                    );
+                  })}
+                </svg>
 
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                          <span className="text-[11px] text-slate-400">
-                            {opt.enabled ? "Activa" : "Pausada"}
+                {/* Nodes Layer */}
+                <div className="absolute inset-0" style={{ zIndex: 2 }}>
+                  {nodes.map((node) => {
+                    const isSelected = selectedNodeId === node.id;
+                    const isDragging = draggingNodeId === node.id;
+
+                    const typeStyles: Record<NodeType, { badge: string; color: string; icon: typeof Bot }> = {
+                      trigger: { badge: "Disparador", color: "border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-400", icon: MessageCircle },
+                      welcome: { badge: "Bienvenida", color: "border-sky-400 bg-sky-500/10 text-sky-700 dark:text-sky-400", icon: Bot },
+                      menu: { badge: "Menú Router", color: "border-indigo-400 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400", icon: ListOrdered },
+                      action: { badge: "Respuesta", color: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400", icon: ExternalLink },
+                      keyword: { badge: "Palabra Clave", color: "border-purple-400 bg-purple-500/10 text-purple-700 dark:text-purple-400", icon: Tag },
+                    };
+
+                    const style = typeStyles[node.type] || typeStyles.action;
+                    const Icon = style.icon;
+
+                    return (
+                      <div
+                        key={node.id}
+                        onPointerDown={(e) => handleNodePointerDown(e, node.id)}
+                        className={`absolute w-[210px] rounded-2xl p-3.5 transition-shadow cursor-grab active:cursor-grabbing border ${
+                          isSelected
+                            ? "border-emerald-500 bg-white dark:bg-slate-900 shadow-lg shadow-emerald-500/15 ring-2 ring-emerald-500/40 z-20"
+                            : "border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 shadow-sm hover:border-slate-300 dark:hover:border-white/20 z-10"
+                        } ${!node.enabled ? "opacity-60" : ""}`}
+                        style={{
+                          left: `${node.x}px`,
+                          top: `${node.y}px`,
+                          transform: isDragging ? "scale(1.02)" : "scale(1)",
+                        }}
+                      >
+                        {/* Node Header */}
+                        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-white/5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase ${style.color}`}
+                          >
+                            <Icon className="h-2.5 w-2.5" />
+                            {style.badge}
                           </span>
-                          <CustomSwitch
-                            checked={opt.enabled}
-                            onChange={(checked) => handleUpdateMenuOption(opt.id, { enabled: checked })}
+
+                          <span
+                            className={`h-2 w-2 rounded-full ${
+                              node.enabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                            }`}
                           />
                         </div>
 
-                        {menuOptions.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMenuOption(opt.id)}
-                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition cursor-pointer"
-                            title="Eliminar opción"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                        {/* Node Title & Description */}
+                        <div className="pt-2">
+                          <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                            {node.title}
+                          </p>
+
+                          {node.type === "action" && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-mono">
+                              Acción: {node.config.actionType === "send_link" ? "Link Reservas" : node.config.actionType === "send_sipap" ? "SIPAP" : node.config.actionType === "human_handoff" ? "Humano" : "Texto"}
+                            </p>
+                          )}
+
+                          {node.type === "keyword" && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-mono">
+                              {(node.config.keywords || []).slice(0, 3).join(", ")}
+                            </p>
+                          )}
+
+                          {node.type === "menu" && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-mono">
+                              5 Opciones Numéricas
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Input & Output Ports (Visual Connectors) */}
+                        <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-700 border-2 border-white dark:border-slate-900" />
+                        <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Inspector Drawer (Configurable Node Panel) */}
+            {isInspectorOpen && selectedNode && (
+              <div className="w-[320px] sm:w-[350px] shrink-0 border-l border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between overflow-y-auto z-30 shadow-md">
+                <div className="space-y-4">
+                  {/* Inspector Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
+                        Configurador de Nodo
+                      </span>
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                        {selectedNode.title}
+                      </h4>
                     </div>
 
-                    <div className="space-y-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsInspectorOpen(false)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Node State (Active / Paused) */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Estado del Nodo:
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-slate-400">
+                        {selectedNode.enabled ? "Activo" : "Pausado"}
+                      </span>
+                      <CustomSwitch
+                        checked={selectedNode.enabled}
+                        onChange={(checked) => updateNode(selectedNode.id, { enabled: checked })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Title Edit */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Nombre o Identificador del Nodo:
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedNode.title}
+                      onChange={(e) => updateNode(selectedNode.id, { title: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans"
+                    />
+                  </div>
+
+                  {/* Action Node Config */}
+                  {selectedNode.type === "action" && (
+                    <div className="space-y-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                          Respuesta que enviará el Bot:
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Acción Automática Asociada:
+                        </label>
+                        <ActionSelector
+                          value={selectedNode.config.actionType || "none"}
+                          onChange={(val) => updateNodeConfig(selectedNode.id, { actionType: val })}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Texto que despacha este nodo:
                         </label>
                         <textarea
-                          rows={2}
-                          value={opt.response}
-                          onChange={(e) => handleUpdateMenuOption(opt.id, { response: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans"
+                          rows={4}
+                          value={selectedNode.config.response || ""}
+                          onChange={(e) =>
+                            updateNodeConfig(selectedNode.id, { response: e.target.value })
+                          }
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
+                          placeholder="Texto de respuesta..."
                         />
                       </div>
+                    </div>
+                  )}
 
+                  {/* Welcome Node Config */}
+                  {selectedNode.type === "welcome" && (
+                    <div className="space-y-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                          Acción Automática:
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Mensaje de Bienvenida:
                         </label>
-                        <ActionSelector
-                          value={opt.action || "none"}
-                          onChange={(val) => handleUpdateMenuOption(opt.id, { action: val })}
+                        <textarea
+                          rows={4}
+                          value={selectedNode.config.welcomeText || ""}
+                          onChange={(e) =>
+                            updateNodeConfig(selectedNode.id, { welcomeText: e.target.value })
+                          }
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Mensaje Fallback (No reconocido):
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={selectedNode.config.fallbackText || ""}
+                          onChange={(e) =>
+                            updateNodeConfig(selectedNode.id, { fallbackText: e.target.value })
+                          }
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
                         />
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  )}
 
-          {/* SUB-TAB 2: KEYWORD TRIGGERS */}
-          {rulesSubTab === "palabras" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                    Disparadores por Palabras Clave
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Si el mensaje del cliente contiene alguna de estas palabras, el bot responde de forma inmediata.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddKeywordRule}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold text-xs px-3 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Agregar Palabra Clave</span>
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {keywordRules.map((rule, idx) => (
-                  <div
-                    key={rule.id || idx}
-                    className="p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 space-y-3 shadow-2xs hover:border-slate-300 dark:hover:border-white/20 transition"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-emerald-600" />
-                        <span className="font-bold text-xs text-slate-900 dark:text-white">
-                          Regla #{idx + 1}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                          <span className="text-[11px] text-slate-400">
-                            {rule.enabled ? "Activa" : "Pausada"}
-                          </span>
-                          <CustomSwitch
-                            checked={rule.enabled}
-                            onChange={(checked) => handleUpdateKeywordRule(rule.id, { enabled: checked })}
-                          />
-                        </div>
-
-                        {keywordRules.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteKeywordRule(rule.id)}
-                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition cursor-pointer"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                        Palabras que activan esta respuesta (separadas por coma):
-                      </label>
-                      <input
-                        type="text"
-                        value={rule.keywords.join(", ")}
-                        onChange={(e) =>
-                          handleUpdateKeywordRule(rule.id, {
-                            keywords: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                          })
-                        }
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 p-2.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                        placeholder="ej: precio, cuanto cuesta, costo, promo"
-                      />
-                    </div>
-
-                    <div className="space-y-2 pt-1">
+                  {/* Keyword Node Config */}
+                  {selectedNode.type === "keyword" && (
+                    <div className="space-y-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                          Respuesta Automática:
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Palabras Clave (separadas por coma):
                         </label>
                         <input
                           type="text"
-                          value={rule.response}
+                          value={(selectedNode.config.keywords || []).join(", ")}
                           onChange={(e) =>
-                            handleUpdateKeywordRule(rule.id, { response: e.target.value })
+                            updateNodeConfig(selectedNode.id, {
+                              keywords: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                            })
                           }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans"
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                           Acción Automática:
                         </label>
                         <ActionSelector
-                          value={rule.action || "none"}
-                          onChange={(val) => handleUpdateKeywordRule(rule.id, { action: val })}
+                          value={selectedNode.config.actionType || "send_link"}
+                          onChange={(val) => updateNodeConfig(selectedNode.id, { actionType: val })}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Respuesta para estas palabras:
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={selectedNode.config.response || ""}
+                          onChange={(e) =>
+                            updateNodeConfig(selectedNode.id, { response: e.target.value })
+                          }
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
                         />
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* SUB-TAB 3: SYSTEM MESSAGES */}
-          {rulesSubTab === "mensajes" && (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                    Mensajes del Sistema
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Textos de bienvenida, fallback para mensajes no reconocidos y fuera de horario de atención.
-                  </p>
+                  )}
                 </div>
 
-                <div className="space-y-3 pt-2">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                      Mensaje de Bienvenida (Saludo Inicial):
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={welcomeMessage}
-                      onChange={(e) => setWelcomeMessage(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                    />
-                  </div>
+                {/* Footer Actions */}
+                <div className="pt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
+                  {selectedNode.type === "action" && (
+                    <button
+                      type="button"
+                      onClick={() => deleteNode(selectedNode.id)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 p-2 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-bold transition cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Eliminar Nodo</span>
+                    </button>
+                  )}
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                      Mensaje de Fallback (Cuando el cliente escribe algo no reconocido):
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={fallbackMessage}
-                      onChange={(e) => setFallbackMessage(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                    />
-                  </div>
-
-                  <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-amber-500" />
-                        <span className="font-bold text-xs text-slate-900 dark:text-white">
-                          Mensaje Especial Fuera de Horario Laboral
-                        </span>
-                      </div>
-                      <CustomSwitch
-                        checked={outOfHoursEnabled}
-                        onChange={(checked) => setOutOfHoursEnabled(checked)}
-                      />
+                  <button
+                    type="button"
+                    onClick={handleSaveCanvasFlow}
+                    className="w-full inline-flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    <span>Guardar Flujo</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : activeTab === "simulador" ? (
+        /* ═══ TAB 2: LIVE SIMULATOR ═══ */
+        <div className="space-y-6" data-tour="bot-simulator-card">
+          <div className="grid gap-6 lg:grid-cols-12 items-start">
+            <div className="lg:col-span-7 flex flex-col items-center">
+              <div className="w-[320px] sm:w-[350px] rounded-[44px] border-[7px] border-slate-900 dark:border-slate-800 bg-slate-900 p-2.5 shadow-2xl">
+                <div className="mx-auto h-4 w-28 rounded-full bg-slate-900 mb-1" />
+                <div className="overflow-hidden rounded-[32px] bg-[#efeae2] flex flex-col h-[560px]">
+                  {/* WhatsApp Top Bar */}
+                  <div className="flex items-center gap-2.5 bg-[#008069] px-3.5 py-3 text-white">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
+                      {business.name.slice(0, 2).toUpperCase()}
                     </div>
-                    {outOfHoursEnabled && (
-                      <textarea
-                        rows={2}
-                        value={outOfHoursMessage}
-                        onChange={(e) => setOutOfHoursMessage(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                      />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate leading-tight">{business.name}</p>
+                      <p className="text-[10px] opacity-80">
+                        {isBotTypingSim ? "escribiendo..." : "en línea · Bot Oficial"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Messages Area */}
+                  <div className="flex-1 p-3 space-y-2.5 overflow-y-auto text-xs">
+                    <div className="text-center">
+                      <span className="rounded-md bg-white/80 px-2 py-0.5 text-[9px] font-semibold text-slate-500 uppercase shadow-2xs">
+                        SIMULACIÓN EN VIVO
+                      </span>
+                    </div>
+
+                    {simChatMessages.map((msg, index) => {
+                      const isClient = msg.sender === "client";
+                      return (
+                        <div
+                          key={index}
+                          className={`flex ${isClient ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[85%] rounded-2xl p-2.5 shadow-xs ${
+                              isClient
+                                ? "bg-[#d9fdd3] text-slate-900 rounded-tr-xs"
+                                : "bg-white text-slate-900 rounded-tl-xs"
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap leading-relaxed text-xs">{msg.text}</p>
+                            <div className="flex justify-end gap-1 text-[9px] text-slate-400 mt-0.5">
+                              <span>{msg.time}</span>
+                              {isClient && <CheckCheck className="h-3 w-3 text-blue-500" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {isBotTypingSim && (
+                      <div className="flex justify-start">
+                        <div className="rounded-2xl rounded-tl-xs bg-white px-3 py-2 text-slate-500 shadow-xs flex items-center gap-1.5 text-xs">
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.2s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.4s]" />
+                          <span className="text-[10px] ml-1">Escribiendo...</span>
+                        </div>
+                      </div>
                     )}
                   </div>
+
+                  {/* Interactive Typing Form */}
+                  <form
+                    onSubmit={handleSimSendMessage}
+                    className="flex items-center gap-2 bg-[#f0f2f5] p-2 border-t border-slate-200"
+                  >
+                    <input
+                      type="text"
+                      value={simInput}
+                      onChange={(e) => setSimInput(e.target.value)}
+                      placeholder="Escribí (ej: 1, precio, hola)..."
+                      className="flex-1 rounded-full bg-white px-3.5 py-1.5 text-xs text-slate-800 outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!simInput.trim() || isBotTypingSim}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-[#008069] text-white disabled:opacity-40 transition cursor-pointer"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
+                  </form>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* SUB-TAB 4: RESPONSE CADENCE */}
-          {rulesSubTab === "velocidad" && (
-            <div className="space-y-4">
+            {/* Quick Test Chips */}
+            <div className="lg:col-span-5 space-y-4">
               <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-                <div>
+                <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                    Pausa Natural de Respuesta
+                    Pruebas Rápidas en 1 Clic
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Ajustá los segundos de espera antes de que el bot envíe su respuesta para que la interacción se sienta cómoda y natural.
-                  </p>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
+                    Flujo Conectado
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Tocá cualquiera de estas opciones para simular cómo responde tu canva a tus clientes:
+                </p>
+
+                <div className="space-y-2">
+                  {[
+                    "Hola",
+                    "1",
+                    "2",
+                    "3",
+                    "precio de corte",
+                    "donde queda el local",
+                    "quiero hablar con una persona",
+                  ].map((example) => (
+                    <button
+                      key={example}
+                      type="button"
+                      onClick={() => {
+                        setSimInput(example);
+                      }}
+                      className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition cursor-pointer flex items-center justify-between"
+                    >
+                      <span>&ldquo;{example}&rdquo;</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    </button>
+                  ))}
                 </div>
 
-                <CustomCadenceSelector
-                  value={responseCadence}
-                  onChange={(val) => setResponseCadence(val)}
-                />
+                <div className="pt-3 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSimChatMessages([
+                        {
+                          sender: "client",
+                          text: "Hola",
+                          time: "14:28",
+                        },
+                        {
+                          sender: "bot",
+                          text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor\n\n_Escribí el número de la opción o tu consulta._`,
+                          time: "14:28",
+                        },
+                      ])
+                    }
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>Reiniciar conversación</span>
+                  </button>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       ) : activeTab === "plantillas" ? (
-        /* ═══ TAB 2: PLANTILLAS Y RECORDATORIOS ═══ */
+        /* ═══ TAB 3: PLANTILLAS Y RECORDATORIOS ═══ */
         <div className="space-y-6" data-tour="bot-templates-card">
           <div className="flex flex-wrap gap-2">
             {whatsappTemplates.map((template) => (
@@ -1386,7 +1687,7 @@ export default function BotWhatsAppPage() {
               </div>
             </div>
 
-            {/* Template Phone Mockup Preview (Clean WhatsApp UI) */}
+            {/* Template Phone Mockup Preview */}
             <div className="lg:col-span-5 flex flex-col items-center">
               <div className="w-[310px] sm:w-[330px] rounded-[42px] border-[6px] border-slate-900 dark:border-slate-800 bg-slate-900 p-2.5 shadow-2xl">
                 <div className="mx-auto h-4 w-28 rounded-full bg-slate-900 mb-1" />
@@ -1451,167 +1752,8 @@ export default function BotWhatsAppPage() {
             </div>
           </div>
         </div>
-      ) : activeTab === "simulador" ? (
-        /* ═══ TAB 3: SIMULADOR DE CHAT EN VIVO ═══ */
-        <div className="space-y-6" data-tour="bot-simulator-card">
-          <div className="grid gap-6 lg:grid-cols-12 items-start">
-            <div className="lg:col-span-7 flex flex-col items-center">
-              <div className="w-[320px] sm:w-[350px] rounded-[44px] border-[7px] border-slate-900 dark:border-slate-800 bg-slate-900 p-2.5 shadow-2xl">
-                <div className="mx-auto h-4 w-28 rounded-full bg-slate-900 mb-1" />
-                <div className="overflow-hidden rounded-[32px] bg-[#efeae2] flex flex-col h-[560px]">
-                  {/* WhatsApp Top Bar */}
-                  <div className="flex items-center gap-2.5 bg-[#008069] px-3.5 py-3 text-white">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
-                      {business.name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold truncate leading-tight">{business.name}</p>
-                      <p className="text-[10px] opacity-80">
-                        {isBotTypingSim ? "escribiendo..." : "en línea · Bot Oficial"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Messages Area */}
-                  <div className="flex-1 p-3 space-y-2.5 overflow-y-auto text-xs">
-                    <div className="text-center">
-                      <span className="rounded-md bg-white/80 px-2 py-0.5 text-[9px] font-semibold text-slate-500 uppercase shadow-2xs">
-                        SIMULACIÓN EN VIVO
-                      </span>
-                    </div>
-
-                    {simChatMessages.map((msg, index) => {
-                      const isClient = msg.sender === "client";
-                      return (
-                        <div
-                          key={index}
-                          className={`flex ${isClient ? "justify-end" : "justify-start"}`}
-                        >
-                          <div
-                            className={`max-w-[85%] rounded-2xl p-2.5 shadow-xs ${
-                              isClient
-                                ? "bg-[#d9fdd3] text-slate-900 rounded-tr-xs"
-                                : "bg-white text-slate-900 rounded-tl-xs"
-                            }`}
-                          >
-                            <p className="whitespace-pre-wrap leading-relaxed text-xs">{msg.text}</p>
-                            <div className="flex justify-end gap-1 text-[9px] text-slate-400 mt-0.5">
-                              <span>{msg.time}</span>
-                              {isClient && <CheckCheck className="h-3 w-3 text-blue-500" />}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {isBotTypingSim && (
-                      <div className="flex justify-start">
-                        <div className="rounded-2xl rounded-tl-xs bg-white px-3 py-2 text-slate-500 shadow-xs flex items-center gap-1.5 text-xs">
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.2s]" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.4s]" />
-                          <span className="text-[10px] ml-1">Escribiendo...</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Interactive Typing Form */}
-                  <form
-                    onSubmit={handleSimSendMessage}
-                    className="flex items-center gap-2 bg-[#f0f2f5] p-2 border-t border-slate-200"
-                  >
-                    <input
-                      type="text"
-                      value={simInput}
-                      onChange={(e) => setSimInput(e.target.value)}
-                      placeholder="Escribí (ej: 1, precio, hola)..."
-                      className="flex-1 rounded-full bg-white px-3.5 py-1.5 text-xs text-slate-800 outline-none"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!simInput.trim() || isBotTypingSim}
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-[#008069] text-white disabled:opacity-40 transition cursor-pointer"
-                    >
-                      <Send className="h-4 w-4" />
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-
-            {/* Simulator Suggestions (Zero Emojis) */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                    Pruebas Rápidas en 1 Clic
-                  </h3>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
-                    Pausa: {responseCadence}s
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tocá cualquiera de estas opciones para simular cómo responde tu bot a tus clientes:
-                </p>
-
-                <div className="space-y-2">
-                  {[
-                    "Hola",
-                    "1",
-                    "2",
-                    "3",
-                    "precio de corte",
-                    "donde queda el local",
-                    "quiero hablar con una persona",
-                  ].map((example) => (
-                    <button
-                      key={example}
-                      type="button"
-                      onClick={() => {
-                        setSimInput(example);
-                      }}
-                      className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition cursor-pointer flex items-center justify-between"
-                    >
-                      <span>&ldquo;{example}&rdquo;</span>
-                      <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-3 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSimChatMessages([
-                        {
-                          sender: "client",
-                          text: "Hola",
-                          time: "14:28",
-                        },
-                        {
-                          sender: "bot",
-                          text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor\n\n_Escribí el número de la opción o tu consulta._`,
-                          time: "14:28",
-                        },
-                      ])
-                    }
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    <span>Reiniciar conversación</span>
-                  </button>
-
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    Pausa: {responseCadence}s
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       ) : (
-        /* ═══ TAB 4: RESPUESTA DE BIENVENIDA WHATSAPP BUSINESS ═══ */
+        /* ═══ TAB 4: WHATSAPP BUSINESS ═══ */
         <div className="space-y-6" data-tour="bot-quick-reply">
           <div className="rounded-2xl border border-emerald-200/80 dark:border-emerald-800/40 bg-gradient-to-r from-emerald-50/40 to-white dark:from-emerald-950/20 dark:to-slate-900 p-5 space-y-4 shadow-2xs">
             <div className="flex items-start gap-3.5">
@@ -1643,7 +1785,7 @@ export default function BotWhatsAppPage() {
         </div>
       )}
 
-      {/* ═══ 5. IN-PAGE CONNECTION MODAL (QR LINKING - HIGH FIDELITY VIEWFINDER) ═══ */}
+      {/* ═══ 5. IN-PAGE CONNECTION MODAL (QR LINKING) ═══ */}
       {isConnectModalOpen && (
         <div
           data-tour="bot-connect-modal"
@@ -1660,7 +1802,7 @@ export default function BotWhatsAppPage() {
                     Vincular WhatsApp Oficial
                   </h3>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Válido para Bot y CRM Omnicanal
+                    Válido para Canva del Bot y CRM Omnicanal
                   </span>
                 </div>
               </div>
@@ -1677,7 +1819,6 @@ export default function BotWhatsAppPage() {
             {/* Viewfinder QR Container */}
             <div className="relative flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10">
               <div className="relative p-3 bg-white rounded-2xl shadow-sm">
-                {/* Viewfinder brackets */}
                 <div className="absolute top-1 left-1 w-4 h-4 border-t-2 border-l-2 border-emerald-600 rounded-tl-sm pointer-events-none" />
                 <div className="absolute top-1 right-1 w-4 h-4 border-t-2 border-r-2 border-emerald-600 rounded-tr-sm pointer-events-none" />
                 <div className="absolute bottom-1 left-1 w-4 h-4 border-b-2 border-l-2 border-emerald-600 rounded-bl-sm pointer-events-none" />
@@ -1703,7 +1844,7 @@ export default function BotWhatsAppPage() {
               </div>
             </div>
 
-            {/* Custom 3 Steps (Clean cards, no native numbers or emojis) */}
+            {/* Step-by-step instructions */}
             <div className="space-y-2">
               <p className="text-xs font-bold text-slate-900 dark:text-white">Pasos para conectar:</p>
               <div className="grid grid-cols-1 gap-1.5 text-xs text-slate-600 dark:text-slate-300">

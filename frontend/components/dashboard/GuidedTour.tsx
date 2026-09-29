@@ -679,10 +679,10 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 3,
-        taskTitle: "Menú Interactivo y Respuestas por Palabras Clave",
+        taskTitle: "Canva de Flujo Visual (Tipo n8n)",
         instruction:
-          "Configurá las opciones del menú numérico (1, 2, 3...) y las palabras clave para que el bot responda al instante sobre precios, servicios, horarios o pagos.",
-        tip: "Podés vincular cada opción para que envíe el link de reserva web, datos SIPAP o transfiera a un asesor humano.",
+          "Arrastrá nodos y organizá el flujo visualmente. Conectá el mensaje de bienvenida con las opciones de reserva, datos SIPAP o derivación a asesor humano.",
+        tip: "Hacé clic en cualquier nodo para abrir su panel lateral de configuración y editar el texto o la acción.",
         targetSelector: '[data-tour="bot-rules-card"]',
       },
       {
