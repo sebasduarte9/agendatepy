@@ -8,7 +8,10 @@ export type CategoryId =
   | "pilates"
   | "spas"
   | "medicos"
-  | "veterinarias";
+  | "veterinarias"
+  | "gimnasios"
+  | "talleres"
+  | "padel";
 
 export type ServiceOption = {
   id: string;
@@ -52,7 +55,7 @@ export const CATEGORIES: CategoryContent[] = [
   },
   {
     id: "odontologia",
-    label: "Odontología",
+    label: "Odontología & Dental",
     emoji: "",
     businessName: "Clínica Dental Sonrisa",
     heroExample: "Turno para Limpieza Dental",
@@ -66,6 +69,24 @@ export const CATEGORIES: CategoryContent[] = [
         "Tu turno fue confirmado: Limpieza Dental — Viernes 10:00hs en Clínica Dental Sonrisa.",
       reminder24h: "Recordatorio: Mañana es tu turno de Limpieza Dental. ¿Necesitás reprogramar?",
       reminder2h: "Te esperamos en 2 horas en Clínica Dental Sonrisa.",
+    },
+  },
+  {
+    id: "spas",
+    label: "Estética & Spas",
+    emoji: "",
+    businessName: "Spa Luz & Calma",
+    heroExample: "Masaje relajante 60 min",
+    services: [
+      { id: "masaje", name: "Masaje relajante", duration: "60 min", price: "Gs. 220.000" },
+      { id: "facial", name: "Limpieza facial", duration: "50 min", price: "Gs. 180.000" },
+      { id: "combo", name: "Ritual spa", duration: "90 min", price: "Gs. 350.000" },
+    ],
+    whatsapp: {
+      confirmation:
+        "Tu turno fue confirmado: Masaje relajante 60 min — Viernes 10:00hs en Spa Luz & Calma.",
+      reminder24h: "Recordatorio: Mañana es tu masaje relajante. ¿Necesitás reprogramar?",
+      reminder2h: "Te esperamos en 2 horas en Spa Luz & Calma.",
     },
   },
   {
@@ -87,26 +108,8 @@ export const CATEGORIES: CategoryContent[] = [
     },
   },
   {
-    id: "spas",
-    label: "Spas & Estética",
-    emoji: "",
-    businessName: "Spa Luz & Calma",
-    heroExample: "Masaje relajante 60 min",
-    services: [
-      { id: "masaje", name: "Masaje relajante", duration: "60 min", price: "Gs. 220.000" },
-      { id: "facial", name: "Limpieza facial", duration: "50 min", price: "Gs. 180.000" },
-      { id: "combo", name: "Ritual spa", duration: "90 min", price: "Gs. 350.000" },
-    ],
-    whatsapp: {
-      confirmation:
-        "Tu turno fue confirmado: Masaje relajante 60 min — Viernes 10:00hs en Spa Luz & Calma.",
-      reminder24h: "Recordatorio: Mañana es tu masaje relajante. ¿Necesitás reprogramar?",
-      reminder2h: "Te esperamos en 2 horas en Spa Luz & Calma.",
-    },
-  },
-  {
     id: "medicos",
-    label: "Médicos & Consultorios",
+    label: "Médicos & Especialistas",
     emoji: "",
     businessName: "Consultorio Dr. Benítez",
     heroExample: "Consulta clínica",
@@ -123,8 +126,26 @@ export const CATEGORIES: CategoryContent[] = [
     },
   },
   {
+    id: "gimnasios",
+    label: "Gimnasios & Crossfit",
+    emoji: "",
+    businessName: "Iron Box Asunción",
+    heroExample: "Clase de Crossfit / Funcional",
+    services: [
+      { id: "crossfit", name: "Clase de Crossfit", duration: "60 min", price: "Gs. 50.000" },
+      { id: "mensual", name: "Pase Libre Mensual", duration: "30 días", price: "Gs. 280.000" },
+      { id: "personal", name: "Sesión Personal Trainer", duration: "60 min", price: "Gs. 120.000" },
+    ],
+    whatsapp: {
+      confirmation:
+        "Tu turno fue confirmado: Clase de Crossfit — Viernes 10:00hs en Iron Box Asunción.",
+      reminder24h: "Recordatorio: Mañana es tu clase en Iron Box. ¿Confirmás asistencia?",
+      reminder2h: "Te esperamos en 2 horas en Iron Box Asunción.",
+    },
+  },
+  {
     id: "veterinarias",
-    label: "Veterinarias",
+    label: "Veterinarias & Pets",
     emoji: "",
     businessName: "Vet Amigos",
     heroExample: "Control + vacunación",
@@ -138,6 +159,42 @@ export const CATEGORIES: CategoryContent[] = [
         "Tu turno fue confirmado: Control + vacunación — Viernes 10:00hs en Vet Amigos.",
       reminder24h: "Recordatorio: Mañana es el control de tu mascota. ¿Necesitás reprogramar?",
       reminder2h: "Te esperamos en 2 horas en Vet Amigos.",
+    },
+  },
+  {
+    id: "padel",
+    label: "Canchas & Pádel",
+    emoji: "",
+    businessName: "Central Pádel Club",
+    heroExample: "Turno Cancha Central 90 min",
+    services: [
+      { id: "cancha", name: "Alquiler Cancha 90 min", duration: "90 min", price: "Gs. 160.000" },
+      { id: "clase", name: "Clase con Profesor", duration: "60 min", price: "Gs. 120.000" },
+      { id: "torneo", name: "Inscripción Torneo", duration: "120 min", price: "Gs. 100.000" },
+    ],
+    whatsapp: {
+      confirmation:
+        "Tu turno fue confirmado: Alquiler Cancha 90 min — Viernes 10:00hs en Central Pádel Club.",
+      reminder24h: "Recordatorio: Mañana juegan en Cancha Central. ¿Confirmás el turno?",
+      reminder2h: "La cancha está lista en 2 horas en Central Pádel Club.",
+    },
+  },
+  {
+    id: "talleres",
+    label: "Talleres & Servicios",
+    emoji: "",
+    businessName: "AutoPro Detailing",
+    heroExample: "Lavado Premium + Encerado",
+    services: [
+      { id: "lavado", name: "Lavado Detailing", duration: "60 min", price: "Gs. 100.000" },
+      { id: "pulido", name: "Pulido y Encerado", duration: "120 min", price: "Gs. 350.000" },
+      { id: "service", name: "Mantenimiento Express", duration: "45 min", price: "Gs. 180.000" },
+    ],
+    whatsapp: {
+      confirmation:
+        "Tu turno fue confirmado: Lavado Detailing — Viernes 10:00hs en AutoPro Detailing.",
+      reminder24h: "Recordatorio: Mañana recibimos tu vehículo en AutoPro Detailing.",
+      reminder2h: "Te esperamos en 2 horas en AutoPro Detailing.",
     },
   },
 ];

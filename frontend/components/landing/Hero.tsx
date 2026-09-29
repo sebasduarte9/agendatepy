@@ -9,6 +9,9 @@ import {
   Flower2,
   Stethoscope,
   PawPrint,
+  Dumbbell,
+  Wrench,
+  Trophy,
   ShieldCheck,
   ArrowRight,
 } from "lucide-react";
@@ -23,6 +26,9 @@ const ICONS: Record<CategoryId, typeof Scissors> = {
   spas: Flower2,
   medicos: Stethoscope,
   veterinarias: PawPrint,
+  gimnasios: Dumbbell,
+  talleres: Wrench,
+  padel: Trophy,
 };
 
 export default function Hero() {
@@ -38,20 +44,20 @@ export default function Hero() {
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="lg:col-span-7 flex flex-col justify-center min-w-0"
         >
-          {/* Hard-Hitting Pain & Benefit Headline */}
-          <h1 className="text-[26px] xs:text-3xl sm:text-4xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08] break-words">
-            Llená tu agenda en automático y reducí 80% las cancelaciones{" "}
+          {/* User Requested Hard-Hitting Headline */}
+          <h1 className="text-[28px] xs:text-3xl sm:text-4xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08] break-words">
+            Gestioná tu agenda y negocio con{" "}
             <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
-              por WhatsApp.
+              AgendatePY
             </span>
           </h1>
 
-          <p className="mt-3 sm:mt-4 max-w-2xl text-xs xs:text-sm sm:text-base lg:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base lg:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
             <strong className="font-bold text-slate-900 dark:text-white block sm:inline">
-              Tu agenda llena 24/7 sin pasar horas respondiendo mensajes.{" "}
+              Mejor control para tu negocio 24/7.{" "}
             </strong>
-            <span className="hidden sm:inline text-slate-600 dark:text-slate-300">
-              Confirmaciones inmediatas y recordatorios automáticos por WhatsApp.
+            <span className="text-slate-600 dark:text-slate-300">
+              Confirmaciones inmediatas, recordatorios automáticos por WhatsApp y cobro de señas sin fricción.
             </span>
           </p>
 
@@ -83,33 +89,41 @@ export default function Hero() {
             <span className="hidden sm:inline">Soporte en Guaraníes</span>
           </div>
 
-          {/* Interactive Category Selector */}
-          <div className="mt-5 sm:mt-6 pt-4 border-t border-slate-200/60 dark:border-white/5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Probá la experiencia para tu rubro:
+          {/* Interactive Category Selector with Ticker-Inspired Pills */}
+          <div className="mt-6 pt-5 border-t border-slate-200/60 dark:border-white/5">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Seleccioná tu rubro para ver el ejemplo:
               </p>
               <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 sm:hidden">
-                Deslizá lateralmente →
+                Deslizá →
               </span>
             </div>
             <div className="relative">
-              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1.5 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
                 {CATEGORIES.map((item) => {
-                  const Icon = ICONS[item.id];
+                  const Icon = ICONS[item.id] || Scissors;
                   const active = selectedCategory === item.id;
                   return (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => setSelectedCategory(item.id)}
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap ${
+                      className={`group inline-flex shrink-0 items-center gap-2 rounded-2xl sm:rounded-full border px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap ${
                         active
-                          ? "border-brand bg-brand text-white shadow-md shadow-brand/25 font-bold scale-[1.02]"
-                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 hover:shadow-xs shadow-2xs"
+                          ? "border-brand bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-md shadow-brand/25 font-bold scale-[1.02]"
+                          : "border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-xs"
                       }`}
                     >
-                      <Icon className="h-3.5 w-3.5" />
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-lg transition-colors ${
+                          active
+                            ? "bg-white/20 text-white"
+                            : "bg-brand/10 text-brand dark:text-[#FF6B4A] group-hover:bg-brand/15"
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                      </span>
                       <span>{item.label}</span>
                     </button>
                   );

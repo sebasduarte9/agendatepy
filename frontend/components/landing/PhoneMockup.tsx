@@ -334,31 +334,31 @@ export default function PhoneMockup() {
       {/* Ambient Halo behind iPhone in warm brand tones */}
       <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/30 via-orange-500/20 to-emerald-500/20 blur-3xl opacity-75 max-w-full" />
 
-      {/* 3D Tiltable iPhone 16 Pro Container */}
+      {/* 3D Tiltable iPhone 16 Pro Container (Desktop) / Clean WhatsApp Chat Card (Mobile) */}
       <motion.div
         style={{
           rotateX,
           rotateY,
           transformStyle: "preserve-3d",
         }}
-        className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[360px] rounded-[38px] xs:rounded-[44px] sm:rounded-[50px] p-[6px] xs:p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
+        className="relative w-full max-w-[340px] xs:max-w-[360px] rounded-3xl sm:rounded-[50px] p-0 sm:p-[9px] bg-transparent sm:bg-gradient-to-b sm:from-[#3a3b40] sm:via-[#1e1f23] sm:to-[#111215] sm:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
       >
-        {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel) */}
+        {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel - Desktop Only) */}
         {/* Left Side: Action Button */}
-        <div className="absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Left Side: Volume Up */}
-        <div className="absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Left Side: Volume Down */}
-        <div className="absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Right Side: Power Button */}
-        <div className="absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e] shadow-[1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e] shadow-[1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Right Side: Camera Control Sensor (iPhone 16 Pro style) */}
-        <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
+        <div className="hidden sm:block absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
-        {/* Outer Glass Bezel */}
-        <div className="relative overflow-hidden rounded-[34px] xs:rounded-[38px] sm:rounded-[42px] bg-black p-[2px] sm:p-[2.5px] shadow-inner">
+        {/* Outer Glass Bezel (Desktop frame only) */}
+        <div className="relative overflow-hidden rounded-3xl sm:rounded-[42px] bg-transparent sm:bg-black p-0 sm:p-[2.5px] sm:shadow-inner">
           {/* Inner Display Canvas */}
-          <div className="relative flex h-[480px] xs:h-[560px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-[32px] xs:rounded-[36px] sm:rounded-[42px] bg-[#efeae2]">
+          <div className="relative flex h-[480px] xs:h-[520px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-3xl sm:rounded-[42px] bg-[#efeae2] border border-slate-200/90 dark:border-white/10 sm:border-none shadow-xl shadow-slate-900/10 dark:shadow-black/50 sm:shadow-none">
             {/* ========================================================= */}
             {/* iOS iMessage Push Notification Banner */}
             {/* ========================================================= */}
@@ -426,9 +426,9 @@ export default function PhoneMockup() {
             />
 
             {/* ========================================================= */}
-            {/* 1. iOS 18 STATUS BAR */}
+            {/* 1. iOS 18 STATUS BAR (Desktop Only) */}
             {/* ========================================================= */}
-            <div className="relative z-30 flex h-11 items-center justify-between px-7 pt-2 text-[#000000] font-semibold text-[13px] tracking-tight select-none">
+            <div className="relative z-30 hidden sm:flex h-11 items-center justify-between px-7 pt-2 text-[#000000] font-semibold text-[13px] tracking-tight select-none">
               <span>9:41</span>
 
               {/* Dynamic Island */}
@@ -694,9 +694,9 @@ export default function PhoneMockup() {
             </div>
 
             {/* ========================================================= */}
-            {/* 5. iOS BOTTOM HOME INDICATOR */}
+            {/* 5. iOS BOTTOM HOME INDICATOR (Desktop Only) */}
             {/* ========================================================= */}
-            <div className="relative z-30 flex h-5 items-center justify-center bg-[#f0f2f5] pb-1">
+            <div className="relative z-30 hidden sm:flex h-5 items-center justify-center bg-[#f0f2f5] pb-1">
               <div className="h-1 w-32 rounded-full bg-black/40" />
             </div>
           </div>
