@@ -55,8 +55,14 @@ export default function Features() {
   return (
     <section
       id="caracteristicas"
-      className="relative mx-auto max-w-7xl px-3 sm:px-6 py-14 sm:py-20 lg:py-24 scroll-mt-24"
+      className="relative mx-auto max-w-7xl px-3 sm:px-6 py-14 sm:py-20 lg:py-24 scroll-mt-24 overflow-x-clip"
     >
+      {/* Silicon Valley Ambient Wave Glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none -z-10">
+        <div className="animate-wave-2 absolute top-[20%] -left-[15%] w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-brand/10 to-transparent blur-3xl opacity-60" />
+        <div className="animate-wave-1 absolute -bottom-[10%] -right-[15%] w-[420px] h-[420px] rounded-full bg-gradient-to-bl from-amber-400/10 to-transparent blur-3xl opacity-50" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -81,7 +87,13 @@ export default function Features() {
       {/* ============================================================== */}
       {/* MÓVIL: Panel Interactivo Flotante con Pestañas y Flechas (< >) */}
       {/* ============================================================== */}
-      <div className="md:hidden mt-6">
+      <motion.div
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="md:hidden mt-6"
+      >
         {/* Pestañas Táctiles Rápidas con Auto-scroll al centro */}
         <div className="flex justify-center px-1">
           <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-1.5 shadow-sm max-w-full overflow-x-auto scrollbar-none scroll-smooth">
@@ -171,7 +183,7 @@ export default function Features() {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ============================================================== */}
       {/* DESKTOP: Cuadrícula Completa Bento Grid (md y superiores)       */}
