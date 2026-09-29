@@ -23,15 +23,19 @@ export default function DashboardShell({
   const color = useDashboardStore((s) => s.business.primaryColor);
   const syncFromDatabase = useDashboardStore((s) => s.syncFromDatabase);
   const updateBusiness = useDashboardStore((s) => s.updateBusiness);
+  const setUserName = useDashboardStore((s) => s.setUserName);
 
   useEffect(() => {
+    if (userName) {
+      setUserName(userName);
+    }
     if (initialTenantSlug) {
       updateBusiness({ slug: initialTenantSlug });
       syncFromDatabase(initialTenantSlug);
     } else {
       syncFromDatabase();
     }
-  }, [initialTenantSlug, syncFromDatabase, updateBusiness]);
+  }, [initialTenantSlug, syncFromDatabase, updateBusiness, userName, setUserName]);
 
   return (
     <div

@@ -50,6 +50,7 @@ export default function FidelizacionPage() {
     loyalty,
     clients,
     business,
+    userName,
     updateLoyalty,
     addClientLoyaltyPoint,
     redeemClientReward,
@@ -183,231 +184,129 @@ export default function FidelizacionPage() {
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   }
 
-  const demoClientId = clients[0]?.id || "cli-martin";
-  const demoClientUrl = getCardUrl(demoClientId);
+  const displayName = userName || "Sebas Duarte";
 
   return (
     <div className="space-y-6">
       {/* ═══ 1. HEADER ═══ */}
       <div
         data-tour="fidelizacion-header"
-        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-5 shadow-xs"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 shadow-xs"
       >
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold border transition ${
                 loyalty.enabled
-                  ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
                   : "bg-slate-100 text-slate-500 border-slate-200/60 dark:border-white/10"
               }`}
             >
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
-                  loyalty.enabled ? "bg-amber-500 animate-pulse" : "bg-slate-400"
+                  loyalty.enabled ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
                 }`}
               />
-              <Crown className="h-3 w-3 text-amber-500" />
+              <Crown className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
               <span>{loyalty.enabled ? "Club VIP Activo" : "Club VIP en Pausa"}</span>
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
               <Globe className="h-3 w-3 text-primary" />
-              <span>Links Personalizados VIP</span>
+              <span>Links Personalizados</span>
             </span>
           </div>
 
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl flex items-center gap-2">
-            <span>Fidelización & Tarjeta Digital VIP</span>
-            <Crown className="h-6 w-6 text-amber-500 fill-amber-400" />
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Fidelización & Tarjetas Digitales</span>
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm mt-0.5">
-            Otorgá sellos por visita, compartí su link web exclusivo y premiá la lealtad de tus clientes.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Sumá sellos por visita y compartí con cada cliente su enlace web único para consultar sus beneficios.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setEditingSettings(!editingSettings)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 px-4 py-2.5 text-xs font-bold shadow-sm transition cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 px-4 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3.5 w-3.5" />
             <span>{editingSettings ? "Cerrar Configuración" : "Configurar Reglas"}</span>
           </button>
         </div>
       </div>
 
-      {/* ═══ 2. CUSTOM LINK SHOWCASE & LIVE WEB CARD PREVIEW ═══ */}
+      {/* ═══ 2. COMPACT SUMMARY & CLIENT WEB CARD PREVIEW ═══ */}
       <div
         data-tour="fidelizacion-wallet-banner"
-        className="relative overflow-hidden rounded-3xl border border-amber-300/60 dark:border-amber-500/20 bg-gradient-to-br from-amber-50/70 via-white to-indigo-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/60 p-6 sm:p-8 text-slate-900 dark:text-white shadow-sm"
+        className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-900 text-white p-4 sm:p-5 shadow-sm"
       >
-        <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-amber-400/15 dark:bg-amber-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute left-1/3 -bottom-20 h-56 w-56 rounded-full bg-indigo-400/15 blur-3xl" />
-
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Left Column: Benefits & Integration */}
-          <div className="lg:col-span-7 space-y-3.5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 dark:bg-amber-400/20 border border-amber-500/20 dark:border-amber-400/30 px-3.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-300">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <span>Link Web Exclusivo para cada Cliente</span>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          {/* Left Column: Compact Rule & Custom Link Info */}
+          <div className="md:col-span-7 space-y-2.5">
+            <div className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-200">
+              <Globe className="h-3 w-3 text-emerald-400" />
+              <span>Formato de Enlace Web Exclusivo</span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-              Tus clientes acceden a su tarjeta con un link personalizado
-            </h2>
+            <div>
+              <div className="font-mono text-xs text-emerald-400 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 inline-block select-all">
+                agendate.py/{business.slug || "salon"}/tarjeta/<span className="text-white/60">[id-cliente]</span>
+              </div>
+            </div>
 
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
-              Sin descargar aplicaciones pesadas ni configuraciones adicionales. Cada cliente recibe su propio enlace web único (ej: <code>agendate.py/{business.slug || "tu-salon"}/tarjeta/...</code>) donde puede consultar sus sellos acumulados en tiempo real, ver su premio disponible y agendar su próxima visita.
+            <p className="text-xs text-slate-300 leading-relaxed max-w-lg">
+              Regla activa: cada cliente suma <strong>{loyalty.mode === "points" ? `${loyalty.pointsPerVisit} pts` : "1 sello"}</strong> por turno asistido. Al alcanzar <strong>{loyalty.rewardThreshold} {loyalty.mode === "points" ? "puntos" : "sellos"}</strong>, desbloquea: <span className="text-emerald-300 font-semibold">{loyalty.rewardDescription}</span>.
             </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-              <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
-                  <Globe className="h-3.5 w-3.5 text-primary" />
-                  <span>100% Web</span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Funciona en cualquier navegador de celular con solo tocar el link.</p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
-                  <Zap className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Sellos en Vivo</span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Al sumar un sello en caja, el link del cliente se actualiza al instante.</p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
-                  <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Envío por WhatsApp</span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Enviás el link exclusivo por WhatsApp con el mensaje ya redactado.</p>
-              </div>
-            </div>
-
-            <div className="pt-2 flex flex-wrap items-center gap-3">
-              <Link
-                href={demoClientUrl}
-                target="_blank"
-                className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 hover:bg-amber-300 px-5 py-3 text-xs font-black text-slate-950 shadow-md transition cursor-pointer"
-              >
-                <Smartphone className="h-4 w-4" />
-                <span>Ver Tarjeta Demo (Vista Cliente)</span>
-                <ExternalLink className="h-3.5 w-3.5 opacity-70" />
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => setSelectedClientForQr(clients[0] || null)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 px-4 py-3 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer shadow-xs"
-              >
-                <QrCode className="h-4 w-4 text-emerald-600" />
-                <span>Mostrar QR para Escaneo</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleCopyCardLink(demoClientId)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 transition cursor-pointer"
-              >
-                {copiedId === demoClientId ? (
-                  <>
-                    <Check className="h-4 w-4 text-emerald-500" />
-                    <span>Link Copiado</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4" />
-                    <span>Copiar Link Demo</span>
-                  </>
-                )}
-              </button>
-            </div>
           </div>
 
-          {/* Right Column: Live Web Card Simulation */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="w-full max-w-sm rounded-3xl bg-slate-950 text-white p-5 shadow-2xl border border-white/15 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
-
-              {/* Browser URL Simulation Bar */}
-              <div className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-1.5 text-[11px] font-mono text-slate-300 border border-white/10 mb-4">
-                <Globe className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                <span className="truncate flex-1">agendate.py/{business.slug || "salon"}/tarjeta/cli...</span>
-                <span className="text-[10px] font-sans font-bold text-amber-300 bg-amber-400/20 px-1.5 py-0.5 rounded">WEB</span>
-              </div>
-
-              {/* Pass Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400 text-slate-950 font-black text-xs">
-                    {business.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <h4 className="font-black text-xs tracking-tight">{business.name}</h4>
-                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Tarjeta Digital VIP</span>
-                  </div>
+          {/* Right Column: Sleek Mini Web Card Preview (Uses logged in user's name) */}
+          <div className="md:col-span-5 flex justify-center md:justify-end">
+            <div className="w-full max-w-xs rounded-xl bg-slate-950 border border-white/10 p-3.5 space-y-2.5 shadow-md">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <div className="min-w-0">
+                  <h4 className="font-bold text-xs truncate text-white">{business.name}</h4>
+                  <span className="text-[10px] text-slate-400">Tarjeta Digital VIP</span>
                 </div>
-                <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-0.5 text-[9px] font-bold text-slate-300">
-                  <Award className="h-3 w-3 text-amber-400" />
-                  <span>Socio VIP</span>
-                </div>
-              </div>
-
-              {/* Pass Content */}
-              <div className="py-4 space-y-3">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Titular del Enlace</span>
-                    <span className="text-sm font-extrabold text-white">Martín Benítez</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Progreso Actual</span>
-                    <span className="text-sm font-black text-amber-400">4 / {loyalty.rewardThreshold} Sellos</span>
-                  </div>
-                </div>
-
-                {/* Stamps Row Simulation */}
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider block mb-2">Sellos Acumulados</span>
-                  <div className="flex items-center justify-between gap-1">
-                    {Array.from({ length: Math.min(loyalty.rewardThreshold, 10) }).map((_, i) => {
-                      const filled = i < 4;
-                      return (
-                        <div
-                          key={i}
-                          className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold transition ${
-                            filled
-                              ? "bg-gradient-to-tr from-amber-400 to-amber-300 text-slate-950 shadow-md scale-105"
-                              : "bg-white/10 text-slate-500 border border-white/10"
-                          }`}
-                        >
-                          <Award className={`h-4 w-4 ${filled ? "text-slate-950" : "text-slate-600"}`} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Benefit description */}
-                <div className="p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/20 text-center">
-                  <span className="text-[10px] text-amber-300 font-semibold block">Próximo Premio al llegar a {loyalty.rewardThreshold} sellos:</span>
-                  <span className="text-xs font-black text-amber-400 mt-0.5 block">{loyalty.rewardDescription}</span>
-                </div>
-              </div>
-
-              {/* Pass Footer */}
-              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400">
-                <span className="font-mono flex items-center gap-1">
-                  <Link2 className="h-3 w-3 text-amber-400" />
-                  <span>Enlace único y seguro</span>
+                <span className="text-[9px] font-mono bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  ACTIVO
                 </span>
-                <span className="flex items-center gap-1 font-semibold text-emerald-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>En vivo en web</span>
-                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[9.5px] text-slate-400 block">Titular:</span>
+                  <span className="font-bold text-white text-xs">{displayName}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[9.5px] text-slate-400 block">Progreso:</span>
+                  <span className="font-extrabold text-emerald-400 text-xs">
+                    {Math.min(4, loyalty.rewardThreshold)} / {loyalty.rewardThreshold} sellos
+                  </span>
+                </div>
+              </div>
+
+              {/* Compact Stamp Dots */}
+              <div className="flex items-center gap-1.5 pt-0.5">
+                {Array.from({ length: Math.min(loyalty.rewardThreshold, 8) }).map((_, i) => {
+                  const filled = i < 4;
+                  return (
+                    <div
+                      key={i}
+                      className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold transition ${
+                        filled
+                          ? "bg-emerald-500 text-slate-950 font-black shadow-xs"
+                          : "border border-white/20 text-slate-500"
+                      }`}
+                    >
+                      {filled ? "✓" : i + 1}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="rounded-lg bg-white/5 border border-white/5 px-2.5 py-1 text-[10px] text-slate-300 truncate">
+                🎁 Premio: <strong className="text-white">{loyalty.rewardDescription}</strong>
               </div>
             </div>
           </div>

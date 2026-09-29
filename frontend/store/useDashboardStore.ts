@@ -961,6 +961,8 @@ type DashboardState = {
   deleteCashMovement: (id: string) => Promise<any> | void;
   currentUserRole: UserRole;
   currentStaffId?: string;
+  userName: string;
+  setUserName: (name: string) => void;
   setCurrentUserRole: (role: UserRole, staffId?: string) => void;
   updateAppointment: (id: string, patch: Partial<Appointment>) => Promise<any> | void;
   updateWhatsAppTemplate: (id: string, body: string) => void;
@@ -1050,6 +1052,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   receipts: initialReceipts,
   currentUserRole: "admin",
   currentStaffId: undefined,
+  userName: "Sebas Duarte",
+  setUserName: (name: string) => set({ userName: name }),
   setCurrentUserRole: (role, staffId) =>
     set({
       currentUserRole: role,

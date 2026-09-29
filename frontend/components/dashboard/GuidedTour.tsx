@@ -623,7 +623,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         taskTitle: "Enlace Web Exclusivo & Tarjeta del Cliente",
         instruction:
           "Cada cliente tiene su propio link web personalizado (ej: agendate.py/tu-salon/tarjeta/...). Sin instalar aplicaciones pesadas: lo abren en su celular, ven sus sellos acumulados y consultan su premio disponible.",
-        tip: "Hacé clic en 'Ver Tarjeta Demo' para probar la experiencia exacta que verá tu cliente en su navegador móvil.",
+        tip: "En la lista de clientes podés abrir directamente la tarjeta de cualquiera de ellos, copiar su link o enviárselo por WhatsApp.",
         targetSelector: '[data-tour="fidelizacion-wallet-banner"]',
       },
       {
