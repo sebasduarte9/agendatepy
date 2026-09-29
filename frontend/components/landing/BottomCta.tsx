@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, MessageCircle, Sparkles } from "lucide-react";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
+import { useCategory } from "@/context/CategoryContext";
 
 const TRUST_POINTS = [
   "14 días gratis sin tarjeta",
@@ -13,8 +14,9 @@ const TRUST_POINTS = [
 ];
 
 export default function BottomCta() {
+  const { category } = useCategory();
   const whatsappUrl = getCommercialWhatsAppUrl(
-    "Hola, quiero probar AgendatePY para mi negocio en Paraguay"
+    "Hola, quiero probar AgendatePY para mi negocio de " + category.label.toLowerCase() + " en Paraguay"
   );
 
   return (

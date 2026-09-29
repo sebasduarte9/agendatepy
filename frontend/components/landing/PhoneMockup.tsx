@@ -132,6 +132,7 @@ export default function PhoneMockup() {
   const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), springConfig);
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (typeof window !== "undefined" && window.innerWidth < 640) return;
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const width = rect.width;
@@ -335,31 +336,31 @@ export default function PhoneMockup() {
       {/* Ambient Halo behind iPhone in warm brand tones */}
       <div className="pointer-events-none absolute -inset-4 rounded-[60px] bg-gradient-to-tr from-brand/30 via-orange-500/20 to-emerald-500/20 blur-3xl opacity-75 max-w-full" />
 
-      {/* 3D Tiltable iPhone 16 Pro Container */}
+      {/* 3D Tiltable iPhone 16 Pro Container (Expanded width on mobile) */}
       <motion.div
         style={{
           rotateX,
           rotateY,
           transformStyle: "preserve-3d",
         }}
-        className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[360px] rounded-[38px] xs:rounded-[44px] sm:rounded-[50px] p-[6px] xs:p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]"
+        className="relative w-full max-w-[340px] xs:max-w-[370px] sm:max-w-[360px] rounded-[30px] xs:rounded-[36px] sm:rounded-[50px] p-[3px] xs:p-[4px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.18)]"
       >
-        {/* Precision Engineered Side Buttons (Attached flush to Titanium bezel) */}
+        {/* Precision Engineered Side Buttons (Desktop only to prevent horizontal overflow on mobile) */}
         {/* Left Side: Action Button */}
-        <div className="absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Left Side: Volume Up */}
-        <div className="absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Left Side: Volume Down */}
-        <div className="absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Right Side: Power Button */}
-        <div className="absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e] shadow-[1px_0_2px_rgba(0,0,0,0.4)]" />
+        <div className="hidden sm:block absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e] shadow-[1px_0_2px_rgba(0,0,0,0.4)]" />
         {/* Right Side: Camera Control Sensor (iPhone 16 Pro style) */}
-        <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
+        <div className="hidden sm:block absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
         {/* Outer Glass Bezel */}
-        <div className="relative overflow-hidden rounded-[34px] xs:rounded-[38px] sm:rounded-[42px] bg-black p-[2px] sm:p-[2.5px] shadow-inner">
+        <div className="relative overflow-hidden rounded-[28px] xs:rounded-[33px] sm:rounded-[42px] bg-black p-[1.5px] sm:p-[2.5px] shadow-inner">
           {/* Inner Display Canvas */}
-          <div className="relative flex h-[480px] xs:h-[560px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-[32px] xs:rounded-[36px] sm:rounded-[42px] bg-[#efeae2]">
+          <div className="relative flex h-[500px] xs:h-[540px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-[26px] xs:rounded-[31px] sm:rounded-[42px] bg-[#efeae2]">
             {/* ========================================================= */}
             {/* iOS iMessage Push Notification Banner */}
             {/* ========================================================= */}
@@ -636,15 +637,15 @@ export default function PhoneMockup() {
                       </div>
                     )}
 
-                    {/* WhatsApp Interactive Action Buttons (Cloud API Native Style) */}
+                    {/* WhatsApp Interactive Action Buttons (Cloud API Native Style - Mobile Thumb Optimized) */}
                     {msg.options && (
-                      <div className="mt-1.5 flex flex-col gap-1 w-full max-w-[86%]">
+                      <div className="mt-1.5 flex flex-col gap-1.5 w-full max-w-[92%] sm:max-w-[86%]">
                         {msg.options.map((opt) => (
                           <button
                             key={opt.label}
                             type="button"
                             onClick={opt.action}
-                            className="w-full rounded-xl border border-[#008069]/30 bg-white py-2 px-3 text-[11px] font-bold text-[#008069] shadow-[0_1px_1px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1.5"
+                            className="w-full min-h-[42px] sm:min-h-0 rounded-xl border border-[#008069]/30 bg-white py-2.5 sm:py-2 px-3 text-[12px] sm:text-[11px] font-bold text-[#008069] shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer text-center"
                           >
                             <span>{opt.label}</span>
                           </button>
@@ -670,6 +671,26 @@ export default function PhoneMockup() {
               </AnimatePresence>
               <div ref={messagesEndRef} className="h-1 w-full shrink-0" />
             </div>
+
+            {/* Interactive hint banner for mobile users */}
+            {step === 0 && (
+              <div className="relative z-20 mx-2.5 mb-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-2 py-1 text-center text-[10px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-center gap-1">
+                <span>👇 Tocá una opción del chat para probar el bot</span>
+              </div>
+            )}
+            {step >= 2 && (
+              <div className="relative z-20 mx-2.5 mb-1 flex items-center justify-between rounded-lg bg-emerald-50 dark:bg-slate-900 border border-emerald-500/20 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                <span>✨ Turno agendado en automático</span>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex items-center gap-1 text-brand hover:underline font-bold cursor-pointer"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Reiniciar</span>
+                </button>
+              </div>
+            )}
 
             {/* ========================================================= */}
             {/* 4. WHATSAPP BOTTOM INPUT BAR */}

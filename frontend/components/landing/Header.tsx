@@ -8,9 +8,11 @@ import {
   Menu,
   X,
   ArrowRight,
+  MessageCircle,
 } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
 import { scrollToSection } from "@/lib/smoothScroll";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 export default function Header() {
   const [activeTab, setActiveTab] = useState("inicio");
@@ -206,6 +208,16 @@ export default function Header() {
               ))}
 
               <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                <a
+                  href={getCommercialWhatsAppUrl("Hola AgendatePY, quiero consultar sobre planes para mi negocio")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 py-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 active:scale-95 transition"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
+                  <span>Consultar por WhatsApp</span>
+                </a>
                 <Link
                   href="/onboarding"
                   onClick={() => setMobileMenuOpen(false)}
