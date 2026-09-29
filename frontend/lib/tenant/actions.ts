@@ -12,6 +12,8 @@ export interface OnboardingInput {
   duration: number;
   price: number;
   whatsapp: string;
+  ruc?: string;
+  logoUrl?: string;
   ownerEmail?: string;
   ownerName?: string;
 }
@@ -49,6 +51,29 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
       };
     }
 
+    // Procesar y persistir logo si viene como dataUrl
+    let finalLogoUrl = (input.logoUrl || "").trim();
+    if (finalLogoUrl.startsWith("data:image/")) {
+      try {
+        const { writeFile, mkdir } = await import("fs/promises");
+        const pathModule = await import("path");
+        const uploadDir = pathModule.join(process.cwd(), "public", "uploads");
+        await mkdir(uploadDir, { recursive: true });
+
+        const matches = finalLogoUrl.match(/^data:image\/([A-Za-z-+]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+          const rawExt = "." + matches[1].toLowerCase().replace("jpeg", "jpg");
+          const ext = [".jpg", ".png", ".webp"].includes(rawExt) ? rawExt : ".png";
+          const buffer = Buffer.from(matches[2], "base64");
+          const filename = "logo-" + cleanSlug + "-" + Date.now() + ext;
+          await writeFile(pathModule.join(uploadDir, filename), buffer);
+          finalLogoUrl = "/uploads/" + filename;
+        }
+      } catch (err) {
+        console.warn("Error al persistir logo de onboarding en disco:", err);
+      }
+    }
+
     // Crear tenant, user, staff, servicio y horarios en una sola transacción atómica
     const result = await prisma.$transaction(async (tx) => {
       // 1. Crear Tenant
@@ -63,6 +88,7 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
           settings: {
             category: input.category,
             whatsappPhone: input.whatsapp.replace(/\D/g, ""),
+            ruc: (input.ruc || "").trim(),
             slotStepMinutes: 30,
             maxAdvanceDays: 30,
           },
@@ -70,7 +96,7 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
             primaryColor: "#5b31e6",
             backgroundColor: "#f8fafc",
             fontFamily: "Plus Jakarta Sans",
-            logoUrl: "",
+            logoUrl: finalLogoUrl,
             whatsapp: input.whatsapp,
           },
         },
