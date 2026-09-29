@@ -85,29 +85,36 @@ export default function Hero() {
 
           {/* Interactive Category Selector */}
           <div className="mt-5 sm:mt-6 pt-4 border-t border-slate-200/60 dark:border-white/5">
-            <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-              Probá la experiencia para tu rubro:
-            </p>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {CATEGORIES.map((item) => {
-                const Icon = ICONS[item.id];
-                const active = selectedCategory === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(item.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer hover:-translate-y-0.5 ${
-                      active
-                        ? "border-brand bg-brand text-white shadow-md shadow-brand/25 font-bold"
-                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 hover:shadow-xs shadow-2xs"
-                    }`}
-                  >
-                    <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Probá la experiencia para tu rubro:
+              </p>
+              <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 sm:hidden">
+                Deslizá lateralmente →
+              </span>
+            </div>
+            <div className="relative">
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
+                {CATEGORIES.map((item) => {
+                  const Icon = ICONS[item.id];
+                  const active = selectedCategory === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(item.id)}
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap ${
+                        active
+                          ? "border-brand bg-brand text-white shadow-md shadow-brand/25 font-bold scale-[1.02]"
+                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 hover:shadow-xs shadow-2xs"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </motion.div>
