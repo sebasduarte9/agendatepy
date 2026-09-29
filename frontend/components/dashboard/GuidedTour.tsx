@@ -659,46 +659,47 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Mensajería",
     icon: Bot,
     summary:
-      "Automatizá la atención con menú interactivo, respuestas por palabras clave y recordatorios 24h y 2h antes para eliminar las inasistencias.",
+      "Automatizá la atención con menú interactivo de opciones únicas, respuestas personalizadas por palabras clave y recordatorios 24h y 2h antes para eliminar las inasistencias.",
     steps: [
       {
         stepNumber: 1,
         taskTitle: "Línea Oficial y Conexión de WhatsApp",
         instruction:
-          "Vinculá tu WhatsApp oficial escaneando el código QR. La sesión queda compartida automáticamente con el CRM Omnicanal.",
-        tip: "Si tu WhatsApp está desconectado, podés abrir el código QR directamente aquí sin salir de la página.",
+          "Vinculá tu WhatsApp oficial escaneando el código QR. La sesión multi-dispositivo corre en nuestra infraestructura en la nube y queda compartida automáticamente con el CRM Omnicanal para que todo tu equipo pueda atender.",
+        tip: "Tu teléfono celular no necesita estar prendido ni en la misma red Wi-Fi; el bot opera de forma continua 24/7.",
         targetSelector: '[data-tour="bot-status-card"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Plantillas y Disparadores Automáticos",
+        taskTitle: "Canva de Flujo Visual Configurable",
         instruction:
-          "Elegí qué mensaje querés automatizar (Confirmación Inmediata, Recordatorio 24h o 2h antes). Podés modificar el texto y usar variables dinámicas.",
-        tip: "Los botones (+Nombre Cliente, +Hora Turno) reemplazan los datos reales en cada mensaje de forma 100% automática.",
-        targetSelector: '[data-tour="bot-templates-card"]',
-      },
-      {
-        stepNumber: 3,
-        taskTitle: "Canva de Flujo Visual (Tipo n8n)",
-        instruction:
-          "Arrastrá nodos y organizá el flujo visualmente. Conectá el mensaje de bienvenida con las opciones de reserva, datos SIPAP o derivación a asesor humano.",
-        tip: "Hacé clic en cualquier nodo para abrir su panel lateral de configuración y editar el texto o la acción.",
+          "Diseñá el árbol de respuestas arrastrando los nodos en el canva. Cada acción cuenta con su propio nodo independiente (Link de Reservas, Servicios y Precios, Datos SIPAP, Ubicación y Asesor Humano). Podés personalizar los textos respetando las reglas de formato de WhatsApp (*negrita*, _cursiva_, ~tachado~, ```monospacio```).",
+        tip: "Asegurate de asignar un número único a cada opción (del 1 al 5) para que el bot responda de forma precisa y sin conflictos.",
         targetSelector: '[data-tour="bot-rules-card"]',
       },
       {
-        stepNumber: 4,
-        taskTitle: "Simulador de Mensajes en Vivo",
+        stepNumber: 3,
+        taskTitle: "Simulador de WhatsApp en Vivo",
         instruction:
-          "En el celular interactivo podés ver en tiempo real cómo recibirán los mensajes tus clientes y probar cómo responde el bot al elegir opciones.",
+          "Probá en tiempo real cómo interactúa tu bot en un iPhone 16 Pro auténtico. El chat inicia en blanco para que puedas tipear cualquier número de opción ('1', '2', '3'), palabras clave o consultas cotidianas y ver la respuesta inmediata.",
+        tip: "Podés tocar las opciones de prueba rápida a la derecha para evaluar saludos, cotizaciones y tarjetas de confirmación en segundos.",
         targetSelector: '[data-tour="bot-simulator-card"]',
       },
       {
-        stepNumber: 5,
-        taskTitle: "Motor Avanzado y Personalización",
+        stepNumber: 4,
+        taskTitle: "Plantillas y Recordatorios Automáticos",
         instruction:
-          "Elegí entre el Canva Visual de AgendatePY o conectá un bot de Typebot con lógica ilimitada y webhooks a través de Evolution API.",
-        tip: "La integración con Typebot se sincroniza automáticamente con tu instancia oficial de Evolution API.",
-        targetSelector: '[data-tour="bot-engine-toggle"]',
+          "Configurá las notificaciones automáticas para tus clientes: Confirmación Inmediata de reserva, Recordatorio 24 horas antes y Recordatorio 2 horas antes. La activación de estos recordatorios está sincronizada en tiempo real con los nodos del Canva.",
+        tip: "El enlace de autogestión {link_autogestion} le permite al cliente confirmar o liberar su turno anticipadamente si no puede asistir.",
+        targetSelector: '[data-tour="bot-templates-card"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Modo Asesor Humano y Asistencia Técnica",
+        instruction:
+          "Cuando un cliente solicita hablar con una persona, el bot pausa sus respuestas automatizadas y notifica a tu equipo en el CRM. Si necesitás soporte en cualquier momento, podés contactarnos directamente desde el botón de ayuda.",
+        tip: "Podés reanudar o transferir cualquier conversación desde tu celular o desde el CRM sin interferencias del bot.",
+        targetSelector: '[data-tour="bot-support-action"]',
       },
     ],
   },

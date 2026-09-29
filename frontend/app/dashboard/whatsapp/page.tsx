@@ -258,6 +258,7 @@ export default function BotWhatsAppPage() {
     toggleWhatsAppTemplate,
     updateBusiness,
     pushToast,
+    openTour,
   } = useDashboardStore();
 
   const isConnected = Boolean(evolutionConfig.connected);
@@ -522,9 +523,8 @@ export default function BotWhatsAppPage() {
   const dragStartRef = useRef<{ startX: number; startY: number; nodeStartX: number; nodeStartY: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
-  // New Modals State: Support & Ultra-detailed Guide
+  // Modal State: Support & Assistance
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
   // Templates tab state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
@@ -1215,21 +1215,12 @@ export default function BotWhatsAppPage() {
           {/* Help & Support Button */}
           <button
             type="button"
+            data-tour="bot-support-action"
             onClick={() => setIsHelpModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition active:scale-98 cursor-pointer shadow-2xs"
           >
             <PhoneCall className="h-3.5 w-3.5" />
             <span>¿Necesitás ayuda? Contactanos</span>
-          </button>
-
-          {/* Ultra-Detailed Guide Button */}
-          <button
-            type="button"
-            onClick={() => setIsGuideModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition active:scale-98 cursor-pointer shadow-2xs"
-          >
-            <Layers className="h-3.5 w-3.5 text-sky-600" />
-            <span>Guía Paso a Paso</span>
           </button>
 
           {/* Connection status badge */}
@@ -1408,7 +1399,7 @@ export default function BotWhatsAppPage() {
           </div>
         </div>
       ) : activeTab === "canva" ? (
-        /* ═══ TAB 1: CANVA DE FLUJO (N8N STYLE WITH SEPARATED ACTION NODES) ═══ */
+        /* ═══ TAB 1: CANVA DE FLUJO CON NODOS DE ACCIÓN SEPARADOS ═══ */
         <div className="space-y-4" data-tour="bot-rules-card">
           {/* Canvas Top Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs">
@@ -2664,15 +2655,15 @@ export default function BotWhatsAppPage() {
                 type="button"
                 onClick={() => {
                   setIsHelpModalOpen(false);
-                  setIsGuideModalOpen(true);
+                  openTour("whatsapp");
                 }}
                 className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 transition cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2.5">
                   <Layers className="h-4 w-4 text-sky-600" />
                   <div>
-                    <p className="font-bold">Abrir Guía Paso a Paso Detallada</p>
-                    <p className="text-[11px] text-slate-400 font-normal">Explicación completa de QR, Canva, formatos y recordatorios.</p>
+                    <p className="font-bold">Iniciar Visita Guiada Interactiva</p>
+                    <p className="text-[11px] text-slate-400 font-normal">Paso a paso en vivo por cada elemento del módulo.</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
@@ -2713,196 +2704,6 @@ export default function BotWhatsAppPage() {
                 className="w-full py-2 rounded-xl text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
               >
                 Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ 7. MODAL: GUÍA ULTRA DETALLISTA PASO A PASO ═══ */}
-      {isGuideModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-6 shadow-2xl [scrollbar-width:thin]">
-            {/* Guide Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600">
-                  <Layers className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-white">
-                    Guía Detallada del Bot de WhatsApp & Canva
-                  </h3>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    Configuración paso a paso para maximizar reservas y eliminar ausencias
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsGuideModalOpen(false)}
-                className="rounded-full p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Connection Status Banner in Guide */}
-            {isConnected ? (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>Línea Oficial Conectada ({activeConnectedPhone}). Todo el flujo y los recordatorios están listos para operar.</span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-amber-600 shrink-0" />
-                  <span><strong>Requisito Crítico:</strong> Tu línea aún no está vinculada. Necesitás vincularla para que el bot responda.</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsGuideModalOpen(false);
-                    setIsConnectModalOpen(true);
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shrink-0 transition cursor-pointer shadow-xs"
-                >
-                  Escanear QR Ahora
-                </button>
-              </div>
-            )}
-
-            {/* Step-by-Step Sections */}
-            <div className="space-y-5 text-xs text-slate-700 dark:text-slate-300">
-              {/* Paso 1 */}
-              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs">
-                    1
-                  </span>
-                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    Vinculación Oficial de la Línea (Código QR)
-                  </h4>
-                </div>
-                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
-                  La conexión utiliza la tecnología oficial multi-dispositivo de WhatsApp. Esto significa que tu teléfono no necesita permanecer con la pantalla prendida ni conectado a la misma red Wi-Fi.
-                </p>
-                <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 space-y-1 font-mono text-[11px] text-slate-600 dark:text-slate-400">
-                  <p>1. En tu celular, abrí WhatsApp (WhatsApp normal o WhatsApp Business).</p>
-                  <p>2. Tocá Menú (tres puntos en Android) o Ajustes (en iPhone) &gt; Dispositivos vinculados.</p>
-                  <p>3. Tocá &ldquo;Vincular un dispositivo&rdquo; y apuntá la cámara al código QR de la pantalla.</p>
-                </div>
-              </div>
-
-              {/* Paso 2 */}
-              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-600 text-white font-mono font-bold text-xs">
-                    2
-                  </span>
-                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    Canva de Flujo y Menú de Opciones Únicas (1 al 5)
-                  </h4>
-                </div>
-                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
-                  El menú principal está estructurado mediante nodos visuales que podés arrastrar y organizar libremente.
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-600 dark:text-slate-400">
-                  <li><strong>Opciones Únicas:</strong> Cada nodo de acción debe tener un número de opción exclusivo (1, 2, 3, etc.). Si dos nodos comparten el mismo número, el sistema te alertará para evitar duplicados.</li>
-                  <li><strong>Formato Nativo de WhatsApp:</strong> Podés dar formato al texto usando *negrita*, _cursiva_, ~tachado~ y ```monospacio``` para que tus respuestas se vean profesionales.</li>
-                  <li><strong>Palabras Clave:</strong> Además del número, podés configurar términos clave (ej: &ldquo;precio&rdquo;, &ldquo;turno&rdquo;, &ldquo;transferencia&rdquo;) para que el bot responda aunque el cliente escriba una frase completa.</li>
-                </ul>
-              </div>
-
-              {/* Paso 3 */}
-              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-600 text-white font-mono font-bold text-xs">
-                    3
-                  </span>
-                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    Nodos de Acción Separados y Creación Libre
-                  </h4>
-                </div>
-                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
-                  Las respuestas automáticas están divididas en 5 tipos de nodos especializados:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
-                    <p className="font-bold text-emerald-700 dark:text-emerald-400">• Link de Reservas:</p>
-                    <p className="text-slate-500 mt-0.5">Envía el link directo al portal donde el cliente autogestiona su turno.</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
-                    <p className="font-bold text-sky-700 dark:text-sky-400">• Servicios y Precios:</p>
-                    <p className="text-slate-500 mt-0.5">Adaptado automáticamente a los servicios y precios en Guaraníes de tu negocio.</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
-                    <p className="font-bold text-purple-700 dark:text-purple-400">• Datos SIPAP:</p>
-                    <p className="text-slate-500 mt-0.5">Provee banco, RUC y alias para pagos por transferencia.</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">
-                    <p className="font-bold text-amber-700 dark:text-amber-400">• Asesor Humano:</p>
-                    <p className="text-slate-500 mt-0.5">Pausa el bot y transfiere la conversación a tu equipo en el CRM.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Paso 4 */}
-              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-600 text-white font-mono font-bold text-xs">
-                    4
-                  </span>
-                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    Recordatorios Automáticos 24h y 2h Antes
-                  </h4>
-                </div>
-                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
-                  La reducción de ausencias funciona de manera sincronizada. Cada vez que entra un turno confirmado en tu web, el sistema programa el recordatorio de 24 horas previas y 2 horas previas.
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  <strong>Sincronización en Vivo:</strong> Si desactivás el interruptor del nodo de 24h en el Canva, se desactiva automáticamente en la pestaña de Plantillas, y viceversa.
-                </p>
-              </div>
-
-              {/* Paso 5 */}
-              <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-700 text-white font-mono font-bold text-xs">
-                    5
-                  </span>
-                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    Validación en el SIMULADOR
-                  </h4>
-                </div>
-                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
-                  El simulador inicia completamente vacío para que puedas probar cualquier interacción escribiendo números de opción, saludos o preguntas cotidianas antes de desplegarlas a tus clientes reales.
-                </p>
-              </div>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="pt-4 border-t border-slate-100 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setIsGuideModalOpen(false)}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              >
-                Cerrar Guía
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsGuideModalOpen(false);
-                  setActiveTab("canva");
-                }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-98 cursor-pointer"
-              >
-                Ir al Canva de Flujo
               </button>
             </div>
           </div>
