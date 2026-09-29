@@ -526,6 +526,18 @@ export default function BotWhatsAppPage() {
   // Modal State: Support & Assistance
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
+  // Listen for Guided Tour tab switching
+  useEffect(() => {
+    const handleTourTab = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tab: "canva" | "simulador" | "plantillas" }>;
+      if (customEvent.detail?.tab) {
+        setActiveTab(customEvent.detail.tab);
+      }
+    };
+    window.addEventListener("agendate-switch-whatsapp-tab", handleTourTab);
+    return () => window.removeEventListener("agendate-switch-whatsapp-tab", handleTourTab);
+  }, []);
+
   // Templates tab state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     whatsappTemplates[0]?.id || "wt-confirmacion"
@@ -1320,85 +1332,49 @@ export default function BotWhatsAppPage() {
       <div className="p-1 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex flex-wrap gap-1">
         <button
           type="button"
-          onClick={() => isConnected && setActiveTab("canva")}
-          disabled={!isConnected}
+          data-tour="bot-tab-canva"
+          onClick={() => setActiveTab("canva")}
           className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-            !isConnected
-              ? "opacity-40 cursor-not-allowed text-slate-400"
-              : activeTab === "canva"
+            activeTab === "canva"
               ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           <Share2 className="h-3.5 w-3.5 text-emerald-600" />
           <span>Canva de flujo</span>
-          {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
 
         <button
           type="button"
-          onClick={() => isConnected && setActiveTab("simulador")}
-          disabled={!isConnected}
+          data-tour="bot-tab-simulador"
+          onClick={() => setActiveTab("simulador")}
           className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
-            !isConnected
-              ? "opacity-40 cursor-not-allowed text-slate-400"
-              : activeTab === "simulador"
+            activeTab === "simulador"
               ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           <Smartphone className="h-3.5 w-3.5 text-sky-600" />
           <span>SIMULADOR</span>
-          {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
 
         <button
           type="button"
-          onClick={() => isConnected && setActiveTab("plantillas")}
-          disabled={!isConnected}
+          data-tour="bot-tab-plantillas"
+          onClick={() => setActiveTab("plantillas")}
           className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-            !isConnected
-              ? "opacity-40 cursor-not-allowed text-slate-400"
-              : activeTab === "plantillas"
+            activeTab === "plantillas"
               ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           <Layers className="h-3.5 w-3.5 text-indigo-600" />
           <span>Plantillas</span>
-          {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
       </div>
 
       {/* ═══ 4. TAB CONTENTS ═══ */}
-      {!isConnected ? (
-        <div className="relative rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/40 p-8 text-center overflow-hidden">
-          <div className="absolute inset-0 bg-white/60 dark:bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 z-10 space-y-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-md">
-              <Lock className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-              Canva Bloqueado Temporalmente
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md">
-              Vinculá tu WhatsApp arriba para poder arrastrar, editar y configurar el flujo interactivo de tu bot.
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsConnectModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 text-xs shadow-md transition cursor-pointer"
-            >
-              <QrCode className="h-4 w-4" />
-              <span>Abrir Código QR</span>
-            </button>
-          </div>
-
-          <div className="opacity-20 pointer-events-none select-none filter blur-xs space-y-4">
-            <div className="h-40 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-            <div className="h-60 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-          </div>
-        </div>
-      ) : activeTab === "canva" ? (
+      {activeTab === "canva" ? (
         /* ═══ TAB 1: CANVA DE FLUJO CON NODOS DE ACCIÓN SEPARADOS ═══ */
         <div className="space-y-4" data-tour="bot-rules-card">
           {/* Canvas Top Bar */}
@@ -1572,7 +1548,7 @@ export default function BotWhatsAppPage() {
           </div>
 
           {/* Canvas Workspace + Inspector Drawer */}
-          <div className="relative rounded-3xl border border-slate-200/90 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950 overflow-hidden flex min-h-[660px] shadow-sm">
+          <div className="relative rounded-3xl border border-slate-200/90 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950 overflow-hidden flex h-[680px] shadow-sm">
             {/* Viewport with Pan and Zoom */}
             <div
               ref={canvasRef}
@@ -1582,7 +1558,7 @@ export default function BotWhatsAppPage() {
               className={`flex-1 relative overflow-auto select-none [background-image:radial-gradient(#cbd5e1_1.2px,transparent_1.2px)] dark:[background-image:radial-gradient(#334155_1.2px,transparent_1.2px)] [background-size:20px_20px] ${
                 isPanningRef.current ? "cursor-grabbing" : "cursor-grab"
               }`}
-              style={{ minHeight: "660px" }}
+              style={{ height: "680px" }}
             >
               <div
                 className="relative"
@@ -1716,28 +1692,43 @@ export default function BotWhatsAppPage() {
 
             {/* Inspector Drawer (Node Settings Panel) */}
             {isInspectorOpen && selectedNode && (
-              <div className="w-[320px] sm:w-[370px] shrink-0 border-l border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between overflow-y-auto z-30 shadow-md">
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                    <div>
-                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
-                        Configuración del Nodo
-                      </span>
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
-                        {selectedNode.title}
-                      </h4>
-                    </div>
+              <div className="w-[320px] sm:w-[380px] shrink-0 border-l border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 flex flex-col h-[680px] z-30 shadow-md">
+                {/* Header */}
+                <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900">
+                  <div className="min-w-0 pr-2">
+                    <span className="text-[10px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
+                      Configuración del Nodo
+                    </span>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                      {selectedNode.title}
+                    </h4>
+                  </div>
 
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleSaveCanvasFlow();
+                        setIsInspectorOpen(false);
+                      }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
+                      title="Guardar cambios de este nodo"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      <span>Guardar</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setIsInspectorOpen(false)}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition cursor-pointer"
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
+                </div>
 
+                {/* Form Body: Scrollable */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 [scrollbar-width:thin]">
                   {/* Node State (Active / Paused) */}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -1936,8 +1927,8 @@ export default function BotWhatsAppPage() {
                   )}
                 </div>
 
-                {/* Footer Actions */}
-                <div className="pt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
+                {/* Fixed Bottom Action Bar */}
+                <div className="p-3 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-slate-800/50 shrink-0 flex items-center gap-2">
                   {[
                     "action_link",
                     "action_prices",
@@ -1949,20 +1940,23 @@ export default function BotWhatsAppPage() {
                     <button
                       type="button"
                       onClick={() => deleteNode(selectedNode.id)}
-                      className="w-full inline-flex items-center justify-center gap-1.5 p-2 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-bold transition cursor-pointer"
+                      className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-bold transition cursor-pointer"
+                      title="Eliminar este nodo"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>Eliminar Nodo</span>
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   )}
 
                   <button
                     type="button"
-                    onClick={handleSaveCanvasFlow}
-                    className="w-full inline-flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
+                    onClick={() => {
+                      handleSaveCanvasFlow();
+                      setIsInspectorOpen(false);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-900/10 transition active:scale-98 cursor-pointer"
                   >
-                    <Check className="h-3.5 w-3.5" />
-                    <span>Guardar Flujo</span>
+                    <Check className="h-4 w-4" />
+                    <span>Guardar Nodo</span>
                   </button>
                 </div>
               </div>
@@ -2598,7 +2592,7 @@ export default function BotWhatsAppPage() {
       {/* ═══ 6. MODAL: ¿NECESITÁS AYUDA? CONTACTANOS ═══ */}
       {isHelpModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-5 shadow-2xl">
+          <div className="relative w-full max-w-md rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-5 shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2.5">
@@ -2607,10 +2601,10 @@ export default function BotWhatsAppPage() {
                 </div>
                 <div>
                   <h3 className="font-black text-sm text-slate-900 dark:text-white">
-                    Centro de Asistencia & Soporte Oficial
+                    Contacto con Soporte Oficial
                   </h3>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Estamos listos para ayudarte con la configuración de {business.name}
+                    Asistencia directa para {business.name}
                   </span>
                 </div>
               </div>
@@ -2624,14 +2618,14 @@ export default function BotWhatsAppPage() {
               </button>
             </div>
 
-            {/* Direct Contact Button */}
-            <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
+            {/* Direct WhatsApp Contact */}
+            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
               <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
-                <MessageCircle className="h-4 w-4 text-emerald-600" />
+                <MessageSquare className="h-4 w-4 text-emerald-600" />
                 <span>Atención Directa por WhatsApp</span>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                ¿Tenés dudas sobre cómo estructurar tu flujo, cómo no desconectar la línea o cómo configurar los datos de pago SIPAP? Hablá directamente con nuestro equipo de soporte técnico.
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                Escribinos directamente para resolver cualquier duda sobre tu flujo, conexión o configuración.
               </p>
               <a
                 href={`https://wa.me/595981700800?text=${encodeURIComponent(
@@ -2639,65 +2633,28 @@ export default function BotWhatsAppPage() {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 text-xs shadow-md transition active:scale-98"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 text-xs shadow-md transition active:scale-98"
               >
                 <MessageSquare className="h-4 w-4" />
-                <span>Chatear con Soporte (+595 981 700 800)</span>
+                <span>Chatear por WhatsApp (+595 981 700 800)</span>
               </a>
             </div>
 
-            {/* Quick Actions */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                Recursos Rápidos:
-              </h4>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsHelpModalOpen(false);
-                  openTour("whatsapp");
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 transition cursor-pointer text-left"
+            {/* Direct Phone / Schedule Info */}
+            <div className="p-3.5 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40 flex items-center justify-between text-xs">
+              <div>
+                <p className="font-bold text-slate-800 dark:text-slate-200">Llamada Telefónica</p>
+                <p className="text-[11px] text-slate-400">Lunes a Sábados: 08:00 a 19:00 hs</p>
+              </div>
+              <a
+                href="tel:+595981700800"
+                className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
               >
-                <div className="flex items-center gap-2.5">
-                  <Layers className="h-4 w-4 text-sky-600" />
-                  <div>
-                    <p className="font-bold">Iniciar Visita Guiada Interactiva</p>
-                    <p className="text-[11px] text-slate-400 font-normal">Paso a paso en vivo por cada elemento del módulo.</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
-              </button>
-
-              {!isConnected && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsHelpModalOpen(false);
-                    setIsConnectModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-100 text-xs font-bold text-amber-900 dark:text-amber-300 transition cursor-pointer text-left"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <QrCode className="h-4 w-4 text-amber-600" />
-                    <div>
-                      <p className="font-bold">Escanear Código QR Ahora</p>
-                      <p className="text-[11px] text-amber-700 dark:text-amber-400 font-normal">Vinculá tu línea oficial en 20 segundos.</p>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-amber-500 shrink-0" />
-                </button>
-              )}
+                Llamar
+              </a>
             </div>
 
-            {/* FAQ Accordion Summary */}
-            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10 text-[11px] text-slate-500">
-              <p className="font-bold text-slate-700 dark:text-slate-300">Preguntas Clave:</p>
-              <p>• <strong>¿Mi celular debe estar prendido?</strong> Una vez escaneado el QR, la sesión multi-dispositivo corre en nuestra nube.</p>
-              <p>• <strong>¿Los recordatorios funcionan 24/7?</strong> Sí, se envían automáticamente 24 horas y 2 horas antes de cada cita.</p>
-            </div>
-
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={() => setIsHelpModalOpen(false)}
