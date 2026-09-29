@@ -65,7 +65,6 @@ export async function POST(req: Request) {
     }
 
     // Dynamic import to avoid bundling issues if any
-    // @ts-expect-error - Optional server-side image processing package
     const { removeBackground } = await import("@imgly/background-removal-node");
 
     // Convert Buffer to standard Blob with explicit MIME type
