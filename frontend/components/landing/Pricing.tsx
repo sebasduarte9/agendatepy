@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -134,6 +134,19 @@ export default function Pricing() {
   const [annual, setAnnual] = useState(false);
   const [mobilePlanIndex, setMobilePlanIndex] = useState(0); // 0: gratis, 1: basico, 2: pro, 3: empresa
 
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const activeTabEl = tabRefs.current[mobilePlanIndex];
+    if (activeTabEl) {
+      activeTabEl.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [mobilePlanIndex]);
+
   const activeMobilePlan = PLANS_DATA[mobilePlanIndex];
 
   const handlePrevPlan = () => {
@@ -217,14 +230,17 @@ export default function Pricing() {
         {/* MÓVIL: Panel Interactivo Flotante con Pestañas y Flechas (< >) */}
         {/* ============================================================== */}
         <div className="lg:hidden mt-5">
-          {/* Pestañas Interactivas (Estilo Antes vs Con AgendatePY) */}
+          {/* Pestañas Interactivas con Auto-scroll al centro */}
           <div className="flex justify-center px-1">
-            <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-1.5 shadow-sm max-w-full overflow-x-auto scrollbar-none">
+            <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-1.5 shadow-sm max-w-full overflow-x-auto scrollbar-none scroll-smooth">
               {PLANS_DATA.map((plan, idx) => {
                 const isActive = mobilePlanIndex === idx;
                 return (
                   <button
                     key={plan.id}
+                    ref={(el) => {
+                      tabRefs.current[idx] = el;
+                    }}
                     type="button"
                     onClick={() => setMobilePlanIndex(idx)}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
