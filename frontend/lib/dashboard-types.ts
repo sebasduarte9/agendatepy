@@ -279,6 +279,25 @@ export type SipapConfig = {
   aliasSipap: string;
 };
 
+export type BotEngineMode = "rules" | "ai" | "hybrid";
+
+export type BotMainMenuOption = {
+  id: string;
+  key: string;
+  title: string;
+  response: string;
+  action?: "none" | "send_link" | "send_sipap" | "human_handoff";
+  enabled: boolean;
+};
+
+export type BotKeywordRule = {
+  id: string;
+  keywords: string[];
+  response: string;
+  action?: "none" | "send_link" | "send_sipap" | "human_handoff";
+  enabled: boolean;
+};
+
 export type EvolutionApiConfig = {
   enabled: boolean;
   baseUrl: string;
@@ -289,8 +308,15 @@ export type EvolutionApiConfig = {
   connected: boolean;
   phoneNumber?: string;
   autoBotEnabled?: boolean;
+  botMode?: BotEngineMode;
+  welcomeMessage?: string;
+  fallbackMessage?: string;
+  mainMenuOptions?: BotMainMenuOption[];
+  keywordRules?: BotKeywordRule[];
   aiPrompt?: string;
   autoBotCadenceSeconds?: number;
+  outOfHoursEnabled?: boolean;
+  outOfHoursMessage?: string;
   webhookUrl?: string;
   lastSync?: string;
   instagramConnected?: boolean;
