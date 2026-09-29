@@ -24,9 +24,32 @@ const MODULE_TABS = [
   { id: "comisiones", label: "Comisiones", icon: Users },
 ] as const;
 
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 90 : -90,
+    opacity: 0,
+    scale: 0.96,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+    scale: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 90 : -90,
+    opacity: 0,
+    scale: 0.96,
+  }),
+};
+
 export default function Features() {
   const [activeStamp, setActiveStamp] = useState(4);
-  const [mobileIndex, setMobileIndex] = useState(0);
+  const [[page, direction], setPage] = useState([0, 0]);
+
+  // Infinite cyclic index so tab transitions always flow continuously
+  const mobileIndex = ((page % MODULE_TABS.length) + MODULE_TABS.length) % MODULE_TABS.length;
 
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isFirstMount = useRef(true);
@@ -45,11 +68,17 @@ export default function Features() {
   }, [mobileIndex]);
 
   const handlePrev = () => {
-    setMobileIndex((prev) => (prev === 0 ? MODULE_TABS.length - 1 : prev - 1));
+    setPage([page - 1, -1]);
   };
 
   const handleNext = () => {
-    setMobileIndex((prev) => (prev === MODULE_TABS.length - 1 ? 0 : prev + 1));
+    setPage([page + 1, 1]);
+  };
+
+  const handleSelectTab = (targetIdx: number) => {
+    if (targetIdx === mobileIndex) return;
+    const diff = targetIdx - mobileIndex;
+    setPage([page + diff, diff > 0 ? 1 : -1]);
   };
 
   return (
@@ -107,7 +136,7 @@ export default function Features() {
                     tabRefs.current[idx] = el;
                   }}
                   type="button"
-                  onClick={() => setMobileIndex(idx)}
+                  onClick={() => handleSelectTab(idx)}
                   className={`flex items-center gap-1.5 rounded-xl px-2.5 xs:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
                     isActive
                       ? "bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-xs font-black"
@@ -122,7 +151,7 @@ export default function Features() {
           </div>
         </div>
 
-        {/* Tarjeta Flotante con Botones Laterales (< >) */}
+        {/* Tarjeta Flotante con Botones Laterales (< >) e Infinite Slide */}
         <div className="relative mt-4 px-3 sm:px-6 max-w-md mx-auto">
           {/* Botón Lateral Izquierdo */}
           <button
@@ -144,27 +173,35 @@ export default function Features() {
             <ChevronRight className="h-5 w-5" />
           </button>
 
-          {/* Tarjeta del Módulo Activo en Móvil */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={MODULE_TABS[mobileIndex].id}
-              initial={{ opacity: 0, scale: 0.97, x: 15 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.97, x: -15 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 xs:p-5 shadow-sm min-h-[350px] flex flex-col justify-between"
-            >
-              {mobileIndex === 0 && <WhatsAppCardContent />}
-              {mobileIndex === 1 && <CashRegisterCardContent />}
-              {mobileIndex === 2 && (
-                <LoyaltyCardContent
-                  activeStamp={activeStamp}
-                  setActiveStamp={setActiveStamp}
-                />
-              )}
-              {mobileIndex === 3 && <CommissionsCardContent />}
-            </motion.div>
-          </AnimatePresence>
+          {/* Contenedor con overflow hidden para animaciones continuas */}
+          <div className="overflow-hidden min-h-[350px]">
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <motion.div
+                key={page}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 320, damping: 30 },
+                  opacity: { duration: 0.22 },
+                  scale: { duration: 0.22 },
+                }}
+                className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 xs:p-5 shadow-sm min-h-[350px] flex flex-col justify-between"
+              >
+                {mobileIndex === 0 && <WhatsAppCardContent />}
+                {mobileIndex === 1 && <CashRegisterCardContent />}
+                {mobileIndex === 2 && (
+                  <LoyaltyCardContent
+                    activeStamp={activeStamp}
+                    setActiveStamp={setActiveStamp}
+                  />
+                )}
+                {mobileIndex === 3 && <CommissionsCardContent />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           {/* Indicador de Posición en Puntos (Dots) */}
           <div className="mt-3.5 flex items-center justify-center gap-1.5">
@@ -172,7 +209,7 @@ export default function Features() {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setMobileIndex(idx)}
+                onClick={() => handleSelectTab(idx)}
                 className={`transition-all duration-300 rounded-full cursor-pointer ${
                   mobileIndex === idx
                     ? "h-2 w-6 bg-brand shadow-xs"

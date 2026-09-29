@@ -52,28 +52,15 @@ export default function StickyMobileCta() {
               </p>
             </div>
 
-            {/* Botones de acción rápida */}
+            {/* Botón Principal: Prueba gratis */}
             <div className="flex items-center gap-1.5 xs:gap-2 shrink-0">
-              {/* Botón WhatsApp de consulta rápida */}
-              <a
-                href={getCommercialWhatsAppUrl("Hola AgendatePY, quiero información para activar mi agenda online")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-8.5 w-8.5 xs:h-9 xs:w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 active:scale-95 transition shrink-0"
-                aria-label="Consultar por WhatsApp"
-              >
-                <MessageCircle className="h-4 w-4 fill-emerald-500 text-emerald-500" />
-              </a>
-
-              {/* Botón Principal: Prueba gratis */}
               <Link
                 href="/onboarding"
-                className="flex h-8.5 xs:h-9 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-2.5 xs:px-3.5 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition shrink-0 whitespace-nowrap"
+                className="flex h-8.5 xs:h-9 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-3.5 xs:px-4 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition shrink-0 whitespace-nowrap"
               >
-                <CalendarPlus className="h-3 w-3 text-white shrink-0" />
-                <span className="hidden xs:inline">Crear agenda</span>
-                <span className="xs:hidden">Empezar</span>
-                <ArrowRight className="h-3 w-3 shrink-0" />
+                <CalendarPlus className="h-3.5 w-3.5 text-white shrink-0" />
+                <span>Empezar gratis</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0" />
               </Link>
             </div>
           </div>

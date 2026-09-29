@@ -157,19 +157,23 @@ export default function PhoneMockup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category.id]);
 
-  function handleSelectService() {
+  function handleSelectService(selectedIdx = 0) {
     setStep(1);
-    const serviceName = category.services[0]?.name || "Corte Clásico";
+    const service = category.services[selectedIdx] || category.services[0];
     const userMsg: Message = {
       id: "u-service",
       incoming: false,
       type: "text",
-      text: serviceName,
+      text: `${service.name} (${service.price})`,
       time: "14:21",
     };
 
     setChat((prev) => [...prev, userMsg]);
     setIsTyping(true);
+
+    const slot1 = category.timeSlots?.[0] || "16:30 hs";
+    const slot2 = category.timeSlots?.[1] || "18:00 hs";
+    const staff = category.staffName || "Atención al Cliente";
 
     setTimeout(() => {
       setIsTyping(false);
@@ -177,24 +181,28 @@ export default function PhoneMockup() {
         id: "b-service",
         incoming: true,
         type: "text",
-        text: `Excelente. Tenemos estos horarios disponibles para hoy con *Marcos Benítez*:\n\n• 15:30 hs\n• 16:30 hs\n• 18:00 hs\n\n¿Cuál te queda más cómodo?`,
+        text: `Excelente elección. Disponibilidad hoy con *${staff}*:\n\n• ${slot1}\n• ${slot2}\n\n¿Cuál horario te queda mejor?`,
         time: "14:21",
         options: [
-          { label: "16:30 hs (Hoy)", action: () => handleSelectTime() },
-          { label: "18:00 hs (Hoy)", action: () => handleSelectTime() },
+          { label: slot1, action: () => handleSelectTime(service, slot1, staff) },
+          { label: slot2, action: () => handleSelectTime(service, slot2, staff) },
         ],
       };
       setChat((prev) => [...prev, botMsg]);
-    }, 900);
+    }, 800);
   }
 
-  function handleSelectTime() {
+  function handleSelectTime(
+    service: { name: string; price: string },
+    timeSlot: string,
+    staff: string
+  ) {
     setStep(2);
     const userMsg: Message = {
       id: "u-time",
       incoming: false,
       type: "text",
-      text: "16:30 hs",
+      text: timeSlot,
       time: "14:22",
     };
 
@@ -209,19 +217,18 @@ export default function PhoneMockup() {
         type: "card",
         time: "14:22",
         cardData: {
-          service: category.services[0]?.name || "Corte Clásico",
-          staff: "Marcos Benítez",
-          datetime: "Hoy a las 16:30 hs",
+          service: service.name,
+          staff: staff,
+          datetime: `Hoy · ${timeSlot}`,
           location: `${category.businessName} · Asunción`,
-          price: "Gs. 80.000",
+          price: service.price,
         },
         options: [
-          { label: "Escuchar audio de confirmación", action: () => handlePlayAudioNote() },
+          { label: "Escuchar audio de confirmación", action: () => handlePlayAudioNote(service) },
         ],
       };
       setChat((prev) => [...prev, confirmationCard]);
 
-      // Notificación push estilo iMessage al iPhone tras registrar el turno con éxito
       setTimeout(() => {
         setShowNotification(true);
         playiOSChime();
@@ -229,7 +236,7 @@ export default function PhoneMockup() {
     }, 700);
   }
 
-  function handlePlayAudioNote() {
+  function handlePlayAudioNote(service?: { name: string; price: string }) {
     setStep(3);
     setIsTyping(true);
 
@@ -242,7 +249,7 @@ export default function PhoneMockup() {
         time: "14:23",
         audioDuration: "0:12",
         options: [
-          { label: "Ver recordatorio previo", action: () => handleShowReminder() },
+          { label: "Ver recordatorio previo", action: () => handleShowReminder(service) },
         ],
       };
       setChat((prev) => [...prev, audioMsg]);
@@ -251,9 +258,10 @@ export default function PhoneMockup() {
     }, 800);
   }
 
-  function handleShowReminder() {
+  function handleShowReminder(service?: { name: string; price: string }) {
     setStep(4);
     setIsTyping(true);
+    const serviceName = service?.name || category.services[0]?.name || "Turno";
 
     setTimeout(() => {
       setIsTyping(false);
@@ -261,7 +269,7 @@ export default function PhoneMockup() {
         id: "r-reminder",
         incoming: true,
         type: "text",
-        text: `*Recordatorio de Turno*\n\n¡Hola Martín! Tu turno para *${category.services[0]?.name || "Corte"}* en *${category.businessName}* es en 2 horas (16:30 hs).\n\nDirección: Avda. España 1420 c/ San Rafael\n\n¿Nos confirmás tu asistencia? Respondé *SI* o reprogramá desde tu enlace de autogestión.`,
+        text: `*Recordatorio de Turno*\n\n¡Hola Martín! Tu reserva para *${serviceName}* en *${category.businessName}* es en 2 horas.\n\nDirección: Avda. España 1420 c/ San Rafael\n\n¿Confirmás tu asistencia? Respondé *SI* o reprogramá desde tu enlace de autogestión.`,
         time: "14:30",
       };
       setChat((prev) => [...prev, reminderMsg]);
@@ -282,19 +290,19 @@ export default function PhoneMockup() {
         id: "m1",
         incoming: false,
         type: "text",
-        text: `Hola, quiero consultar disponibilidad en *${category.businessName}*.`,
+        text: `Hola, quiero consultar en *${category.businessName}*.`,
         time: "14:20",
       },
       {
         id: "m2",
         incoming: true,
         type: "text",
-        text: `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción.\n\nSoy el asistente virtual de AgendatePY. Seleccioná el servicio que deseás agendar:`,
+        text: category.botIntro || `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción. Seleccioná una opción:`,
         time: "14:20",
-        options: [
-          { label: `${category.services[0]?.name || "Corte Clásico"} · Gs. 80.000`, action: () => handleSelectService() },
-          { label: `${category.services[1]?.name || "Servicio Completo"} · Gs. 120.000`, action: () => handleSelectService() },
-        ],
+        options: category.services.slice(0, 2).map((srv, idx) => ({
+          label: `${srv.name} · ${srv.price}`,
+          action: () => handleSelectService(idx),
+        })),
       },
     ]);
   }
