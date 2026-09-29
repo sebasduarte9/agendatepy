@@ -22,25 +22,16 @@ import {
   Clock,
   Sliders,
   AlertCircle,
-  Flame,
   ArrowRight,
   Plus,
   Trash2,
-  Edit2,
-  Layers,
-  Cpu,
-  FileText,
-  Compass,
   ListOrdered,
   Tag,
-  CalendarCheck,
-  ToggleLeft,
-  ToggleRight,
-  ExternalLink,
+  Settings2,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useDashboardStore, defaultBotMenuOptions, defaultBotKeywords } from "@/store/useDashboardStore";
-import type { BotEngineMode, BotMainMenuOption, BotKeywordRule } from "@/lib/dashboard-types";
+import type { BotMainMenuOption, BotKeywordRule } from "@/lib/dashboard-types";
 import Card from "@/components/dashboard/ui/Card";
 
 const AVAILABLE_TAGS = [
@@ -69,14 +60,11 @@ export default function BotWhatsAppPage() {
 
   const isConnected = Boolean(evolutionConfig.connected);
 
-  // Main page tabs
-  const [activeTab, setActiveTab] = useState<"cerebro" | "plantillas" | "simulador" | "business">("cerebro");
+  // Main tabs
+  const [activeTab, setActiveTab] = useState<"reglas" | "plantillas" | "simulador" | "business">("reglas");
 
-  // Sub-tabs for "Cerebro del Bot"
-  const [brainSubTab, setBrainSubTab] = useState<"modo" | "menu" | "palabras" | "mensajes" | "ia">("modo");
-
-  // Bot Engine Mode
-  const [botMode, setBotMode] = useState<BotEngineMode>(evolutionConfig.botMode || "rules");
+  // Sub-tabs inside "Flujo & Reglas del Bot"
+  const [rulesSubTab, setRulesSubTab] = useState<"menu" | "palabras" | "mensajes" | "velocidad">("menu");
 
   // Menu Options & Keywords state
   const [menuOptions, setMenuOptions] = useState<BotMainMenuOption[]>(
@@ -97,25 +85,20 @@ export default function BotWhatsAppPage() {
   );
   const [fallbackMessage, setFallbackMessage] = useState(
     evolutionConfig.fallbackMessage ||
-      "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente o escribí *humano* para contactar a nuestro equipo."
+      "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo."
   );
   const [outOfHoursEnabled, setOutOfHoursEnabled] = useState(
     evolutionConfig.outOfHoursEnabled ?? true
   );
   const [outOfHoursMessage, setOutOfHoursMessage] = useState(
     evolutionConfig.outOfHoursMessage ||
-      "¡Hola! En este momento nuestro local se encuentra cerrado. Podés reservar tu turno para el próximo día disponible en:"
+      "¡Hola! En este momento nuestro local se encuentra cerrado. Podés reservar tu turno para el próximo día disponible directamente en nuestra agenda online:"
   );
 
-  // AI Prompt & anti-ban cadence
-  const [botPrompt, setBotPrompt] = useState(
-    evolutionConfig.aiPrompt ||
-      `Sos el asistente virtual de ${business.name}. Tu objetivo es responder cordialmente las preguntas sobre servicios, precios y horarios, y enviar el enlace de reserva web cuando el cliente desee agendar.`
+  // Natural response delay in seconds (1 to 10s)
+  const [responseCadence, setResponseCadence] = useState<number>(
+    Math.min(10, Math.max(1, evolutionConfig.autoBotCadenceSeconds || 3))
   );
-  const [antiBanCadence, setAntiBanCadence] = useState(
-    evolutionConfig.autoBotCadenceSeconds || 12
-  );
-  const [aiPersonality, setAiPersonality] = useState<"formal" | "amigable" | "juvenil" | "vip">("amigable");
 
   // Templates tab state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
@@ -269,15 +252,14 @@ export default function BotWhatsAppPage() {
   // Save Bot Configuration to DB
   function handleSaveBotConfig() {
     updateEvolutionConfig({
-      botMode,
+      botMode: "rules",
       mainMenuOptions: menuOptions,
       keywordRules,
       welcomeMessage,
       fallbackMessage,
       outOfHoursEnabled,
       outOfHoursMessage,
-      aiPrompt: botPrompt,
-      autoBotCadenceSeconds: antiBanCadence,
+      autoBotCadenceSeconds: responseCadence,
     });
     pushToast("success", "Configuración y reglas del Bot guardadas y sincronizadas con la base de datos.");
   }
@@ -326,18 +308,18 @@ export default function BotWhatsAppPage() {
     setKeywordRules(keywordRules.filter((r) => r.id !== id));
   }
 
-  // Simulator bot response engine (Rules, AI, Hybrid)
+  // Simulator bot response engine (Rules & Keywords)
   function computeBotReply(userMsg: string): string {
     const lower = userMsg.toLowerCase().trim();
 
-    // 1. Saludo inicial
+    // 1. Saludo inicial o petición de menú
     if (
       lower === "hola" ||
       lower === "buenas" ||
       lower === "buen dia" ||
       lower === "menu" ||
       lower === "inicio" ||
-      lower === "hola bot"
+      lower === "empezar"
     ) {
       const activeOpts = menuOptions.filter((o) => o.enabled);
       let res = `${welcomeMessage}\n\n`;
@@ -380,28 +362,13 @@ export default function BotWhatsAppPage() {
       return reply;
     }
 
-    // 4. Si el modo es puramente de Reglas (Sin IA) -> Mensaje Fallback
-    if (botMode === "rules") {
-      const activeOpts = menuOptions.filter((o) => o.enabled);
-      let res = `${fallbackMessage}\n\n`;
-      if (activeOpts.length > 0) {
-        res += activeOpts.map((o) => `${o.key}️⃣ ${o.title}`).join("\n");
-      }
-      return res;
+    // 4. Fallback: No coincide
+    const activeOpts = menuOptions.filter((o) => o.enabled);
+    let res = `${fallbackMessage}\n\n`;
+    if (activeOpts.length > 0) {
+      res += activeOpts.map((o) => `${o.key}️⃣ ${o.title}`).join("\n");
     }
-
-    // 5. Si el modo es IA o Híbrido -> Respuesta contextual inteligente
-    if (lower.includes("precio") || lower.includes("costo") || lower.includes("cuanto")) {
-      return `Nuestros servicios en *${business.name}* van desde Gs. 50.000. Podés ver la lista completa con fotos y tiempos estimados en: ${bookingUrl}`;
-    }
-    if (lower.includes("donde") || lower.includes("ubicacion") || lower.includes("queda")) {
-      return `Estamos ubicados en *${business.address || "Avda. Santa Teresa 1420"}*. Abrimos de Lunes a Sábados de 09:00 a 20:00 hs. ¡Te esperamos!`;
-    }
-    if (lower.includes("turno") || lower.includes("agendar") || lower.includes("hora") || lower.includes("cita")) {
-      return `¡Con gusto! Contamos con turnos disponibles hoy. Podés elegir tu profesional y horario favorito aquí: ${bookingUrl}`;
-    }
-
-    return `¡Hola! Con gusto te respondemos en *${business.name}*. Si querés reservar o consultar horarios libres, ingresá a nuestra agenda online con confirmación inmediata: ${bookingUrl}`;
+    return res;
   }
 
   function handleSimSendMessage(e?: React.FormEvent) {
@@ -415,7 +382,7 @@ export default function BotWhatsAppPage() {
     setSimInput("");
     setIsBotTypingSim(true);
 
-    const delayMs = Math.min(2000, Math.max(800, antiBanCadence * 80));
+    const delayMs = Math.min(2500, Math.max(600, responseCadence * 300));
 
     setTimeout(() => {
       const reply = computeBotReply(userMsg);
@@ -468,11 +435,11 @@ export default function BotWhatsAppPage() {
             </h1>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-300/40">
               <Sparkles className="h-3 w-3" />
-              {botMode === "rules" ? "Modo Reglas (Sin IA)" : botMode === "hybrid" ? "Híbrido IA" : "Motor IA"}
+              Automatizado
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Asistente para WhatsApp: configurable por menú de números, palabras clave o Inteligencia Artificial para responder y agendar 24/7.
+            Asistente automático para WhatsApp: menú interactivo por opciones, respuestas por palabras clave y recordatorios 24h y 2h antes.
           </p>
         </div>
 
@@ -564,7 +531,7 @@ export default function BotWhatsAppPage() {
                 Vinculá tu WhatsApp para activar el Bot y las Opciones
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Para configurar el menú automático, las respuestas por palabras clave, los recordatorios y la IA, es obligatorio vincular la línea de WhatsApp de tu negocio.
+                Para configurar el menú automático, las respuestas por palabras clave y los recordatorios 24h y 2h antes, es obligatorio vincular la línea de WhatsApp de tu negocio.
               </p>
             </div>
 
@@ -596,17 +563,17 @@ export default function BotWhatsAppPage() {
                   <span>Misma sesión con CRM</span>
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  La sesión vinculada sirve automáticamente para este Bot y para la bandeja omnicanal del CRM.
+                  La sesión vinculada sirve automáticamente para este Bot y para la bandeja de mensajes del CRM.
                 </p>
               </div>
 
               <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-white/5 space-y-1 text-xs">
                 <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                  <span>Funciona sin IA</span>
+                  <span>Cero ausencias</span>
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Si no tenés IA, podés usar el motor de menú por opciones (1, 2, 3...) y palabras clave 100% gratis.
+                  Tus clientes reciben confirmaciones y recordatorios automáticos 24h y 2h antes.
                 </p>
               </div>
             </div>
@@ -618,18 +585,18 @@ export default function BotWhatsAppPage() {
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
         <button
           type="button"
-          onClick={() => isConnected && setActiveTab("cerebro")}
+          onClick={() => isConnected && setActiveTab("reglas")}
           disabled={!isConnected}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
             !isConnected
               ? "opacity-40 cursor-not-allowed text-slate-400"
-              : activeTab === "cerebro"
+              : activeTab === "reglas"
               ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
           }`}
         >
-          <Cpu className="h-3.5 w-3.5" />
-          <span>Cerebro & Reglas del Bot</span>
+          <Sliders className="h-3.5 w-3.5" />
+          <span>Flujo & Reglas del Bot</span>
           {!isConnected && <Lock className="h-3 w-3 ml-0.5" />}
         </button>
 
@@ -714,21 +681,20 @@ export default function BotWhatsAppPage() {
             <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
           </div>
         </div>
-      ) : activeTab === "cerebro" ? (
-        /* ═══ TAB 1: CEREBRO & REGLAS DEL BOT (HYBRID ARCHITECTURE) ═══ */
-        <div className="space-y-6" data-tour="bot-ai-card">
-          {/* Engine Mode Selection Header */}
+      ) : activeTab === "reglas" ? (
+        /* ═══ TAB 1: FLUJO & REGLAS DEL BOT ═══ */
+        <div className="space-y-6" data-tour="bot-rules-card">
           <Card>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/10">
               <div>
                 <span className="text-[11px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider block">
-                  Arquitectura del Motor
+                  Configuración de Respuestas
                 </span>
                 <h2 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
-                  Modalidad de Funcionamiento del Bot
+                  Menú Automático & Respuestas por Palabras Clave
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Elegí si preferís un bot de reglas y menú numérico (100% sin IA y sin costos) o con Inteligencia Artificial.
+                  Personalizá las opciones que se envían al cliente, las respuestas directas y las acciones automáticas.
                 </p>
               </div>
 
@@ -739,183 +705,69 @@ export default function BotWhatsAppPage() {
                   className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
                 >
                   <Check className="h-3.5 w-3.5" />
-                  <span>Guardar Configuración</span>
+                  <span>Guardar Cambios</span>
                 </button>
               </div>
             </div>
 
-            {/* 3 Engine Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
-              {/* Mode 1: Rules & Menu */}
-              <div
-                onClick={() => setBotMode("rules")}
-                className={`p-4 rounded-2xl border-2 transition cursor-pointer space-y-2 ${
-                  botMode === "rules"
-                    ? "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-sm"
-                    : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-slate-900"
+            {/* Sub-Tabs: Menu, Keywords, Messages, Cadence */}
+            <div className="flex flex-wrap items-center gap-2 pt-4">
+              <button
+                type="button"
+                onClick={() => setRulesSubTab("menu")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  rulesSubTab === "menu"
+                    ? "bg-emerald-600 text-white shadow-2xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white">
-                    <ListOrdered className="h-4 w-4" />
-                  </div>
-                  <span
-                    className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
-                      botMode === "rules"
-                        ? "border-emerald-500 bg-emerald-500 text-white"
-                        : "border-slate-300 dark:border-slate-700"
-                    }`}
-                  >
-                    {botMode === "rules" && <Check className="h-2.5 w-2.5 stroke-3" />}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-xs text-slate-900 dark:text-white">
-                    Menú Numérico & Reglas
-                  </h3>
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                    100% Sin IA · Cero Costo de API
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Responde con opciones (1, 2, 3...) y dispara respuestas automáticas por palabras clave. Confiable, predecible y sin costo por mensaje.
-                </p>
-              </div>
+                <ListOrdered className="h-3.5 w-3.5" />
+                <span>Opciones del Menú ({menuOptions.length})</span>
+              </button>
 
-              {/* Mode 2: Hybrid */}
-              <div
-                onClick={() => setBotMode("hybrid")}
-                className={`p-4 rounded-2xl border-2 transition cursor-pointer space-y-2 ${
-                  botMode === "hybrid"
-                    ? "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-sm"
-                    : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-slate-900"
+              <button
+                type="button"
+                onClick={() => setRulesSubTab("palabras")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  rulesSubTab === "palabras"
+                    ? "bg-emerald-600 text-white shadow-2xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                    <Zap className="h-4 w-4" />
-                  </div>
-                  <span
-                    className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
-                      botMode === "hybrid"
-                        ? "border-emerald-500 bg-emerald-500 text-white"
-                        : "border-slate-300 dark:border-slate-700"
-                    }`}
-                  >
-                    {botMode === "hybrid" && <Check className="h-2.5 w-2.5 stroke-3" />}
-                  </span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-extrabold text-xs text-slate-900 dark:text-white">
-                      Híbrido Inteligente
-                    </h3>
-                    <span className="text-[9px] font-black uppercase text-amber-600 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.2 rounded-md">
-                      Recomendado
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-500">
-                    Menú Rápido + Respaldo de IA
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Ofrece el menú rápido numérico, pero si el cliente escribe una pregunta abierta compleja, la IA interviene para responder cordialmente.
-                </p>
-              </div>
+                <Tag className="h-3.5 w-3.5" />
+                <span>Palabras Clave ({keywordRules.length})</span>
+              </button>
 
-              {/* Mode 3: Pure AI */}
-              <div
-                onClick={() => setBotMode("ai")}
-                className={`p-4 rounded-2xl border-2 transition cursor-pointer space-y-2 ${
-                  botMode === "ai"
-                    ? "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-sm"
-                    : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-slate-900"
+              <button
+                type="button"
+                onClick={() => setRulesSubTab("mensajes")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  rulesSubTab === "mensajes"
+                    ? "bg-emerald-600 text-white shadow-2xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <span
-                    className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
-                      botMode === "ai"
-                        ? "border-emerald-500 bg-emerald-500 text-white"
-                        : "border-slate-300 dark:border-slate-700"
-                    }`}
-                  >
-                    {botMode === "ai" && <Check className="h-2.5 w-2.5 stroke-3" />}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-xs text-slate-900 dark:text-white">
-                    Inteligencia Artificial Pura
-                  </h3>
-                  <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">
-                    Conversación Abierta con LLM
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Conversa con tus clientes de forma 100% natural siguiendo tu prompt, resolviendo dudas y guiándolos al link de reservas.
-                </p>
-              </div>
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Bienvenida & Fallback</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRulesSubTab("velocidad")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  rulesSubTab === "velocidad"
+                    ? "bg-emerald-600 text-white shadow-2xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                }`}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>Pausa de Respuesta ({responseCadence}s)</span>
+              </button>
             </div>
           </Card>
 
-          {/* Sub-Tabs: Menu, Keywords, Messages, AI */}
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/80 dark:border-white/10 pb-2.5">
-            <button
-              type="button"
-              onClick={() => setBrainSubTab("menu")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                brainSubTab === "menu"
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              1️⃣ Opciones del Menú ({menuOptions.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setBrainSubTab("palabras")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                brainSubTab === "palabras"
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              🏷️ Palabras Clave ({keywordRules.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setBrainSubTab("mensajes")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                brainSubTab === "mensajes"
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              💬 Bienvenida & Fallback
-            </button>
-
-            {(botMode === "ai" || botMode === "hybrid") && (
-              <button
-                type="button"
-                onClick={() => setBrainSubTab("ia")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  brainSubTab === "ia"
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                🧠 Prompt & Personalidad IA
-              </button>
-            )}
-          </div>
-
           {/* SUB-TAB 1: MENU BUILDER */}
-          {brainSubTab === "menu" && (
+          {rulesSubTab === "menu" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -923,7 +775,7 @@ export default function BotWhatsAppPage() {
                     Constructor del Menú Interactivo
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Definí las opciones numéricas que se le presentan al cliente cuando inicia conversación.
+                    Opciones numéricas (1, 2, 3...) que se le envían al cliente para que elija con un solo número.
                   </p>
                 </div>
                 <button
@@ -1022,7 +874,7 @@ export default function BotWhatsAppPage() {
           )}
 
           {/* SUB-TAB 2: KEYWORD TRIGGERS */}
-          {brainSubTab === "palabras" && (
+          {rulesSubTab === "palabras" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -1030,7 +882,7 @@ export default function BotWhatsAppPage() {
                     Disparadores por Palabras Clave
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Si el mensaje del cliente contiene alguna de estas palabras, el bot responde automáticamente.
+                    Si el mensaje del cliente contiene alguna de estas palabras, el bot responde de forma inmediata.
                   </p>
                 </div>
                 <button
@@ -1141,7 +993,7 @@ export default function BotWhatsAppPage() {
           )}
 
           {/* SUB-TAB 3: SYSTEM MESSAGES */}
-          {brainSubTab === "mensajes" && (
+          {rulesSubTab === "mensajes" && (
             <div className="space-y-4">
               <Card className="space-y-4">
                 <div>
@@ -1149,7 +1001,7 @@ export default function BotWhatsAppPage() {
                     Mensajes del Sistema
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Textos de bienvenida, fallback para mensajes no comprendidos y fuera de horario.
+                    Textos de bienvenida, fallback para mensajes no reconocidos y fuera de horario de atención.
                   </p>
                 </div>
 
@@ -1207,82 +1059,42 @@ export default function BotWhatsAppPage() {
             </div>
           )}
 
-          {/* SUB-TAB 4: AI PROMPT SETTINGS */}
-          {(botMode === "ai" || botMode === "hybrid") && brainSubTab === "ia" && (
+          {/* SUB-TAB 4: RESPONSE CADENCE */}
+          {rulesSubTab === "velocidad" && (
             <div className="space-y-4">
               <Card className="space-y-4">
                 <div>
                   <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                    Instrucciones & Personalidad de la Inteligencia Artificial
+                    Pausa Natural de Respuesta
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Definí el tono de voz y el conocimiento del negocio que el LLM debe utilizar al conversar.
+                    Ajustá los segundos de espera antes de que el bot envíe su respuesta para que la interacción se sienta cómoda y natural.
                   </p>
                 </div>
 
-                {/* Tone chips */}
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                    Tono de Atención:
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: "amigable", label: "Cálido y Amigable 😊" },
-                      { key: "formal", label: "Profesional y Formal 👔" },
-                      { key: "juvenil", label: "Descontracturado / Urbano ⚡" },
-                      { key: "vip", label: "Exclusivo & VIP 👑" },
-                    ].map((tone) => (
-                      <button
-                        key={tone.key}
-                        type="button"
-                        onClick={() => setAiPersonality(tone.key as any)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                          aiPersonality === tone.key
-                            ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-bold"
-                            : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                        }`}
-                      >
-                        {tone.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                    Instrucción Principal (Prompt del Asistente):
-                  </label>
-                  <textarea
-                    rows={6}
-                    value={botPrompt}
-                    onChange={(e) => setBotPrompt(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 leading-relaxed font-sans"
-                    placeholder="Instrucciones del bot..."
-                  />
-                </div>
-
-                {/* Anti-ban Cadence */}
-                <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 space-y-2">
+                <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 space-y-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                       <Clock className="h-4 w-4 text-emerald-600" />
-                      <span>Cadencia de lectura y tipeo anti-baneo:</span>
+                      <span>Tiempo de espera antes de contestar:</span>
                     </span>
-                    <strong className="text-emerald-700 dark:text-emerald-400 font-mono">
-                      {antiBanCadence} segundos
+                    <strong className="text-emerald-700 dark:text-emerald-400 font-mono text-sm">
+                      {responseCadence} segundos
                     </strong>
                   </div>
                   <input
                     type="range"
-                    min="5"
-                    max="25"
-                    value={antiBanCadence}
-                    onChange={(e) => setAntiBanCadence(Number(e.target.value))}
+                    min="1"
+                    max="10"
+                    value={responseCadence}
+                    onChange={(e) => setResponseCadence(Number(e.target.value))}
                     className="w-full accent-emerald-600 cursor-pointer"
                   />
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Simula la espera y el estado de &ldquo;escribiendo...&rdquo; en WhatsApp para evitar ser detectado como spam por Meta.
-                  </p>
+                  <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                    <span>1s (Inmediato)</span>
+                    <span>5s (Natural)</span>
+                    <span>10s (Pausado)</span>
+                  </div>
                 </div>
               </Card>
             </div>
@@ -1342,7 +1154,7 @@ export default function BotWhatsAppPage() {
                 <div className="space-y-4 pt-3">
                   <div>
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      Variables inteligentes (tocá para insertar):
+                      Variables dinámicas (tocá para insertar):
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {AVAILABLE_TAGS.map((item) => (
@@ -1502,9 +1314,7 @@ export default function BotWhatsAppPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold truncate leading-tight">{business.name}</p>
                       <p className="text-[10px] opacity-80">
-                        {isBotTypingSim
-                          ? "escribiendo..."
-                          : `en línea · ${botMode === "rules" ? "Bot de Reglas" : "Bot Inteligente"}`}
+                        {isBotTypingSim ? "escribiendo..." : "en línea · Bot Oficial"}
                       </p>
                     </div>
                   </div>
@@ -1513,7 +1323,7 @@ export default function BotWhatsAppPage() {
                   <div className="flex-1 p-3 space-y-2.5 overflow-y-auto text-xs">
                     <div className="text-center">
                       <span className="rounded-md bg-white/80 px-2 py-0.5 text-[9px] font-semibold text-slate-500 uppercase shadow-2xs">
-                        SIMULACIÓN EN VIVO ({botMode.toUpperCase()})
+                        SIMULACIÓN EN VIVO
                       </span>
                     </div>
 
@@ -1585,7 +1395,7 @@ export default function BotWhatsAppPage() {
                     Pruebas Rápidas en 1 Clic
                   </h3>
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
-                    Modo: {botMode}
+                    Pausa: {responseCadence}s
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -1638,7 +1448,7 @@ export default function BotWhatsAppPage() {
                   </button>
 
                   <span className="text-[11px] text-slate-400 font-mono">
-                    Cadencia: {antiBanCadence}s
+                    Pausa: {responseCadence}s
                   </span>
                 </div>
               </Card>
@@ -1695,7 +1505,7 @@ export default function BotWhatsAppPage() {
                     Vincular WhatsApp Oficial
                   </h3>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Válido para Bot Inteligente y CRM Omnicanal
+                    Válido para Bot y CRM Omnicanal
                   </span>
                 </div>
               </div>

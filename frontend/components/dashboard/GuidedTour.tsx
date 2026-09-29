@@ -656,10 +656,10 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
   whatsapp: {
     id: "whatsapp",
     title: "Bot WhatsApp & Automatizaciones",
-    badge: "IA & Mensajería",
+    badge: "Mensajería",
     icon: Bot,
     summary:
-      "Automatizá la atención con Inteligencia Artificial, confirmaciones inmediatas y recordatorios 24h y 2h antes para eliminar las inasistencias.",
+      "Automatizá la atención con menú interactivo, respuestas por palabras clave y recordatorios 24h y 2h antes para eliminar las inasistencias.",
     steps: [
       {
         stepNumber: 1,
@@ -679,17 +679,17 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 3,
-        taskTitle: "Cerebro y Comportamiento del Bot con IA",
+        taskTitle: "Menú Interactivo y Respuestas por Palabras Clave",
         instruction:
-          "Personalizá las respuestas del bot inteligente, sus políticas de atención y la cadencia humana anti-bloqueo.",
-        tip: "El bot puede agendar turnos solo y derivar a un humano cuando el cliente lo pida.",
-        targetSelector: '[data-tour="bot-ai-card"]',
+          "Configurá las opciones del menú numérico (1, 2, 3...) y las palabras clave para que el bot responda al instante sobre precios, servicios, horarios o pagos.",
+        tip: "Podés vincular cada opción para que envíe el link de reserva web, datos SIPAP o transfiera a un asesor humano.",
+        targetSelector: '[data-tour="bot-rules-card"]',
       },
       {
         stepNumber: 4,
         taskTitle: "Simulador de Mensajes en Vivo",
         instruction:
-          "En el celular interactivo podés ver en tiempo real cómo recibirán los mensajes tus clientes y probar respuestas del bot.",
+          "En el celular interactivo podés ver en tiempo real cómo recibirán los mensajes tus clientes y probar cómo responde el bot al elegir opciones.",
         targetSelector: '[data-tour="bot-simulator-card"]',
       },
       {
@@ -1260,7 +1260,7 @@ export default function GuidedTour() {
     };
   }, []);
 
-  // Debounced navigation to prevent rapid-click / enter spam glitches
+  // Debounced navigation to prevent rapid-click glitches
   const handleNext = useCallback(() => {
     if (isTransitioningRef.current) return;
     isTransitioningRef.current = true;
