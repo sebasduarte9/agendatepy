@@ -87,15 +87,17 @@ export default function FidelizacionPage() {
     rewards: activeRewards,
   });
 
-  // Keep form in sync if store updates
+  // Keep form in sync if store updates and user is not actively editing
   useEffect(() => {
-    setFormSettings({
-      enabled: loyalty.enabled,
-      mode: loyalty.mode || "stamps",
-      pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
-      rewards: activeRewards,
-    });
-  }, [loyalty, activeRewards]);
+    if (!editingSettings) {
+      setFormSettings({
+        enabled: loyalty.enabled,
+        mode: loyalty.mode || "stamps",
+        pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
+        rewards: activeRewards,
+      });
+    }
+  }, [loyalty, activeRewards, editingSettings]);
 
   // Generate QR when client is selected
   useEffect(() => {
@@ -179,19 +181,30 @@ export default function FidelizacionPage() {
     e.preventDefault();
     setIsSavingSettings(true);
     try {
-      const sortedTiers = [...formSettings.rewards].sort((a, b) => a.threshold - b.threshold);
+      const validTiers = formSettings.rewards
+        .map((r, index) => ({
+          id: r.id || `rew-${Date.now()}-${index + 1}`,
+          threshold: Math.max(1, Number(r.threshold) || 1),
+          description: r.description.trim() || `Premio #${index + 1}`,
+        }))
+        .sort((a, b) => a.threshold - b.threshold);
+
       const patch = {
         enabled: formSettings.enabled,
         mode: formSettings.mode as "stamps" | "points",
-        rewardThreshold: sortedTiers[0]?.threshold || 5,
-        rewardDescription: sortedTiers[0]?.description || "Premio",
+        rewardThreshold: validTiers[0]?.threshold || 5,
+        rewardDescription: validTiers[0]?.description || "Premio de fidelidad",
         pointsPerVisit: Number(formSettings.pointsPerVisit) || 1,
-        rewards: sortedTiers,
+        rewards: validTiers,
       };
 
-      await updateLoyalty(patch);
+      const ok = await updateLoyalty(patch);
       setEditingSettings(false);
-      pushToast("success", "Reglas y múltiples premios guardados y sincronizados con la base de datos.");
+      if (ok !== false) {
+        pushToast("success", "Premios y reglas actualizados y guardados en la base de datos.");
+      } else {
+        pushToast("error", "Se actualizaron localmente pero hubo un detalle al sincronizar con el servidor.");
+      }
     } catch (err) {
       console.error("Error guardando reglas de fidelización:", err);
       pushToast("error", "Hubo un error al guardar las reglas.");
@@ -205,9 +218,10 @@ export default function FidelizacionPage() {
     pushToast("success", `+1 sello otorgado a ${clientName}`);
   }
 
-  function handleRedeem(clientId: string, clientName: string) {
-    redeemClientReward(clientId);
-    pushToast("success", `¡Premio canjeado con éxito para ${clientName}!`);
+  function handleRedeem(clientId: string, clientName: string, tierThreshold?: number) {
+    const pts = tierThreshold || minRewardThreshold;
+    redeemClientReward(clientId, pts);
+    pushToast("success", `¡Premio canjeado con éxito para ${clientName}! (-${pts} ${loyalty.mode === "points" ? "pts" : "sellos"})`);
   }
 
   function getCardUrl(clientId: string) {
@@ -816,7 +830,13 @@ export default function FidelizacionPage() {
                       {canRedeem ? (
                         <button
                           type="button"
-                          onClick={() => handleRedeem(client.id, client.name)}
+                          onClick={() =>
+                            handleRedeem(
+                              client.id,
+                              client.name,
+                              highestUnlocked ? highestUnlocked.threshold : threshold
+                            )
+                          }
                           className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition cursor-pointer"
                         >
                           <Gift className="h-3.5 w-3.5" />

@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN"]);
+    const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN", "STAFF"]);
     if (isGuardError(auth)) return auth;
 
     const currentTenant = await prisma.tenant.findUnique({

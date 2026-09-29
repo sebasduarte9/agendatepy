@@ -289,6 +289,8 @@ export type EvolutionApiConfig = {
   connected: boolean;
   phoneNumber?: string;
   autoBotEnabled?: boolean;
+  aiPrompt?: string;
+  autoBotCadenceSeconds?: number;
   webhookUrl?: string;
   lastSync?: string;
   instagramConnected?: boolean;

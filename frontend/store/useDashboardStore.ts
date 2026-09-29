@@ -958,7 +958,7 @@ type DashboardState = {
   deleteClient: (id: string) => Promise<any> | void;
   updateLoyalty: (patch: Partial<LoyaltySettings>) => Promise<boolean> | void;
   addClientLoyaltyPoint: (clientId: string) => void;
-  redeemClientReward: (clientId: string) => void;
+  redeemClientReward: (clientId: string, pointsToDeduct?: number) => void;
   updateSipap: (patch: Partial<SipapConfig>) => void;
   updateEvolutionApi: (patch: Partial<EvolutionApiConfig>) => void;
   addCashMovement: (item: Omit<CashMovement, "id">) => Promise<any> | void;
@@ -1117,9 +1117,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }
 
         if (data.tenant?.settings?.loyalty) {
+          const dbLoyalty = data.tenant.settings.loyalty;
           nextState.loyalty = {
             ...state.loyalty,
-            ...data.tenant.settings.loyalty,
+            ...dbLoyalty,
+            rewards: Array.isArray(dbLoyalty.rewards) && dbLoyalty.rewards.length > 0
+              ? dbLoyalty.rewards
+              : state.loyalty.rewards,
+          };
+        }
+
+        if (data.tenant?.settings?.evolutionConfig) {
+          nextState.evolutionConfig = {
+            ...state.evolutionConfig,
+            ...data.tenant.settings.evolutionConfig,
           };
         }
 
@@ -1969,8 +1980,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       body: JSON.stringify({ points: newPoints }),
     }).catch((err) => console.warn("Error actualizando puntos de cliente:", err));
   },
-  redeemClientReward: (clientId) => {
-    const threshold = get().loyalty.rewardThreshold;
+  redeemClientReward: (clientId, pointsToDeduct) => {
+    const defaultThreshold = get().loyalty.rewardThreshold || 5;
+    const threshold = typeof pointsToDeduct === "number" && pointsToDeduct > 0 ? pointsToDeduct : defaultThreshold;
     const prev = get().clients;
     const target = prev.find((c) => c.id === clientId);
     if (!target) return;
@@ -2079,10 +2091,17 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   crmConversations: initialCrmConversations,
   evolutionConfig: initialEvolutionApi,
   updateEvolutionConfig: (config) => {
+    const next = { ...get().evolutionConfig, ...config };
     set({
-      evolutionConfig: { ...get().evolutionConfig, ...config },
+      evolutionConfig: next,
     });
-    get().pushToast("success", "Configuración de canales actualizada.");
+    fetch("/api/tenant/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        settings: { evolutionConfig: next },
+      }),
+    }).catch((err) => console.warn("Error guardando evolutionConfig en BD:", err));
   },
   loadDemoConversation: () => {
     set({

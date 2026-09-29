@@ -23,6 +23,7 @@ import {
   Award,
   Palette,
   MessagesSquare,
+  Bot,
   Pin,
   PinOff,
   ExternalLink,
@@ -56,7 +57,7 @@ const OPERATIONS_LINKS: SidebarLink[] = [
   { href: "/dashboard/transferencias", label: "Transferencias SIPAP", icon: Receipt, roles: ["admin", "cajero"] },
   { href: "/dashboard/crm", label: "CRM Omnicanal", icon: MessagesSquare, badge: "3 Canales", roles: ["admin", "cajero"] },
   { href: "/dashboard/fidelizacion", label: "Fidelización VIP", icon: Award, badge: "Puntos", roles: ["admin", "cajero"] },
-  { href: "/dashboard/whatsapp", label: "WhatsApp Hub", icon: MessageSquare, badge: "Auto", roles: ["admin"] },
+  { href: "/dashboard/whatsapp", label: "Bot WhatsApp", icon: Bot, badge: "IA", roles: ["admin"] },
   { href: "/dashboard/estadisticas", label: "Estadísticas", icon: BarChart3, roles: ["admin"] },
 ];
 

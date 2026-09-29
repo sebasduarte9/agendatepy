@@ -16,6 +16,7 @@ import {
   ExternalLink,
   CheckCircle2,
   Users,
+  Bot,
   Scissors,
   ShoppingBag,
   ShieldCheck,
@@ -654,30 +655,49 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
   },
   whatsapp: {
     id: "whatsapp",
-    title: "WhatsApp Hub & Recordatorios",
-    badge: "Mensajería",
-    icon: MessageSquare,
+    title: "Bot WhatsApp & Automatizaciones",
+    badge: "IA & Mensajería",
+    icon: Bot,
     summary:
-      "Automatizá confirmaciones inmediatas y recordatorios 24h y 2h antes para eliminar las inasistencias en tu negocio.",
+      "Automatizá la atención con Inteligencia Artificial, confirmaciones inmediatas y recordatorios 24h y 2h antes para eliminar las inasistencias.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Personalizar las plantillas de mensajes",
+        taskTitle: "Línea Oficial y Conexión de WhatsApp",
         instruction:
-          "Elegí qué mensaje querés editar (Confirmación Inmediata, Recordatorio 24h o 2h antes). Podés modificar el texto para adaptarlo al tono de tu negocio.",
-        tip: "Usá los botones de variables dinámicas (+Nombre Cliente, +Hora Turno) para que cada mensaje salga personalizado sin escribir nada a mano.",
+          "Vinculá tu WhatsApp oficial escaneando el código QR. La sesión queda compartida automáticamente con el CRM Omnicanal.",
+        tip: "Si tu WhatsApp está desconectado, podés abrir el código QR directamente aquí sin salir de la página.",
+        targetSelector: '[data-tour="bot-status-card"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Simular cómo lo recibe el cliente",
+        taskTitle: "Plantillas y Disparadores Automáticos",
         instruction:
-          "En la columna derecha tenés una maqueta de WhatsApp en vivo. Cada cambio que hacés en el texto se refleja al instante tal cual llegará al celular del cliente.",
+          "Elegí qué mensaje querés automatizar (Confirmación Inmediata, Recordatorio 24h o 2h antes). Podés modificar el texto y usar variables dinámicas.",
+        tip: "Los botones (+Nombre Cliente, +Hora Turno) reemplazan los datos reales en cada mensaje de forma 100% automática.",
+        targetSelector: '[data-tour="bot-templates-card"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Copiar el mensaje de bienvenida para WhatsApp Business",
+        taskTitle: "Cerebro y Comportamiento del Bot con IA",
         instruction:
-          "Al pie de la página tenés el recuadro con el mensaje de respuesta automática listo para copiar y pegar en tu WhatsApp Business oficial.",
+          "Personalizá las respuestas del bot inteligente, sus políticas de atención y la cadencia humana anti-bloqueo.",
+        tip: "El bot puede agendar turnos solo y derivar a un humano cuando el cliente lo pida.",
+        targetSelector: '[data-tour="bot-ai-card"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Simulador de Mensajes en Vivo",
+        instruction:
+          "En el celular interactivo podés ver en tiempo real cómo recibirán los mensajes tus clientes y probar respuestas del bot.",
+        targetSelector: '[data-tour="bot-simulator-card"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Respuesta de Bienvenida para WhatsApp Business",
+        instruction:
+          "Copiá este mensaje predeterminado en tu WhatsApp Business para que cuando un cliente te escriba por primera vez reciba tu enlace de reservas.",
+        targetSelector: '[data-tour="bot-quick-reply"]',
       },
     ],
   },
