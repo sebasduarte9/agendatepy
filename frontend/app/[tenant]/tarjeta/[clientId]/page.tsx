@@ -83,6 +83,9 @@ export default async function TarjetaDigitalClientePage({ params }: PageProps) {
     rewardDescription:
       loyaltyConfig.rewardDescription || "50% OFF en tu próximo corte o servicio",
     pointsPerVisit: Number(loyaltyConfig.pointsPerVisit) || 1,
+    rewards: Array.isArray(loyaltyConfig.rewards) && loyaltyConfig.rewards.length > 0
+      ? loyaltyConfig.rewards
+      : undefined,
   };
 
   const client: TarjetaDataProps["client"] = {

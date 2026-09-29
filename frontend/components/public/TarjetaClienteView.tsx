@@ -40,6 +40,7 @@ export type TarjetaDataProps = {
     rewardThreshold: number;
     rewardDescription: string;
     pointsPerVisit: number;
+    rewards?: { id: string; threshold: number; description: string }[];
   };
 };
 
@@ -75,6 +76,7 @@ export default function TarjetaClienteView({
         rewardThreshold: storeLoyalty.rewardThreshold || initialLoyalty.rewardThreshold || 5,
         rewardDescription: storeLoyalty.rewardDescription || initialLoyalty.rewardDescription,
         pointsPerVisit: storeLoyalty.pointsPerVisit || initialLoyalty.pointsPerVisit || 1,
+        rewards: storeLoyalty.rewards || initialLoyalty.rewards,
       };
     }
     return initialLoyalty;
@@ -82,8 +84,23 @@ export default function TarjetaClienteView({
 
   const brandColor = tenant.primaryColor || "#e11d48";
   const points = client.points ?? 0;
-  const threshold = Math.max(1, loyalty.rewardThreshold || 5);
-  const isRewardReady = points >= threshold;
+
+  const rewardTiers = useMemo(() => {
+    if (loyalty.rewards && loyalty.rewards.length > 0) {
+      return [...loyalty.rewards].sort((a, b) => a.threshold - b.threshold);
+    }
+    return [
+      {
+        id: "default-tier",
+        threshold: loyalty.rewardThreshold || 5,
+        description: loyalty.rewardDescription || "Premio especial por tu fidelidad",
+      },
+    ];
+  }, [loyalty.rewards, loyalty.rewardThreshold, loyalty.rewardDescription]);
+
+  const maxThreshold = Math.max(1, ...rewardTiers.map((r) => r.threshold));
+  const threshold = loyalty.rewards && loyalty.rewards.length > 0 ? maxThreshold : Math.max(1, loyalty.rewardThreshold || 5);
+  const isRewardReady = points >= (rewardTiers[0]?.threshold || 5);
   const remaining = Math.max(0, threshold - points);
   const progressPercent = Math.min(100, Math.round((points / threshold) * 100));
 
@@ -312,9 +329,66 @@ export default function TarjetaClienteView({
             </div>
           )}
 
-          {/* Reward Status Pill */}
+          {/* Reward Status / Multi-tier list */}
           <div className="relative z-10 mt-5">
-            {isRewardReady ? (
+            {rewardTiers.length > 1 ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Premios Disponibles ({rewardTiers.length})
+                  </span>
+                  <span className="text-[10px] font-semibold text-emerald-400">
+                    {rewardTiers.filter((r) => points >= r.threshold).length} alcanzados
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {rewardTiers.map((r, idx) => {
+                    const isTierUnlocked = points >= r.threshold;
+                    const diff = Math.max(0, r.threshold - points);
+                    return (
+                      <div
+                        key={r.id || idx}
+                        className={`rounded-2xl border p-2.5 flex items-center justify-between text-xs transition-all ${
+                          isTierUnlocked
+                            ? "border-emerald-500/40 bg-emerald-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 mr-2">
+                          <div
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-black shadow-sm ${
+                              isTierUnlocked
+                                ? "bg-emerald-500 text-slate-950"
+                                : "bg-white/10 text-slate-300"
+                            }`}
+                          >
+                            {isTierUnlocked ? <Gift className="h-4 w-4" /> : <Award className="h-3.5 w-3.5" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold truncate text-xs leading-snug">{r.description}</p>
+                            <span className="text-[10px] text-slate-400">
+                              {r.threshold} {loyalty.mode === "points" ? "pts" : "sellos"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          {isTierUnlocked ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                              ¡Desbloqueado!
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-slate-400">
+                              Faltan {diff}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : isRewardReady ? (
               <div className="rounded-2xl border border-emerald-400/40 bg-emerald-500/15 p-3 flex items-center gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-black shadow-md">
                   <Gift className="h-5 w-5" />
@@ -324,7 +398,7 @@ export default function TarjetaClienteView({
                     ¡Premio Desbloqueado!
                   </span>
                   <p className="text-xs font-bold text-white leading-tight truncate">
-                    {loyalty.rewardDescription}
+                    {rewardTiers[0]?.description || loyalty.rewardDescription}
                   </p>
                 </div>
               </div>
@@ -332,7 +406,7 @@ export default function TarjetaClienteView({
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 text-slate-300 truncate mr-2">
                   <Gift className="h-4 w-4 shrink-0" style={{ color: brandColor }} />
-                  <span className="truncate">{loyalty.rewardDescription}</span>
+                  <span className="truncate">{rewardTiers[0]?.description || loyalty.rewardDescription}</span>
                 </div>
                 <span
                   className="font-bold text-[11px] shrink-0"

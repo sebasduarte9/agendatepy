@@ -295,6 +295,10 @@ export const initialLoyalty: LoyaltySettings = {
   rewardThreshold: 5,
   rewardDescription: "50% OFF en tu próximo corte o servicio",
   pointsPerVisit: 1,
+  rewards: [
+    { id: "rew-1", threshold: 5, description: "50% OFF en tu próximo corte o servicio" },
+    { id: "rew-2", threshold: 10, description: "Corte o Tratamiento Capilar 100% Gratis" },
+  ],
 };
 
 export const initialSipap: SipapConfig = {

@@ -21,6 +21,7 @@ import {
   Smartphone,
   ShieldCheck,
   Plus,
+  Trash2,
   Info,
   Sparkles,
   QrCode,
@@ -35,7 +36,7 @@ import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import { formatGs } from "@/lib/dashboard-dates";
-import type { Client } from "@/lib/dashboard-types";
+import type { Client, LoyaltyRewardTier } from "@/lib/dashboard-types";
 
 const REWARD_PRESETS = [
   "50% OFF en tu próximo corte o servicio",
@@ -65,12 +66,25 @@ export default function FidelizacionPage() {
   const [selectedClientForQr, setSelectedClientForQr] = useState<Client | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
+  // Normalize active reward tiers
+  const activeRewards: LoyaltyRewardTier[] = useMemo(() => {
+    if (loyalty.rewards && Array.isArray(loyalty.rewards) && loyalty.rewards.length > 0) {
+      return [...loyalty.rewards].sort((a, b) => a.threshold - b.threshold);
+    }
+    return [
+      {
+        id: "rew-1",
+        threshold: loyalty.rewardThreshold || 5,
+        description: loyalty.rewardDescription || "50% OFF en tu próximo corte o servicio",
+      },
+    ];
+  }, [loyalty.rewards, loyalty.rewardThreshold, loyalty.rewardDescription]);
+
   const [formSettings, setFormSettings] = useState({
     enabled: loyalty.enabled,
     mode: loyalty.mode || "stamps",
-    rewardThreshold: loyalty.rewardThreshold,
-    rewardDescription: loyalty.rewardDescription,
     pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
+    rewards: activeRewards,
   });
 
   // Keep form in sync if store updates
@@ -78,11 +92,10 @@ export default function FidelizacionPage() {
     setFormSettings({
       enabled: loyalty.enabled,
       mode: loyalty.mode || "stamps",
-      rewardThreshold: loyalty.rewardThreshold,
-      rewardDescription: loyalty.rewardDescription,
       pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
+      rewards: activeRewards,
     });
-  }, [loyalty]);
+  }, [loyalty, activeRewards]);
 
   // Generate QR when client is selected
   useEffect(() => {
@@ -103,8 +116,11 @@ export default function FidelizacionPage() {
 
   const totalPointsAwarded = clients.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
   const totalRewardsRedeemed = clients.reduce((sum, c) => sum + (c.loyaltyRedeemed || 0), 0);
+
+  // A client is eligible if they have reached at least the lowest reward threshold
+  const minRewardThreshold = activeRewards[0]?.threshold || loyalty.rewardThreshold || 5;
   const eligibleClients = clients.filter(
-    (c) => (c.loyaltyPoints || 0) >= loyalty.rewardThreshold
+    (c) => (c.loyaltyPoints || 0) >= minRewardThreshold
   );
 
   const filteredClients = useMemo(() => {
@@ -118,7 +134,7 @@ export default function FidelizacionPage() {
         if (!matchesSearch) return false;
 
         if (filterTab === "con_premio") {
-          return (c.loyaltyPoints || 0) >= loyalty.rewardThreshold;
+          return (c.loyaltyPoints || 0) >= minRewardThreshold;
         }
         if (filterTab === "vips") {
           return c.tags.includes("VIP");
@@ -127,23 +143,55 @@ export default function FidelizacionPage() {
         return true;
       })
       .sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0));
-  }, [clients, search, filterTab, loyalty.rewardThreshold]);
+  }, [clients, search, filterTab, minRewardThreshold]);
+
+  function handleAddRewardTier() {
+    const lastTier = formSettings.rewards[formSettings.rewards.length - 1];
+    const nextStep = formSettings.mode === "points" ? 50 : 5;
+    const nextThreshold = lastTier ? lastTier.threshold + nextStep : 5;
+    const newTier: LoyaltyRewardTier = {
+      id: `rew-${Date.now()}`,
+      threshold: nextThreshold,
+      description: "Servicio o Beneficio Especial de Regalo",
+    };
+    setFormSettings({
+      ...formSettings,
+      rewards: [...formSettings.rewards, newTier],
+    });
+  }
+
+  function handleRemoveRewardTier(id: string) {
+    if (formSettings.rewards.length <= 1) return;
+    setFormSettings({
+      ...formSettings,
+      rewards: formSettings.rewards.filter((r) => r.id !== id),
+    });
+  }
+
+  function handleUpdateTier(id: string, patch: Partial<LoyaltyRewardTier>) {
+    setFormSettings({
+      ...formSettings,
+      rewards: formSettings.rewards.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    });
+  }
 
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
     setIsSavingSettings(true);
     try {
+      const sortedTiers = [...formSettings.rewards].sort((a, b) => a.threshold - b.threshold);
       const patch = {
         enabled: formSettings.enabled,
         mode: formSettings.mode as "stamps" | "points",
-        rewardThreshold: Number(formSettings.rewardThreshold),
-        rewardDescription: formSettings.rewardDescription.trim(),
+        rewardThreshold: sortedTiers[0]?.threshold || 5,
+        rewardDescription: sortedTiers[0]?.description || "Premio",
         pointsPerVisit: Number(formSettings.pointsPerVisit) || 1,
+        rewards: sortedTiers,
       };
 
       await updateLoyalty(patch);
       setEditingSettings(false);
-      pushToast("success", "Reglas del Club VIP guardadas y sincronizadas con la base de datos.");
+      pushToast("success", "Reglas y múltiples premios guardados y sincronizados con la base de datos.");
     } catch (err) {
       console.error("Error guardando reglas de fidelización:", err);
       pushToast("error", "Hubo un error al guardar las reglas.");
@@ -179,7 +227,7 @@ export default function FidelizacionPage() {
     const cardUrl = getCardUrl(clientId);
     const cleanPhone = clientPhone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `¡Hola ${clientName}! 👋 Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n📲 ${cardUrl}\n\nPodés abrir tu enlace en cualquier momento para consultar tus sellos acumulados y premios. ¡Acumulás sellos en cada visita para canjear tu premio de: *${loyalty.rewardDescription}*!`
+      `¡Hola ${clientName}! 👋 Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n📲 ${cardUrl}\n\nPodés abrir tu enlace en cualquier momento para consultar tus sellos acumulados y premios. ¡Acumulás sellos en cada visita para canjear tus premios en *${business.name}*!`
     );
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   }
@@ -236,67 +284,87 @@ export default function FidelizacionPage() {
         </div>
       </div>
 
-      {/* ═══ 2. COMPACT SUMMARY & CLIENT WEB CARD PREVIEW ═══ */}
+      {/* ═══ 2. COMPACT SUMMARY & CLIENT WEB CARD PREVIEW (LIGHT & DARK THEMED) ═══ */}
       <div
         data-tour="fidelizacion-wallet-banner"
-        className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-900 text-white p-4 sm:p-5 shadow-sm"
+        className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-4 sm:p-5 shadow-xs transition"
       >
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
           {/* Left Column: Compact Rule & Custom Link Info */}
           <div className="md:col-span-7 space-y-2.5">
-            <div className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-200">
-              <Globe className="h-3 w-3 text-emerald-400" />
+            <div className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+              <Globe className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
               <span>Formato de Enlace Web Exclusivo</span>
             </div>
 
             <div>
-              <div className="font-mono text-xs text-emerald-400 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 inline-block select-all">
-                agendate.py/{business.slug || "salon"}/tarjeta/<span className="text-white/60">[id-cliente]</span>
+              <div className="font-mono text-xs text-emerald-700 dark:text-emerald-400 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 inline-block select-all">
+                agendate.py/{business.slug || "salon"}/tarjeta/<span className="text-slate-400 dark:text-white/60">[id-cliente]</span>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed max-w-lg">
-              Regla activa: cada cliente suma <strong>{loyalty.mode === "points" ? `${loyalty.pointsPerVisit} pts` : "1 sello"}</strong> por turno asistido. Al alcanzar <strong>{loyalty.rewardThreshold} {loyalty.mode === "points" ? "puntos" : "sellos"}</strong>, desbloquea: <span className="text-emerald-300 font-semibold">{loyalty.rewardDescription}</span>.
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-lg">
+              Regla activa: cada cliente suma <strong>{loyalty.mode === "points" ? `${loyalty.pointsPerVisit} pts` : "1 sello"}</strong> por turno asistido.
+              {activeRewards.length > 1 ? (
+                <span> Tenés <strong>{activeRewards.length} premios escalonados</strong> configurados para premiar la recurrencia.</span>
+              ) : (
+                <span> Al alcanzar <strong>{loyalty.rewardThreshold} {loyalty.mode === "points" ? "puntos" : "sellos"}</strong>, desbloquea: <span className="text-emerald-600 dark:text-emerald-300 font-semibold">{loyalty.rewardDescription}</span>.</span>
+              )}
             </p>
+
+            {/* Configured Rewards Chips */}
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {activeRewards.map((tier, idx) => (
+                <span
+                  key={tier.id || idx}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200"
+                >
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    {tier.threshold} {loyalty.mode === "points" ? "pts" : "sellos"}:
+                  </span>
+                  <span className="truncate max-w-[170px]">{tier.description}</span>
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Right Column: Sleek Mini Web Card Preview (Uses logged in user's name) */}
+          {/* Right Column: Sleek Mini Web Card Preview (Themed) */}
           <div className="md:col-span-5 flex justify-center md:justify-end">
-            <div className="w-full max-w-xs rounded-xl bg-slate-950 border border-white/10 p-3.5 space-y-2.5 shadow-md">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <div className="w-full max-w-xs rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 p-3.5 space-y-2.5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-white/10 pb-2">
                 <div className="min-w-0">
-                  <h4 className="font-bold text-xs truncate text-white">{business.name}</h4>
-                  <span className="text-[10px] text-slate-400">Tarjeta Digital VIP</span>
+                  <h4 className="font-bold text-xs truncate text-slate-900 dark:text-white">{business.name}</h4>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Tarjeta Digital VIP</span>
                 </div>
-                <span className="text-[9px] font-mono bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                <span className="text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">
                   ACTIVO
                 </span>
               </div>
 
               <div className="flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-[9.5px] text-slate-400 block">Titular:</span>
-                  <span className="font-bold text-white text-xs">{displayName}</span>
+                  <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block">Titular:</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-xs">{displayName}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[9.5px] text-slate-400 block">Progreso:</span>
-                  <span className="font-extrabold text-emerald-400 text-xs">
-                    {Math.min(4, loyalty.rewardThreshold)} / {loyalty.rewardThreshold} sellos
+                  <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block">Progreso:</span>
+                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
+                    {Math.min(4, activeRewards[0]?.threshold || 5)} / {activeRewards[0]?.threshold || 5} sellos
                   </span>
                 </div>
               </div>
 
               {/* Compact Stamp Dots */}
               <div className="flex items-center gap-1.5 pt-0.5">
-                {Array.from({ length: Math.min(loyalty.rewardThreshold, 8) }).map((_, i) => {
+                {Array.from({ length: Math.min(activeRewards[0]?.threshold || 5, 8) }).map((_, i) => {
                   const filled = i < 4;
                   return (
                     <div
                       key={i}
                       className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold transition ${
                         filled
-                          ? "bg-emerald-500 text-slate-950 font-black shadow-xs"
-                          : "border border-white/20 text-slate-500"
+                          ? "bg-emerald-500 text-white font-black shadow-2xs"
+                          : "border border-slate-300 dark:border-white/20 text-slate-400"
                       }`}
                     >
                       {filled ? "✓" : i + 1}
@@ -305,211 +373,219 @@ export default function FidelizacionPage() {
                 })}
               </div>
 
-              <div className="rounded-lg bg-white/5 border border-white/5 px-2.5 py-1 text-[10px] text-slate-300 truncate">
-                🎁 Premio: <strong className="text-white">{loyalty.rewardDescription}</strong>
+              <div className="rounded-lg bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 px-2.5 py-1 text-[10px] text-slate-700 dark:text-slate-300 truncate">
+                🎁 1° Premio: <strong className="text-slate-900 dark:text-white">{activeRewards[0]?.description || loyalty.rewardDescription}</strong>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ═══ 3. CONFIGURATION PANEL (COLLAPSIBLE / FORM) ═══ */}
-      {editingSettings && (
-        <Card data-tour="fidelizacion-config-card" className="border-2 border-primary/30 bg-primary/5 dark:bg-primary/10 p-6 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-primary/15 pb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
-                <SlidersHorizontal className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Reglas del Programa de Fidelización & Beneficios
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Definí cómo ganan sellos tus clientes y qué premio se les acredita automáticamente.
-                </p>
-              </div>
+      {/* ═══ 3. CONFIGURATION PANEL & MULTI-REWARDS BUILDER (ALWAYS IN DOM FOR TOUR STEP 4) ═══ */}
+      <Card data-tour="fidelizacion-config-card" className="border border-slate-200/80 dark:border-white/10 p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-white/5 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <SlidersHorizontal className="h-4.5 w-4.5" />
             </div>
-
-            <label className="flex items-center gap-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-2xl px-3.5 py-2 shadow-2xs">
-              <input
-                type="checkbox"
-                checked={formSettings.enabled}
-                onChange={(e) => setFormSettings({ ...formSettings, enabled: e.target.checked })}
-                className="h-4 w-4 rounded text-primary focus:ring-primary cursor-pointer"
-              />
-              <span>Programa Activo</span>
-            </label>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Reglas & Premios del Programa</span>
+                <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  {formSettings.rewards.length} {formSettings.rewards.length === 1 ? "Premio" : "Premios"}
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Personalizá la acumulación por visita y configurá uno o múltiples premios escalonados.
+              </p>
+            </div>
           </div>
 
-          <form onSubmit={handleSaveSettings} className="space-y-5 text-xs">
-            {/* Modalidad del programa */}
-            <div>
-              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-2">
-                Modalidad de la Tarjeta Digital
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormSettings({
-                      ...formSettings,
-                      mode: "stamps",
-                      rewardThreshold: formSettings.mode === "points" ? 5 : formSettings.rewardThreshold,
-                      pointsPerVisit: 1,
-                    })
-                  }
-                  className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
-                    formSettings.mode === "stamps"
-                      ? "border-primary bg-primary/10 dark:bg-primary/20 text-primary font-bold shadow-xs"
-                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Award className="h-5 w-5 text-amber-500" />
-                    <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                      Tarjeta de Sellos por Visita (Recomendada)
-                    </span>
-                  </div>
-                  <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
-                    1 sello automático por cada cita o visita asistida. Es la más fácil de entender para el cliente: &ldquo;Completá 5 visitas y ganás tu premio&rdquo;.
-                  </p>
-                </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEditingSettings(!editingSettings)}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              {editingSettings ? "Ocultar Editor" : "Editar Premios & Reglas"}
+            </button>
+          </div>
+        </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormSettings({
-                      ...formSettings,
-                      mode: "points",
-                      rewardThreshold: formSettings.mode === "stamps" ? 100 : formSettings.rewardThreshold,
-                      pointsPerVisit: 10,
-                    })
-                  }
-                  className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
-                    formSettings.mode === "points"
-                      ? "border-primary bg-primary/10 dark:bg-primary/20 text-primary font-bold shadow-xs"
-                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Coins className="h-5 w-5 text-indigo-500" />
-                    <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                      Tarjeta de Puntos Acumulables
-                    </span>
-                  </div>
-                  <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
-                    Acumula puntos por visita o por consumo. Ideal para salones y negocios con catálogo variado de premios escalonados.
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            {/* Threshold & Points Inputs */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  {formSettings.mode === "stamps"
-                    ? "Meta para Canjear (Cantidad de Visitas / Sellos)"
-                    : "Puntos necesarios para canjear"}
-                </label>
-                <input
-                  type="number"
-                  min="2"
-                  max={formSettings.mode === "stamps" ? "20" : "5000"}
-                  value={formSettings.rewardThreshold}
-                  onChange={(e) =>
-                    setFormSettings({ ...formSettings, rewardThreshold: Number(e.target.value) })
-                  }
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
-                />
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  {formSettings.mode === "stamps"
-                    ? "Estándar de fidelidad: 5 o 10 sellos."
-                    : "Ejemplo: 100 puntos acumulados."}
+        {/* If collapsed: Clean summary view */}
+        {!editingSettings ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+            {activeRewards.map((tier, idx) => (
+              <div
+                key={tier.id || idx}
+                className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/60 space-y-1.5"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-extrabold text-primary">Premio #{idx + 1}</span>
+                  <span className="font-mono text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-white/10">
+                    {tier.threshold} {loyalty.mode === "points" ? "puntos" : "visitas"}
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                  {tier.description}
                 </p>
               </div>
+            ))}
+          </div>
+        ) : (
+          /* If expanded: Full multi-rewards interactive form */
+          <form onSubmit={handleSaveSettings} className="space-y-5 text-xs pt-1">
+            {/* Mode selection & Active status */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10">
+              <div>
+                <span className="font-bold text-slate-900 dark:text-white block">Modalidad del Programa</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {formSettings.mode === "stamps"
+                    ? "Tarjeta de Sellos: 1 sello por cada visita o servicio asistido."
+                    : "Tarjeta de Puntos: acumulación de puntos por cita o consumo."}
+                </span>
+              </div>
 
-              {formSettings.mode === "points" ? (
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Puntos otorgados por visita completada
-                  </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormSettings({ ...formSettings, mode: "stamps" })}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs border transition cursor-pointer ${
+                    formSettings.mode === "stamps"
+                      ? "bg-primary text-white border-primary shadow-xs"
+                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10"
+                  }`}
+                >
+                  Sellos por Visita
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormSettings({ ...formSettings, mode: "points" })}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs border transition cursor-pointer ${
+                    formSettings.mode === "points"
+                      ? "bg-primary text-white border-primary shadow-xs"
+                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10"
+                  }`}
+                >
+                  Puntos
+                </button>
+
+                <label className="flex items-center gap-2 ml-2 pl-3 border-l border-slate-200 dark:border-white/10 cursor-pointer font-bold text-slate-700 dark:text-slate-200">
                   <input
-                    type="number"
-                    min="1"
-                    max="1000"
-                    value={formSettings.pointsPerVisit}
-                    onChange={(e) =>
-                      setFormSettings({ ...formSettings, pointsPerVisit: Number(e.target.value) })
-                    }
-                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
+                    type="checkbox"
+                    checked={formSettings.enabled}
+                    onChange={(e) => setFormSettings({ ...formSettings, enabled: e.target.checked })}
+                    className="h-4 w-4 rounded text-primary focus:ring-primary cursor-pointer"
                   />
-                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                    Se sumarán automáticamente a la tarjeta del cliente tras confirmar su asistencia.
+                  <span>Activo</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Multiple Rewards Tier Builder */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-xs">
+                    Premios Escalonados Configurables
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Definí los premios que se desbloquean a medida que el cliente acumula visitas o puntos.
                   </p>
                 </div>
-              ) : (
-                <div className="flex flex-col justify-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                  <span className="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    <span>Acreditación Automática</span>
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                    Cada vez que un barbero o estilista completa el servicio en el calendario, se agrega +1 sello de forma inmediata.
-                  </span>
-                </div>
-              )}
+
+                <button
+                  type="button"
+                  onClick={handleAddRewardTier}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-primary text-primary font-bold text-xs hover:bg-primary/5 transition cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Agregar Premio</span>
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                {formSettings.rewards.map((tier, idx) => (
+                  <div
+                    key={tier.id || idx}
+                    className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 space-y-2 shadow-2xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-xs text-primary flex items-center gap-1.5">
+                        <Gift className="h-3.5 w-3.5" />
+                        <span>Premio #{idx + 1}</span>
+                      </span>
+
+                      {formSettings.rewards.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRewardTier(tier.id)}
+                          className="text-slate-400 hover:text-rose-600 transition p-1"
+                          title="Eliminar este escalón de premio"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                      <div className="sm:col-span-4">
+                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                          {formSettings.mode === "points" ? "Puntos requeridos:" : "Visitas / Sellos requeridos:"}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max={formSettings.mode === "points" ? 5000 : 50}
+                          value={tier.threshold}
+                          onChange={(e) =>
+                            handleUpdateTier(tier.id, { threshold: Number(e.target.value) || 1 })
+                          }
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-3 py-2 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-8">
+                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                          Descripción del Beneficio:
+                        </label>
+                        <input
+                          type="text"
+                          value={tier.description}
+                          onChange={(e) =>
+                            handleUpdateTier(tier.id, { description: e.target.value })
+                          }
+                          placeholder="Ej. 50% OFF en próximo servicio, Producto gratis..."
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-3 py-2 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick suggestion presets chips */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] text-slate-400 font-semibold mr-1">Sugerir:</span>
+                      {REWARD_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => handleUpdateTier(tier.id, { description: preset })}
+                          className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer"
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Description & Presets */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="font-bold text-slate-800 dark:text-slate-200">
-                  Descripción del Premio / Beneficio a Entregar
-                </label>
-                <span className="text-[11px] text-slate-400">Visible en la tarjeta web del cliente</span>
-              </div>
-              <input
-                type="text"
-                value={formSettings.rewardDescription}
-                onChange={(e) =>
-                  setFormSettings({ ...formSettings, rewardDescription: e.target.value })
-                }
-                placeholder="Ej. 50% de descuento en tu próximo corte"
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
-              />
-
-              {/* Quick Presets */}
-              <div className="mt-2.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                  Sugerencias Rápidas:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {REWARD_PRESETS.map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setFormSettings({ ...formSettings, rewardDescription: preset })}
-                      className={`px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition cursor-pointer ${
-                        formSettings.rewardDescription === preset
-                          ? "bg-primary text-white border-primary"
-                          : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-white/5 hover:bg-slate-100"
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Form Footer */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-primary/15">
+            {/* Form actions */}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-white/10">
               <button
                 type="button"
                 onClick={() => setEditingSettings(false)}
-                className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 cursor-pointer transition"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 Cancelar
               </button>
@@ -517,7 +593,7 @@ export default function FidelizacionPage() {
               <button
                 type="submit"
                 disabled={isSavingSettings}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary hover:opacity-95 px-5 py-2 font-bold text-white shadow-sm transition cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary hover:opacity-90 px-5 py-2 font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50"
               >
                 {isSavingSettings ? (
                   <>
@@ -527,14 +603,14 @@ export default function FidelizacionPage() {
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    <span>Guardar Reglas en Base de Datos</span>
+                    <span>Guardar Reglas & Premios en BD</span>
                   </>
                 )}
               </button>
             </div>
           </form>
-        </Card>
-      )}
+        )}
+      </Card>
 
       {/* ═══ 4. KPI METRICS CARDS ═══ */}
       <div data-tour="fidelizacion-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -645,8 +721,11 @@ export default function FidelizacionPage() {
           ) : (
             filteredClients.map((client) => {
               const points = client.loyaltyPoints || 0;
-              const threshold = loyalty.rewardThreshold;
-              const canRedeem = points >= threshold;
+              const threshold = activeRewards[0]?.threshold || loyalty.rewardThreshold || 5;
+              const maxThreshold = activeRewards[activeRewards.length - 1]?.threshold || threshold;
+              const unlockedTiers = activeRewards.filter((r) => points >= r.threshold);
+              const highestUnlocked = unlockedTiers[unlockedTiers.length - 1];
+              const canRedeem = unlockedTiers.length > 0;
               const isCopied = copiedId === client.id;
               const initials = client.name
                 .split(" ")
@@ -667,18 +746,20 @@ export default function FidelizacionPage() {
                     </div>
 
                     <div className="space-y-0.5 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
                           {client.name}
                         </span>
                         {client.tags.includes("VIP") && (
-                          <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-0.5">
-                            <Flame className="h-3 w-3" /> VIP
+                          <span className="rounded-md bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center gap-0.5">
+                            <Crown className="h-3 w-3" /> VIP
                           </span>
                         )}
                         {canRedeem && (
-                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[9.5px] font-black text-emerald-800 dark:text-emerald-300 animate-pulse border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
-                            <Gift className="h-3 w-3" /> ¡Premio Listo!
+                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[9.5px] font-black text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                            <Gift className="h-3 w-3" />
+                            <span>{unlockedTiers.length > 1 ? `${unlockedTiers.length} Premios: ` : "Premio: "}</span>
+                            <span className="truncate max-w-[130px]">{highestUnlocked?.description}</span>
                           </span>
                         )}
                       </div>
@@ -697,21 +778,21 @@ export default function FidelizacionPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     {/* Digital Stamps Progress */}
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/60 dark:border-white/5">
-                      {Array.from({ length: threshold }).map((_, i) => {
+                      {Array.from({ length: Math.min(maxThreshold, 10) }).map((_, i) => {
                         const filled = i < points;
                         return (
                           <span
                             key={i}
                             className={`flex h-7 w-7 items-center justify-center rounded-xl text-xs font-bold transition ${
                               filled
-                                ? "bg-amber-400 text-slate-950 shadow-xs scale-105"
+                                ? "bg-emerald-500 text-white shadow-2xs scale-105"
                                 : "bg-white dark:bg-slate-900 text-slate-300 dark:text-slate-600"
                             }`}
-                            title={`Sello ${i + 1} de ${threshold}`}
+                            title={`Sello ${i + 1} de ${maxThreshold}`}
                           >
                             <Award
                               className={`h-3.5 w-3.5 ${
-                                filled ? "text-slate-950" : "text-slate-300 dark:text-slate-600"
+                                filled ? "text-white" : "text-slate-300 dark:text-slate-600"
                               }`}
                             />
                           </span>
@@ -736,10 +817,10 @@ export default function FidelizacionPage() {
                         <button
                           type="button"
                           onClick={() => handleRedeem(client.id, client.name)}
-                          className="inline-flex items-center gap-1 rounded-xl bg-amber-500 hover:bg-amber-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition cursor-pointer animate-bounce"
+                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition cursor-pointer"
                         >
                           <Gift className="h-3.5 w-3.5" />
-                          <span>Canjear Premio</span>
+                          <span>Canjear</span>
                         </button>
                       ) : (
                         <span className="text-[11px] font-semibold text-slate-400 px-1 font-mono">

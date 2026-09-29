@@ -256,12 +256,19 @@ export type WhatsAppTemplate = {
 
 export type LoyaltyMode = "stamps" | "points";
 
+export type LoyaltyRewardTier = {
+  id: string;
+  threshold: number; // Ej. 3, 5, 10 visitas o puntos
+  description: string; // Ej. "20% OFF", "Lavado gratis", etc.
+};
+
 export type LoyaltySettings = {
   enabled: boolean;
   mode?: LoyaltyMode; // "stamps" (sellos por visita) o "points" (puntos acumulables)
-  rewardThreshold: number; // Ej. 5 sellos o 100 puntos
+  rewardThreshold: number; // Ej. 5 sellos o 100 puntos (fallback / primer premio)
   rewardDescription: string; // Ej. "50% de descuento en tu próximo corte"
   pointsPerVisit: number;
+  rewards?: LoyaltyRewardTier[]; // Múltiples premios configurables por escalón
 };
 
 export type SipapConfig = {
