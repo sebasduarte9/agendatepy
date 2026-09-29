@@ -1376,6 +1376,8 @@ Cada entrada debe detallar:
     - El título *"Planes a tu medida, sin comisiones ocultas"* se optimizó con `lg:whitespace-nowrap` y ancho adaptativo para mantenerse en una sola línea en desktop.
     - Se removió *"Recordatorios automáticos por WhatsApp"* del Plan Gratuito (manteniendo *"Confirmaciones por WhatsApp"*).
     - Se recalibraron las 4 tarjetas a 7 ítems homogéneos cada una, con paddings optimizados y menor altura para que no se corten en la parte inferior y los botones de acción queden perfectamente visibles.
+    - **Panel Móvil Interactivo Flotante:** En dispositivos móviles (`< lg`), se reemplazó el apilamiento vertical largo por un selector táctil interactivo con pestañas de planes (`[ Gratis ] [ Básico ] [ Plan Pro ⭐ ] [ Empresa ]`), botones laterales flotantes (`<` y `>`) y puntos de posición para cambiar entre planes sin necesidad de desplazarse verticalmente. En desktop (`>= lg`) se mantiene la grilla completa de 4 columnas en paralelo.
+
 
 
 

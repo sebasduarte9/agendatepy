@@ -2,8 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, X, Shield, CheckCircle2, Zap, ChevronDown } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  Check,
+  X,
+  Shield,
+  CheckCircle2,
+  Zap,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
 const FREE_FEATURES = [
@@ -46,15 +55,102 @@ const EMPRESA_FEATURES = [
   { ok: true, label: "Soporte VIP telefónico y WhatsApp" },
 ];
 
+const PLANS_DATA = [
+  {
+    id: "gratis",
+    name: "Plan Gratuito",
+    shortName: "Gratis",
+    badge: "Para Empezar",
+    description: "Ideal para arrancar sin costo y digitalizarte hoy.",
+    priceMonthly: "Gs. 0",
+    priceAnnual: "Gs. 0",
+    period: "/para siempre",
+    isFree: true,
+    savings: undefined,
+    billedDetail: undefined,
+    cta: "Comenzar Gratis",
+    href: "/onboarding",
+    isExternal: false,
+    features: FREE_FEATURES,
+    highlighted: false,
+  },
+  {
+    id: "basico",
+    name: "Plan Básico",
+    shortName: "Básico",
+    badge: undefined,
+    description: "Para profesionales independientes en crecimiento.",
+    priceMonthly: "Gs. 100.000",
+    priceAnnual: "Gs. 80.000",
+    period: "/mes",
+    isFree: false,
+    savings: "Ahorrás Gs. 240.000 al año",
+    billedDetail: "Gs. 960.000 facturado anual",
+    cta: "Elegir Básico",
+    href: "/onboarding",
+    isExternal: false,
+    features: BASIC_FEATURES,
+    highlighted: false,
+  },
+  {
+    id: "pro",
+    name: "Plan Pro",
+    shortName: "Plan Pro",
+    badge: "Más Popular en PY",
+    description: "Para salones, barberías y spas con equipo.",
+    priceMonthly: "Gs. 250.000",
+    priceAnnual: "Gs. 200.000",
+    period: "/mes",
+    isFree: false,
+    savings: "Ahorrás Gs. 600.000 al año",
+    billedDetail: "Gs. 2.400.000 facturado anual",
+    cta: "Probar Plan Pro",
+    href: "/onboarding",
+    isExternal: false,
+    features: PRO_FEATURES,
+    highlighted: true,
+  },
+  {
+    id: "empresa",
+    name: "Plan Empresa",
+    shortName: "Empresa",
+    badge: undefined,
+    description: "Para franquicias, sucursales y clínicas.",
+    priceMonthly: "Gs. 650.000",
+    priceAnnual: "Gs. 520.000",
+    period: "/mes",
+    isFree: false,
+    savings: "Ahorrás Gs. 1.560.000 al año",
+    billedDetail: "Gs. 6.240.000 facturado anual",
+    cta: "Consultar por Empresa",
+    href: getCommercialWhatsAppUrl("Hola AgendatePY, quisiera asesoramiento sobre el Plan Empresa"),
+    isExternal: true,
+    features: EMPRESA_FEATURES,
+    highlighted: false,
+  },
+];
+
 export default function Pricing() {
   const [annual, setAnnual] = useState(false);
+  const [mobilePlanIndex, setMobilePlanIndex] = useState(0); // 0: gratis, 1: basico, 2: pro, 3: empresa
+
+  const activeMobilePlan = PLANS_DATA[mobilePlanIndex];
+
+  const handlePrevPlan = () => {
+    setMobilePlanIndex((prev) => (prev > 0 ? prev - 1 : PLANS_DATA.length - 1));
+  };
+
+  const handleNextPlan = () => {
+    setMobilePlanIndex((prev) => (prev < PLANS_DATA.length - 1 ? prev + 1 : 0));
+  };
 
   return (
     <section
       id="precios"
       className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 lg:pt-10 lg:pb-20 scroll-mt-20"
     >
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="relative mx-auto max-w-7xl px-3 sm:px-6">
+        {/* Encabezado Principal */}
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -117,98 +213,138 @@ export default function Pricing() {
           </button>
         </div>
 
-        {/* Grilla de Planes: Freemium + 3 Planes de Pago */}
-        <div className="mt-6 sm:mt-8 grid gap-4 lg:gap-3 xl:gap-4.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
-          {/* 1. Plan Inicial Gratuito */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full min-w-0"
-          >
-            <PriceCard
-              name="Plan Gratuito"
-              badge="Para Empezar"
-              description="Ideal para arrancar sin costo y digitalizarte hoy."
-              price="Gs. 0"
-              period="/para siempre"
-              annual={annual}
-              isFree={true}
-              cta="Comenzar Gratis"
-              href="/onboarding"
-              features={FREE_FEATURES}
-            />
-          </motion.div>
+        {/* ============================================================== */}
+        {/* MÓVIL: Panel Interactivo Flotante con Pestañas y Flechas (< >) */}
+        {/* ============================================================== */}
+        <div className="lg:hidden mt-5">
+          {/* Pestañas Interactivas (Estilo Antes vs Con AgendatePY) */}
+          <div className="flex justify-center px-1">
+            <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-1.5 shadow-sm max-w-full overflow-x-auto scrollbar-none">
+              {PLANS_DATA.map((plan, idx) => {
+                const isActive = mobilePlanIndex === idx;
+                return (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    onClick={() => setMobilePlanIndex(idx)}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
+                      isActive
+                        ? plan.highlighted
+                          ? "bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-xs font-black"
+                          : "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-black"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <span>{plan.shortName}</span>
+                    {plan.highlighted && (
+                      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-amber-300 animate-pulse" : "bg-brand"}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-          {/* 2. Plan Básico */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.65, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full min-w-0"
-          >
-            <PriceCard
-              name="Plan Básico"
-              description="Para profesionales independientes en crecimiento."
-              price={annual ? "Gs. 80.000" : "Gs. 100.000"}
-              period="/mes"
-              annual={annual}
-              savings="Ahorrás Gs. 240.000 al año"
-              billedDetail="Gs. 960.000 facturado anual"
-              cta="Elegir Básico"
-              href="/onboarding"
-              features={BASIC_FEATURES}
-            />
-          </motion.div>
+          {/* Tarjeta Flotante con Botones Laterales en los Bordes */}
+          <div className="relative mt-4 px-3 sm:px-6 max-w-md mx-auto">
+            {/* Botón Lateral Izquierdo */}
+            <button
+              type="button"
+              onClick={handlePrevPlan}
+              className="absolute left-0 sm:left-1 top-1/2 -translate-y-1/2 z-20 h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-lg border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-all cursor-pointer active:scale-90"
+              aria-label="Ver plan anterior"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
 
-          {/* 3. Plan Pro */}
-          <motion.div
-            initial={{ opacity: 0, y: 24, scale: 0.98 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full min-w-0"
-          >
-            <PriceCard
-              name="Plan Pro"
-              badge="Más Popular en PY"
-              description="Para salones, barberías y spas con equipo."
-              price={annual ? "Gs. 200.000" : "Gs. 250.000"}
-              period="/mes"
-              annual={annual}
-              savings="Ahorrás Gs. 600.000 al año"
-              billedDetail="Gs. 2.400.000 facturado anual"
-              cta="Probar Plan Pro"
-              href="/onboarding"
-              features={PRO_FEATURES}
-              highlighted
-            />
-          </motion.div>
+            {/* Botón Lateral Derecho */}
+            <button
+              type="button"
+              onClick={handleNextPlan}
+              className="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-20 h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-lg border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-all cursor-pointer active:scale-90"
+              aria-label="Ver plan siguiente"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
 
-          {/* 4. Plan Empresa */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.65, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full min-w-0"
-          >
-            <PriceCard
-              name="Plan Empresa"
-              description="Para franquicias, sucursales y clínicas."
-              price={annual ? "Gs. 520.000" : "Gs. 650.000"}
-              period="/mes"
-              annual={annual}
-              savings="Ahorrás Gs. 1.560.000 al año"
-              billedDetail="Gs. 6.240.000 facturado anual"
-              cta="Consultar por Empresa"
-              href={getCommercialWhatsAppUrl("Hola AgendatePY, quisiera asesoramiento sobre el Plan Empresa")}
-              isExternal={true}
-              features={EMPRESA_FEATURES}
-            />
-          </motion.div>
+            {/* Tarjeta Animada del Plan Activo */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeMobilePlan.id}
+                initial={{ opacity: 0, scale: 0.97, x: 15 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.97, x: -15 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <PriceCard
+                  name={activeMobilePlan.name}
+                  badge={activeMobilePlan.badge}
+                  description={activeMobilePlan.description}
+                  price={annual ? activeMobilePlan.priceAnnual : activeMobilePlan.priceMonthly}
+                  period={activeMobilePlan.period}
+                  annual={annual}
+                  isFree={activeMobilePlan.isFree}
+                  savings={activeMobilePlan.savings}
+                  billedDetail={activeMobilePlan.billedDetail}
+                  cta={activeMobilePlan.cta}
+                  href={activeMobilePlan.href}
+                  isExternal={activeMobilePlan.isExternal}
+                  features={activeMobilePlan.features}
+                  highlighted={activeMobilePlan.highlighted}
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Indicador de Posición en Puntos */}
+            <div className="mt-3.5 flex items-center justify-center gap-1.5">
+              {PLANS_DATA.map((plan, idx) => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setMobilePlanIndex(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    mobilePlanIndex === idx
+                      ? "w-6 bg-brand dark:bg-[#FF6B4A]"
+                      : "w-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400"
+                  }`}
+                  aria-label={`Ir al ${plan.name}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* DESKTOP (PC/Laptops): Grilla Completa de 4 Columnas Lado a Lado */}
+        {/* ============================================================== */}
+        <div className="hidden lg:grid lg:grid-cols-4 lg:gap-3 xl:gap-4.5 items-stretch mt-6 sm:mt-8">
+          {PLANS_DATA.map((plan) => (
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col h-full min-w-0"
+            >
+              <PriceCard
+                name={plan.name}
+                badge={plan.badge}
+                description={plan.description}
+                price={annual ? plan.priceAnnual : plan.priceMonthly}
+                period={plan.period}
+                annual={annual}
+                isFree={plan.isFree}
+                savings={plan.savings}
+                billedDetail={plan.billedDetail}
+                cta={plan.cta}
+                href={plan.href}
+                isExternal={plan.isExternal}
+                features={plan.features}
+                highlighted={plan.highlighted}
+              />
+            </motion.div>
+          ))}
         </div>
 
         {/* Garantía y Formas de Pago */}
