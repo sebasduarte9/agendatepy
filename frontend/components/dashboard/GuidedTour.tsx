@@ -694,10 +694,11 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 5,
-        taskTitle: "Respuesta de Bienvenida para WhatsApp Business",
+        taskTitle: "Motor Avanzado y Personalización",
         instruction:
-          "Copiá este mensaje predeterminado en tu WhatsApp Business para que cuando un cliente te escriba por primera vez reciba tu enlace de reservas.",
-        targetSelector: '[data-tour="bot-quick-reply"]',
+          "Elegí entre el Canva Visual de AgendatePY o conectá un bot de Typebot con lógica ilimitada y webhooks a través de Evolution API.",
+        tip: "La integración con Typebot se sincroniza automáticamente con tu instancia oficial de Evolution API.",
+        targetSelector: '[data-tour="bot-engine-toggle"]',
       },
     ],
   },

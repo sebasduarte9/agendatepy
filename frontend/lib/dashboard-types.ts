@@ -317,6 +317,12 @@ export type EvolutionApiConfig = {
   autoBotCadenceSeconds?: number;
   outOfHoursEnabled?: boolean;
   outOfHoursMessage?: string;
+  canvasNodes?: any[];
+  canvasConnections?: any[];
+  botEngine?: "native_canvas" | "typebot";
+  typebotUrl?: string;
+  typebotName?: string;
+  typebotKeywordFinish?: string;
   webhookUrl?: string;
   lastSync?: string;
   instagramConnected?: boolean;
@@ -345,4 +351,7 @@ export type BusinessProfile = {
   tiktokPixel: string;
   openingCash: number; // Fondo de caja inicial en Gs.
   acceptedPaymentMethods?: string[]; // Medios de pago habilitados: efectivo, pos, transferencia, billetera, qr
+  logo?: string;
+  logoUrl?: string;
+  banner?: string;
 };
