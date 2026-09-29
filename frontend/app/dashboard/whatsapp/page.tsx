@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Clock,
   Send,
-  HelpCircle,
   Lock,
   Zap,
   RefreshCw,
@@ -21,7 +20,6 @@ import {
   Tag,
   ListOrdered,
   Smartphone,
-  Copy,
   X,
   CheckCheck,
   ExternalLink,
@@ -41,17 +39,14 @@ import {
   ChevronLeft,
   Video,
   Play,
-  Pause,
   Mic,
   Share2,
-  Settings2,
-  SlidersHorizontal,
-  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import type { BotMainMenuOption, BotKeywordRule } from "@/lib/dashboard-types";
 
-// Dynamic message tags for templates (100% clean, no emojis)
+// Dynamic message tags for templates (100% clean, zero emojis)
 const AVAILABLE_TAGS = [
   { tag: "{cliente}", label: "Nombre Cliente" },
   { tag: "{servicio}", label: "Servicio" },
@@ -65,14 +60,18 @@ const AVAILABLE_TAGS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-// N8N-STYLE CANVAS TYPES & MODELS
+// SPECIALIZED NODE TYPES (Separated Actions, Zero Emojis)
 // ═══════════════════════════════════════════════════════════════════
 
 export type NodeType =
   | "trigger"
   | "welcome"
   | "menu"
-  | "action"
+  | "action_link"
+  | "action_prices"
+  | "action_sipap"
+  | "action_human"
+  | "action_location"
   | "keyword"
   | "booking_trigger"
   | "confirmation"
@@ -86,14 +85,12 @@ export interface CanvasNode {
   y: number;
   enabled: boolean;
   config: {
-    key?: string; // for menu options: "1", "2", etc.
-    actionType?: "none" | "send_link" | "send_sipap" | "human_handoff";
-    response?: string;
+    key?: string; // "1", "2", "3", etc.
     keywords?: string[];
+    response?: string;
     welcomeText?: string;
     fallbackText?: string;
     templateTrigger?: "confirmacion" | "recordatorio_24h" | "recordatorio_2h" | "cancelacion";
-    priceText?: string;
   };
 }
 
@@ -105,7 +102,57 @@ export interface CanvasConnection {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CUSTOM UI CONTROLS (Zero Basic HTML, Zero Emojis)
+// WHATSAPP TEXT FORMATTER HELPER (Parses *bold*, _italic_, ~strike~)
+// ═══════════════════════════════════════════════════════════════════
+
+function renderWhatsAppFormatted(text: string) {
+  if (!text) return null;
+  const lines = text.split("\n");
+
+  return lines.map((line, lineIdx) => {
+    // Regex splits *bold*, _italic_, ~strike~, `code`
+    const parts = line.split(/(\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~|`[^`\n]+`)/g);
+
+    return (
+      <span key={lineIdx} className="block leading-relaxed min-h-[1.2em]">
+        {parts.map((part, partIdx) => {
+          if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+            return (
+              <strong key={partIdx} className="font-bold text-slate-900">
+                {part.slice(1, -1)}
+              </strong>
+            );
+          }
+          if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
+            return (
+              <em key={partIdx} className="italic text-slate-800">
+                {part.slice(1, -1)}
+              </em>
+            );
+          }
+          if (part.startsWith("~") && part.endsWith("~") && part.length > 2) {
+            return (
+              <del key={partIdx} className="line-through text-slate-400">
+                {part.slice(1, -1)}
+              </del>
+            );
+          }
+          if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+            return (
+              <code key={partIdx} className="font-mono bg-black/10 px-1 py-0.5 rounded text-[11px]">
+                {part.slice(1, -1)}
+              </code>
+            );
+          }
+          return <span key={partIdx}>{part}</span>;
+        })}
+      </span>
+    );
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CUSTOM SWITCH COMPONENT
 // ═══════════════════════════════════════════════════════════════════
 
 function CustomSwitch({
@@ -144,228 +191,6 @@ function CustomSwitch({
   );
 }
 
-function ActionSelector({
-  value,
-  onChange,
-}: {
-  value: "none" | "send_link" | "send_sipap" | "human_handoff";
-  onChange: (val: "none" | "send_link" | "send_sipap" | "human_handoff") => void;
-}) {
-  const actions: {
-    id: "none" | "send_link" | "send_sipap" | "human_handoff";
-    label: string;
-    icon: typeof MessageSquare;
-  }[] = [
-    { id: "none", label: "Solo Texto", icon: MessageSquare },
-    { id: "send_link", label: "Link Reservas", icon: ExternalLink },
-    { id: "send_sipap", label: "Datos SIPAP", icon: CreditCard },
-    { id: "human_handoff", label: "Asesor Humano", icon: UserCheck },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/5">
-      {actions.map((act) => {
-        const isSelected = value === act.id;
-        const Icon = act.icon;
-        return (
-          <button
-            key={act.id}
-            type="button"
-            onClick={() => onChange(act.id)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              isSelected
-                ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs border border-slate-200/90 dark:border-white/10"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <Icon className={`h-3.5 w-3.5 shrink-0 ${isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`} />
-            <span className="truncate text-[11px]">{act.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// INITIAL 360° WORKFLOW GRAPH (Nodes + Connections)
-// ═══════════════════════════════════════════════════════════════════
-
-const DEFAULT_CANVAS_NODES: CanvasNode[] = [
-  // ── INCOMING MESSAGES BRANCH ──
-  {
-    id: "node-trigger-entry",
-    type: "trigger",
-    title: "Mensaje Entrante",
-    x: 40,
-    y: 190,
-    enabled: true,
-    config: {},
-  },
-  {
-    id: "node-welcome-hub",
-    type: "welcome",
-    title: "Saludo & Menú",
-    x: 270,
-    y: 160,
-    enabled: true,
-    config: {
-      welcomeText: "¡Hola! Bienvenido/a a nuestro canal oficial. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor\n\n_Escribí el número de la opción o tu consulta._",
-      fallbackText: "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo.",
-    },
-  },
-  {
-    id: "node-menu-router",
-    type: "menu",
-    title: "Enrutador de Opciones",
-    x: 530,
-    y: 130,
-    enabled: true,
-    config: {},
-  },
-  {
-    id: "node-act-link",
-    type: "action",
-    title: "Opción 1: Link Turnos",
-    x: 820,
-    y: 20,
-    enabled: true,
-    config: {
-      key: "1",
-      actionType: "send_link",
-      response: "¡Excelente! Podés elegir tu servicio, ver los profesionales y reservar tu turno con confirmación inmediata acá:",
-    },
-  },
-  {
-    id: "node-act-prices",
-    type: "action",
-    title: "Opción 2: Tarifario",
-    x: 820,
-    y: 130,
-    enabled: true,
-    config: {
-      key: "2",
-      actionType: "send_link",
-      response: "Nuestros servicios más pedidos:\n• Corte Clásico / Fade: Gs. 60.000\n• Perfilado & Barba VIP: Gs. 45.000\n• Combo Corte + Barba: Gs. 95.000\n\nPodés ver la carta completa y promociones aquí:",
-    },
-  },
-  {
-    id: "node-act-location",
-    type: "action",
-    title: "Opción 3: Ubicación",
-    x: 820,
-    y: 240,
-    enabled: true,
-    config: {
-      key: "3",
-      actionType: "none",
-      response: "Estamos en Avda. Santa Teresa 1420 c/ Denis Roa, Asunción.\nHorario de atención: Lunes a Sábado de 09:00 a 20:00 hs.\nContamos con estacionamiento exclusivo para clientes.",
-    },
-  },
-  {
-    id: "node-act-sipap",
-    type: "action",
-    title: "Opción 4: Datos SIPAP",
-    x: 820,
-    y: 350,
-    enabled: true,
-    config: {
-      key: "4",
-      actionType: "send_sipap",
-      response: "Datos para transferencias bancarias:\nBanco: Banco Itaú Paraguay\nTitular: AgendatePY Studio\nCta Cte: 0123456789\nRUC: 80012345-6\nAlias SIPAP: pagos@agendate.py\n\nPor favor envianos tu comprobante para validarlo.",
-    },
-  },
-  {
-    id: "node-act-human",
-    type: "action",
-    title: "Opción 5: Asesor Humano",
-    x: 820,
-    y: 460,
-    enabled: true,
-    config: {
-      key: "5",
-      actionType: "human_handoff",
-      response: "¡Claro que sí! Un integrante de nuestro equipo tomará la conversación en breve. Por favor dejanos tu consulta detallada.",
-    },
-  },
-  {
-    id: "node-keywords-trigger",
-    type: "keyword",
-    title: "Palabras Clave",
-    x: 270,
-    y: 400,
-    enabled: true,
-    config: {
-      keywords: ["precio", "costo", "turno", "donde", "ubicacion", "sipap"],
-      response: "Gracias por consultarnos. Consultá nuestros horarios y reservá en tiempo real aquí:",
-      actionType: "send_link",
-    },
-  },
-
-  // ── APPOINTMENT AUTOMATIONS BRANCH (CONFIRMATION & REMINDERS) ──
-  {
-    id: "node-trigger-booking",
-    type: "booking_trigger",
-    title: "Turno Confirmado en Web",
-    x: 40,
-    y: 600,
-    enabled: true,
-    config: {},
-  },
-  {
-    id: "node-confirm-card",
-    type: "confirmation",
-    title: "Confirmación Inmediata",
-    x: 320,
-    y: 580,
-    enabled: true,
-    config: {
-      templateTrigger: "confirmacion",
-      response: "Tu turno para {servicio} con {profesional} quedó confirmado para el {fecha} a las {hora} hs en {negocio}.",
-    },
-  },
-  {
-    id: "node-remind-24h",
-    type: "reminder",
-    title: "Recordatorio 24h Antes",
-    x: 620,
-    y: 580,
-    enabled: true,
-    config: {
-      templateTrigger: "recordatorio_24h",
-      response: "Te recordamos tu turno de mañana {fecha} a las {hora} hs para {servicio} en {negocio}. ¿Nos confirmás tu asistencia?",
-    },
-  },
-  {
-    id: "node-remind-2h",
-    type: "reminder",
-    title: "Recordatorio 2h Antes",
-    x: 900,
-    y: 580,
-    enabled: true,
-    config: {
-      templateTrigger: "recordatorio_2h",
-      response: "Tu turno es en 2 horas ({hora} hs). Te estamos esperando en {negocio}. ¡Nos vemos pronto!",
-    },
-  },
-];
-
-const DEFAULT_CANVAS_CONNECTIONS: CanvasConnection[] = [
-  { id: "conn-1", fromNodeId: "node-trigger-entry", toNodeId: "node-welcome-hub" },
-  { id: "conn-2", fromNodeId: "node-welcome-hub", toNodeId: "node-menu-router" },
-  { id: "conn-3", fromNodeId: "node-menu-router", toNodeId: "node-act-link" },
-  { id: "conn-4", fromNodeId: "node-menu-router", toNodeId: "node-act-prices" },
-  { id: "conn-5", fromNodeId: "node-menu-router", toNodeId: "node-act-location" },
-  { id: "conn-6", fromNodeId: "node-menu-router", toNodeId: "node-act-sipap" },
-  { id: "conn-7", fromNodeId: "node-menu-router", toNodeId: "node-act-human" },
-  { id: "conn-8", fromNodeId: "node-trigger-entry", toNodeId: "node-keywords-trigger" },
-  { id: "conn-9", fromNodeId: "node-keywords-trigger", toNodeId: "node-act-link" },
-  // Booking confirmation pipeline
-  { id: "conn-10", fromNodeId: "node-trigger-booking", toNodeId: "node-confirm-card" },
-  { id: "conn-11", fromNodeId: "node-confirm-card", toNodeId: "node-remind-24h" },
-  { id: "conn-12", fromNodeId: "node-remind-24h", toNodeId: "node-remind-2h" },
-];
-
 // ═══════════════════════════════════════════════════════════════════
 // MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════════════════════════════
@@ -373,6 +198,7 @@ const DEFAULT_CANVAS_CONNECTIONS: CanvasConnection[] = [
 export default function BotWhatsAppPage() {
   const {
     business,
+    services,
     evolutionConfig,
     updateEvolutionConfig,
     whatsappTemplates,
@@ -380,29 +206,215 @@ export default function BotWhatsAppPage() {
     toggleWhatsAppTemplate,
     updateBusiness,
     pushToast,
-    openTour,
   } = useDashboardStore();
 
   const isConnected = Boolean(evolutionConfig.connected);
 
-  // 3 Streamlined Tabs (WhatsApp Business removed)
+  // Tabs: "Canva de flujo", "SIMULADOR", "Plantillas"
   const [activeTab, setActiveTab] = useState<"canva" | "simulador" | "plantillas">("canva");
 
-  // Bot Engine Mode (Native Canvas vs Typebot)
-  const [botEngine, setBotEngine] = useState<"native_canvas" | "typebot">(
-    evolutionConfig.botEngine || "native_canvas"
-  );
-  const [typebotUrl, setTypebotUrl] = useState(
-    evolutionConfig.typebotUrl || "https://typebot.co"
-  );
-  const [typebotName, setTypebotName] = useState(
-    evolutionConfig.typebotName || `${(business.slug || "local")}-whatsapp`
-  );
-  const [typebotKeywordFinish, setTypebotKeywordFinish] = useState(
-    evolutionConfig.typebotKeywordFinish || "humano"
-  );
+  const slug = business.slug || "barberia";
+  const [origin, setOrigin] = useState("https://agendatepy.com");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+  const bookingUrl = `${origin}/${slug}/reservar`;
 
-  // Canvas State: Loaded from evolutionConfig if exists in DB, or defaults
+  // Dynamic default texts based on real salon profile & services
+  const defaultPricesText =
+    services && services.length > 0
+      ? `*Servicios y Precios en ${business.name}:*\n` +
+        services
+          .slice(0, 4)
+          .map((s) => `• *${s.name}*: Gs. ${s.price.toLocaleString("es-PY")}`)
+          .join("\n") +
+        `\n\nPodés ver la carta completa y reservar tu turno aquí:\n${bookingUrl}`
+      : `Podés consultar nuestra carta completa de servicios y reservar tu turno al instante aquí:\n${bookingUrl}`;
+
+  const defaultLocationText = `*Ubicación & Horarios:*\nEstamos en ${business.address || "Avda. Santa Teresa 1420 c/ Denis Roa, Asunción"}.\nHorario de atención: Lunes a Sábados de 09:00 a 20:00 hs.`;
+
+  const defaultSipapText = `*Datos para Transferencia SIPAP:*\nBanco: Banco Itaú Paraguay\nTitular: ${business.name}\nRUC: 80012345-6\nAlias SIPAP: pagos@agendate.py\n\nPor favor envianos tu comprobante para validarlo.`;
+
+  const defaultWelcomeText = `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n*1.* Agendar turno online\n*2.* Servicios y precios\n*3.* Datos de pago SIPAP\n*4.* Hablar con un asesor\n*5.* Ubicación y horarios\n\n_Escribí el número de la opción o tu consulta._`;
+
+  // Default Canvas Graph with separated action nodes
+  const buildInitialNodes = useCallback((): CanvasNode[] => {
+    return [
+      {
+        id: "node-trigger-entry",
+        type: "trigger",
+        title: "Mensaje Entrante",
+        x: 40,
+        y: 190,
+        enabled: true,
+        config: {},
+      },
+      {
+        id: "node-welcome-hub",
+        type: "welcome",
+        title: "Saludo & Menú",
+        x: 270,
+        y: 160,
+        enabled: true,
+        config: {
+          welcomeText: defaultWelcomeText,
+          fallbackText: "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo.",
+        },
+      },
+      {
+        id: "node-menu-router",
+        type: "menu",
+        title: "Enrutador de Opciones",
+        x: 530,
+        y: 130,
+        enabled: true,
+        config: {},
+      },
+      // 4 SEPARATED ACTION NODES + LOCATION
+      {
+        id: "node-act-link",
+        type: "action_link",
+        title: "Link de Reservas",
+        x: 820,
+        y: 20,
+        enabled: true,
+        config: {
+          key: "1",
+          keywords: ["1", "turno", "agendar", "cita", "reserva", "reservar", "hora"],
+          response: `¡Excelente! Podés elegir tu servicio, ver los profesionales y reservar tu turno con confirmación inmediata acá:\n${bookingUrl}`,
+        },
+      },
+      {
+        id: "node-act-prices",
+        type: "action_prices",
+        title: "Servicios & Precios",
+        x: 820,
+        y: 130,
+        enabled: true,
+        config: {
+          key: "2",
+          keywords: ["2", "precio", "costo", "tarifa", "cuanto", "vale", "servicios"],
+          response: defaultPricesText,
+        },
+      },
+      {
+        id: "node-act-sipap",
+        type: "action_sipap",
+        title: "Datos SIPAP",
+        x: 820,
+        y: 240,
+        enabled: true,
+        config: {
+          key: "3",
+          keywords: ["3", "sipap", "transferencia", "banco", "pagos", "cuenta"],
+          response: defaultSipapText,
+        },
+      },
+      {
+        id: "node-act-human",
+        type: "action_human",
+        title: "Asesor Humano",
+        x: 820,
+        y: 350,
+        enabled: true,
+        config: {
+          key: "4",
+          keywords: ["4", "humano", "persona", "asesor", "hablar", "ayuda"],
+          response: "¡Claro que sí! Un integrante de nuestro equipo tomará la conversación en breve. Por favor dejanos tu consulta detallada.",
+        },
+      },
+      {
+        id: "node-act-location",
+        type: "action_location",
+        title: "Ubicación & Horarios",
+        x: 820,
+        y: 460,
+        enabled: true,
+        config: {
+          key: "5",
+          keywords: ["5", "donde", "ubicacion", "direccion", "llegar", "horario"],
+          response: defaultLocationText,
+        },
+      },
+      {
+        id: "node-keywords-trigger",
+        type: "keyword",
+        title: "Palabras Clave",
+        x: 270,
+        y: 400,
+        enabled: true,
+        config: {
+          keywords: ["consulta", "info", "promo", "duda"],
+          response: `Gracias por contactarnos. Podés ver nuestros horarios y reservar tu lugar en tiempo real aquí:\n${bookingUrl}`,
+        },
+      },
+      // APPOINTMENT AUTOMATIONS BRANCH
+      {
+        id: "node-trigger-booking",
+        type: "booking_trigger",
+        title: "Turno Confirmado en Web",
+        x: 40,
+        y: 600,
+        enabled: true,
+        config: {},
+      },
+      {
+        id: "node-confirm-card",
+        type: "confirmation",
+        title: "Confirmación Inmediata",
+        x: 320,
+        y: 580,
+        enabled: true,
+        config: {
+          templateTrigger: "confirmacion",
+          response: "¡Hola {cliente}! Tu turno para *{servicio}* con *{profesional}* quedó confirmado para el *{fecha} a las {hora} hs* en {negocio}.\n\nUbicación: {direccion}\nVer o gestionar tu turno: {link_autogestion}\n\n¡Te esperamos!",
+        },
+      },
+      {
+        id: "node-remind-24h",
+        type: "reminder",
+        title: "Recordatorio 24h Antes",
+        x: 620,
+        y: 580,
+        enabled: true,
+        config: {
+          templateTrigger: "recordatorio_24h",
+          response: "¡Hola {cliente}! Te recordamos tu turno de mañana *{fecha} a las {hora} hs* para *{servicio}* en *{negocio}*.\n\n¿Nos confirmás tu asistencia? Podés autogestionar aquí:\n{link_autogestion}",
+        },
+      },
+      {
+        id: "node-remind-2h",
+        type: "reminder",
+        title: "Recordatorio 2h Antes",
+        x: 900,
+        y: 580,
+        enabled: true,
+        config: {
+          templateTrigger: "recordatorio_2h",
+          response: "¡Hola {cliente}! Te recordamos que tu turno es en 2 horas ({hora} hs). Te estamos esperando en {negocio} ({direccion}). ¡Nos vemos pronto!",
+        },
+      },
+    ];
+  }, [bookingUrl, business.address, business.name, defaultLocationText, defaultPricesText, defaultSipapText, defaultWelcomeText]);
+
+  const defaultConnections: CanvasConnection[] = [
+    { id: "conn-1", fromNodeId: "node-trigger-entry", toNodeId: "node-welcome-hub" },
+    { id: "conn-2", fromNodeId: "node-welcome-hub", toNodeId: "node-menu-router" },
+    { id: "conn-3", fromNodeId: "node-menu-router", toNodeId: "node-act-link" },
+    { id: "conn-4", fromNodeId: "node-menu-router", toNodeId: "node-act-prices" },
+    { id: "conn-5", fromNodeId: "node-menu-router", toNodeId: "node-act-sipap" },
+    { id: "conn-6", fromNodeId: "node-menu-router", toNodeId: "node-act-human" },
+    { id: "conn-7", fromNodeId: "node-menu-router", toNodeId: "node-act-location" },
+    { id: "conn-8", fromNodeId: "node-trigger-entry", toNodeId: "node-keywords-trigger" },
+    { id: "conn-9", fromNodeId: "node-keywords-trigger", toNodeId: "node-act-link" },
+    { id: "conn-10", fromNodeId: "node-trigger-booking", toNodeId: "node-confirm-card" },
+    { id: "conn-11", fromNodeId: "node-confirm-card", toNodeId: "node-remind-24h" },
+    { id: "conn-12", fromNodeId: "node-remind-24h", toNodeId: "node-remind-2h" },
+  ];
+
+  // Canvas State: Loaded from DB if present, otherwise initial nodes
   const [nodes, setNodes] = useState<CanvasNode[]>(() => {
     if (
       evolutionConfig.canvasNodes &&
@@ -411,7 +423,7 @@ export default function BotWhatsAppPage() {
     ) {
       return evolutionConfig.canvasNodes;
     }
-    return DEFAULT_CANVAS_NODES;
+    return buildInitialNodes();
   });
 
   const [connections, setConnections] = useState<CanvasConnection[]>(() => {
@@ -422,14 +434,15 @@ export default function BotWhatsAppPage() {
     ) {
       return evolutionConfig.canvasConnections;
     }
-    return DEFAULT_CANVAS_CONNECTIONS;
+    return defaultConnections;
   });
 
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>("node-confirm-card");
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>("node-act-link");
   const [zoom, setZoom] = useState(1);
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
 
-  // Node Dragging
+  // Dragging state
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const dragStartRef = useRef<{ startX: number; startY: number; nodeStartX: number; nodeStartY: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
@@ -443,7 +456,7 @@ export default function BotWhatsAppPage() {
   );
   const [sendingTest, setSendingTest] = useState(false);
 
-  // In-Page Connection Modal state
+  // Modal QR
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const [qrCounter, setQrCounter] = useState(45);
@@ -451,12 +464,12 @@ export default function BotWhatsAppPage() {
     evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800"
   );
 
-  // Realistic iPhone Simulator State
+  // Simulator State (Pure WhatsApp text, zero API buttons)
   const [simChatMessages, setSimChatMessages] = useState<
     {
       id: string;
       sender: "client" | "bot";
-      type: "text" | "card" | "audio";
+      type: "text" | "card";
       text?: string;
       time: string;
       cardData?: {
@@ -466,8 +479,6 @@ export default function BotWhatsAppPage() {
         price: string;
         location: string;
       };
-      audioDuration?: string;
-      options?: { label: string; action: () => void }[];
     }[]
   >([
     {
@@ -481,35 +492,18 @@ export default function BotWhatsAppPage() {
       id: "msg-2",
       sender: "bot",
       type: "text",
-      text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor\n\n_Escribí el número de la opción o tu consulta._`,
+      text: defaultWelcomeText,
       time: "14:28",
-      options: [
-        { label: "1. Agendar Turno", action: () => triggerSimMessage("1") },
-        { label: "2. Ver Precios", action: () => triggerSimMessage("2") },
-        { label: "4. Datos SIPAP", action: () => triggerSimMessage("4") },
-      ],
     },
   ]);
   const [simInput, setSimInput] = useState("");
   const [isBotTypingSim, setIsBotTypingSim] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
   const currentTemplate =
     whatsappTemplates.find((t) => t.id === selectedTemplateId) ||
     whatsappTemplates[0];
 
-  const slug = business.slug || "barberia";
-  const [origin, setOrigin] = useState("https://agendatepy.com");
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setOrigin(window.location.origin);
-    }
-  }, []);
-
-  const bookingUrl = `${origin}/${slug}/reservar`;
-
-  // Auto scroll in iPhone simulator
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
@@ -555,22 +549,169 @@ export default function BotWhatsAppPage() {
     }
   }, [isConnectModalOpen, generateQrCode]);
 
-  function handleStartTour() {
-    if (!isConnected) {
-      setIsConnectModalOpen(true);
-      pushToast(
-        "error",
-        "Para realizar la guía completa es necesario vincular tu WhatsApp primero. Se abrió el código QR."
-      );
-    } else {
-      openTour("whatsapp");
+  // ═══════════════════════════════════════════════════════════════════
+  // TWO-WAY SYNCHRONIZATION: CANVAS NODES <-> WHATSAPP TEMPLATES
+  // ═══════════════════════════════════════════════════════════════════
+
+  function updateNode(nodeId: string, patch: Partial<CanvasNode>) {
+    setNodes((prev) =>
+      prev.map((node) => (node.id === nodeId ? { ...node, ...patch } : node))
+    );
+
+    // Two-way synchronization: If a reminder/confirmation node is toggled, update templates store!
+    if (patch.enabled !== undefined) {
+      if (nodeId === "node-remind-24h") {
+        const tmpl = whatsappTemplates.find((t) => t.id === "wt-recordatorio-24h");
+        if (tmpl && tmpl.enabled !== patch.enabled) {
+          toggleWhatsAppTemplate("wt-recordatorio-24h");
+        }
+      } else if (nodeId === "node-remind-2h") {
+        const tmpl = whatsappTemplates.find((t) => t.id === "wt-recordatorio-2h");
+        if (tmpl && tmpl.enabled !== patch.enabled) {
+          toggleWhatsAppTemplate("wt-recordatorio-2h");
+        }
+      } else if (nodeId === "node-confirm-card") {
+        const tmpl = whatsappTemplates.find((t) => t.id === "wt-confirmacion");
+        if (tmpl && tmpl.enabled !== patch.enabled) {
+          toggleWhatsAppTemplate("wt-confirmacion");
+        }
+      }
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // NODE DRAGGING & PERSISTENCE
-  // ═══════════════════════════════════════════════════════════════════
+  function handleToggleTemplate(templateId: string) {
+    toggleWhatsAppTemplate(templateId);
 
+    // Reflected in canvas nodes immediately
+    const targetNodeId =
+      templateId === "wt-confirmacion"
+        ? "node-confirm-card"
+        : templateId === "wt-recordatorio-24h"
+        ? "node-remind-24h"
+        : templateId === "wt-recordatorio-2h"
+        ? "node-remind-2h"
+        : null;
+
+    if (targetNodeId) {
+      setNodes((prev) =>
+        prev.map((n) => (n.id === targetNodeId ? { ...n, enabled: !n.enabled } : n))
+      );
+    }
+  }
+
+  function updateNodeConfig(nodeId: string, configPatch: Partial<CanvasNode["config"]>) {
+    setNodes((prev) =>
+      prev.map((node) =>
+        node.id === nodeId
+          ? { ...node, config: { ...node.config, ...configPatch } }
+          : node
+      )
+    );
+  }
+
+  function deleteNode(nodeId: string) {
+    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
+    setConnections((prev) =>
+      prev.filter((c) => c.fromNodeId !== nodeId && c.toNodeId !== nodeId)
+    );
+    if (selectedNodeId === nodeId) {
+      setSelectedNodeId(null);
+    }
+    pushToast("success", "Nodo eliminado del flujo.");
+  }
+
+  // Create specialized action nodes directly
+  function createSpecializedNode(type: NodeType, title: string, defaultText: string, defaultKey: string) {
+    const newNodeId = `node-${type}-${Date.now()}`;
+    const newNode: CanvasNode = {
+      id: newNodeId,
+      type: type,
+      title: title,
+      x: 820,
+      y: 100 + nodes.length * 35,
+      enabled: true,
+      config: {
+        key: defaultKey,
+        response: defaultText,
+        keywords: [defaultKey],
+      },
+    };
+
+    setNodes((prev) => [...prev, newNode]);
+    setConnections((prev) => [
+      ...prev,
+      { id: `conn-${Date.now()}`, fromNodeId: "node-menu-router", toNodeId: newNodeId },
+    ]);
+    setSelectedNodeId(newNodeId);
+    setIsInspectorOpen(true);
+    setAddMenuOpen(false);
+    pushToast("success", `Nodo '${title}' creado con éxito.`);
+  }
+
+  // Save flow and sync to DB
+  function handleSaveCanvasFlow() {
+    const actionNodes = nodes.filter((n) =>
+      [
+        "action_link",
+        "action_prices",
+        "action_sipap",
+        "action_human",
+        "action_location",
+      ].includes(n.type)
+    );
+    const keywordNodes = nodes.filter((n) => n.type === "keyword");
+    const welcomeNode = nodes.find((n) => n.type === "welcome");
+    const confirmNode = nodes.find((n) => n.type === "confirmation");
+    const remind24hNode = nodes.find((n) => n.id === "node-remind-24h");
+    const remind2hNode = nodes.find((n) => n.id === "node-remind-2h");
+
+    const mappedMenuOptions: BotMainMenuOption[] = actionNodes.map((n, i) => {
+      let actType: "none" | "send_link" | "send_sipap" | "human_handoff" = "none";
+      if (n.type === "action_link") actType = "send_link";
+      else if (n.type === "action_sipap") actType = "send_sipap";
+      else if (n.type === "action_human") actType = "human_handoff";
+
+      return {
+        id: n.id,
+        key: n.config.key || String(i + 1),
+        title: n.title,
+        response: n.config.response || "Información solicitada.",
+        action: actType,
+        enabled: n.enabled,
+      };
+    });
+
+    const mappedKeywordRules: BotKeywordRule[] = keywordNodes.map((n) => ({
+      id: n.id,
+      keywords: n.config.keywords || ["consulta"],
+      response: n.config.response || "Gracias por comunicarte.",
+      action: "none",
+      enabled: n.enabled,
+    }));
+
+    if (confirmNode?.config.response) {
+      updateWhatsAppTemplate("wt-confirmacion", confirmNode.config.response);
+    }
+    if (remind24hNode?.config.response) {
+      updateWhatsAppTemplate("wt-recordatorio-24h", remind24hNode.config.response);
+    }
+    if (remind2hNode?.config.response) {
+      updateWhatsAppTemplate("wt-recordatorio-2h", remind2hNode.config.response);
+    }
+
+    updateEvolutionConfig({
+      canvasNodes: nodes,
+      canvasConnections: connections,
+      mainMenuOptions: mappedMenuOptions,
+      keywordRules: mappedKeywordRules,
+      welcomeMessage: welcomeNode?.config.welcomeText || evolutionConfig.welcomeMessage,
+      fallbackMessage: welcomeNode?.config.fallbackText || evolutionConfig.fallbackMessage,
+    });
+
+    pushToast("success", "Flujo guardado con éxito y sincronizado en la base de datos.");
+  }
+
+  // Node Drag Handlers
   function handleNodePointerDown(e: React.PointerEvent, nodeId: string) {
     e.stopPropagation();
     setSelectedNodeId(nodeId);
@@ -611,115 +752,8 @@ export default function BotWhatsAppPage() {
     dragStartRef.current = null;
   }, []);
 
-  function updateNode(nodeId: string, patch: Partial<CanvasNode>) {
-    setNodes((prev) =>
-      prev.map((node) => (node.id === nodeId ? { ...node, ...patch } : node))
-    );
-  }
-
-  function updateNodeConfig(nodeId: string, configPatch: Partial<CanvasNode["config"]>) {
-    setNodes((prev) =>
-      prev.map((node) =>
-        node.id === nodeId
-          ? { ...node, config: { ...node.config, ...configPatch } }
-          : node
-      )
-    );
-  }
-
-  function deleteNode(nodeId: string) {
-    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
-    setConnections((prev) =>
-      prev.filter((c) => c.fromNodeId !== nodeId && c.toNodeId !== nodeId)
-    );
-    if (selectedNodeId === nodeId) {
-      setSelectedNodeId(null);
-    }
-    pushToast("success", "Nodo eliminado del flujo.");
-  }
-
-  function addNewActionNode() {
-    const actionCount = nodes.filter((n) => n.type === "action").length + 1;
-    const newNodeId = `node-act-${Date.now()}`;
-    const newNode: CanvasNode = {
-      id: newNodeId,
-      type: "action",
-      title: `Opción ${actionCount}: Nueva Acción`,
-      x: 820,
-      y: 100 + actionCount * 45,
-      enabled: true,
-      config: {
-        key: String(actionCount),
-        actionType: "send_link",
-        response: "Escribí aquí el texto que enviará este nodo de respuesta...",
-      },
-    };
-
-    setNodes((prev) => [...prev, newNode]);
-    setConnections((prev) => [
-      ...prev,
-      { id: `conn-${Date.now()}`, fromNodeId: "node-menu-router", toNodeId: newNodeId },
-    ]);
-    setSelectedNodeId(newNodeId);
-    setIsInspectorOpen(true);
-    pushToast("success", "Nuevo nodo de respuesta añadido al flujo.");
-  }
-
-  // 100% PERSISTENCE TO DATABASE VIA ZUSTAND & API
-  function handleSaveCanvasFlow() {
-    const actionNodes = nodes.filter((n) => n.type === "action");
-    const keywordNodes = nodes.filter((n) => n.type === "keyword");
-    const welcomeNode = nodes.find((n) => n.type === "welcome");
-    const confirmNode = nodes.find((n) => n.type === "confirmation");
-    const remind24hNode = nodes.find((n) => n.id === "node-remind-24h");
-    const remind2hNode = nodes.find((n) => n.id === "node-remind-2h");
-
-    const mappedMenuOptions: BotMainMenuOption[] = actionNodes.map((n, i) => ({
-      id: n.id,
-      key: n.config.key || String(i + 1),
-      title: n.title,
-      response: n.config.response || "Información solicitada.",
-      action: n.config.actionType || "none",
-      enabled: n.enabled,
-    }));
-
-    const mappedKeywordRules: BotKeywordRule[] = keywordNodes.map((n) => ({
-      id: n.id,
-      keywords: n.config.keywords || ["consulta"],
-      response: n.config.response || "Gracias por comunicarte.",
-      action: n.config.actionType || "none",
-      enabled: n.enabled,
-    }));
-
-    // Update templates from canvas nodes if edited
-    if (confirmNode?.config.response) {
-      updateWhatsAppTemplate("wt-confirmacion", confirmNode.config.response);
-    }
-    if (remind24hNode?.config.response) {
-      updateWhatsAppTemplate("wt-recordatorio-24h", remind24hNode.config.response);
-    }
-    if (remind2hNode?.config.response) {
-      updateWhatsAppTemplate("wt-recordatorio-2h", remind2hNode.config.response);
-    }
-
-    updateEvolutionConfig({
-      canvasNodes: nodes,
-      canvasConnections: connections,
-      mainMenuOptions: mappedMenuOptions,
-      keywordRules: mappedKeywordRules,
-      welcomeMessage: welcomeNode?.config.welcomeText || evolutionConfig.welcomeMessage,
-      fallbackMessage: welcomeNode?.config.fallbackText || evolutionConfig.fallbackMessage,
-      botEngine: botEngine,
-      typebotUrl: typebotUrl,
-      typebotName: typebotName,
-      typebotKeywordFinish: typebotKeywordFinish,
-    });
-
-    pushToast("success", "Flujo del canva guardado y sincronizado en la base de datos.");
-  }
-
   // ═══════════════════════════════════════════════════════════════════
-  // SIMULATOR BOT RESPONSE (Real-Time Interactive Phone)
+  // SIMULATOR ENGINE (Zero API Buttons, 100% Pure WhatsApp Text)
   // ═══════════════════════════════════════════════════════════════════
 
   function triggerSimMessage(text: string) {
@@ -736,7 +770,7 @@ export default function BotWhatsAppPage() {
 
     const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    // Client message
+    // Client bubble
     setSimChatMessages((prev) => [
       ...prev,
       {
@@ -754,7 +788,7 @@ export default function BotWhatsAppPage() {
       const lower = userMsg.toLowerCase().trim();
       const botTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-      // Special case: Simulation of Appointment Confirmation Card
+      // Special case: Simulation of interactive appointment confirmation card
       if (lower === "confirmar" || lower === "confirmar turno" || lower === "mi turno") {
         setSimChatMessages((prev) => [
           ...prev,
@@ -764,10 +798,10 @@ export default function BotWhatsAppPage() {
             type: "card",
             time: botTime,
             cardData: {
-              service: "Corte Fade Clásico + Perfilado",
+              service: services[0]?.name || "Corte Fade Clásico + Perfilado",
               staff: "Diego Franco",
               datetime: "Jueves 24 de Octubre · 15:30 hs",
-              price: "Gs. 75.000",
+              price: services[0]?.price ? `Gs. ${services[0].price.toLocaleString("es-PY")}` : "Gs. 75.000",
               location: business.address || "Avda. Santa Teresa 1420",
             },
           },
@@ -776,16 +810,26 @@ export default function BotWhatsAppPage() {
         return;
       }
 
-      // Rules execution from canvas nodes
+      // Check Canvas Nodes
       const welcomeNode = nodes.find((n) => n.type === "welcome");
-      const welcomeText = welcomeNode?.config.welcomeText || "¡Hola! Bienvenido a nuestra agenda oficial.";
-      const fallbackText = welcomeNode?.config.fallbackText || "Opción no reconocida. Por favor ingresá un número del menú.";
-      const actionNodes = nodes.filter((n) => n.type === "action" && n.enabled);
-      const keywordNodes = nodes.filter((n) => n.type === "keyword" && n.enabled);
+      const welcomeText = welcomeNode?.config.welcomeText || defaultWelcomeText;
+      const fallbackText = welcomeNode?.config.fallbackText || "Opción no reconocida. Por favor escribí el número correspondiente.";
+
+      const activeNodes = nodes.filter((n) =>
+        n.enabled &&
+        [
+          "action_link",
+          "action_prices",
+          "action_sipap",
+          "action_human",
+          "action_location",
+          "keyword",
+        ].includes(n.type)
+      );
 
       let replyText = "";
-      let quickOptions: { label: string; action: () => void }[] | undefined;
 
+      // Saludo inicial
       if (
         lower === "hola" ||
         lower === "buenas" ||
@@ -793,47 +837,22 @@ export default function BotWhatsAppPage() {
         lower === "menu" ||
         lower === "inicio"
       ) {
-        replyText = `${welcomeText}\n\n`;
-        if (actionNodes.length > 0) {
-          replyText += actionNodes.map((o) => `${o.config.key || "•"}. ${o.title}`).join("\n");
-        }
-        quickOptions = [
-          { label: "1. Agendar Turno", action: () => triggerSimMessage("1") },
-          { label: "2. Ver Precios", action: () => triggerSimMessage("2") },
-          { label: "4. Datos SIPAP", action: () => triggerSimMessage("4") },
-        ];
+        replyText = welcomeText;
       } else {
-        const matchedAction = actionNodes.find(
-          (n) => lower === (n.config.key || "").toLowerCase() || lower === n.title.toLowerCase()
-        );
-        if (matchedAction) {
-          replyText = matchedAction.config.response || "Aquí tenés la información:";
-          if (matchedAction.config.actionType === "send_link") {
-            replyText += `\n\n*Reservar online:* ${bookingUrl}`;
-          } else if (matchedAction.config.actionType === "send_sipap") {
-            replyText += `\n\n*Datos SIPAP:*\nBanco: Banco Itaú\nTitular: ${business.name}\nRUC: 80012345-6\nAlias: pagos@agendate.py`;
-          } else if (matchedAction.config.actionType === "human_handoff") {
-            replyText += `\n\n*Atención:* Un integrante de nuestro equipo tomará la conversación en breve.`;
-          }
-        } else {
-          const matchedKw = keywordNodes.find((n) =>
-            (n.config.keywords || []).some((kw) => lower.includes(kw.toLowerCase().trim()))
+        // Coincidencia por clave numérica o keywords
+        const matched = activeNodes.find((n) => {
+          const keyMatches = (n.config.key || "").toLowerCase().trim() === lower;
+          const keywordMatches = (n.config.keywords || []).some((kw) =>
+            lower.includes(kw.toLowerCase().trim())
           );
-          if (matchedKw) {
-            replyText = matchedKw.config.response || "Información:";
-            if (matchedKw.config.actionType === "send_link") {
-              replyText += `\n\n*Reservar online:* ${bookingUrl}`;
-            } else if (matchedKw.config.actionType === "send_sipap") {
-              replyText += `\n\n*Datos SIPAP:*\nBanco: Banco Itaú\nTitular: ${business.name}\nRUC: 80012345-6\nAlias: pagos@agendate.py`;
-            } else if (matchedKw.config.actionType === "human_handoff") {
-              replyText += `\n\n*Atención:* Pausamos el bot y te transferimos a un asesor.`;
-            }
-          } else {
-            replyText = `${fallbackText}\n\n`;
-            if (actionNodes.length > 0) {
-              replyText += actionNodes.map((o) => `${o.config.key || "•"}. ${o.title}`).join("\n");
-            }
-          }
+          const titleMatches = n.title.toLowerCase().includes(lower);
+          return keyMatches || keywordMatches || titleMatches;
+        });
+
+        if (matched) {
+          replyText = matched.config.response || "Información solicitada.";
+        } else {
+          replyText = fallbackText;
         }
       }
 
@@ -845,7 +864,6 @@ export default function BotWhatsAppPage() {
           type: "text",
           text: replyText,
           time: botTime,
-          options: quickOptions,
         },
       ]);
       setIsBotTypingSim(false);
@@ -881,7 +899,7 @@ export default function BotWhatsAppPage() {
   function getPreviewText(rawBody: string) {
     return rawBody
       .replace(/{cliente}/g, "Martín Benítez")
-      .replace(/{servicio}/g, "Corte Fade + Perfilado")
+      .replace(/{servicio}/g, services[0]?.name || "Corte Fade + Perfilado")
       .replace(/{profesional}/g, "Diego Franco")
       .replace(/{fecha}/g, "Jueves 24 de Octubre")
       .replace(/{hora}/g, "15:30")
@@ -917,7 +935,7 @@ export default function BotWhatsAppPage() {
 
   return (
     <div className="space-y-6">
-      {/* ═══ 1. TOP HEADER ═══ */}
+      {/* ═══ 1. TOP HEADER (Without Guided Tour Button) ═══ */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2.5">
@@ -953,23 +971,12 @@ export default function BotWhatsAppPage() {
               {isConnected ? "Línea Conectada" : "Desconectado"}
             </span>
           </div>
-
-          {/* Interactive Guide Button */}
-          <button
-            type="button"
-            onClick={handleStartTour}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3.5 py-2 text-xs font-bold shadow-2xs transition active:scale-98 cursor-pointer"
-          >
-            <HelpCircle className="h-4 w-4" />
-            <span>Guía Interactiva</span>
-          </button>
         </div>
       </div>
 
       {/* ═══ 2. MANDATORY CONNECTION GATE / STATUS BANNER ═══ */}
       <div data-tour="bot-status-card">
         {isConnected ? (
-          /* CONNECTED STATE BANNER */
           <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
@@ -1012,7 +1019,6 @@ export default function BotWhatsAppPage() {
             </div>
           </div>
         ) : (
-          /* DISCONNECTED / MANDATORY GATE */
           <div
             data-tour="bot-connect-gate"
             className="rounded-3xl border border-amber-300/80 dark:border-amber-500/30 bg-gradient-to-b from-amber-50/60 to-white dark:from-amber-950/20 dark:to-slate-900 p-6 sm:p-8 text-center space-y-4 shadow-sm"
@@ -1047,7 +1053,7 @@ export default function BotWhatsAppPage() {
         )}
       </div>
 
-      {/* ═══ 3. MAIN TABS (WhatsApp Business Removed) ═══ */}
+      {/* ═══ 3. MAIN TABS (TITLES: Canva de flujo, SIMULADOR, Plantillas) ═══ */}
       <div className="p-1 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex flex-wrap gap-1">
         <button
           type="button"
@@ -1062,7 +1068,7 @@ export default function BotWhatsAppPage() {
           }`}
         >
           <Share2 className="h-3.5 w-3.5 text-emerald-600" />
-          <span>Canva de Flujo (Tipo n8n)</span>
+          <span>Canva de flujo</span>
           {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
 
@@ -1070,7 +1076,7 @@ export default function BotWhatsAppPage() {
           type="button"
           onClick={() => isConnected && setActiveTab("simulador")}
           disabled={!isConnected}
-          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
             !isConnected
               ? "opacity-40 cursor-not-allowed text-slate-400"
               : activeTab === "simulador"
@@ -1079,7 +1085,7 @@ export default function BotWhatsAppPage() {
           }`}
         >
           <Smartphone className="h-3.5 w-3.5 text-sky-600" />
-          <span>Simulador iPhone (WhatsApp UI)</span>
+          <span>SIMULADOR</span>
           {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
 
@@ -1096,14 +1102,13 @@ export default function BotWhatsAppPage() {
           }`}
         >
           <Layers className="h-3.5 w-3.5 text-indigo-600" />
-          <span>Plantillas & Disparadores</span>
+          <span>Plantillas</span>
           {!isConnected && <Lock className="h-3 w-3 ml-0.5 text-slate-400" />}
         </button>
       </div>
 
       {/* ═══ 4. TAB CONTENTS ═══ */}
       {!isConnected ? (
-        /* LOCKED OVERLAY */
         <div className="relative rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/40 p-8 text-center overflow-hidden">
           <div className="absolute inset-0 bg-white/60 dark:bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 z-10 space-y-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-md">
@@ -1131,54 +1136,25 @@ export default function BotWhatsAppPage() {
           </div>
         </div>
       ) : activeTab === "canva" ? (
-        /* ═══ TAB 1: VISUAL WORKFLOW CANVAS (N8N STYLE) ═══ */
+        /* ═══ TAB 1: CANVA DE FLUJO (N8N STYLE WITH SEPARATED ACTION NODES) ═══ */
         <div className="space-y-4" data-tour="bot-rules-card">
-          {/* Engine Selector Header (Native vs Typebot) */}
-          <div
-            data-tour="bot-engine-toggle"
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs"
-          >
+          {/* Canvas Top Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs">
             <div className="flex items-center gap-2.5">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
                 <Share2 className="h-4 w-4" />
               </span>
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight">
-                  Canva del Flujo Automático
+                  Canva de flujo
                 </h3>
                 <span className="text-[11px] text-slate-400">
-                  Arrastrá nodos para conectar opciones, confirmaciones de turno y recordatorios
+                  Arrastrá nodos individuales para cada acción y hacé clic para editar
                 </span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {/* Bot Engine Switcher (Native Canvas vs Typebot) */}
-              <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-white/5 flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setBotEngine("native_canvas")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    botEngine === "native_canvas"
-                      ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs border border-slate-200/80 dark:border-white/10"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  Canva AgendatePY
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBotEngine("typebot")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    botEngine === "typebot"
-                      ? "bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-400 shadow-xs border border-slate-200/80 dark:border-white/10"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  Typebot Avanzado
-                </button>
-              </div>
-
               {/* Zoom Controls */}
               <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/5">
                 <button
@@ -1200,16 +1176,121 @@ export default function BotWhatsAppPage() {
                 >
                   <ZoomIn className="h-3.5 w-3.5" />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setZoom(1)}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                  title="Restablecer"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
               </div>
 
-              {/* Add Node Button */}
+              {/* Add Node Dropdown (Separated specialized actions) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setAddMenuOpen(!addMenuOpen)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-xs font-bold transition active:scale-98 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Agregar Nodo</span>
+                  <ChevronDown className="h-3 w-3 ml-0.5" />
+                </button>
+
+                {addMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-xl p-1.5 z-40 space-y-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        createSpecializedNode(
+                          "action_link",
+                          "Link de Reservas",
+                          `¡Excelente! Podés reservar tu turno acá:\n${bookingUrl}`,
+                          String(nodes.length + 1)
+                        )
+                      }
+                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 transition cursor-pointer"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>+ Link de Reservas</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        createSpecializedNode(
+                          "action_prices",
+                          "Servicios y Precios",
+                          defaultPricesText,
+                          String(nodes.length + 1)
+                        )
+                      }
+                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:text-sky-600 transition cursor-pointer"
+                    >
+                      <ListOrdered className="h-3.5 w-3.5 text-sky-600" />
+                      <span>+ Servicios y Precios</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        createSpecializedNode(
+                          "action_sipap",
+                          "Datos SIPAP",
+                          defaultSipapText,
+                          String(nodes.length + 1)
+                        )
+                      }
+                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-600 transition cursor-pointer"
+                    >
+                      <CreditCard className="h-3.5 w-3.5 text-purple-600" />
+                      <span>+ Datos SIPAP</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        createSpecializedNode(
+                          "action_human",
+                          "Asesor Humano",
+                          "Un asesor humano te responderá a la brevedad.",
+                          String(nodes.length + 1)
+                        )
+                      }
+                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 transition cursor-pointer"
+                    >
+                      <UserCheck className="h-3.5 w-3.5 text-amber-600" />
+                      <span>+ Asesor Humano</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        createSpecializedNode(
+                          "action_location",
+                          "Ubicación & Horarios",
+                          defaultLocationText,
+                          String(nodes.length + 1)
+                        )
+                      }
+                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition cursor-pointer"
+                    >
+                      <MapPin className="h-3.5 w-3.5 text-rose-600" />
+                      <span>+ Ubicación & Horarios</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* "Probar Flujo" Button NEXT TO "Guardar Flujo" */}
               <button
                 type="button"
-                onClick={addNewActionNode}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-xs font-bold transition active:scale-98 cursor-pointer"
+                onClick={() => setActiveTab("simulador")}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition active:scale-98 cursor-pointer shadow-2xs"
               >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Agregar Nodo</span>
+                <Play className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Probar Flujo</span>
               </button>
 
               {/* Save Workflow Button */}
@@ -1224,70 +1305,9 @@ export default function BotWhatsAppPage() {
             </div>
           </div>
 
-          {/* Typebot Configuration Box (Only shown if Typebot engine is chosen) */}
-          {botEngine === "typebot" && (
-            <div className="p-4 rounded-2xl border border-purple-300 dark:border-purple-800/60 bg-gradient-to-r from-purple-50/60 to-white dark:from-purple-950/20 dark:to-slate-900 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                    Conexión Directa con Typebot (Evolution API /typebot/set)
-                  </h4>
-                </div>
-                <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/60 px-2 py-0.5 rounded-full">
-                  100% Personalizable
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                Al activar Typebot, Evolution API delegará los mensajes entrantes a tu flujo de Typebot con soporte para bloques condicionales, captura de variables y llamadas webhook HTTP.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    URL del Visor de Typebot:
-                  </label>
-                  <input
-                    type="text"
-                    value={typebotUrl}
-                    onChange={(e) => setTypebotUrl(e.target.value)}
-                    placeholder="https://typebot.co"
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Nombre o ID del Typebot:
-                  </label>
-                  <input
-                    type="text"
-                    value={typebotName}
-                    onChange={(e) => setTypebotName(e.target.value)}
-                    placeholder="flujo-principal"
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Palabra para Pausar y Derivar a Humano:
-                  </label>
-                  <input
-                    type="text"
-                    value={typebotKeywordFinish}
-                    onChange={(e) => setTypebotKeywordFinish(e.target.value)}
-                    placeholder="humano"
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Canvas Workspace + Inspector Drawer */}
           <div className="relative rounded-3xl border border-slate-200/90 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950 overflow-hidden flex min-h-[660px] shadow-sm">
-            {/* Canvas Viewport */}
+            {/* Viewport */}
             <div
               ref={canvasRef}
               onPointerMove={handleCanvasPointerMove}
@@ -1295,7 +1315,6 @@ export default function BotWhatsAppPage() {
               className="flex-1 relative overflow-auto select-none [background-image:radial-gradient(#cbd5e1_1.2px,transparent_1.2px)] dark:[background-image:radial-gradient(#334155_1.2px,transparent_1.2px)] [background-size:20px_20px]"
               style={{ minHeight: "660px" }}
             >
-              {/* Scalable Container */}
               <div
                 className="relative"
                 style={{
@@ -1361,14 +1380,18 @@ export default function BotWhatsAppPage() {
                       trigger: { badge: "Disparador", color: "border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-400", icon: MessageCircle },
                       welcome: { badge: "Bienvenida", color: "border-sky-400 bg-sky-500/10 text-sky-700 dark:text-sky-400", icon: Bot },
                       menu: { badge: "Enrutador Menú", color: "border-indigo-400 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400", icon: ListOrdered },
-                      action: { badge: "Respuesta", color: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400", icon: ExternalLink },
+                      action_link: { badge: "Link Reservas", color: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400", icon: ExternalLink },
+                      action_prices: { badge: "Servicios & Precios", color: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-400", icon: ListOrdered },
+                      action_sipap: { badge: "Datos SIPAP", color: "border-purple-500 bg-purple-500/10 text-purple-700 dark:text-purple-400", icon: CreditCard },
+                      action_human: { badge: "Asesor Humano", color: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400", icon: UserCheck },
+                      action_location: { badge: "Ubicación", color: "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400", icon: MapPin },
                       keyword: { badge: "Palabra Clave", color: "border-purple-400 bg-purple-500/10 text-purple-700 dark:text-purple-400", icon: Tag },
                       booking_trigger: { badge: "Evento Turno", color: "border-teal-400 bg-teal-500/10 text-teal-700 dark:text-teal-400", icon: Calendar },
                       confirmation: { badge: "Confirmación", color: "border-emerald-600 bg-emerald-600/15 text-emerald-800 dark:text-emerald-300 font-bold", icon: CheckCircle2 },
                       reminder: { badge: "Recordatorio", color: "border-blue-400 bg-blue-500/10 text-blue-700 dark:text-blue-400", icon: Clock },
                     };
 
-                    const style = typeStyles[node.type] || typeStyles.action;
+                    const style = typeStyles[node.type] || typeStyles.action_link;
                     const Icon = style.icon;
 
                     return (
@@ -1386,7 +1409,6 @@ export default function BotWhatsAppPage() {
                           transform: isDragging ? "scale(1.02)" : "scale(1)",
                         }}
                       >
-                        {/* Node Header */}
                         <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-white/5">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase ${style.color}`}
@@ -1402,38 +1424,17 @@ export default function BotWhatsAppPage() {
                           />
                         </div>
 
-                        {/* Node Title & Description */}
                         <div className="pt-2">
                           <p className="text-xs font-black text-slate-900 dark:text-white truncate">
                             {node.title}
                           </p>
-
-                          {node.type === "action" && (
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-mono">
-                              Acción: {node.config.actionType === "send_link" ? "Link Reservas" : node.config.actionType === "send_sipap" ? "SIPAP" : node.config.actionType === "human_handoff" ? "Humano" : "Texto"}
-                            </p>
-                          )}
-
-                          {node.type === "confirmation" && (
-                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate mt-0.5 font-mono">
-                              Tarjeta Interactiva
-                            </p>
-                          )}
-
-                          {node.type === "reminder" && (
-                            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold truncate mt-0.5 font-mono">
-                              Disparo Automático
-                            </p>
-                          )}
-
-                          {node.type === "keyword" && (
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-mono">
-                              {(node.config.keywords || []).slice(0, 3).join(", ")}
+                          {node.config.key && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                              Opción: *{node.config.key}*
                             </p>
                           )}
                         </div>
 
-                        {/* Ports */}
                         <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-700 border-2 border-white dark:border-slate-900" />
                         <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
                       </div>
@@ -1445,13 +1446,13 @@ export default function BotWhatsAppPage() {
 
             {/* Inspector Drawer (Node Settings Panel) */}
             {isInspectorOpen && selectedNode && (
-              <div className="w-[320px] sm:w-[360px] shrink-0 border-l border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between overflow-y-auto z-30 shadow-md">
+              <div className="w-[320px] sm:w-[370px] shrink-0 border-l border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between overflow-y-auto z-30 shadow-md">
                 <div className="space-y-4">
-                  {/* Inspector Header */}
+                  {/* Header */}
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
                     <div>
                       <span className="text-[10px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
-                        Configurador de Nodo
+                        Configuración del Nodo
                       </span>
                       <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
                         {selectedNode.title}
@@ -1467,7 +1468,7 @@ export default function BotWhatsAppPage() {
                     </button>
                   </div>
 
-                  {/* Active Switch */}
+                  {/* Node State (Active / Paused) */}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       Estado del Nodo:
@@ -1483,10 +1484,10 @@ export default function BotWhatsAppPage() {
                     </div>
                   </div>
 
-                  {/* Node Title */}
+                  {/* Title Input */}
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Nombre o Título del Nodo:
+                      Título en el Canva:
                     </label>
                     <input
                       type="text"
@@ -1496,87 +1497,67 @@ export default function BotWhatsAppPage() {
                     />
                   </div>
 
-                  {/* Confirmation / Reminder Node Specifics */}
-                  {(selectedNode.type === "confirmation" || selectedNode.type === "reminder") && (
-                    <div className="space-y-3">
-                      <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 text-xs space-y-1">
-                        <span className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                          Tarjeta de Confirmación Oficial
-                        </span>
-                        <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
-                          Este nodo despacha automáticamente la tarjeta de confirmación del turno con fecha, hora, especialista, monto y enlace web.
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                          Variables dinámicas disponibles:
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {AVAILABLE_TAGS.map((t) => (
-                            <button
-                              key={t.tag}
-                              type="button"
-                              onClick={() => {
-                                const current = selectedNode.config.response || "";
-                                updateNodeConfig(selectedNode.id, { response: `${current} ${t.tag}` });
-                              }}
-                              className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-medium hover:bg-emerald-500 hover:text-white transition"
-                            >
-                              +{t.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Texto del Mensaje:
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={selectedNode.config.response || ""}
-                          onChange={(e) =>
-                            updateNodeConfig(selectedNode.id, { response: e.target.value })
-                          }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                        />
-                      </div>
+                  {/* Option Key Number if applicable */}
+                  {selectedNode.config.key !== undefined && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Número de Opción en el Menú:
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedNode.config.key}
+                        onChange={(e) => updateNodeConfig(selectedNode.id, { key: e.target.value })}
+                        className="w-20 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-center"
+                      />
                     </div>
                   )}
 
-                  {/* Action Node Config */}
-                  {selectedNode.type === "action" && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Acción Automática Asociada:
-                        </label>
-                        <ActionSelector
-                          value={selectedNode.config.actionType || "none"}
-                          onChange={(val) => updateNodeConfig(selectedNode.id, { actionType: val })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Texto que despacha este nodo:
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={selectedNode.config.response || ""}
-                          onChange={(e) =>
-                            updateNodeConfig(selectedNode.id, { response: e.target.value })
-                          }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                          placeholder="Texto de respuesta..."
-                        />
-                      </div>
+                  {/* Keywords for automatic matching */}
+                  {selectedNode.config.keywords !== undefined && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Palabras que activan esta opción (separadas por coma):
+                      </label>
+                      <input
+                        type="text"
+                        value={(selectedNode.config.keywords || []).join(", ")}
+                        onChange={(e) =>
+                          updateNodeConfig(selectedNode.id, {
+                            keywords: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                          })
+                        }
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                        placeholder="ej: 1, turno, agendar"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Si el cliente escribe cualquiera de estas palabras, se dispara esta respuesta.
+                      </p>
                     </div>
                   )}
 
-                  {/* Welcome Node Config */}
+                  {/* Response Textarea with WhatsApp formatting rules helper */}
+                  {selectedNode.config.response !== undefined && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Respuesta de Texto enviada por WhatsApp:
+                      </label>
+                      <textarea
+                        rows={6}
+                        value={selectedNode.config.response || ""}
+                        onChange={(e) =>
+                          updateNodeConfig(selectedNode.id, { response: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
+                        placeholder="Texto de respuesta..."
+                      />
+                      {/* Gray helper text for WhatsApp formatting rules */}
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
+                        Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Welcome Node Textarea */}
                   {selectedNode.type === "welcome" && (
                     <div className="space-y-3">
                       <div>
@@ -1584,18 +1565,21 @@ export default function BotWhatsAppPage() {
                           Mensaje de Bienvenida:
                         </label>
                         <textarea
-                          rows={4}
+                          rows={6}
                           value={selectedNode.config.welcomeText || ""}
                           onChange={(e) =>
                             updateNodeConfig(selectedNode.id, { welcomeText: e.target.value })
                           }
                           className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
                         />
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
+                          Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
+                        </p>
                       </div>
 
                       <div>
                         <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Mensaje Fallback (No reconocido):
+                          Mensaje de Fallback (No reconocido):
                         </label>
                         <textarea
                           rows={3}
@@ -1605,51 +1589,9 @@ export default function BotWhatsAppPage() {
                           }
                           className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
                         />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Keyword Node Config */}
-                  {selectedNode.type === "keyword" && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Palabras Clave (separadas por coma):
-                        </label>
-                        <input
-                          type="text"
-                          value={(selectedNode.config.keywords || []).join(", ")}
-                          onChange={(e) =>
-                            updateNodeConfig(selectedNode.id, {
-                              keywords: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                            })
-                          }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Acción Automática:
-                        </label>
-                        <ActionSelector
-                          value={selectedNode.config.actionType || "send_link"}
-                          onChange={(val) => updateNodeConfig(selectedNode.id, { actionType: val })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Respuesta para estas palabras:
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={selectedNode.config.response || ""}
-                          onChange={(e) =>
-                            updateNodeConfig(selectedNode.id, { response: e.target.value })
-                          }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                        />
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
+                          Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
+                        </p>
                       </div>
                     </div>
                   )}
@@ -1657,7 +1599,14 @@ export default function BotWhatsAppPage() {
 
                 {/* Footer Actions */}
                 <div className="pt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
-                  {selectedNode.type === "action" && (
+                  {[
+                    "action_link",
+                    "action_prices",
+                    "action_sipap",
+                    "action_human",
+                    "action_location",
+                    "keyword",
+                  ].includes(selectedNode.type) && (
                     <button
                       type="button"
                       onClick={() => deleteNode(selectedNode.id)}
@@ -1687,19 +1636,15 @@ export default function BotWhatsAppPage() {
           <div className="grid gap-6 lg:grid-cols-12 items-start">
             {/* The iPhone 16 Pro Mockup */}
             <div className="lg:col-span-7 flex flex-col items-center">
-              {/* iPhone 16 Pro Chassis copied from Landing */}
               <div className="relative mx-auto flex w-full items-center justify-center p-2 sm:p-4">
                 {/* 3D Titanium Bezel Container */}
                 <div className="relative w-full max-w-[320px] sm:max-w-[350px] rounded-[44px] sm:rounded-[50px] p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]">
-                  {/* Left Side: Action Button */}
+                  {/* Left Side Buttons */}
                   <div className="absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
-                  {/* Left Side: Volume Up */}
                   <div className="absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
-                  {/* Left Side: Volume Down */}
                   <div className="absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
-                  {/* Right Side: Power Button */}
+                  {/* Right Side Buttons */}
                   <div className="absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e]" />
-                  {/* Right Side: Camera Control */}
                   <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
                   {/* Outer Glass Bezel */}
@@ -1746,7 +1691,7 @@ export default function BotWhatsAppPage() {
                         </div>
                       </div>
 
-                      {/* 2. WHATSAPP BUSINESS HEADER WITH LOCAL'S ACTUAL PROFILE & NAME */}
+                      {/* 2. WHATSAPP HEADER WITH LOCAL NAME & PROFILE */}
                       <div className="relative z-20 flex items-center justify-between bg-[#008069] px-3 py-2 text-white shadow-sm">
                         <div className="flex items-center gap-2 min-w-0">
                           <button
@@ -1754,17 +1699,17 @@ export default function BotWhatsAppPage() {
                             onClick={() =>
                               setSimChatMessages([
                                 {
-                                  id: "reset-1",
+                                  id: `reset-1`,
                                   sender: "client",
                                   type: "text",
                                   text: "Hola",
                                   time: "14:28",
                                 },
                                 {
-                                  id: "reset-2",
+                                  id: `reset-2`,
                                   sender: "bot",
                                   type: "text",
-                                  text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor`,
+                                  text: defaultWelcomeText,
                                   time: "14:28",
                                 },
                               ])
@@ -1774,12 +1719,12 @@ export default function BotWhatsAppPage() {
                             <ChevronLeft className="h-5 w-5 stroke-[2.5]" />
                           </button>
 
-                          {/* Profile Avatar (Local's Actual Logo or Initials) */}
+                          {/* Profile Avatar (Local's Actual Photo or Initials) */}
                           <div className="relative shrink-0">
-                            {business.logo ? (
+                            {business.logo || business.banner ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
-                                src={business.logo}
+                                src={business.logo || business.banner}
                                 alt={business.name}
                                 className="h-9 w-9 rounded-full object-cover border border-white/40 shadow-xs"
                               />
@@ -1791,7 +1736,6 @@ export default function BotWhatsAppPage() {
                             <BadgeCheck className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-white fill-[#10b981]" />
                           </div>
 
-                          {/* Name and Status */}
                           <div className="min-w-0">
                             <p className="truncate text-xs font-black text-white leading-tight">
                               {business.name}
@@ -1808,7 +1752,6 @@ export default function BotWhatsAppPage() {
                           </div>
                         </div>
 
-                        {/* Top action icons */}
                         <div className="flex items-center gap-2.5 text-white/90 pr-1">
                           <Video className="h-4 w-4" />
                           <Phone className="h-3.5 w-3.5" />
@@ -1827,7 +1770,7 @@ export default function BotWhatsAppPage() {
                                   id: `reset-bot-${Date.now()}`,
                                   sender: "bot",
                                   type: "text",
-                                  text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor`,
+                                  text: defaultWelcomeText,
                                   time: "14:28",
                                 },
                               ])
@@ -1840,25 +1783,22 @@ export default function BotWhatsAppPage() {
                         </div>
                       </div>
 
-                      {/* 3. MESSAGE STREAM */}
+                      {/* 3. MESSAGE STREAM (WITH WHATSAPP MARKDOWN PARSING) */}
                       <div
                         ref={chatScrollRef}
                         className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                       >
-                        {/* Date badge */}
                         <div className="text-center my-1">
                           <span className="rounded-lg bg-[#ffffff]/80 px-2.5 py-0.5 text-[10px] font-semibold text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wider">
                             HOY
                           </span>
                         </div>
 
-                        {/* Encryption pill */}
                         <div className="mx-auto max-w-[260px] rounded-lg bg-[#ffeecd] px-2 py-1 text-center text-[9px] text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] flex items-center justify-center gap-1">
                           <Lock className="h-2.5 w-2.5 shrink-0 text-[#54656f]" />
                           <span>Mensajes y llamadas cifrados de extremo a extremo.</span>
                         </div>
 
-                        {/* Stream of Messages */}
                         {simChatMessages.map((msg) => (
                           <div
                             key={msg.id}
@@ -1866,8 +1806,8 @@ export default function BotWhatsAppPage() {
                               msg.sender === "client" ? "items-end" : "items-start"
                             }`}
                           >
-                            {/* Standard Text Bubble */}
-                            {msg.type === "text" && (
+                            {/* Standard Text Bubble with Bold/Italic Parsing */}
+                            {msg.type === "text" && msg.text && (
                               <div
                                 className={`relative max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] ${
                                   msg.sender === "client"
@@ -1875,7 +1815,7 @@ export default function BotWhatsAppPage() {
                                     : "rounded-tl-xs bg-white text-[#111b21]"
                                 }`}
                               >
-                                <p className="whitespace-pre-wrap">{msg.text}</p>
+                                {renderWhatsAppFormatted(msg.text)}
                                 <div className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#667781]">
                                   <span>{msg.time}</span>
                                   {msg.sender === "client" && (
@@ -1930,22 +1870,6 @@ export default function BotWhatsAppPage() {
                                   </span>
                                   <span>{msg.time}</span>
                                 </div>
-                              </div>
-                            )}
-
-                            {/* Interactive Action Buttons */}
-                            {msg.options && (
-                              <div className="mt-1.5 flex flex-col gap-1 w-full max-w-[86%]">
-                                {msg.options.map((opt) => (
-                                  <button
-                                    key={opt.label}
-                                    type="button"
-                                    onClick={opt.action}
-                                    className="w-full rounded-xl border border-[#008069]/30 bg-white py-1.5 px-3 text-[11px] font-bold text-[#008069] shadow-[0_1px_1px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1 cursor-pointer"
-                                  >
-                                    <span>{opt.label}</span>
-                                  </button>
-                                ))}
                               </div>
                             )}
                           </div>
@@ -2021,6 +1945,8 @@ export default function BotWhatsAppPage() {
                     "1",
                     "2",
                     "3",
+                    "4",
+                    "5",
                     "precio de corte",
                     "donde queda el local",
                     "hablar con una persona",
@@ -2053,7 +1979,7 @@ export default function BotWhatsAppPage() {
                           id: `reset-bot-${Date.now()}`,
                           sender: "bot",
                           type: "text",
-                          text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n1. Agendar un turno online\n2. Ver servicios y precios\n3. Ubicación y horarios\n4. Datos de pago SIPAP\n5. Hablar con un asesor`,
+                          text: defaultWelcomeText,
                           time: "14:28",
                         },
                       ])
@@ -2116,7 +2042,7 @@ export default function BotWhatsAppPage() {
                     </span>
                     <CustomSwitch
                       checked={Boolean(currentTemplate?.enabled)}
-                      onChange={() => currentTemplate && toggleWhatsAppTemplate(currentTemplate.id)}
+                      onChange={() => currentTemplate && handleToggleTemplate(currentTemplate.id)}
                     />
                   </div>
                 </div>
@@ -2153,8 +2079,8 @@ export default function BotWhatsAppPage() {
                       }
                       className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/50 p-3.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition leading-relaxed font-sans"
                     />
-                    <p className="mt-1 text-[11px] text-slate-400">
-                      Consejo: Podés usar formato de WhatsApp con *negrita* o _cursiva_.
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
+                      Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
                     </p>
                   </div>
 
@@ -2203,16 +2129,14 @@ export default function BotWhatsAppPage() {
               </div>
             </div>
 
-            {/* Template Preview Card */}
+            {/* Template Preview Card with WhatsApp formatting parsing */}
             <div className="lg:col-span-5 space-y-3">
               <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-3">
                 <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">
                   Vista Previa del Mensaje
                 </h4>
                 <div className="p-3.5 rounded-2xl bg-[#d9fdd3] text-slate-900 text-xs shadow-xs leading-relaxed">
-                  <p className="whitespace-pre-wrap">
-                    {currentTemplate ? getPreviewText(currentTemplate.body) : ""}
-                  </p>
+                  {renderWhatsAppFormatted(currentTemplate ? getPreviewText(currentTemplate.body) : "")}
                   <div className="flex justify-end gap-1 text-[9px] text-slate-500 mt-2">
                     <span>14:30</span>
                     <CheckCheck className="h-3 w-3 text-blue-500" />
