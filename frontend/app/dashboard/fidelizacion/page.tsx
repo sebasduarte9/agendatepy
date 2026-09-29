@@ -7,7 +7,8 @@ import {
   Crown,
   Gift,
   CheckCircle2,
-  Wallet,
+  Globe,
+  Link2,
   SlidersHorizontal,
   Coins,
   Settings,
@@ -24,7 +25,6 @@ import {
   Sparkles,
   QrCode,
   Share2,
-  Compass,
   ArrowUpRight,
   Zap,
   Filter,
@@ -54,7 +54,6 @@ export default function FidelizacionPage() {
     addClientLoyaltyPoint,
     redeemClientReward,
     pushToast,
-    openTour,
   } = useDashboardStore();
 
   const [search, setSearch] = useState("");
@@ -179,10 +178,13 @@ export default function FidelizacionPage() {
     const cardUrl = getCardUrl(clientId);
     const cleanPhone = clientPhone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `¡Hola ${clientName}! 👋 Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n📲 ${cardUrl}\n\nPodés guardarla directamente en tu *Apple Wallet* (iPhone) o *Google Wallet* (Android). ¡Acumulás sellos en cada visita para canjear tu premio de: *${loyalty.rewardDescription}*!`
+      `¡Hola ${clientName}! 👋 Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n📲 ${cardUrl}\n\nPodés abrir tu enlace en cualquier momento para consultar tus sellos acumulados y premios. ¡Acumulás sellos en cada visita para canjear tu premio de: *${loyalty.rewardDescription}*!`
     );
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   }
+
+  const demoClientId = clients[0]?.id || "cli-martin";
+  const demoClientUrl = getCardUrl(demoClientId);
 
   return (
     <div className="space-y-6">
@@ -209,8 +211,8 @@ export default function FidelizacionPage() {
               <span>{loyalty.enabled ? "Club VIP Activo" : "Club VIP en Pausa"}</span>
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-              <Wallet className="h-3 w-3 text-primary" />
-              <span>Pases Apple & Google Wallet</span>
+              <Globe className="h-3 w-3 text-primary" />
+              <span>Links Personalizados VIP</span>
             </span>
           </div>
 
@@ -219,20 +221,11 @@ export default function FidelizacionPage() {
             <Crown className="h-6 w-6 text-amber-500 fill-amber-400" />
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm mt-0.5">
-            Otorgá sellos por visita, emití pases para Apple & Google Wallet y premiá la lealtad de tus clientes.
+            Otorgá sellos por visita, compartí su link web exclusivo y premiá la lealtad de tus clientes.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => openTour("fidelizacion")}
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/80 dark:border-indigo-800/60 px-4 py-2.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 shadow-xs transition cursor-pointer"
-          >
-            <Compass className="h-4 w-4 text-indigo-500" />
-            <span>Guía Interactiva</span>
-          </button>
-
           <button
             type="button"
             onClick={() => setEditingSettings(!editingSettings)}
@@ -244,7 +237,7 @@ export default function FidelizacionPage() {
         </div>
       </div>
 
-      {/* ═══ 2. WALLET SHOWCASE & LIVE PASS PREVIEW ═══ */}
+      {/* ═══ 2. CUSTOM LINK SHOWCASE & LIVE WEB CARD PREVIEW ═══ */}
       <div
         data-tour="fidelizacion-wallet-banner"
         className="relative overflow-hidden rounded-3xl border border-amber-300/60 dark:border-amber-500/20 bg-gradient-to-br from-amber-50/70 via-white to-indigo-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/60 p-6 sm:p-8 text-slate-900 dark:text-white shadow-sm"
@@ -257,46 +250,46 @@ export default function FidelizacionPage() {
           <div className="lg:col-span-7 space-y-3.5">
             <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 dark:bg-amber-400/20 border border-amber-500/20 dark:border-amber-400/30 px-3.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-300">
               <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <span>Soporte Oficial Apple Wallet (.pkpass) & Google Wallet</span>
+              <span>Link Web Exclusivo para cada Cliente</span>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-              Tus clientes llevan tu salón guardado en el bolsillo
+              Tus clientes acceden a su tarjeta con un link personalizado
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
-              Sin descargar ninguna app pesada. Cada cliente tiene un pase digital con su nombre, sellos acumulados en tiempo real y código QR. Al tocar <strong>&ldquo;Agregar a Apple Wallet&rdquo;</strong> o <strong>&ldquo;Guardar en Google Wallet&rdquo;</strong>, reciben notificaciones automáticas al ganar sellos.
+              Sin descargar aplicaciones pesadas ni configuraciones adicionales. Cada cliente recibe su propio enlace web único (ej: <code>agendate.py/{business.slug || "tu-salon"}/tarjeta/...</code>) donde puede consultar sus sellos acumulados en tiempo real, ver su premio disponible y agendar su próxima visita.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
               <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
-                  <Smartphone className="h-3.5 w-3.5 text-primary" />
-                  <span>Sin Descargas</span>
+                  <Globe className="h-3.5 w-3.5 text-primary" />
+                  <span>100% Web</span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Funciona nativo en iPhone y Android con solo abrir el enlace.</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Funciona en cualquier navegador de celular con solo tocar el link.</p>
               </div>
 
               <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
                   <Zap className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Push Automático</span>
+                  <span>Sellos en Vivo</span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Al sumar un sello en caja, el pase de su celular se actualiza solo.</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Al sumar un sello en caja, el link del cliente se actualiza al instante.</p>
               </div>
 
               <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
-                  <Gift className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Canje en 1 Clic</span>
+                  <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Envío por WhatsApp</span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Escaneás el QR en el local o canjeás directo desde esta pantalla.</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Enviás el link exclusivo por WhatsApp con el mensaje ya redactado.</p>
               </div>
             </div>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <Link
-                href={getCardUrl(clients[0]?.id || "cli-martin")}
+                href={demoClientUrl}
                 target="_blank"
                 className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 hover:bg-amber-300 px-5 py-3 text-xs font-black text-slate-950 shadow-md transition cursor-pointer"
               >
@@ -313,13 +306,38 @@ export default function FidelizacionPage() {
                 <QrCode className="h-4 w-4 text-emerald-600" />
                 <span>Mostrar QR para Escaneo</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => handleCopyCardLink(demoClientId)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+              >
+                {copiedId === demoClientId ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-500" />
+                    <span>Link Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    <span>Copiar Link Demo</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Right Column: Live Apple Wallet Pass Simulation */}
+          {/* Right Column: Live Web Card Simulation */}
           <div className="lg:col-span-5 flex justify-center">
             <div className="w-full max-w-sm rounded-3xl bg-slate-950 text-white p-5 shadow-2xl border border-white/15 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+
+              {/* Browser URL Simulation Bar */}
+              <div className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-1.5 text-[11px] font-mono text-slate-300 border border-white/10 mb-4">
+                <Globe className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate flex-1">agendate.py/{business.slug || "salon"}/tarjeta/cli...</span>
+                <span className="text-[10px] font-sans font-bold text-amber-300 bg-amber-400/20 px-1.5 py-0.5 rounded">WEB</span>
+              </div>
 
               {/* Pass Header */}
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -329,12 +347,12 @@ export default function FidelizacionPage() {
                   </div>
                   <div>
                     <h4 className="font-black text-xs tracking-tight">{business.name}</h4>
-                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">VIP Member Pass</span>
+                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Tarjeta Digital VIP</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-0.5 text-[9px] font-bold text-slate-300">
                   <Award className="h-3 w-3 text-amber-400" />
-                  <span>Nivel Oro</span>
+                  <span>Socio VIP</span>
                 </div>
               </div>
 
@@ -342,7 +360,7 @@ export default function FidelizacionPage() {
               <div className="py-4 space-y-3">
                 <div className="flex justify-between items-baseline">
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Titular del Pase</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Titular del Enlace</span>
                     <span className="text-sm font-extrabold text-white">Martín Benítez</span>
                   </div>
                   <div className="text-right">
@@ -380,12 +398,15 @@ export default function FidelizacionPage() {
                 </div>
               </div>
 
-              {/* Pass Footer / Barcode mockup */}
+              {/* Pass Footer */}
               <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400">
-                <span className="font-mono">PASS-AGPY-78401</span>
-                <span className="flex items-center gap-1 font-semibold text-slate-300">
-                  <Wallet className="h-3 w-3 text-amber-400" />
-                  <span>Listo para Apple Wallet</span>
+                <span className="font-mono flex items-center gap-1">
+                  <Link2 className="h-3 w-3 text-amber-400" />
+                  <span>Enlace único y seguro</span>
+                </span>
+                <span className="flex items-center gap-1 font-semibold text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>En vivo en web</span>
                 </span>
               </div>
             </div>
@@ -548,7 +569,7 @@ export default function FidelizacionPage() {
                 <label className="font-bold text-slate-800 dark:text-slate-200">
                   Descripción del Premio / Beneficio a Entregar
                 </label>
-                <span className="text-[11px] text-slate-400">Visible en Apple & Google Wallet</span>
+                <span className="text-[11px] text-slate-400">Visible en la tarjeta web del cliente</span>
               </div>
               <input
                 type="text"
@@ -864,7 +885,7 @@ export default function FidelizacionPage() {
                         href={getCardUrl(client.id)}
                         target="_blank"
                         className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
-                        title="Ver tarjeta digital como la ve el cliente"
+                        title="Abrir tarjeta web en una nueva pestaña"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Link>
@@ -877,11 +898,11 @@ export default function FidelizacionPage() {
         </div>
       </Card>
 
-      {/* ═══ 6. QR SCAN & PASS MODAL ═══ */}
+      {/* ═══ 6. QR SCAN & WEB LINK MODAL ═══ */}
       <Modal
         open={Boolean(selectedClientForQr)}
         onClose={() => setSelectedClientForQr(null)}
-        title="Pase Digital Apple & Google Wallet"
+        title="Tarjeta Web Digital · Link Exclusivo"
         maxWidth="max-w-md"
       >
         {selectedClientForQr && (
@@ -915,8 +936,17 @@ export default function FidelizacionPage() {
               )}
             </div>
 
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-left">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Enlace web del cliente:
+              </span>
+              <span className="font-mono text-[11px] text-slate-800 dark:text-slate-200 break-all select-all block">
+                {getCardUrl(selectedClientForQr.id)}
+              </span>
+            </div>
+
             <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xs mx-auto leading-relaxed">
-              El cliente puede escanear este código QR con la cámara de su celular para abrir su pase e instalarlo en <strong>Apple Wallet</strong> o <strong>Google Wallet</strong>.
+              El cliente puede escanear este código QR con la cámara de su celular para abrir directamente su link personalizado y ver sus sellos acumulados en tiempo real.
             </p>
 
             <div className="pt-2 flex items-center justify-center gap-2">

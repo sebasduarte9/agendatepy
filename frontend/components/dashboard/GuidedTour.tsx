@@ -608,22 +608,22 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Retención & Lealtad",
     icon: Award,
     summary:
-      "Aumentá la recurrencia de tus clientes con tarjetas digitales para Apple & Google Wallet, sellos por visita y premios automáticos.",
+      "Aumentá la recurrencia de tus clientes con enlaces web personalizados, sellos por visita y premios automáticos.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Club VIP & Tarjetas de Fidelización",
+        taskTitle: "Club VIP & Fidelización",
         instruction:
-          "Bienvenido al Club VIP de AgendatePY. Desde acá fidelizás a tus clientes con tarjetas digitales oficiales, sellos por visita y canjes automatizados para maximizar la recurrencia.",
-        tip: "Podés iniciar la guía en cualquier momento desde el botón 'Guía Interactiva'.",
+          "Bienvenido al Club VIP de AgendatePY. Desde acá fidelizás a tus clientes con enlaces web personalizados, sellos por visita y canjes automatizados para maximizar la recurrencia.",
+        tip: "Podés iniciar o repasar esta guía en cualquier momento desde el botón flotante en la esquina inferior.",
         targetSelector: '[data-tour="fidelizacion-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Pases Apple Wallet (.pkpass) & Google Wallet",
+        taskTitle: "Enlace Web Exclusivo & Tarjeta del Cliente",
         instruction:
-          "Tus clientes pueden instalar su tarjeta digital directamente en la app Wallet de su iPhone o Android. Cada vez que visitan tu salón y ganan sellos, su celular recibe una notificación push automática.",
-        tip: "Hacé clic en 'Ver Tarjeta Demo' para ver el diseño interactivo que verá tu cliente en su pantalla.",
+          "Cada cliente tiene su propio link web personalizado (ej: agendate.py/tu-salon/tarjeta/...). Sin instalar aplicaciones pesadas: lo abren en su celular, ven sus sellos acumulados y consultan su premio disponible.",
+        tip: "Hacé clic en 'Ver Tarjeta Demo' para probar la experiencia exacta que verá tu cliente en su navegador móvil.",
         targetSelector: '[data-tour="fidelizacion-wallet-banner"]',
       },
       {
@@ -646,7 +646,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         stepNumber: 5,
         taskTitle: "Gestión de Sellos, Canjes y Envíos por WhatsApp",
         instruction:
-          "En esta tabla podés sumar sellos (+1 Sello) tras cada atención, canjear beneficios listos con 1 toque o enviar el enlace de su tarjeta digital por WhatsApp con el mensaje ya redactado.",
+          "En esta tabla podés sumar sellos (+1 Sello) tras cada atención, canjear beneficios listos con 1 toque o enviar el link web exclusivo por WhatsApp con el mensaje ya redactado.",
         tip: "Usá el buscador rápido para localizar a cualquier cliente por nombre o número telefónico.",
         targetSelector: '[data-tour="fidelizacion-clients-table"]',
       },
