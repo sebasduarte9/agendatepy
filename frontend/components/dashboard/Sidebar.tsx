@@ -204,9 +204,12 @@ export default function Sidebar() {
                 transform: expanded ? "translateX(0)" : "translateX(-6px)",
               }}
             >
-              <div className="flex items-center gap-1.5 font-extrabold tracking-tight text-slate-900 dark:text-white">
+              <div
+                className="flex items-center gap-1.5 font-coolvetica text-lg tracking-normal text-slate-900 dark:text-white"
+                style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
+              >
                 <span className="truncate">agendate<span className="text-[#FF4F2B]">py</span></span>
-                <span className="rounded-full bg-orange-100 dark:bg-orange-950/60 border border-orange-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-[#FF4F2B] shrink-0">
+                <span className="rounded-full bg-orange-100 dark:bg-orange-950/60 border border-orange-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-[#FF4F2B] shrink-0 font-sans">
                   PRO
                 </span>
               </div>

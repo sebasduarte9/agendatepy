@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,7 +8,6 @@ import {
   Menu,
   X,
   ArrowRight,
-  MessageCircle,
 } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
 import { scrollToSection } from "@/lib/smoothScroll";
@@ -17,6 +16,22 @@ import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 export default function Header() {
   const [activeTab, setActiveTab] = useState("inicio");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Cerrar el menú al interactuar fuera del header SIN usar ningún backdrop que afecte la landing
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleOutsideInteraction = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (headerRef.current && !headerRef.current.contains(target)) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutsideInteraction);
+    return () => document.removeEventListener("pointerdown", handleOutsideInteraction);
+  }, [mobileMenuOpen]);
 
   const sectionIds = [
     "inicio",
@@ -119,13 +134,14 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-2 sm:top-3 z-50 px-2 sm:px-4 md:px-6 transition-all duration-300">
+    <header ref={headerRef} className="sticky top-2 sm:top-3 z-50 px-2 sm:px-4 md:px-6 transition-all duration-300 relative">
+      {/* Navbar principal limpia, blanca y con sutil frosted glass */}
       <nav
         aria-label="Navegación principal"
-        className="mx-auto flex h-13 sm:h-15 max-w-7xl items-center justify-between gap-3 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-slate-950/85 px-3.5 sm:px-5 md:px-6 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-xl"
+        className="relative mx-auto max-w-7xl rounded-full px-3.5 sm:px-5 md:px-6 h-13 sm:h-15 flex items-center justify-between gap-3 bg-white/92 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300"
       >
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center shrink-0">
+        <Link href="/" className="flex items-center shrink-0 relative z-10">
           <motion.div
             whileHover={{ scale: 1.03 }}
             transition={{ type: "spring", stiffness: 300 }}
@@ -135,7 +151,7 @@ export default function Header() {
         </Link>
 
         {/* Clean Center Navigation Rail (Desktop) */}
-        <div className="hidden lg:flex items-center gap-1 xl:gap-1.5">
+        <div className="hidden lg:flex items-center gap-1 xl:gap-1.5 relative z-10">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
@@ -145,8 +161,8 @@ export default function Header() {
                 onClick={(e) => handleNavClick(e, item.id, item.href)}
                 className={`relative px-3.5 xl:px-4 py-1.5 text-xs font-bold transition-all duration-200 rounded-full flex items-center justify-center ${
                   isActive
-                    ? "text-brand dark:text-white bg-brand/10 dark:bg-white/10 font-bold"
-                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-white/5"
+                    ? "text-[#FF4F2B] dark:text-white bg-[#FF4F2B]/10 dark:bg-white/10 font-bold"
+                    : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
                 }`}
               >
                 {item.label}
@@ -156,85 +172,86 @@ export default function Header() {
         </div>
 
         {/* Right Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 relative z-10">
           <Link
             href="/login"
-            className="hidden sm:inline-flex items-center justify-center gap-1 whitespace-nowrap text-xs font-bold transition-all duration-200 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95"
+            className="hidden sm:inline-flex items-center justify-center gap-1 whitespace-nowrap text-xs font-bold transition-all duration-200 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-white/50 dark:hover:bg-white/5 active:scale-95"
           >
             <LogIn className="h-3.5 w-3.5 opacity-70" />
             <span>Acceder</span>
           </Link>
 
+          {/* Desktop CTA */}
           <Link
             href="/onboarding"
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xs font-bold transition-all duration-200 bg-gradient-to-r from-brand to-[#FF6B4A] text-white hover:brightness-110 h-8 sm:h-8.5 px-3.5 sm:px-4 rounded-full shadow-sm shadow-brand/20 active:scale-95"
+            className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-full bg-[#FF4F2B] hover:bg-[#F04420] text-white text-xs font-bold shadow-sm shadow-[#FF4F2B]/25 active:scale-95 transition-all border border-white/20"
           >
-            <span>Probar gratis</span>
+            Probar gratis
+          </Link>
+
+          {/* Mobile Iniciar sesión CTA */}
+          <Link
+            href="/login"
+            className="sm:hidden inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-[#FF4F2B] hover:bg-[#F04420] text-white text-xs font-bold shadow-sm shadow-[#FF4F2B]/25 active:scale-95 transition-all border border-white/20"
+          >
+            Iniciar sesión
           </Link>
 
           {/* Mobile Hamburger Toggle */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xs lg:hidden shrink-0"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/80 dark:border-white/10 bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 shadow-xs lg:hidden shrink-0 transition-colors active:scale-95"
             aria-label="Abrir menú"
           >
-            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {mobileMenuOpen ? <X className="h-3.5 w-3.5" /> : <Menu className="h-3.5 w-3.5" />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile Drawer */}
+      {/* Menú flotante: Blanco limpio, sutil frosted glass, sin empujar la landing */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0, y: -8 }}
-            animate={{ height: "auto", opacity: 1, y: 0 }}
-            exit={{ height: 0, opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="mx-auto mt-2 max-w-7xl overflow-hidden rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 p-4 shadow-2xl backdrop-blur-2xl lg:hidden"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            style={{ position: "absolute" }}
+            className="absolute top-[calc(100%+8px)] left-2 right-2 sm:left-4 sm:right-4 z-50 lg:hidden pointer-events-auto rounded-3xl p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.10)] overflow-hidden"
           >
             <div className="flex flex-col gap-1.5">
-              {navItems.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.href}
-                  onClick={(e) => handleNavClick(e, item.id, item.href)}
-                  className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
-                >
-                  <span>{item.label}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-                </a>
-              ))}
-
-              <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-                <a
-                  href={getCommercialWhatsAppUrl("Hola AgendatePY, quiero consultar sobre planes para mi negocio")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 py-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 active:scale-95 transition"
-                >
-                  <MessageCircle className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
-                  <span>Consultar por WhatsApp</span>
-                </a>
-                <Link
-                  href="/onboarding"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] py-2.5 text-center text-xs font-bold text-white shadow-md shadow-brand/25"
-                >
-                  <span>Registrate gratis ahora</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 py-2 text-center text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50"
-                >
-                  <LogIn className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Ya tengo cuenta · Acceder</span>
-                </Link>
-              </div>
+              {navItems.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    onClick={(e) => handleNavClick(e, item.id, item.href)}
+                    className={`group flex items-center justify-between rounded-2xl px-4 py-3 text-xs font-bold transition-all duration-150 ${
+                      isActive
+                        ? "bg-[#FF4F2B]/10 text-[#FF4F2B] border border-[#FF4F2B]/25 font-black shadow-2xs"
+                        : "text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent active:scale-[0.99]"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <span
+                        className={`h-2 w-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-[#FF4F2B] shadow-xs shadow-[#FF4F2B]"
+                            : "bg-slate-300 dark:bg-slate-600 group-hover:bg-slate-400"
+                        }`}
+                      />
+                      <span className="tracking-tight text-[13px]">{item.label}</span>
+                    </span>
+                    <ArrowRight
+                      className={`h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 ${
+                        isActive ? "text-[#FF4F2B]" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                      }`}
+                    />
+                  </a>
+                );
+              })}
             </div>
           </motion.div>
         )}
@@ -242,4 +259,3 @@ export default function Header() {
     </header>
   );
 }
-

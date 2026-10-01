@@ -300,7 +300,7 @@ export default function Features() {
         </div>
         <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-          <span>Soporte prioritario en Guaraníes</span>
+          <span>Atención y soporte local</span>
         </div>
       </motion.div>
     </section>
@@ -376,7 +376,7 @@ function CashRegisterCardContent() {
         </h3>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           <strong className="font-bold text-slate-900 dark:text-white block sm:inline">Cierre diario sin descuadres. </strong>
-          <span className="hidden sm:inline">Registro automático de cobros en efectivo y transferencias SIPAP sin planillas manuales.</span>
+          <span className="hidden sm:inline">Registro automático de cobros en efectivo y transferencias bancarias sin planillas manuales.</span>
         </p>
       </div>
 

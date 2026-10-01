@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import BrandLogo from "@/components/ui/BrandLogo";
 import {
   CalendarCheck,
   Building2,
@@ -173,13 +174,8 @@ export default function OnboardingPage() {
 
       <header className="relative z-10 border-b border-slate-200/80 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-slate-900">
-            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand text-white shadow-xs">
-              <CalendarCheck className="h-4 w-4" />
-            </span>
-            <span className="text-sm font-black tracking-tight">
-              Agendate<span className="text-brand">PY</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <BrandLogo variant="horizontal" iconClassName="h-6.5 w-6.5" />
           </Link>
           <div className="flex items-center gap-2.5">
             <span className="text-xs font-bold text-slate-600 dark:text-slate-400">

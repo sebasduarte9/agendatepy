@@ -88,7 +88,7 @@ export default function Integrations() {
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <Landmark className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                SIPAP (Todos los Bancos)
+                Transferencias (Todos los Bancos)
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
                 <CreditCard className="h-3.5 w-3.5 text-brand shrink-0" />

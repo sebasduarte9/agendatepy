@@ -22,11 +22,20 @@ import {
   Wrench,
   Trophy,
   MessageCircle,
+  Clock,
+  FileText,
+  Share2,
+  Smartphone,
 } from "lucide-react";
 import { CATEGORIES, type CategoryId } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import PhoneMockup from "./PhoneMockup";
+import Marquee from "@/components/ui/Marquee";
+import CircularOrbitHero from "./CircularOrbitHero";
+import LiquidGlass from "@/components/ui/LiquidGlass";
+import { scrollToSection } from "@/lib/smoothScroll";
+import LiveBookingSimulator from "./LiveBookingSimulator";
 
 const ICONS: Record<CategoryId, typeof Scissors> = {
   peluqueria: Scissors,
@@ -42,40 +51,98 @@ const ICONS: Record<CategoryId, typeof Scissors> = {
 
 const ROW1_CARDS = [
   {
-    id: "pago",
-    icon: CheckCircle2,
-    iconBg: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400",
-    title: "Pago recibido",
-    badge: "Verificado",
-    badgeColor: "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300",
+    id: "transferencia",
+    icon: Landmark,
+    iconBg: "bg-orange-50 text-brand dark:bg-orange-950/50 dark:text-[#FF6B4A]",
+    title: "Seña Transferencia",
+    badge: "Gs. 80.000",
+    badgeColor: "bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300",
+    desc: "Transferencia verificada",
   },
   {
     id: "qr",
     icon: Sparkles,
     iconBg: "bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400",
     title: "Cobro QR",
-    badge: "Instantáneo",
+    badge: "0% Comisión",
     badgeColor: "bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300",
+    desc: "Bancard / Dinelco",
   },
-  {
-    id: "sipap",
-    icon: Landmark,
-    iconBg: "bg-orange-50 text-brand dark:bg-orange-950/50 dark:text-[#FF6B4A]",
-    title: "Seña SIPAP",
-    badge: "Gs. 80.000",
-    badgeColor: "bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300",
-  },
-];
-
-const ROW2_CARDS = [
   {
     id: "reserva",
     icon: CalendarCheck,
     iconBg: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400",
-    title: "Reserva confirmada",
+    title: "Reserva Confirmada",
     badge: "24/7",
     badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+    desc: "Odontología · Hoy 16:30 hs",
   },
+  {
+    id: "caja",
+    icon: Coins,
+    iconBg: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400",
+    title: "Cierre de Caja",
+    badge: "Cuadrado",
+    badgeColor: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300",
+    desc: "Gs. 2.450.000 arqueado",
+  },
+  {
+    id: "padel",
+    icon: Trophy,
+    iconBg: "bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400",
+    title: "Pádel Cancha 1",
+    badge: "Reservado",
+    badgeColor: "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300",
+    desc: "Viernes 20:00 hs · Luces",
+  },
+  {
+    id: "wallet",
+    icon: Smartphone,
+    iconBg: "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
+    title: "Tarjeta Digital",
+    badge: "Apple Wallet",
+    badgeColor: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+    desc: "Puntos fidelización OK",
+  },
+  {
+    id: "pilates",
+    icon: StretchHorizontal,
+    iconBg: "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400",
+    title: "Pase Reformer",
+    badge: "8 Clases",
+    badgeColor: "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
+    desc: "Studio Pilates Aura",
+  },
+  {
+    id: "vet",
+    icon: PawPrint,
+    iconBg: "bg-teal-50 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400",
+    title: "Vacunación Puppy",
+    badge: "Completado",
+    badgeColor: "bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300",
+    desc: "Veterinaria Pet Care",
+  },
+  {
+    id: "gcal",
+    icon: Calendar,
+    iconBg: "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400",
+    title: "Google Calendar",
+    badge: "Sync en vivo",
+    badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300",
+    desc: "Actualización bilateral",
+  },
+  {
+    id: "taller",
+    icon: Wrench,
+    iconBg: "bg-lime-50 text-lime-700 dark:bg-lime-950/50 dark:text-lime-400",
+    title: "Alineación & Taller",
+    badge: "En proceso",
+    badgeColor: "bg-lime-100 text-lime-800 dark:bg-lime-950/60 dark:text-lime-300",
+    desc: "Mecánica Express",
+  },
+];
+
+const ROW2_CARDS = [
   {
     id: "recordatorio",
     icon: Bell,
@@ -83,14 +150,88 @@ const ROW2_CARDS = [
     title: "Recordatorio 2h",
     badge: "Sin ausencias",
     badgeColor: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+    desc: "Sofía confirmó asistencia",
   },
   {
-    id: "padel",
-    icon: Calendar,
-    iconBg: "bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400",
-    title: "Pádel Cancha 1",
-    badge: "Reservado",
-    badgeColor: "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300",
+    id: "barba",
+    icon: Scissors,
+    iconBg: "bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400",
+    title: "Corte & Barba Spa",
+    badge: "Marcos B.",
+    badgeColor: "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300",
+    desc: "Studio Barber Asunción",
+  },
+  {
+    id: "comision",
+    icon: CheckCircle2,
+    iconBg: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400",
+    title: "Liquidación Staff",
+    badge: "Al día",
+    badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+    desc: "50% Staff · Gs. 480.000",
+  },
+  {
+    id: "spa",
+    icon: Flower2,
+    iconBg: "bg-pink-50 text-pink-600 dark:bg-pink-950/50 dark:text-pink-400",
+    title: "Masaje Relax",
+    badge: "Confirmado",
+    badgeColor: "bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300",
+    desc: "Serena Spa · 17:30 hs",
+  },
+  {
+    id: "bloqueo",
+    icon: Clock,
+    iconBg: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    title: "Bloqueo de Agenda",
+    badge: "Protegido",
+    badgeColor: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
+    desc: "Almuerzo equipo 13:00 hs",
+  },
+  {
+    id: "factura",
+    icon: FileText,
+    iconBg: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400",
+    title: "Factura con RUC",
+    badge: "Resimple OK",
+    badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+    desc: "Comprobante electrónico",
+  },
+  {
+    id: "gym",
+    icon: Dumbbell,
+    iconBg: "bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400",
+    title: "Crossfit WOD",
+    badge: "Cupo lleno",
+    badgeColor: "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300",
+    desc: "Iron Box · 18:00 hs",
+  },
+  {
+    id: "medico",
+    icon: Stethoscope,
+    iconBg: "bg-cyan-50 text-cyan-600 dark:bg-cyan-950/50 dark:text-cyan-400",
+    title: "Consulta Médica",
+    badge: "Box 2",
+    badgeColor: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300",
+    desc: "Dr. Benítez · Hoy",
+  },
+  {
+    id: "bio",
+    icon: Share2,
+    iconBg: "bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-950/50 dark:text-fuchsia-400",
+    title: "Link en Bio",
+    badge: "Instagram",
+    badgeColor: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-950/60 dark:text-fuchsia-300",
+    desc: "34 reservas online hoy",
+  },
+  {
+    id: "seguridad",
+    icon: ShieldCheck,
+    iconBg: "bg-teal-50 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400",
+    title: "Telemetría & Auditoría",
+    badge: "Seguro",
+    badgeColor: "bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300",
+    desc: "Multi-tenant encriptado",
   },
 ];
 
@@ -102,20 +243,13 @@ export default function Hero() {
   return (
     <section
       id="inicio"
-      className="relative pt-3 sm:pt-8 pb-10 sm:pb-16 lg:pt-10 lg:pb-20 scroll-mt-24 overflow-x-clip max-w-full"
+      className="relative pt-8 xs:pt-10 sm:pt-14 lg:pt-16 pb-10 sm:pb-16 lg:pb-20 scroll-mt-24 overflow-x-clip max-w-full"
     >
-      {/* Fondo con puntos difuminados en movimiento suave */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none -z-10">
-        <div className="animate-wave-1 absolute -top-[12%] -left-[8%] w-[420px] sm:w-[680px] h-[420px] sm:h-[680px] rounded-full bg-gradient-to-tr from-[#FF4F2B]/20 via-[#FF6B4A]/15 to-transparent blur-3xl opacity-85" />
-        <div className="animate-wave-2 absolute top-[20%] -right-[10%] w-[380px] sm:w-[640px] h-[380px] sm:h-[640px] rounded-full bg-gradient-to-br from-amber-400/20 via-orange-400/12 to-transparent blur-3xl opacity-80" />
-        <div className="animate-wave-3 absolute bottom-[10%] left-[20%] w-[380px] sm:w-[620px] h-[380px] sm:h-[620px] rounded-full bg-gradient-to-t from-emerald-500/15 via-teal-400/10 to-transparent blur-3xl opacity-75" />
-      </div>
-
       <div className="relative mx-auto max-w-7xl px-3 sm:px-6">
         {/* ============================================================== */}
         {/* TABLET & DESKTOP LAYOUT (md: and up): Mockup 3D interactivo    */}
         {/* ============================================================== */}
-        <div className="hidden md:grid items-center gap-6 lg:gap-12 md:grid-cols-12 min-h-[calc(100vh-130px)]">
+        <div className="hidden md:grid items-center gap-6 lg:gap-12 md:grid-cols-12 min-h-[620px] lg:min-h-[680px]">
           {/* Columna Izquierda Desktop/Tablet */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -123,10 +257,24 @@ export default function Hero() {
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
             className="md:col-span-7 flex flex-col justify-center text-left min-w-0"
           >
-            {/* Badge pill Desktop */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand/10 dark:bg-brand/20 border border-brand/20 text-brand dark:text-[#FF6B4A] text-xs lg:text-sm font-bold tracking-wide mb-4 w-fit">
-              <Sparkles className="h-4 w-4" />
-              <span>Plataforma #1 en Paraguay para Reservas y Cobros</span>
+            {/* Badge pill Desktop con Liquid Glass */}
+            <div className="mb-4 w-fit">
+              <LiquidGlass
+                displacementScale={32}
+                blurAmount={0.08}
+                saturation={140}
+                aberrationIntensity={1.8}
+                elasticity={0.25}
+                cornerRadius={999}
+                padding="8px 20px"
+                overLight={true}
+                className="bg-white/40 dark:bg-slate-900/40 border border-white/60 dark:border-white/20 shadow-md shadow-[#FF4F2B]/10 hover:shadow-lg transition-all"
+              >
+                <div className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold tracking-wide text-slate-900 dark:text-white whitespace-nowrap">
+                  <Sparkles className="h-4 w-4 text-[#FF4F2B]" />
+                  <span>Gestión y reservas online automatizadas</span>
+                </div>
+              </LiquidGlass>
             </div>
 
             {/* Headline Desktop */}
@@ -143,44 +291,60 @@ export default function Hero() {
               Mejor control para tu negocio y tus reservas <span className="text-brand font-extrabold">24/7</span>
             </p>
             <p className="mt-2.5 max-w-xl text-base lg:text-lg font-normal leading-relaxed text-slate-600 dark:text-slate-300">
-              Agendamiento automático por WhatsApp sin intermediarios, cobro de señas por SIPAP y recordatorios que eliminan las ausencias.
+              Agendamiento automático por WhatsApp sin intermediarios, cobro de señas por transferencia bancaria y recordatorios que eliminan las ausencias.
             </p>
 
             {/* CTA Desktop */}
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center justify-center gap-2.5 px-8 lg:px-9 py-4 text-base lg:text-lg font-black bg-gradient-to-r from-brand to-[#FF6B4A] text-white rounded-full shadow-lg shadow-brand/25 hover:brightness-110 transition-all active:scale-98 w-fit"
-              >
-                <span>Registrate gratis ahora</span>
-                <ArrowRight className="h-5 w-5" />
+            <div className="mt-11 lg:mt-14 flex flex-wrap items-center gap-4">
+              <Link href="/onboarding" className="inline-block group active:scale-98 transition-transform">
+                <LiquidGlass
+                  cornerRadius={999}
+                  padding="14px 34px"
+                  overLight={false}
+                  showGlare={false}
+                  useDisplacement={false}
+                  className="bg-[#FF4F2B] hover:bg-[#F04420] text-white shadow-lg shadow-[#FF4F2B]/25 transition-all border border-white/20"
+                >
+                  <div className="inline-flex items-center justify-center gap-2.5 text-base lg:text-lg font-bold text-white whitespace-nowrap">
+                    <span>Registrate gratis ahora</span>
+                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </LiquidGlass>
               </Link>
+
               <a
                 href={getCommercialWhatsAppUrl(whatsappMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-4 text-base font-bold border border-emerald-500/30 dark:border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 rounded-full hover:bg-emerald-500/20 transition-all active:scale-98 w-fit"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-full shadow-md shadow-[#25D366]/20 transition-all active:scale-98 w-fit"
               >
-                <MessageCircle className="h-4.5 w-4.5 fill-emerald-500 text-emerald-500 shrink-0" />
+                <MessageCircle className="h-4.5 w-4.5 fill-white stroke-none shrink-0" />
                 <span>Consultar por WhatsApp</span>
               </a>
             </div>
 
-            {/* Garantías de confianza Desktop */}
-            <div className="mt-4 flex items-center gap-3 text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-medium">
-              <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span>14 días gratis</span>
-              </span>
-              <span>·</span>
-              <span>Sin tarjeta</span>
-              <span>·</span>
-              <span>Activación en 3 min</span>
-              <span>·</span>
-              <span>Soporte en Guaraníes</span>
+            {/* Garantías de confianza Desktop en cápsula de cristal mate */}
+            <div className="mt-4.5 w-fit">
+              <LiquidGlass
+                cornerRadius={999}
+                padding="6px 18px"
+                overLight={true}
+                showGlare={false}
+                useDisplacement={false}
+                className="bg-white/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/15 shadow-2xs"
+              >
+                <div className="flex items-center gap-3 text-xs lg:text-sm text-slate-700 dark:text-slate-300 font-medium">
+                  <span className="inline-flex items-center gap-1 font-bold text-slate-900 dark:text-white">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>Sin tarjeta</span>
+                  </span>
+                  <span className="text-slate-400">·</span>
+                  <span>Activación en 3 min</span>
+                </div>
+              </LiquidGlass>
             </div>
 
-            {/* Selector de Rubros Desktop */}
+            {/* Selector de Rubros Desktop con Chips de Liquid Glass */}
             <div className="mt-7 pt-4 border-t border-slate-200/60 dark:border-white/5 w-full">
               <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                 Solución a medida para tu rubro:
@@ -194,14 +358,26 @@ export default function Hero() {
                       key={`desk-${item.id}`}
                       type="button"
                       onClick={() => setSelectedCategory(item.id)}
-                      className={`group inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap ${
-                        active
-                          ? "border-brand bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-md shadow-brand/25 font-bold scale-[1.02]"
-                          : "border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-xs"
-                      }`}
+                      className="group cursor-pointer active:scale-95 transition-transform"
                     >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span>{item.label}</span>
+                      <LiquidGlass
+                        cornerRadius={999}
+                        padding="6px 14px"
+                        overLight={!active}
+                        showGlare={false}
+                        useDisplacement={false}
+                        interactive={false}
+                        className={`transition-all duration-200 ${
+                          active
+                            ? "bg-[#FF4F2B] text-white border border-white/20 shadow-sm shadow-[#FF4F2B]/20"
+                            : "bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-[#FF4F2B]/40 hover:bg-white/80 dark:hover:bg-slate-800/80"
+                        }`}
+                      >
+                        <div className="inline-flex items-center gap-2 text-xs font-semibold whitespace-nowrap">
+                          <Icon className="h-3.5 w-3.5" />
+                          <span>{item.label}</span>
+                        </div>
+                      </LiquidGlass>
                     </button>
                   );
                 })}
@@ -225,172 +401,102 @@ export default function Hero() {
         {/* ============================================================== */}
         {/* MOBILE LAYOUT (< md): Exclusivo para teléfonos                 */}
         {/* ============================================================== */}
-        <div className="md:hidden flex flex-col justify-start gap-5 xs:gap-6 min-h-[calc(100svh-76px)] text-left w-full pt-1 pb-4">
-          {/* Bloque Superior: Pill + Titular con 3 renglones destacados y separados + Cards ticker en paralelo */}
-          <div className="pt-1">
-            {/* Pill badge superior */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand/10 dark:bg-brand/20 border border-brand/20 text-brand dark:text-[#FF6B4A] text-xs font-bold tracking-wide uppercase mb-3 backdrop-blur-xs">
-              <Sparkles className="h-3.5 w-3.5 text-brand" />
-              <span>Gestión 24/7 en Paraguay</span>
+        <div className="md:hidden flex flex-col justify-start text-left w-full pt-3 xs:pt-5 pb-2">
+          {/* Bloque superior: Titular a la izquierda con Orbitador de 3 filas a la derecha */}
+          <div className="relative w-full overflow-x-clip min-h-[270px] xs:min-h-[300px] flex items-center mb-5">
+            {/* Titular monumental de alto impacto visual (El protagonista) */}
+            <div className="relative z-10 max-w-[56%] xs:max-w-[53%] pointer-events-auto pr-1">
+              <h1 className="text-left font-sans">
+                <span className="block text-[36px] xs:text-[42px] font-black text-slate-950 dark:text-white leading-[1.06] tracking-tight">
+                  Gestioná tu
+                </span>
+                <span className="block text-[36px] xs:text-[42px] font-black text-slate-950 dark:text-white leading-[1.06] tracking-tight">
+                  agenda
+                </span>
+                <span className="block text-[20px] xs:text-[24px] font-medium text-slate-700 dark:text-slate-300 leading-snug tracking-normal mt-1">
+                  y tu negocio con
+                </span>
+                <span className="block text-[42px] xs:text-[50px] font-black tracking-tight text-[#FF5B37] leading-[1.04] mt-1.5">
+                  AgendatePY
+                </span>
+              </h1>
             </div>
 
-            <div className="relative w-full pt-0.5 pb-2 overflow-x-clip">
-              {/* Layer de Cards HORIZONTALES animadas a la derecha con difuminación suave hacia las letras */}
-              <div className="absolute right-0 -top-1 bottom-0 w-[50%] xs:w-[46%] pointer-events-none select-none overflow-hidden fade-to-letters-mask flex flex-col justify-center gap-2.5 -mr-2">
-                {/* Fila 1 Horizontal: Pago recibido (Verificado), Cobro QR, Seña SIPAP */}
-                <div className="flex w-max gap-2 animate-ticker-left">
-                  {[...ROW1_CARDS, ...ROW1_CARDS, ...ROW1_CARDS].map((card, idx) => {
-                    const Icon = card.icon;
-                    return (
-                      <div
-                        key={`mob-h1-${card.id}-${idx}`}
-                        className="flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3 py-2 shadow-sm backdrop-blur-md"
-                      >
-                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 text-left">
-                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">
-                            {card.title}
-                          </p>
-                          <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-extrabold mt-0.5 ${card.badgeColor}`}>
-                            {card.badge}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            {/* Vitrina Orbital: 3 Filas concéntricas dando vueltas a un lado con desvanecimiento */}
+            <CircularOrbitHero />
+          </div>
 
-                {/* Fila 2 Horizontal: Reserva confirmada (24/7), Recordatorio 2h, Pádel Cancha 1 */}
-                <div className="flex w-max gap-2 animate-ticker-right">
-                  {[...ROW2_CARDS, ...ROW2_CARDS, ...ROW2_CARDS].map((card, idx) => {
-                    const Icon = card.icon;
-                    return (
-                      <div
-                        key={`mob-h2-${card.id}-${idx}`}
-                        className="flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 px-3 py-2 shadow-sm backdrop-blur-md"
-                      >
-                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 text-left">
-                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">
-                            {card.title}
-                          </p>
-                          <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-extrabold mt-0.5 ${card.badgeColor}`}>
-                            {card.badge}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+          {/* Subtítulo limpio y directo */}
+          <div className="relative z-20 mb-3 mt-1">
+            <p className="text-left text-base xs:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+              Mejor control para tu negocio y tus reservas <span className="text-[#FF5B37] font-black">24/7</span>
+            </p>
+          </div>
 
-              {/* Titular en primer plano con letras variadas, más grandes y con mayor separación vertical */}
-              <div className="relative z-10 max-w-[82%] pointer-events-auto">
-                <h1 className="text-left">
-                  <span className="block text-[28px] xs:text-[34px] sm:text-[38px] font-black text-slate-900 dark:text-white leading-[1.2] tracking-tight">
-                    Gestioná tu agenda
+          {/* CTA Principal con Liquid Glass refinado (bajados con margen superior) */}
+          <div className="mt-5 xs:mt-7 flex flex-col gap-3">
+            <Link
+              href="/onboarding"
+              className="w-full block group active:scale-98 transition-transform"
+            >
+              <LiquidGlass
+                cornerRadius={999}
+                padding="14px 24px"
+                overLight={false}
+                showGlare={false}
+                useDisplacement={false}
+                interactive={false}
+                className="w-full bg-[#FF4F2B] hover:bg-[#F04420] text-white shadow-lg shadow-[#FF4F2B]/20 border border-white/20 transition-all"
+              >
+                <div className="inline-flex items-center justify-center gap-2.5 text-base xs:text-lg font-bold text-white">
+                  <span>Registrate gratis ahora</span>
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </LiquidGlass>
+            </Link>
+
+            {/* Botón WhatsApp */}
+            <a
+              href={getCommercialWhatsAppUrl(whatsappMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-base font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-full shadow-md shadow-[#25D366]/20 transition-all active:scale-98"
+            >
+              <MessageCircle className="h-5 w-5 fill-white stroke-none shrink-0" />
+              <span>Consultar por WhatsApp</span>
+            </a>
+
+            {/* Micro-copy centrado en cápsula de cristal mate sutil */}
+            <div className="flex items-center justify-center mt-1">
+              <LiquidGlass
+                cornerRadius={999}
+                padding="5px 16px"
+                overLight={true}
+                showGlare={false}
+                useDisplacement={false}
+                interactive={false}
+                className="bg-white/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/10 shadow-2xs"
+              >
+                <div className="flex items-center gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="inline-flex items-center gap-1 font-bold text-slate-900 dark:text-white">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Sin tarjeta</span>
                   </span>
-                  <span className="block text-[24px] xs:text-[29px] sm:text-[32px] font-semibold text-slate-700 dark:text-slate-300 tracking-normal mt-2 leading-[1.2]">
-                    y tu negocio con
-                  </span>
-                  <span className="block text-[34px] xs:text-[42px] sm:text-[48px] font-black tracking-tight bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent drop-shadow-xs mt-2.5 leading-[1.15]">
-                    AgendatePY
-                  </span>
-                </h1>
-              </div>
+                  <span className="text-slate-400">·</span>
+                  <span>Activación en 3 min</span>
+                </div>
+              </LiquidGlass>
             </div>
           </div>
 
-          {/* Bloque Central: Ocupa el espacio vertical de manera legible, estructurada y sin huecos vacíos */}
-          <div className="flex flex-col gap-4">
-            {/* Tarjeta de propuesta de valor con tipografía más grande y espaciada */}
-            <div className="rounded-2xl border border-white/80 dark:border-white/10 bg-white/70 dark:bg-slate-900/60 p-4 xs:p-5 shadow-sm backdrop-blur-md">
-              <h2 className="text-base xs:text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-snug tracking-tight">
-                Mejor control para tu negocio y tus reservas <span className="text-brand dark:text-[#FF6B4A] font-extrabold">24/7</span>
-              </h2>
-              <p className="mt-2 text-sm xs:text-[15px] font-medium leading-relaxed text-slate-600 dark:text-slate-300">
-                Agendamiento 100% automático por <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">WhatsApp</strong>, cobro de señas por <strong className="text-orange-600 dark:text-orange-400 font-semibold">SIPAP</strong> y cero ausencias.
-              </p>
-
-              {/* Beneficios directos para enriquecer la lectura y ocupar el espacio vertical */}
-              <div className="mt-3.5 pt-3 border-t border-slate-200/60 dark:border-white/5 flex flex-col gap-2.5">
-                <div className="flex items-center gap-2.5 text-xs xs:text-sm text-slate-700 dark:text-slate-300">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">✓</span>
-                  <span><strong>Confirmación inmediata</strong> en el WhatsApp del cliente</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs xs:text-sm text-slate-700 dark:text-slate-300">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-bold text-[11px]">✓</span>
-                  <span><strong>Señas SIPAP / QR</strong> verificadas antes de agendar</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs xs:text-sm text-slate-700 dark:text-slate-300">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 font-bold text-[11px]">✓</span>
-                  <span><strong>Recordatorios 24/7</strong> para asegurar asistencia</span>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA Principal y WhatsApp */}
-            <div className="flex flex-col gap-2.5">
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-4 text-base xs:text-lg font-black bg-gradient-to-r from-brand to-[#FF6B4A] text-white rounded-full shadow-lg shadow-brand/25 hover:brightness-110 transition-all active:scale-98 w-full"
-              >
-                <span>Registrate gratis ahora</span>
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-              <a
-                href={getCommercialWhatsAppUrl(whatsappMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold border border-emerald-500/30 dark:border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 rounded-full hover:bg-emerald-500/20 transition active:scale-98 w-full"
-              >
-                <MessageCircle className="h-4 w-4 fill-emerald-500 text-emerald-500 shrink-0" />
-                <span>Consultar por WhatsApp</span>
-              </a>
-            </div>
-
-            {/* Garantías y sellos de confianza distribuidos en 3 columnas */}
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-xl border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-slate-900/60 py-2.5 px-2 backdrop-blur-xs shadow-xs">
-                <span className="flex items-center justify-center gap-1 text-[11px] xs:text-xs font-bold text-slate-800 dark:text-slate-200">
-                  <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
-                  14 días gratis
-                </span>
-              </div>
-              <div className="rounded-xl border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-slate-900/60 py-2.5 px-2 backdrop-blur-xs shadow-xs">
-                <span className="text-[11px] xs:text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Sin tarjeta
-                </span>
-              </div>
-              <div className="rounded-xl border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-slate-900/60 py-2.5 px-2 backdrop-blur-xs shadow-xs">
-                <span className="text-[11px] xs:text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  En 3 minutos
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Selector de Rubros Mobile: Empujado hacia el fondo */}
-          <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 w-full">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-left">
-                Solución a medida para tu rubro:
-              </p>
-              <a
-                href="#simulador-whatsapp"
-                className="text-xs font-bold text-brand hover:underline flex items-center gap-0.5"
-              >
-                <span>Ver bot en vivo</span>
-                <ArrowRight className="h-3 w-3" />
-              </a>
-            </div>
-            <div className="relative overflow-hidden max-w-full ticker-mask py-0.5">
-              <div className="ticker-track flex w-max gap-2 py-0.5 hover:[animation-play-state:paused] active:[animation-play-state:paused]">
-                {[...CATEGORIES, ...CATEGORIES].map((item, idx) => {
+          {/* Selector de Rubros: Ubicado bien abajo para que la simulación de WhatsApp quede completamente fuera del primer pantallazo */}
+          <div className="mt-36 xs:mt-44 sm:mt-48 pt-12 border-t border-slate-200/80 dark:border-white/10 w-full">
+            <p className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 text-center mb-3.5">
+              SOLUCIÓN A MEDIDA PARA TU RUBRO:
+            </p>
+            <div className="relative overflow-hidden max-w-full ticker-mask py-2">
+              <Marquee duration="32s" gap="0.625rem" repeat={3} pauseOnHover>
+                {CATEGORIES.map((item, idx) => {
                   const Icon = ICONS[item.id] || Scissors;
                   const active = selectedCategory === item.id;
                   return (
@@ -398,41 +504,44 @@ export default function Hero() {
                       key={`mob-cat-${item.id}-${idx}`}
                       type="button"
                       onClick={() => setSelectedCategory(item.id)}
-                      className={`group inline-flex shrink-0 items-center gap-2 rounded-2xl border px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap ${
-                        active
-                          ? "border-brand bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-md shadow-brand/25 font-bold scale-[1.02]"
-                          : "border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand/40 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-xs"
-                      }`}
+                      className="group cursor-pointer active:scale-95 transition-transform pointer-events-auto z-10 touch-manipulation select-none"
                     >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span>{item.label}</span>
+                      <LiquidGlass
+                        cornerRadius={999}
+                        padding="6px 14px"
+                        overLight={!active}
+                        showGlare={false}
+                        useDisplacement={false}
+                        interactive={false}
+                        className={`transition-all duration-200 ${
+                          active
+                            ? "bg-[#FF4F2B] text-white border border-white/20 shadow-sm shadow-[#FF4F2B]/20"
+                            : "bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300"
+                        }`}
+                      >
+                        <div className="inline-flex items-center gap-2 text-xs font-semibold whitespace-nowrap">
+                          <Icon className="h-3.5 w-3.5" />
+                          <span>{item.label}</span>
+                        </div>
+                      </LiquidGlass>
                     </button>
                   );
                 })}
-              </div>
+              </Marquee>
             </div>
           </div>
         </div>
 
         {/* En mobile: La simulación interactiva de WhatsApp SOLO al scrollear hacia abajo, fuera del primer pantallazo */}
-        <div id="simulador-whatsapp" className="md:hidden relative mt-28 pt-16 border-t border-slate-200/60 dark:border-white/5 text-center scroll-mt-20">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2.5 backdrop-blur-md">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Simulación Interactiva</span>
-          </div>
-          <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-            Mirá cómo reservan en segundos
-          </h3>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-2">
-            100% integrado a WhatsApp.
-          </p>
-          <div className="mb-6 flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-            <span>Simulando bot para: <strong className="text-slate-800 dark:text-slate-200">{category?.label}</strong></span>
-          </div>
+        <div id="simulador-whatsapp" className="md:hidden relative mt-16 pt-8 border-t border-slate-200/60 dark:border-white/5 flex flex-col items-center scroll-mt-20">
           <div className="w-full flex justify-center max-w-full">
             <PhoneMockup />
           </div>
+        </div>
+
+        {/* Simulador de reserva en vivo colocado directamente debajo del simulador de WhatsApp con su separación */}
+        <div className="mt-14 sm:mt-20">
+          <LiveBookingSimulator />
         </div>
       </div>
     </section>

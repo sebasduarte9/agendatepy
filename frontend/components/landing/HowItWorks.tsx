@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Zap, Check, Clock, MessageSquareCheck, WalletCards } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 import MiniCalendar from "./MiniCalendar";
+import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 
 const TIMES = ["09:00", "10:30", "14:00", "16:30"];
 const PAYMENTS = [
@@ -105,7 +106,13 @@ function BookingWidget() {
   const service = category.services.find((item) => item.id === serviceId);
 
   return (
-    <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 p-3.5 xs:p-4 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-2xl transition-all max-w-full overflow-hidden">
+    <LiquidGlassCard
+      borderRadius="28px"
+      blurIntensity="xl"
+      glowIntensity="sm"
+      shadowIntensity="md"
+      className="p-3.5 xs:p-4 sm:p-6 border border-white/60 dark:border-white/10 shadow-xl max-w-full overflow-hidden"
+    >
       {/* Pasos / Indicador superior */}
       <div className="mb-4 flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -255,7 +262,7 @@ function BookingWidget() {
           </div>
         </motion.div>
       )}
-    </div>
+    </LiquidGlassCard>
   );
 }
 
@@ -315,7 +322,13 @@ function WorkflowStep({
   detail: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 p-3.5 sm:p-4 shadow-xs backdrop-blur-xl hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+    <LiquidGlassCard
+      borderRadius="20px"
+      blurIntensity="lg"
+      glowIntensity="xs"
+      shadowIntensity="sm"
+      className="p-3.5 sm:p-4 border border-white/60 dark:border-white/10 hover:border-[#FF4F2B]/40 hover:-translate-y-0.5 transition-all duration-300"
+    >
       <div className="flex items-center gap-2.5 sm:gap-3">
         <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] sm:text-xs font-black text-brand dark:text-white border border-slate-200/60 dark:border-white/10">
           {step}
@@ -329,6 +342,6 @@ function WorkflowStep({
         <p className="font-semibold text-slate-800 dark:text-slate-200">{leadIn}</p>
         <p className="hidden sm:block text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{detail}</p>
       </div>
-    </div>
+    </LiquidGlassCard>
   );
 }

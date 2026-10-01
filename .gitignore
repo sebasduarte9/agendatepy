@@ -19,6 +19,7 @@ nginx/certs/
 out/
 build/
 *.log
+*.zip
 
 # Archivos del Sistema Operativo
 .DS_Store

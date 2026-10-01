@@ -21,6 +21,7 @@ import {
   switchRoleDemoAction,
 } from "@/lib/auth/actions";
 import type { UserRole } from "@/lib/auth/types";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 function LoginForm() {
   const router = useRouter();
@@ -138,12 +139,7 @@ function LoginForm() {
             href="/"
             className="inline-flex items-center gap-2 rounded-2xl bg-white px-3.5 py-1.5 shadow-[0_2px_10px_rgb(0,0,0,0.04)] border border-slate-200/80 transition hover:scale-[1.02]"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand text-white shadow-xs">
-              <CalendarCheck className="h-4 w-4" />
-            </span>
-            <span className="text-sm font-black tracking-tight text-slate-900">
-              Agendate<span className="text-brand">PY</span>
-            </span>
+            <BrandLogo variant="horizontal" iconClassName="h-6.5 w-6.5" />
           </Link>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Bienvenido a tu panel

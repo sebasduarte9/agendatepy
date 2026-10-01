@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-plus-jakarta",
+});
+
+const coolvetica = localFont({
+  src: "../public/fonts/coolvetica/coolvetica-rg.otf",
+  variable: "--font-coolvetica",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -139,7 +146,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${jakarta.variable} h-full scroll-smooth`} data-scroll-behavior="smooth">
+    <html lang="es" className={`${jakarta.variable} ${coolvetica.variable} h-full scroll-smooth`} data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CalendarCheck, ArrowLeft, Shield, FileText } from "lucide-react";
+import { ArrowLeft, Shield, FileText } from "lucide-react";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export const metadata = {
   title: "Términos y Condiciones | AgendatePY",
@@ -12,13 +13,8 @@ export default function TerminosPage() {
       {/* Cabecera */}
       <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-slate-900">
-            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand text-white shadow-xs">
-              <CalendarCheck className="h-4 w-4" />
-            </span>
-            <span className="text-sm font-black tracking-tight">
-              Agendate<span className="text-brand">PY</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <BrandLogo variant="horizontal" iconClassName="h-6.5 w-6.5" />
           </Link>
 
           <Link

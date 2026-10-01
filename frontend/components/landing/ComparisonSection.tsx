@@ -37,7 +37,7 @@ const BEFORE_ITEMS = [
   {
     icon: AlertCircle,
     title: "Descuadres al cerrar la caja",
-    desc: "Mezcla de cobros en efectivo, transferencias SIPAP y pos sin registro claro.",
+    desc: "Mezcla de cobros en efectivo, transferencias bancarias y pos sin registro claro.",
   },
 ];
 
@@ -60,7 +60,7 @@ const AFTER_ITEMS = [
   {
     icon: TrendingUp,
     title: "Caja y Arqueo Cuadrado",
-    desc: "Control total de efectivo y transferencias SIPAP con balance diario exacto.",
+    desc: "Control total de efectivo y transferencias bancarias con balance diario exacto.",
   },
 ];
 
@@ -229,7 +229,7 @@ export default function ComparisonSection() {
 
             <div className="mt-6 pt-4 border-t border-emerald-500/20 dark:border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
               <p className="text-xs text-slate-600 dark:text-slate-300 font-medium text-center sm:text-left">
-                Prueba 14 días sin costo ni tarjeta de crédito
+                Comenzá ahora sin tarjeta de crédito
               </p>
               <Link
                 href="/onboarding"

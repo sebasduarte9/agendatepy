@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarPlus, MessageCircle, ArrowRight } from "lucide-react";
-import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
+import { CalendarPlus, ArrowRight } from "lucide-react";
 
 export default function StickyMobileCta() {
   const [isVisible, setIsVisible] = useState(false);
@@ -35,32 +34,32 @@ export default function StickyMobileCta() {
           style={{ paddingBottom: "max(0.65rem, env(safe-area-inset-bottom))" }}
         >
           <div className="flex items-center justify-between gap-1.5 xs:gap-2.5">
-            {/* Mensaje de valor y garantía */}
+            {/* Texto limpio sin nombres de negocio ficticios ni rubro */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="flex h-2 w-2 rounded-full bg-brand animate-ping shrink-0" />
-                <p className="truncate text-xs font-black text-slate-900 dark:text-white leading-tight">
-                  Agendate<span className="text-brand">PY</span>
-                </p>
-                <span className="rounded-full bg-brand/10 px-1.5 py-0.2 text-[9px] font-black text-brand shrink-0">
-                  <span className="hidden xs:inline">14 días gratis</span>
-                  <span className="xs:hidden">14d gratis</span>
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
-                Sin tarjeta · 3 min
+              <p
+                className="truncate text-base font-coolvetica text-slate-900 dark:text-white leading-tight"
+                style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
+              >
+                Agendate<span className="text-[#FF4F2B]">PY</span>
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
+                Automatizá tus turnos 24/7
               </p>
             </div>
 
-            {/* Botón Principal: Prueba gratis */}
+            {/* Botón Principal con línea glow neón rotando alrededor */}
             <div className="flex items-center gap-1.5 xs:gap-2 shrink-0">
               <Link
                 href="/onboarding"
-                className="flex h-8.5 xs:h-9 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-3.5 xs:px-4 text-xs font-black text-white shadow-md shadow-brand/25 active:scale-95 transition shrink-0 whitespace-nowrap"
+                className="relative group p-[1.5px] rounded-xl overflow-hidden active:scale-95 transition-transform"
               >
-                <CalendarPlus className="h-3.5 w-3.5 text-white shrink-0" />
-                <span>Empezar gratis</span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                {/* Línea glow neón que va dando vueltas de a poco sobre el borde */}
+                <span className="absolute inset-[-150%] animate-[spin_3.5s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_0_300deg,#FF4F2B_360deg)] pointer-events-none" />
+                <span className="relative flex h-8.5 xs:h-9 items-center justify-center gap-1.5 rounded-[10px] bg-[#FF4F2B] hover:bg-[#F04420] px-3.5 xs:px-4 text-xs font-black text-white shadow-md shadow-[#FF4F2B]/25 transition shrink-0 whitespace-nowrap">
+                  <CalendarPlus className="h-3.5 w-3.5 text-white shrink-0" />
+                  <span>Empezar gratis</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                </span>
               </Link>
             </div>
           </div>

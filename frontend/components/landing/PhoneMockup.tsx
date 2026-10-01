@@ -121,28 +121,30 @@ export default function PhoneMockup() {
     }
   };
 
-  const initialMessages: Message[] = [
+  const getInitialMessages = (cat: typeof category): Message[] => [
     {
       id: "m1",
       incoming: false,
       type: "text",
-      text: `Hola, quiero consultar disponibilidad en *${category.businessName}*.`,
+      text: `Hola, quiero consultar disponibilidad en *${cat.businessName}*.`,
       time: "14:20",
     },
     {
       id: "m2",
       incoming: true,
       type: "text",
-      text: `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción.\n\nSoy el asistente virtual de AgendatePY. Seleccioná el servicio que deseás agendar:`,
+      text: cat.botIntro || `¡Hola! Bienvenido/a a *${cat.businessName}* en Asunción.\n\nSoy el asistente virtual de AgendatePY. Seleccioná el servicio que deseás agendar:`,
       time: "14:20",
-      options: [
-        { label: `${category.services[0]?.name || "Corte Clásico"} · Gs. 80.000`, action: () => handleSelectService() },
-        { label: `${category.services[1]?.name || "Servicio Completo"} · Gs. 120.000`, action: () => handleSelectService() },
-      ],
+      options: (cat.services && cat.services.length > 0 ? cat.services.slice(0, 2) : [
+        { id: "s1", name: "Consulta General", duration: "30 min", price: "Gs. 80.000" }
+      ]).map((srv, idx) => ({
+        label: `${srv.name} · ${srv.price}`,
+        action: () => handleSelectService(idx),
+      })),
     },
   ];
 
-  const [chat, setChat] = useState<Message[]>(initialMessages);
+  const [chat, setChat] = useState<Message[]>(() => getInitialMessages(category));
 
   // Auto-scroll chat whenever messages change or typing status updates
   useEffect(() => {
@@ -159,16 +161,24 @@ export default function PhoneMockup() {
 
   function handleSelectService(selectedIdx = 0) {
     setStep(1);
-    const service = category.services[selectedIdx] || category.services[0];
+    const service = (category.services && category.services[selectedIdx]) || category.services?.[0] || {
+      name: "Servicio General",
+      price: "Gs. 80.000",
+      duration: "30 min",
+    };
     const userMsg: Message = {
-      id: "u-service",
+      id: `u-service-${Date.now()}`,
       incoming: false,
       type: "text",
       text: `${service.name} (${service.price})`,
       time: "14:21",
     };
 
-    setChat((prev) => [...prev, userMsg]);
+    // Remove buttons from previous message and append user response
+    setChat((prev) => [
+      ...prev.map((m) => (m.options ? { ...m, options: undefined } : m)),
+      userMsg,
+    ]);
     setIsTyping(true);
 
     const slot1 = category.timeSlots?.[0] || "16:30 hs";
@@ -178,7 +188,7 @@ export default function PhoneMockup() {
     setTimeout(() => {
       setIsTyping(false);
       const botMsg: Message = {
-        id: "b-service",
+        id: `b-service-${Date.now()}`,
         incoming: true,
         type: "text",
         text: `Excelente elección. Disponibilidad hoy con *${staff}*:\n\n• ${slot1}\n• ${slot2}\n\n¿Cuál horario te queda mejor?`,
@@ -189,7 +199,7 @@ export default function PhoneMockup() {
         ],
       };
       setChat((prev) => [...prev, botMsg]);
-    }, 800);
+    }, 700);
   }
 
   function handleSelectTime(
@@ -199,20 +209,24 @@ export default function PhoneMockup() {
   ) {
     setStep(2);
     const userMsg: Message = {
-      id: "u-time",
+      id: `u-time-${Date.now()}`,
       incoming: false,
       type: "text",
       text: timeSlot,
       time: "14:22",
     };
 
-    setChat((prev) => [...prev, userMsg]);
+    // Remove buttons from previous message and append user response
+    setChat((prev) => [
+      ...prev.map((m) => (m.options ? { ...m, options: undefined } : m)),
+      userMsg,
+    ]);
     setIsTyping(true);
 
     setTimeout(() => {
       setIsTyping(false);
       const confirmationCard: Message = {
-        id: "b-card",
+        id: `b-card-${Date.now()}`,
         incoming: true,
         type: "card",
         time: "14:22",
@@ -232,7 +246,7 @@ export default function PhoneMockup() {
       setTimeout(() => {
         setShowNotification(true);
         playiOSChime();
-      }, 700);
+      }, 600);
     }, 700);
   }
 
@@ -240,10 +254,13 @@ export default function PhoneMockup() {
     setStep(3);
     setIsTyping(true);
 
+    // Remove options from confirmation card
+    setChat((prev) => prev.map((m) => (m.options ? { ...m, options: undefined } : m)));
+
     setTimeout(() => {
       setIsTyping(false);
       const audioMsg: Message = {
-        id: "b-audio",
+        id: `b-audio-${Date.now()}`,
         incoming: true,
         type: "audio",
         time: "14:23",
@@ -255,18 +272,21 @@ export default function PhoneMockup() {
       setChat((prev) => [...prev, audioMsg]);
       setIsPlayingAudio(true);
       setTimeout(() => setIsPlayingAudio(false), 3500);
-    }, 800);
+    }, 700);
   }
 
   function handleShowReminder(service?: { name: string; price: string }) {
     setStep(4);
     setIsTyping(true);
-    const serviceName = service?.name || category.services[0]?.name || "Turno";
+    const serviceName = service?.name || category.services?.[0]?.name || "Turno";
+
+    // Remove options from audio message
+    setChat((prev) => prev.map((m) => (m.options ? { ...m, options: undefined } : m)));
 
     setTimeout(() => {
       setIsTyping(false);
       const reminderMsg: Message = {
-        id: "r-reminder",
+        id: `r-reminder-${Date.now()}`,
         incoming: true,
         type: "text",
         text: `*Recordatorio de Turno*\n\n¡Hola Martín! Tu reserva para *${serviceName}* en *${category.businessName}* es en 2 horas.\n\nDirección: Avda. España 1420 c/ San Rafael\n\n¿Confirmás tu asistencia? Respondé *SI* o reprogramá desde tu enlace de autogestión.`,
@@ -285,26 +305,7 @@ export default function PhoneMockup() {
     setStep(0);
     setIsTyping(false);
     setIsPlayingAudio(false);
-    setChat([
-      {
-        id: "m1",
-        incoming: false,
-        type: "text",
-        text: `Hola, quiero consultar en *${category.businessName}*.`,
-        time: "14:20",
-      },
-      {
-        id: "m2",
-        incoming: true,
-        type: "text",
-        text: category.botIntro || `¡Hola! Bienvenido/a a *${category.businessName}* en Asunción. Seleccioná una opción:`,
-        time: "14:20",
-        options: category.services.slice(0, 2).map((srv, idx) => ({
-          label: `${srv.name} · ${srv.price}`,
-          action: () => handleSelectService(idx),
-        })),
-      },
-    ]);
+    setChat(getInitialMessages(category));
   }
 
   return (
@@ -376,7 +377,7 @@ export default function PhoneMockup() {
                     href="/onboarding"
                     className="mt-2.5 flex items-center justify-between rounded-xl bg-gradient-to-r from-brand to-[#FF6B4A] px-3.5 py-2 text-[11px] font-black text-white shadow-sm hover:brightness-110 active:scale-98 transition group"
                   >
-                    <span>Empezar gratis en 3 minutos</span>
+                    <span>Empezar gratis</span>
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </motion.div>
@@ -488,7 +489,7 @@ export default function PhoneMockup() {
             {/* ========================================================= */}
             <div
               ref={chatScrollRef}
-              className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-left"
             >
               {/* Date Badge */}
               <div className="text-center my-1">
@@ -510,18 +511,25 @@ export default function PhoneMockup() {
                     initial={{ opacity: 0, y: 8, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.22 }}
-                    className={`flex flex-col ${msg.incoming ? "items-start" : "items-end"}`}
+                    className={`flex flex-col ${msg.incoming ? "items-start text-left" : "items-end text-left"}`}
+                    style={{ textAlign: "left" }}
                   >
-                    {/* Standard Text Bubble */}
+                    {/* Standard Text Bubble: Siempre alineado a la izquierda */}
                     {msg.type === "text" && (
                       <div
-                        className={`relative max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] ${
+                        className={`relative max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed text-left shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] ${
                           msg.incoming
                             ? "rounded-tl-xs bg-white text-[#111b21]"
                             : "rounded-tr-xs bg-[#d9fdd3] text-[#111b21]"
                         }`}
+                        style={{ textAlign: "left" }}
                       >
-                        <p className="whitespace-pre-wrap">{renderWhatsAppText(msg.text)}</p>
+                        <p
+                          className="whitespace-pre-wrap text-left text-[#111b21]"
+                          style={{ textAlign: "left", width: "100%" }}
+                        >
+                          {renderWhatsAppText(msg.text)}
+                        </p>
                         <div className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#667781]">
                           <span>{msg.time}</span>
                           {!msg.incoming && <CheckCheck className="h-3 w-3 text-[#53bdeb]" />}
@@ -611,9 +619,10 @@ export default function PhoneMockup() {
                             key={opt.label}
                             type="button"
                             onClick={opt.action}
-                            className="w-full rounded-xl border border-[#008069]/30 bg-white py-2 px-3 text-[11px] font-bold text-[#008069] shadow-[0_1px_1px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center gap-1.5"
+                            className="w-full rounded-xl border border-[#008069]/30 bg-white py-2 px-3 text-[11px] font-bold text-[#008069] shadow-[0_1px_1px_rgba(0,0,0,0.06)] hover:bg-[#e7f8f5] active:scale-[0.98] transition flex items-center justify-center text-center gap-1.5"
+                            style={{ textAlign: "center" }}
                           >
-                            <span>{opt.label}</span>
+                            <span className="w-full text-center">{opt.label}</span>
                           </button>
                         ))}
                       </div>

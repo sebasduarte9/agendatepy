@@ -39,29 +39,8 @@ export type CategoryContent = {
 
 export const CATEGORIES: CategoryContent[] = [
   {
-    id: "peluqueria",
-    label: "Peluquerías & Barberías",
-    emoji: "",
-    businessName: "Studio Corte & Barba",
-    heroExample: "Corte Degradé + Barba",
-    staffName: "Marcos Benítez",
-    botIntro: "¡Hola! Bienvenido/a a Studio Corte & Barba en Asunción.\n\nSeleccioná el servicio que deseás agendar hoy:",
-    timeSlots: ["15:30 hs", "17:00 hs", "18:30 hs"],
-    services: [
-      { id: "corte", name: "Corte Clásico Degradé", duration: "30 min", price: "Gs. 60.000" },
-      { id: "barba", name: "Perfilado de Barba Spa", duration: "25 min", price: "Gs. 40.000" },
-      { id: "combo", name: "Corte + Barba Completo", duration: "50 min", price: "Gs. 90.000" },
-    ],
-    whatsapp: {
-      confirmation:
-        "Tu turno fue confirmado: Corte + Barba — Hoy 17:00 hs en Studio Corte & Barba.",
-      reminder24h: "Recordatorio: Mañana es tu turno de Corte + Barba. ¿Necesitás reprogramar?",
-      reminder2h: "Te esperamos en 2 horas en Studio Corte & Barba.",
-    },
-  },
-  {
     id: "odontologia",
-    label: "Odontología & Dental",
+    label: "Odontologia & Dental",
     emoji: "",
     businessName: "Clínica Dental Sonrisa",
     heroExample: "Limpieza con Ultrasonido",
@@ -103,7 +82,7 @@ export const CATEGORIES: CategoryContent[] = [
   },
   {
     id: "pilates",
-    label: "Pilates & Fitness",
+    label: "Pilates",
     emoji: "",
     businessName: "Studio Pilates Aura",
     heroExample: "Clase de Reformer",
@@ -113,13 +92,34 @@ export const CATEGORIES: CategoryContent[] = [
     services: [
       { id: "reformer", name: "Clase de Prueba Reformer", duration: "50 min", price: "Gs. 50.000" },
       { id: "pack8", name: "Pase Mensual 8 Clases", duration: "Mes", price: "Gs. 320.000" },
-      { id: "libre", name: "Pase Libre Pilates & Yoga", duration: "Mes", price: "Gs. 420.000" },
+      { id: "pack12", name: "Pase Mensual 12 Clases", duration: "Mes", price: "Gs. 420.000" },
     ],
     whatsapp: {
       confirmation:
-        "Tu lugar fue reservado: Clase Reformer — Hoy 18:00 hs en Studio Pilates Aura.",
-      reminder24h: "Recordatorio: Mañana es tu clase de Reformer. Te esperamos con ropa cómoda.",
-      reminder2h: "Te esperamos en 2 horas en Studio Pilates Aura.",
+        "Tu turno fue confirmado: Clase de Prueba Reformer — Hoy 18:00 hs en Studio Pilates Aura.",
+      reminder24h: "Recordatorio: Mañana tenés clase de Pilates. ¡Traé ropa cómoda!",
+      reminder2h: "Tu sesión de Pilates comienza en 2 horas en Studio Pilates Aura.",
+    },
+  },
+  {
+    id: "peluqueria",
+    label: "Peluquerías & Barberías",
+    emoji: "",
+    businessName: "Studio Corte & Barba",
+    heroExample: "Corte Degradé + Barba",
+    staffName: "Marcos Benítez",
+    botIntro: "¡Hola! Bienvenido/a a Studio Corte & Barba en Asunción.\n\nSeleccioná el servicio que deseás agendar hoy:",
+    timeSlots: ["15:30 hs", "17:00 hs", "18:30 hs"],
+    services: [
+      { id: "corte", name: "Corte Clásico Degradé", duration: "30 min", price: "Gs. 60.000" },
+      { id: "barba", name: "Perfilado de Barba Spa", duration: "25 min", price: "Gs. 40.000" },
+      { id: "combo", name: "Corte + Barba Completo", duration: "50 min", price: "Gs. 90.000" },
+    ],
+    whatsapp: {
+      confirmation:
+        "Tu turno fue confirmado: Corte + Barba — Hoy 17:00 hs en Studio Corte & Barba.",
+      reminder24h: "Recordatorio: Mañana es tu turno de Corte + Barba. ¿Necesitás reprogramar?",
+      reminder2h: "Te esperamos en 2 horas en Studio Corte & Barba.",
     },
   },
   {

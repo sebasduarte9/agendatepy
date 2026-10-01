@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Percent, Smartphone, ShieldCheck, Wallet } from "lucide-react";
+import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 
 const ITEMS = [
   {
@@ -18,14 +19,14 @@ const ITEMS = [
   },
   {
     icon: ShieldCheck,
-    title: "Prueba gratuita real de 14 días",
-    valuePhrase: "Activación en 3 minutos sin tarjeta de crédito.",
-    detail: "Creás tu agenda, compartís tu enlace y empezás a recibir turnos de inmediato sin contratos a plazo.",
+    title: "Comenzá sin tarjeta de crédito",
+    valuePhrase: "Activación en 3 minutos sin contratos a plazo.",
+    detail: "Creás tu agenda, compartís tu enlace y empezás a recibir turnos de inmediato sin complicaciones.",
   },
   {
     icon: Wallet,
     title: "Cobrás directo a tu cuenta local",
-    valuePhrase: "Transferencias SIPAP, QR Bancard o efectivo.",
+    valuePhrase: "Transferencias bancarias, QR Bancard o efectivo.",
     detail: "Validación automática con cualquier banco de plaza en Paraguay o cobro presencial en el local.",
   },
 ];
@@ -40,35 +41,39 @@ export default function Differentiators() {
         transition={{ duration: 0.6 }}
         className="max-w-2xl"
       >
-        <span className="rounded-full bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
-          Ventajas Clave
-        </span>
-        <h2 className="mt-3 text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+        <h2 className="text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
           Por qué salones y consultorios en Paraguay eligen AgendatePY
         </h2>
       </motion.div>
       <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 md:grid-cols-2">
         {ITEMS.map(({ icon: Icon, title, valuePhrase, detail }, index) => {
           return (
-            <motion.article
+            <motion.div
               key={title}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: (index % 2) * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-4.5 sm:p-6 shadow-xs hover:border-brand/40 hover:-translate-y-1 hover:shadow-md transition-all duration-300 min-w-0"
             >
-              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-                <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
-              </div>
-              <h3 className="mt-3.5 sm:mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
-              <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                {valuePhrase}
-              </p>
-              <p className="hidden sm:block mt-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                {detail}
-              </p>
-            </motion.article>
+              <LiquidGlassCard
+                borderRadius="24px"
+                blurIntensity="lg"
+                glowIntensity="xs"
+                shadowIntensity="sm"
+                className="border border-white/60 dark:border-white/10 p-5 sm:p-6 hover:border-[#FF4F2B]/40 transition-all duration-300"
+              >
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                  <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+                </div>
+                <h3 className="mt-3.5 sm:mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
+                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {valuePhrase}
+                </p>
+                <p className="hidden sm:block mt-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {detail}
+                </p>
+              </LiquidGlassCard>
+            </motion.div>
           );
         })}
       </div>

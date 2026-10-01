@@ -370,7 +370,7 @@ export default function Pricing() {
         <div className="mt-7 sm:mt-10 text-center text-xs text-slate-500 dark:text-slate-400">
           <p className="flex items-center justify-center gap-2 font-medium">
             <Shield className="h-4 w-4 text-brand dark:text-[#FF6B4A] shrink-0" />
-            Plan Inicial Gratuito para siempre (20 turnos/mes) · Sin tarjeta de crédito ni contratos · Pagá planes superiores con QR Bancard o SIPAP.
+            Plan Inicial Gratuito para siempre (20 turnos/mes) · Sin tarjeta de crédito ni contratos · Pagá planes superiores con QR Bancard o transferencia bancaria.
           </p>
         </div>
       </div>

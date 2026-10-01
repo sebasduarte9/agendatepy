@@ -7,7 +7,7 @@ import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import { useCategory } from "@/context/CategoryContext";
 
 const TRUST_POINTS = [
-  "14 días gratis sin tarjeta",
+  "Sin tarjeta de crédito",
   "Activación en 3 minutos",
   "0% de comisiones por reserva",
   "Soporte local en Paraguay",

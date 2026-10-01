@@ -25,6 +25,19 @@
   --color-brand-dark: #E03E1D;
   --color-whatsapp: #128c7e;
   --font-sans: var(--font-plus-jakarta);
+  --font-coolvetica: var(--font-coolvetica);
+}
+
+@font-face {
+  font-family: "Coolvetica";
+  src: url("/fonts/coolvetica/coolvetica-rg.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-coolvetica {
+  font-family: var(--font-coolvetica), "Coolvetica", sans-serif;
 }
 
 html,
@@ -274,44 +287,316 @@ body {
   }
 }
 
-/* 2-Row Horizontal Cards Animations on Mobile */
-@keyframes ticker-scroll-left {
-  0% {
+/* Standard Marquee Animations (Magic UI / Aceternity UI spec) */
+@keyframes marquee-left {
+  from {
     transform: translateX(0);
   }
-  100% {
-    transform: translateX(-50%);
+  to {
+    transform: translateX(calc(-100% - var(--gap, 0.5rem)));
   }
 }
 
-@keyframes ticker-scroll-right {
-  0% {
-    transform: translateX(-50%);
+@keyframes marquee-right {
+  from {
+    transform: translateX(calc(-100% - var(--gap, 0.5rem)));
   }
-  100% {
+  to {
     transform: translateX(0);
   }
 }
 
-.animate-ticker-left {
-  animation: ticker-scroll-left 25s linear infinite;
-  will-change: transform;
+@keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - var(--gap, 0.5rem)));
+  }
 }
 
-.animate-ticker-right {
-  animation: ticker-scroll-right 25s linear infinite;
-  will-change: transform;
+@keyframes marquee-vertical-reverse {
+  from {
+    transform: translateY(calc(-100% - var(--gap, 0.5rem)));
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
-.animate-ticker-left:hover,
-.animate-ticker-left:active,
-.animate-ticker-right:hover,
-.animate-ticker-right:active {
-  animation-play-state: paused;
+.animate-marquee,
+.animate-marquee-left {
+  animation: marquee-left var(--duration, 32s) linear infinite;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+.animate-marquee-right,
+.animate-marquee-reverse {
+  animation: marquee-right var(--duration, 32s) linear infinite;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+.animate-marquee-vertical {
+  animation: marquee-vertical var(--duration, 32s) linear infinite;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+.animate-marquee-vertical-reverse {
+  animation: marquee-vertical-reverse var(--duration, 32s) linear infinite;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-marquee-left,
+  .animate-marquee-right,
+  .animate-marquee-reverse,
+  .animate-marquee-vertical,
+  .animate-marquee-vertical-reverse,
+  .animate-cards-vertical {
+    animation: none;
+  }
 }
 
 .fade-to-letters-mask {
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 12%, rgba(0, 0, 0, 0.35) 30%, black 55%, black 95%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, transparent 12%, rgba(0, 0, 0, 0.35) 30%, black 55%, black 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
 }
+
+/* ==========================================================================
+   Aurora Boreal (Orange & White Animated Ribbon Waves)
+   ========================================================================== */
+
+@keyframes aurora-wave-1 {
+  0% {
+    transform: translate3d(-8%, -6%, 0) rotate(-5deg) scaleY(1) scaleX(1);
+  }
+  30% {
+    transform: translate3d(6%, 8%, 0) rotate(4deg) scaleY(1.15) scaleX(1.08);
+  }
+  60% {
+    transform: translate3d(-5%, 12%, 0) rotate(-2deg) scaleY(0.92) scaleX(1.12);
+  }
+  85% {
+    transform: translate3d(4%, -3%, 0) rotate(2deg) scaleY(1.08) scaleX(0.96);
+  }
+  100% {
+    transform: translate3d(-8%, -6%, 0) rotate(-5deg) scaleY(1) scaleX(1);
+  }
+}
+
+@keyframes aurora-wave-2 {
+  0% {
+    transform: translate3d(10%, 8%, 0) rotate(5deg) scale(1);
+  }
+  35% {
+    transform: translate3d(-8%, -6%, 0) rotate(-4deg) scale(1.18) skewX(-3deg);
+  }
+  70% {
+    transform: translate3d(6%, 5%, 0) rotate(3deg) scale(0.94) skewX(4deg);
+  }
+  100% {
+    transform: translate3d(10%, 8%, 0) rotate(5deg) scale(1);
+  }
+}
+
+@keyframes aurora-wave-3 {
+  0% {
+    transform: translate3d(-6%, 12%, 0) rotate(2deg) scale(1.05);
+  }
+  45% {
+    transform: translate3d(8%, -8%, 0) rotate(-4deg) scale(0.92) skewY(2deg);
+  }
+  75% {
+    transform: translate3d(-4%, -2%, 0) rotate(3deg) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-6%, 12%, 0) rotate(2deg) scale(1.05);
+  }
+}
+
+@keyframes aurora-svg-drift {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.06) rotate(1.5deg);
+  }
+  100% {
+    transform: translate3d(-3%, -2%, 0) scale(1) rotate(0deg);
+  }
+}
+
+.animate-aurora-1 {
+  animation: aurora-wave-1 24s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: transform;
+}
+
+.animate-aurora-2 {
+  animation: aurora-wave-2 30s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: transform;
+}
+
+.animate-aurora-3 {
+  animation: aurora-wave-3 26s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: transform;
+}
+
+.animate-aurora-wave {
+  animation: aurora-svg-drift 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-aurora-1,
+  .animate-aurora-2,
+  .animate-aurora-3,
+  .animate-aurora-wave {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Circular Concentric Orbits (Cards Orbiting on Circles with Fade Mask)
+   ========================================================================== */
+
+@keyframes orbit-spin-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-spin-ccw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes orbit-anim-cw {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-radius, 100px)) rotate(0deg) translate(-50%, -50%);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-radius, 100px)) rotate(-360deg) translate(-50%, -50%);
+  }
+}
+
+@keyframes orbit-anim-ccw {
+  from {
+    transform: rotate(360deg) translateX(var(--orbit-radius, 100px)) rotate(-360deg) translate(-50%, -50%);
+  }
+  to {
+    transform: rotate(0deg) translateX(var(--orbit-radius, 100px)) rotate(0deg) translate(-50%, -50%);
+  }
+}
+
+.animate-orbit-cw {
+  animation: orbit-spin-cw var(--orbit-duration, 32s) linear infinite;
+  will-change: transform;
+}
+
+.animate-orbit-ccw {
+  animation: orbit-spin-ccw var(--orbit-duration, 32s) linear infinite;
+  will-change: transform;
+}
+
+.animate-orbit-card-cw {
+  animation: orbit-anim-cw var(--orbit-duration, 30s) linear infinite;
+  will-change: transform;
+}
+
+.animate-orbit-card-ccw {
+  animation: orbit-anim-ccw var(--orbit-duration, 30s) linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-orbit-cw,
+  .animate-orbit-ccw,
+  .animate-orbit-card-cw,
+  .animate-orbit-card-ccw {
+    animation: none;
+  }
+}
+
+@supports (property(--border-angle)) {
+  @property --border-angle {
+    inherits: false;
+    initial-value: 0deg;
+    syntax: '<angle>';
+  }
+}
+
+@keyframes border {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+.animate-border-spin {
+  animation: border 4s linear infinite;
+}
+
+/* ==========================================================================
+   REAL LIQUID GLASS (Apple VisionOS / iOS 18 Design Specification)
+   - High transmission crystal glass
+   - Prismatic specular rim reflection (inset light)
+   - Micro-sheen top glare
+   - 28px blur with 190% saturation boost
+   ========================================================================== */
+.liquid-glass-surface {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0.42) 50%, rgba(255, 255, 255, 0.65) 100%);
+  backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 24px 60px -12px rgba(255, 79, 43, 0.16),
+    0 10px 28px -4px rgba(0, 0, 0, 0.05),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.dark .liquid-glass-surface {
+  background: linear-gradient(135deg, rgba(24, 30, 42, 0.75) 0%, rgba(15, 20, 30, 0.60) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 24px 60px -12px rgba(0, 0, 0, 0.5),
+    0 10px 28px -4px rgba(0, 0, 0, 0.3),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.liquid-glass-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.08) 35%, transparent 100%);
+  z-index: 1;
+}
+
+.dark .liquid-glass-sheen::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.02) 35%, transparent 100%);
+}
+
+
 

@@ -7,66 +7,39 @@ interface BrandLogoProps {
   className?: string;
   iconClassName?: string;
   badge?: string;
+  showText?: boolean;
 }
 
+const OFFICIAL_LOGO_PATH =
+  "M305.11 882.3c-42.76 0-79.63-23.6-97.32-58.99-16.22-30.96-14.75-64.88-1.48-97.32l224.14-529.36c20.64-48.66 66.35-79.63 119.44-79.63h100.27c53.08 0 98.79 30.97 119.44 79.63l224.13 529.36c13.27 32.44 14.74 66.36-1.48 97.32-17.69 35.39-54.55 58.99-97.32 58.99-48.66 0-88.47-29.5-106.17-72.26l-64.88-160.72h-247.72l-64.88 160.72c-17.7 42.76-57.51 72.26-106.17 72.26z M 448.62 466.32 L 523.56 466.32 L 600.02 301.32 L 676.48 466.32 L 749.43 466.32 A 91.5 91.5 0 0 1 749.43 649.32 L 448.62 649.32 A 91.5 91.5 0 0 1 448.62 466.32 Z M 448.62 484.32 L 749.43 484.32 A 73.575 73.575 0 0 1 749.43 631.47 L 448.62 631.47 A 73.575 73.575 0 0 1 448.62 484.32 Z M753.27 616.14c-32.01 0-57.88-25.87-57.88-57.88 0-32 25.87-57.88 57.88-57.88 32.01 0 57.88 25.88 57.88 57.88 0 32.01-25.87 57.88-57.88 57.88z";
+
 /**
- * Logotipo e Isotipo Oficial de Agendatepy
- * Isotipo: Letra A redondeada en #FF4F2B con switch/toggle de automatización blanco.
- * Wordmark: "agendatepy" en minúsculas con tracking ajustado.
+ * Logotipo e Isotipo Oficial de AgendatePY
+ * Isotipo: Letra A redondeada en #FF4F2B con switch/toggle integrado.
+ * Tipografía del nombre a lado del logo: Coolvetica.
  */
 export default function BrandLogo({
   variant = "horizontal",
   className = "",
-  iconClassName = "h-9 w-9",
+  iconClassName = "h-8 w-8",
   badge,
+  showText = true,
 }: BrandLogoProps) {
-  // Símbolo / Isotipo solo (A con toggle)
+  // Símbolo / Isotipo oficial
   const renderIsotype = () => (
     <svg
-      viewBox="70 50 585 550"
+      viewBox="160 90 880 810"
       className={iconClassName}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="Agendatepy Icon"
+      aria-label="AgendatePY Icon"
     >
-      {/* Rounded A */}
       <path
-        d="M165 585
-           C136 585 111 569 99 545
-           C88 524 89 501 98 479
-           L250 120
-           C264 87 295 66 331 66
-           L399 66
-           C435 66 466 87 480 120
-           L632 479
-           C641 501 642 524 631 545
-           C619 569 594 585 565 585
-           C532 585 505 565 493 536
-           L449 427
-           L281 427
-           L237 536
-           C225 565 198 585 165 585 Z"
         fill="#FF4F2B"
+        fillRule="evenodd"
+        d={OFFICIAL_LOGO_PATH}
       />
-
-      {/* Inner triangular cutout */}
-      <path d="M365 191 L327 273 L403 273 Z" fill="#FFFFFF" />
-
-      {/* Toggle outline */}
-      <rect
-        x="203"
-        y="270"
-        width="316"
-        height="112"
-        rx="56"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth="17"
-      />
-
-      {/* Toggle knob */}
-      <circle cx="443" cy="326" r="45" fill="#FFFFFF" />
     </svg>
   );
 
@@ -94,74 +67,57 @@ export default function BrandLogo({
         role="img"
         aria-labelledby="brandTitle brandDesc"
       >
-        <title id="brandTitle">Agendatepy logo</title>
+        <title id="brandTitle">AgendatePY logo</title>
         <desc id="brandDesc">
-          Orange rounded A with a white automation toggle and dark agendatepy wordmark.
+          A redondeada naranja con switch de automatización y nombre en Coolvetica.
         </desc>
 
-        {/* Isotipo */}
-        <g transform="translate(270 85)">
+        <g transform="translate(0, -60)">
           <path
-            d="M165 585
-               C136 585 111 569 99 545
-               C88 524 89 501 98 479
-               L250 120
-               C264 87 295 66 331 66
-               L399 66
-               C435 66 466 87 480 120
-               L632 479
-               C641 501 642 524 631 545
-               C619 569 594 585 565 585
-               C532 585 505 565 493 536
-               L449 427
-               L281 427
-               L237 536
-               C225 565 198 585 165 585 Z"
             fill="#FF4F2B"
+            fillRule="evenodd"
+            d={OFFICIAL_LOGO_PATH}
           />
-          <path d="M365 191 L327 273 L403 273 Z" fill="#FFFFFF" />
-          <rect
-            x="203"
-            y="270"
-            width="316"
-            height="112"
-            rx="56"
-            fill="none"
-            stroke="#FFFFFF"
-            strokeWidth="17"
-          />
-          <circle cx="443" cy="326" r="45" fill="#FFFFFF" />
         </g>
 
-        {/* Wordmark */}
         <text
           x="600"
-          y="820"
+          y="880"
           textAnchor="middle"
-          fontFamily="Inter, Poppins, Montserrat, Arial, Helvetica, sans-serif"
-          fontSize="108"
-          fontWeight="750"
-          letterSpacing="-4"
+          className="font-coolvetica"
+          style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
+          fontSize="115"
+          letterSpacing="-1"
           fill="currentColor"
         >
-          agendatepy
+          Agendate<tspan fill="#FF4F2B">PY</tspan>
         </text>
       </svg>
     );
   }
 
-  // Variante: Horizontal Navbar Lockup (Isotipo a la izquierda + Wordmark a la derecha)
+  // Variante: Horizontal Navbar Lockup (Isotipo a la izquierda + Wordmark en Coolvetica a la derecha)
   return (
-    <div className={`flex items-center gap-1.5 xs:gap-2.5 shrink-0 ${className}`}>
+    <div className={`flex items-center gap-2 xs:gap-2.5 shrink-0 ${className}`}>
       <div className="relative flex items-center justify-center shrink-0">
         {renderIsotype()}
+        {badge && (
+          <span className="absolute -top-1 -right-1 rounded-full bg-[#FF4F2B] px-1 py-0.2 text-[8px] font-black text-white uppercase">
+            {badge}
+          </span>
+        )}
       </div>
 
-      <div className="flex items-center font-bold tracking-tight">
-        <span className="text-base xs:text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">
-          agendate<span className="text-[#FF4F2B]">py</span>
-        </span>
-      </div>
+      {showText && (
+        <div className="flex items-center">
+          <span
+            className="font-coolvetica text-xl sm:text-2xl text-slate-900 dark:text-white leading-none tracking-normal select-none"
+            style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
+          >
+            Agendate<span className="text-[#FF4F2B]">PY</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

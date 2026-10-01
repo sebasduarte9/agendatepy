@@ -106,7 +106,7 @@ export default function Footer() {
         <div className="mt-8 sm:mt-12 flex flex-col items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-5 sm:pt-6 text-xs text-slate-400 dark:text-slate-500 sm:flex-row gap-2 text-center sm:text-left">
           <p>© 2026 AgendatePY. Hecho en Asunción, Paraguay.</p>
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-            <span>Soporte local SIPAP</span>
+            <span>Soporte local en transferencias</span>
             <span>·</span>
             <span>Precios en Guaraníes</span>
           </div>

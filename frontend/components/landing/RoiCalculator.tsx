@@ -265,7 +265,7 @@ export default function RoiCalculator() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <p className="text-center text-[10px] text-slate-400 mt-2">
-                14 días de prueba gratuita · Activación en 3 minutos sin tarjeta
+                Sin tarjeta de crédito · Activación en 3 minutos
               </p>
             </div>
           </motion.div>
