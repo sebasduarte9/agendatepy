@@ -1563,7 +1563,7 @@ export default function GuidedTour() {
             setCurrentStepIndex(0);
             openTour(detectedSectionKey);
           }}
-          className={`fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-full px-4 py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 group cursor-pointer ${
+          className={`fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 flex items-center gap-2 rounded-full p-2.5 sm:px-4 sm:py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 group cursor-pointer ${
             completedSections.includes(detectedSectionKey)
               ? "border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-white shadow-md hover:border-primary"
               : "border-2 border-amber-400/80 bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/25 text-amber-950 dark:text-amber-100 shadow-[0_0_30px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/30 animate-pulse"
@@ -1579,7 +1579,7 @@ export default function GuidedTour() {
           >
             <Compass className="h-3.5 w-3.5" />
           </div>
-          <span>Visita Guiada</span>
+          <span className="hidden sm:inline">Visita Guiada</span>
           {completedSections.includes(detectedSectionKey) ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
           ) : (
@@ -1593,11 +1593,12 @@ export default function GuidedTour() {
         <button
           type="button"
           onClick={() => setShowExitConfirm(true)}
-          className="fixed bottom-5 right-5 z-[99999] flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer border border-rose-500/50 bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-950/40"
+          className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-[99999] flex items-center gap-1.5 rounded-full px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer border border-rose-500/50 bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-950/40"
           title="Salir de la visita guiada"
         >
           <LogOut className="h-3.5 w-3.5" />
-          <span>Salir de Visita Guiada</span>
+          <span className="hidden sm:inline">Salir de Visita Guiada</span>
+          <span className="sm:hidden">Salir</span>
         </button>
       )}
 

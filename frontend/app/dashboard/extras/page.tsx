@@ -62,7 +62,7 @@ export default function ExtrasPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 pb-20">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -78,7 +78,7 @@ export default function ExtrasPage() {
         <Card className="flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-              <QrCode className="h-5 w-5 text-primary" />
+              <QrCode className="h-5 w-5 text-primary shrink-0" />
               <h2>Código QR para Mostrador / Vidriera</h2>
             </div>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -88,7 +88,7 @@ export default function ExtrasPage() {
             {/* Printable Preview Card */}
             <div
               id="printable-card"
-              className="mt-4 rounded-3xl border-2 border-slate-900/10 dark:border-white/10 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-6 text-center shadow-lg"
+              className="mt-4 rounded-3xl border-2 border-slate-900/10 dark:border-white/10 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-4 sm:p-6 text-center shadow-lg"
             >
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white font-black text-lg shadow-md shadow-primary/25">
                 {business.name.slice(0, 2).toUpperCase()}
@@ -101,7 +101,7 @@ export default function ExtrasPage() {
               </p>
 
               {/* QR Image */}
-              <div className="my-4 mx-auto w-44 h-44 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white p-2.5 shadow-xs flex items-center justify-center">
+              <div className="my-4 mx-auto w-36 h-36 sm:w-44 sm:h-44 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white p-2.5 shadow-xs flex items-center justify-center">
                 {qrDataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -128,7 +128,7 @@ export default function ExtrasPage() {
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <a
               href={qrDataUrl || "#"}
               download={`qr_${business.slug || "reserva"}.png`}
@@ -140,7 +140,7 @@ export default function ExtrasPage() {
             <button
               type="button"
               onClick={handlePrint}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-white py-2.5 text-xs font-bold text-white dark:text-slate-900 shadow-sm hover:opacity-90 transition"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-white py-2.5 text-xs font-bold text-white dark:text-slate-900 shadow-sm hover:opacity-90 transition cursor-pointer"
             >
               <Printer className="h-4 w-4" />
               <span>Imprimir Cartel</span>
@@ -152,48 +152,50 @@ export default function ExtrasPage() {
         <div className="space-y-6">
           <Card className="space-y-4">
             <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
-              <Share2 className="h-4 w-4 text-primary" />
+              <Share2 className="h-4 w-4 text-primary shrink-0" />
               <span>Tu Enlace Oficial de Reservas</span>
             </h2>
-            <div className="flex items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/50 p-2 pl-3">
-              <span className="flex-1 truncate font-mono text-xs text-slate-700 dark:text-slate-300">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/50 p-2 sm:pl-3">
+              <span className="flex-1 truncate font-mono text-xs text-slate-700 dark:text-slate-300 px-1 py-1 sm:p-0">
                 {bookingUrl}
               </span>
-              <a
-                href={bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-                title="Abrir web de reservas"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-                <span className="hidden sm:inline">Abrir</span>
-              </a>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-95 transition"
-              >
-                {copiedUrl ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                <span>{copiedUrl ? "Copiado" : "Copiar"}</span>
-              </button>
+              <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0">
+                <a
+                  href={bookingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                  title="Abrir web de reservas"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="hidden sm:inline">Abrir</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-95 transition cursor-pointer"
+                >
+                  {copiedUrl ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copiedUrl ? "Copiado" : "Copiar"}</span>
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1 text-xs">
               <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 space-y-1">
                 <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                  <Camera className="h-3.5 w-3.5 text-pink-500" /> Instagram Bio
+                  <Camera className="h-3.5 w-3.5 text-pink-500 shrink-0" /> Instagram Bio
                 </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                   Pegalo en el campo &ldquo;Sitio web&rdquo; de tu perfil para captar reservas directas.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 space-y-1">
                 <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                  <MessageCircle className="h-3.5 w-3.5 text-emerald-500" /> WhatsApp
+                  <MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> WhatsApp
                 </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                   Configuralo como mensaje de bienvenida o respuesta rápida /agenda.
                 </p>
               </div>
@@ -203,7 +205,7 @@ export default function ExtrasPage() {
           {/* Marketing Pixels & Configuration */}
           <Card className="space-y-4">
             <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
-              <Target className="h-4 w-4 text-primary" />
+              <Target className="h-4 w-4 text-primary shrink-0" />
               <span>Tracking de Pauta & Anuncios (Meta / TikTok)</span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -237,7 +239,7 @@ export default function ExtrasPage() {
 
               <button
                 type="button"
-                className="w-full rounded-2xl bg-primary py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 transition"
+                className="w-full rounded-2xl bg-primary py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
                 onClick={() => pushToast("success", "Píxeles y configuraciones de pauta guardadas")}
               >
                 Guardar Píxeles de Conversión

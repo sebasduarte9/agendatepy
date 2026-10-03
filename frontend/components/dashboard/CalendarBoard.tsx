@@ -433,6 +433,9 @@ export default function CalendarBoard() {
   const label = format(parseISO(`${calendarDate}T12:00:00`), "EEEE d 'de' MMMM, yyyy", {
     locale: es,
   });
+  const shortLabel = format(parseISO(`${calendarDate}T12:00:00`), "EEE d 'de' MMM", {
+    locale: es,
+  });
 
   // Open Quick Booking/Block modal pre-filling slot
   function handleEmptySlotClick(dateStr: string, hour: number, staffId: string) {
@@ -539,101 +542,60 @@ export default function CalendarBoard() {
         data-tour="calendar-header"
         className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-200/80 dark:border-white/10 pb-4"
       >
-        {/* Left: + Create Button & Date Navigators */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* "+ Crear Cita" Pill Button */}
-          <button
-            type="button"
-            data-tour="calendar-create-btn"
-            onClick={() => {
-              setNewSlotData({
-                date: calendarDate,
-                time: "10:00",
-                staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
-              });
-              setNewClientId(null);
-              setNewClientName("");
-              setNewClientPhone("");
-              setSelectedCountryCode("PY");
-              setCountryDropdownOpen(false);
-              setCountrySearchQuery("");
-              setNewServiceId(services[0]?.id || "");
-              setNewModalMode("appointment");
-              setNewModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Crear Cita</span>
-          </button>
-
-          {/* "+ Bloquear Horario" Button */}
-          <button
-            type="button"
-            data-tour="calendar-block-btn"
-            onClick={() => {
-              setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : "all");
-              setBlockDate(calendarDate);
-              setBlockStart("13:00");
-              setBlockEnd("14:00");
-              setBlockReason("Almuerzo / Descanso");
-              setNewModalMode("block");
-              setNewModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-amber-500 hover:text-amber-600 transition cursor-pointer"
-          >
-            <Ban className="h-4 w-4 text-amber-500" />
-            <span>Bloquear Horario</span>
-          </button>
-
-          {/* Hoy button */}
-          <button
-            type="button"
-            className="rounded-xl border border-slate-200/80 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-            onClick={() =>
-              setCalendarDate(
-                formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
-              )
-            }
-          >
-            Hoy
-          </button>
-
-          {/* Navigation Arrows */}
-          <div className="flex items-center">
+        {/* Top/Left: Date navigators and title */}
+        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full lg:w-auto">
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Hoy button */}
             <button
               type="button"
-              className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1))}
-              aria-label="Anterior"
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              onClick={() =>
+                setCalendarDate(
+                  formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
+                )
+              }
             >
-              <ChevronLeft className="h-4 w-4" />
+              Hoy
             </button>
-            <button
-              type="button"
-              className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1))}
-              aria-label="Siguiente"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+
+            {/* Navigation Arrows */}
+            <div className="flex items-center">
+              <button
+                type="button"
+                className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1))}
+                aria-label="Anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1))}
+                aria-label="Siguiente"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Current Date Label */}
-          <h1 className="text-base font-black capitalize text-slate-900 dark:text-white sm:text-lg">
-            {label}
+          <h1 className="text-sm font-black capitalize text-slate-900 dark:text-white sm:text-lg truncate">
+            <span className="sm:hidden">{shortLabel}</span>
+            <span className="hidden sm:inline">{label}</span>
           </h1>
         </div>
 
-        {/* Right: View Switcher (Día / Semana / Mes) */}
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 bg-white/80 dark:bg-slate-900/80 shadow-xs">
+        {/* Bottom/Right: View Switcher (Día / Semana / Mes) & Action Buttons */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 w-full lg:w-auto">
+          {/* Segmented View Switcher */}
+          <div className="flex flex-1 sm:flex-initial rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 bg-white/80 dark:bg-slate-900/80 shadow-xs justify-center">
             {(["dia", "semana", "mes"] as const).map((view) => (
               <button
                 key={view}
                 type="button"
                 onClick={() => setCalendarView(view)}
-                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition cursor-pointer ${
+                className={`flex-1 sm:flex-initial text-center rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition cursor-pointer ${
                   calendarView === view
                     ? "bg-primary text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -642,6 +604,53 @@ export default function CalendarBoard() {
                 {view === "dia" ? "Día" : view === "semana" ? "Semana" : "Mes"}
               </button>
             ))}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* "+ Crear Cita" Pill Button */}
+            <button
+              type="button"
+              data-tour="calendar-create-btn"
+              onClick={() => {
+                setNewSlotData({
+                  date: calendarDate,
+                  time: "10:00",
+                  staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
+                });
+                setNewClientId(null);
+                setNewClientName("");
+                setNewClientPhone("");
+                setSelectedCountryCode("PY");
+                setCountryDropdownOpen(false);
+                setCountrySearchQuery("");
+                setNewServiceId(services[0]?.id || "");
+                setNewModalMode("appointment");
+                setNewModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-3 sm:px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Cita</span>
+            </button>
+
+            {/* "+ Bloquear Horario" Button */}
+            <button
+              type="button"
+              data-tour="calendar-block-btn"
+              onClick={() => {
+                setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : "all");
+                setBlockDate(calendarDate);
+                setBlockStart("13:00");
+                setBlockEnd("14:00");
+                setBlockReason("Almuerzo / Descanso");
+                setNewModalMode("block");
+                setNewModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-amber-500 hover:text-amber-600 transition cursor-pointer"
+            >
+              <Ban className="h-4 w-4 text-amber-500" />
+              <span>Bloquear</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1453,36 +1462,36 @@ function GoogleCalendarDayView({
 
   return (
     <Card className="p-0 border border-slate-200/80 dark:border-white/10 shadow-sm rounded-3xl bg-white dark:bg-slate-900/90 overflow-hidden">
-      {/* Staff Columns Header */}
-      <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-950/60 sticky top-0 z-20">
-        <div className="w-16 shrink-0 border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[10px] font-bold text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-950 z-30">
-          HORA
-        </div>
-        <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${staffList.length}, minmax(180px, 1fr))` }}>
-          {staffList.map((person) => (
-            <div
-              key={person.id}
-              className="flex items-center gap-2 p-3 border-r border-slate-200/80 dark:border-white/10 last:border-r-0"
-            >
-              <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs"
-                style={{ background: person.color }}
-              >
-                {person.avatar}
-              </span>
-              <div className="truncate">
-                <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{person.name}</p>
-                <p className="text-[10px] text-slate-400 truncate">{person.role}</p>
-              </div>
+      {/* Scroll container wrapping BOTH header and time grid */}
+      <div className="relative overflow-x-auto [scrollbar-width:thin] w-full">
+        <div className="relative min-w-[650px] sm:min-w-[700px]">
+          {/* Staff Columns Header */}
+          <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-950/60 sticky top-0 z-20">
+            <div className="w-16 shrink-0 border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[10px] font-bold text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-950 z-30">
+              HORA
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${staffList.length}, minmax(180px, 1fr))` }}>
+              {staffList.map((person) => (
+                <div
+                  key={person.id}
+                  className="flex items-center gap-2 p-3 border-r border-slate-200/80 dark:border-white/10 last:border-r-0"
+                >
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs"
+                    style={{ background: person.color }}
+                  >
+                    {person.avatar}
+                  </span>
+                  <div className="truncate">
+                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{person.name}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{person.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-      {/* Time Grid with Red Live Indicator */}
-      <div className="relative overflow-x-auto">
-        <div className="relative min-w-[700px]">
-          {/* Live Red Time Indicator */}
+          {/* Time Grid with Red Live Indicator */}
           {showRedIndicator && (
             <div
               className="absolute left-0 right-0 z-30 flex items-center pointer-events-none transition-all duration-500"
@@ -1806,13 +1815,16 @@ function GoogleCalendarMonthView({
   ];
 
   return (
-    <Card className="p-3 border border-slate-200/80 dark:border-white/10 rounded-3xl bg-white dark:bg-slate-900/90 shadow-sm overflow-x-auto">
-      <div className="grid min-w-[720px] grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 pb-2 border-b border-slate-100 dark:border-white/10">
+    <Card className="p-3 border border-slate-200/80 dark:border-white/10 rounded-3xl bg-white dark:bg-slate-900/90 shadow-sm overflow-x-auto [scrollbar-width:thin]">
+      <div className="grid min-w-[700px] grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 pb-2 border-b border-slate-100 dark:border-white/10">
         {["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map((d) => (
-          <span key={d}>{d}</span>
+          <span key={d}>
+            <span className="hidden sm:inline">{d}</span>
+            <span className="sm:hidden">{d.slice(0, 3)}</span>
+          </span>
         ))}
       </div>
-      <div className="mt-2 grid min-w-[720px] grid-cols-7 gap-1.5">
+      <div className="mt-2 grid min-w-[700px] grid-cols-7 gap-1.5">
         {cells.map((day, index) => {
           if (!day) return <div key={`empty-${index}`} className="min-h-24 rounded-2xl bg-slate-50/30 dark:bg-slate-950/20" />;
           const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;

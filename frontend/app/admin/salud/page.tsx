@@ -40,23 +40,26 @@ export default function SystemHealthPage() {
   }, [period]);
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-white tracking-tight">Salud del Sistema & Telemetría</h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <Cpu className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400 shrink-0" />
+              <span>Salud del Sistema & Telemetría</span>
+            </h1>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
               System Health
             </span>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Monitoreo de tasa de error, códigos HTTP, conflictos de agendamiento y disponibilidad de endpoints.
           </p>
         </div>
 
         {/* Period Selector */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto max-w-full shrink-0">
           <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
             {[
               { label: "7d", val: "7d" },
@@ -67,7 +70,7 @@ export default function SystemHealthPage() {
               <button
                 key={p.val}
                 onClick={() => setPeriod(p.val)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap shrink-0 ${
                   period === p.val
                     ? "bg-indigo-600 text-white shadow-sm font-semibold"
                     : "text-slate-400 hover:text-white"
@@ -80,7 +83,7 @@ export default function SystemHealthPage() {
 
           <button
             onClick={fetchHealth}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition"
+            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition cursor-pointer shrink-0"
             title="Recargar telemetría"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -90,7 +93,7 @@ export default function SystemHealthPage() {
 
       {/* Main Health Status Banner */}
       {data && (
-        <div className={`p-6 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+        <div className={`p-4 sm:p-6 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
           data.errorRate < 2
             ? "bg-emerald-950/20 border-emerald-800/40 text-emerald-300"
             : data.errorRate < 5

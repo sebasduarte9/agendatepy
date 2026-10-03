@@ -63,17 +63,20 @@ export default function AdoptionPage() {
   ];
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-white tracking-tight">Matriz de Adopción de Producto</h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <Boxes className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400 shrink-0" />
+              <span>Matriz de Adopción de Producto</span>
+            </h1>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 shrink-0">
               Product Intelligence
             </span>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Auditoría de funcionalidades reales utilizadas por cada negocio en AgendatePY.
           </p>
         </div>
@@ -96,14 +99,14 @@ export default function AdoptionPage() {
           ].map((item) => (
             <div
               key={item.label}
-              className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col justify-between"
+              className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between"
             >
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span className="font-medium truncate">{item.label}</span>
                 <item.icon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
               </div>
               <div className="mt-2">
-                <div className="text-xl font-bold text-white">{item.rate}%</div>
+                <div className="text-lg sm:text-xl font-bold text-white">{item.rate}%</div>
                 <div className="text-[11px] font-mono text-slate-500">{item.count} tenants</div>
               </div>
               <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
@@ -118,7 +121,7 @@ export default function AdoptionPage() {
       )}
 
       {/* Controls & Search */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -144,7 +147,7 @@ export default function AdoptionPage() {
               { value: "payouts", label: "Con Liquidaciones" },
               { value: "portal", label: "Con Portal Público" },
             ]}
-            buttonClassName="bg-slate-950 border-slate-800 text-slate-200 min-w-[190px]"
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-200 w-full sm:w-auto sm:min-w-[190px]"
           />
         </div>
       </div>
@@ -168,7 +171,7 @@ export default function AdoptionPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse min-w-[850px]">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/80 text-slate-400 uppercase tracking-wider font-mono text-[10px]">
                   <th className="p-3.5 pl-5">Negocio</th>

@@ -159,7 +159,7 @@ export default function SingleTenantAdminPage() {
   const { tenant, operationalActivity, milestones, counts, aggregatedFinances, appointmentsByStatus, recentOperationalActivity } = data;
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full text-slate-100">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Navigation Breadcrumb */}
       <div className="flex items-center justify-between">
         <Link
@@ -177,11 +177,11 @@ export default function SingleTenantAdminPage() {
       </div>
 
       {/* Tenant Identity & Account Header Card */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-black text-white tracking-tight">{tenant.name}</h1>
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">{tenant.name}</h1>
               {getPlanBadge(tenant.plan)}
               <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-semibold bg-slate-800 text-slate-300 border border-slate-700">
                 Estado: {tenant.status}
@@ -459,7 +459,7 @@ export default function SingleTenantAdminPage() {
       </div>
 
       {/* Client & Business Media Gallery Control */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -477,7 +477,7 @@ export default function SingleTenantAdminPage() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 text-xs">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 text-xs overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
             {[
               { id: "ALL", label: "Todos" },
               { id: "client", label: "Clientes" },

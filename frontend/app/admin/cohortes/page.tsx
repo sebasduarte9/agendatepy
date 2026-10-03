@@ -55,19 +55,19 @@ export default function AdminCohortsPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-indigo-400" />
-            Cohortes & Retención Operativa (D7 - D90)
+          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-400 shrink-0" />
+            <span>Cohortes & Retención Operativa (D7 - D90)</span>
           </h1>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">
             Fase 5.9
           </span>
         </div>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
           Seguimiento de activación y retención real según mes de registro. Milestones no alcanzados indican honestamente su estado.
         </p>
       </div>
@@ -82,7 +82,7 @@ export default function AdminCohortsPage() {
       {/* Cohorts Table */}
       <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs min-w-[780px]">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-950/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
                 <th className="py-3.5 px-4">Cohorte</th>

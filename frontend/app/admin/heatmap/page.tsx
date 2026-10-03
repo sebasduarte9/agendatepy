@@ -189,26 +189,26 @@ export default function WebHeatmapAdminPage() {
   }, [data, mode, deviceType]);
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full text-slate-100">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <Flame className="h-6 w-6 text-rose-500" />
-              Web Heatmap & Analítica Visual
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <Flame className="h-5 w-5 sm:h-6 sm:w-6 text-rose-500 shrink-0" />
+              <span>Web Heatmap & Analítica Visual</span>
             </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">
               Comportamiento Real
             </span>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Visualización gráfica de clics, scroll y movimiento de usuarios en páginas públicas.
           </p>
         </div>
 
         {/* Global Filters */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Tenant Selector */}
           <CustomSelect
             value={tenantId}
@@ -343,42 +343,42 @@ export default function WebHeatmapAdminPage() {
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3 gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setMode("click")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap shrink-0 ${
               mode === "click"
                 ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
                 : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
             }`}
           >
             <MousePointer className="w-3.5 h-3.5" />
-            <span>Mapa de Clics (Click Heatmap)</span>
+            <span>Mapa de Clics</span>
           </button>
 
           <button
             onClick={() => setMode("scroll")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap shrink-0 ${
               mode === "scroll"
                 ? "bg-amber-600 text-white shadow-lg shadow-amber-600/30"
                 : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
             }`}
           >
             <Scroll className="w-3.5 h-3.5" />
-            <span>Mapa de Scroll (Profundidad)</span>
+            <span>Mapa de Scroll</span>
           </button>
 
           <button
             onClick={() => setMode("move")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap shrink-0 ${
               mode === "move"
                 ? "bg-cyan-600 text-white shadow-lg shadow-cyan-600/30"
                 : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
             }`}
           >
             <Move className="w-3.5 h-3.5" />
-            <span>Movimiento de Mouse (Attention)</span>
+            <span>Movimiento Mouse</span>
           </button>
         </div>
 
@@ -423,8 +423,8 @@ export default function WebHeatmapAdminPage() {
           <div
             className={`relative rounded-2xl border border-slate-800/90 bg-slate-900 overflow-hidden shadow-inner transition-all duration-300 ${
               deviceType === "mobile"
-                ? "w-[360px] min-h-[640px]"
-                : "w-full min-h-[600px] max-w-[760px]"
+                ? "w-full max-w-[360px] min-h-[500px] sm:min-h-[640px]"
+                : "w-full min-h-[500px] sm:min-h-[600px] max-w-[760px]"
             }`}
           >
             {/* Background Page Representation (Booking Page Mock Layout) */}
