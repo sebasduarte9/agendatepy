@@ -26,16 +26,19 @@ import {
   FileText,
   Share2,
   Smartphone,
+  QrCode,
 } from "lucide-react";
 import { CATEGORIES, type CategoryId } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import PhoneMockup from "./PhoneMockup";
+import PhoneOrbitNotifications from "./PhoneOrbitNotifications";
 import Marquee from "@/components/ui/Marquee";
 import CircularOrbitHero from "./CircularOrbitHero";
 import LiquidGlass from "@/components/ui/LiquidGlass";
 import { scrollToSection } from "@/lib/smoothScroll";
 import LiveBookingSimulator from "./LiveBookingSimulator";
+import { OFFICIAL_LOGO_PATH } from "@/components/ui/BrandLogo";
 
 const ICONS: Record<CategoryId, typeof Scissors> = {
   peluqueria: Scissors,
@@ -61,7 +64,7 @@ const ROW1_CARDS = [
   },
   {
     id: "qr",
-    icon: Sparkles,
+    icon: QrCode,
     iconBg: "bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400",
     title: "Cobro QR",
     badge: "0% Comisión",
@@ -287,7 +290,7 @@ export default function Hero() {
             </h1>
 
             {/* Subtítulo Desktop */}
-            <p className="mt-5 max-w-xl text-lg md:text-xl lg:text-2xl font-bold leading-relaxed text-slate-800 dark:text-slate-100">
+            <p className="mt-6 lg:mt-7 max-w-xl text-lg md:text-xl lg:text-2xl font-bold leading-relaxed text-slate-800 dark:text-slate-100">
               Mejor control para tu negocio y tus reservas <span className="text-brand font-extrabold">24/7</span>
             </p>
             <p className="mt-2.5 max-w-xl text-base lg:text-lg font-normal leading-relaxed text-slate-600 dark:text-slate-300">
@@ -392,8 +395,13 @@ export default function Hero() {
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
             className="md:col-span-5 flex justify-center max-w-full"
           >
-            <div className="scale-[0.84] lg:scale-100 origin-center">
-              <PhoneMockup />
+            <div className="relative flex items-center justify-center scale-[0.84] lg:scale-100 origin-center">
+              {/* Notificaciones satelitales girando concéntricamente detrás del teléfono */}
+              <PhoneOrbitNotifications />
+              {/* Teléfono interactivo en primer plano */}
+              <div className="relative z-20">
+                <PhoneMockup />
+              </div>
             </div>
           </motion.div>
         </div>
@@ -402,39 +410,56 @@ export default function Hero() {
         {/* MOBILE LAYOUT (< md): Exclusivo para teléfonos                 */}
         {/* ============================================================== */}
         <div className="md:hidden flex flex-col justify-start text-left w-full pt-3 xs:pt-5 pb-2">
-          {/* Bloque superior: Titular a la izquierda con Orbitador de 3 filas a la derecha */}
-          <div className="relative w-full overflow-x-clip min-h-[270px] xs:min-h-[300px] flex items-center mb-5">
+          {/* Bloque superior: Titular a la izquierda con Orbitador de tarjetas a la derecha */}
+          <div className="relative w-full overflow-x-clip min-h-[300px] xs:min-h-[330px] flex items-center mb-5">
             {/* Titular monumental de alto impacto visual (El protagonista) */}
-            <div className="relative z-10 max-w-[56%] xs:max-w-[53%] pointer-events-auto pr-1">
+            <div className="relative z-10 max-w-[62%] xs:max-w-[58%] pointer-events-auto pr-1">
               <h1 className="text-left font-sans">
-                <span className="block text-[36px] xs:text-[42px] font-black text-slate-950 dark:text-white leading-[1.06] tracking-tight">
+                <span className="block text-[42px] xs:text-[48px] font-black text-slate-950 dark:text-white leading-[1.05] tracking-tight">
                   Gestioná tu
                 </span>
-                <span className="block text-[36px] xs:text-[42px] font-black text-slate-950 dark:text-white leading-[1.06] tracking-tight">
+                <span className="block text-[42px] xs:text-[48px] font-black text-slate-950 dark:text-white leading-[1.05] tracking-tight">
                   agenda
                 </span>
-                <span className="block text-[20px] xs:text-[24px] font-medium text-slate-700 dark:text-slate-300 leading-snug tracking-normal mt-1">
+                <span className="block text-[22px] xs:text-[26px] font-medium text-slate-700 dark:text-slate-300 leading-snug tracking-normal mt-1">
                   y tu negocio con
                 </span>
-                <span className="block text-[42px] xs:text-[50px] font-black tracking-tight text-[#FF5B37] leading-[1.04] mt-1.5">
-                  AgendatePY
+                <span className="relative inline-flex items-center flex-nowrap text-[40px] xs:text-[46px] font-black tracking-tight text-[#FF4F2B] leading-[1.04] mt-1.5">
+                  <span className="relative inline-flex items-center justify-center shrink-0 mr-0.5 xs:mr-1">
+                    <svg
+                      viewBox="160 90 880 810"
+                      className="h-[40px] w-[40px] xs:h-[46px] xs:w-[46px] shrink-0"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      role="img"
+                      aria-label="AgendatePY Logo"
+                    >
+                      <path
+                        fill="#FF4F2B"
+                        fillRule="evenodd"
+                        d={OFFICIAL_LOGO_PATH}
+                      />
+                    </svg>
+                    {/* Órbita de notificaciones anclada con precisión en la A del logo */}
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none -z-0">
+                      <CircularOrbitHero />
+                    </span>
+                  </span><span className="tracking-tight text-[#FF4F2B]">gendatePY</span>
                 </span>
               </h1>
             </div>
-
-            {/* Vitrina Orbital: 3 Filas concéntricas dando vueltas a un lado con desvanecimiento */}
-            <CircularOrbitHero />
           </div>
 
-          {/* Subtítulo limpio y directo */}
-          <div className="relative z-20 mb-3 mt-1">
-            <p className="text-left text-base xs:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
-              Mejor control para tu negocio y tus reservas <span className="text-[#FF5B37] font-black">24/7</span>
+          {/* Subtítulo limpio y centrado */}
+          <div className="relative z-20 mb-3.5 mt-5 xs:mt-7 text-center w-full">
+            <p className="text-center text-base xs:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug mx-auto max-w-sm">
+              Mejor control para tu negocio y tus reservas{" "}
+              <span className="text-[#FF4F2B] font-black">24/7</span>
             </p>
           </div>
 
           {/* CTA Principal con Liquid Glass refinado (bajados con margen superior) */}
-          <div className="mt-5 xs:mt-7 flex flex-col gap-3">
+          <div className="mt-4.5 xs:mt-6 flex flex-col gap-3">
             <Link
               href="/onboarding"
               className="w-full block group active:scale-98 transition-transform"
@@ -489,10 +514,13 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Selector de Rubros: Ubicado bien abajo para que la simulación de WhatsApp quede completamente fuera del primer pantallazo */}
-          <div className="mt-36 xs:mt-44 sm:mt-48 pt-12 border-t border-slate-200/80 dark:border-white/10 w-full">
+          {/* Selector de Rubros / Solución a Medida: Espaciado óptimo para que sea visible en Safari sin que lo tape el buscador inferior */}
+          <div
+            className="mt-14 xs:mt-16 sm:mt-18 pt-7 pb-6 border-t border-slate-200/80 dark:border-white/10 w-full"
+            style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+          >
             <p className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 text-center mb-3.5">
-              SOLUCIÓN A MEDIDA PARA TU RUBRO:
+              SOLUCIÓN A MEDIDA PARA TU NEGOCIO:
             </p>
             <div className="relative overflow-hidden max-w-full ticker-mask py-2">
               <Marquee duration="32s" gap="0.625rem" repeat={3} pauseOnHover>
@@ -533,9 +561,14 @@ export default function Hero() {
         </div>
 
         {/* En mobile: La simulación interactiva de WhatsApp SOLO al scrollear hacia abajo, fuera del primer pantallazo */}
-        <div id="simulador-whatsapp" className="md:hidden relative mt-16 pt-8 border-t border-slate-200/60 dark:border-white/5 flex flex-col items-center scroll-mt-20">
+        <div id="simulador-whatsapp" className="md:hidden relative mt-20 xs:mt-24 sm:mt-28 pt-8 xs:pt-10 border-t border-slate-200/60 dark:border-white/5 flex flex-col items-center scroll-mt-20 overflow-x-clip">
           <div className="w-full flex justify-center max-w-full">
-            <PhoneMockup />
+            <div className="relative flex items-center justify-center">
+              <PhoneOrbitNotifications isMobile />
+              <div className="relative z-20">
+                <PhoneMockup />
+              </div>
+            </div>
           </div>
         </div>
 

@@ -9,7 +9,6 @@ import Ticker from "./Ticker";
 
 import ThreeGradientBackground from "./ThreeGradientBackground";
 import StackingCardsSection from "./StackingCardsSection";
-import ScrollTextAnimation from "./ScrollTextSection";
 import Features from "./Features";
 import ComparisonSection from "./ComparisonSection";
 import Pricing from "./Pricing";
@@ -29,7 +28,6 @@ export default function LandingPage() {
           <Hero />
           <Ticker />
           <StackingCardsSection />
-          <ScrollTextAnimation />
           <Features />
           <ComparisonSection />
           <Pricing />

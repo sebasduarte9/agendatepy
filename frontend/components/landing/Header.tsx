@@ -38,7 +38,6 @@ export default function Header() {
     "como-funciona",
     "caracteristicas",
     "precios",
-    "faq",
   ];
 
   // Sincronización con el scroll para marcar la pestaña activa
@@ -53,7 +52,7 @@ export default function Header() {
         window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - 90;
       if (atBottom) {
-        setActiveTab("faq");
+        setActiveTab("precios");
         return;
       }
 
@@ -130,7 +129,6 @@ export default function Header() {
     { id: "como-funciona", label: "Cómo Funciona", href: "#como-funciona" },
     { id: "caracteristicas", label: "Características", href: "#caracteristicas" },
     { id: "precios", label: "Precios", href: "#precios" },
-    { id: "faq", label: "FAQ", href: "#faq" },
   ];
 
   return (

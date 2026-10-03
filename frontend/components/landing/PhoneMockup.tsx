@@ -148,10 +148,16 @@ export default function PhoneMockup() {
 
   // Auto-scroll chat whenever messages change or typing status updates
   useEffect(() => {
+    if (step === 0) {
+      if (chatScrollRef.current) {
+        chatScrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
     scrollToBottom();
     const timer = setTimeout(scrollToBottom, 120);
     return () => clearTimeout(timer);
-  }, [chat, isTyping]);
+  }, [chat, isTyping, step]);
 
   // Restart chat when category changes
   useEffect(() => {
@@ -327,7 +333,7 @@ export default function PhoneMockup() {
         {/* Outer Glass Bezel (Desktop frame only) */}
         <div className="relative overflow-hidden rounded-3xl sm:rounded-[42px] bg-transparent sm:bg-black p-0 sm:p-[2.5px] sm:shadow-inner">
           {/* Inner Display Canvas */}
-          <div className="relative flex h-[480px] xs:h-[520px] sm:h-[640px] lg:h-[660px] flex-col overflow-hidden rounded-3xl sm:rounded-[42px] bg-[#efeae2] border border-slate-200/90 dark:border-white/10 sm:border-none shadow-xl shadow-slate-900/10 dark:shadow-black/50 sm:shadow-none">
+          <div className="relative flex h-[560px] xs:h-[600px] sm:h-[650px] lg:h-[670px] flex-col overflow-hidden rounded-3xl sm:rounded-[42px] bg-[#efeae2] border border-slate-200/90 dark:border-white/10 sm:border-none shadow-xl shadow-slate-900/10 dark:shadow-black/50 sm:shadow-none">
             {/* ========================================================= */}
             {/* iOS iMessage Push Notification Banner */}
             {/* ========================================================= */}
@@ -489,11 +495,11 @@ export default function PhoneMockup() {
             {/* ========================================================= */}
             <div
               ref={chatScrollRef}
-              className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-left"
+              className="relative z-10 flex-1 overflow-y-auto px-3 pt-3.5 pb-2.5 space-y-2.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-left"
             >
               {/* Date Badge */}
-              <div className="text-center my-1">
-                <span className="rounded-lg bg-[#ffffff]/80 px-2.5 py-0.8 text-[10px] font-semibold text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wider">
+              <div className="text-center mt-1 mb-2">
+                <span className="rounded-lg bg-[#ffffff]/85 px-3 py-1 text-[10px] font-semibold text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wider">
                   HOY
                 </span>
               </div>

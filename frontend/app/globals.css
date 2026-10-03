@@ -537,6 +537,118 @@ body {
   }
 }
 
+/* ==========================================================================
+   PHONE NOTIFICATIONS ORBIT (Dual Concentric Counter-Rotating Satellites)
+   Based on user animation specification with 60fps GPU acceleration
+   ========================================================================== */
+
+@keyframes Rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@-webkit-keyframes Rotate {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes Rotate-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@-webkit-keyframes Rotate-reverse {
+  from {
+    -webkit-transform: rotate(360deg);
+  }
+  to {
+    -webkit-transform: rotate(0deg);
+  }
+}
+
+@keyframes circle-rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(405deg);
+  }
+}
+
+@-webkit-keyframes circle-rotate {
+  from {
+    -webkit-transform: translate(-50%, -50%) rotate(45deg);
+  }
+  to {
+    -webkit-transform: translate(-50%, -50%) rotate(405deg);
+  }
+}
+
+@keyframes img-rotate {
+  from {
+    transform: rotate(-45deg);
+  }
+  to {
+    transform: rotate(-405deg);
+  }
+}
+
+@-webkit-keyframes img-rotate {
+  from {
+    -webkit-transform: rotate(-45deg);
+  }
+  to {
+    -webkit-transform: rotate(-405deg);
+  }
+}
+
+.hero-orbit-big-circle {
+  animation: Rotate var(--orbit-outer-speed, 32s) linear infinite;
+  -webkit-animation: Rotate var(--orbit-outer-speed, 32s) linear infinite;
+  will-change: transform;
+}
+
+.hero-orbit-reverse {
+  animation: Rotate-reverse var(--orbit-outer-speed, 32s) linear infinite;
+  -webkit-animation: Rotate-reverse var(--orbit-outer-speed, 32s) linear infinite;
+  will-change: transform;
+}
+
+.hero-orbit-inner-circle {
+  animation: circle-rotate var(--orbit-inner-speed, 24s) linear infinite;
+  -webkit-animation: circle-rotate var(--orbit-inner-speed, 24s) linear infinite;
+  will-change: transform;
+}
+
+.hero-orbit-inner-reverse {
+  animation: img-rotate var(--orbit-inner-speed, 24s) linear infinite;
+  -webkit-animation: img-rotate var(--orbit-inner-speed, 24s) linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-orbit-big-circle,
+  .hero-orbit-reverse,
+  .hero-orbit-inner-circle,
+  .hero-orbit-inner-reverse {
+    animation: none !important;
+    -webkit-animation: none !important;
+  }
+}
+
+
 @supports (property(--border-angle)) {
   @property --border-angle {
     inherits: false;
