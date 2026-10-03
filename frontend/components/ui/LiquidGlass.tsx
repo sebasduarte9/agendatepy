@@ -49,15 +49,15 @@ export default function LiquidGlass({
 }: LiquidGlassProps) {
   const filterId = useId().replace(/:/g, "_");
   const glassRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const [isHovered, setIsHovered] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [elasticOffset, setElasticOffset] = useState({ x: 0, y: 0 });
   const [directionalScale, setDirectionalScale] = useState({ sx: 1, sy: 1 });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Micro-física elástica Apple (muy sutil y refinada)
   const handleMouseMove = useCallback(

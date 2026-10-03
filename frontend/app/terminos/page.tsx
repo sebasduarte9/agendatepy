@@ -46,7 +46,7 @@ export default function TerminosPage() {
                 1. Aceptación de los Términos
               </h2>
               <p className="mt-2">
-                Al acceder, registrarse o utilizar la plataforma <strong>AgendatePY</strong> (en adelante "el Servicio"), usted manifiesta haber leído, comprendido y aceptado en su totalidad estos Términos y Condiciones, así como nuestra Política de Privacidad, en conformidad con la <strong>Ley N° 4868/13 de Comercio Electrónico</strong> de la República del Paraguay.
+                Al acceder, registrarse o utilizar la plataforma <strong>AgendatePY</strong> (en adelante &ldquo;el Servicio&rdquo;), usted manifiesta haber leído, comprendido y aceptado en su totalidad estos Términos y Condiciones, así como nuestra Política de Privacidad, en conformidad con la <strong>Ley N° 4868/13 de Comercio Electrónico</strong> de la República del Paraguay.
               </p>
             </section>
 

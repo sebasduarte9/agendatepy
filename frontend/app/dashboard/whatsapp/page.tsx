@@ -517,6 +517,7 @@ export default function BotWhatsAppPage() {
     return { x: 0, y: 0 };
   });
   const isPanningRef = useRef(false);
+  const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
 
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
@@ -842,9 +843,9 @@ export default function BotWhatsAppPage() {
   }
 
   function handleCanvasPointerDown(e: React.PointerEvent) {
-    // Only pan if clicking canvas background (not a node or interactive button)
     if ((e.target as HTMLElement).closest("[data-canvas-node]")) return;
     isPanningRef.current = true;
+    setIsPanning(true);
     panStartRef.current = {
       startX: e.clientX,
       startY: e.clientY,
@@ -900,6 +901,7 @@ export default function BotWhatsAppPage() {
     setDraggingNodeId(null);
     dragStartRef.current = null;
     isPanningRef.current = false;
+    setIsPanning(false);
     panStartRef.current = null;
   }, [draggingNodeId, pan]);
 
@@ -1556,7 +1558,7 @@ export default function BotWhatsAppPage() {
               onPointerMove={handleCanvasPointerMove}
               onPointerUp={handleCanvasPointerUp}
               className={`flex-1 relative overflow-auto select-none [background-image:radial-gradient(#cbd5e1_1.2px,transparent_1.2px)] dark:[background-image:radial-gradient(#334155_1.2px,transparent_1.2px)] [background-size:20px_20px] ${
-                isPanningRef.current ? "cursor-grabbing" : "cursor-grab"
+                isPanning ? "cursor-grabbing" : "cursor-grab"
               }`}
               style={{ height: "680px" }}
             >
@@ -1567,7 +1569,7 @@ export default function BotWhatsAppPage() {
                   height: "1400px",
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transformOrigin: "top left",
-                  transition: draggingNodeId || isPanningRef.current ? "none" : "transform 0.15s ease",
+                  transition: draggingNodeId || isPanning ? "none" : "transform 0.15s ease",
                 }}
               >
                 {/* SVG Connections Layer (Bezier Curves) */}

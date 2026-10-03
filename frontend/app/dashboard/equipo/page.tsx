@@ -1006,7 +1006,7 @@ export default function EquipoRolesPage() {
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
               <p className="font-bold">
-                ¿Estás seguro de que deseas eliminar a "{memberToDelete?.name}"?
+                ¿Estás seguro de que deseas eliminar a &ldquo;{memberToDelete?.name}&rdquo;?
               </p>
               <p className="text-rose-600/90 dark:text-rose-400/90">
                 Se desvinculará de los servicios asignados y su acceso con Google quedará revocado.

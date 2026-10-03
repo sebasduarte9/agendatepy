@@ -22,30 +22,44 @@ type CategoryContextValue = {
 
 const CategoryContext = createContext<CategoryContextValue | null>(null);
 
+const VALID_CATEGORIES: CategoryId[] = [
+  "peluqueria",
+  "odontologia",
+  "pilates",
+  "spas",
+  "medicos",
+  "veterinarias",
+  "gimnasios",
+  "talleres",
+  "padel",
+];
+
+function getInitialCategory(): CategoryId {
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const rubroParam = params.get("rubro") as CategoryId;
+    if (rubroParam && VALID_CATEGORIES.includes(rubroParam)) {
+      return rubroParam;
+    }
+  }
+  return "odontologia";
+}
+
 export function CategoryProvider({ children }: { children: ReactNode }) {
   // Rubro activo en toda la landing (Hero, WhatsApp y widget).
   const [selectedCategory, setSelectedCategory] =
-    useState<CategoryId>("odontologia");
+    useState<CategoryId>(getInitialCategory);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const rubroParam = params.get("rubro") as CategoryId;
-      const validCategories: CategoryId[] = [
-        "peluqueria",
-        "odontologia",
-        "pilates",
-        "spas",
-        "medicos",
-        "veterinarias",
-        "gimnasios",
-        "talleres",
-        "padel",
-      ];
-      if (rubroParam && validCategories.includes(rubroParam)) {
+      if (rubroParam && VALID_CATEGORIES.includes(rubroParam)) {
         setSelectedCategory(rubroParam);
       }
-    }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   const value = useMemo(
