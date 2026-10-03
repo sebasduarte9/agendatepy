@@ -372,9 +372,9 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
     ? "bg-slate-900/90 border-slate-800 text-slate-100 shadow-xl shadow-black/40 backdrop-blur-md"
     : "bg-white/95 border-slate-200 text-slate-900 shadow-xs backdrop-blur-md";
 
-  const secondaryTextClass = isDark ? "text-slate-400" : "text-slate-500";
+  const secondaryTextClass = isDark ? "text-slate-300" : "text-slate-600";
   const itemBgClass = isDark
-    ? "bg-slate-800/80 border-slate-700/80 text-slate-100 hover:border-slate-600"
+    ? "bg-slate-800/90 border-slate-700/90 text-slate-100 hover:border-slate-500"
     : "bg-white border-slate-200 text-slate-900 hover:border-slate-300";
 
   // Renders the Linktree / Bio-links custom action buttons
@@ -494,15 +494,15 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                                 setSlots([]);
                                 setSlotsState("idle");
                               }}
-                              className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${
+                              className={`flex w-full items-center justify-between rounded-2xl border p-4 sm:p-5 text-left transition-all active:scale-[0.99] cursor-pointer ${
                                 selected
-                                  ? "border-primary bg-primary/10 ring-1 ring-primary shadow-xs"
+                                  ? "border-primary bg-primary/10 ring-2 ring-primary/40 shadow-sm"
                                   : itemBgClass
                               }`}
                             >
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="block font-bold text-sm">{item.name}</span>
+                              <div className="space-y-1.5 flex-1 min-w-0 pr-3">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="block font-bold text-sm sm:text-base text-slate-900 dark:text-white">{item.name}</span>
                                   {hasPromo && (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs">
                                       <Flame className="h-3 w-3" />
@@ -511,8 +511,8 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                                   )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className={`inline-flex items-center gap-1 text-xs ${secondaryTextClass}`}>
-                                    <Clock className="h-3 w-3" /> {item.durationMinutes} min
+                                  <span className={`inline-flex items-center gap-1 text-xs font-medium ${secondaryTextClass}`}>
+                                    <Clock className="h-3.5 w-3.5 text-primary" /> {item.durationMinutes} min
                                   </span>
                                   {hasPromo && item.promoLimitHours && (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
@@ -531,21 +531,32 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                                   )}
                                 </div>
                               </div>
-                              <div className="text-right shrink-0 ml-3">
-                                {hasPromo ? (
-                                  <div>
-                                    <span className="block text-xs line-through text-slate-400 dark:text-slate-500">
+                              <div className="flex items-center gap-3 shrink-0">
+                                <div className="text-right shrink-0">
+                                  {hasPromo ? (
+                                    <div>
+                                      <span className="block text-xs line-through text-slate-400 dark:text-slate-500">
+                                        Gs. {item.price.toLocaleString("es-PY")}
+                                      </span>
+                                      <span className="font-black text-sm sm:text-base text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                        Gs. {item.promoPrice?.toLocaleString("es-PY")}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="font-black text-sm sm:text-base text-primary tabular-nums">
                                       Gs. {item.price.toLocaleString("es-PY")}
                                     </span>
-                                    <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">
-                                      Gs. {item.promoPrice?.toLocaleString("es-PY")}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="font-black text-sm text-primary">
-                                    Gs. {item.price.toLocaleString("es-PY")}
-                                  </span>
-                                )}
+                                  )}
+                                </div>
+                                <div
+                                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                                    selected
+                                      ? "border-primary bg-primary text-white scale-105 shadow-xs"
+                                      : "border-slate-300 dark:border-slate-600 bg-transparent"
+                                  }`}
+                                >
+                                  {selected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                                </div>
                               </div>
                             </button>
                           </li>
@@ -606,10 +617,10 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                                   key={slot.start}
                                   type="button"
                                   onClick={() => setStart(slot.start)}
-                                  className={`rounded-xl border py-2.5 text-xs font-bold transition ${
+                                  className={`h-12 w-full rounded-xl border flex items-center justify-center text-sm font-bold active:scale-95 transition-all cursor-pointer ${
                                     selected
-                                      ? "border-primary bg-primary text-white shadow-sm"
-                                      : `${itemBgClass} hover:border-primary`
+                                      ? "border-primary bg-primary text-white font-black shadow-md shadow-primary/30 ring-2 ring-primary ring-offset-2 ring-offset-slate-900 scale-105"
+                                      : "border-slate-200 dark:border-slate-700/90 bg-white dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 hover:border-primary/60 hover:bg-slate-50 dark:hover:bg-slate-700/80"
                                   }`}
                                 >
                                   {timeLabel}
@@ -663,9 +674,9 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                           )}
                         </div>
                       </div>
-                      <div className={`mt-2.5 flex items-center justify-between ${secondaryTextClass}`}>
-                        <span>Fecha y hora:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      <div className={`mt-3 pt-2.5 border-t border-black/5 dark:border-white/5 flex items-center justify-between ${secondaryTextClass}`}>
+                        <span className="text-xs font-medium">Fecha y horario:</span>
+                        <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
                           {start ? formatInTimeZone(new Date(start), tenant.timezone, "d 'de' MMMM · HH:mm 'hs'", { locale: es }) : ""}
                         </span>
                       </div>
@@ -685,10 +696,10 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                       )}
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3.5">
                       <div>
-                        <label className={`block text-xs font-semibold ${secondaryTextClass}`}>
-                          Nombre y Apellido
+                        <label className={`block text-xs font-bold uppercase tracking-wider ${secondaryTextClass}`}>
+                          Nombre y Apellido *
                         </label>
                         <input
                           type="text"
@@ -696,15 +707,15 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="Tu nombre completo"
-                          className={`mt-1 w-full rounded-xl border px-3.5 py-2.5 text-xs outline-none focus:border-primary ${
+                          className={`mt-1.5 h-12 w-full rounded-xl border px-4 py-3 text-base sm:text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition ${
                             isDark ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-slate-200 text-slate-900"
                           }`}
                         />
                       </div>
 
                       <div>
-                        <label className={`block text-xs font-semibold ${secondaryTextClass}`}>
-                          Teléfono de WhatsApp (Paraguay)
+                        <label className={`block text-xs font-bold uppercase tracking-wider ${secondaryTextClass}`}>
+                          Teléfono de WhatsApp (Paraguay) *
                         </label>
                         <input
                           type="tel"
@@ -712,39 +723,38 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="0981 123 456"
-                          className={`mt-1 w-full rounded-xl border px-3.5 py-2.5 text-xs outline-none focus:border-primary ${
+                          className={`mt-1.5 h-12 w-full rounded-xl border px-4 py-3 text-base sm:text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition ${
                             isDark ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-slate-200 text-slate-900"
                           }`}
                         />
                         <div
-                          className={`mt-2 rounded-xl p-2.5 text-[11px] leading-relaxed border transition ${
+                          className={`mt-2 rounded-xl p-3 text-[11px] leading-relaxed border transition ${
                             isDark
                               ? "bg-slate-800/80 border-slate-700/80 text-slate-300"
                               : "bg-blue-50/70 border-blue-100 text-slate-700"
                           }`}
                         >
                           <div className="flex items-start gap-2">
-                            <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                               <Check className="h-2.5 w-2.5 stroke-[3]" />
                             </span>
-                            <p className="text-[10.5px]">
+                            <p className="text-[11px]">
                               <strong className="font-semibold text-slate-900 dark:text-white">
-                                Autorización de avisos y recordatorios:
+                                Avisos oficiales:
                               </strong>{" "}
                               Al registrar tu número, autorizás expresamente a{" "}
                               <span className="font-semibold">{tenant.name}</span> y AgendatePY a
-                              enviarte confirmaciones oficiales, recordatorios previos al turno y
-                              actualizaciones del servicio por WhatsApp o SMS.
+                              enviarte confirmación de turno y recordatorios por WhatsApp.
                             </p>
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <label className={`block text-xs font-semibold ${secondaryTextClass}`}>
+                        <label className={`block text-xs font-bold uppercase tracking-wider ${secondaryTextClass}`}>
                           Forma de Pago preferida en el local
                         </label>
-                        <div className="mt-1.5 grid grid-cols-2 gap-2">
+                        <div className="mt-2 grid grid-cols-2 gap-2 sm:gap-2.5">
                           {[
                             { id: "efectivo", label: "Efectivo", icon: Banknote },
                             { id: "pos_bancard", label: "Tarjeta (POS)", icon: CreditCard },
@@ -757,14 +767,14 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                                 key={m.id}
                                 type="button"
                                 onClick={() => setPaymentMethod(m.id as typeof paymentMethod)}
-                                className={`rounded-xl border p-2 text-xs font-semibold transition text-left flex items-center gap-2 ${
+                                className={`h-12 rounded-xl border px-3 text-xs sm:text-sm font-semibold transition text-left flex items-center gap-2.5 active:scale-98 cursor-pointer ${
                                   paymentMethod === m.id
-                                    ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
+                                    ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/40 font-bold"
                                     : itemBgClass
                                 }`}
                               >
                                 <IconComp className="h-4 w-4 shrink-0 text-primary" />
-                                <span>{m.label}</span>
+                                <span className="truncate">{m.label}</span>
                               </button>
                             );
                           })}
@@ -1217,7 +1227,7 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
 
   return (
     <div
-      className={`relative min-h-dvh w-full px-4 pt-4 pb-12 transition-colors duration-300`}
+      className={`relative min-h-dvh w-full px-3.5 sm:px-4 pt-3 sm:pt-4 pb-28 sm:pb-12 transition-colors duration-300 overflow-x-hidden`}
       style={{
         fontFamily: fontStack(tenant.fontFamily || "plus-jakarta-sans"),
         ["--primary" as string]: tenant.primaryColor || "#5b31e6",
@@ -1299,15 +1309,16 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                     )}
                   </div>
                   {/* Social Buttons */}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     {tenant.whatsapp && (
                       <a
                         href={`https://wa.me/${tenant.whatsapp.replace(/\D/g, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs"
+                        className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-xs hover:bg-emerald-500 active:scale-95 transition"
+                        aria-label="WhatsApp"
                       >
-                        <MessageCircle className="h-4 w-4" />
+                        <MessageCircle className="h-5 w-5" />
                       </a>
                     )}
                     {tenant.instagram && (
@@ -1315,9 +1326,12 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                         href={`https://instagram.com/${tenant.instagram.replace(/^@/, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-xs ${isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-700"}`}
+                        className={`flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs active:scale-95 transition ${
+                          isDark ? "border-slate-700 bg-slate-800 text-slate-200 hover:text-pink-500" : "border-slate-200 bg-white text-slate-700 hover:text-pink-500"
+                        }`}
+                        aria-label="Instagram"
                       >
-                        <InstagramIcon className="h-3.5 w-3.5" />
+                        <InstagramIcon className="h-5 w-5" />
                       </a>
                     )}
                   </div>
@@ -1502,18 +1516,18 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                 </div>
 
                 {/* Social Media Contact Pills */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   {tenant.instagram && (
                     <a
                       href={`https://instagram.com/${tenant.instagram.replace(/^@/, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-xs hover:text-pink-600 transition ${
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs hover:text-pink-500 active:scale-95 transition ${
                         isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-700"
                       }`}
                       aria-label="Instagram"
                     >
-                      <InstagramIcon className="h-4 w-4" />
+                      <InstagramIcon className="h-5 w-5" />
                     </a>
                   )}
                   {tenant.whatsapp && (
@@ -1521,10 +1535,10 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                       href={`https://wa.me/${tenant.whatsapp.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 transition"
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-xs hover:bg-emerald-500 active:scale-95 transition"
                       aria-label="WhatsApp"
                     >
-                      <MessageCircle className="h-4 w-4" />
+                      <MessageCircle className="h-5 w-5" />
                     </a>
                   )}
                   {tenant.googleMapsUrl && (
@@ -1532,12 +1546,12 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                       href={tenant.googleMapsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-xs hover:text-primary transition ${
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs hover:text-primary active:scale-95 transition ${
                         isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-700"
                       }`}
                       aria-label="Google Maps"
                     >
-                      <MapPin className="h-4 w-4" />
+                      <MapPin className="h-5 w-5" />
                     </a>
                   )}
                 </div>
@@ -1546,18 +1560,18 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
               <div>
                 <h1 className={`tracking-tight ${titleSizeClass}`}>{tenant.name}</h1>
                 {tenant.slogan && (
-                  <p className="mt-0.5 text-xs font-semibold text-primary">{tenant.slogan}</p>
+                  <p className="mt-0.5 text-xs sm:text-sm font-bold text-primary">{tenant.slogan}</p>
                 )}
                 {tenant.bio && (
-                  <p className={`mt-1 text-xs leading-relaxed ${secondaryTextClass}`}>{tenant.bio}</p>
+                  <p className={`mt-1.5 text-xs sm:text-sm leading-relaxed ${secondaryTextClass}`}>{tenant.bio}</p>
                 )}
               </div>
 
               {/* Booking Notice / Policy Alert */}
               {tenant.bookingNotice && (
-                <div className="mt-3 flex items-start gap-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-800 dark:text-amber-300">
+                <div className="mt-3.5 flex items-start gap-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200">
                   <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] leading-tight">{tenant.bookingNotice}</p>
+                  <p className="text-xs leading-relaxed font-medium">{tenant.bookingNotice}</p>
                 </div>
               )}
 
@@ -1615,6 +1629,79 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
             </>
           )}
         </main>
+      )}
+
+      {/* Sticky Mobile Action Dock (Fresha / Boulevard standard) */}
+      {activeTab === "turnos" && (
+        <aside aria-label="Acciones de reserva móvil" className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 dark:bg-slate-950/95 border-t border-slate-800 backdrop-blur-md px-4 py-3 shadow-2xl safe-area-pb">
+          <div className="flex items-center justify-between gap-3 max-w-lg mx-auto">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={() => setStep((s) => (s - 1) as 1 | 2)}
+                className="h-11 px-3.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 active:scale-95 transition cursor-pointer"
+              >
+                Volver
+              </button>
+            )}
+
+            <div className="min-w-0 flex-1">
+              {step === 1 && service ? (
+                <div>
+                  <p className="text-xs font-bold text-white truncate">{service.name}</p>
+                  <p className="text-[11px] font-black text-primary font-mono">
+                    Gs. {(service.promoPrice && service.hasPromo ? service.promoPrice : service.price).toLocaleString("es-PY")}
+                  </p>
+                </div>
+              ) : step === 1 ? (
+                <p className="text-xs text-slate-400">Elegí tu servicio</p>
+              ) : null}
+
+              {step === 2 && start ? (
+                <div>
+                  <p className="text-xs font-bold text-white truncate">
+                    {formatInTimeZone(new Date(start), tenant.timezone, "d 'de' MMM · HH:mm 'hs'", { locale: es })}
+                  </p>
+                  <p className="text-[11px] text-slate-400 truncate">{service?.name}</p>
+                </div>
+              ) : step === 2 ? (
+                <p className="text-xs text-slate-400">Elegí fecha y horario</p>
+              ) : null}
+
+              {step === 3 && (
+                <div>
+                  <p className="text-xs font-bold text-white truncate">Paso final</p>
+                  <p className="text-[11px] text-slate-300">
+                    Total: <span className="font-bold text-primary">Gs. {(service?.promoPrice && service?.hasPromo ? service.promoPrice : service?.price || 0).toLocaleString("es-PY")}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {step < 3 ? (
+              <button
+                type="button"
+                disabled={!canContinue}
+                onClick={() => setStep((s) => (s + 1) as 2 | 3)}
+                className={`h-11 px-5 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-1.5 transition active:scale-95 disabled:opacity-30 cursor-pointer ${customBtnClasses}`}
+                style={customBtnStyles}
+              >
+                <span>Siguiente</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={!canContinue || pending}
+                onClick={confirm}
+                className={`h-11 px-5 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-1.5 transition active:scale-95 disabled:opacity-30 cursor-pointer ${customBtnClasses}`}
+                style={customBtnStyles}
+              >
+                <span>{pending ? "Guardando..." : "Confirmar Cita"}</span>
+              </button>
+            )}
+          </div>
+        </aside>
       )}
     </div>
   );

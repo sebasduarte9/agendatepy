@@ -2175,7 +2175,7 @@ export default function AparienciaPage() {
           </div>
 
           {/* Authentic iPhone 16 Pro Chassis copied from Landing */}
-          <div className="relative mx-auto w-full max-w-[340px] sm:max-w-[360px] rounded-[50px] p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]">
+          <div className="relative mx-auto w-full max-w-[308px] min-[390px]:max-w-[340px] sm:max-w-[360px] rounded-[44px] min-[390px]:rounded-[50px] p-[7px] min-[390px]:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]">
             {/* Precision Engineered Side Buttons */}
             <div className="absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
             <div className="absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e] shadow-[-1px_0_2px_rgba(0,0,0,0.4)]" />
@@ -2184,10 +2184,10 @@ export default function AparienciaPage() {
             <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
             {/* Outer Glass Bezel */}
-            <div className="relative overflow-hidden rounded-[42px] bg-black p-[2.5px] shadow-inner">
+            <div className="relative overflow-hidden rounded-[38px] min-[390px]:rounded-[42px] bg-black p-[2.5px] shadow-inner">
               {/* Inner Display Canvas */}
               <div
-                className={`relative flex h-[660px] flex-col overflow-hidden rounded-[40px] transition-all duration-300 ${
+                className={`relative flex h-[580px] min-[390px]:h-[660px] flex-col overflow-hidden rounded-[36px] min-[390px]:rounded-[40px] transition-all duration-300 ${
                   previewIsDark ? "dark [color-scheme:dark]" : "light [color-scheme:light]"
                 }`}
                 style={{

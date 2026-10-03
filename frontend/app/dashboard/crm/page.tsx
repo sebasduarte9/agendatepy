@@ -35,6 +35,7 @@ import {
   Hash,
   FileText,
   History,
+  ChevronLeft,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -95,6 +96,7 @@ export default function CrmOmnichannelPage() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string>("conv-demo-1");
   const [replyText, setReplyText] = useState("");
+  const [mobileActiveView, setMobileActiveView] = useState<"list" | "chat" | "profile">("list");
 
   // Modals
   const [channelsModalOpen, setChannelsModalOpen] = useState(false);
@@ -419,7 +421,7 @@ export default function CrmOmnichannelPage() {
           /* ═══ 3-COLUMN CRM WORKSPACE ═══ */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[720px]">
             {/* LEFT: Conversations */}
-            <div className="lg:col-span-4 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
+            <div className={`lg:col-span-4 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden ${mobileActiveView !== "list" ? "hidden lg:flex" : "flex"}`}>
               <div data-tour="crm-channels" className="p-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/60 dark:bg-slate-950/40">
                 <div className="grid grid-cols-4 gap-1 p-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-white/5">
                   {(["todos", "whatsapp", "instagram", "messenger"] as const).map((ch) => {
@@ -460,7 +462,7 @@ export default function CrmOmnichannelPage() {
                   const sel = activeConversation?.id === c.id;
                   const ini = c.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
                   return (
-                    <button key={c.id} type="button" onClick={() => setSelectedId(c.id)} className={`w-full text-left p-3.5 flex items-start gap-3 transition cursor-pointer ${sel ? "bg-primary/10 dark:bg-primary/20 border-l-4 border-primary" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}>
+                    <button key={c.id} type="button" onClick={() => { setSelectedId(c.id); setMobileActiveView("chat"); }} className={`w-full text-left p-3.5 flex items-start gap-3 transition cursor-pointer ${sel ? "bg-primary/10 dark:bg-primary/20 border-l-4 border-primary" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}>
                       <div className="relative shrink-0">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs shadow-2xs">{ini}</div>
                         <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-white/10"><ChannelIcon channel={c.channel} size="sm" /></span>
@@ -486,28 +488,48 @@ export default function CrmOmnichannelPage() {
             </div>
 
             {/* CENTER: Chat */}
-            <div data-tour="crm-chat-box" className="lg:col-span-5 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
+            <div data-tour="crm-chat-box" className={`lg:col-span-5 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden ${mobileActiveView !== "chat" ? "hidden lg:flex" : "flex"}`}>
               {activeConversation ? (
                 <>
                   <div className="p-3.5 border-b border-slate-100 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950/40 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => setMobileActiveView("list")}
+                        className="lg:hidden -ml-1 p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0 cursor-pointer"
+                        aria-label="Volver a conversaciones"
+                        title="Volver a conversaciones"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <div className="relative shrink-0">
                         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xs">{activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
                         <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs"><ChannelIcon channel={activeConversation.channel} size="sm" /></span>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <span>{activeConversation.clientName}</span>
-                          <span className={`rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold capitalize ${channelBadgeStyles(activeConversation.channel)}`}>{activeConversation.channel}</span>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                          <span className="truncate">{activeConversation.clientName}</span>
+                          <span className={`rounded-full border px-1.5 py-0.2 text-[9px] font-extrabold capitalize shrink-0 ${channelBadgeStyles(activeConversation.channel)}`}>{activeConversation.channel}</span>
                         </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{activeConversation.channelIdentifier}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">{activeConversation.channelIdentifier}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setMobileActiveView("profile")}
+                        className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                        title="Ver datos del cliente"
+                        aria-label="Ver datos del cliente"
+                      >
+                        <User className="h-4 w-4" />
+                      </button>
                       {activeConversation.status === "resolved" ? (
-                        <button type="button" onClick={() => reopenCrmConversation(activeConversation.id)} className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-white transition cursor-pointer">Reabrir</button>
+                        <button type="button" onClick={() => reopenCrmConversation(activeConversation.id)} className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 px-2.5 sm:px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-white transition cursor-pointer">Reabrir</button>
                       ) : (
-                        <button type="button" onClick={() => resolveCrmConversation(activeConversation.id)} className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 px-3 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer">Marcar Resuelto</button>
+                        <button type="button" onClick={() => resolveCrmConversation(activeConversation.id)} className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 px-2.5 sm:px-3 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer">
+                          <span className="hidden sm:inline">Marcar </span>Resuelto
+                        </button>
                       )}
                     </div>
                   </div>
@@ -606,7 +628,7 @@ export default function CrmOmnichannelPage() {
                     </div>
                   </div>
                   <div className="p-3 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900 flex items-center gap-2">
-                    <input type="text" placeholder={`Responder a ${activeConversation.clientName}...`} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSend(); } }} className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    <input type="text" placeholder={`Responder a ${activeConversation.clientName}...`} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSend(); } }} className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 text-base sm:text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" />
                     <button type="button" onClick={handleSend} disabled={!replyText.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:opacity-95 disabled:opacity-40 transition shadow-sm cursor-pointer" aria-label="Enviar"><Send className="h-4 w-4" /></button>
                   </div>
                 </>
@@ -619,10 +641,19 @@ export default function CrmOmnichannelPage() {
             </div>
 
             {/* RIGHT: Client Profile & Actions */}
-            <div data-tour="crm-client-profile" className="lg:col-span-3 flex flex-col gap-4">
+            <div data-tour="crm-client-profile" className={`lg:col-span-3 flex flex-col gap-4 ${mobileActiveView !== "profile" ? "hidden lg:flex" : "flex"}`}>
               {activeConversation ? (
                 <>
                   <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-4 shadow-sm space-y-4">
+                    {/* Back to chat button on mobile */}
+                    <button
+                      type="button"
+                      onClick={() => setMobileActiveView("chat")}
+                      className="lg:hidden inline-flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-xl transition w-fit cursor-pointer"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span>Volver al chat</span>
+                    </button>
                     <div className="text-center pb-3 border-b border-slate-100 dark:border-white/10">
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-tr from-primary to-indigo-600 text-white font-black text-lg shadow-md mb-2">{activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
                       <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">{activeConversation.clientName}</h3>

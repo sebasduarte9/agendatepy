@@ -119,13 +119,13 @@ export default function TransferenciasPage() {
         </div>
 
         {/* Status Filters */}
-        <div className="flex items-center gap-1 rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xs">
+        <div className="flex items-center gap-1 rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xs overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
+              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition shrink-0 whitespace-nowrap cursor-pointer ${
                 filter === f
                   ? "bg-primary text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
