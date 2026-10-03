@@ -28,3 +28,6 @@ Thumbs.db
 # Subidas de usuarios (uploads dinámicos)
 frontend/public/uploads/*
 !frontend/public/uploads/.gitkeep
+
+# IDE y agentes locales
+.agents/

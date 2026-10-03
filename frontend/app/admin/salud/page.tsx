@@ -40,27 +40,22 @@ export default function SystemHealthPage() {
   }, [period]);
 
   return (
-    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <Cpu className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400 shrink-0" />
-              <span>Salud del Sistema & Telemetría</span>
-            </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
-              System Health
-            </span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+            <Cpu className="h-5 w-5 text-slate-400 shrink-0" />
+            <span>Salud del Sistema</span>
+          </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Monitoreo de tasa de error, códigos HTTP, conflictos de agendamiento y disponibilidad de endpoints.
+            Monitoreo de tasa de error, códigos HTTP y disponibilidad de endpoints.
           </p>
         </div>
 
         {/* Period Selector */}
         <div className="flex items-center gap-2 overflow-x-auto max-w-full shrink-0">
-          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-0.5 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
             {[
               { label: "7d", val: "7d" },
               { label: "30d", val: "30d" },
@@ -70,10 +65,10 @@ export default function SystemHealthPage() {
               <button
                 key={p.val}
                 onClick={() => setPeriod(p.val)}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap shrink-0 ${
+                className={`px-2.5 py-1 rounded-md text-xs transition whitespace-nowrap ${
                   period === p.val
-                    ? "bg-indigo-600 text-white shadow-sm font-semibold"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-slate-800 text-white font-medium"
+                    : "text-slate-400 hover:text-slate-200"
                 }`}
               >
                 {p.label}
@@ -83,50 +78,44 @@ export default function SystemHealthPage() {
 
           <button
             onClick={fetchHealth}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer shrink-0"
             title="Recargar telemetría"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
 
       {/* Main Health Status Banner */}
       {data && (
-        <div className={`p-4 sm:p-6 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-          data.errorRate < 2
-            ? "bg-emerald-950/20 border-emerald-800/40 text-emerald-300"
-            : data.errorRate < 5
-            ? "bg-amber-950/20 border-amber-800/40 text-amber-300"
-            : "bg-red-950/20 border-red-800/40 text-red-300"
-        }`}>
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-2xl ${
-              data.errorRate < 2 ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-            }`}>
-              <Cpu className="w-8 h-8" />
+        <div className="p-4 sm:p-5 rounded-xl border border-slate-800/80 bg-slate-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700/70 flex items-center justify-center text-slate-300 shrink-0">
+              <Cpu className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs font-mono uppercase tracking-wider font-bold opacity-80">
-                Estado Operativo de Plataforma
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${
+                  data.errorRate < 2 ? "bg-emerald-400" : data.errorRate < 5 ? "bg-amber-400" : "bg-rose-400"
+                }`} />
+                <span className="text-sm font-semibold text-white">
+                  {data.errorRate < 2 ? "Sistema Saludable" : data.errorRate < 5 ? "Degradación Menor" : "Incidencias Detectadas"}
+                </span>
               </div>
-              <div className="text-2xl font-black text-white mt-0.5">
-                {data.errorRate < 2 ? "SISTEMA SALUDABLE" : data.errorRate < 5 ? "DEGRADACIÓN MENOR" : "INCIDENCIAS DETECTADAS"}
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Tasa global de error calculada en {data.errorRate}% sobre {data.totalMonitoredRequests} eventos/requests monitorizados.
+              <p className="text-xs text-slate-400 mt-0.5">
+                Tasa de error: {data.errorRate}% sobre {data.totalMonitoredRequests} eventos monitorizados.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 self-start md:self-auto border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6">
+          <div className="flex items-center gap-6 self-start md:self-auto border-t md:border-t-0 md:border-l border-slate-800/80 pt-3 md:pt-0 md:pl-6">
             <div>
-              <div className="text-[11px] text-slate-400 font-mono">Error Rate</div>
-              <div className="text-2xl font-bold font-mono text-white">{data.errorRate}%</div>
+              <div className="text-[11px] text-slate-500 font-mono">Error Rate</div>
+              <div className="text-xl font-semibold font-mono text-white tabular-nums">{data.errorRate}%</div>
             </div>
             <div>
-              <div className="text-[11px] text-slate-400 font-mono">Total Errores</div>
-              <div className="text-2xl font-bold font-mono text-rose-400">{data.errors.total}</div>
+              <div className="text-[11px] text-slate-500 font-mono">Total Errores</div>
+              <div className="text-xl font-semibold font-mono text-slate-200 tabular-nums">{data.errors.total}</div>
             </div>
           </div>
         </div>
@@ -136,20 +125,20 @@ export default function SystemHealthPage() {
       {data?.errors && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "401 Unauthorized", count: data.errors.http401, desc: "Sesión / Auth", color: "text-amber-400" },
-            { label: "403 Forbidden", count: data.errors.http403, desc: "RBAC denegado", color: "text-orange-400" },
-            { label: "404 Not Found", count: data.errors.http404, desc: "Ruta o ID inexistente", color: "text-slate-300" },
-            { label: "409 Conflict", count: data.errors.http409, desc: "Slot tomado / Concurrencia", color: "text-purple-400" },
-            { label: "500 Server Error", count: data.errors.http500, desc: "Excepciones de servidor", color: "text-red-400" },
-            { label: "Validation Errors", count: data.errors.validationErrors, desc: "Payloads inválidos", color: "text-sky-400" },
+            { label: "401 Unauthorized", count: data.errors.http401, desc: "Sesión / Auth" },
+            { label: "403 Forbidden", count: data.errors.http403, desc: "RBAC denegado" },
+            { label: "404 Not Found", count: data.errors.http404, desc: "Ruta o ID inexistente" },
+            { label: "409 Conflict", count: data.errors.http409, desc: "Slot tomado / Concurrencia" },
+            { label: "500 Server Error", count: data.errors.http500, desc: "Excepciones de servidor" },
+            { label: "Validation Errors", count: data.errors.validationErrors, desc: "Payloads inválidos" },
           ].map((item) => (
             <div
               key={item.label}
-              className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col justify-between"
+              className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3.5 flex flex-col justify-between"
             >
-              <div className="text-xs font-semibold text-slate-400 truncate">{item.label}</div>
+              <div className="text-xs text-slate-400 truncate font-medium">{item.label}</div>
               <div className="my-2">
-                <div className={`text-2xl font-bold font-mono ${item.color}`}>{item.count}</div>
+                <div className="text-xl font-semibold font-mono text-white tabular-nums">{item.count}</div>
               </div>
               <div className="text-[10px] text-slate-500 truncate">{item.desc}</div>
             </div>
@@ -158,34 +147,36 @@ export default function SystemHealthPage() {
       )}
 
       {/* Endpoint Breakdown & Recent Errors Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Endpoints Error Breakdown */}
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Server className="w-4 h-4 text-indigo-400" />
-            Errores por Endpoint API
-          </h2>
-          <p className="text-xs text-slate-400">
-            Distribución de incidencias registradas por ruta de la API.
-          </p>
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Server className="w-4 h-4 text-slate-400" />
+              Errores por Endpoint API
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Distribución de incidencias registradas por ruta de la API.
+            </p>
+          </div>
 
-          <div className="divide-y divide-slate-800/80 pt-2">
+          <div className="divide-y divide-slate-800/60 pt-1">
             {!data?.endpointBreakdown || data.endpointBreakdown.length === 0 ? (
               <div className="py-8 text-center text-slate-500 text-xs">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500/40 mx-auto mb-2" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-500/50 mx-auto mb-1.5" />
                 No se registraron errores en endpoints durante el período seleccionado.
               </div>
             ) : (
               data.endpointBreakdown.map((ep: any) => (
-                <div key={ep.endpoint} className="py-3 flex items-center justify-between">
+                <div key={ep.endpoint} className="py-2.5 flex items-center justify-between text-xs">
                   <div>
-                    <div className="font-mono text-xs font-semibold text-slate-200">{ep.endpoint}</div>
+                    <div className="font-mono text-xs text-slate-200">{ep.endpoint}</div>
                     <div className="text-[11px] text-slate-500">
                       Códigos: {JSON.stringify(ep.statusCodes)}
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono text-xs font-bold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">
+                    <span className="font-mono text-xs text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700/60">
                       {ep.totalErrors} errores
                     </span>
                   </div>
@@ -196,35 +187,37 @@ export default function SystemHealthPage() {
         </div>
 
         {/* Recent Error Feed */}
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Activity className="w-4 h-4 text-rose-400" />
-            Últimos Eventos de Error
-          </h2>
-          <p className="text-xs text-slate-400">
-            Registro cronológico de excepciones y fallas operacionales sanitizadas.
-          </p>
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Activity className="w-4 h-4 text-slate-400" />
+              Últimos Eventos de Error
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Registro cronológico de excepciones operacionales.
+            </p>
+          </div>
 
-          <div className="divide-y divide-slate-800/80 pt-2 max-h-96 overflow-y-auto pr-1">
+          <div className="divide-y divide-slate-800/60 pt-1 max-h-96 overflow-y-auto pr-1">
             {!data?.recentErrors || data.recentErrors.length === 0 ? (
               <div className="py-8 text-center text-slate-500 text-xs">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500/40 mx-auto mb-2" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-500/50 mx-auto mb-1.5" />
                 Sin eventos de error recientes.
               </div>
             ) : (
               data.recentErrors.map((err: any) => (
-                <div key={err.id} className="py-3 space-y-1">
+                <div key={err.id} className="py-2.5 space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-bold text-rose-400">{err.event}</span>
+                    <span className="font-mono text-slate-300">{err.event}</span>
                     <span className="text-[10px] text-slate-500 font-mono">
                       {new Date(err.createdAt).toLocaleTimeString("es-PY")}
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    Endpoint / Entidad: <span className="font-mono text-slate-300">{err.entityId || "N/A"}</span>
+                    Endpoint: <span className="font-mono text-slate-300">{err.entityId || "N/A"}</span>
                   </div>
                   {err.metadata?.message && (
-                    <div className="text-[11px] text-slate-500 font-mono bg-slate-950 p-1.5 rounded border border-slate-800/80">
+                    <div className="text-[11px] text-slate-400 font-mono bg-slate-950 p-1.5 rounded border border-slate-800/80">
                       {err.metadata.message}
                     </div>
                   )}

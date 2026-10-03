@@ -50,14 +50,14 @@ export default function AdminAuditPage() {
   }, [page, eventTypeFilter]);
 
   return (
-    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400 shrink-0" />
+          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 shrink-0" />
             <span>Auditoría de Plataforma & Eventos</span>
-          </h2>
+          </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Registro inmutable de hitos del sistema, cambios administrativos y actividades operativas.
           </p>
@@ -95,12 +95,12 @@ export default function AdminAuditPage() {
       )}
 
       {/* Events Table */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/50 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <th className="py-3.5 px-4">Fecha (UTC/Local)</th>
+              <tr className="border-b border-slate-800/80 bg-slate-950/60 text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                <th className="py-3.5 px-4">Fecha (Local)</th>
                 <th className="py-3.5 px-4">Evento</th>
                 <th className="py-3.5 px-4">Tenant</th>
                 <th className="py-3.5 px-4">Entidad</th>
@@ -111,7 +111,7 @@ export default function AdminAuditPage() {
               {loading ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-500 font-sans">
-                    <div className="h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <div className="h-6 w-6 border-2 border-slate-600 border-t-slate-200 rounded-full animate-spin mx-auto mb-2" />
                     Cargando registros de auditoría...
                   </td>
                 </tr>
@@ -128,7 +128,7 @@ export default function AdminAuditPage() {
                       {new Date(ev.createdAt).toLocaleString("es-PY")}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-800 text-slate-300 border border-slate-700/60">
                         {ev.event}
                       </span>
                     </td>
@@ -149,25 +149,25 @@ export default function AdminAuditPage() {
         </div>
 
         {/* Pagination Bar */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between text-xs text-slate-400 font-sans">
+        <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs text-slate-400 font-sans">
           <div>
-            Total: <span className="text-white font-bold">{pagination.total}</span> eventos
+            Total: <span className="text-white font-medium tabular-nums">{pagination.total}</span> eventos
           </div>
           <div className="flex items-center gap-2">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-3 py-1 rounded bg-slate-800 text-slate-300 disabled:opacity-40 hover:bg-slate-700 transition"
+              className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 disabled:opacity-30 hover:bg-slate-700 hover:text-white transition cursor-pointer font-medium"
             >
               Anterior
             </button>
-            <span className="font-mono">
+            <span className="font-mono text-slate-400">
               Página {page} de {pagination.totalPages}
             </span>
             <button
               disabled={page >= pagination.totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 rounded bg-slate-800 text-slate-300 disabled:opacity-40 hover:bg-slate-700 transition"
+              className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 disabled:opacity-30 hover:bg-slate-700 hover:text-white transition cursor-pointer font-medium"
             >
               Siguiente
             </button>

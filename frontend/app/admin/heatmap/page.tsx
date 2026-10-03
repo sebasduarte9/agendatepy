@@ -189,21 +189,16 @@ export default function WebHeatmapAdminPage() {
   }, [data, mode, deviceType]);
 
   return (
-    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <Flame className="h-5 w-5 sm:h-6 sm:w-6 text-rose-500 shrink-0" />
-              <span>Web Heatmap & Analítica Visual</span>
-            </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">
-              Comportamiento Real
-            </span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+            <Flame className="h-5 w-5 text-slate-400 shrink-0" />
+            <span>Web Heatmap</span>
+          </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Visualización gráfica de clics, scroll y movimiento de usuarios en páginas públicas.
+            Visualización analítica de clics, profundidad de scroll y movimiento de usuarios.
           </p>
         </div>
 
@@ -236,19 +231,19 @@ export default function WebHeatmapAdminPage() {
           />
 
           {/* Device Filter */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs">
+          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
             <button
               onClick={() => setDeviceType("all")}
-              className={`px-2.5 py-1 rounded-lg transition ${
-                deviceType === "all" ? "bg-indigo-600 text-white font-semibold" : "text-slate-400 hover:text-white"
+              className={`px-2.5 py-1 rounded-md transition ${
+                deviceType === "all" ? "bg-slate-800 text-white font-medium" : "text-slate-400 hover:text-white"
               }`}
             >
               Todos
             </button>
             <button
               onClick={() => setDeviceType("desktop")}
-              className={`px-2.5 py-1 rounded-lg flex items-center gap-1 transition ${
-                deviceType === "desktop" ? "bg-indigo-600 text-white font-semibold" : "text-slate-400 hover:text-white"
+              className={`px-2 py-1 rounded-md flex items-center gap-1 transition ${
+                deviceType === "desktop" ? "bg-slate-800 text-white font-medium" : "text-slate-400 hover:text-white"
               }`}
               title="Desktop"
             >
@@ -256,8 +251,8 @@ export default function WebHeatmapAdminPage() {
             </button>
             <button
               onClick={() => setDeviceType("mobile")}
-              className={`px-2.5 py-1 rounded-lg flex items-center gap-1 transition ${
-                deviceType === "mobile" ? "bg-indigo-600 text-white font-semibold" : "text-slate-400 hover:text-white"
+              className={`px-2 py-1 rounded-md flex items-center gap-1 transition ${
+                deviceType === "mobile" ? "bg-slate-800 text-white font-medium" : "text-slate-400 hover:text-white"
               }`}
               title="Mobile"
             >
@@ -280,120 +275,120 @@ export default function WebHeatmapAdminPage() {
       </div>
 
       {/* KPI Stats Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
             <span>Sesiones Analizadas</span>
-            <Activity className="w-4 h-4 text-indigo-400" />
+            <Activity className="w-4 h-4 text-slate-500" />
           </div>
-          <div className="text-2xl font-bold text-white mt-1">
+          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">
             {data?.stats?.totalSessions?.toLocaleString("es-PY") || 0}
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Visitantes únicos rastreados</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Visitantes rastreados</div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
             <span>Clics Totales</span>
-            <MousePointer className="w-4 h-4 text-rose-400" />
+            <MousePointer className="w-4 h-4 text-slate-500" />
           </div>
-          <div className="text-2xl font-bold text-rose-400 mt-1">
+          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">
             {data?.stats?.totalClicks?.toLocaleString("es-PY") || 0}
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5">
             {data?.stats?.totalSessions
               ? ((data.stats.totalClicks / data.stats.totalSessions) || 0).toFixed(1)
               : 0}{" "}
-            clics por sesión
+            clics/sesión
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Profundidad Scroll Promedio</span>
-            <Scroll className="w-4 h-4 text-amber-400" />
+            <span>Profundidad Scroll</span>
+            <Scroll className="w-4 h-4 text-slate-500" />
           </div>
-          <div className="text-2xl font-bold text-amber-400 mt-1">
+          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">
             {data?.stats?.avgScrollDepth || 0}%
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Hasta qué punto exploran</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Promedio de lectura</div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Dispositivos Dominantes</span>
-            <Monitor className="w-4 h-4 text-cyan-400" />
+            <span>Dispositivos</span>
+            <Monitor className="w-4 h-4 text-slate-500" />
           </div>
           <div className="text-sm font-semibold text-white mt-2 flex items-center gap-3">
-            <span className="flex items-center gap-1 text-xs">
-              <Monitor className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="flex items-center gap-1 text-xs text-slate-300">
+              <Monitor className="w-3.5 h-3.5 text-slate-400" />
               {data?.stats?.deviceBreakdown?.desktop || 0}
             </span>
-            <span className="flex items-center gap-1 text-xs">
-              <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="flex items-center gap-1 text-xs text-slate-300">
+              <Smartphone className="w-3.5 h-3.5 text-slate-400" />
               {data?.stats?.deviceBreakdown?.mobile || 0}
             </span>
-            <span className="flex items-center gap-1 text-xs">
-              <Tablet className="w-3.5 h-3.5 text-purple-400" />
+            <span className="flex items-center gap-1 text-xs text-slate-300">
+              <Tablet className="w-3.5 h-3.5 text-slate-400" />
               {data?.stats?.deviceBreakdown?.tablet || 0}
             </span>
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">Desktop / Mobile / Tablet</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Desktop / Mobile / Tablet</div>
         </div>
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3 gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 gap-2 overflow-x-auto">
+        <div className="flex items-center gap-0.5 bg-slate-900 p-0.5 rounded-lg border border-slate-800 shrink-0">
           <button
             onClick={() => setMode("click")}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-1.5 rounded-md text-xs transition flex items-center gap-1.5 ${
               mode === "click"
-                ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-                : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                ? "bg-slate-800 text-white font-medium"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             <MousePointer className="w-3.5 h-3.5" />
-            <span>Mapa de Clics</span>
+            <span>Clics</span>
           </button>
 
           <button
             onClick={() => setMode("scroll")}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-1.5 rounded-md text-xs transition flex items-center gap-1.5 ${
               mode === "scroll"
-                ? "bg-amber-600 text-white shadow-lg shadow-amber-600/30"
-                : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                ? "bg-slate-800 text-white font-medium"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             <Scroll className="w-3.5 h-3.5" />
-            <span>Mapa de Scroll</span>
+            <span>Scroll</span>
           </button>
 
           <button
             onClick={() => setMode("move")}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-1.5 rounded-md text-xs transition flex items-center gap-1.5 ${
               mode === "move"
-                ? "bg-cyan-600 text-white shadow-lg shadow-cyan-600/30"
-                : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                ? "bg-slate-800 text-white font-medium"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             <Move className="w-3.5 h-3.5" />
-            <span>Movimiento Mouse</span>
+            <span>Movimiento</span>
           </button>
         </div>
 
         {/* Legend */}
-        <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-400 font-mono bg-slate-900/60 px-3 py-1.5 rounded-xl border border-slate-800">
+        <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-400 font-mono bg-slate-900/60 px-3 py-1 rounded-lg border border-slate-800">
           <span>Intensidad:</span>
-          <span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Frío
-          <span className="w-3 h-3 rounded-full bg-amber-400 inline-block ml-2" /> Medio
-          <span className="w-3 h-3 rounded-full bg-rose-500 inline-block ml-2" /> Caliente
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" /> Frío
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block ml-1.5" /> Medio
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block ml-1.5" /> Caliente
         </div>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-950/40 border border-red-800/60 text-red-300 text-sm flex items-center gap-3">
-          <AlertCircle className="h-5 w-5 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-rose-950/20 border border-rose-900/40 text-rose-300 text-xs flex items-center gap-2.5">
+          <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
           <span>{error}</span>
         </div>
       )}
@@ -401,7 +396,7 @@ export default function WebHeatmapAdminPage() {
       {/* Main Heatmap Visual Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Visual Page Representation with Overlay Layer */}
-        <div className="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-3xl p-4 md:p-6 shadow-2xl relative overflow-hidden flex flex-col items-center">
+        <div className="lg:col-span-2 bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 md:p-6 relative overflow-hidden flex flex-col items-center">
           {/* Browser Top Bar Mock */}
           <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl px-4 py-2.5 mb-4 flex items-center justify-between text-xs text-slate-400">
             <div className="flex items-center gap-2">
@@ -590,21 +585,21 @@ export default function WebHeatmapAdminPage() {
         </div>
 
         {/* Right Sidebar: Top Clicked Elements & Scroll Distribution */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Top Clicked Elements */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <MousePointer className="w-4 h-4 text-rose-400" />
+          <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <MousePointer className="w-4 h-4 text-slate-400" />
                 Elementos Más Clickeados
               </h2>
-              <span className="text-[10px] font-mono text-slate-400">Top 10</span>
+              <span className="text-[11px] font-mono text-slate-500">Top 10</span>
             </div>
 
             {loading ? (
               <div className="py-8 text-center text-xs text-slate-500">Cargando elementos...</div>
             ) : data?.topElements && data.topElements.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {data.topElements.map((el, idx) => {
                   const pct = data.stats.totalClicks
                     ? Math.round((el.count / data.stats.totalClicks) * 100)
@@ -612,14 +607,14 @@ export default function WebHeatmapAdminPage() {
                   return (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs"
+                      className="p-2 rounded-lg bg-slate-900/80 border border-slate-800/60 flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px] border border-indigo-800">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700/60">
                             &lt;{el.tag}&gt;
                           </span>
-                          <span className="font-semibold text-slate-200 truncate">
+                          <span className="font-medium text-slate-200 truncate">
                             {el.text || el.selector || "Elemento sin texto"}
                           </span>
                         </div>
@@ -630,8 +625,8 @@ export default function WebHeatmapAdminPage() {
                         )}
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="font-bold text-white">{el.count} clics</div>
-                        <div className="text-[10px] font-mono text-rose-400">{pct}%</div>
+                        <div className="font-semibold text-white tabular-nums">{el.count} clics</div>
+                        <div className="text-[10px] font-mono text-slate-400">{pct}%</div>
                       </div>
                     </div>
                   );
@@ -645,10 +640,10 @@ export default function WebHeatmapAdminPage() {
           </div>
 
           {/* Scroll Distribution Card */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <Scroll className="w-4 h-4 text-amber-400" />
+          <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Scroll className="w-4 h-4 text-slate-400" />
                 Retención por Nivel de Scroll
               </h2>
             </div>

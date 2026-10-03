@@ -39,14 +39,14 @@ export default function AdminCohortsPage() {
   const renderRetentionCell = (milestone: any) => {
     if (!milestone || !milestone.available || milestone.rate === null) {
       return (
-        <span className="text-[10px] text-slate-500 bg-slate-950/60 px-2 py-0.5 rounded border border-slate-800">
-          Aún no disponible
+        <span className="text-[11px] text-slate-600 font-mono">
+          —
         </span>
       );
     }
     return (
       <div className="font-mono text-xs">
-        <span className="font-bold text-indigo-300">{milestone.rate}%</span>
+        <span className="font-medium text-slate-200">{milestone.rate}%</span>
         <span className="text-[10px] text-slate-500 ml-1">
           ({milestone.retainedCount}/{milestone.eligibleCount})
         </span>
@@ -55,20 +55,15 @@ export default function AdminCohortsPage() {
   };
 
   return (
-    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-400 shrink-0" />
-            <span>Cohortes & Retención Operativa (D7 - D90)</span>
-          </h1>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">
-            Fase 5.9
-          </span>
-        </div>
+        <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+          <Users className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 shrink-0" />
+          <span>Cohortes & Retención Operativa (D7 - D90)</span>
+        </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Seguimiento de activación y retención real según mes de registro. Milestones no alcanzados indican honestamente su estado.
+          Seguimiento de activación y retención real según mes de registro.
         </p>
       </div>
 
@@ -80,11 +75,11 @@ export default function AdminCohortsPage() {
       )}
 
       {/* Cohorts Table */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs min-w-[780px]">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+              <tr className="border-b border-slate-800/80 bg-slate-950/60 text-[10px] font-mono uppercase tracking-wider text-slate-400">
                 <th className="py-3.5 px-4">Cohorte</th>
                 <th className="py-3.5 px-3 text-center">Registrados</th>
                 <th className="py-3.5 px-3 text-center">Configurados</th>
@@ -102,7 +97,7 @@ export default function AdminCohortsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={11} className="py-16 text-center text-slate-500 font-sans">
-                    <div className="h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <div className="h-6 w-6 border-2 border-slate-600 border-t-slate-200 rounded-full animate-spin mx-auto mb-2" />
                     Analizando cohortes históricas...
                   </td>
                 </tr>
@@ -115,22 +110,22 @@ export default function AdminCohortsPage() {
               ) : (
                 cohorts.map((c) => (
                   <tr key={c.month} className="hover:bg-slate-800/30 transition">
-                    <td className="py-3.5 px-4 font-bold text-slate-200 font-mono">
+                    <td className="py-3.5 px-4 font-medium text-slate-200 font-mono">
                       {c.month}
                     </td>
-                    <td className="py-3.5 px-3 text-center text-white font-bold font-mono">
+                    <td className="py-3.5 px-3 text-center text-white font-medium font-mono tabular-nums">
                       {c.registeredCount}
                     </td>
-                    <td className="py-3.5 px-3 text-center text-slate-300 font-mono">
+                    <td className="py-3.5 px-3 text-center text-slate-300 font-mono tabular-nums">
                       {c.configuredCount}
                     </td>
-                    <td className="py-3.5 px-3 text-center text-emerald-400 font-mono font-semibold">
+                    <td className="py-3.5 px-3 text-center text-slate-200 font-mono tabular-nums">
                       {c.readyForBookingCount || 0}
                     </td>
-                    <td className="py-3.5 px-3 text-center text-indigo-400 font-mono font-semibold">
+                    <td className="py-3.5 px-3 text-center text-slate-200 font-mono tabular-nums">
                       {c.firstBookingCount}
                     </td>
-                    <td className="py-3.5 px-3 text-center text-sky-400 font-mono font-semibold">
+                    <td className="py-3.5 px-3 text-center text-slate-200 font-mono tabular-nums">
                       {c.firstCashCount}
                     </td>
                     <td className="py-3.5 px-3 text-center">
