@@ -45,23 +45,26 @@ export default function AlertsCenterPage() {
   }) || [];
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-white tracking-tight">Centro de Alertas & Detección de Anomalías</h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400 shrink-0" />
+              <span>Centro de Alertas & Anomalías</span>
+            </h1>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
               Alert Intelligence
             </span>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Reglas automáticas de detección de inactividad, anomalías operativas y desconfiguraciones.
           </p>
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 overflow-x-auto max-w-full shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
             { label: "Todas", val: "ALL" },
             { label: "Críticas", val: "CRITICAL" },
@@ -71,7 +74,7 @@ export default function AlertsCenterPage() {
             <button
               key={btn.val}
               onClick={() => setSeverityFilter(btn.val)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap shrink-0 ${
                 severityFilter === btn.val
                   ? "bg-indigo-600 text-white shadow-sm font-semibold"
                   : "text-slate-400 hover:text-white"

@@ -50,21 +50,21 @@ export default function AdminAuditPage() {
   }, [page, eventTypeFilter]);
 
   return (
-    <div className="space-y-6">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-emerald-400" />
-            Auditoría de Plataforma & Eventos
+          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400 shrink-0" />
+            <span>Auditoría de Plataforma & Eventos</span>
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Registro inmutable de hitos del sistema, cambios administrativos y actividades operativas.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <CustomSelect
             value={eventTypeFilter}
             onChange={(val) => {
@@ -82,7 +82,7 @@ export default function AdminAuditPage() {
               { value: "PAYOUT_PAID", label: "PAYOUT_PAID" },
               { value: "EXPORT_CREATED", label: "EXPORT_CREATED" },
             ]}
-            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 min-w-[190px]"
+            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 w-full sm:w-auto sm:min-w-[190px]"
           />
         </div>
       </div>
@@ -95,9 +95,9 @@ export default function AdminAuditPage() {
       )}
 
       {/* Events Table */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-950/50 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="py-3.5 px-4">Fecha (UTC/Local)</th>

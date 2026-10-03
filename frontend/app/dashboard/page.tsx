@@ -138,12 +138,12 @@ export default function DashboardHomePage() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="space-y-6"
+      className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden"
     >
       {/* Top Welcome & Operational Command Bar */}
       <div
         data-tour="welcome-banner"
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/10 via-indigo-600/5 to-purple-600/10 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/70 border border-violet-200/80 dark:border-white/10 p-6 text-slate-900 dark:text-white shadow-xl backdrop-blur-xl transition-all duration-300"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/10 via-indigo-600/5 to-purple-600/10 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/70 border border-violet-200/80 dark:border-white/10 p-5 sm:p-6 text-slate-900 dark:text-white shadow-xl backdrop-blur-xl transition-all duration-300 w-full max-w-full min-w-0"
       >
         <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-primary/15 dark:bg-primary/20 blur-3xl" />
 
@@ -297,31 +297,31 @@ export default function DashboardHomePage() {
       </div>
 
       {/* Main 2-Column Operational Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
         {/* Left Column (2/3 width): Today's Agenda Feed */}
-        <div data-tour="agenda-operativa" className="lg:col-span-2 space-y-4">
-          <Card>
+        <div data-tour="agenda-operativa" className="lg:col-span-2 space-y-4 w-full max-w-full min-w-0">
+          <Card className="w-full max-w-full min-w-0 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h2 className="font-black text-slate-900 dark:text-slate-100 text-base">
                     Agenda Operativa
                   </h2>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary shrink-0">
                     {displayAppointments.length} turnos
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
                   Gestión directa: confirma, cobrá en caja o comunicate con el cliente en 1 clic
                 </p>
               </div>
 
               {/* Filter tabs */}
-              <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+              <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs shrink-0 self-start sm:self-auto max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <button
                   type="button"
                   onClick={() => setFilterTab("hoy")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
                     filterTab === "hoy"
                       ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -332,7 +332,7 @@ export default function DashboardHomePage() {
                 <button
                   type="button"
                   onClick={() => setFilterTab("pendientes")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
                     filterTab === "pendientes"
                       ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -343,7 +343,7 @@ export default function DashboardHomePage() {
                 <button
                   type="button"
                   onClick={() => setFilterTab("todos")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
                     filterTab === "todos"
                       ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -389,105 +389,122 @@ export default function DashboardHomePage() {
                   return (
                     <li
                       key={item.id}
-                      className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 p-2 rounded-2xl transition"
+                      className="py-3.5 px-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 rounded-2xl transition min-w-0 w-full"
                     >
-                      {/* Left: Avatar + Details */}
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-black text-xs shadow-2xs">
-                          {item.clientName.slice(0, 2).toUpperCase()}
-                        </div>
+                      {/* Responsive container: cleanly stacks on mobile and aligns horizontally on desktop */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 w-full">
+                        {/* Left: Avatar + Details */}
+                        <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-black text-xs shadow-2xs mt-0.5 sm:mt-0">
+                            {item.clientName.slice(0, 2).toUpperCase()}
+                          </div>
 
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                              {item.clientName}
-                            </span>
-                            {isVip && (
-                              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-black text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                VIP
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate max-w-[150px] sm:max-w-none">
+                                {item.clientName}
                               </span>
-                            )}
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
-                                item.status === "completed"
-                                  ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-                                  : item.status === "confirmed"
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                              }`}
-                            >
-                              {item.status === "completed"
-                                ? "Cobrado"
-                                : item.status === "confirmed"
-                                ? "Confirmado"
-                                : "Pendiente"}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            <span className="font-semibold text-slate-700 dark:text-slate-200">
-                              {service?.name || "Servicio"}
-                            </span>
-                            <span>•</span>
-                            <span className="font-bold text-primary">
-                              {formatGs(service?.price ?? 80000)}
-                            </span>
-                            {assignedStaff && (
-                              <>
-                                <span>•</span>
-                                <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
-                                  <Scissors className="h-3 w-3 text-slate-400" />
-                                  {assignedStaff.name}
+                              {isVip && (
+                                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-black text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                                  VIP
                                 </span>
-                              </>
+                              )}
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase shrink-0 ${
+                                  item.status === "completed"
+                                    ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                                    : item.status === "confirmed"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                }`}
+                              >
+                                {item.status === "completed"
+                                  ? "Cobrado"
+                                  : item.status === "confirmed"
+                                  ? "Confirmado"
+                                  : "Pendiente"}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              <span className="font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[160px] sm:max-w-none">
+                                {service?.name || "Servicio"}
+                              </span>
+                              <span>•</span>
+                              <span className="font-bold text-primary shrink-0">
+                                {formatGs(service?.price ?? 80000)}
+                              </span>
+                              {assignedStaff && (
+                                <>
+                                  <span>•</span>
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 truncate">
+                                    <Scissors className="h-3 w-3 text-slate-400 shrink-0" />
+                                    {assignedStaff.name}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Mobile-only time pill pinned top-right */}
+                          <div className="sm:hidden text-right shrink-0">
+                            <span className="block font-black text-xs text-slate-900 dark:text-white">
+                              {timeFormatted}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {dateFormatted}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Actions Toolbar */}
+                        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2.5 sm:pt-0 border-t border-slate-100 dark:border-white/5 sm:border-t-0 w-full sm:w-auto">
+                          {/* Desktop time display */}
+                          <div className="hidden sm:block text-right shrink-0 mr-1">
+                            <span className="block font-black text-xs text-slate-900 dark:text-white">
+                              {timeFormatted}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {dateFormatted}
+                            </span>
+                          </div>
+
+                          {/* WhatsApp Direct */}
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white text-xs font-bold transition shrink-0"
+                            title="Enviar recordatorio por WhatsApp"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                            <span className="sm:hidden">WhatsApp</span>
+                          </a>
+
+                          <div className="flex items-center gap-1.5">
+                            {/* Ficha técnica shortcut */}
+                            <Link
+                              href={`/dashboard/clientes?cliente=${encodeURIComponent(item.clientName)}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition shrink-0"
+                              title="Ver Ficha Técnica y Galería"
+                            >
+                              <User className="h-3.5 w-3.5" />
+                            </Link>
+
+                            {/* Cobrar en caja button */}
+                            {item.status !== "completed" && (
+                              <button
+                                type="button"
+                                onClick={() => handleCompleteAndPay(item)}
+                                className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-bold transition shadow-xs shrink-0"
+                                title="Marcar como atendido y registrar ingreso en caja"
+                              >
+                                <Banknote className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                                <span>Cobrar</span>
+                              </button>
                             )}
                           </div>
                         </div>
-                      </div>
-
-                      {/* Right: Time badge + Action buttons */}
-                      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-                        <div className="text-right">
-                          <span className="block font-black text-xs text-slate-900 dark:text-white">
-                            {timeFormatted}
-                          </span>
-                          <span className="text-[10px] text-slate-400">
-                            {dateFormatted}
-                          </span>
-                        </div>
-
-                        {/* WhatsApp reminder button */}
-                        <a
-                          href={waUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition"
-                          title="Enviar recordatorio por WhatsApp"
-                        >
-                          <MessageSquare className="h-3.5 w-3.5" />
-                        </a>
-
-                        {/* Cobrar en caja button */}
-                        {item.status !== "completed" && (
-                          <button
-                            type="button"
-                            onClick={() => handleCompleteAndPay(item)}
-                            className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-bold transition shadow-xs"
-                            title="Marcar como atendido y registrar ingreso en caja"
-                          >
-                            <Banknote className="h-3.5 w-3.5 text-emerald-400" />
-                            <span>Cobrar</span>
-                          </button>
-                        )}
-
-                        {/* Ficha técnica shortcut */}
-                        <Link
-                          href={`/dashboard/clientes?cliente=${encodeURIComponent(item.clientName)}`}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition"
-                          title="Ver Ficha Técnica y Galería"
-                        >
-                          <User className="h-3.5 w-3.5" />
-                        </Link>
                       </div>
                     </li>
                   );
@@ -503,7 +520,7 @@ export default function DashboardHomePage() {
                 <span>Ver calendario completo</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-              <span className="text-slate-400 text-[11px]">
+              <span className="text-slate-400 text-[11px] hidden sm:inline">
                 Sincronización automática de citas
               </span>
             </div>
@@ -511,19 +528,19 @@ export default function DashboardHomePage() {
         </div>
 
         {/* Right Column (1/3 width): Live CRM Inbox & Quick Operations */}
-        <div data-tour="quick-actions-crm" className="space-y-4">
+        <div data-tour="quick-actions-crm" className="space-y-4 w-full max-w-full min-w-0">
           {/* CRM Quick Inbox Card */}
-          <Card>
+          <Card className="w-full max-w-full min-w-0 overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <MessagesSquare className="h-4 w-4 text-violet-500" />
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <MessagesSquare className="h-4 w-4 text-violet-500 shrink-0" />
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">
                   Atención CRM Omnicanal
                 </h3>
               </div>
               <Link
                 href="/dashboard/crm"
-                className="text-xs font-bold text-primary hover:underline"
+                className="text-xs font-bold text-primary hover:underline shrink-0 ml-2"
               >
                 Abrir CRM
               </Link>
@@ -547,16 +564,16 @@ export default function DashboardHomePage() {
                     <Link
                       key={conv.id}
                       href="/dashboard/crm"
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 transition"
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 transition min-w-0 w-full"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="relative">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="relative shrink-0">
                           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 font-bold text-xs">
                             {conv.clientName.slice(0, 2).toUpperCase()}
                           </div>
                           <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-bold text-slate-900 dark:text-white text-xs truncate">
                             {conv.clientName}
                           </p>
@@ -566,7 +583,7 @@ export default function DashboardHomePage() {
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-bold text-primary uppercase shrink-0">
+                      <span className="text-[10px] font-bold text-primary uppercase shrink-0 ml-2 px-1.5 py-0.5 rounded bg-primary/10">
                         {conv.channel}
                       </span>
                     </Link>
@@ -577,46 +594,54 @@ export default function DashboardHomePage() {
           </Card>
 
           {/* Quick Operations Deck */}
-          <Card className="space-y-3">
+          <Card className="space-y-3 w-full max-w-full min-w-0 overflow-hidden">
             <h3 className="font-bold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-white/10 pb-2">
               Acciones Frecuentes
             </h3>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs w-full min-w-0">
               <Link
                 href="/dashboard/nueva-reserva"
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5"
+                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <Ban className="h-4 w-4 text-amber-500" />
-                <span className="font-bold text-slate-800 dark:text-slate-200">Bloquear Horario</span>
-                <span className="text-[10px] text-slate-400">Descansos o permisos</span>
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                  <Ban className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Bloquear Horario</span>
+                <span className="text-[10px] text-slate-400 truncate w-full">Descansos o permisos</span>
               </Link>
 
               <Link
                 href="/dashboard/transferencias"
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5"
+                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <Receipt className="h-4 w-4 text-emerald-500" />
-                <span className="font-bold text-slate-800 dark:text-slate-200">SIPAP Bancario</span>
-                <span className="text-[10px] text-slate-400">Validar comprobantes</span>
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+                  <Receipt className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">SIPAP Bancario</span>
+                <span className="text-[10px] text-slate-400 truncate w-full">Validar comprobantes</span>
               </Link>
 
               <Link
                 href="/dashboard/comisiones"
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5"
+                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <Coins className="h-4 w-4 text-amber-500" />
-                <span className="font-bold text-slate-800 dark:text-slate-200">Comisiones</span>
-                <span className="text-[10px] text-slate-400">Liquidación equipo</span>
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                  <Coins className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Comisiones</span>
+                <span className="text-[10px] text-slate-400 truncate w-full">Liquidación equipo</span>
               </Link>
 
               <Link
                 href="/dashboard/apariencia"
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5"
+                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <Palette className="h-4 w-4 text-violet-500" />
-                <span className="font-bold text-slate-800 dark:text-slate-200">Diseño Web</span>
-                <span className="text-[10px] text-slate-400">Colores y tipografías</span>
+                <div className="p-2 rounded-xl bg-violet-500/10 text-violet-500 shrink-0">
+                  <Palette className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Diseño Web</span>
+                <span className="text-[10px] text-slate-400 truncate w-full">Colores y fuentes</span>
               </Link>
             </div>
           </Card>

@@ -43,9 +43,9 @@ export default function DashboardShell({
       style={{ ["--primary" as string]: color }}
     >
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <Header />
-        <main className="main-content flex-1 p-4 sm:p-6">{children}</main>
+        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-hidden p-3.5 sm:p-6">{children}</main>
       </div>
       <Suspense fallback={null}>
         <GuidedTour />

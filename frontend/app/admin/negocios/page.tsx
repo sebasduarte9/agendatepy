@@ -123,28 +123,28 @@ export default function AdminTenantsDirectoryPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full text-slate-100">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-indigo-400" />
-            Directorio Central de Negocios
+          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+            <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-400 shrink-0" />
+            <span>Directorio Central de Negocios</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Inventario completo de cuentas registradas en AgendatePY con desglose de planes y estado operacional.
           </p>
         </div>
 
-        <div className="text-xs font-mono text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800">
+        <div className="text-xs font-mono text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 self-start sm:self-auto shrink-0">
           Total listados: <span className="text-white font-bold">{pagination.total}</span> negocios
         </div>
       </div>
 
       {/* Search & Multi-Filters Toolbar */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 min-w-[260px]">
-          <div className="relative flex-1">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full lg:flex-1 min-w-0">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
             <input
               type="text"
@@ -162,7 +162,7 @@ export default function AdminTenantsDirectoryPage() {
           </button>
         </form>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           {/* Plan Filter */}
           <CustomSelect
             value={planFilter}
@@ -177,7 +177,7 @@ export default function AdminTenantsDirectoryPage() {
               { value: "PROFESIONAL", label: "PROFESIONAL" },
               { value: "EMPRESA", label: "EMPRESA" },
             ]}
-            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 min-w-[160px]"
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 w-full sm:w-auto sm:min-w-[150px]"
           />
 
           {/* Status filter */}
@@ -193,7 +193,7 @@ export default function AdminTenantsDirectoryPage() {
               { value: "PAUSED", label: "PAUSED" },
               { value: "SUSPENDED", label: "SUSPENDED" },
             ]}
-            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 min-w-[130px]"
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 w-full sm:w-auto sm:min-w-[130px]"
           />
 
           {/* Sort By */}
@@ -212,7 +212,7 @@ export default function AdminTenantsDirectoryPage() {
               { value: "name-desc", label: "Nombre (Z - A)" },
               { value: "lastActivity-desc", label: "Mayor actividad reciente" },
             ]}
-            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 min-w-[190px]"
+            buttonClassName="bg-slate-950 border-slate-800 text-slate-300 w-full sm:w-auto sm:min-w-[180px]"
           />
         </div>
       </div>
@@ -225,9 +225,9 @@ export default function AdminTenantsDirectoryPage() {
       )}
 
       {/* Tenants Table */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[850px]">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="py-4 px-4">Negocio</th>

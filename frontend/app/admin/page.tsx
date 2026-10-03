@@ -82,26 +82,26 @@ export default function SaaSAdminOverviewPage() {
   const saas = data?.saasOverview;
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full text-slate-100">
+    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
       {/* Header & Quick Search */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-indigo-500" />
-              Platform Admin • Centro de Cuentas
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-500 shrink-0" />
+              <span>Platform Admin • Centro de Cuentas</span>
             </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">
               SaaS Admin
             </span>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Control central de negocios, distribución de planes de cuenta y actividad de la plataforma AgendatePY.
           </p>
         </div>
 
         {/* Global Search & Filters */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -109,7 +109,7 @@ export default function SaaSAdminOverviewPage() {
                 window.location.href = `/admin/negocios?search=${encodeURIComponent(searchTerm.trim())}`;
               }
             }}
-            className="relative"
+            className="relative w-full sm:w-auto flex-1 sm:flex-initial"
           >
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -117,12 +117,12 @@ export default function SaaSAdminOverviewPage() {
               placeholder="Buscar negocio por nombre/slug..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-64 transition"
+              className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-full sm:w-64 transition"
             />
           </form>
 
           {/* Period selector */}
-          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
             {[
               { label: "7d", val: "7d" },
               { label: "30d", val: "30d" },
@@ -133,7 +133,7 @@ export default function SaaSAdminOverviewPage() {
               <button
                 key={p.val}
                 onClick={() => setPeriod(p.val)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap shrink-0 ${
                   period === p.val
                     ? "bg-indigo-600 text-white shadow-sm font-semibold"
                     : "text-slate-400 hover:text-white"
@@ -312,8 +312,8 @@ export default function SaaSAdminOverviewPage() {
           </div>
 
           {/* Directory Preview: Recent Tenants Table */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div>
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-indigo-400" />
@@ -326,7 +326,7 @@ export default function SaaSAdminOverviewPage() {
 
               <Link
                 href="/admin/negocios"
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5 self-start sm:self-auto shrink-0"
               >
                 <span>Directorio Completo</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -334,7 +334,7 @@ export default function SaaSAdminOverviewPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[650px]">
                 <thead>
                   <tr className="border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     <th className="py-3 px-3">Negocio</th>
