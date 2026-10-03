@@ -98,7 +98,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ clientId: string }> }
 ) {
-  const { clientId } = await params;
+  const { clientId: rawClientId } = await params;
+  const clientId = (rawClientId || "1001").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 50) || "1001";
   const searchParams = request.nextUrl.searchParams;
   const clientName = searchParams.get("name") || "Cliente VIP";
   const businessName = searchParams.get("business") || "AgendatePY Studio";
@@ -110,7 +111,7 @@ export async function GET(
   const passJson = {
     formatVersion: 1,
     passTypeIdentifier: "pass.com.agendatepy.club",
-    serialNumber: `VIP-${clientId || "1001"}`,
+    serialNumber: `VIP-${clientId}`,
     teamIdentifier: "AGENDATEPY",
     organizationName: businessName,
     description: `Tarjeta VIP de Fidelidad - ${businessName}`,

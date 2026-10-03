@@ -14,9 +14,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const error = searchParams.get("error");
+  const state = searchParams.get("state");
+  const cookieState = request.cookies.get("google_oauth_state")?.value;
 
   const baseUrl = getAuthBaseUrl(request);
   const redirectUri = `${baseUrl}/api/auth/callback/google`;
+
+  if (cookieState && state && cookieState !== state) {
+    console.error("Google OAuth state mismatch detected:", { queryState: state, cookieState });
+    return NextResponse.redirect(`${baseUrl}/login?error=oauth_state_invalid`);
+  }
 
   if (error || !code) {
     console.error("Google OAuth error from query:", error);
@@ -42,9 +49,14 @@ export async function GET(request: NextRequest) {
       include: { tenant: { select: { slug: true, subdomain: true } } },
     });
 
+    const configuredAdmins = (process.env.SUPERADMIN_EMAILS || "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const defaultAdmins = ["admin@agendate.py", "sebasduarte9@gmail.com"];
     const isSuperAdmin =
-      cleanEmail === "admin@agendate.py" ||
-      cleanEmail === "sebasduarte9@gmail.com";
+      configuredAdmins.includes(cleanEmail) ||
+      defaultAdmins.includes(cleanEmail);
 
     if (!user) {
       user = await prisma.user.create({

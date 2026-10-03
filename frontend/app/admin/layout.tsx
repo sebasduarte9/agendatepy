@@ -62,25 +62,25 @@ export default function AdminLayout({
 
   const primaryNavItems = [
     {
-      name: "Overview Global",
+      name: "Resumen",
       href: "/admin",
       icon: LayoutDashboard,
       exact: true,
     },
     {
-      name: "Directorio de Negocios",
+      name: "Negocios",
       href: "/admin/negocios",
       icon: Building2,
       exact: false,
     },
     {
-      name: "Web Heatmap",
+      name: "Mapa de Calor",
       href: "/admin/heatmap",
       icon: Flame,
       exact: false,
     },
     {
-      name: "Auditoría de Eventos",
+      name: "Auditoría",
       href: "/admin/auditoria",
       icon: ShieldCheck,
       exact: false,
@@ -95,19 +95,19 @@ export default function AdminLayout({
       exact: false,
     },
     {
-      name: "Centro de Alertas",
+      name: "Alertas",
       href: "/admin/alertas",
       icon: AlertTriangle,
       exact: false,
     },
     {
-      name: "Matriz de Adopción",
+      name: "Adopción",
       href: "/admin/adopcion",
       icon: Boxes,
       exact: false,
     },
     {
-      name: "Cohortes & Retención",
+      name: "Retención",
       href: "/admin/cohortes",
       icon: Users,
       exact: false,
@@ -131,9 +131,9 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-medium tracking-wide">Validando privilegios de Platform Admin...</p>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 space-y-3">
+        <div className="w-8 h-8 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-slate-500 tracking-wide">Cargando panel de administración...</p>
       </div>
     );
   }

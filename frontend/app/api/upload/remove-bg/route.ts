@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session && process.env.NODE_ENV === "production") {
+    if (!session) {
       return NextResponse.json(
         { error: "No autorizado." },
         { status: 401 }
@@ -40,14 +40,58 @@ export async function POST(req: Request) {
       mimeType = `image/${matches[1].toLowerCase().replace("jpg", "jpeg")}`;
       inputBuffer = Buffer.from(matches[2], "base64");
     } else if (typeof source === "string" && source.startsWith("/uploads/")) {
-      // Local server file
-      const localPath = path.join(process.cwd(), "public", source);
+      // Local server file with path traversal prevention
+      const cleanFilename = path.basename(source);
+      if (!/^[a-zA-Z0-9._-]+$/.test(cleanFilename) || cleanFilename.includes("..")) {
+        return NextResponse.json(
+          { error: "Nombre de archivo inválido." },
+          { status: 400 }
+        );
+      }
+      const uploadDir = path.resolve(process.cwd(), "public", "uploads");
+      const localPath = path.resolve(uploadDir, cleanFilename);
+      if (!localPath.startsWith(uploadDir)) {
+        return NextResponse.json(
+          { error: "Acceso a ruta no permitido." },
+          { status: 403 }
+        );
+      }
       inputBuffer = await readFile(localPath);
-      const ext = path.extname(source).toLowerCase().replace(".", "");
+      const ext = path.extname(cleanFilename).toLowerCase().replace(".", "");
       mimeType = ext === "jpg" ? "image/jpeg" : `image/${ext || "png"}`;
     } else if (typeof source === "string" && (source.startsWith("http://") || source.startsWith("https://"))) {
-      // Remote URL fetch
-      const resp = await fetch(source);
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(source);
+      } catch {
+        return NextResponse.json({ error: "URL inválida." }, { status: 400 });
+      }
+
+      if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+        return NextResponse.json({ error: "Protocolo no permitido." }, { status: 400 });
+      }
+
+      const hostname = parsedUrl.hostname.toLowerCase();
+      // Bloquear acceso a loopback, metadatos y redes privadas (anti-SSRF)
+      const isPrivate =
+        hostname === "localhost" ||
+        hostname.endsWith(".localhost") ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1" ||
+        hostname === "0.0.0.0" ||
+        hostname === "169.254.169.254" ||
+        hostname.startsWith("10.") ||
+        hostname.startsWith("192.168.") ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+
+      if (isPrivate) {
+        return NextResponse.json(
+          { error: "No se permite acceder a recursos locales o redes privadas." },
+          { status: 403 }
+        );
+      }
+
+      const resp = await fetch(source, { signal: AbortSignal.timeout(5000) });
       if (!resp.ok) {
         return NextResponse.json(
           { error: "No se pudo obtener la imagen remota." },
@@ -55,6 +99,9 @@ export async function POST(req: Request) {
         );
       }
       const arr = await resp.arrayBuffer();
+      if (arr.byteLength > 10 * 1024 * 1024) {
+        return NextResponse.json({ error: "Imagen remota demasiado grande." }, { status: 400 });
+      }
       inputBuffer = Buffer.from(arr);
       mimeType = resp.headers.get("content-type") || "image/png";
     } else {
@@ -93,7 +140,6 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: "No se pudo procesar el recorte de fondo en el servidor.",
-        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

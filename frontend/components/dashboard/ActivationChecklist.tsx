@@ -46,6 +46,11 @@ export default function ActivationChecklist() {
     return null;
   }
 
+  // Once the business is 100% configured, hide onboarding clutter from daily dashboard
+  if (isFullyActivated && !isFirstBookingCelebration) {
+    return null;
+  }
+
   const steps = [
     {
       id: "info",

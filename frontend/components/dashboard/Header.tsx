@@ -58,7 +58,7 @@ export default function Header() {
             {business.name}
           </p>
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
             <p className="profile-plan text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">
               {currentUserRole === "admin" ? "Administrador" : "Colaborador"}
             </p>

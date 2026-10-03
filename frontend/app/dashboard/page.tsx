@@ -140,72 +140,65 @@ export default function DashboardHomePage() {
       transition={{ duration: 0.25, ease: "easeOut" }}
       className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden"
     >
-      {/* Top Welcome & Operational Command Bar */}
+      {/* Clean Architectural Header & Command Bar */}
       <div
         data-tour="welcome-banner"
-        className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 sm:p-6 transition w-full max-w-full min-w-0"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-1 pb-2 w-full max-w-full min-w-0"
       >
-        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1.5 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span>Abierto hoy · Asunción, Paraguay</span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              ¡Buen día, {business.name}!
-            </h1>
-            <p className="text-xs text-slate-600 dark:text-slate-400 sm:text-sm leading-relaxed">
-              Panel central de operaciones: agenda sincronizada, cobros en caja y atención al cliente.
-            </p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="font-medium text-slate-700 dark:text-slate-300">{business.name}</span>
+            <span>·</span>
+            <span>{business.city ? `${business.city}, Paraguay` : (business.address || "Paraguay")}</span>
           </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Panel de Operaciones
+          </h1>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/dashboard/nueva-reserva"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary hover:bg-primary/90 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition"
-            >
-              <CalendarPlus className="h-4 w-4" />
-              <span>+ Nueva Cita</span>
-            </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/nueva-reserva"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 px-3.5 py-2 text-xs font-semibold shadow-xs transition"
+          >
+            <CalendarPlus className="h-4 w-4" />
+            <span>+ Nueva Cita</span>
+          </Link>
 
-            <Link
-              href="/dashboard/caja"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
-            >
-              <Banknote className="h-4 w-4 text-emerald-500" />
-              <span>Caja & Arqueo</span>
-            </Link>
+          <Link
+            href="/dashboard/caja"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 transition shadow-2xs"
+          >
+            <Banknote className="h-4 w-4 text-slate-400" />
+            <span>Caja & Arqueo</span>
+          </Link>
 
-            <Link
-              href="/dashboard/crm"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
-            >
-              <MessagesSquare className="h-4 w-4 text-slate-500" />
-              <span>Mensajes</span>
-              {unreadMessagesCount > 0 && (
-                <span className="rounded-full bg-primary/20 text-primary dark:text-slate-200 px-1.5 py-0.2 text-[10px] font-bold">
-                  {unreadMessagesCount}
-                </span>
-              )}
-            </Link>
-          </div>
+          <Link
+            href="/dashboard/crm"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 transition shadow-2xs"
+          >
+            <MessagesSquare className="h-4 w-4 text-slate-400" />
+            <span>Mensajes</span>
+            {unreadMessagesCount > 0 && (
+              <span className="rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-bold px-1.5 py-0.2">
+                {unreadMessagesCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
 
-      {/* Checklist de Activación del Negocio & Hitos Operacionales */}
+      {/* Checklist de Activación del Negocio (se oculta automáticamente al 100%) */}
       <ActivationChecklist />
 
-      {/* 4 Clean Operational KPI Cards (Real Data Calculated) */}
+      {/* 4 Clean Operational KPI Cards */}
       <div data-tour="kpi-cards" className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Revenue Today */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Recaudación de Hoy
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Banknote className="h-4 w-4" />
-            </span>
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Recaudación de Hoy</span>
+            <Banknote className="h-4 w-4 text-slate-400" />
           </div>
           {!isInitialSyncDone ? (
             <div className="h-7 w-32 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
@@ -215,20 +208,16 @@ export default function DashboardHomePage() {
             </p>
           )}
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{confirmedToday.length} turnos</span>
+            <span className="font-medium text-emerald-600 dark:text-emerald-400">{confirmedToday.length} turnos</span>
             <span>cobrados / confirmados</span>
           </div>
         </div>
 
         {/* Card 2: Appointments Today */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Citas del Día
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
-              <CalendarDays className="h-4 w-4" />
-            </span>
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Citas del Día</span>
+            <CalendarDays className="h-4 w-4 text-slate-400" />
           </div>
           {!isInitialSyncDone ? (
             <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
@@ -238,21 +227,26 @@ export default function DashboardHomePage() {
             </p>
           )}
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{confirmedToday.length} confirmados</span>
-            <span>·</span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400">{pendingToday.length} pendientes</span>
+            <span>{confirmedToday.length} confirmados</span>
+            {pendingToday.length > 0 ? (
+              <>
+                <span>·</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium">{pendingToday.length} pendientes</span>
+              </>
+            ) : (
+              <>
+                <span>·</span>
+                <span>0 pendientes</span>
+              </>
+            )}
           </div>
         </div>
 
         {/* Card 3: Chair Occupancy */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Ocupación de Agenda
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <TrendingUp className="h-4 w-4" />
-            </span>
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Ocupación de Agenda</span>
+            <TrendingUp className="h-4 w-4 text-slate-400" />
           </div>
           {!isInitialSyncDone ? (
             <div className="h-7 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
@@ -262,19 +256,15 @@ export default function DashboardHomePage() {
             </p>
           )}
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <span>{staff.filter((s) => s.active).length} profesionales atendiendo hoy</span>
+            <span>{staff.filter((s) => s.active).length} colaboradores atendiendo</span>
           </div>
         </div>
 
         {/* Card 4: Total Clients */}
-        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Clientes Registrados
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <User className="h-4 w-4" />
-            </span>
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Clientes Registrados</span>
+            <User className="h-4 w-4 text-slate-400" />
           </div>
           {!isInitialSyncDone ? (
             <div className="h-7 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
@@ -284,8 +274,9 @@ export default function DashboardHomePage() {
             </p>
           )}
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{clients.filter((c) => c.tags?.includes("VIP")).length} VIP</span>
-            <span>con historial técnico</span>
+            <span>{clients.filter((c) => c.tags?.includes("VIP")).length} VIP</span>
+            <span>·</span>
+            <span>historial activo</span>
           </div>
         </div>
       </div>
@@ -306,7 +297,7 @@ export default function DashboardHomePage() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                  Gestión directa: confirma, cobrá en caja o comunicate con el cliente.
+                  Turnos del día y cobros en tiempo real.
                 </p>
               </div>
 
@@ -467,7 +458,7 @@ export default function DashboardHomePage() {
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white text-xs font-medium transition shrink-0"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 text-xs font-medium transition shrink-0"
                             title="Enviar recordatorio por WhatsApp"
                           >
                             <MessageSquare className="h-3.5 w-3.5 shrink-0" />
@@ -478,7 +469,7 @@ export default function DashboardHomePage() {
                             {/* Ficha técnica shortcut */}
                             <Link
                               href={`/dashboard/clientes?cliente=${encodeURIComponent(item.clientName)}`}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition shrink-0"
                               title="Ver Ficha Técnica"
                             >
                               <User className="h-3.5 w-3.5" />
@@ -489,7 +480,7 @@ export default function DashboardHomePage() {
                               <button
                                 type="button"
                                 onClick={() => handleCompleteAndPay(item)}
-                                className="inline-flex items-center gap-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-semibold transition shadow-2xs shrink-0 cursor-pointer"
+                                className="inline-flex items-center gap-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-semibold transition shadow-xs shrink-0 cursor-pointer"
                                 title="Marcar como atendido y registrar ingreso en caja"
                               >
                                 <Banknote className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -508,14 +499,11 @@ export default function DashboardHomePage() {
             <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-2 flex items-center justify-between text-xs">
               <Link
                 href="/dashboard/calendario"
-                className="font-medium text-primary hover:underline flex items-center gap-1"
+                className="font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1"
               >
                 <span>Ver calendario completo</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-              <span className="text-slate-400 text-[11px] hidden sm:inline">
-                Sincronización automática de citas
-              </span>
             </div>
           </Card>
         </div>
@@ -533,15 +521,11 @@ export default function DashboardHomePage() {
               </div>
               <Link
                 href="/dashboard/crm"
-                className="text-xs font-medium text-primary hover:underline shrink-0 ml-2"
+                className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shrink-0 ml-2"
               >
                 Abrir CRM
               </Link>
             </div>
-
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              WhatsApp, Instagram Direct y chat web.
-            </p>
 
             <div className="mt-3 space-y-2">
               {crmConversations.length === 0 ? (
@@ -557,7 +541,7 @@ export default function DashboardHomePage() {
                     <Link
                       key={conv.id}
                       href="/dashboard/crm"
-                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 transition min-w-0 w-full"
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 transition min-w-0 w-full"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className="relative shrink-0">
@@ -587,54 +571,66 @@ export default function DashboardHomePage() {
           </Card>
 
           {/* Quick Operations Deck */}
-          <Card className="space-y-3 w-full max-w-full min-w-0 overflow-hidden">
-            <h3 className="font-semibold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-slate-800 pb-2">
-              Acciones Rápidas
+          <Card className="p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden">
+            <h3 className="font-semibold text-slate-900 dark:text-white text-sm pb-3 border-b border-slate-100 dark:border-slate-800">
+              Accesos Rápidos
             </h3>
 
-            <div className="grid grid-cols-2 gap-2 text-xs w-full min-w-0">
+            <div className="mt-3 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
               <Link
                 href="/dashboard/bloquear-horario"
-                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500 shrink-0">
-                  <Ban className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Ban className="h-4 w-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition shrink-0" />
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">Bloquear Horario</p>
+                    <p className="text-[11px] text-slate-400">Descansos o ausencias</p>
+                  </div>
                 </div>
-                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">Bloquear Horario</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Descansos o permisos</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
 
               <Link
                 href="/dashboard/transferencias"
-                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
-                  <Receipt className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Receipt className="h-4 w-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition shrink-0" />
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">SIPAP Bancario</p>
+                    <p className="text-[11px] text-slate-400">Validar transferencias</p>
+                  </div>
                 </div>
-                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">SIPAP Bancario</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Validar comprobantes</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
 
               <Link
                 href="/dashboard/comisiones"
-                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
-                  <Coins className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Coins className="h-4 w-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition shrink-0" />
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">Comisiones</p>
+                    <p className="text-[11px] text-slate-400">Liquidación al personal</p>
+                  </div>
                 </div>
-                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">Comisiones</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Liquidación equipo</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
 
               <Link
                 href="/dashboard/apariencia"
-                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
-                  <Palette className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Palette className="h-4 w-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition shrink-0" />
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">Diseño Web</p>
+                    <p className="text-[11px] text-slate-400">Colores y página pública</p>
+                  </div>
                 </div>
-                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">Diseño Web</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Colores y fuentes</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
             </div>
           </Card>

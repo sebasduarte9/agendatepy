@@ -1563,31 +1563,12 @@ export default function GuidedTour() {
             setCurrentStepIndex(0);
             openTour(detectedSectionKey);
           }}
-          className={`fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 flex items-center gap-2 rounded-full p-2.5 sm:px-4 sm:py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 group cursor-pointer ${
-            completedSections.includes(detectedSectionKey)
-              ? "border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-white shadow-md hover:border-primary"
-              : "border-2 border-amber-400/80 bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/25 text-amber-950 dark:text-amber-100 shadow-[0_0_30px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/30 animate-pulse"
-          }`}
+          className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
           title="Abrir guía paso a paso y tutoriales de esta sección"
         >
-          <div
-            className={`flex h-5 w-5 items-center justify-center rounded-full transition ${
-              completedSections.includes(detectedSectionKey)
-                ? "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white"
-                : "bg-amber-500 text-white shadow-xs"
-            }`}
-          >
-            <Compass className="h-3.5 w-3.5" />
-          </div>
-          <span className="hidden sm:inline">Visita Guiada</span>
-          {completedSections.includes(detectedSectionKey) ? (
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-          ) : (
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-          )}
+          <Compass className="h-3.5 w-3.5 text-slate-400" />
+          <span className="hidden sm:inline">Guía del sistema</span>
+          <span className="sm:hidden">Guía</span>
         </button>
       ) : (
         <button
