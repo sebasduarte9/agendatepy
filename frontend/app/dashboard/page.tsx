@@ -143,28 +143,26 @@ export default function DashboardHomePage() {
       {/* Top Welcome & Operational Command Bar */}
       <div
         data-tour="welcome-banner"
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/10 via-indigo-600/5 to-purple-600/10 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/70 border border-violet-200/80 dark:border-white/10 p-5 sm:p-6 text-slate-900 dark:text-white shadow-xl backdrop-blur-xl transition-all duration-300 w-full max-w-full min-w-0"
+        className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 sm:p-6 transition w-full max-w-full min-w-0"
       >
-        <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-primary/15 dark:bg-primary/20 blur-3xl" />
-
         <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1.5 max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 dark:bg-white/10 border border-primary/20 dark:border-white/10 px-3 py-1 text-xs font-semibold text-primary dark:text-white backdrop-blur-md">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
               <span>Abierto hoy · Asunción, Paraguay</span>
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
               ¡Buen día, {business.name}!
             </h1>
-            <p className="text-xs text-slate-600 dark:text-slate-300 sm:text-sm leading-relaxed">
-              Panel central de operaciones: agenda sincronizada, cobros en caja y atención al cliente activa.
+            <p className="text-xs text-slate-600 dark:text-slate-400 sm:text-sm leading-relaxed">
+              Panel central de operaciones: agenda sincronizada, cobros en caja y atención al cliente.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/dashboard/nueva-reserva"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary hover:bg-primary/90 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition"
             >
               <CalendarPlus className="h-4 w-4" />
               <span>+ Nueva Cita</span>
@@ -172,7 +170,7 @@ export default function DashboardHomePage() {
 
             <Link
               href="/dashboard/caja"
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
             >
               <Banknote className="h-4 w-4 text-emerald-500" />
               <span>Caja & Arqueo</span>
@@ -180,12 +178,12 @@ export default function DashboardHomePage() {
 
             <Link
               href="/dashboard/crm"
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
             >
-              <MessagesSquare className="h-4 w-4 text-violet-500" />
-              <span>CRM Chats</span>
+              <MessagesSquare className="h-4 w-4 text-slate-500" />
+              <span>Mensajes</span>
               {unreadMessagesCount > 0 && (
-                <span className="rounded-full bg-red-500 px-1.5 py-0.2 text-[10px] font-black text-white">
+                <span className="rounded-full bg-primary/20 text-primary dark:text-slate-200 px-1.5 py-0.2 text-[10px] font-bold">
                   {unreadMessagesCount}
                 </span>
               )}
@@ -198,101 +196,97 @@ export default function DashboardHomePage() {
       <ActivationChecklist />
 
       {/* 4 Clean Operational KPI Cards (Real Data Calculated) */}
-      <div data-tour="kpi-cards" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div data-tour="kpi-cards" className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Revenue Today */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Recaudación de Hoy
             </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <Banknote className="h-4 w-4" />
             </span>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-32 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-32 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
               {formatGs(revenueToday)}
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="font-bold text-emerald-600 dark:text-emerald-400">{confirmedToday.length} turnos</span>
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{confirmedToday.length} turnos</span>
             <span>cobrados / confirmados</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80" />
         </div>
 
         {/* Card 2: Appointments Today */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Citas del Día
             </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
               <CalendarDays className="h-4 w-4" />
             </span>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              {appointmentsToday.length} <span className="text-sm font-semibold text-slate-400">turnos</span>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {appointmentsToday.length} <span className="text-sm font-normal text-slate-400">turnos</span>
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="font-bold text-emerald-600">{confirmedToday.length} confirmados</span>
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{confirmedToday.length} confirmados</span>
             <span>·</span>
-            <span className="font-bold text-amber-600">{pendingToday.length} pendientes</span>
+            <span className="font-semibold text-amber-600 dark:text-amber-400">{pendingToday.length} pendientes</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-violet-500 to-indigo-500 opacity-80" />
         </div>
 
         {/* Card 3: Chair Occupancy */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Ocupación de Agenda
             </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <TrendingUp className="h-4 w-4" />
             </span>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
               {occupancyRate}%
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
             <span>{staff.filter((s) => s.active).length} profesionales atendiendo hoy</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80" />
         </div>
 
         {/* Card 4: Total Clients */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Clientes Registrados
             </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <User className="h-4 w-4" />
             </span>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              {clients.length} <span className="text-sm font-semibold text-slate-400">fichas</span>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {clients.length} <span className="text-sm font-normal text-slate-400">fichas</span>
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="font-bold text-amber-600">{clients.filter((c) => c.tags?.includes("VIP")).length} VIP</span>
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{clients.filter((c) => c.tags?.includes("VIP")).length} VIP</span>
             <span>con historial técnico</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-amber-500 to-orange-400 opacity-80" />
         </div>
       </div>
 
@@ -301,30 +295,30 @@ export default function DashboardHomePage() {
         {/* Left Column (2/3 width): Today's Agenda Feed */}
         <div data-tour="agenda-operativa" className="lg:col-span-2 space-y-4 w-full max-w-full min-w-0">
           <Card className="w-full max-w-full min-w-0 overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-black text-slate-900 dark:text-slate-100 text-base">
+                  <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-base">
                     Agenda Operativa
                   </h2>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary shrink-0">
+                  <span className="rounded px-2 py-0.5 text-[10px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/40 shrink-0">
                     {displayAppointments.length} turnos
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                  Gestión directa: confirma, cobrá en caja o comunicate con el cliente en 1 clic
+                  Gestión directa: confirma, cobrá en caja o comunicate con el cliente.
                 </p>
               </div>
 
               {/* Filter tabs */}
-              <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs shrink-0 self-start sm:self-auto max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 text-xs shrink-0 self-start sm:self-auto max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border border-slate-200/80 dark:border-slate-700/60">
                 <button
                   type="button"
                   onClick={() => setFilterTab("hoy")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
+                  className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
                     filterTab === "hoy"
-                      ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   Hoy
@@ -332,10 +326,10 @@ export default function DashboardHomePage() {
                 <button
                   type="button"
                   onClick={() => setFilterTab("pendientes")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
+                  className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
                     filterTab === "pendientes"
-                      ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   Pendientes ({pendingToday.length})
@@ -343,10 +337,10 @@ export default function DashboardHomePage() {
                 <button
                   type="button"
                   onClick={() => setFilterTab("todos")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
+                  className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
                     filterTab === "todos"
-                      ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   Próximos
@@ -357,20 +351,20 @@ export default function DashboardHomePage() {
             {/* List */}
             {displayAppointments.length === 0 ? (
               <div className="py-12 text-center space-y-3">
-                <CalendarDays className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600" />
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                <CalendarDays className="h-9 w-9 mx-auto text-slate-300 dark:text-slate-600" />
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   No hay turnos para este filtro hoy.
                 </p>
                 <Link
                   href="/dashboard/nueva-reserva"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-medium text-white shadow-xs"
                 >
                   <CalendarPlus className="h-3.5 w-3.5" />
                   <span>Agendar Nuevo Turno</span>
                 </Link>
               </div>
             ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-white/5">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {displayAppointments.map((item) => {
                   const service = services.find((s) => s.id === item.serviceId);
                   const assignedStaff = staff.find((st) => st.id === item.staffId);
@@ -389,33 +383,32 @@ export default function DashboardHomePage() {
                   return (
                     <li
                       key={item.id}
-                      className="py-3.5 px-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 rounded-2xl transition min-w-0 w-full"
+                      className="py-3 px-2 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 rounded-xl transition min-w-0 w-full"
                     >
-                      {/* Responsive container: cleanly stacks on mobile and aligns horizontally on desktop */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 w-full">
                         {/* Left: Avatar + Details */}
                         <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-black text-xs shadow-2xs mt-0.5 sm:mt-0">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs mt-0.5 sm:mt-0">
                             {item.clientName.slice(0, 2).toUpperCase()}
                           </div>
 
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate max-w-[150px] sm:max-w-none">
+                              <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm truncate max-w-[150px] sm:max-w-none">
                                 {item.clientName}
                               </span>
                               {isVip && (
-                                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-black text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                                <span className="rounded px-1.5 py-0.2 text-[9px] font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 shrink-0">
                                   VIP
                                 </span>
                               )}
                               <span
-                                className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase shrink-0 ${
+                                className={`rounded px-2 py-0.5 text-[10px] font-mono shrink-0 ${
                                   item.status === "completed"
-                                    ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                                    ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/40"
                                     : item.status === "confirmed"
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                                 }`}
                               >
                                 {item.status === "completed"
@@ -426,18 +419,18 @@ export default function DashboardHomePage() {
                               </span>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              <span className="font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[160px] sm:max-w-none">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[160px] sm:max-w-none">
                                 {service?.name || "Servicio"}
                               </span>
                               <span>•</span>
-                              <span className="font-bold text-primary shrink-0">
+                              <span className="font-mono text-slate-700 dark:text-slate-300 shrink-0">
                                 {formatGs(service?.price ?? 80000)}
                               </span>
                               {assignedStaff && (
                                 <>
                                   <span>•</span>
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 truncate">
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 truncate">
                                     <Scissors className="h-3 w-3 text-slate-400 shrink-0" />
                                     {assignedStaff.name}
                                   </span>
@@ -446,9 +439,9 @@ export default function DashboardHomePage() {
                             </div>
                           </div>
 
-                          {/* Mobile-only time pill pinned top-right */}
+                          {/* Mobile-only time pill */}
                           <div className="sm:hidden text-right shrink-0">
-                            <span className="block font-black text-xs text-slate-900 dark:text-white">
+                            <span className="block font-semibold text-xs text-slate-900 dark:text-white tabular-nums">
                               {timeFormatted}
                             </span>
                             <span className="text-[10px] text-slate-400">
@@ -458,10 +451,10 @@ export default function DashboardHomePage() {
                         </div>
 
                         {/* Actions Toolbar */}
-                        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2.5 sm:pt-0 border-t border-slate-100 dark:border-white/5 sm:border-t-0 w-full sm:w-auto">
+                        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-slate-100 dark:border-slate-800 sm:border-t-0 w-full sm:w-auto">
                           {/* Desktop time display */}
                           <div className="hidden sm:block text-right shrink-0 mr-1">
-                            <span className="block font-black text-xs text-slate-900 dark:text-white">
+                            <span className="block font-semibold text-xs text-slate-900 dark:text-white tabular-nums">
                               {timeFormatted}
                             </span>
                             <span className="text-[10px] text-slate-400">
@@ -474,7 +467,7 @@ export default function DashboardHomePage() {
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white text-xs font-bold transition shrink-0"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white text-xs font-medium transition shrink-0"
                             title="Enviar recordatorio por WhatsApp"
                           >
                             <MessageSquare className="h-3.5 w-3.5 shrink-0" />
@@ -485,8 +478,8 @@ export default function DashboardHomePage() {
                             {/* Ficha técnica shortcut */}
                             <Link
                               href={`/dashboard/clientes?cliente=${encodeURIComponent(item.clientName)}`}
-                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition shrink-0"
-                              title="Ver Ficha Técnica y Galería"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0"
+                              title="Ver Ficha Técnica"
                             >
                               <User className="h-3.5 w-3.5" />
                             </Link>
@@ -496,10 +489,10 @@ export default function DashboardHomePage() {
                               <button
                                 type="button"
                                 onClick={() => handleCompleteAndPay(item)}
-                                className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-bold transition shadow-xs shrink-0"
+                                className="inline-flex items-center gap-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-semibold transition shadow-2xs shrink-0 cursor-pointer"
                                 title="Marcar como atendido y registrar ingreso en caja"
                               >
-                                <Banknote className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                                <Banknote className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                                 <span>Cobrar</span>
                               </button>
                             )}
@@ -512,10 +505,10 @@ export default function DashboardHomePage() {
               </ul>
             )}
 
-            <div className="border-t border-slate-100 dark:border-white/10 pt-3 mt-2 flex items-center justify-between text-xs">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-2 flex items-center justify-between text-xs">
               <Link
                 href="/dashboard/calendario"
-                className="font-bold text-primary hover:underline flex items-center gap-1"
+                className="font-medium text-primary hover:underline flex items-center gap-1"
               >
                 <span>Ver calendario completo</span>
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -531,30 +524,30 @@ export default function DashboardHomePage() {
         <div data-tour="quick-actions-crm" className="space-y-4 w-full max-w-full min-w-0">
           {/* CRM Quick Inbox Card */}
           <Card className="w-full max-w-full min-w-0 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2 min-w-0">
-                <MessagesSquare className="h-4 w-4 text-violet-500 shrink-0" />
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">
-                  Atención CRM Omnicanal
+                <MessagesSquare className="h-4 w-4 text-slate-500 shrink-0" />
+                <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                  Mensajes Recientes
                 </h3>
               </div>
               <Link
                 href="/dashboard/crm"
-                className="text-xs font-bold text-primary hover:underline shrink-0 ml-2"
+                className="text-xs font-medium text-primary hover:underline shrink-0 ml-2"
               >
                 Abrir CRM
               </Link>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              Mensajes entrantes de WhatsApp, Instagram Direct y chat web.
+              WhatsApp, Instagram Direct y chat web.
             </p>
 
             <div className="mt-3 space-y-2">
               {crmConversations.length === 0 ? (
                 <div className="py-6 text-center space-y-1">
                   <MessagesSquare className="h-7 w-7 mx-auto text-slate-300 dark:text-slate-600" />
-                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Sin mensajes pendientes</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300">Sin mensajes pendientes</p>
                   <p className="text-[11px] text-slate-400">Los chats entrantes de tus clientes aparecerán aquí.</p>
                 </div>
               ) : (
@@ -564,17 +557,17 @@ export default function DashboardHomePage() {
                     <Link
                       key={conv.id}
                       href="/dashboard/crm"
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 transition min-w-0 w-full"
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 transition min-w-0 w-full"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className="relative shrink-0">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 font-bold text-xs">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs">
                             {conv.clientName.slice(0, 2).toUpperCase()}
                           </div>
-                          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900" />
+                          <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-white dark:border-slate-900" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                          <p className="font-medium text-slate-900 dark:text-white text-xs truncate">
                             {conv.clientName}
                           </p>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
@@ -583,7 +576,7 @@ export default function DashboardHomePage() {
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-bold text-primary uppercase shrink-0 ml-2 px-1.5 py-0.5 rounded bg-primary/10">
+                      <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase shrink-0 ml-2 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
                         {conv.channel}
                       </span>
                     </Link>
@@ -595,52 +588,52 @@ export default function DashboardHomePage() {
 
           {/* Quick Operations Deck */}
           <Card className="space-y-3 w-full max-w-full min-w-0 overflow-hidden">
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-white/10 pb-2">
-              Acciones Frecuentes
+            <h3 className="font-semibold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-slate-800 pb-2">
+              Acciones Rápidas
             </h3>
 
             <div className="grid grid-cols-2 gap-2 text-xs w-full min-w-0">
               <Link
-                href="/dashboard/nueva-reserva"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                href="/dashboard/bloquear-horario"
+                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500 shrink-0">
                   <Ban className="h-4 w-4" />
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Bloquear Horario</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">Bloquear Horario</span>
                 <span className="text-[10px] text-slate-400 truncate w-full">Descansos o permisos</span>
               </Link>
 
               <Link
                 href="/dashboard/transferencias"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
                   <Receipt className="h-4 w-4" />
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">SIPAP Bancario</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">SIPAP Bancario</span>
                 <span className="text-[10px] text-slate-400 truncate w-full">Validar comprobantes</span>
               </Link>
 
               <Link
                 href="/dashboard/comisiones"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
                   <Coins className="h-4 w-4" />
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Comisiones</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">Comisiones</span>
                 <span className="text-[10px] text-slate-400 truncate w-full">Liquidación equipo</span>
               </Link>
 
               <Link
                 href="/dashboard/apariencia"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
               >
-                <div className="p-2 rounded-xl bg-violet-500/10 text-violet-500 shrink-0">
+                <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
                   <Palette className="h-4 w-4" />
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Diseño Web</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200 truncate w-full text-xs">Diseño Web</span>
                 <span className="text-[10px] text-slate-400 truncate w-full">Colores y fuentes</span>
               </Link>
             </div>

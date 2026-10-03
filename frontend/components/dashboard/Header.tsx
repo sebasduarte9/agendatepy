@@ -72,16 +72,13 @@ export default function Header() {
           data-tour="header-booking-link"
           href={`/${business.slug || "barberia"}/reservar`}
           target="_blank"
-          className="group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-indigo-500/10 hover:from-primary/20 hover:to-indigo-500/20 px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-extrabold text-primary shadow-xs hover:shadow-md hover:shadow-primary/15 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900 hover:bg-slate-200/80 dark:hover:bg-slate-800 px-2.5 sm:px-3.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition shrink-0"
           title="Abrir tu portal público de reservas en una nueva pestaña"
         >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-          </span>
-          <span className="hidden xs:inline sm:inline">Ver mi página</span>
-          <span className="inline xs:hidden sm:hidden">Página</span>
-          <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+          <span className="hidden sm:inline">Ver mi página</span>
+          <span className="sm:hidden">Página</span>
+          <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
         </Link>
 
         {/* Dark Mode Toggle */}
