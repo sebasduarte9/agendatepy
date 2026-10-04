@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, Menu, Settings, Sun, Moon, ExternalLink, HelpCircle, BookOpen } from "lucide-react";
+import { LogOut, Menu, Settings, Sun, Moon, ExternalLink, HelpCircle, BookOpen, Compass } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 export default function Header() {
@@ -10,6 +10,7 @@ export default function Header() {
   const currentUserRole = useDashboardStore((s) => s.currentUserRole);
   const setOpen = useDashboardStore((s) => s.setSidebarOpen);
   const userName = useDashboardStore((s) => s.userName);
+  const openTour = useDashboardStore((s) => s.openTour);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -75,34 +76,45 @@ export default function Header() {
           data-tour="header-booking-link"
           href={`/${business.slug || "barberia"}/reservar`}
           target="_blank"
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition shrink-0"
           title="Abrir tu portal público de reservas en una nueva pestaña"
         >
           <span
-            className="h-1.5 w-1.5 rounded-full shrink-0"
+            className="h-1.5 w-1.5 rounded-full shrink-0 animate-pulse"
             style={{ backgroundColor: "var(--primary, #10b981)" }}
           />
           <span className="hidden sm:inline">agendate.py/{business.slug || "barberia"}</span>
-          <span className="sm:hidden">Página</span>
+          <span className="sm:hidden text-[11px] font-semibold">Web</span>
           <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
         </Link>
 
-        {/* Documentation / Manual Icon */}
+        {/* Guided Tour Direct Trigger */}
+        <button
+          type="button"
+          onClick={() => openTour()}
+          className="rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
+          aria-label="Guía interactiva"
+          title="Guía interactiva del sistema"
+        >
+          <Compass className="h-4 w-4" />
+        </button>
+
+        {/* Documentation / Manual Icon (desktop only, accessible on mobile via 'Más') */}
         <Link
           href="/dashboard/extras"
-          className="rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           aria-label="Material y ayuda"
           title="Material & Documentación"
         >
           <BookOpen className="h-4 w-4" />
         </Link>
 
-        {/* Support Help Icon */}
+        {/* Support Help Icon (desktop only, accessible on mobile via WhatsApp) */}
         <a
           href="https://wa.me/595981700800?text=Hola%20Soporte%20AgendatePY"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           aria-label="Soporte técnico"
           title="Ayuda y Soporte"
         >
@@ -113,7 +125,7 @@ export default function Header() {
         <button
           type="button"
           onClick={toggleDarkMode}
-          className="rounded-full p-2 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+          className="rounded-full p-2 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
           aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
           title={isDark ? "Modo Claro" : "Modo Oscuro"}
         >
@@ -130,12 +142,12 @@ export default function Header() {
           <Settings className="h-4 w-4" />
         </Link>
 
-        {/* Logout Button */}
+        {/* Logout Button (Desktop only; on mobile it's in the 'Más' sheet) */}
         <button
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition disabled:opacity-50 cursor-pointer"
+          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition disabled:opacity-50 cursor-pointer"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"
         >

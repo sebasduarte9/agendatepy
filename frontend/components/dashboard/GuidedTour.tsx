@@ -1553,8 +1553,8 @@ export default function GuidedTour() {
   return (
     <>
       {/* Floating launcher button in bottom right:
-          When tour is NOT active: "Visita Guiada" button.
-          When tour IS active: "Salir de Visita Guiada" button with confirmation. */}
+          On mobile (< sm), this is hidden to prevent overlapping the bottom navigation dock.
+          Accessible via the "Más" bottom sheet or header. On desktop (sm+), floats in bottom-right. */}
       {!isTourOpen ? (
         <button
           type="button"
@@ -1563,23 +1563,22 @@ export default function GuidedTour() {
             setCurrentStepIndex(0);
             openTour(detectedSectionKey);
           }}
-          className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+          className="hidden sm:flex fixed bottom-5 right-5 z-40 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-300 shadow-lg backdrop-blur hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
           title="Abrir guía paso a paso y tutoriales de esta sección"
         >
           <Compass className="h-3.5 w-3.5 text-slate-400" />
-          <span className="hidden sm:inline">Guía del sistema</span>
-          <span className="sm:hidden">Guía</span>
+          <span>Guía del sistema</span>
         </button>
       ) : (
         <button
           type="button"
           onClick={() => setShowExitConfirm(true)}
-          className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-[99999] flex items-center gap-1.5 rounded-full px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer border border-rose-500/50 bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-950/40"
+          className="fixed top-4 right-4 sm:bottom-5 sm:right-5 sm:top-auto z-[99999] flex items-center gap-1.5 rounded-full px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer border border-rose-500/50 bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-950/40"
           title="Salir de la visita guiada"
         >
           <LogOut className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Salir de Visita Guiada</span>
-          <span className="sm:hidden">Salir</span>
+          <span className="sm:hidden">Salir de Guía</span>
         </button>
       )}
 

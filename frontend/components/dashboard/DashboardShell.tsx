@@ -56,7 +56,7 @@ export default function DashboardShell({
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <Header />
-        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-hidden p-3.5 sm:p-6 pb-24 lg:pb-6">
+        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-hidden p-3.5 sm:p-6 pb-28 sm:pb-32 lg:pb-8">
           {children}
         </main>
       </div>
