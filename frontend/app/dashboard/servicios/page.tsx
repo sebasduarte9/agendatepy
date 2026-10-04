@@ -25,6 +25,7 @@ import {
   Hourglass,
   Timer,
   ShieldCheck,
+  ExternalLink,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -452,74 +453,256 @@ export default function ServiciosPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
+    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
+      {/* ========================================================= */}
+      {/* 1. DARK CONSOLE HERO BANNER                                */}
+      {/* ========================================================= */}
       <div
         data-tour="servicios-header"
-        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
       >
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
-            <span>Catálogo de Servicios</span>
-            <Scissors className="h-5 w-5 text-primary" />
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Categorías, duraciones por turno, profesionales asignados y promociones flash.
-          </p>
-        </div>
+        {/* Dynamic Brand Ambient Radial Glow */}
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
 
-        <button
-          type="button"
-          data-tour="servicios-new-btn"
-          onClick={handleOpenCreateService}
-          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer w-fit"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nuevo Servicio</span>
-        </button>
-      </div>
-
-      {/* Team Link Notification Banner */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between rounded-2xl border border-primary/20 bg-primary/5 p-3.5 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white font-bold">
-            <Users className="h-4 w-4" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-900 dark:text-white">
-              ¿Querés gestionar horarios y comisiones individuales?
-            </p>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              Los porcentajes de ganancia de cada especialista se administran en Colaboradores.
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="uppercase tracking-wider font-semibold text-slate-300">
+                Workspace
+              </span>
+              <span>/</span>
+              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
+              <span className="hidden sm:inline">·</span>
+              <span className="hidden sm:inline text-slate-400">{services.length} servicios</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+              Catálogo de Servicios
+            </h1>
+            <p className="text-sm text-slate-400">
+              Categorías, duraciones por turno, profesionales asignados y promociones flash.
             </p>
           </div>
+
+          {/* Quick Action Dock */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              data-tour="servicios-new-btn"
+              onClick={handleOpenCreateService}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
+              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Nuevo Servicio</span>
+            </button>
+
+            <Link
+              href={`/${business.slug || "barberia"}/reservar`}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition"
+              title="Ver cómo ven los clientes tus servicios"
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+              <span>Ver Web</span>
+            </Link>
+
+            <Link
+              href="/dashboard/equipo"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition"
+              title="Administrar comisiones y colaboradores"
+            >
+              <Users className="h-3.5 w-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Equipo</span>
+            </Link>
+          </div>
         </div>
-        <Link
-          href="/dashboard/equipo"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-primary/40 shadow-xs transition shrink-0"
-        >
-          <span>Ir a Equipo ({activeStaffCount} activos)</span>
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
       </div>
 
-      {/* KPI Stats */}
-      <div data-tour="servicios-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          label="Servicios Activos Online"
-          value={`${visibleServicesCount} de ${services.length}`}
-          icon={Layers}
-        />
-        <StatCard
-          label="Duración Promedio"
-          value={`${avgDuration} min / turno`}
-          icon={Clock}
-        />
-        <StatCard
-          label="Precio Promedio"
-          value={formatGs(avgPrice)}
-          icon={Coins}
-        />
+      {/* ========================================================= */}
+      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
+      {/* ========================================================= */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Inset Subheader */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div className="font-semibold text-sm text-slate-900 dark:text-white">
+            Métricas de Visibilidad & Catálogo
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            {visibleServicesCount} de {services.length} servicios visibles para reserva online
+          </div>
+        </div>
+
+        {/* Dual-Card Inset Telemetry */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left Card: Operational Gauges & Summary */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+            {/* Top section: Mini status box + 2 circular gauges */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
+              {/* Mini status box */}
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+                <div>
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Promos Flash
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                    {services.filter((s) => s.hasPromo).length > 0
+                      ? `${services.filter((s) => s.hasPromo).length} ofertas con descuento activas.`
+                      : "Sin ofertas flash activas."}
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <span className="inline-block rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 text-[11px] font-semibold">
+                    {services.filter((s) => s.hasPromo).length} activas
+                  </span>
+                </div>
+              </div>
+
+              {/* Circular Gauge 1: Visibilidad % */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * (services.length > 0 ? Math.round((visibleServicesCount / services.length) * 100) : 100)) / 100}
+                      strokeLinecap="round"
+                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      className="transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {services.length > 0 ? Math.round((visibleServicesCount / services.length) * 100) : 100}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Visibles
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {visibleServicesCount} activos
+                </div>
+              </div>
+
+              {/* Circular Gauge 2: Duración Promedio */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray="4 2"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.round((avgDuration / 90) * 100))) / 100}
+                      strokeLinecap="round"
+                      className="text-emerald-500 transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {avgDuration}m
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Duración
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  por turno
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Data Rows */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Total de servicios registrados</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {services.length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Especialistas asignados</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {activeStaffCount} profesionales
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                <span>Precio promedio por servicio</span>
+                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
+                  {formatGs(avgPrice)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Card: Categorías & Acceso rápido a Equipo */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+            <div>
+              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
+                Categorías Registradas ({allCategories.length})
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {allCategories.slice(0, 8).map((cat) => {
+                  const count = services.filter((s) => s.category?.toLowerCase() === cat.toLowerCase()).length;
+                  return (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-300"
+                    >
+                      <span>{cat}</span>
+                      <span className="font-bold text-slate-400 dark:text-slate-500">· {count}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Team notice */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                ¿Querés ajustar horarios y comisiones individuales?
+              </div>
+              <Link
+                href="/dashboard/equipo"
+                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0"
+              >
+                <span>Equipo</span>
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Search Bar & Category Filters + Add Category Action */}

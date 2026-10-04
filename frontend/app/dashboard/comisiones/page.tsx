@@ -31,6 +31,9 @@ import {
   ShieldCheck,
   Package,
   ShoppingBag,
+  Sparkles,
+  Wallet,
+  ArrowDownRight,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -55,7 +58,7 @@ const ROLE_CONFIG: Record<string, { label: string; icon: any; badgeClass: string
   barbero: {
     label: "Barbero",
     icon: Scissors,
-    badgeClass: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
+    badgeClass: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20",
   },
   estilista: {
     label: "Estilista",
@@ -77,6 +80,8 @@ export default function ComisionesPage() {
     updateStaffCommission,
     pushToast,
   } = useDashboardStore();
+
+  const brandColor = business.primaryColor || "var(--primary, #0ea5e9)";
 
   // Filters state
   const [selectedStaffId, setSelectedStaffId] = useState<string>("ALL");
@@ -238,6 +243,14 @@ export default function ComisionesPage() {
     const totalPaidCommission = relevantPayouts.reduce((acc, p) => acc + p.amountPaid, 0);
     const pendingCommission = Math.max(0, totalCommissionEarned - totalPaidCommission);
 
+    const payoutRate = totalCommissionEarned > 0 
+      ? Math.min(100, Math.round((totalPaidCommission / totalCommissionEarned) * 100))
+      : 100;
+
+    const servicesSharePct = totalCommissionEarned > 0
+      ? Math.round((totalServicesCommission / totalCommissionEarned) * 100)
+      : 80;
+
     return {
       totalBilled,
       totalServicesBilled,
@@ -247,6 +260,9 @@ export default function ComisionesPage() {
       totalProductsCommission,
       totalPaidCommission,
       pendingCommission,
+      payoutRate,
+      servicesSharePct,
+      productsSharePct: 100 - servicesSharePct,
       totalServicesCount: earnedServicesItems.length,
       totalProductsCount: earnedProductsItems.length,
       payoutsCount: relevantPayouts.length,
@@ -266,7 +282,6 @@ export default function ComisionesPage() {
       const productsCommission = staffProducts.reduce((acc, i) => acc + i.commissionAmount, 0);
       const totalEarned = servicesCommission + productsCommission;
 
-      // Percentage of money coming from services vs products
       let servicesSharePercent = 0;
       let productsSharePercent = 0;
 
@@ -274,7 +289,6 @@ export default function ComisionesPage() {
         servicesSharePercent = Math.round((servicesCommission / totalEarned) * 100);
         productsSharePercent = 100 - servicesSharePercent;
       } else {
-        // Defaults based on role if no sales yet in period
         servicesSharePercent = (st.commissionPercentage ?? 0) > 0 ? 80 : 0;
         productsSharePercent = 100 - servicesSharePercent;
       }
@@ -466,148 +480,340 @@ export default function ComisionesPage() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header with Filters & Primary Actions */}
+    <div className="mx-auto max-w-7xl space-y-6 pb-20">
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
       <div
         data-tour="comisiones-header"
-        className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 shadow-xs"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
       >
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Coins className="h-5 w-5" />
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: brandColor }}
+        />
+
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: brandColor }}
+              />
+              <span>Liquidaciones & Equipo Operativo</span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Comisiones & Pagos al Equipo
+            </h1>
+            <p className="text-sm text-slate-300 max-w-xl">
+              Cálculo transparente de ingresos por servicios realizados y venta de productos en mostrador con recibos oficiales imprimibles.
+            </p>
+          </div>
+
+          {/* Action Dock & Global Filters */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Staff Selector */}
+            <div className="bg-slate-900/80 rounded-xl border border-slate-700/80 backdrop-blur-md">
+              <CustomSelect
+                value={selectedStaffId}
+                onChange={(val) => setSelectedStaffId(val)}
+                options={staffFilterOptions}
+                buttonClassName="min-w-[190px] bg-transparent text-white border-0 py-2 text-xs"
+              />
+            </div>
+
+            {/* Period Selector */}
+            <div className="bg-slate-900/80 rounded-xl border border-slate-700/80 backdrop-blur-md">
+              <CustomSelect
+                value={period}
+                onChange={(val) => setPeriod(val)}
+                options={periodFilterOptions}
+                buttonClassName="min-w-[130px] bg-transparent text-white border-0 py-2 text-xs"
+              />
+            </div>
+
+            {/* Configure Rules */}
+            <button
+              type="button"
+              data-tour="comisiones-rules"
+              onClick={() => setIsRulesModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-white transition backdrop-blur-md cursor-pointer"
+            >
+              <Sliders className="h-3.5 w-3.5 text-slate-300" />
+              <span>Reglas %</span>
+            </button>
+
+            {/* Liquidar button */}
+            <button
+              type="button"
+              data-tour="comisiones-liquidar-btn"
+              onClick={() => handleOpenLiquidar()}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer"
+              style={{
+                backgroundColor: brandColor,
+                boxShadow: `0 4px 14px -2px ${brandColor}55`,
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              <span>Pagar Comisión</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ APPLE INSET CONTAINER: BENTO TELEMETRY & GAUGES ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Card 1: Circular Progress Gauges (Liquidation Rate & Source Breakdown) */}
+          <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                Comisiones & Pagos al Equipo
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Calculá las ganancias de cada profesional por servicios y productos sin errores.
-              </p>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Coins className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                    Balance Global de Liquidaciones
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                  {metrics.totalServicesCount + metrics.totalProductsCount} transacciones
+                </span>
+              </div>
+
+              {/* Gauges & Summary */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                {/* Gauge 1: Payout Rate */}
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
+                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="text-slate-200 dark:text-slate-800"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        strokeWidth="4"
+                        strokeDasharray={113}
+                        strokeDashoffset={113 - (113 * metrics.payoutRate) / 100}
+                        strokeLinecap="round"
+                        stroke={brandColor}
+                        fill="transparent"
+                        className="transition-all duration-700 ease-out"
+                      />
+                    </svg>
+                    <span className="absolute font-mono font-bold text-xs text-slate-800 dark:text-white">
+                      {metrics.payoutRate}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Tasa de Pago
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                      {metrics.payoutsCount} pagos emitidos
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      {formatGs(metrics.totalPaidCommission)} pagados
+                    </span>
+                  </div>
+                </div>
+
+                {/* Gauge 2: Source Breakdown (Servicios vs Productos) */}
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
+                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="text-amber-500/20"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        strokeWidth="4"
+                        strokeDasharray={113}
+                        strokeDashoffset={113 - (113 * metrics.servicesSharePct) / 100}
+                        strokeLinecap="round"
+                        stroke="#6366f1"
+                        fill="transparent"
+                        className="transition-all duration-700 ease-out"
+                      />
+                    </svg>
+                    <span className="absolute font-mono font-bold text-xs text-indigo-600 dark:text-indigo-400">
+                      {metrics.servicesSharePct}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Origen de Ganancia
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                      {metrics.servicesSharePct}% Servicios
+                    </span>
+                    <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 font-bold">
+                      {metrics.productsSharePct}% Productos
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Summary Pill Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Total Ganado</span>
+                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                  {formatGs(metrics.totalCommissionEarned)}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Por Liquidar</span>
+                <span
+                  className={`font-mono font-extrabold text-xs ${
+                    metrics.pendingCommission > 0
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-emerald-600 dark:text-emerald-400"
+                  }`}
+                >
+                  {formatGs(metrics.pendingCommission)}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Facturación</span>
+                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                  {formatGs(metrics.totalBilled)}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Equipo Activo</span>
+                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                  {staff.length} colaboradores
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Quick Jump & Pending Balances Telemetry */}
+          <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <Wallet className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                    Acceso Rápido & Navegación
+                  </span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
+                  Secciones
+                </span>
+              </div>
+
+              {/* Navigation Link Cards */}
+              <div className="space-y-2 pt-3">
+                <a
+                  href="#seccion-equipo"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-100 dark:border-slate-800 transition group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition">
+                        Equipo & Desglose
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {staff.length} profesionales con % servicios vs productos
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-400">↗</span>
+                </a>
+
+                <a
+                  href="#seccion-turnos"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-100 dark:border-slate-800 transition group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600">
+                      <Scissors className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition">
+                        Servicios & Ventas Detalladas
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {allEarnedItems.length} transacciones auditadas
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-400">↗</span>
+                </a>
+
+                <a
+                  href="#seccion-historial"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-100 dark:border-slate-800 transition group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600">
+                      <Receipt className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition">
+                        Recibos Oficiales Emitidos
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {commissionPayouts.length} recibos generados
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-400">↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Direct Payout CTA Banner */}
+            <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                ¿Listo para liquidar saldos?
+              </span>
+              <button
+                type="button"
+                onClick={() => handleOpenLiquidar()}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl text-white transition hover:brightness-110 cursor-pointer"
+                style={{ backgroundColor: brandColor }}
+              >
+                Pagar Comisión
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Global Filters & Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Custom Staff Filter */}
-          <CustomSelect
-            value={selectedStaffId}
-            onChange={(val) => setSelectedStaffId(val)}
-            options={staffFilterOptions}
-            buttonClassName="min-w-[210px]"
-          />
-
-          {/* Custom Period Filter */}
-          <CustomSelect
-            value={period}
-            onChange={(val) => setPeriod(val)}
-            options={periodFilterOptions}
-            buttonClassName="min-w-[135px]"
-          />
-
-          {/* Configure Rules Button */}
-          <button
-            type="button"
-            data-tour="comisiones-rules"
-            onClick={() => setIsRulesModalOpen(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 px-3.5 py-2 rounded-xl transition cursor-pointer"
-          >
-            <Sliders className="h-3.5 w-3.5 text-slate-500" />
-            <span>Porcentajes</span>
-          </button>
-
-          {/* Liquidar Comisiones Button */}
-          <button
-            type="button"
-            data-tour="comisiones-liquidar-btn"
-            onClick={() => handleOpenLiquidar()}
-            className="inline-flex items-center gap-1.5 text-xs font-black text-white bg-primary hover:brightness-110 shadow-md shadow-primary/20 px-4 py-2 rounded-xl transition cursor-pointer active:scale-95"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Pagar Comisión</span>
-          </button>
-        </div>
       </div>
 
-      {/* 2. Summary KPI Cards */}
-      <div data-tour="comisiones-kpis" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Ganancias del Equipo"
-          value={formatGs(metrics.totalCommissionEarned)}
-          hint={`Servicios + productos en el período`}
-          icon={Coins}
-        />
-        <StatCard
-          label="Por Pagar al Equipo"
-          value={formatGs(metrics.pendingCommission)}
-          hint={metrics.pendingCommission > 0 ? "Monto acumulado a liquidar" : "Al día con todos"}
-          icon={Clock}
-        />
-        <StatCard
-          label="Ya Pagado"
-          value={formatGs(metrics.totalPaidCommission)}
-          hint={`${metrics.payoutsCount} pagos realizados`}
-          icon={CheckCircle2}
-        />
-        <StatCard
-          label="Total Ventas & Servicios"
-          value={formatGs(metrics.totalBilled)}
-          hint={`${metrics.totalServicesCount} servicios y ${metrics.totalProductsCount} productos`}
-          icon={ArrowUpRight}
-        />
-      </div>
-
-      {/* Quick Jump Navigation Tabs */}
-      <div
-        data-tour="comisiones-tabs"
-        className="flex items-center gap-2 overflow-x-auto pb-1 text-xs"
-      >
-        <a
-          href="#seccion-equipo"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold transition"
-        >
-          <Users className="h-3.5 w-3.5 text-primary" />
-          <span>Equipo y Ganancias</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white dark:bg-slate-900 text-slate-500 font-mono">
-            {staff.length}
-          </span>
-        </a>
-
-        <a
-          href="#seccion-turnos"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold transition"
-        >
-          <Scissors className="h-3.5 w-3.5 text-indigo-500" />
-          <span>Servicios y Ventas del Período</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white dark:bg-slate-900 text-slate-500 font-mono">
-            {allEarnedItems.length}
-          </span>
-        </a>
-
-        <a
-          href="#seccion-historial"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold transition"
-        >
-          <Receipt className="h-3.5 w-3.5 text-emerald-500" />
-          <span>Historial de Pagos</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white dark:bg-slate-900 text-slate-500 font-mono">
-            {commissionPayouts.length}
-          </span>
-        </a>
-      </div>
-
-      {/* 3. SECTION 1: COLLABORATOR CARDS & PROFILE BREAKDOWN (% SERVICIOS VS % PRODUCTOS) */}
-      <div id="seccion-equipo" className="space-y-3 pt-2">
-        <div className="flex items-center justify-between">
+      {/* ═══ SECTION 1: COLLABORATOR CARDS & PROFILE BREAKDOWN (% SERVICIOS VS % PRODUCTOS) ═══ */}
+      <div id="seccion-equipo" className="space-y-4 pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
+            <Users className="h-4 w-4" style={{ color: brandColor }} />
             <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
               Equipo & Desglose de Ganancias
             </h2>
           </div>
           <span className="text-xs text-slate-400">
-            Revisá el % de plata que viene de servicios y de productos de cada profesional
+            Revisá el origen del dinero (% servicios vs % productos) por cada colaborador.
           </span>
         </div>
 
@@ -623,7 +829,7 @@ export default function ComisionesPage() {
             return (
               <Card
                 key={st.id}
-                className="p-5 flex flex-col justify-between border border-slate-200/90 dark:border-white/10 hover:border-primary/40 transition shadow-xs"
+                className="p-5 flex flex-col justify-between border border-slate-200/90 dark:border-slate-800 hover:border-primary/50 transition shadow-xs rounded-2xl bg-white dark:bg-slate-950"
               >
                 <div>
                   {/* Top Bar: Avatar, Role Badge & Name */}
@@ -631,7 +837,7 @@ export default function ComisionesPage() {
                     <div className="flex items-center gap-3">
                       <div
                         className="flex h-11 w-11 items-center justify-center rounded-2xl font-black text-white text-sm shadow-xs"
-                        style={{ backgroundColor: st.color || "#4f46e5" }}
+                        style={{ backgroundColor: st.color || brandColor }}
                       >
                         {st.avatar}
                       </div>
@@ -654,15 +860,15 @@ export default function ComisionesPage() {
                   </div>
 
                   {/* Configured Commission Rates */}
-                  <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-white/5 text-xs">
-                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-2.5 border border-slate-100 dark:border-white/5">
+                  <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-900/80 p-2.5 border border-slate-100 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-semibold">Tasa en Servicios</span>
                       <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono">
                         {st.commissionPercentage}%
                       </span>
                     </div>
 
-                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-2.5 border border-slate-100 dark:border-white/5">
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-900/80 p-2.5 border border-slate-100 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-semibold">Tasa en Productos</span>
                       <span className="text-sm font-black text-amber-600 dark:text-amber-400 font-mono">
                         {st.productCommissionPercentage ?? 10}%
@@ -670,10 +876,10 @@ export default function ComisionesPage() {
                     </div>
                   </div>
 
-                  {/* USER REQUEST HIGHLIGHT: % DE PLATA QUE VIENE DE SERVICIO Y QUE % DE PRODUCTO EN SU PERFIL */}
-                  <div className="mt-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 space-y-2">
+                  {/* Financial Origin Breakdown */}
+                  <div className="mt-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-100 dark:border-slate-800 space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-black text-slate-800 dark:text-slate-200">
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
                         Origen de sus Ganancias:
                       </span>
                       <span className="font-bold text-slate-900 dark:text-white font-mono text-[11px]">
@@ -682,7 +888,7 @@ export default function ComisionesPage() {
                     </div>
 
                     {/* Dual Color Progress Bar */}
-                    <div className="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex">
+                    <div className="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
                       <div
                         className="bg-indigo-600 h-full transition-all duration-500"
                         style={{ width: `${summary.servicesSharePercent}%` }}
@@ -700,10 +906,10 @@ export default function ComisionesPage() {
                       <div className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-indigo-600 shrink-0" />
                         <div>
-                          <span className="font-bold text-indigo-700 dark:text-indigo-400">
+                          <span className="font-bold text-indigo-700 dark:text-indigo-400 block">
                             {summary.servicesSharePercent}% Servicios
                           </span>
-                          <span className="block text-[10px] text-slate-400 font-mono">
+                          <span className="text-[10px] text-slate-400 font-mono">
                             {formatGs(summary.servicesCommission)}
                           </span>
                         </div>
@@ -712,10 +918,10 @@ export default function ComisionesPage() {
                       <div className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
                         <div>
-                          <span className="font-bold text-amber-700 dark:text-amber-400">
+                          <span className="font-bold text-amber-700 dark:text-amber-400 block">
                             {summary.productsSharePercent}% Productos
                           </span>
-                          <span className="block text-[10px] text-slate-400 font-mono">
+                          <span className="text-[10px] text-slate-400 font-mono">
                             {formatGs(summary.productsCommission)}
                           </span>
                         </div>
@@ -737,7 +943,7 @@ export default function ComisionesPage() {
                 </div>
 
                 {/* Footer with Balance & Direct Pay Action */}
-                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/5">
+                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-baseline justify-between mb-3">
                     <span className="text-xs font-semibold text-slate-500">Saldo a cobrar:</span>
                     <span
@@ -755,7 +961,8 @@ export default function ComisionesPage() {
                     <button
                       type="button"
                       onClick={() => handleOpenLiquidar(st.id)}
-                      className="flex-1 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-2 text-xs font-bold hover:opacity-90 transition cursor-pointer text-center"
+                      className="flex-1 rounded-xl py-2 text-xs font-bold text-white transition hover:brightness-110 cursor-pointer text-center"
+                      style={{ backgroundColor: brandColor }}
                     >
                       Pagar al Colaborador
                     </button>
@@ -766,7 +973,7 @@ export default function ComisionesPage() {
                         const el = document.getElementById("seccion-turnos");
                         el?.scrollIntoView({ behavior: "smooth" });
                       }}
-                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition cursor-pointer"
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-850 text-xs font-bold transition cursor-pointer"
                     >
                       Ver Detalle
                     </button>
@@ -778,16 +985,16 @@ export default function ComisionesPage() {
         </div>
       </div>
 
-      {/* 4. SECTION 2: SERVICES & PRODUCTS BREAKDOWN TABLE */}
+      {/* ═══ SECTION 2: SERVICES & PRODUCTS BREAKDOWN TABLE ═══ */}
       <div id="seccion-turnos" className="pt-4">
         <Card
           data-tour="comisiones-turnos-table"
-          className="overflow-hidden p-0 border border-slate-200/80 dark:border-white/10 shadow-xs"
+          className="overflow-hidden p-0 border border-slate-200/80 dark:border-slate-800 shadow-xs rounded-2xl bg-white dark:bg-slate-950"
         >
-          <div className="p-4 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <Scissors className="h-4 w-4 text-primary" />
+                <Scissors className="h-4 w-4" style={{ color: brandColor }} />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                   Servicios y Productos Vendidos en el Período
                 </h3>
@@ -797,7 +1004,7 @@ export default function ComisionesPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl">
+              <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded-xl border border-slate-200/60 dark:border-slate-800">
                 {allEarnedItems.length} ventas y servicios
               </span>
             </div>
@@ -806,19 +1013,19 @@ export default function ComisionesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-white/5 font-bold uppercase tracking-wider text-slate-400 text-[10px]">
-                  <th className="py-3 px-4">Fecha y Hora</th>
-                  <th className="py-3 px-4">Tipo</th>
-                  <th className="py-3 px-4">Profesional</th>
-                  <th className="py-3 px-4">Cliente</th>
-                  <th className="py-3 px-4">Concepto</th>
-                  <th className="py-3 px-4 text-right">Cobrado</th>
-                  <th className="py-3 px-4 text-center">% Ganancia</th>
-                  <th className="py-3 px-4 text-right">Comisión</th>
-                  <th className="py-3 px-4 text-center">Estado</th>
+                <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                  <th className="py-3.5 px-4">Fecha y Hora</th>
+                  <th className="py-3.5 px-4">Tipo</th>
+                  <th className="py-3.5 px-4">Profesional</th>
+                  <th className="py-3.5 px-4">Cliente</th>
+                  <th className="py-3.5 px-4">Concepto</th>
+                  <th className="py-3.5 px-4 text-right">Cobrado</th>
+                  <th className="py-3.5 px-4 text-center">% Ganancia</th>
+                  <th className="py-3.5 px-4 text-right">Comisión</th>
+                  <th className="py-3.5 px-4 text-center">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {allEarnedItems.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="py-12 text-center text-slate-400 text-xs">
@@ -827,7 +1034,7 @@ export default function ComisionesPage() {
                   </tr>
                 ) : (
                   allEarnedItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                    <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition">
                       <td className="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400 text-[11px]">
                         {new Date(item.date).toLocaleDateString("es-PY", {
                           day: "2-digit",
@@ -889,16 +1096,16 @@ export default function ComisionesPage() {
         </Card>
       </div>
 
-      {/* 5. SECTION 3: PAYOUTS HISTORY & OFFICIAL RECEIPTS */}
+      {/* ═══ SECTION 3: PAYOUTS HISTORY & OFFICIAL RECEIPTS ═══ */}
       <div id="seccion-historial" className="pt-4">
         <Card
           data-tour="comisiones-payouts-table"
-          className="overflow-hidden p-0 border border-slate-200/80 dark:border-white/10 shadow-xs"
+          className="overflow-hidden p-0 border border-slate-200/80 dark:border-slate-800 shadow-xs rounded-2xl bg-white dark:bg-slate-950"
         >
-          <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+          <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-primary" />
+                <Receipt className="h-4 w-4" style={{ color: brandColor }} />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                   Historial de Pagos & Recibos Emitidos
                 </h3>
@@ -911,6 +1118,7 @@ export default function ComisionesPage() {
               type="button"
               onClick={() => handleOpenLiquidar()}
               className="text-xs font-bold text-primary hover:underline cursor-pointer flex items-center gap-1"
+              style={{ color: brandColor }}
             >
               <Plus className="h-3.5 w-3.5" />
               Pagar Comisión
@@ -920,18 +1128,18 @@ export default function ComisionesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-white/5 font-bold uppercase tracking-wider text-slate-400 text-[10px]">
-                  <th className="py-3 px-4">Recibo #</th>
-                  <th className="py-3 px-4">Fecha Pago</th>
-                  <th className="py-3 px-4">Profesional</th>
-                  <th className="py-3 px-4">Período</th>
-                  <th className="py-3 px-4">Desglose (% Origen)</th>
-                  <th className="py-3 px-4">Método</th>
-                  <th className="py-3 px-4 text-right">Total Pagado</th>
-                  <th className="py-3 px-4 text-center">Recibo Oficial</th>
+                <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                  <th className="py-3.5 px-4">Recibo #</th>
+                  <th className="py-3.5 px-4">Fecha Pago</th>
+                  <th className="py-3.5 px-4">Profesional</th>
+                  <th className="py-3.5 px-4">Período</th>
+                  <th className="py-3.5 px-4">Desglose (% Origen)</th>
+                  <th className="py-3.5 px-4">Método</th>
+                  <th className="py-3.5 px-4 text-right">Total Pagado</th>
+                  <th className="py-3.5 px-4 text-center">Recibo Oficial</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {commissionPayouts.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-400">
@@ -944,21 +1152,21 @@ export default function ComisionesPage() {
                     const prodPct = p.productsSharePercent ?? 10;
 
                     return (
-                      <tr key={p.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
-                        <td className="py-3 px-4 font-mono font-black text-primary">
+                      <tr key={p.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition">
+                        <td className="py-3.5 px-4 font-mono font-black" style={{ color: brandColor }}>
                           {p.receiptNumber || `#${p.id.slice(0, 8)}`}
                         </td>
-                        <td className="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">
+                        <td className="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400">
                           {new Date(p.paidAt).toLocaleDateString("es-PY")}
                         </td>
-                        <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                        <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
                           {p.staffName}
                         </td>
-                        <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                        <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                           {new Date(p.periodStart).toLocaleDateString("es-PY", { day: "2-digit", month: "short" })} -{" "}
                           {new Date(p.periodEnd).toLocaleDateString("es-PY", { day: "2-digit", month: "short" })}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2 text-[10.5px]">
                             <span className="inline-flex items-center gap-1 font-semibold text-indigo-700 dark:text-indigo-400">
                               <Scissors className="h-3 w-3" />
@@ -971,19 +1179,20 @@ export default function ComisionesPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                             {p.paymentMethod}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm">
+                        <td className="py-3.5 px-4 text-right font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm">
                           {formatGs(p.amountPaid)}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3.5 px-4 text-center">
                           <button
                             type="button"
                             onClick={() => setSelectedPayoutReceipt(p)}
-                            className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline px-2.5 py-1 rounded-lg hover:bg-primary/10 transition cursor-pointer"
+                            className="inline-flex items-center gap-1 text-xs font-bold hover:underline px-2.5 py-1 rounded-lg transition cursor-pointer"
+                            style={{ color: brandColor }}
                           >
                             <Receipt className="h-3.5 w-3.5" />
                             <span>Ver Recibo</span>
@@ -999,7 +1208,7 @@ export default function ComisionesPage() {
         </Card>
       </div>
 
-      {/* MODAL 1: LIQUIDAR / PAGAR COMISIÓN */}
+      {/* ═══ MODAL 1: LIQUIDAR / PAGAR COMISIÓN ═══ */}
       <Modal
         open={isLiquidarModalOpen}
         onClose={() => setIsLiquidarModalOpen(false)}
@@ -1160,7 +1369,8 @@ export default function ComisionesPage() {
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary hover:brightness-110 px-5 py-2 font-black text-white shadow-md shadow-primary/20 transition cursor-pointer"
+              className="rounded-xl px-5 py-2 font-black text-white shadow-md transition hover:brightness-110 cursor-pointer"
+              style={{ backgroundColor: brandColor }}
             >
               Confirmar y Emitir Recibo
             </button>
@@ -1168,7 +1378,7 @@ export default function ComisionesPage() {
         </form>
       </Modal>
 
-      {/* MODAL 2: USER REQUEST: OFFICIAL PRINTABLE RECEIPT / FACTURA WITH % DE SERVICIO Y % DE PRODUCTO */}
+      {/* ═══ MODAL 2: OFFICIAL PRINTABLE RECEIPT / FACTURA ═══ */}
       <Modal
         open={!!selectedPayoutReceipt}
         onClose={() => setSelectedPayoutReceipt(null)}
@@ -1187,7 +1397,7 @@ export default function ComisionesPage() {
                   <p className="text-[10px] text-slate-400">RUC: 80099881-2 — Asunción, Paraguay</p>
                 </div>
                 <div className="text-right">
-                  <span className="font-mono font-black text-primary text-sm block">
+                  <span className="font-mono font-black text-sm block" style={{ color: brandColor }}>
                     {selectedPayoutReceipt.receiptNumber}
                   </span>
                   <span className="text-[10px] text-slate-400">
@@ -1219,7 +1429,7 @@ export default function ComisionesPage() {
                 </div>
               </div>
 
-              {/* USER REQUEST: FINANCIAL BREAKDOWN WITH % OF MONEY FROM SERVICES VS PRODUCTS */}
+              {/* Financial breakdown */}
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-white/10 space-y-2">
                 <span className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider block border-b border-slate-200 dark:border-white/10 pb-1.5">
                   Desglose de Origen del Dinero
@@ -1335,7 +1545,7 @@ export default function ComisionesPage() {
         )}
       </Modal>
 
-      {/* MODAL 3: COMMISSION RULES CONFIGURATION */}
+      {/* ═══ MODAL 3: COMMISSION RULES CONFIGURATION ═══ */}
       <Modal
         open={isRulesModalOpen}
         onClose={() => setIsRulesModalOpen(false)}
@@ -1358,7 +1568,7 @@ export default function ComisionesPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className="flex h-9 w-9 items-center justify-center rounded-xl font-bold text-white text-xs shrink-0"
-                      style={{ backgroundColor: st.color || "#4f46e5" }}
+                      style={{ backgroundColor: st.color || brandColor }}
                     >
                       {st.avatar}
                     </div>
@@ -1441,7 +1651,8 @@ export default function ComisionesPage() {
             <button
               type="button"
               onClick={handleSaveRules}
-              className="rounded-xl bg-primary hover:brightness-110 px-5 py-2 font-bold text-white shadow-md shadow-primary/20 transition cursor-pointer"
+              className="rounded-xl px-5 py-2 font-bold text-white shadow-md transition hover:brightness-110 cursor-pointer"
+              style={{ backgroundColor: brandColor }}
             >
               Guardar Porcentajes
             </button>

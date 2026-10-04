@@ -323,84 +323,274 @@ export default function EquipoRolesPage() {
   const cashierCount = staff.filter((s) => s.systemRole === "cajero").length;
   const prosCount = staff.filter((s) => s.systemRole !== "admin" && s.systemRole !== "cajero").length;
 
+  const activeRate = useMemo(() => {
+    if (staff.length === 0) return 100;
+    return Math.round((activeStaffCount / staff.length) * 100);
+  }, [activeStaffCount, staff.length]);
+
+  const avgCommission = useMemo(() => {
+    if (staff.length === 0) return 40;
+    const sum = staff.reduce((acc, s) => acc + (s.commissionPercentage || 40), 0);
+    return Math.round(sum / staff.length);
+  }, [staff]);
+
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
+    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
+      {/* ========================================================= */}
+      {/* 1. DARK CONSOLE HERO BANNER                                */}
+      {/* ========================================================= */}
       <div
         data-tour="equipo-header"
-        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
       >
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
-            <span>Equipo, Roles & Especialistas</span>
-            <Users className="h-5 w-5 text-primary" />
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Invitá a tus colaboradores con Google, configurá comisiones y asigná niveles de acceso seguros.
-          </p>
-        </div>
+        {/* Dynamic Brand Ambient Radial Glow */}
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
 
-        <button
-          type="button"
-          data-tour="equipo-new-btn"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer w-fit"
-        >
-          <Plus className="h-4 w-4" />
-          <span>+ Invitar Colaborador</span>
-        </button>
-      </div>
-
-      {/* Services Notification Banner */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between rounded-2xl border border-primary/20 bg-primary/5 p-3.5 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white font-bold">
-            <Layers className="h-4 w-4" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-900 dark:text-white">
-              ¿Querés asignar qué servicios realiza cada especialista?
-            </p>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              En el Catálogo podés marcar quiénes atienden cada corte, barba o tratamiento con cálculo de comisiones.
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="uppercase tracking-wider font-semibold text-slate-300">
+                Workspace
+              </span>
+              <span>/</span>
+              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
+              <span className="hidden sm:inline">·</span>
+              <span className="hidden sm:inline text-slate-400">{activeStaffCount} activos</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+              Equipo, Roles & Especialistas
+            </h1>
+            <p className="text-sm text-slate-400">
+              Invitá a tus colaboradores con Google, configurá comisiones y asigná niveles de acceso.
             </p>
           </div>
+
+          {/* Quick Action Dock */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              data-tour="equipo-new-btn"
+              onClick={openCreate}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
+              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Invitar Colaborador</span>
+            </button>
+
+            <Link
+              href="/dashboard/servicios"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition"
+              title="Ir al Catálogo de Servicios"
+            >
+              <Layers className="h-3.5 w-3.5 text-slate-400" />
+              <span>Servicios ({services.length})</span>
+            </Link>
+          </div>
         </div>
-        <Link
-          href="/dashboard/servicios"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-primary/40 shadow-xs transition shrink-0"
-        >
-          <span>Ir a Servicios ({services.length})</span>
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
       </div>
 
-      {/* KPI Stats */}
-      <div data-tour="equipo-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Colaboradores"
-          value={`${staff.length} miembros`}
-          hint={`${activeStaffCount} activos para turnos`}
-          icon={Users}
-        />
-        <StatCard
-          label="Dueño / Admins"
-          value={`${adminCount}`}
-          hint="Control total de finanzas"
-          icon={Crown}
-        />
-        <StatCard
-          label="Cajeros & Recepción"
-          value={`${cashierCount}`}
-          hint="Cobros y mostrador"
-          icon={Banknote}
-        />
-        <StatCard
-          label="Profesionales en Salón"
-          value={`${prosCount}`}
-          hint="Barberos & estilistas"
-          icon={Scissors}
-        />
+      {/* ========================================================= */}
+      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
+      {/* ========================================================= */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Inset Subheader */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div className="font-semibold text-sm text-slate-900 dark:text-white">
+            Métricas de Dotación & Roles
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            {activeStaffCount} de {staff.length} colaboradores activos para turnos
+          </div>
+        </div>
+
+        {/* Dual-Card Inset Telemetry */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left Card: Operational Gauges & Summary */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+            {/* Top section: Mini status box + 2 circular gauges */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
+              {/* Mini status box */}
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+                <div>
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Equipo Activo
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                    {activeStaffCount} colaboradores disponibles en salón.
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <span className="inline-block rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 text-[11px] font-semibold">
+                    {prosCount} especialistas
+                  </span>
+                </div>
+              </div>
+
+              {/* Circular Gauge 1: Activos % */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * activeRate) / 100}
+                      strokeLinecap="round"
+                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      className="transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {activeRate}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Activos
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  en recepción y sillas
+                </div>
+              </div>
+
+              {/* Circular Gauge 2: Comisión Promedio */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray="4 2"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, avgCommission)) / 100}
+                      strokeLinecap="round"
+                      className="text-emerald-500 transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {avgCommission}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Comisión
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  promedio salón
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Data Rows */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Administradores con acceso total</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {adminCount}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Personal de caja y recepción</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {cashierCount}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                <span>Total de colaboradores registrados</span>
+                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
+                  {staff.length} miembros
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Card: Roles & Asignación de servicios */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+            <div>
+              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
+                Distribución de Niveles de Acceso
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                      <Crown className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Dueño / Admin</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{adminCount} cuentas</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <Banknote className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Cajero / Mostrador</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{cashierCount} cuentas</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                      <Scissors className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Especialistas en Salón</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{prosCount} profesionales</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom notification */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                Asigná los servicios que realiza cada profesional en el Catálogo:
+              </span>
+              <Link
+                href="/dashboard/servicios"
+                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0"
+              >
+                <span>Servicios</span>
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Search and Filter Navigation Bar */}

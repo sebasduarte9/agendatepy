@@ -709,53 +709,274 @@ export default function AparienciaPage() {
         }
       `}</style>
 
-      {/* Header (No top Visita Guiada button, enhanced Ver Página Pública button) */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 dark:border-white/10 pb-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-            Diseño & Personalización de la Página de Reservas
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Personalizá tipografías de Google, portada, colores y enlaces de tu portal público.
-          </p>
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      <div
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
+
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)" }}
+              />
+              <span>Estudio de Marca & Experiencia del Cliente</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Diseño & Apariencia de la Página de Reservas
+            </h1>
+            <p className="text-sm text-slate-300 max-w-xl">
+              Personalizá la identidad visual de tu portal público: tipografías de Google Fonts, paleta de colores, portada panorámica, estilo de botones y orden de secciones.
+            </p>
+          </div>
+
+          {/* Action Dock */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Ver Página Pública */}
+            <Link
+              href={publicBookingUrl}
+              target="_blank"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition backdrop-blur-md cursor-pointer"
+            >
+              <span>Ver Página Pública</span>
+              <ExternalLink className="h-3.5 w-3.5 text-slate-300" />
+            </Link>
+
+            {/* Clean Save Button with dynamic brand color */}
+            <button
+              type="button"
+              data-tour="tour-save"
+              disabled={isSaving}
+              onClick={() => handleSave()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl text-white px-5 py-2.5 text-xs font-black shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer disabled:opacity-60"
+              style={{
+                backgroundColor: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)",
+                boxShadow: `0 4px 14px -2px ${(business.primaryColor || theme.primaryColor || "#0ea5e9")}55`,
+              }}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Guardando...</span>
+                </>
+              ) : savedSuccess ? (
+                <>
+                  <Check className="h-4 w-4 stroke-[3] text-white animate-bounce" />
+                  <span>¡Guardado!</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  <span>Guardar Cambios</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Enhanced Ver Página Pública Button with animation */}
-          <Link
-            href={publicBookingUrl}
-            target="_blank"
-            className="group relative inline-flex items-center gap-2.5 rounded-2xl border-2 border-primary/40 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent hover:border-primary px-5 py-2.5 text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-          >
-            <span>Ver Página Pública</span>
-            <ExternalLink className="h-4 w-4 text-primary transition-transform duration-200 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-          </Link>
+      {/* ═══ APPLE INSET CONTAINER: TELEMETRY & BRAND TOKENS ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Card 1: Branding Completeness Circular Gauge & Active Tokens */}
+          <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <Palette className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                    Identidad Visual de Marca
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                  {theme.themePreset ? `Preset: ${theme.themePreset}` : "Tema Personalizado"}
+                </span>
+              </div>
 
-          {/* Clean Save Button */}
-          <button
-            type="button"
-            data-tour="tour-save"
-            disabled={isSaving}
-            onClick={() => handleSave()}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white px-5 py-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-60"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Guardando...</span>
-              </>
-            ) : savedSuccess ? (
-              <>
-                <Check className="h-4 w-4 stroke-[3] text-emerald-100 animate-bounce" />
-                <span>¡Guardado!</span>
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                <span>Guardar Cambios</span>
-              </>
-            )}
-          </button>
+              {/* Gauges & Summary */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                {/* Gauge 1: Brand Customization Score */}
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
+                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="text-slate-200 dark:text-slate-800"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        strokeWidth="4"
+                        strokeDasharray={113}
+                        strokeDashoffset={
+                          113 -
+                          (113 *
+                            Math.round(
+                              ([
+                                Boolean(theme.logoUrl || business.logo),
+                                Boolean(theme.bannerUrl),
+                                Boolean(theme.primaryColor || business.primaryColor),
+                                Boolean(theme.fontFamily),
+                              ].filter(Boolean).length /
+                                4) *
+                                100
+                            )) /
+                            100
+                        }
+                        strokeLinecap="round"
+                        stroke={business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)"}
+                        fill="transparent"
+                        className="transition-all duration-700 ease-out"
+                      />
+                    </svg>
+                    <span className="absolute font-mono font-bold text-xs text-slate-800 dark:text-white">
+                      {Math.round(
+                        ([
+                          Boolean(theme.logoUrl || business.logo),
+                          Boolean(theme.bannerUrl),
+                          Boolean(theme.primaryColor || business.primaryColor),
+                          Boolean(theme.fontFamily),
+                        ].filter(Boolean).length /
+                          4) *
+                          100
+                      )}
+                      %
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Perfil de Marca
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                      {theme.logoUrl || business.logo ? "Logo verificado" : "Sin logo asignado"}
+                    </span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      {theme.bannerUrl ? "Portada panorámica activa" : "Portada por defecto"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Gauge 2: Active Color & Typography Pill */}
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                  <div
+                    className="h-10 w-10 rounded-2xl shrink-0 border-2 border-white dark:border-slate-800 shadow-xs flex items-center justify-center font-bold text-white text-xs"
+                    style={{ backgroundColor: business.primaryColor || theme.primaryColor || "#0ea5e9" }}
+                  >
+                    ✓
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
+                      {theme.fontFamily || "Inter / Google Font"}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block font-mono">
+                      {business.primaryColor || theme.primaryColor || "#0ea5e9"}
+                    </span>
+                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
+                      {theme.layoutStyle || "Moderno"} · {theme.buttonRadius || "Píldora"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick KPI Bar */}
+            <div className="grid grid-cols-4 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Tipografía</span>
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate block">
+                  {theme.fontFamily || "Sans"}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Botones</span>
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white capitalize">
+                  {theme.buttonRadius || "Píldora"}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Fondo</span>
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white capitalize">
+                  {theme.backgroundEffect || "Elegante"}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Links</span>
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                  {(theme.customLinks || []).length} enlaces
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Live Public Booking URL & Preview Shortcut */}
+          <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Globe className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                    Enlace Público de tu Portal
+                  </span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
+                  Online
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 mt-3 space-y-2">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">
+                  URL para clientes:
+                </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold text-slate-900 dark:text-white truncate">
+                    agendate.py{publicBookingUrl}
+                  </span>
+                  <Link
+                    href={publicBookingUrl}
+                    target="_blank"
+                    className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition text-slate-600 dark:text-slate-300"
+                    title="Abrir en nueva pestaña"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+
+              <div className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+                Podés ver la vista previa en tiempo real en la columna derecha (conmutable entre vista celular y escritorio).
+              </div>
+            </div>
+
+            <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[11px]">
+                {savedSuccess ? "Todos los cambios guardados" : "Edición en tiempo real"}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleSave()}
+                className="font-bold hover:underline cursor-pointer flex items-center gap-1"
+                style={{ color: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)" }}
+              >
+                <span>Guardar ahora</span>
+                <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

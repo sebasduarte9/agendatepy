@@ -1197,132 +1197,331 @@ export default function BotWhatsAppPage() {
   const activeConnectedPhone =
     evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
 
+  const brandColor = business.primaryColor || "var(--primary, #0ea5e9)";
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
+  const activeNodesCount = nodes.filter((n) => n.enabled).length;
+  const nodesActivePct = nodes.length > 0 ? Math.round((activeNodesCount / nodes.length) * 100) : 100;
 
   return (
-    <div className="space-y-6">
-      {/* ═══ 1. TOP HEADER (Without Guided Tour Button) ═══ */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
-              <Bot className="h-5 w-5" />
+    <div className="mx-auto max-w-7xl space-y-6 pb-20">
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      <div
+        data-tour="bot-header-console"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: brandColor }}
+        />
+
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: brandColor }}
+              />
+              <span>Automatización & WhatsApp Bot Inteligente</span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                  Bot WhatsApp
-                </h1>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                  <Zap className="h-3 w-3" />
-                  Canva 100% Configurable
-                </span>
-              </div>
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Bot WhatsApp & Flujo Conversacional
+            </h1>
+            <p className="text-sm text-slate-300 max-w-xl">
+              Diseñá el flujo visual interactivo para tu local: menú inteligente, confirmaciones de turno con QR SIPAP y recordatorios automáticos 24h y 2h antes.
+            </p>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Diseñá el flujo visual de atención para tu local: menú interactivo, confirmaciones de turno y recordatorios automáticos.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Help & Support Button */}
-          <button
-            type="button"
-            data-tour="bot-support-action"
-            onClick={() => setIsHelpModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition active:scale-98 cursor-pointer shadow-2xs"
-          >
-            <PhoneCall className="h-3.5 w-3.5" />
-            <span>¿Necesitás ayuda? Contactanos</span>
-          </button>
+          {/* Action Dock */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Help / Support Button */}
+            <button
+              type="button"
+              data-tour="bot-support-action"
+              onClick={() => setIsHelpModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition backdrop-blur-md cursor-pointer"
+            >
+              <PhoneCall className="h-4 w-4 text-slate-300" />
+              <span>Ayuda / Soporte</span>
+            </button>
 
-          {/* Connection status badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-bold shadow-2xs">
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${
-                isConnected ? "bg-emerald-500 ring-4 ring-emerald-500/20 animate-pulse" : "bg-amber-500 ring-4 ring-amber-500/20"
-              }`}
-            />
-            <span className="text-slate-700 dark:text-slate-200 font-medium">
-              {isConnected ? "Línea Conectada" : "Desconectado"}
-            </span>
+            {/* Connection Status Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-900/80 text-xs font-bold backdrop-blur-md shadow-xs">
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  isConnected
+                    ? "bg-emerald-500 ring-4 ring-emerald-500/20 animate-pulse"
+                    : "bg-amber-500 ring-4 ring-amber-500/20"
+                }`}
+              />
+              <span className="text-slate-200">
+                {isConnected ? "Línea Conectada" : "Desconectado"}
+              </span>
+            </div>
+
+            {/* Direct Connect / QR button */}
+            {isConnected ? (
+              <button
+                type="button"
+                onClick={() => setIsConnectModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-black text-white shadow-md transition hover:brightness-110 cursor-pointer"
+                style={{ backgroundColor: brandColor }}
+              >
+                <QrCode className="h-4 w-4" />
+                <span>Reconectar QR</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsConnectModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer bg-emerald-600 hover:bg-emerald-500"
+              >
+                <QrCode className="h-4 w-4" />
+                <span>Vincular con QR</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ═══ 2. MANDATORY CONNECTION GATE / STATUS BANNER ═══ */}
-      <div data-tour="bot-status-card">
-        {isConnected ? (
-          <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent p-4 sm:p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm">
-                  <MessageCircle className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-slate-900 dark:text-white">
-                      Línea Oficial Conectada
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400">
-                      Activo 24/7
-                    </span>
+      {/* ═══ APPLE INSET CONTAINER: TELEMETRY & GAUGES ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Card 1: Circular Progress Gauges (Active Nodes & Bot Availability) */}
+          <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Bot className="h-4 w-4" />
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 font-mono mt-0.5">
-                    Número: <strong className="text-emerald-700 dark:text-emerald-400">{activeConnectedPhone}</strong> · Sincronizado con CRM Omnicanal
-                  </p>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                    Telemetría del Canal WhatsApp
+                  </span>
                 </div>
+                <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                  {connections.length} enlaces activos
+                </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsConnectModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition active:scale-98 cursor-pointer shadow-2xs"
-                >
-                  <QrCode className="h-3.5 w-3.5" />
-                  <span>Reconectar QR</span>
-                </button>
+              {/* Gauges & Summary */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                {/* Gauge 1: Active Nodes Ratio */}
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
+                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="text-slate-200 dark:text-slate-800"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        strokeWidth="4"
+                        strokeDasharray={113}
+                        strokeDashoffset={113 - (113 * nodesActivePct) / 100}
+                        strokeLinecap="round"
+                        stroke={brandColor}
+                        fill="transparent"
+                        className="transition-all duration-700 ease-out"
+                      />
+                    </svg>
+                    <span className="absolute font-mono font-bold text-xs text-slate-800 dark:text-white">
+                      {nodesActivePct}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Nodos Operativos
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                      {activeNodesCount} de {nodes.length} nodos activos
+                    </span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      Canva 100% interactivo
+                    </span>
+                  </div>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={handleDisconnect}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 text-rose-700 dark:text-rose-400 px-3 py-1.5 text-xs font-bold transition active:scale-98 cursor-pointer"
-                >
-                  <span>Desconectar</span>
-                </button>
+                {/* Gauge 2: Automated 24/7 Availability */}
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
+                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="text-emerald-500/20"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        strokeWidth="4"
+                        strokeDasharray={113}
+                        strokeDashoffset={0}
+                        strokeLinecap="round"
+                        stroke="#10b981"
+                        fill="transparent"
+                      />
+                    </svg>
+                    <span className="absolute font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                      24/7
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Respuesta Inmediata
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-mono">
+                      {activeConnectedPhone}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      Disparador sin demoras
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick KPI Bar */}
+            <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Recordatorios</span>
+                <span className="font-mono font-extrabold text-xs text-emerald-600 dark:text-emerald-400">
+                  24h y 2h antes
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Canal CRM</span>
+                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                  Sincronizado
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block">Nodos en Lienzo</span>
+                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                  {nodes.length} bloques
+                </span>
               </div>
             </div>
           </div>
-        ) : (
-          <div
-            data-tour="bot-connect-gate"
-            className="rounded-3xl border border-amber-300/80 dark:border-amber-500/30 bg-gradient-to-b from-amber-50/60 to-white dark:from-amber-950/20 dark:to-slate-900 p-6 sm:p-8 text-center space-y-4 shadow-sm"
-          >
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm">
-              <Lock className="h-7 w-7" />
+
+          {/* Card 2: Interactive Controls & Live Preview Shortcut */}
+          <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                    <Smartphone className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                    Simulador & Vistas Rápidas
+                  </span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
+                  Interactivo
+                </span>
+              </div>
+
+              <div className="space-y-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("simulador")}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-100 dark:border-slate-800 transition group text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600">
+                      <MessageCircle className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition">
+                        Abrir Simulador WhatsApp
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        Probá en vivo las opciones del menú como si fueras un cliente
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-400">↗</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("plantillas")}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-100 dark:border-slate-800 transition group text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600">
+                      <Layers className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition">
+                        Plantillas & Textos Oficiales
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        Configurá confirmaciones y mensajes predeterminados
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-400">↗</span>
+                </button>
+              </div>
             </div>
 
-            <div className="max-w-xl mx-auto space-y-1.5">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-200/60 dark:bg-amber-900/60 px-2.5 py-0.5 rounded-full">
-                Requisito Obligatorio
+            <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[11px]">
+                {isConnected ? "Línea lista para responder" : "Conectá la línea para operar"}
               </span>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                Vinculá tu WhatsApp para activar el Canva del Bot
+              <button
+                type="button"
+                onClick={() => setActiveTab("canva")}
+                className="font-bold hover:underline cursor-pointer flex items-center gap-1"
+                style={{ color: brandColor }}
+              >
+                <span>Ver lienzo</span>
+                <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Connection warning gate if not connected */}
+      <div data-tour="bot-status-card">
+        {!isConnected && (
+          <div
+            data-tour="bot-connect-gate"
+            className="rounded-2xl border border-amber-300/80 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-950/20 p-5 sm:p-6 text-center space-y-3 shadow-xs"
+          >
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+              <Lock className="h-5 w-5" />
+            </div>
+
+            <div className="max-w-xl mx-auto space-y-1">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                Vinculá tu WhatsApp para activar el Bot en vivo
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Para configurar el flujo visual de nodos, las opciones de respuesta y los recordatorios automáticos 24h y 2h antes, es obligatorio vincular la línea oficial de tu negocio.
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                Para responder a clientes reales y enviar recordatorios automáticos 24h y 2h antes, es necesario escanear el código QR con el número del local.
               </p>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="pt-1 flex justify-center">
               <button
                 type="button"
                 onClick={() => setIsConnectModalOpen(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-3.5 text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition active:scale-98 cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 text-xs shadow-md transition active:scale-98 cursor-pointer"
               >
-                <QrCode className="h-4.5 w-4.5" />
+                <QrCode className="h-4 w-4" />
                 <span>Vincular mi WhatsApp Ahora (Escanear QR)</span>
               </button>
             </div>

@@ -61,16 +61,252 @@ export default function ExtrasPage() {
     window.print();
   }
 
+  const hasPixel = Boolean(business.metaPixel && business.metaPixel.trim());
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-20">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-          Kit de Marketing, QR & Pauta Digital
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-          Herramientas para atraer reservas: Cartel con código QR para mostrador, enlace para Instagram Bio y píxeles de conversión.
-        </p>
+    <div className="mx-auto max-w-5xl space-y-6 pb-20">
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      <div
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
+
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+              />
+              <span>KIT DE CRECIMIENTO, QR & PAUTA DIGITAL</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Kit de Marketing & Carteles QR
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Cartel con código QR de mostrador en alta resolución, enlace directo para Instagram Bio y píxeles de conversión publicitaria.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <a
+              href={qrDataUrl || "#"}
+              download={`qr_${business.slug || "reserva"}.png`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
+            >
+              <Download className="h-4 w-4 text-slate-300" />
+              <span>Descargar QR</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition cursor-pointer"
+            >
+              <Printer className="h-4 w-4 text-slate-300" />
+              <span>Imprimir Cartel</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
+              style={{
+                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+              }}
+            >
+              {copiedUrl ? <Check className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4" />}
+              <span>{copiedUrl ? "¡Copiado!" : "Copiar Enlace"}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Estado del Kit */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                >
+                  <QrCode className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Resolución & Estado de Escaneo
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Cartelería física y fidelización rápida</p>
+                </div>
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <Check className="h-3.5 w-3.5" />
+                <span>400x400 HD</span>
+              </span>
+            </div>
+
+            {/* Circular Gauges */}
+            <div className="py-4 grid grid-cols-2 gap-4">
+              {/* Gauge 1: QR Ready */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={0}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    100%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Código QR
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    Listo para imprimir
+                  </span>
+                </div>
+              </div>
+
+              {/* Gauge 2: Meta Pixel */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke={hasPixel ? "#10b981" : "#f59e0b"}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={hasPixel ? 0 : 56}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className={`absolute text-[10px] font-black font-mono ${hasPixel ? "text-emerald-500" : "text-amber-500"}`}>
+                    {hasPixel ? "100%" : "0%"}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Meta Pixel
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {hasPixel ? "Activo" : "Pendiente"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Operational Telemetry Rows */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Formato</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  PNG / PDF
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Escaneo</span>
+                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                  Cámara Nativa
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Velocidad</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  &lt; 30 seg
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Enlace Web & Canales */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 font-bold">
+                  <Share2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Enlace Oficial para Redes Sociales
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Instagram Bio, WhatsApp Business y Facebook</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-slate-400">
+                {slug}
+              </span>
+            </div>
+
+            {/* URL Box */}
+            <div className="py-2.5">
+              <span className="text-[10px] text-slate-400 block font-medium mb-1">
+                URL Pública de Agendamiento:
+              </span>
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800">
+                <span className="font-mono text-xs text-slate-800 dark:text-slate-200 truncate pr-2">
+                  {bookingUrl}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 shrink-0"
+                  style={{
+                    backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                    color: "#ffffff",
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>{copiedUrl ? "Copiado" : "Copiar"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Tip */}
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span>Pegá este enlace en el botón de tu perfil de Instagram para captar reservas automáticas 24/7.</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

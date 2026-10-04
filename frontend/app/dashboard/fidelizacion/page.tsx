@@ -248,53 +248,246 @@ export default function FidelizacionPage() {
 
   const displayName = userName || "Sebas Duarte";
 
+  const eligiblePct = clients.length > 0 ? Math.round((eligibleClients.length / clients.length) * 100) : 0;
+  const vipPct = clients.length > 0 ? Math.round((clients.filter((c) => c.tags.includes("VIP")).length / clients.length) * 100) : 0;
+
   return (
     <div className="space-y-6">
-      {/* ═══ 1. HEADER ═══ */}
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
       <div
         data-tour="fidelizacion-header"
-        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 shadow-xs"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
       >
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold border transition ${
-                loyalty.enabled
-                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                  : "bg-slate-100 text-slate-500 border-slate-200/60 dark:border-white/10"
-              }`}
-            >
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
+
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
               <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  loyalty.enabled ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
-                }`}
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
               />
-              <Crown className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-              <span>{loyalty.enabled ? "Club VIP Activo" : "Club VIP en Pausa"}</span>
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-              <Globe className="h-3 w-3 text-primary" />
-              <span>Links Personalizados</span>
-            </span>
+              <span>PROGRAMA DE FIDELIZACIÓN & CLUB VIP</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Fidelización & Tarjetas Digitales VIP
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Sumá sellos por visita y compartí con cada cliente su enlace web único para consultar sus beneficios y canjes.
+            </p>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span>Fidelización & Tarjetas Digitales</span>
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Sumá sellos por visita y compartí con cada cliente su enlace web único para consultar sus beneficios.
-          </p>
-        </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold border backdrop-blur-md transition ${
+                loyalty.enabled
+                  ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                  : "bg-white/5 text-slate-400 border-white/10"
+              }`}
+            >
+              <Crown className="h-4 w-4 text-emerald-400" />
+              <span>{loyalty.enabled ? "Club VIP Activo" : "Club en Pausa"}</span>
+            </span>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setEditingSettings(!editingSettings)}
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 px-4 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            <span>{editingSettings ? "Cerrar Configuración" : "Configurar Reglas"}</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setEditingSettings(!editingSettings)}
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
+              style={{
+                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+              }}
+            >
+              <Settings className="h-4 w-4" />
+              <span>{editingSettings ? "Cerrar Configuración" : "Configurar Reglas"}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Adhesión & Retención */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                >
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Retención & Beneficios Acumulados
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Progreso de la base de clientes</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-slate-400">
+                {clients.length} clientes totales
+              </span>
+            </div>
+
+            {/* Circular Gauges */}
+            <div className="py-4 grid grid-cols-2 gap-4">
+              {/* Gauge 1: Clients with ready reward */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, eligiblePct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    {eligiblePct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Premio Listo
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {eligibleClients.length} de {clients.length} listos
+                  </span>
+                </div>
+              </div>
+
+              {/* Gauge 2: VIP Segment Share */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke="#10b981"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, vipPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    {vipPct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Segmento VIP
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    Clientes recurrentes
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Operational Telemetry Rows */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Sellos Otorgados</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  {totalPointsAwarded} {loyalty.mode === "points" ? "pts" : "sellos"}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Premios Canjeados</span>
+                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                  {totalRewardsRedeemed} premios
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Listos p/ Canje</span>
+                <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono">
+                  {eligibleClients.length} clientes
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Reglas & Escala de Premios */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 font-bold">
+                  <Gift className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Escala de Premios & Enlace Web
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Modalidad: {loyalty.mode === "points" ? "Puntos" : "Sellos por visita"}</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                +{loyalty.mode === "points" ? `${loyalty.pointsPerVisit} pts` : "1 sello"} / visita
+              </span>
+            </div>
+
+            {/* URL Box */}
+            <div className="py-2.5">
+              <span className="text-[10px] text-slate-400 block font-medium mb-1">
+                Estructura de Tarjeta Digital Móvil:
+              </span>
+              <div className="font-mono text-xs text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 rounded-xl px-3 py-2 select-all">
+                agendate.py/{business.slug || "salon"}/tarjeta/<span className="text-emerald-600 dark:text-emerald-400 font-bold">[id-cliente]</span>
+              </div>
+            </div>
+
+            {/* Tiers List */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                Premios Configurados ({activeRewards.length})
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {activeRewards.map((tier, idx) => (
+                  <span
+                    key={tier.id || idx}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700"
+                  >
+                    <span className="font-bold text-amber-600 dark:text-amber-400">
+                      {tier.threshold} {loyalty.mode === "points" ? "pts" : "sellos"}:
+                    </span>
+                    <span className="truncate max-w-[150px]">{tier.description}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

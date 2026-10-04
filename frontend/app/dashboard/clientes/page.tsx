@@ -186,55 +186,276 @@ export default function ClientesPage() {
     pushToast("success", "Base de clientes exportada en CSV.");
   }
 
+  const vipRate = useMemo(() => {
+    if (clients.length === 0) return 0;
+    return Math.round((vipCount / clients.length) * 100);
+  }, [vipCount, clients.length]);
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div data-tour="clientes-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Clientes
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Directorio de clientes, historial de visitas y ficha técnica privada.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={exportCSV}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs transition hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
-          >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            Exportar CSV
-          </button>
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 transition hover:opacity-95 cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            Nuevo Cliente
-          </button>
+    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
+      {/* ========================================================= */}
+      {/* 1. DARK CONSOLE HERO BANNER                                */}
+      {/* ========================================================= */}
+      <div
+        data-tour="clientes-header"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        {/* Dynamic Brand Ambient Radial Glow */}
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="uppercase tracking-wider font-semibold text-slate-300">
+                Workspace
+              </span>
+              <span>/</span>
+              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
+              <span className="hidden sm:inline">·</span>
+              <span className="hidden sm:inline text-slate-400">{clients.length} fichas</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+              Directorio de Clientes
+            </h1>
+            <p className="text-sm text-slate-400">
+              Historial de visitas, ficha técnica privada, fórmulas y fidelización.
+            </p>
+          </div>
+
+          {/* Quick Action Dock */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
+              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nuevo Cliente</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={exportCSV}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition cursor-pointer"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Exportar CSV</span>
+            </button>
+
+            <Link
+              href="/dashboard/crm"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition"
+              title="Ir a Mensajes CRM"
+            >
+              <MessagesSquare className="h-3.5 w-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Mensajes</span>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div data-tour="clientes-kpis" className="grid gap-4 md:grid-cols-3">
-        <StatCard
-          label="Total de Clientes"
-          value={String(clients.length)}
-          icon={Users}
-        />
-        <StatCard
-          label="Clientes VIP / Frecuentes"
-          value={String(vipCount)}
-          icon={Crown}
-        />
-        <StatCard
-          label="Gasto Promedio por Cliente"
-          value={formatGs(avgSpent)}
-          icon={UserCheck}
-        />
+      {/* ========================================================= */}
+      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
+      {/* ========================================================= */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Inset Subheader */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div className="font-semibold text-sm text-slate-900 dark:text-white">
+            Métricas de Fidelización & Clientes
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            {vipCount} clientes VIP · Gasto medio {formatGs(avgSpent)}
+          </div>
+        </div>
+
+        {/* Dual-Card Inset Telemetry */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left Card: Operational Gauges & Summary */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+            {/* Top section: Mini status box + 2 circular gauges */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
+              {/* Mini status box */}
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+                <div>
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Clientes VIP
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                    {vipCount} clientes de alto valor identificados.
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <span className="inline-block rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 text-[11px] font-semibold">
+                    {vipCount} VIP
+                  </span>
+                </div>
+              </div>
+
+              {/* Circular Gauge 1: VIP % */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * vipRate) / 100}
+                      strokeLinecap="round"
+                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      className="transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {vipRate}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  VIP
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {vipCount} frecuentes
+                </div>
+              </div>
+
+              {/* Circular Gauge 2: Fórmulas Técnicas Guardadas */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray="4 2"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.round((clients.filter((c) => c.formula).length / (clients.length || 1)) * 100))) / 100}
+                      strokeLinecap="round"
+                      className="text-emerald-500 transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {clients.filter((c) => c.formula).length}
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Fórmulas
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  fichas con datos
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Data Rows */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Total de clientes registrados</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {clients.length} fichas
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Gasto acumulado total</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {formatGs(totalSpentAll)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                <span>Gasto promedio por cliente</span>
+                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
+                  {formatGs(avgSpent)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Card: Etiquetas & Segmentación */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+            <div>
+              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
+                Segmentos de Clientes
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                      <Crown className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Clientes VIP</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{vipCount}</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <UserCheck className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Frecuentes</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {clients.filter((c) => c.tags?.includes("Frecuente")).length}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <Users className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Nuevos Ingresos</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {clients.filter((c) => c.tags?.includes("Nuevo")).length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom notification */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                Fichas técnicas con notas privadas y fórmulas químicas:
+              </span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                100% Confidencial
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Search and Filters */}

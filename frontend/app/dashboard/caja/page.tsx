@@ -253,75 +253,120 @@ export default function CajaPage() {
   }, [selectedDate, todayStr, yesterdayStr, tz]);
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
+    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
+      {/* ========================================================= */}
+      {/* 1. DARK CONSOLE HERO BANNER                                */}
+      {/* ========================================================= */}
       <div
         data-tour="caja-header"
-        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
       >
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
-            <span>Caja Diaria & Arqueo</span>
-            <Wallet className="h-5 w-5 text-primary" />
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Control de cobros por turno, arqueo de gaveta y registro de gastos diarios.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
-          <button
-            type="button"
-            data-tour="caja-close-btn"
-            onClick={() => setArqueoOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 sm:px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
-          >
-            <CheckSquare className="h-4 w-4 text-primary shrink-0" />
-            <span className="truncate">Cierre de Caja</span>
-          </button>
-          <button
-            type="button"
-            data-tour="caja-new-btn"
-            onClick={() => setModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-3 sm:px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
-          >
-            <PlusCircle className="h-4 w-4 shrink-0" />
-            <span className="truncate">+ Movimiento</span>
-          </button>
+        {/* Dynamic Brand Ambient Radial Glow */}
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="uppercase tracking-wider font-semibold text-slate-300">
+                Workspace
+              </span>
+              <span>/</span>
+              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
+              <span className="hidden sm:inline">·</span>
+              <span className="hidden sm:inline capitalize text-slate-400">{formattedDayTitle}</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+              Caja Diaria & Arqueo
+            </h1>
+            <p className="text-sm text-slate-400">
+              Control de cobros por turno, arqueo de gaveta y registro de gastos diarios.
+            </p>
+          </div>
+
+          {/* Quick Action Dock */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              data-tour="caja-new-btn"
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
+              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>+ Movimiento</span>
+            </button>
+
+            <button
+              type="button"
+              data-tour="caja-close-btn"
+              onClick={() => setArqueoOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition cursor-pointer"
+            >
+              <CheckSquare className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Cierre de Caja</span>
+            </button>
+
+            <a
+              href="/api/reports/cash?type=movements&format=csv"
+              download
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-300 transition"
+              title="Exportar movimientos en formato CSV"
+            >
+              <Download className="h-3.5 w-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Exportar</span>
+            </a>
+          </div>
         </div>
       </div>
 
-      {/* Date Navigation & Day-by-Day Historical Filter */}
-      <div
-        data-tour="caja-date-filter"
-        className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-3.5 shadow-xs"
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Day selection buttons */}
-          <div className="flex flex-wrap items-center gap-1.5">
+      {/* ========================================================= */}
+      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
+      {/* ========================================================= */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Inset Subheader with Date Filter Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+          <div>
+            <div className="font-semibold text-sm text-slate-900 dark:text-white">
+              Resumen de Caja · {formattedDayTitle}
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+              {dateFilteredMovements.length} movimientos registrados en este período
+            </div>
+          </div>
+
+          {/* Date Filter Segmented Controls */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
             <button
               type="button"
               onClick={() => setSelectedDate(todayStr)}
-              className={`rounded-2xl px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+              className={`rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
                 selectedDate === todayStr
-                  ? "bg-primary text-white shadow-xs"
-                  : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
+              style={selectedDate === todayStr ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
             >
               Hoy
             </button>
             <button
               type="button"
               onClick={() => setSelectedDate(yesterdayStr)}
-              className={`rounded-2xl px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+              className={`rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
                 selectedDate === yesterdayStr
-                  ? "bg-primary text-white shadow-xs"
-                  : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
+              style={selectedDate === yesterdayStr ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
             >
               Ayer
             </button>
-
-            {/* Custom Date Picker input styled */}
             <div className="relative inline-flex items-center">
               <input
                 type="date"
@@ -329,141 +374,246 @@ export default function CajaPage() {
                 onChange={(e) => {
                   if (e.target.value) setSelectedDate(e.target.value);
                 }}
-                className={`rounded-2xl border px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                className={`rounded-xl border px-2.5 py-0.5 text-xs font-medium transition cursor-pointer ${
                   selectedDate !== todayStr && selectedDate !== yesterdayStr && selectedDate !== "all"
-                    ? "border-primary bg-primary/10 text-primary shadow-xs"
-                    : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                 } focus:outline-none`}
-                title="Seleccionar fecha específica"
+                title="Seleccionar fecha"
               />
             </div>
-
             <button
               type="button"
               onClick={() => setSelectedDate("all")}
-              className={`rounded-2xl px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+              className={`rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
                 selectedDate === "all"
-                  ? "bg-primary text-white shadow-xs"
-                  : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
+              style={selectedDate === "all" ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
             >
-              <History className="h-3.5 w-3.5 inline mr-1" />
-              Todo el Historial
+              Historial
             </button>
           </div>
-
-          {/* Current view indicator & movement count */}
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-800/40 px-3 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300">
-              <Calendar className="h-3.5 w-3.5" />
-              <span className="capitalize">{formattedDayTitle}</span>
-            </span>
-            <span className="rounded-xl bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-600 dark:text-slate-300">
-              {dateFilteredMovements.length} mov.
-            </span>
-          </div>
         </div>
-      </div>
 
-      {/* Daily Cash Closure Status Banner */}
-      {activeClosure ? (
-        <div className="flex items-center justify-between rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 shadow-xs">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
-                Arqueo registrado ({formatInTimeZone(new Date(activeClosure.closedAt), tz, "HH:mm")} hs por {activeClosure.closedBy})
-              </p>
-              <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300">
-                Efectivo contado: {formatGs(activeClosure.countedCash)} · Diferencia: {formatGs(activeClosure.difference)} · {activeClosure.notes ? `Nota: "${activeClosure.notes}"` : "Sin observaciones"}.
+        {/* Status Alert if needed */}
+        {activeClosure ? (
+          <div className="flex items-center justify-between rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 shadow-xs">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                  Arqueo registrado ({formatInTimeZone(new Date(activeClosure.closedAt), tz, "HH:mm")} hs por {activeClosure.closedBy})
+                </p>
+                <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300">
+                  Efectivo contado: {formatGs(activeClosure.countedCash)} · Diferencia: {formatGs(activeClosure.difference)} · {activeClosure.notes ? `Nota: "${activeClosure.notes}"` : "Sin observaciones"}.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : selectedDate === todayStr ? (
+          <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <p className="text-xs text-amber-900 dark:text-amber-200">
+                <strong>Caja del día activa.</strong> Fondo inicial: <strong>{formatGs(stats.opening)}</strong>. Al terminar la jornada, realizá el <strong>Cierre de Caja</strong> para cuadrar la gaveta.
               </p>
             </div>
           </div>
-        </div>
-      ) : selectedDate === todayStr ? (
-        <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-            <p className="text-xs text-amber-900 dark:text-amber-200">
-              <strong>Caja de hoy en curso.</strong> Fondo inicial cargado: <strong>{formatGs(stats.opening)}</strong>. Al terminar tu turno, realizá el <strong>Cierre de Caja</strong> para verificar el dinero en la gaveta.
-            </p>
+        ) : null}
+
+        {/* Dual-Card Inset Telemetry */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left Card: Operational Gauges & Summary */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+            {/* Top section: Mini status box + 2 circular gauges */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
+              {/* Mini status box */}
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+                <div>
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Gaveta Físico
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                    Fondo inicial + cobros en efectivo - egresos.
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <span className="text-xs font-extrabold text-slate-900 dark:text-white">
+                    {formatGs(stats.efectivoEnCajaEsperado)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Circular Gauge 1: Efectivo % */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * (stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0)) / 100}
+                      strokeLinecap="round"
+                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      className="transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Efectivo
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {formatGs(stats.efectivoIngresos)}
+                </div>
+              </div>
+
+              {/* Circular Gauge 2: Digital % (SIPAP + POS) */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray="4 2"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * (stats.totalIngresos > 0 ? Math.round(((stats.posIngresos + stats.transferenciaIngresos) / stats.totalIngresos) * 100) : 0)) / 100}
+                      strokeLinecap="round"
+                      className="text-emerald-500 transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {stats.totalIngresos > 0 ? Math.round(((stats.posIngresos + stats.transferenciaIngresos) / stats.totalIngresos) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Digital (POS/SIPAP)
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {formatGs(stats.posIngresos + stats.transferenciaIngresos)}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Data Rows */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Total Ingresos Brutos</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {formatGs(stats.totalIngresos)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Egresos y Gastos Operativos</span>
+                <span className="font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
+                  -{formatGs(stats.egresos)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                <span>Balance Neto del Período</span>
+                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
+                  {formatGs(stats.balanceNeto)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Card: Methods Breakdown Cards */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+            <div>
+              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
+                Desglose por Canal de Cobro
+              </div>
+
+              <div className="space-y-2">
+                {/* Method 1: Efectivo */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <Banknote className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">Efectivo en Gaveta</div>
+                      <div className="text-[10px] text-slate-400">Fondo inicial + ventas directas</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
+                    {formatGs(stats.efectivoIngresos)}
+                  </span>
+                </div>
+
+                {/* Method 2: POS Bancard */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <CreditCard className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">POS / Tarjetas Bancard</div>
+                      <div className="text-[10px] text-slate-400">Terminal comercial débito/crédito</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
+                    {formatGs(stats.posIngresos)}
+                  </span>
+                </div>
+
+                {/* Method 3: Transferencias SIPAP */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                      <Building2 className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">Transferencias SIPAP / SPI</div>
+                      <div className="text-[10px] text-slate-400">Acreditaciones bancarias directas</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
+                    {formatGs(stats.transferenciaIngresos)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <span>Total en canales digitales (POS + SIPAP):</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                {formatGs(stats.posIngresos + stats.transferenciaIngresos)}
+              </span>
+            </div>
           </div>
         </div>
-      ) : null}
-
-      {/* KPI Cards */}
-      <div
-        data-tour="caja-kpis"
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
-      >
-        <StatCard
-          label={selectedDate === "all" ? "Total Ingresos Histórico" : "Total Ingresos del Día"}
-          value={formatGs(stats.totalIngresos)}
-          icon={TrendingUp}
-        />
-        <StatCard
-          label="Efectivo en Gaveta Esperado"
-          value={formatGs(stats.efectivoEnCajaEsperado)}
-          icon={Banknote}
-        />
-        <StatCard
-          label="Egresos / Gastos"
-          value={formatGs(stats.egresos)}
-          icon={ArrowUpRight}
-        />
-        <StatCard
-          label="Balance Neto"
-          value={formatGs(stats.balanceNeto)}
-          icon={Wallet}
-        />
-      </div>
-
-      {/* Breakdown by Method Cards */}
-      <div
-        data-tour="caja-methods"
-        className="grid gap-4 md:grid-cols-3"
-      >
-        <Card className="border-l-4 border-l-emerald-500">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Efectivo Físico en Gaveta
-          </p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl font-black text-slate-900 dark:text-white">
-              {formatGs(stats.efectivoEnCajaEsperado)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Fondo inicial ({formatGs(stats.opening)}) + Cobros en mano ({formatGs(stats.efectivoIngresos)}) - Egresos ({formatGs(stats.egresos)})
-          </p>
-        </Card>
-
-        <Card className="border-l-4 border-l-blue-500">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Tarjetas POS Bancard
-          </p>
-          <div className="mt-2">
-            <span className="text-xl font-black text-slate-900 dark:text-white">
-              {formatGs(stats.posIngresos)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Acredita en cuenta bancaria comercial Bancard/uPay
-          </p>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Transferencias SIPAP
-          </p>
-          <div className="mt-2">
-            <span className="text-xl font-black text-slate-900 dark:text-white">
-              {formatGs(stats.transferenciaIngresos)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Pagos directos vía comprobante bancario validado
-          </p>
-        </Card>
       </div>
 
       {/* Movements Table */}

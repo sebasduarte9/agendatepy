@@ -131,33 +131,60 @@ export default function EstadisticasPage() {
   }, [dbStats]);
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Métricas & Analítica del Negocio
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            Evolución de facturación en Gs., tasa de asistencia, métodos de cobro y horarios pico.
-          </p>
-        </div>
+    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
+      {/* ========================================================= */}
+      {/* 1. DARK CONSOLE HERO BANNER                                */}
+      {/* ========================================================= */}
+      <div
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        {/* Dynamic Brand Ambient Radial Glow */}
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
 
-        <div className="flex items-center gap-1 rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xs overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
-          {FILTERS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setFilter(item)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition shrink-0 whitespace-nowrap cursor-pointer ${
-                filter === item
-                  ? "bg-primary text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="uppercase tracking-wider font-semibold text-slate-300">
+                Workspace
+              </span>
+              <span>/</span>
+              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
+              <span className="hidden sm:inline">·</span>
+              <span className="hidden sm:inline text-slate-400">{filter}</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+              Métricas & Analítica del Negocio
+            </h1>
+            <p className="text-sm text-slate-400">
+              Evolución de facturación en Gs., tasa de asistencia, métodos de cobro y horarios pico.
+            </p>
+          </div>
+
+          {/* Timeframe Filter Dock */}
+          <div className="flex items-center gap-1 rounded-2xl border border-slate-700 p-1 bg-slate-900/80 backdrop-blur-xl shadow-xs overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
+            {FILTERS.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setFilter(item)}
+                className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition shrink-0 whitespace-nowrap cursor-pointer ${
+                  filter === item
+                    ? "text-white shadow-xs"
+                    : "text-slate-400 hover:text-white"
+                }`}
+                style={filter === item ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -178,39 +205,192 @@ export default function EstadisticasPage() {
         </div>
       )}
 
-      {/* KPI Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {loading ? (
-          <>
-            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
-            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
-            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
-            <div className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse border border-slate-200/60 dark:border-white/5" />
-          </>
-        ) : (
-          <>
-            <StatCard
-              label="Facturación Confirmada"
-              value={formatGs(revenue)}
-              icon={Wallet}
-            />
-            <StatCard
-              label="Tasa de Asistencia (Show-up)"
-              value={`${attendanceRate}%`}
-              icon={CheckCircle2}
-            />
-            <StatCard
-              label="Clientes Únicos Atendidos"
-              value={`${uniqueClients} personas`}
-              icon={UserRound}
-            />
-            <StatCard
-              label="Turnos Cancelados"
-              value={`${cancelled.length} cancelados`}
-              icon={Ban}
-            />
-          </>
-        )}
+      {/* ========================================================= */}
+      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
+      {/* ========================================================= */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Inset Subheader */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div className="font-semibold text-sm text-slate-900 dark:text-white">
+            Resumen de Rendimiento · {filter}
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            {uniqueClients} clientes únicos atendidos · Asistencia al {attendanceRate}%
+          </div>
+        </div>
+
+        {/* Dual-Card Inset Telemetry */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left Card: Operational Gauges & Summary */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+            {/* Top section: Mini status box + 2 circular gauges */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
+              {/* Mini status box */}
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+                <div>
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Facturación
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                    Ingresos brutos acumulados en este período.
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <span className="text-xs font-extrabold text-slate-900 dark:text-white">
+                    {formatGs(revenue)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Circular Gauge 1: Asistencia % */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * attendanceRate) / 100}
+                      strokeLinecap="round"
+                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      className="transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {attendanceRate}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Asistencia
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  show-up clientes
+                </div>
+              </div>
+
+              {/* Circular Gauge 2: Cancelación % */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="relative h-14 w-14 flex items-center justify-center">
+                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray="4 2"
+                      className="text-slate-100 dark:text-slate-800"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * (total > 0 ? Math.round((cancelled.length / total) * 100) : 0)) / 100}
+                      strokeLinecap="round"
+                      className="text-rose-500 transition-all duration-700"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
+                    {total > 0 ? Math.round((cancelled.length / total) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                  Cancelados
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {cancelled.length} turnos
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Data Rows */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Facturación confirmada</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {formatGs(revenue)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                <span>Clientes únicos atendidos</span>
+                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {uniqueClients} personas
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                <span>Total de citas procesadas</span>
+                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
+                  {total} turnos
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Card: Quick KPI highlights */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+            <div>
+              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
+                Indicadores Clave del Negocio
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <Wallet className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Facturación Cobrada</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{formatGs(revenue)}</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Tasa de Asistencia</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{attendanceRate}%</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                      <UserRound className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Clientes Atendidos</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{uniqueClients} personas</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom notification */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <span>Filtro de período:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{filter}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Charts Section */}

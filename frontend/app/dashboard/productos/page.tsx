@@ -379,73 +379,311 @@ export default function ProductosPage() {
     setTimeout(() => setCopiedLink(false), 2000);
   }
 
+  const healthyProductsCount = products.filter((p) => p.stock > 5).length;
+  const stockHealthyPct = products.length > 0 ? Math.round((healthyProductsCount / products.length) * 100) : 100;
+  const avgMarginPct = totalRetailValue > 0 ? Math.round((estimatedProfit / totalRetailValue) * 100) : 0;
+  const onSaleCount = products.filter((p) => p.isOnSale && p.salePrice && p.salePrice < p.price).length;
+
+  const topCategoryBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    products.forEach((p) => {
+      const c = p.category?.trim() || "General";
+      map[c] = (map[c] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  }, [products]);
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div data-tour="productos-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Productos, Tienda & Inventario
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Catálogo web con pedidos directos a tu WhatsApp y venta rápida al mostrador.
-          </p>
-        </div>
+      {/* Dark Console Hero Header */}
+      <div
+        data-tour="productos-header"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={copyStoreLink}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
-          >
-            {copiedLink ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-slate-400" />}
-            <span>Copiar Enlace Tienda</span>
-          </button>
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+              />
+              <span>CATÁLOGO DIGITAL & INVENTARIO</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Productos, Tienda & Inventario
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Control de existencias en tiempo real, márgenes por unidad, alertas de stock bajo y pedidos directos a tu WhatsApp.
+            </p>
+          </div>
 
-          <Link
-            href={publicStoreUrl}
-            target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-          >
-            <ExternalLink className="h-4 w-4 text-slate-400" />
-            <span>Ver Tienda Web</span>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={copyStoreLink}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition cursor-pointer"
+            >
+              {copiedLink ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-slate-300" />}
+              <span>{copiedLink ? "¡Copiado!" : "Copiar Enlace Tienda"}</span>
+            </button>
 
-          <button
-            type="button"
-            data-tour="productos-new-btn"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:brightness-110 transition cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nuevo Producto</span>
-          </button>
+            <Link
+              href={publicStoreUrl}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
+            >
+              <ExternalLink className="h-4 w-4 text-slate-300" />
+              <span>Ver Tienda Web</span>
+            </Link>
+
+            <button
+              type="button"
+              data-tour="productos-new-btn"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
+              style={{
+                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nuevo Producto</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* KPI Stats */}
-      <div data-tour="productos-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Unidades en Stock"
-          value={`${totalStock} u.`}
-          icon={Package}
-        />
-        <StatCard
-          label="Valor del Inventario (Venta)"
-          value={formatGs(totalRetailValue)}
-          icon={ShoppingBag}
-        />
-        <StatCard
-          label="Margen Bruto Estimado"
-          value={formatGs(estimatedProfit)}
-          icon={TrendingUp}
-        />
-        <StatCard
-          label="Stock Bajo o Crítico (≤5)"
-          value={`${lowStockCount} items`}
-          icon={AlertTriangle}
-          delta={lowStockCount > 0 ? -lowStockCount : undefined}
-        />
+      {/* Apple Inset Telemetry & Intelligence Container */}
+      <div data-tour="productos-kpis" className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Stock Health & Financial Overview */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                >
+                  <Package className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Salud del Inventario & Márgenes
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Existencias operativas y rentabilidad</p>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-[11px] font-bold text-slate-400 block">Total Ítems</span>
+                <span className="text-sm font-black text-slate-900 dark:text-white font-mono">
+                  {products.length} productos
+                </span>
+              </div>
+            </div>
+
+            {/* Circular SVG Gauges */}
+            <div className="py-4 grid grid-cols-2 gap-4">
+              {/* Gauge 1: Stock Health */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, stockHealthyPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    {stockHealthyPct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Stock Óptimo
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {healthyProductsCount} de {products.length} con &gt;5 u.
+                  </span>
+                </div>
+              </div>
+
+              {/* Gauge 2: Average Margin */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke="#10b981"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, avgMarginPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    {avgMarginPct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Margen Comercial
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    Rentabilidad media
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Telemetry Rows */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Total Unidades</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  {totalStock} u.
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Valor Venta (PVP)</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono truncate block">
+                  {formatGs(totalRetailValue)}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Margen Bruto Est.</span>
+                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono truncate block">
+                  {formatGs(estimatedProfit)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Restock Alerts & Category Distribution */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold ${
+                  lowStockCount > 0 ? "bg-amber-500" : "bg-emerald-600"
+                }`}>
+                  {lowStockCount > 0 ? <AlertTriangle className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Alertas & Segmentación
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Reabastecimiento y categorías principales</p>
+                </div>
+              </div>
+
+              {onSaleCount > 0 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  <Tag className="h-3 w-3" />
+                  <span>{onSaleCount} en oferta</span>
+                </span>
+              )}
+            </div>
+
+            {/* Low Stock Warning or All Clear */}
+            <div className="py-3">
+              {lowStockCount > 0 ? (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-ping" />
+                    <div>
+                      <span className="text-xs font-black text-amber-700 dark:text-amber-300 block">
+                        {lowStockCount} {lowStockCount === 1 ? "producto requiere" : "productos requieren"} reposición
+                      </span>
+                      <span className="text-[10px] text-amber-600/90 dark:text-amber-400/90">
+                        Existencias menores o iguales a 5 unidades en bodega.
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="text-[11px] font-bold text-amber-700 dark:text-amber-300 underline cursor-pointer hover:opacity-80"
+                  >
+                    Ver críticos
+                  </button>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <div>
+                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 block">
+                      Inventario con niveles saludables
+                    </span>
+                    <span className="text-[10px] text-emerald-600/90 dark:text-emerald-400/90">
+                      Todos los productos activos cuentan con stock superior a 5 unidades.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Category Breakdown Bars */}
+            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                Distribución por Categoría
+              </span>
+              <div className="space-y-1.5">
+                {topCategoryBreakdown.map(([cat, count]) => {
+                  const pct = products.length > 0 ? Math.round((count / products.length) * 100) : 0;
+                  return (
+                    <div key={cat} className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{cat}</span>
+                        <span className="font-mono text-slate-400">{count} u. ({pct}%)</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters & Search */}
@@ -465,9 +703,10 @@ export default function ProductosPage() {
           <button
             type="button"
             onClick={() => setSelectedCategory("Todas")}
-            className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+            style={selectedCategory === "Todas" ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
+            className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
               selectedCategory === "Todas"
-                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
+                ? "shadow-xs font-bold"
                 : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
@@ -477,7 +716,7 @@ export default function ProductosPage() {
           <button
             type="button"
             onClick={() => setSelectedCategory("ofertas")}
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
               selectedCategory === "ofertas"
                 ? "bg-amber-500 text-white shadow-xs"
                 : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20"
@@ -495,9 +734,10 @@ export default function ProductosPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                  style={isSelected ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                     isSelected
-                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
+                      ? "shadow-xs font-bold"
                       : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >

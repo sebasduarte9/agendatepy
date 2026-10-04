@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import QRCode from "qrcode";
 import {
@@ -22,6 +23,7 @@ import {
   AlertTriangle,
   X,
   Check,
+  Copy,
   Laptop,
   Lock,
   ExternalLink,
@@ -210,27 +212,295 @@ export default function ConfiguracionPage() {
     }
   }
 
+  const profileFields = [business.name, business.slug, business.phone, business.address, business.timezone];
+  const filledFieldsCount = profileFields.filter(Boolean).length;
+  const profileCompletionPct = Math.round((filledFieldsCount / profileFields.length) * 100);
+  const paymentMethodsPct = Math.round((activePaymentMethods.length / AVAILABLE_PAYMENT_METHODS.length) * 100);
+  const publicStoreUrl = `/${business.slug || "barberia"}/reservar`;
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  async function copyStoreLink() {
+    const fullUrl = `${window.location.origin}${publicStoreUrl}`;
+    await navigator.clipboard.writeText(fullUrl);
+    setCopiedLink(true);
+    pushToast("success", "Enlace público de reservas copiado");
+    setTimeout(() => setCopiedLink(false), 2000);
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="mx-auto max-w-3xl space-y-6"
+      className="space-y-6 max-w-5xl mx-auto"
     >
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-          Configuración del Negocio & Ajustes
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-          Información legal, dirección física, horarios de apertura, seguridad y gestión de cuenta.
-        </p>
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      <div
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
+
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+              />
+              <span>AJUSTES GLOBALES & SEGURIDAD OPERATIVA</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Configuración del Negocio
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Información comercial, enlace público agendate.py/{business.slug}, métodos de pago aceptados y seguridad 2FA.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={copyStoreLink}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition cursor-pointer"
+            >
+              {copiedLink ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-slate-300" />}
+              <span>{copiedLink ? "¡Copiado!" : "Copiar Enlace"}</span>
+            </button>
+
+            <Link
+              href={publicStoreUrl}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
+            >
+              <ExternalLink className="h-4 w-4 text-slate-300" />
+              <span>Ver Página Web</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
+              style={{
+                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+              }}
+            >
+              <Save className="h-4 w-4" />
+              <span>Guardar Cambios</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Perfil del Negocio & Estado */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                >
+                  <Store className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Estado & Completitud del Negocio
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Parámetros comerciales esenciales</p>
+                </div>
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Verificado</span>
+              </span>
+            </div>
+
+            {/* Circular SVG Gauges */}
+            <div className="py-4 grid grid-cols-2 gap-4">
+              {/* Gauge 1: Profile Completion */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, profileCompletionPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    {profileCompletionPct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Perfil Completo
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {filledFieldsCount} de {profileFields.length} campos listos
+                  </span>
+                </div>
+              </div>
+
+              {/* Gauge 2: Payment Methods Coverage */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke="#10b981"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, paymentMethodsPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    {paymentMethodsPct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Medios de Cobro
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {activePaymentMethods.length} de {AVAILABLE_PAYMENT_METHODS.length} activos
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Operational Telemetry Rows */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Horario Semanal</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  {openingTime} - {closingTime}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Domingos</span>
+                <span className={`text-xs font-black font-mono ${sundayOpen ? "text-emerald-500" : "text-slate-400"}`}>
+                  {sundayOpen ? "Abierto" : "Cerrado"}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Seguridad 2FA</span>
+                <span className={`text-xs font-black font-mono ${is2faEnabled ? "text-emerald-500" : "text-amber-500"}`}>
+                  {is2faEnabled ? "Protegido" : "Pendiente"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Enlace Web & Métodos de Pago Activos */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 font-bold">
+                  <Globe className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Enlace Público de Reservas
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Portal web directo para tus clientes</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-slate-400">
+                {business.timezone}
+              </span>
+            </div>
+
+            {/* URL Box */}
+            <div className="py-3">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800">
+                <div className="min-w-0 pr-3">
+                  <span className="text-[10px] text-slate-400 block font-medium">Subdominio Activo:</span>
+                  <span className="text-xs font-bold font-mono text-slate-900 dark:text-white truncate block">
+                    agendate.py/{business.slug}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyStoreLink}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                    color: "#ffffff",
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>Copiar</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Active Payment Pills */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                Métodos de Pago Habilitados ({activePaymentMethods.length})
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {AVAILABLE_PAYMENT_METHODS.filter((m) => activePaymentMethods.includes(m.id)).map((m) => (
+                  <span
+                    key={m.id}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700"
+                  >
+                    <Check className="h-3 w-3 text-emerald-500" />
+                    <span>{m.title}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSaveAll} className="space-y-6">
         {/* Brand & Logo Header Card */}
         <Card className="flex flex-col sm:flex-row items-center gap-5">
-          <label className="group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center rounded-3xl bg-gradient-to-tr from-primary to-indigo-600 text-2xl font-black text-white shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+          <label
+            className="group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center rounded-3xl text-2xl font-black text-white shadow-xl hover:scale-105 transition-all"
+            style={{
+              backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+              boxShadow: `0 10px 25px -5px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+            }}
+          >
             {business.name.slice(0, 2).toUpperCase()}
             <input
               type="file"
@@ -251,7 +521,10 @@ export default function ConfiguracionPage() {
                 Verificado
               </span>
             </div>
-            <p className="font-mono text-xs text-primary font-bold">
+            <p
+              className="font-mono text-xs font-bold"
+              style={{ color: business.primaryColor || "var(--primary, #0ea5e9)" }}
+            >
               agendate.py/{business.slug}
             </p>
             <p className="text-xs text-slate-400">

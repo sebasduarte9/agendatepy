@@ -369,17 +369,248 @@ function NuevaReservaContent() {
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
   }, [createdAppointment, business]);
 
+  const activeStaffPct = Math.round((staff.filter((s) => s.active).length / Math.max(1, staff.length)) * 100);
+  const durationPct = Math.min(100, Math.round(((currentService?.durationMin || 45) / 90) * 100));
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {/* Top Header */}
-      <div data-tour="nueva-reserva-header">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white inline-flex items-center gap-2">
-          <span>Agendar Turno Rápido</span>
-          <CalendarPlus className="h-6 w-6 text-primary" />
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-          Carga de turnos presenciales o telefónicos con sincronización directa en base de datos SQL.
-        </p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      <div
+        data-tour="nueva-reserva-header"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+      >
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
+
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+              />
+              <span>AGENDA OPERATIVA & RECEPCIÓN</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Agendar Turno Rápido & Recepción
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Carga manual de turnos presenciales o telefónicos con confirmación instantánea de WhatsApp y base de datos SQL.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/dashboard/calendario"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
+            >
+              <Calendar className="h-4 w-4 text-slate-300" />
+              <span>Ver Agenda Completa</span>
+            </Link>
+
+            <Link
+              href="/dashboard/clientes"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
+            >
+              <User className="h-4 w-4 text-slate-300" />
+              <span>Directorio Clientes</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setMode(mode === "appointment" ? "block" : "appointment")}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-md transition cursor-pointer ${
+                mode === "block" ? "bg-amber-600 hover:bg-amber-500" : "bg-white/10 hover:bg-white/20 border border-white/15"
+              }`}
+            >
+              <Ban className="h-4 w-4" />
+              <span>{mode === "block" ? "Volver a Turno" : "Bloquear Horario"}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Capacidad Operativa & Especialistas */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                >
+                  <CalendarPlus className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Capacidad & Especialistas
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Disponibilidad del equipo en salón</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-slate-400">
+                {date}
+              </span>
+            </div>
+
+            {/* Circular Gauges */}
+            <div className="py-4 grid grid-cols-2 gap-4">
+              {/* Gauge 1: Staff Availability */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, activeStaffPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    {activeStaffPct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Equipo Activo
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {staff.filter((s) => s.active).length} de {staff.length} disponibles
+                  </span>
+                </div>
+              </div>
+
+              {/* Gauge 2: Service Duration */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke="#10b981"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, durationPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    {currentService?.durationMin || 45}m
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Duración Estimada
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    Bloque de agenda
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Operational Telemetry Rows */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Horario Turno</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono truncate block">
+                  {time} a {appointmentEndTime}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Especialistas</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  {staff.length} activos
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Catálogo</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  {services.length} servicios
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Resumen del Turno & Recordatorio */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold">
+                  <Scissors className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Resumen del Turno Seleccionado
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Detalles en vivo de la reserva</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400">
+                {currentService?.price ? formatGs(currentService.price) : "Gs. 0"}
+              </span>
+            </div>
+
+            {/* Live Service Pill */}
+            <div className="py-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {currentService?.name || "Servicio"}
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    {currentService?.durationMin || 45} min
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                  <span>Profesional asignado:</span>
+                  <strong className="text-slate-800 dark:text-slate-200 font-medium">
+                    {currentStaff?.name || "Equipo General"}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* WhatsApp Ready Status */}
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs">
+              <MessageCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+              <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium truncate">
+                Recordatorio con link de Google Calendar listo para enviar tras agendar.
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {createdAppointment ? (
@@ -886,9 +1117,10 @@ function NuevaReservaContent() {
                         key={id}
                         type="button"
                         onClick={() => setPaymentMethod(id)}
+                        style={isSelected ? { backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)", color: "#ffffff", borderColor: business.primaryColor || "var(--primary, #0ea5e9)" } : undefined}
                         className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 px-2 text-xs font-bold transition cursor-pointer ${
                           isSelected
-                            ? "border-primary bg-primary text-white shadow-xs"
+                            ? "shadow-xs"
                             : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
                         }`}
                       >
@@ -921,7 +1153,10 @@ function NuevaReservaContent() {
               >
                 <div>
                   <span className="text-[10.5px] text-slate-400 block font-medium">Tarifa del Servicio:</span>
-                  <span className="text-base font-black text-primary">
+                  <span
+                    className="text-base font-black font-mono"
+                    style={{ color: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  >
                     {formatGs(currentService?.price || 0)}
                   </span>
                 </div>
@@ -936,7 +1171,11 @@ function NuevaReservaContent() {
                   <button
                     type="submit"
                     disabled={isSubmitting || !clientName.trim()}
-                    className="rounded-2xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
+                    style={{
+                      backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                      boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+                    }}
+                    className="rounded-2xl px-6 py-2.5 text-xs font-bold text-white shadow-md hover:brightness-110 disabled:opacity-50 transition cursor-pointer"
                   >
                     {isSubmitting ? "Guardando en SQL..." : "Confirmar Turno"}
                   </button>

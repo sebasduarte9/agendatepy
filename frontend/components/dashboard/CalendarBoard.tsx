@@ -533,36 +533,73 @@ export default function CalendarBoard() {
     }
   }
 
+  const dayAppointments = useMemo(() => {
+    return appointments.filter((a) => {
+      try {
+        return a.start.startsWith(calendarDate);
+      } catch {
+        return false;
+      }
+    });
+  }, [appointments, calendarDate]);
+
+  const confirmedDayCount = dayAppointments.filter((a) => a.status === "confirmed" || a.status === "completed").length;
+  const attendanceRate = dayAppointments.length > 0 ? Math.round((confirmedDayCount / dayAppointments.length) * 100) : 100;
+  const dayBlocks = blocks.filter((b) => b.date === calendarDate);
+  const totalSlotsEstimated = Math.max(1, staff.length * 12);
+  const occupancyPct = Math.min(100, Math.round(((dayAppointments.length + dayBlocks.length) / totalSlotsEstimated) * 100));
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <p className="sr-only">{timezoneNote}</p>
 
-      {/* Google Calendar-Style Top Command Toolbar */}
+      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
       <div
         data-tour="calendar-header"
-        className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-200/80 dark:border-white/10 pb-4"
+        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
       >
-        {/* Top/Left: Date navigators and title */}
-        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Hoy button */}
-            <button
-              type="button"
-              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              onClick={() =>
-                setCalendarDate(
-                  formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
-                )
-              }
-            >
-              Hoy
-            </button>
+        <div
+          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+        />
 
-            {/* Navigation Arrows */}
-            <div className="flex items-center">
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full animate-pulse"
+                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+              />
+              <span>AGENDA & CONTROL OPERATIVO</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white capitalize">
+                {label}
+              </h1>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Planificación centralizada por especialista, bloqueos de descanso y confirmación automática con clientes.
+            </p>
+          </div>
+
+          {/* Action Dock */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Date Navigator */}
+            <div className="flex items-center gap-1 bg-white/10 border border-white/15 rounded-xl p-1 backdrop-blur-md">
               <button
                 type="button"
-                className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="rounded-lg px-2.5 py-1 text-xs font-bold text-white hover:bg-white/15 transition cursor-pointer"
+                onClick={() =>
+                  setCalendarDate(
+                    formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
+                  )
+                }
+              >
+                Hoy
+              </button>
+              <button
+                type="button"
+                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer"
                 onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1))}
                 aria-label="Anterior"
               >
@@ -570,43 +607,33 @@ export default function CalendarBoard() {
               </button>
               <button
                 type="button"
-                className="rounded-xl p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer"
                 onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1))}
                 aria-label="Siguiente"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
-          </div>
 
-          {/* Current Date Label */}
-          <h1 className="text-sm font-black capitalize text-slate-900 dark:text-white sm:text-lg truncate">
-            <span className="sm:hidden">{shortLabel}</span>
-            <span className="hidden sm:inline">{label}</span>
-          </h1>
-        </div>
+            {/* View Switcher pills */}
+            <div className="flex rounded-xl bg-white/10 border border-white/15 p-1 backdrop-blur-md">
+              {(["dia", "semana", "mes"] as const).map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setCalendarView(view)}
+                  style={calendarView === view ? { backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)", color: "#ffffff" } : undefined}
+                  className={`rounded-lg px-3 py-1 text-xs font-bold capitalize transition cursor-pointer ${
+                    calendarView === view
+                      ? "shadow-xs"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  {view === "dia" ? "Día" : view === "semana" ? "Semana" : "Mes"}
+                </button>
+              ))}
+            </div>
 
-        {/* Bottom/Right: View Switcher (Día / Semana / Mes) & Action Buttons */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 w-full lg:w-auto">
-          {/* Segmented View Switcher */}
-          <div className="flex flex-1 sm:flex-initial rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 bg-white/80 dark:bg-slate-900/80 shadow-xs justify-center">
-            {(["dia", "semana", "mes"] as const).map((view) => (
-              <button
-                key={view}
-                type="button"
-                onClick={() => setCalendarView(view)}
-                className={`flex-1 sm:flex-initial text-center rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition cursor-pointer ${
-                  calendarView === view
-                    ? "bg-primary text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {view === "dia" ? "Día" : view === "semana" ? "Semana" : "Mes"}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
             {/* "+ Crear Cita" Pill Button */}
             <button
               type="button"
@@ -627,7 +654,11 @@ export default function CalendarBoard() {
                 setNewModalMode("appointment");
                 setNewModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-3 sm:px-4 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
+              style={{
+                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+              }}
             >
               <Plus className="h-4 w-4" />
               <span>+ Cita</span>
@@ -646,14 +677,216 @@ export default function CalendarBoard() {
                 setNewModalMode("block");
                 setNewModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-amber-500 hover:text-amber-600 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-amber-500/20 hover:border-amber-500/40 text-slate-200 hover:text-amber-300 px-3.5 py-2 text-xs font-bold transition cursor-pointer backdrop-blur-md"
             >
-              <Ban className="h-4 w-4 text-amber-500" />
+              <Ban className="h-4 w-4 text-amber-400" />
               <span>Bloquear</span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
+      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Ocupación & Confirmación */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                >
+                  <CalendarDays className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Ocupación de Turnos & Citas
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Balance operativo del día seleccionado</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-slate-400">
+                {calendarDate}
+              </span>
+            </div>
+
+            {/* Circular Gauges */}
+            <div className="py-4 grid grid-cols-2 gap-4">
+              {/* Gauge 1: Occupancy */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, occupancyPct))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    {occupancyPct}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Ocupación Día
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {dayAppointments.length} turnos agendados
+                  </span>
+                </div>
+              </div>
+
+              {/* Gauge 2: Attendance / Confirmation Rate */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      className="stroke-slate-200 dark:stroke-slate-700"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      stroke="#10b981"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={113}
+                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, attendanceRate))) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    {attendanceRate}%
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    Confirmados
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    {confirmedDayCount} de {dayAppointments.length} listos
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Operational Telemetry Rows */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Total Turnos</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  {dayAppointments.length} citas
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Bloqueos Pausa</span>
+                <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono">
+                  {dayBlocks.length} pausas
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-medium text-slate-400 block">Especialistas</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  {staff.length} activos
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Filtros de Especialistas & Vistas */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Filtro por Especialista
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Seleccioná un profesional o vista general</p>
+                </div>
+              </div>
+
+              <span className="text-xs font-bold text-slate-500">
+                {selectedStaffId === "all" ? "Todo el Salón" : staff.find((s) => s.id === selectedStaffId)?.name}
+              </span>
+            </div>
+
+            {/* Staff Filter Bar */}
+            <div className="py-3">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedStaffId("all")}
+                  style={selectedStaffId === "all" ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
+                    selectedStaffId === "all"
+                      ? "shadow-xs"
+                      : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  Todos ({staff.length})
+                </button>
+                {staff.map((person) => {
+                  const isSelected = selectedStaffId === person.id;
+                  return (
+                    <button
+                      key={person.id}
+                      type="button"
+                      onClick={() => setSelectedStaffId(person.id)}
+                      style={isSelected ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
+                      className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs transition shrink-0 cursor-pointer ${
+                        isSelected
+                          ? "shadow-xs font-bold"
+                          : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <span
+                        className="flex h-4 w-4 items-center justify-center rounded-full text-[8.5px] font-bold text-white shadow-xs"
+                        style={{ background: person.color }}
+                      >
+                        {person.avatar}
+                      </span>
+                      <span>{person.name.split(" ")[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Tips */}
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span>Hacé clic en cualquier celda libre para crear un turno rápido.</span>
+              <span className="font-bold text-primary font-mono">{business.timezone}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       {/* Staff Filter Bar with Avatars */}
       {currentUserRole === "admin" || currentUserRole === "cajero" ? (
