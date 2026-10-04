@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarPlus,
   CalendarDays,
@@ -22,13 +22,26 @@ import {
   Receipt,
   Coins,
   AlertCircle,
+  Share2,
+  Copy,
+  ExternalLink,
+  Check,
+  Layers,
+  Activity,
+  X,
+  ChevronRight,
+  Phone,
+  Sparkles,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import ActivationChecklist from "@/components/dashboard/ActivationChecklist";
+import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
+import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
 import { formatGs, phoneWa } from "@/lib/dashboard-dates";
-import type { Appointment } from "@/lib/dashboard-types";
+import type { Appointment, Client } from "@/lib/dashboard-types";
 
 export default function DashboardHomePage() {
   const appointments = useDashboardStore((s) => s.appointments);
@@ -43,7 +56,16 @@ export default function DashboardHomePage() {
   const pushToast = useDashboardStore((s) => s.pushToast);
   const isInitialSyncDone = useDashboardStore((s) => s.isInitialSyncDone);
 
+  // Filter tabs and view controls
   const [filterTab, setFilterTab] = useState<"hoy" | "pendientes" | "todos">("hoy");
+  const [selectedStaffFilter, setSelectedStaffFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"cards" | "timeline">("cards");
+
+  // Inspection Drawer & Modals state
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [quickBookingOpen, setQuickBookingOpen] = useState(false);
+  const [selectedClientForFicha, setSelectedClientForFicha] = useState<Client | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Today's civil date in Asunción
   const todayStr = useMemo(() => {
@@ -51,6 +73,20 @@ export default function DashboardHomePage() {
       return formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd");
     } catch {
       return "2026-09-25";
+    }
+  }, [business.timezone]);
+
+  // Formatted civil date string for header banner
+  const todayFormattedDisplay = useMemo(() => {
+    try {
+      const formatted = formatInTimeZone(
+        new Date(),
+        business.timezone || "America/Asuncion",
+        "EEEE d 'de' MMMM"
+      );
+      return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    } catch {
+      return "Hoy";
     }
   }, [business.timezone]);
 
@@ -63,9 +99,21 @@ export default function DashboardHomePage() {
     });
   }, [appointments, todayStr]);
 
-  // Total confirmed
+  // Total confirmed & pending
   const confirmedToday = appointmentsToday.filter((a) => a.status === "confirmed" || a.status === "completed");
   const pendingToday = appointmentsToday.filter((a) => a.status === "pending");
+
+  // Next upcoming appointment today
+  const nextUpcomingAppointment = useMemo(() => {
+    const nowIso = new Date().toISOString();
+    const sorted = [...appointmentsToday]
+      .filter((a) => a.status !== "completed" && a.status !== "cancelled")
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    
+    // Find first appointment starting after or around now, or fallback to first pending/confirmed
+    const upcoming = sorted.find((a) => a.start >= nowIso) || sorted[0] || null;
+    return upcoming;
+  }, [appointmentsToday]);
 
   // Revenue today (from confirmed/completed appointments + income cash movements)
   const revenueToday = useMemo(() => {
@@ -81,7 +129,7 @@ export default function DashboardHomePage() {
     return fromAppointments + fromCash;
   }, [confirmedToday, services, cashMovements, todayStr]);
 
-  // Estimated chair occupancy rate today (assuming 10 working hours * 3 active staff = 30 available hours)
+  // Estimated chair occupancy rate today
   const occupancyRate = useMemo(() => {
     const totalMinutesBooked = appointmentsToday.reduce((sum, item) => {
       const s = services.find((sv) => sv.id === item.serviceId);
@@ -92,22 +140,33 @@ export default function DashboardHomePage() {
     return Math.min(100, Math.round((totalMinutesBooked / availableMinutes) * 100));
   }, [appointmentsToday, services, staff]);
 
-  // Filtered list to display in the agenda
+  // Filtered list to display in the agenda (with tab filter + staff filter)
   const displayAppointments = useMemo(() => {
+    let list: Appointment[] = [];
     if (filterTab === "hoy") {
-      return appointmentsToday.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      list = [...appointmentsToday].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    } else if (filterTab === "pendientes") {
+      list = appointments.filter((a) => a.status === "pending");
+    } else {
+      list = appointments.filter((a) => a.status !== "cancelled").slice(0, 10);
     }
-    if (filterTab === "pendientes") {
-      return appointments.filter((a) => a.status === "pending");
+
+    if (selectedStaffFilter !== "all") {
+      list = list.filter((a) => a.staffId === selectedStaffFilter);
     }
-    return appointments.filter((a) => a.status !== "cancelled").slice(0, 8);
-  }, [filterTab, appointmentsToday, appointments]);
+
+    return list;
+  }, [filterTab, appointmentsToday, appointments, selectedStaffFilter]);
+
+  // Staff members active
+  const activeStaffList = useMemo(() => staff.filter((s) => s.active), [staff]);
 
   // CRM unread count
   const unreadMessagesCount = useMemo(() => {
     return crmConversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
   }, [crmConversations]);
 
+  // Complete and charge appointment in Cash
   const handleCompleteAndPay = async (app: Appointment) => {
     const isAlreadyCharged = cashMovements.some((m) => m.appointmentId === app.id);
     if (isAlreadyCharged) {
@@ -130,6 +189,44 @@ export default function DashboardHomePage() {
     if (ok) {
       await updateAppointment(app.id, { status: "completed" });
       pushToast("success", `Turno de ${app.clientName} completado y cobrado (${formatGs(price)} en caja).`);
+      if (selectedAppointment?.id === app.id) {
+        setSelectedAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
+      }
+    }
+  };
+
+  // Copy Public Booking Link
+  const handleCopyBookingLink = () => {
+    const slug = business.slug || "reservar";
+    const url = typeof window !== "undefined" ? `${window.location.origin}/${slug}/reservar` : `https://agendate.py/${slug}/reservar`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    pushToast("success", "¡Enlace de reserva pública copiado al portapapeles!");
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  // Quick Open Client Ficha Modal
+  const handleOpenClientFicha = (clientName: string, clientPhone?: string) => {
+    const matched = clients.find(
+      (c) => (clientPhone && c.phone === clientPhone) || c.name.toLowerCase() === clientName.toLowerCase()
+    );
+    if (matched) {
+      setSelectedClientForFicha(matched);
+    } else {
+      // Create minimal synthetic client object to inspect
+      setSelectedClientForFicha({
+        id: `client-${Date.now()}`,
+        name: clientName,
+        phone: clientPhone || "",
+        email: "",
+        notes: "",
+        totalVisits: 1,
+        totalSpent: 0,
+        lastVisit: todayStr,
+        tags: ["Nuevo"],
+        loyaltyPoints: 0,
+        loyaltyRedeemed: 0,
+      });
     }
   };
 
@@ -140,237 +237,381 @@ export default function DashboardHomePage() {
       transition={{ duration: 0.25, ease: "easeOut" }}
       className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden"
     >
-      {/* Top Welcome & Operational Command Bar */}
+      {/* ========================================================= */}
+      {/* 1. TOP COMMAND BAR & LIVE OPERATIONAL HERO                 */}
+      {/* ========================================================= */}
       <div
         data-tour="welcome-banner"
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/10 via-indigo-600/5 to-purple-600/10 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/70 border border-violet-200/80 dark:border-white/10 p-5 sm:p-6 text-slate-900 dark:text-white shadow-xl backdrop-blur-xl transition-all duration-300 w-full max-w-full min-w-0"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-1 pb-1 w-full max-w-full min-w-0"
       >
-        <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-primary/15 dark:bg-primary/20 blur-3xl" />
+        <div className="space-y-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+              {business.name || "AgendatePY"}
+            </span>
+            <span>·</span>
+            <span className="truncate">{business.city ? `${business.city}, Paraguay` : (business.address || "Paraguay")}</span>
+            <span className="hidden md:inline">·</span>
+            <span className="hidden md:inline font-medium text-slate-600 dark:text-slate-400 capitalize">
+              {todayFormattedDisplay}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Panel de Operaciones
+          </h1>
+        </div>
 
-        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1.5 max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 dark:bg-white/10 border border-primary/20 dark:border-white/10 px-3 py-1 text-xs font-semibold text-primary dark:text-white backdrop-blur-md">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Abierto hoy · Asunción, Paraguay</span>
+        {/* Global Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Quick Booking Launcher */}
+          <button
+            type="button"
+            onClick={() => setQuickBookingOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 px-3.5 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
+          >
+            <CalendarPlus className="h-4 w-4" />
+            <span>+ Nueva Cita</span>
+          </button>
+
+          {/* Caja & Arqueo */}
+          <Link
+            href="/dashboard/caja"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 transition shadow-2xs"
+          >
+            <Banknote className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Caja & Arqueo</span>
+          </Link>
+
+          {/* CRM Messages */}
+          <Link
+            href="/dashboard/crm"
+            className="relative inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 transition shadow-2xs"
+          >
+            <MessagesSquare className="h-4 w-4 text-slate-400" />
+            <span>Mensajes</span>
+            {unreadMessagesCount > 0 && (
+              <span className="rounded-full bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.2">
+                {unreadMessagesCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Quick Copy Booking Link */}
+          <button
+            type="button"
+            onClick={handleCopyBookingLink}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-2.5 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition shadow-2xs cursor-pointer"
+            title="Copiar link de reserva de tu negocio"
+          >
+            {copiedLink ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="text-emerald-600 font-semibold">Copiado</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-3.5 w-3.5 text-slate-400" />
+                <span className="hidden sm:inline">Link Público</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 2. REAL-TIME OPERATIONAL PULSE BANNER                      */}
+      {/* ========================================================= */}
+      <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Left: Next Turn Countdown / State */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
+              <Clock className="h-5 w-5 text-emerald-400" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              ¡Buen día, {business.name}!
-            </h1>
-            <p className="text-xs text-slate-600 dark:text-slate-300 sm:text-sm leading-relaxed">
-              Panel central de operaciones: agenda sincronizada, cobros en caja y atención al cliente activa.
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
+                  Pulso del Salón
+                </span>
+                <span className="h-1 w-1 rounded-full bg-white/40" />
+                <span className="text-[11px] text-slate-300">En tiempo real</span>
+              </div>
+              {nextUpcomingAppointment ? (
+                <p className="text-sm font-medium text-white truncate mt-0.5">
+                  Próximo turno:{" "}
+                  <span className="font-bold underline decoration-emerald-400 underline-offset-2">
+                    {nextUpcomingAppointment.clientName}
+                  </span>{" "}
+                  a las{" "}
+                  <span className="font-mono text-emerald-300">
+                    {formatInTimeZone(nextUpcomingAppointment.start, business.timezone || "America/Asuncion", "HH:mm 'hs'")}
+                  </span>
+                  {" · "}
+                  <span className="text-slate-300 text-xs">
+                    {services.find((s) => s.id === nextUpcomingAppointment.serviceId)?.name || "Servicio"}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-sm font-medium text-slate-200 truncate mt-0.5">
+                  No hay más turnos en espera para hoy. Agenda disponible para nuevos clientes.
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/dashboard/nueva-reserva"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all"
-            >
-              <CalendarPlus className="h-4 w-4" />
-              <span>+ Nueva Cita</span>
-            </Link>
+          {/* Right: Live Chair Occupancy Meter */}
+          <div className="flex items-center gap-4 border-t border-white/10 pt-3 md:pt-0 md:border-t-0 shrink-0">
+            <div className="space-y-1 text-left md:text-right">
+              <div className="text-[11px] text-slate-300 flex items-center md:justify-end gap-1.5">
+                <span>Ocupación de sillones:</span>
+                <span className="font-bold text-white tabular-nums">{occupancyRate}%</span>
+              </div>
+              <div className="w-48 sm:w-44 h-2 bg-white/15 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-400 to-teal-300 rounded-full transition-all duration-500"
+                  style={{ width: `${occupancyRate}%` }}
+                />
+              </div>
+            </div>
 
             <Link
-              href="/dashboard/caja"
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
+              href={`/${business.slug || "barberia"}/reservar`}
+              target="_blank"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white border border-white/15 transition shrink-0"
+              title="Ver cómo ve el cliente tu portal de reservas online"
             >
-              <Banknote className="h-4 w-4 text-emerald-500" />
-              <span>Caja & Arqueo</span>
-            </Link>
-
-            <Link
-              href="/dashboard/crm"
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-white backdrop-blur-md transition shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <MessagesSquare className="h-4 w-4 text-violet-500" />
-              <span>CRM Chats</span>
-              {unreadMessagesCount > 0 && (
-                <span className="rounded-full bg-red-500 px-1.5 py-0.2 text-[10px] font-black text-white">
-                  {unreadMessagesCount}
-                </span>
-              )}
+              <span>Ver Web</span>
+              <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Checklist de Activación del Negocio & Hitos Operacionales */}
+      {/* Checklist de Activación del Negocio (se oculta automáticamente al 100%) */}
       <ActivationChecklist />
 
-      {/* 4 Clean Operational KPI Cards (Real Data Calculated) */}
-      <div data-tour="kpi-cards" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ========================================================= */}
+      {/* 3. ELEVATED LINEAR/STRIPE TELEMETRY KPI CARDS              */}
+      {/* ========================================================= */}
+      <div data-tour="kpi-cards" className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Revenue Today */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Recaudación de Hoy
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+        <div className="relative group rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Recaudación de Hoy</span>
+            <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <Banknote className="h-4 w-4" />
-            </span>
+            </div>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-32 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-32 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
               {formatGs(revenueToday)}
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="font-bold text-emerald-600 dark:text-emerald-400">{confirmedToday.length} turnos</span>
-            <span>cobrados / confirmados</span>
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+              {confirmedToday.length} turnos cobrados
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono">Gs · Py</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80" />
         </div>
 
         {/* Card 2: Appointments Today */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Citas del Día
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+        <div className="relative group rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Citas del Día</span>
+            <div className="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <CalendarDays className="h-4 w-4" />
-            </span>
+            </div>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              {appointmentsToday.length} <span className="text-sm font-semibold text-slate-400">turnos</span>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {appointmentsToday.length} <span className="text-sm font-normal text-slate-400">turnos</span>
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="font-bold text-emerald-600">{confirmedToday.length} confirmados</span>
-            <span>·</span>
-            <span className="font-bold text-amber-600">{pendingToday.length} pendientes</span>
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <span>{confirmedToday.length} confirmados</span>
+            {pendingToday.length > 0 ? (
+              <span className="text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[11px]">
+                {pendingToday.length} pendientes
+              </span>
+            ) : (
+              <span className="text-slate-400 text-[11px]">Al día</span>
+            )}
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-violet-500 to-indigo-500 opacity-80" />
         </div>
 
         {/* Card 3: Chair Occupancy */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Ocupación de Agenda
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+        <div className="relative group rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Ocupación de Agenda</span>
+            <div className="h-7 w-7 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
               <TrendingUp className="h-4 w-4" />
-            </span>
+            </div>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
               {occupancyRate}%
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-            <span>{staff.filter((s) => s.active).length} profesionales atendiendo hoy</span>
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <span>{activeStaffList.length} colaboradores activos</span>
+            <span className="text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">Capacidad</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80" />
         </div>
 
         {/* Card 4: Total Clients */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Clientes Registrados
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+        <div className="relative group rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 p-4 sm:p-5 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Clientes Registrados</span>
+            <div className="h-7 w-7 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center">
               <User className="h-4 w-4" />
-            </span>
+            </div>
           </div>
           {!isInitialSyncDone ? (
-            <div className="h-8 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
+            <div className="h-7 w-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-lg mt-2" />
           ) : (
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              {clients.length} <span className="text-sm font-semibold text-slate-400">fichas</span>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {clients.length} <span className="text-sm font-normal text-slate-400">fichas</span>
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="font-bold text-amber-600">{clients.filter((c) => c.tags?.includes("VIP")).length} VIP</span>
-            <span>con historial técnico</span>
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <span className="text-amber-600 dark:text-amber-400 font-medium">
+              {clients.filter((c) => c.tags?.includes("VIP")).length} VIP
+            </span>
+            <span className="text-[11px] text-slate-400">Historial activo</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-amber-500 to-orange-400 opacity-80" />
         </div>
       </div>
 
-      {/* Main 2-Column Operational Grid */}
+      {/* ========================================================= */}
+      {/* 4. MAIN 2-COLUMN OPERATIONAL GRID                         */}
+      {/* ========================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
         {/* Left Column (2/3 width): Today's Agenda Feed */}
         <div data-tour="agenda-operativa" className="lg:col-span-2 space-y-4 w-full max-w-full min-w-0">
-          <Card className="w-full max-w-full min-w-0 overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-black text-slate-900 dark:text-slate-100 text-base">
-                    Agenda Operativa
-                  </h2>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary shrink-0">
-                    {displayAppointments.length} turnos
-                  </span>
+          <Card className="w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+            {/* Header with Title and Filtering Controls */}
+            <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-base">
+                      Agenda Operativa
+                    </h2>
+                    <span className="rounded-full px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                      {displayAppointments.length} turnos
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                    Turnos del día, confirmaciones por WhatsApp y cobro en tiempo real.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                  Gestión directa: confirma, cobrá en caja o comunicate con el cliente en 1 clic
-                </p>
+
+                {/* Filter tabs */}
+                <div className="flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 text-xs shrink-0 self-start sm:self-auto max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border border-slate-200/80 dark:border-slate-700/60">
+                  <button
+                    type="button"
+                    onClick={() => setFilterTab("hoy")}
+                    className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
+                      filterTab === "hoy"
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Hoy ({appointmentsToday.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterTab("pendientes")}
+                    className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
+                      filterTab === "pendientes"
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Pendientes ({pendingToday.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterTab("todos")}
+                    className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
+                      filterTab === "todos"
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Próximos
+                  </button>
+                </div>
               </div>
 
-              {/* Filter tabs */}
-              <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs shrink-0 self-start sm:self-auto max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {/* Staff Filter Bar (Industry standard in Fresha / Boulevard) */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <span className="text-[11px] font-medium text-slate-400 shrink-0">Filtrar por:</span>
                 <button
                   type="button"
-                  onClick={() => setFilterTab("hoy")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
-                    filterTab === "hoy"
-                      ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                  onClick={() => setSelectedStaffFilter("all")}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition shrink-0 cursor-pointer ${
+                    selectedStaffFilter === "all"
+                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  Hoy
+                  Todos los profesionales
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterTab("pendientes")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
-                    filterTab === "pendientes"
-                      ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                  }`}
-                >
-                  Pendientes ({pendingToday.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterTab("todos")}
-                  className={`rounded-lg px-2.5 py-1 font-bold transition shrink-0 whitespace-nowrap ${
-                    filterTab === "todos"
-                      ? "bg-white dark:bg-slate-700 text-primary dark:text-white shadow-2xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                  }`}
-                >
-                  Próximos
-                </button>
+                {activeStaffList.map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setSelectedStaffFilter(st.id)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition shrink-0 cursor-pointer ${
+                      selectedStaffFilter === st.id
+                        ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <Scissors className="h-3 w-3 opacity-70" />
+                    <span>{st.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* List */}
+            {/* Appointment List / Timeline Feed */}
             {displayAppointments.length === 0 ? (
-              <div className="py-12 text-center space-y-3">
-                <CalendarDays className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600" />
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                  No hay turnos para este filtro hoy.
-                </p>
-                <Link
-                  href="/dashboard/nueva-reserva"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm"
+              <div className="py-14 text-center space-y-3">
+                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                  <CalendarDays className="h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    No hay turnos registrados para este filtro.
+                  </p>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                    Los turnos agendados por clientes o cargados manualmente aparecerán aquí al instante.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setQuickBookingOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 px-4 py-2 text-xs font-semibold shadow-xs cursor-pointer"
                 >
                   <CalendarPlus className="h-3.5 w-3.5" />
-                  <span>Agendar Nuevo Turno</span>
-                </Link>
+                  <span>Agendar Nuevo Turno Ahora</span>
+                </button>
               </div>
             ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-white/5">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {displayAppointments.map((item) => {
                   const service = services.find((s) => s.id === item.serviceId);
                   const assignedStaff = staff.find((st) => st.id === item.staffId);
@@ -386,36 +627,51 @@ export default function DashboardHomePage() {
                   );
                   const waUrl = `${waBase}?text=${waReminderMsg}`;
 
+                  const isSelected = selectedAppointment?.id === item.id;
+
                   return (
                     <li
                       key={item.id}
-                      className="py-3.5 px-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 rounded-2xl transition min-w-0 w-full"
+                      onClick={() => setSelectedAppointment(item)}
+                      className={`py-3.5 px-3 rounded-xl transition cursor-pointer group min-w-0 w-full ${
+                        isSelected
+                          ? "bg-slate-100/90 dark:bg-slate-800/80 ring-1 ring-slate-300 dark:ring-slate-700"
+                          : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                      }`}
                     >
-                      {/* Responsive container: cleanly stacks on mobile and aligns horizontally on desktop */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 w-full">
-                        {/* Left: Avatar + Details */}
+                        {/* Left: Time Badge + Avatar + Client Details */}
                         <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-black text-xs shadow-2xs mt-0.5 sm:mt-0">
-                            {item.clientName.slice(0, 2).toUpperCase()}
+                          {/* Chronological Time Badge */}
+                          <div className="flex flex-col items-center justify-center h-12 w-14 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200/60 dark:border-slate-700/50 shrink-0">
+                            <span className="font-bold text-xs text-slate-900 dark:text-white tabular-nums">
+                              {timeFormatted.replace(" hs", "")}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {dateFormatted}
+                            </span>
                           </div>
 
+                          {/* Client details */}
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate max-w-[150px] sm:max-w-none">
+                              <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm truncate max-w-[160px] sm:max-w-none group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                 {item.clientName}
                               </span>
+
                               {isVip && (
-                                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-black text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                                <span className="rounded px-1.5 py-0.2 text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 shrink-0">
                                   VIP
                                 </span>
                               )}
+
                               <span
-                                className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase shrink-0 ${
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${
                                   item.status === "completed"
-                                    ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                                    ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/40"
                                     : item.status === "confirmed"
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                                 }`}
                               >
                                 {item.status === "completed"
@@ -427,17 +683,17 @@ export default function DashboardHomePage() {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              <span className="font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[160px] sm:max-w-none">
+                              <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[170px] sm:max-w-none">
                                 {service?.name || "Servicio"}
                               </span>
                               <span>•</span>
-                              <span className="font-bold text-primary shrink-0">
+                              <span className="font-mono font-semibold text-slate-900 dark:text-slate-100 shrink-0">
                                 {formatGs(service?.price ?? 80000)}
                               </span>
                               {assignedStaff && (
                                 <>
                                   <span>•</span>
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 truncate">
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">
                                     <Scissors className="h-3 w-3 text-slate-400 shrink-0" />
                                     {assignedStaff.name}
                                   </span>
@@ -445,65 +701,52 @@ export default function DashboardHomePage() {
                               )}
                             </div>
                           </div>
-
-                          {/* Mobile-only time pill pinned top-right */}
-                          <div className="sm:hidden text-right shrink-0">
-                            <span className="block font-black text-xs text-slate-900 dark:text-white">
-                              {timeFormatted}
-                            </span>
-                            <span className="text-[10px] text-slate-400">
-                              {dateFormatted}
-                            </span>
-                          </div>
                         </div>
 
-                        {/* Actions Toolbar */}
-                        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2.5 sm:pt-0 border-t border-slate-100 dark:border-white/5 sm:border-t-0 w-full sm:w-auto">
-                          {/* Desktop time display */}
-                          <div className="hidden sm:block text-right shrink-0 mr-1">
-                            <span className="block font-black text-xs text-slate-900 dark:text-white">
-                              {timeFormatted}
-                            </span>
-                            <span className="text-[10px] text-slate-400">
-                              {dateFormatted}
-                            </span>
-                          </div>
-
-                          {/* WhatsApp Direct */}
+                        {/* Right: Quick Action Buttons */}
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-slate-100 dark:border-slate-800 sm:border-t-0 w-full sm:w-auto"
+                        >
+                          {/* Direct WhatsApp launcher */}
                           <a
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white text-xs font-bold transition shrink-0"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 text-xs font-medium transition shrink-0"
                             title="Enviar recordatorio por WhatsApp"
                           >
                             <MessageSquare className="h-3.5 w-3.5 shrink-0" />
-                            <span className="sm:hidden">WhatsApp</span>
+                            <span>WhatsApp</span>
                           </a>
 
-                          <div className="flex items-center gap-1.5">
-                            {/* Ficha técnica shortcut */}
-                            <Link
-                              href={`/dashboard/clientes?cliente=${encodeURIComponent(item.clientName)}`}
-                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition shrink-0"
-                              title="Ver Ficha Técnica y Galería"
-                            >
-                              <User className="h-3.5 w-3.5" />
-                            </Link>
+                          {/* Ficha Técnica button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenClientFicha(item.clientName, item.clientPhone)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition shrink-0 cursor-pointer"
+                            title="Ver Ficha Técnica del Cliente"
+                          >
+                            <User className="h-3.5 w-3.5" />
+                          </button>
 
-                            {/* Cobrar en caja button */}
-                            {item.status !== "completed" && (
-                              <button
-                                type="button"
-                                onClick={() => handleCompleteAndPay(item)}
-                                className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-bold transition shadow-xs shrink-0"
-                                title="Marcar como atendido y registrar ingreso en caja"
-                              >
-                                <Banknote className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                                <span>Cobrar</span>
-                              </button>
-                            )}
-                          </div>
+                          {/* Cobrar en caja button */}
+                          {item.status !== "completed" ? (
+                            <button
+                              type="button"
+                              onClick={() => handleCompleteAndPay(item)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-semibold transition shadow-xs shrink-0 cursor-pointer"
+                              title="Marcar como atendido y registrar ingreso en caja"
+                            >
+                              <Banknote className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                              <span>Cobrar</span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-slate-400">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                              <span>Pagado</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                     </li>
@@ -512,49 +755,125 @@ export default function DashboardHomePage() {
               </ul>
             )}
 
-            <div className="border-t border-slate-100 dark:border-white/10 pt-3 mt-2 flex items-center justify-between text-xs">
+            {/* Card Footer Link */}
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-2 flex items-center justify-between text-xs">
+              <span className="text-slate-400">
+                Sincronización automática de agenda en vivo
+              </span>
               <Link
                 href="/dashboard/calendario"
-                className="font-bold text-primary hover:underline flex items-center gap-1"
+                className="font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 transition"
               >
                 <span>Ver calendario completo</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-              <span className="text-slate-400 text-[11px] hidden sm:inline">
-                Sincronización automática de citas
-              </span>
             </div>
           </Card>
         </div>
 
-        {/* Right Column (1/3 width): Live CRM Inbox & Quick Operations */}
+        {/* Right Column (1/3 width): Live CRM Inbox, Selected Drawer & Quick Tools */}
         <div data-tour="quick-actions-crm" className="space-y-4 w-full max-w-full min-w-0">
+          {/* Quick Inspection Drawer (If an appointment is selected) */}
+          <AnimatePresence>
+            {selectedAppointment && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+              >
+                <Card className="border-emerald-500/40 dark:border-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/10 p-4 w-full max-w-full min-w-0 overflow-hidden shadow-xs">
+                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        Inspección Rápida
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAppointment(null)}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Cliente:</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {selectedAppointment.clientName}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Horario:</span>
+                      <span className="font-mono font-medium text-slate-900 dark:text-white">
+                        {formatInTimeZone(selectedAppointment.start, business.timezone || "America/Asuncion", "HH:mm 'hs' (dd/MM)")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Servicio:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {services.find((s) => s.id === selectedAppointment.serviceId)?.name || "Servicio"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Monto:</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                        {formatGs(services.find((s) => s.id === selectedAppointment.serviceId)?.price ?? 80000)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 flex flex-col gap-1.5">
+                    {selectedAppointment.status !== "completed" && (
+                      <button
+                        type="button"
+                        onClick={() => handleCompleteAndPay(selectedAppointment)}
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 text-xs transition cursor-pointer shadow-2xs"
+                      >
+                        <Banknote className="h-3.5 w-3.5" />
+                        <span>Cobrar en Caja Ahora</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenClientFicha(selectedAppointment.clientName, selectedAppointment.clientPhone)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium py-1.5 text-xs transition cursor-pointer"
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      <span>Ver Ficha Técnica y Fórmulas</span>
+                    </button>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* CRM Quick Inbox Card */}
-          <Card className="w-full max-w-full min-w-0 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
+          <Card className="w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2 min-w-0">
-                <MessagesSquare className="h-4 w-4 text-violet-500 shrink-0" />
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">
-                  Atención CRM Omnicanal
+                <MessagesSquare className="h-4 w-4 text-slate-500 shrink-0" />
+                <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                  Mensajes Recientes
                 </h3>
               </div>
               <Link
                 href="/dashboard/crm"
-                className="text-xs font-bold text-primary hover:underline shrink-0 ml-2"
+                className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shrink-0 ml-2"
               >
                 Abrir CRM
               </Link>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              Mensajes entrantes de WhatsApp, Instagram Direct y chat web.
-            </p>
-
             <div className="mt-3 space-y-2">
               {crmConversations.length === 0 ? (
                 <div className="py-6 text-center space-y-1">
                   <MessagesSquare className="h-7 w-7 mx-auto text-slate-300 dark:text-slate-600" />
-                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Sin mensajes pendientes</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300">Sin mensajes pendientes</p>
                   <p className="text-[11px] text-slate-400">Los chats entrantes de tus clientes aparecerán aquí.</p>
                 </div>
               ) : (
@@ -564,17 +883,17 @@ export default function DashboardHomePage() {
                     <Link
                       key={conv.id}
                       href="/dashboard/crm"
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 transition min-w-0 w-full"
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 transition min-w-0 w-full"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className="relative shrink-0">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 font-bold text-xs">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs">
                             {conv.clientName.slice(0, 2).toUpperCase()}
                           </div>
-                          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900" />
+                          <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-white dark:border-slate-900" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                          <p className="font-semibold text-slate-900 dark:text-white text-xs truncate">
                             {conv.clientName}
                           </p>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
@@ -583,7 +902,7 @@ export default function DashboardHomePage() {
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-bold text-primary uppercase shrink-0 ml-2 px-1.5 py-0.5 rounded bg-primary/10">
+                      <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase shrink-0 ml-2 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-semibold">
                         {conv.channel}
                       </span>
                     </Link>
@@ -593,60 +912,99 @@ export default function DashboardHomePage() {
             </div>
           </Card>
 
-          {/* Quick Operations Deck */}
-          <Card className="space-y-3 w-full max-w-full min-w-0 overflow-hidden">
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-white/10 pb-2">
-              Acciones Frecuentes
+          {/* Quick Operations Deck (Preserved 100% of all actions & routes) */}
+          <Card className="p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+            <h3 className="font-semibold text-slate-900 dark:text-white text-sm pb-3 border-b border-slate-100 dark:border-slate-800">
+              Accesos Rápidos
             </h3>
 
-            <div className="grid grid-cols-2 gap-2 text-xs w-full min-w-0">
+            <div className="mt-3 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
               <Link
-                href="/dashboard/nueva-reserva"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                href="/dashboard/bloquear-horario"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
-                  <Ban className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                    <Ban className="h-4 w-4 text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">Bloquear Horario</p>
+                    <p className="text-[11px] text-slate-400">Descansos o ausencias</p>
+                  </div>
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Bloquear Horario</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Descansos o permisos</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
 
               <Link
                 href="/dashboard/transferencias"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
-                  <Receipt className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                    <Receipt className="h-4 w-4 text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">SIPAP Bancario</p>
+                    <p className="text-[11px] text-slate-400">Validar transferencias</p>
+                  </div>
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">SIPAP Bancario</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Validar comprobantes</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
 
               <Link
                 href="/dashboard/comisiones"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
-                  <Coins className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                    <Coins className="h-4 w-4 text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">Comisiones</p>
+                    <p className="text-[11px] text-slate-400">Liquidación al personal</p>
+                  </div>
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Comisiones</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Liquidación equipo</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
 
               <Link
                 href="/dashboard/apariencia"
-                className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center gap-1.5 min-w-0 w-full"
+                className="flex items-center justify-between py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >
-                <div className="p-2 rounded-xl bg-violet-500/10 text-violet-500 shrink-0">
-                  <Palette className="h-4 w-4" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                    <Palette className="h-4 w-4 text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">Diseño Web</p>
+                    <p className="text-[11px] text-slate-400">Colores y página pública</p>
+                  </div>
                 </div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate w-full text-xs">Diseño Web</span>
-                <span className="text-[10px] text-slate-400 truncate w-full">Colores y fuentes</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition" />
               </Link>
             </div>
           </Card>
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* 5. MODALS: QUICK BOOKING & CLIENT FICHA                   */}
+      {/* ========================================================= */}
+      <QuickBookingModal
+        open={quickBookingOpen}
+        onClose={() => setQuickBookingOpen(false)}
+        initialDate={todayStr}
+      />
+
+      <ClientFichaModal
+        client={selectedClientForFicha}
+        onClose={() => setSelectedClientForFicha(null)}
+        onOpenEdit={() => {}}
+        onOpenQuickBooking={() => {
+          setSelectedClientForFicha(null);
+          setQuickBookingOpen(true);
+        }}
+      />
     </motion.div>
   );
 }

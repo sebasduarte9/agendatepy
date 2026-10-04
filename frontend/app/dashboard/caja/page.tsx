@@ -268,24 +268,24 @@ export default function CajaPage() {
             Control de cobros por turno, arqueo de gaveta y registro de gastos diarios.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             data-tour="caja-close-btn"
             onClick={() => setArqueoOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 sm:px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
           >
-            <CheckSquare className="h-4 w-4 text-primary" />
-            <span>Cierre de Caja</span>
+            <CheckSquare className="h-4 w-4 text-primary shrink-0" />
+            <span className="truncate">Cierre de Caja</span>
           </button>
           <button
             type="button"
             data-tour="caja-new-btn"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-3 sm:px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
           >
-            <PlusCircle className="h-4 w-4" />
-            <span>+ Registrar Movimiento</span>
+            <PlusCircle className="h-4 w-4 shrink-0" />
+            <span className="truncate">+ Movimiento</span>
           </button>
         </div>
       </div>

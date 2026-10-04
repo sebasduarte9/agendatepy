@@ -36,53 +36,71 @@ export default function BookingCalendar({
   const canGoForward = compareMonth(cursor, lastMonth) < 0;
 
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
+    <div className="w-full select-none">
+      {/* Month Header and Navigation */}
+      <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
           aria-label="Mes anterior"
           disabled={!canGoBack}
           onClick={() => setCursor((current) => shiftMonth(current, -1))}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-20 disabled:pointer-events-none transition cursor-pointer"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <p className="text-sm font-semibold capitalize text-slate-800 dark:text-slate-100">{label}</p>
+
+        <p className="text-base font-bold capitalize text-slate-900 dark:text-white tracking-tight">
+          {label}
+        </p>
+
         <button
           type="button"
           aria-label="Mes siguiente"
           disabled={!canGoForward}
           onClick={() => setCursor((current) => shiftMonth(current, 1))}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-20 disabled:pointer-events-none transition cursor-pointer"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+
+      {/* Weekdays Row */}
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider pb-1">
         {WEEKDAYS.map((day, index) => (
-          <span key={`${day}-${index}`}>{day}</span>
+          <span key={`${day}-${index}`} className="flex h-7 items-center justify-center">
+            {day}
+          </span>
         ))}
       </div>
-      <div className="mt-1 grid grid-cols-7 gap-1">
+
+      {/* Day Cells Grid */}
+      <div className="mt-1 grid grid-cols-7 gap-1 sm:gap-1.5">
         {cells.map((day, index) => {
-          if (!day) return <span key={`empty-${index}`} />;
+          if (!day) return <span key={`empty-${index}`} className="h-11 sm:h-10" />;
           const civil = toCivil(cursor.year, cursor.month, day);
           const disabled = civil < today || civil > lastBookable;
           const isSelected = civil === selected;
           const isToday = civil === today;
+
+          let btnClasses = "h-11 sm:h-10 w-full rounded-xl text-sm font-bold flex items-center justify-center transition-all duration-150";
+
+          if (disabled) {
+            btnClasses += " text-slate-400/25 dark:text-slate-700 cursor-not-allowed pointer-events-none bg-transparent";
+          } else if (isSelected) {
+            btnClasses += " bg-primary text-white font-black shadow-md shadow-primary/30 ring-2 ring-primary ring-offset-2 ring-offset-slate-900 scale-105 cursor-pointer";
+          } else if (isToday) {
+            btnClasses += " border-2 border-primary/60 text-primary font-black bg-primary/10 hover:bg-primary/20 cursor-pointer active:scale-95";
+          } else {
+            btnClasses += " text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/90 active:scale-95 cursor-pointer";
+          }
+
           return (
             <button
               key={civil}
               type="button"
               disabled={disabled}
               onClick={() => onSelect(civil)}
-              className={`h-10 rounded-xl text-sm font-semibold transition ${
-                isSelected
-                  ? "bg-primary text-white shadow-xs"
-                  : isToday
-                    ? "bg-primary/10 text-primary font-bold"
-                    : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-              } ${disabled ? "cursor-not-allowed text-slate-300 dark:text-slate-700 hover:bg-transparent dark:hover:bg-transparent" : ""}`}
+              className={btnClasses}
             >
               {day}
             </button>

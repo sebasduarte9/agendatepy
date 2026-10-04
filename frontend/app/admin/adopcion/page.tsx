@@ -63,19 +63,14 @@ export default function AdoptionPage() {
   ];
 
   return (
-    <div className="p-3.5 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full min-w-0 text-slate-100 overflow-hidden">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <Boxes className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400 shrink-0" />
-              <span>Matriz de Adopción de Producto</span>
-            </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 shrink-0">
-              Product Intelligence
-            </span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+            <Boxes className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 shrink-0" />
+            <span>Matriz de Adopción de Producto</span>
+          </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Auditoría de funcionalidades reales utilizadas por cada negocio en AgendatePY.
           </p>
@@ -99,19 +94,19 @@ export default function AdoptionPage() {
           ].map((item) => (
             <div
               key={item.label}
-              className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between"
+              className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3.5 flex flex-col justify-between"
             >
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span className="font-medium truncate">{item.label}</span>
-                <item.icon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <item.icon className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               </div>
               <div className="mt-2">
-                <div className="text-lg sm:text-xl font-bold text-white">{item.rate}%</div>
+                <div className="text-lg sm:text-xl font-semibold text-white tracking-tight tabular-nums">{item.rate}%</div>
                 <div className="text-[11px] font-mono text-slate-500">{item.count} tenants</div>
               </div>
-              <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+              <div className="w-full bg-slate-800/80 rounded-full h-1 mt-2.5 overflow-hidden">
                 <div
-                  className="bg-indigo-500 h-1.5 rounded-full"
+                  className="bg-slate-400 h-1 rounded-full"
                   style={{ width: `${Math.min(100, Math.max(0, item.rate))}%` }}
                 />
               </div>
@@ -121,7 +116,7 @@ export default function AdoptionPage() {
       )}
 
       {/* Controls & Search */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -129,7 +124,7 @@ export default function AdoptionPage() {
             placeholder="Filtrar por negocio o slug..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-700"
           />
         </div>
 
@@ -153,27 +148,27 @@ export default function AdoptionPage() {
       </div>
 
       {/* Feature Matrix Table */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <Boxes className="w-4 h-4 text-indigo-400" />
+      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
+          <h2 className="text-xs font-mono uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <Boxes className="w-4 h-4 text-slate-500" />
             Matriz de Adopción por Negocio ({data?.matrix?.length || 0})
           </h2>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-500">
             Valores calculados desde operaciones registradas en PostgreSQL
           </span>
         </div>
 
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center text-slate-400">
-            <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2" />
-            <p className="text-xs font-mono">Cargando matriz...</p>
+            <div className="w-6 h-6 border-2 border-slate-600 border-t-slate-200 rounded-full animate-spin mb-2" />
+            <p className="text-xs font-mono text-slate-500">Cargando matriz...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse min-w-[850px]">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/80 text-slate-400 uppercase tracking-wider font-mono text-[10px]">
+                <tr className="border-b border-slate-800/80 bg-slate-950/60 text-slate-400 uppercase tracking-wider font-mono text-[10px]">
                   <th className="p-3.5 pl-5">Negocio</th>
                   <th className="p-3.5 text-center">Ready</th>
                   <th className="p-3.5 text-center">Agenda</th>
@@ -188,7 +183,7 @@ export default function AdoptionPage() {
                   <th className="p-3.5 text-right pr-5">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 font-medium">
+              <tbody className="divide-y divide-slate-800/60">
                 {data?.matrix?.length === 0 ? (
                   <tr>
                     <td colSpan={12} className="p-8 text-center text-slate-500">
@@ -197,11 +192,11 @@ export default function AdoptionPage() {
                   </tr>
                 ) : (
                   data?.matrix?.map((row: any) => (
-                    <tr key={row.id} className="hover:bg-slate-800/40 transition">
+                    <tr key={row.id} className="hover:bg-slate-800/30 transition">
                       <td className="p-3.5 pl-5">
                         <Link
                           href={`/admin/negocios/${row.id}`}
-                          className="font-bold text-slate-200 hover:text-indigo-400 transition"
+                          className="font-medium text-slate-200 hover:text-white transition"
                         >
                           {row.name}
                         </Link>
@@ -211,11 +206,11 @@ export default function AdoptionPage() {
                       {/* Ready for booking */}
                       <td className="p-3.5 text-center">
                         {row.isReady ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-emerald-400 border border-slate-700/60">
                             LISTO
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-slate-500 border border-slate-800">
                             Pendiente
                           </span>
                         )}
@@ -234,20 +229,16 @@ export default function AdoptionPage() {
                       ].map((active, i) => (
                         <td key={i} className="p-3.5 text-center">
                           {active ? (
-                            <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto">
-                              <Check className="w-3 h-3" />
-                            </div>
+                            <Check className="w-3.5 h-3.5 text-emerald-400 mx-auto" />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-slate-800/60 text-slate-600 flex items-center justify-center mx-auto">
-                              <X className="w-3 h-3" />
-                            </div>
+                            <span className="text-slate-600 font-mono">—</span>
                           )}
                         </td>
                       ))}
 
                       {/* Adopted Modules Score */}
                       <td className="p-3.5 text-center">
-                        <span className="font-mono text-xs font-bold text-indigo-400">
+                        <span className="font-mono text-xs text-slate-300 tabular-nums">
                           {row.adoptedFeaturesCount} / 8
                         </span>
                       </td>
@@ -256,9 +247,9 @@ export default function AdoptionPage() {
                       <td className="p-3.5 text-right pr-5">
                         <Link
                           href={`/admin/negocios/${row.id}`}
-                          className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                          className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white transition font-medium"
                         >
-                          Ver <ArrowRight className="w-3.5 h-3.5" />
+                          Ver <ArrowRight className="w-3 h-3" />
                         </Link>
                       </td>
                     </tr>
