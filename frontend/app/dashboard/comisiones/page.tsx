@@ -24,6 +24,7 @@ import {
   Search,
   FileText,
   ChevronDown,
+  ChevronRight,
   Check,
   AlertCircle,
   X,
@@ -40,6 +41,8 @@ import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import CustomSelect from "@/components/dashboard/ui/CustomSelect";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { StaffMember, CommissionPayoutRecord, Appointment } from "@/lib/dashboard-types";
 
@@ -1010,7 +1013,8 @@ export default function ComisionesPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 font-bold uppercase tracking-wider text-slate-400 text-[10px]">
@@ -1093,6 +1097,69 @@ export default function ComisionesPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile View: Apple Inset Grouped List */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {allEarnedItems.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-xs">
+                No hay registros en el período y filtro seleccionado.
+              </div>
+            ) : (
+              allEarnedItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-3.5 flex items-center justify-between gap-3 active:bg-slate-50 dark:active:bg-slate-900/50 transition"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`p-2.5 rounded-2xl shrink-0 ${
+                        item.type === "service"
+                          ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      {item.type === "service" ? (
+                        <Scissors className="h-4 w-4" />
+                      ) : (
+                        <ShoppingBag className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                          {item.concept}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
+                          {item.commissionPercentage}%
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {item.staffName} · {item.clientName}
+                      </p>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {new Date(item.date).toLocaleDateString("es-PY", {
+                          day: "2-digit",
+                          month: "short",
+                        })}{" "}
+                        {new Date(item.date).toLocaleTimeString("es-PY", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400 block">
+                      +{formatGs(item.commissionAmount)}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400 block">
+                      Cobrado {formatGs(item.chargedAmount)}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </Card>
       </div>
 
@@ -1125,7 +1192,8 @@ export default function ComisionesPage() {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 font-bold uppercase tracking-wider text-slate-400 text-[10px]">
@@ -1204,6 +1272,62 @@ export default function ComisionesPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile View: Apple Inset Grouped List */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {commissionPayouts.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-xs">
+                No hay pagos registrados hasta el momento.
+              </div>
+            ) : (
+              commissionPayouts.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setSelectedPayoutReceipt(p);
+                  }}
+                  className="p-3.5 flex items-center justify-between gap-3 active:bg-slate-50 dark:active:bg-slate-900/50 transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="p-2.5 rounded-2xl shrink-0"
+                      style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                    >
+                      <Receipt className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                          {p.staffName}
+                        </span>
+                        <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          {p.paymentMethod}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {p.receiptNumber || `#${p.id.slice(0, 8)}`}
+                      </p>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {new Date(p.periodStart).toLocaleDateString("es-PY", { day: "2-digit", month: "short" })} – {new Date(p.periodEnd).toLocaleDateString("es-PY", { day: "2-digit", month: "short" })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 flex items-center gap-2">
+                    <div>
+                      <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400 block">
+                        {formatGs(p.amountPaid)}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        Ver recibo
+                      </span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       </div>

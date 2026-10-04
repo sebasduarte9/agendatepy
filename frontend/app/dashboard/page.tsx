@@ -42,6 +42,8 @@ import Card from "@/components/dashboard/ui/Card";
 import ActivationChecklist from "@/components/dashboard/ActivationChecklist";
 import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 import { formatGs, phoneWa } from "@/lib/dashboard-dates";
 import type { Appointment, Client } from "@/lib/dashboard-types";
 
@@ -719,41 +721,19 @@ export default function DashboardHomePage() {
                   </p>
                 </div>
 
-                {/* Filter tabs */}
-                <div className="flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 text-xs shrink-0 self-start sm:self-auto max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border border-slate-200/80 dark:border-slate-700/60">
-                  <button
-                    type="button"
-                    onClick={() => setFilterTab("hoy")}
-                    className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
-                      filterTab === "hoy"
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    Hoy ({appointmentsToday.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterTab("pendientes")}
-                    className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
-                      filterTab === "pendientes"
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    Pendientes ({pendingToday.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterTab("todos")}
-                    className={`rounded-md px-2.5 py-1 font-medium transition shrink-0 whitespace-nowrap cursor-pointer ${
-                      filterTab === "todos"
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    Próximos
-                  </button>
+                {/* Filter tabs: Apple IosSegmentedControl */}
+                <div className="shrink-0 self-start sm:self-auto max-w-full">
+                  <IosSegmentedControl
+                    value={filterTab}
+                    onChange={(val) => setFilterTab(val as "hoy" | "pendientes" | "todos")}
+                    layoutId="dashboardAgendaFilterPill"
+                    size="sm"
+                    options={[
+                      { value: "hoy", label: "Hoy", badge: appointmentsToday.length },
+                      { value: "pendientes", label: "Pendientes", badge: pendingToday.length },
+                      { value: "todos", label: "Próximos" },
+                    ]}
+                  />
                 </div>
               </div>
 

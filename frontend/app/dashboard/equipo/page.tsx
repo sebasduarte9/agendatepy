@@ -30,6 +30,8 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 import type { StaffMember, UserRole } from "@/lib/dashboard-types";
 
 const ROLE_DEFINITIONS: {
@@ -595,38 +597,24 @@ export default function EquipoRolesPage() {
 
       {/* Search and Filter Navigation Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Role Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {[
-            { id: "all", label: "Todos", count: staff.length },
-            { id: "pro", label: "Profesionales", count: prosCount },
-            { id: "cajero", label: "Caja", count: cashierCount },
-            { id: "admin", label: "Dueños", count: adminCount },
-            { id: "active", label: "Activos", count: activeStaffCount },
-            { id: "paused", label: "Pausados", count: staff.length - activeStaffCount },
-          ].map((pill) => (
-            <button
-              key={pill.id}
-              type="button"
-              onClick={() => setRoleFilter(pill.id)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-                roleFilter === pill.id
-                  ? "bg-primary text-white shadow-xs"
-                  : "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20"
-              }`}
-            >
-              <span>{pill.label}</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-md ${
-                  roleFilter === pill.id
-                    ? "bg-white/20 text-white font-black"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                }`}
-              >
-                {pill.count}
-              </span>
-            </button>
-          ))}
+        {/* Role Segmented Control */}
+        <div className="w-full sm:w-auto overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <IosSegmentedControl
+            options={[
+              { value: "all", label: "Todos", badge: staff.length },
+              { value: "pro", label: "Especialistas", badge: prosCount },
+              { value: "cajero", label: "Caja", badge: cashierCount },
+              { value: "admin", label: "Dueños", badge: adminCount },
+              { value: "active", label: "Activos" },
+            ]}
+            value={roleFilter}
+            onChange={(val) => {
+              setRoleFilter(val);
+              triggerHaptic("selection");
+            }}
+            layoutId="equipoRoleSegment"
+            className="w-full sm:w-auto"
+          />
         </div>
 
         {/* Search Input */}
@@ -706,7 +694,130 @@ export default function EquipoRolesPage() {
             )}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <>
+            {/* Mobile Apple Inset Grouped Staff List */}
+            <div className="block sm:hidden space-y-3">
+              <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
+                {filteredStaff.map((person) => {
+                  const memberEmail =
+                    (person as any).email ||
+                    `${person.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`;
+                  const roleDef =
+                    ROLE_DEFINITIONS.find((r) => r.role === person.systemRole) || ROLE_DEFINITIONS[2];
+                  const isMemberActive = person.active !== false;
+                  const assignedServicesCount = services.filter((s) =>
+                    s.staffIds?.includes(person.id)
+                  ).length;
+                  const commission = person.commissionPercentage ?? 50;
+
+                  return (
+                    <div key={person.id} className="p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="relative">
+                            <div
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-sm"
+                              style={{ backgroundColor: person.color || "#FF4F2B" }}
+                            >
+                              {person.avatar || person.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <span
+                              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${
+                                isMemberActive ? "bg-emerald-500" : "bg-amber-400"
+                              }`}
+                            />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                                {person.name}
+                              </h4>
+                              <span
+                                className={`rounded-md px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider border ${roleDef.badgeColor}`}
+                              >
+                                {roleDef.shortTitle}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                              <span>{assignedServicesCount} servicios</span>
+                              <span>•</span>
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                {commission}% com.
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Apple Toggle Switch for Active / Paused Status */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic("selection");
+                              handleToggleActive(person);
+                            }}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                              isMemberActive ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                            }`}
+                            title={isMemberActive ? "Colaborador activo" : "Colaborador pausado"}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                isMemberActive ? "translate-x-6" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Mobile Action Footer */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100/70 dark:border-slate-800/60 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("light");
+                            handleCopyEmail(memberEmail);
+                          }}
+                          className="text-[11px] font-mono text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1 truncate max-w-[190px] cursor-pointer"
+                        >
+                          <Mail className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{memberEmail}</span>
+                        </button>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic("selection");
+                              openEdit(person);
+                            }}
+                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                            title="Editar rol y permisos"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic("light");
+                              setMemberToDelete({ id: person.id, name: person.name });
+                            }}
+                            className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                            title="Eliminar colaborador"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Desktop Grid View */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredStaff.map((person) => {
               const memberEmail =
                 (person as any).email ||
@@ -878,7 +989,8 @@ export default function EquipoRolesPage() {
                 </div>
               );
             })}
-          </div>
+            </div>
+          </>
         )}
       </Card>
 

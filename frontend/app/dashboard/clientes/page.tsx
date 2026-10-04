@@ -17,6 +17,7 @@ import {
   Crown,
   MessagesSquare,
   CalendarPlus,
+  ChevronRight,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -24,6 +25,8 @@ import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import CustomSelect from "@/components/dashboard/ui/CustomSelect";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
 import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
@@ -470,26 +473,116 @@ export default function ClientesPage() {
             className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto">
-          {["todos", "VIP", "Frecuente", "Nuevo"].map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => setSelectedTag(tag)}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition-all duration-200 cursor-pointer ${
-                selectedTag === tag
-                  ? "bg-primary text-white shadow-xs"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
+        <div className="w-full sm:w-auto">
+          <IosSegmentedControl
+            value={selectedTag}
+            onChange={(val) => setSelectedTag(val)}
+            layoutId="clientesTagFilter"
+            size="sm"
+            options={[
+              { value: "todos", label: "Todos", badge: clients.length },
+              { value: "VIP", label: "VIP", badge: clients.filter((c) => c.tags?.includes("VIP")).length },
+              { value: "Frecuente", label: "Frecuentes" },
+              { value: "Nuevo", label: "Nuevos" },
+            ]}
+          />
         </div>
       </div>
 
-      {/* Clients Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Mobile View: Apple Contacts Inset Grouped Directory */}
+      <div className="md:hidden rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900/60 divide-y divide-slate-100 dark:divide-white/5 shadow-xs overflow-hidden">
+        {filteredClients.length === 0 ? (
+          <div className="py-12 text-center text-slate-400 text-xs">
+            No se encontraron clientes con el filtro aplicado.
+          </div>
+        ) : (
+          filteredClients.map((client) => {
+            const initials = client.name
+              .split(" ")
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
+            const cleanPhone = client.phone.replace(/\D/g, "");
+            const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+              `¡Hola ${client.name}! Te escribimos desde ${business.name}. ¿Cómo estás?`
+            )}`;
+
+            return (
+              <div
+                key={client.id}
+                className="p-3.5 flex items-center justify-between gap-3 active:bg-slate-50 dark:active:bg-slate-800/40 transition cursor-pointer"
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setSelectedClient(client);
+                }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xs font-black text-primary shadow-xs">
+                    {initials}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {client.name}
+                      </h4>
+                      {client.tags?.map((t) => (
+                        <span
+                          key={t}
+                          className={`rounded px-1.5 py-0.2 text-[9px] font-black uppercase tracking-tight shrink-0 ${
+                            t === "VIP"
+                              ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400"
+                              : t === "Frecuente"
+                              ? "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-400"
+                              : "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400"
+                          }`}
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                      {client.phone}
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                      <span>{client.totalVisits} visitas</span>
+                      <span>·</span>
+                      <span className="text-primary font-bold">{formatGs(client.totalSpent)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => triggerHaptic("medium")}
+                    className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:scale-105 active:scale-95 transition"
+                    title="Enviar WhatsApp"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      setSelectedClient(client);
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop View: Clients Grid */}
+      <div className="hidden md:grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredClients.map((client, index) => {
           const initials = client.name
             .split(" ")

@@ -27,6 +27,7 @@ import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import ProductImageUploader from "@/components/dashboard/ProductImageUploader";
+import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { ProductItem } from "@/lib/dashboard-types";
 
@@ -699,10 +700,13 @@ export default function ProductosPage() {
           />
         </div>
 
-        <div data-tour="productos-categories-bar" className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div data-tour="productos-categories-bar" className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
             type="button"
-            onClick={() => setSelectedCategory("Todas")}
+            onClick={() => {
+              triggerHaptic("selection");
+              setSelectedCategory("Todas");
+            }}
             style={selectedCategory === "Todas" ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
             className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
               selectedCategory === "Todas"
@@ -715,7 +719,10 @@ export default function ProductosPage() {
 
           <button
             type="button"
-            onClick={() => setSelectedCategory("ofertas")}
+            onClick={() => {
+              triggerHaptic("selection");
+              setSelectedCategory("ofertas");
+            }}
             className={`rounded-xl px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
               selectedCategory === "ofertas"
                 ? "bg-amber-500 text-white shadow-xs"
@@ -733,7 +740,10 @@ export default function ProductosPage() {
               <div key={cat} className="relative group shrink-0">
                 <button
                   type="button"
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setSelectedCategory(cat);
+                  }}
                   style={isSelected ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
                   className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                     isSelected
@@ -824,7 +834,168 @@ export default function ProductosPage() {
           </button>
         </Card>
       ) : (
-        <div data-tour="productos-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <>
+          {/* Mobile Apple Inset Grouped Inventory List */}
+          <div className="block sm:hidden space-y-3">
+            <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
+              {filteredProducts.map((p) => {
+                const isLowStock = p.stock <= 5;
+                const marginPercent = Math.round(((p.price - p.cost) / p.price) * 100);
+                const isBroken = brokenImages[p.id] || !p.imageUrl;
+
+                return (
+                  <div key={p.id} className="p-3.5 space-y-2.5">
+                    <div className="flex items-center gap-3">
+                      {/* Squircle Thumbnail */}
+                      <div className="relative h-14 w-14 shrink-0 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 overflow-hidden flex items-center justify-center">
+                        {isBroken ? (
+                          <Package className="h-6 w-6 text-slate-400" />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            onError={() => setBrokenImages((prev) => ({ ...prev, [p.id]: true }))}
+                            className="h-full w-full object-contain p-1"
+                          />
+                        )}
+                        {p.isOnSale && (
+                          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500" />
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            {p.category}
+                          </span>
+                          {!p.active && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-500/10 text-rose-600">
+                              Pausado
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                          {p.name}
+                        </h4>
+                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                          {p.isOnSale && p.salePrice && p.salePrice < p.price ? (
+                            <>
+                              <span className="font-mono font-black text-amber-600 dark:text-amber-400 text-xs">
+                                {formatGs(p.salePrice)}
+                              </span>
+                              <span className="font-mono text-[10px] text-slate-400 line-through">
+                                {formatGs(p.price)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="font-mono font-black text-slate-900 dark:text-white text-xs">
+                              {formatGs(p.price)}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-emerald-600 font-semibold">
+                            · {marginPercent}% mg
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Apple Stepper Control */}
+                      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/60 dark:border-white/5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("medium");
+                            updateProductStock(p.id, -1);
+                          }}
+                          disabled={p.stock <= 0}
+                          className="h-7 w-7 rounded-xl bg-white dark:bg-slate-700 font-bold text-slate-800 dark:text-slate-200 flex items-center justify-center text-xs shadow-2xs active:scale-90 transition disabled:opacity-30 cursor-pointer"
+                          title="Restar 1 unidad"
+                        >
+                          -
+                        </button>
+                        <span
+                          className={`w-7 text-center font-mono font-black text-xs ${
+                            isLowStock ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
+                          }`}
+                        >
+                          {p.stock}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("selection");
+                            updateProductStock(p.id, 1);
+                          }}
+                          className="h-7 w-7 rounded-xl bg-white dark:bg-slate-700 font-bold text-slate-800 dark:text-slate-200 flex items-center justify-center text-xs shadow-2xs active:scale-90 transition cursor-pointer"
+                          title="Sumar 1 unidad"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Mobile Quick Action Footer */}
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100/70 dark:border-slate-800/60 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("light");
+                            handleOpenPromoModal(p);
+                          }}
+                          className={`px-2 py-0.5 rounded-lg text-[10.5px] font-bold flex items-center gap-1 transition cursor-pointer ${
+                            p.isOnSale && p.salePrice && p.salePrice < p.price
+                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-500 border border-slate-200/60 dark:border-slate-700"
+                          }`}
+                        >
+                          <Tag className="h-3 w-3 text-amber-500" />
+                          <span>{p.isOnSale ? "Oferta activa" : "Descuento"}</span>
+                        </button>
+
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                          isLowStock
+                            ? "bg-rose-50 dark:bg-rose-950/40 text-rose-600 border border-rose-200 dark:border-rose-900"
+                            : "text-slate-400"
+                        }`}>
+                          {isLowStock ? "Stock bajo" : `${p.stock} dispon.`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("selection");
+                            openEditModal(p);
+                          }}
+                          className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                          title="Editar producto"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("light");
+                            handleDelete(p.id, p.name);
+                          }}
+                          className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                          title="Eliminar producto"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Desktop Product Grid */}
+          <div data-tour="productos-grid" className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProducts.map((p, index) => {
             const isLowStock = p.stock <= 5;
             const marginPercent = Math.round(((p.price - p.cost) / p.price) * 100);
@@ -1005,7 +1176,8 @@ export default function ProductosPage() {
             );
           })}
         </div>
-      )}
+      </>
+    )}
 
       {/* Create / Edit Modal */}
       <Modal

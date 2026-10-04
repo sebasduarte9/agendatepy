@@ -19,6 +19,7 @@ import {
 import QRCode from "qrcode";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
+import { triggerHaptic } from "@/lib/haptics";
 
 export default function ExtrasPage() {
   const { business, updateBusiness, pushToast } = useDashboardStore();
@@ -51,6 +52,7 @@ export default function ExtrasPage() {
   }, [bookingUrl]);
 
   async function handleCopy() {
+    triggerHaptic("selection");
     await navigator.clipboard.writeText(bookingUrl);
     setCopiedUrl(true);
     pushToast("success", "Enlace de reservas copiado al portapapeles");
@@ -58,6 +60,7 @@ export default function ExtrasPage() {
   }
 
   function handlePrint() {
+    triggerHaptic("medium");
     window.print();
   }
 

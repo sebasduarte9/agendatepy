@@ -31,6 +31,7 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
+import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { ServiceItem } from "@/lib/dashboard-types";
 
@@ -831,7 +832,129 @@ export default function ServiciosPage() {
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <>
+          {/* Mobile Apple Inset Grouped Services List */}
+          <div className="block sm:hidden space-y-3">
+            <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
+              {filteredServices.map((item) => {
+                const isVisible = item.active !== false;
+                const hasActivePromo = item.hasPromo && item.promoPrice;
+                const currentPrice = hasActivePromo ? item.promoPrice! : item.price;
+                return (
+                  <div key={item.id} className="p-3.5 space-y-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Apple Squircle Icon with Brand Accent */}
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold">
+                          <Scissors className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              {item.category || "General"}
+                            </span>
+                            {item.hasPromo && (
+                              <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                PROMO
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                            {item.name}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-primary" />
+                              {item.durationMin} min
+                            </span>
+                            <span>•</span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white">
+                              {formatGs(currentPrice)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Apple Toggle Switch for Online Visibility */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("selection");
+                            handleToggleVisibility(item);
+                          }}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                            isVisible ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                          }`}
+                          title={isVisible ? "Servicio visible" : "Servicio pausado"}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              isVisible ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Mobile Action Footer */}
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100/70 dark:border-slate-800/60 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic("light");
+                          handleOpenPromoModal(item);
+                        }}
+                        className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Flame className="h-3 w-3" />
+                        <span>{item.hasPromo ? "Editar Promo" : "+ Promo Flash"}</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("light");
+                            handleCopyServiceLink(item.id, item.name);
+                          }}
+                          className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                          title="Copiar link"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("selection");
+                            handleOpenEditService(item);
+                          }}
+                          className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                          title="Editar servicio"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("light");
+                            setDeleteTarget({ id: item.id, name: item.name });
+                          }}
+                          className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                          title="Eliminar servicio"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Desktop Grid View */}
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredServices.map((item, index) => {
             const isVisible = item.active !== false;
             const hasActivePromo = item.hasPromo && item.promoPrice;
@@ -1021,7 +1144,8 @@ export default function ServiciosPage() {
               </Card>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Modal 1: Service Create / Edit (Clean, Zero Promo Clutter) */}

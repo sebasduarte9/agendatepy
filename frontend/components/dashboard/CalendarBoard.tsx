@@ -40,6 +40,8 @@ import { addDaysIso, phoneWa, formatGs, normalizeParaguayPhone } from "@/lib/das
 import Modal from "./ui/Modal";
 import Card from "./ui/Card";
 import CustomSelect from "./ui/CustomSelect";
+import IosSegmentedControl from "./ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 
 const START_HOUR = 8;
 const END_HOUR = 20;
@@ -588,50 +590,56 @@ export default function CalendarBoard() {
             <div className="flex items-center gap-1 bg-white/10 border border-white/15 rounded-xl p-1 backdrop-blur-md">
               <button
                 type="button"
-                className="rounded-lg px-2.5 py-1 text-xs font-bold text-white hover:bg-white/15 transition cursor-pointer"
-                onClick={() =>
+                className="rounded-lg px-2.5 py-1 text-xs font-bold text-white hover:bg-white/15 transition cursor-pointer active:scale-95"
+                onClick={() => {
+                  triggerHaptic("medium");
                   setCalendarDate(
                     formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
-                  )
-                }
+                  );
+                }}
               >
                 Hoy
               </button>
               <button
                 type="button"
-                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer"
-                onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1))}
+                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer active:scale-90"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1));
+                }}
                 aria-label="Anterior"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 type="button"
-                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer"
-                onClick={() => setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1))}
+                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer active:scale-90"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1));
+                }}
                 aria-label="Siguiente"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
 
-            {/* View Switcher pills */}
-            <div className="flex rounded-xl bg-white/10 border border-white/15 p-1 backdrop-blur-md">
-              {(["dia", "semana", "mes"] as const).map((view) => (
-                <button
-                  key={view}
-                  type="button"
-                  onClick={() => setCalendarView(view)}
-                  style={calendarView === view ? { backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)", color: "#ffffff" } : undefined}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold capitalize transition cursor-pointer ${
-                    calendarView === view
-                      ? "shadow-xs"
-                      : "text-slate-300 hover:text-white"
-                  }`}
-                >
-                  {view === "dia" ? "Día" : view === "semana" ? "Semana" : "Mes"}
-                </button>
-              ))}
+            {/* View Switcher iOS Segmented Control */}
+            <div className="w-full sm:w-auto">
+              <IosSegmentedControl
+                options={[
+                  { value: "dia", label: "Día" },
+                  { value: "semana", label: "Semana" },
+                  { value: "mes", label: "Mes" },
+                ]}
+                value={calendarView}
+                onChange={(val) => {
+                  setCalendarView(val as any);
+                  triggerHaptic("selection");
+                }}
+                layoutId="calendarViewSegment"
+                className="w-full sm:w-auto"
+              />
             </div>
 
             {/* "+ Crear Cita" Pill Button */}

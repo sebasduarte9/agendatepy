@@ -28,6 +28,8 @@ import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import DataTable from "@/components/dashboard/ui/DataTable";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 
 export default function CajaPage() {
@@ -636,26 +638,19 @@ export default function CajaPage() {
               <Download className="h-3.5 w-3.5 text-slate-500" />
               Exportar CSV
             </a>
-            <div className="flex gap-1.5 overflow-x-auto">
-              {[
-                { id: "todos", label: "Todos" },
-                { id: "efectivo", label: "Efectivo" },
-                { id: "pos", label: "POS Bancard" },
-                { id: "transferencia", label: "SIPAP" },
-              ].map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setFilterMethod(m.id)}
-                  className={`rounded-2xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                    filterMethod === m.id
-                      ? "bg-primary text-white shadow-xs"
-                      : "border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
+            <div className="w-full sm:w-auto">
+              <IosSegmentedControl
+                value={filterMethod}
+                onChange={(val) => setFilterMethod(val)}
+                layoutId="cajaMethodFilter"
+                size="sm"
+                options={[
+                  { value: "todos", label: "Todos" },
+                  { value: "efectivo", label: "Efectivo" },
+                  { value: "pos", label: "POS" },
+                  { value: "transferencia", label: "SIPAP" },
+                ]}
+              />
             </div>
           </div>
         </div>
@@ -683,88 +678,144 @@ export default function CajaPage() {
             </div>
           </div>
         ) : (
-          <DataTable
-            rows={filteredMovements}
-            columns={[
-              {
-                key: "time",
-                header: "Fecha / Hora",
-                render: (item) => (
-                  <span className="font-mono text-slate-500 text-xs">
-                    {formatInTimeZone(item.date, tz, "dd/MM · HH:mm")}
-                  </span>
-                ),
-              },
-              {
-                key: "type",
-                header: "Tipo",
-                render: (item) => (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      item.type === "ingreso"
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                        : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
-                    }`}
-                  >
-                    {item.type === "ingreso" ? (
-                      <ArrowDownLeft className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpRight className="h-3 w-3" />
-                    )}
-                    {item.type === "ingreso" ? "Ingreso" : "Egreso"}
-                  </span>
-                ),
-              },
-              {
-                key: "concept",
-                header: "Concepto",
-                render: (item) => (
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    {item.concept}
-                  </span>
-                ),
-              },
-              {
-                key: "method",
-                header: "Medio de Pago",
-                render: (item) => (
-                  <span className="capitalize text-slate-600 dark:text-slate-300 font-medium text-xs">
-                    {item.method === "pos"
-                      ? "POS Bancard"
-                      : item.method === "transferencia"
-                      ? "SIPAP Bancario"
-                      : "Efectivo"}
-                  </span>
-                ),
-              },
-              {
-                key: "voucher",
-                header: "Comprobante / Ref",
-                render: (item) => (
-                  <span className="text-slate-400 font-mono text-[11px]">
-                    {item.voucherNumber || "—"}
-                  </span>
-                ),
-              },
-              {
-                key: "amount",
-                header: "Monto",
-                render: (item) => (
-                  <span
-                    className={`font-black ${
-                      item.type === "ingreso"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-rose-600 dark:text-rose-400"
-                    }`}
-                  >
-                    {item.type === "ingreso" ? "+" : "-"}
-                    {formatGs(item.amount)}
-                  </span>
-                ),
-              },
-            ]}
-            pageSize={8}
-          />
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+              <DataTable
+                rows={filteredMovements}
+                columns={[
+                  {
+                    key: "time",
+                    header: "Fecha / Hora",
+                    render: (item) => (
+                      <span className="font-mono text-slate-500 text-xs">
+                        {formatInTimeZone(item.date, tz, "dd/MM · HH:mm")}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "type",
+                    header: "Tipo",
+                    render: (item) => (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          item.type === "ingreso"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                        }`}
+                      >
+                        {item.type === "ingreso" ? (
+                          <ArrowDownLeft className="h-3 w-3" />
+                        ) : (
+                          <ArrowUpRight className="h-3 w-3" />
+                        )}
+                        {item.type === "ingreso" ? "Ingreso" : "Egreso"}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "concept",
+                    header: "Concepto",
+                    render: (item) => (
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {item.concept}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "method",
+                    header: "Medio de Pago",
+                    render: (item) => (
+                      <span className="capitalize text-slate-600 dark:text-slate-300 font-medium text-xs">
+                        {item.method === "pos"
+                          ? "POS Bancard"
+                          : item.method === "transferencia"
+                          ? "SIPAP Bancario"
+                          : "Efectivo"}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "voucher",
+                    header: "Comprobante / Ref",
+                    render: (item) => (
+                      <span className="text-slate-400 font-mono text-[11px]">
+                        {item.voucherNumber || "—"}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "amount",
+                    header: "Monto",
+                    render: (item) => (
+                      <span
+                        className={`font-black ${
+                          item.type === "ingreso"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-rose-600 dark:text-rose-400"
+                        }`}
+                      >
+                        {item.type === "ingreso" ? "+" : "-"}
+                        {formatGs(item.amount)}
+                      </span>
+                    ),
+                  },
+                ]}
+                pageSize={8}
+              />
+            </div>
+
+            {/* Mobile View: Apple Inset Grouped Cash Flow List */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
+              {filteredMovements.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-3.5 flex items-center justify-between gap-3 active:bg-slate-50 dark:active:bg-slate-800/40 transition"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`p-2.5 rounded-2xl shrink-0 ${
+                        item.type === "ingreso"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      {item.type === "ingreso" ? (
+                        <ArrowDownLeft className="h-4 w-4" />
+                      ) : (
+                        <ArrowUpRight className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                          {item.concept}
+                        </span>
+                        <span className="rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-tight bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          {item.method === "pos" ? "POS" : item.method === "transferencia" ? "SIPAP" : "Efectivo"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
+                        {formatInTimeZone(item.date, tz, "dd/MM · HH:mm")} hs {item.voucherNumber && `· ${item.voucherNumber}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span
+                      className={`text-xs font-black font-mono block ${
+                        item.type === "ingreso"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      {item.type === "ingreso" ? "+" : "-"}
+                      {formatGs(item.amount)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </Card>
 
@@ -794,50 +845,82 @@ export default function CajaPage() {
             No hay arqueos de caja registrados todavía.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400 uppercase text-[10px] font-bold">
-                  <th className="py-2.5">Fecha y Hora</th>
-                  <th className="py-2.5">Responsable</th>
-                  <th className="py-2.5 text-right">Efectivo Esperado</th>
-                  <th className="py-2.5 text-right">Efectivo Contado</th>
-                  <th className="py-2.5 text-right">Diferencia</th>
-                  <th className="py-2.5">Observaciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {closures.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition">
-                    <td className="py-2.5 font-mono text-slate-700 dark:text-slate-300">
-                      {formatInTimeZone(c.closedAt, tz, "dd/MM/yyyy HH:mm")}
-                    </td>
-                    <td className="py-2.5 font-medium text-slate-900 dark:text-white">{c.closedBy}</td>
-                    <td className="py-2.5 text-right font-bold text-slate-700 dark:text-slate-300">
-                      {formatGs(c.expectedCash)}
-                    </td>
-                    <td className="py-2.5 text-right font-bold text-slate-900 dark:text-white">
-                      {formatGs(c.countedCash)}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          c.difference === 0
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                            : c.difference > 0
-                            ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
-                            : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                        }`}
-                      >
-                        {c.difference === 0 ? "Exacto" : c.difference > 0 ? `+${formatGs(c.difference)}` : formatGs(c.difference)}
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-slate-500 italic">{c.notes || "—"}</td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400 uppercase text-[10px] font-bold">
+                    <th className="py-2.5">Fecha y Hora</th>
+                    <th className="py-2.5">Responsable</th>
+                    <th className="py-2.5 text-right">Efectivo Esperado</th>
+                    <th className="py-2.5 text-right">Efectivo Contado</th>
+                    <th className="py-2.5 text-right">Diferencia</th>
+                    <th className="py-2.5">Observaciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {closures.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition">
+                      <td className="py-2.5 font-mono text-slate-700 dark:text-slate-300">
+                        {formatInTimeZone(c.closedAt, tz, "dd/MM/yyyy HH:mm")}
+                      </td>
+                      <td className="py-2.5 font-medium text-slate-900 dark:text-white">{c.closedBy}</td>
+                      <td className="py-2.5 text-right font-bold text-slate-700 dark:text-slate-300">
+                        {formatGs(c.expectedCash)}
+                      </td>
+                      <td className="py-2.5 text-right font-bold text-slate-900 dark:text-white">
+                        {formatGs(c.countedCash)}
+                      </td>
+                      <td className="py-2.5 text-right">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            c.difference === 0
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                              : c.difference > 0
+                              ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
+                              : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                          }`}
+                        >
+                          {c.difference === 0 ? "Exacto" : c.difference > 0 ? `+${formatGs(c.difference)}` : formatGs(c.difference)}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-slate-500 italic">{c.notes || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile View: Apple Inset Grouped Arqueo List */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
+              {closures.map((c) => (
+                <div key={c.id} className="py-3 px-1 space-y-1.5 active:bg-slate-50 dark:active:bg-slate-800/40 transition">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {c.closedBy}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        c.difference === 0
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          : c.difference > 0
+                          ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
+                          : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                      }`}
+                    >
+                      {c.difference === 0 ? "Exacto" : c.difference > 0 ? `+${formatGs(c.difference)}` : formatGs(c.difference)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                    <span>{formatInTimeZone(c.closedAt, tz, "dd/MM · HH:mm")} hs</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Contado: {formatGs(c.countedCash)}</span>
+                  </div>
+                  {c.notes && <p className="text-[11px] text-slate-400 italic">{c.notes}</p>}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </Card>
 

@@ -35,6 +35,8 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { Client, LoyaltyRewardTier } from "@/lib/dashboard-types";
 
@@ -859,44 +861,25 @@ export default function FidelizacionPage() {
           {/* Filters & Search */}
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
             {/* Filter Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-full sm:w-auto overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <button
-                type="button"
-                onClick={() => setFilterTab("todos")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 whitespace-nowrap ${
-                  filterTab === "todos"
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                }`}
-              >
-                Todos ({clients.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFilterTab("con_premio")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
-                  filterTab === "con_premio"
-                    ? "bg-amber-400 text-slate-950 font-black shadow-2xs"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                }`}
-              >
-                <Gift className="h-3 w-3" />
-                <span>Premio Listo ({eligibleClients.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFilterTab("vips")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
-                  filterTab === "vips"
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                }`}
-              >
-                <Flame className="h-3 w-3 text-amber-500" />
-                <span>VIPs</span>
-              </button>
+            <div className="w-full sm:w-auto">
+              <IosSegmentedControl
+                options={[
+                  { value: "todos", label: `Todos (${clients.length})` },
+                  {
+                    value: "con_premio",
+                    label: "Premio Listo",
+                    badge: eligibleClients.length > 0 ? eligibleClients.length : undefined,
+                  },
+                  { value: "vips", label: "VIPs" },
+                ]}
+                value={filterTab}
+                onChange={(val) => {
+                  setFilterTab(val as any);
+                  triggerHaptic("selection");
+                }}
+                layoutId="fidelizacionTabSegment"
+                className="w-full sm:w-auto"
+              />
             </div>
 
             {/* Search Input */}
@@ -1014,8 +997,11 @@ export default function FidelizacionPage() {
                       {/* Add Point (+1 Sello) */}
                       <button
                         type="button"
-                        onClick={() => handleAddPoint(client.id, client.name)}
-                        className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs transition cursor-pointer shrink-0"
+                        onClick={() => {
+                          triggerHaptic("medium");
+                          handleAddPoint(client.id, client.name);
+                        }}
+                        className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
                         title="Sumar +1 sello tras la visita"
                       >
                         +1 Sello
@@ -1025,14 +1011,15 @@ export default function FidelizacionPage() {
                       {canRedeem ? (
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
+                            triggerHaptic("success");
                             handleRedeem(
                               client.id,
                               client.name,
                               highestUnlocked ? highestUnlocked.threshold : threshold
-                            )
-                          }
-                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition cursor-pointer shrink-0"
+                            );
+                          }}
+                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
                         >
                           <Gift className="h-3.5 w-3.5" />
                           <span>Canjear</span>
@@ -1048,7 +1035,8 @@ export default function FidelizacionPage() {
                         href={getWhatsAppShareUrl(client.name, client.phone, client.id)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-white shadow-xs transition cursor-pointer shrink-0"
+                        onClick={() => triggerHaptic("light")}
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
                         title="Enviar tarjeta al WhatsApp del cliente"
                       >
                         <MessageCircle className="h-3.5 w-3.5" />
@@ -1058,8 +1046,11 @@ export default function FidelizacionPage() {
                       {/* Show QR Modal */}
                       <button
                         type="button"
-                        onClick={() => setSelectedClientForQr(client)}
-                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition cursor-pointer shrink-0"
+                        onClick={() => {
+                          triggerHaptic("selection");
+                          setSelectedClientForQr(client);
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition active:scale-95 cursor-pointer shrink-0"
                         title="Mostrar código QR del pase"
                       >
                         <QrCode className="h-4 w-4" />
