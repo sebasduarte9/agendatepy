@@ -84,7 +84,7 @@ export default function ComisionesPage() {
     pushToast,
   } = useDashboardStore();
 
-  const brandColor = business.primaryColor || "var(--primary, #0ea5e9)";
+  const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
 
   // Filters state
   const [selectedStaffId, setSelectedStaffId] = useState<string>("ALL");
@@ -484,81 +484,61 @@ export default function ComisionesPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="comisiones-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: brandColor }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Comisiones al Equipo
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1 sm:space-y-2">
-            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: brandColor }}
-              />
-              <span>Liquidaciones & Equipo Operativo</span>
-            </div>
-            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Comisiones al Equipo
-            </h1>
-            <p className="hidden sm:block text-sm text-slate-300 max-w-xl">
-              Cálculo transparente de ingresos por servicios realizados y venta de productos en mostrador con recibos oficiales imprimibles.
-            </p>
+        {/* Action Dock & Global Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Staff Selector */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+            <CustomSelect
+              value={selectedStaffId}
+              onChange={(val) => setSelectedStaffId(val)}
+              options={staffFilterOptions}
+              buttonClassName="min-w-[170px] bg-transparent text-slate-800 dark:text-slate-100 border-0 py-1.5 text-xs font-semibold"
+            />
           </div>
 
-          {/* Action Dock & Global Filters */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Staff Selector */}
-            <div className="bg-slate-900/80 rounded-xl border border-slate-700/80 backdrop-blur-md">
-              <CustomSelect
-                value={selectedStaffId}
-                onChange={(val) => setSelectedStaffId(val)}
-                options={staffFilterOptions}
-                buttonClassName="min-w-[190px] bg-transparent text-white border-0 py-2 text-xs"
-              />
-            </div>
-
-            {/* Period Selector */}
-            <div className="bg-slate-900/80 rounded-xl border border-slate-700/80 backdrop-blur-md">
-              <CustomSelect
-                value={period}
-                onChange={(val) => setPeriod(val)}
-                options={periodFilterOptions}
-                buttonClassName="min-w-[130px] bg-transparent text-white border-0 py-2 text-xs"
-              />
-            </div>
-
-            {/* Configure Rules */}
-            <button
-              type="button"
-              data-tour="comisiones-rules"
-              onClick={() => setIsRulesModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-white transition backdrop-blur-md cursor-pointer"
-            >
-              <Sliders className="h-3.5 w-3.5 text-slate-300" />
-              <span>Reglas %</span>
-            </button>
-
-            {/* Liquidar button */}
-            <button
-              type="button"
-              data-tour="comisiones-liquidar-btn"
-              onClick={() => handleOpenLiquidar()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer"
-              style={{
-                backgroundColor: brandColor,
-                boxShadow: `0 4px 14px -2px ${brandColor}55`,
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Pagar Comisión</span>
-            </button>
+          {/* Period Selector */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+            <CustomSelect
+              value={period}
+              onChange={(val) => setPeriod(val)}
+              options={periodFilterOptions}
+              buttonClassName="min-w-[125px] bg-transparent text-slate-800 dark:text-slate-100 border-0 py-1.5 text-xs font-semibold"
+            />
           </div>
+
+          {/* Configure Rules */}
+          <button
+            type="button"
+            data-tour="comisiones-rules"
+            onClick={() => setIsRulesModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 transition shadow-xs cursor-pointer"
+          >
+            <Sliders className="h-3.5 w-3.5 text-slate-400" />
+            <span>Reglas %</span>
+          </button>
+
+          {/* Liquidar button */}
+          <button
+            type="button"
+            data-tour="comisiones-liquidar-btn"
+            onClick={() => handleOpenLiquidar()}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: brandColor,
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Pagar Comisión</span>
+          </button>
         </div>
       </div>
 

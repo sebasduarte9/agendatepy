@@ -218,6 +218,7 @@ export default function CalendarBoard() {
 
   const [newServiceId, setNewServiceId] = useState(services[0]?.id || "");
   const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>("efectivo");
+  const [mobileAgendaMode, setMobileAgendaMode] = useState<"stream" | "grid">("stream");
 
   const activeCountry = useMemo(() => {
     return COUNTRY_LIST.find((c) => c.code === selectedCountryCode) || COUNTRY_LIST[0];
@@ -432,6 +433,17 @@ export default function CalendarBoard() {
     return true;
   });
 
+  const mobileDayAppointments = useMemo(() => {
+    return appointments
+      .filter((a) => {
+        if (!a.start.startsWith(calendarDate)) return false;
+        if (a.status === "cancelled") return false;
+        if (selectedStaffId !== "all" && a.staffId !== selectedStaffId) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }, [appointments, calendarDate, selectedStaffId]);
+
   const label = format(parseISO(`${calendarDate}T12:00:00`), "EEEE d 'de' MMMM, yyyy", {
     locale: es,
   });
@@ -555,147 +567,187 @@ export default function CalendarBoard() {
     <div className="space-y-6">
       <p className="sr-only">{timezoneNote}</p>
 
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="calendar-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Agenda & Turnos
+          </h1>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 capitalize mt-0.5">
+            {label}
+          </p>
+        </div>
 
-        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-              />
-              <span>AGENDA & CONTROL OPERATIVO</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white capitalize">
-                {label}
-              </h1>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Planificación centralizada por especialista, bloqueos de descanso y confirmación automática con clientes.
-            </p>
+        {/* Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Date Navigator */}
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-xl p-1 shadow-xs">
+            <button
+              type="button"
+              className="rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer active:scale-95"
+              onClick={() => {
+                triggerHaptic("medium");
+                setCalendarDate(
+                  formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
+                );
+              }}
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer active:scale-90"
+              onClick={() => {
+                triggerHaptic("light");
+                setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1));
+              }}
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer active:scale-90"
+              onClick={() => {
+                triggerHaptic("light");
+                setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1));
+              }}
+              aria-label="Siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* Action Dock */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Date Navigator */}
-            <div className="flex items-center gap-1 bg-white/10 border border-white/15 rounded-xl p-1 backdrop-blur-md">
-              <button
-                type="button"
-                className="rounded-lg px-2.5 py-1 text-xs font-bold text-white hover:bg-white/15 transition cursor-pointer active:scale-95"
-                onClick={() => {
-                  triggerHaptic("medium");
-                  setCalendarDate(
-                    formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
-                  );
-                }}
-              >
-                Hoy
-              </button>
-              <button
-                type="button"
-                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer active:scale-90"
-                onClick={() => {
-                  triggerHaptic("light");
-                  setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1));
-                }}
-                aria-label="Anterior"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                className="rounded-lg p-1 text-white hover:bg-white/15 transition cursor-pointer active:scale-90"
-                onClick={() => {
-                  triggerHaptic("light");
-                  setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1));
-                }}
-                aria-label="Siguiente"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+          {/* View Switcher iOS Segmented Control */}
+          <div className="w-full sm:w-auto">
+            <IosSegmentedControl
+              options={[
+                { value: "dia", label: "Día" },
+                { value: "semana", label: "Semana" },
+                { value: "mes", label: "Mes" },
+              ]}
+              value={calendarView}
+              onChange={(val) => {
+                setCalendarView(val as any);
+                triggerHaptic("selection");
+              }}
+              layoutId="calendarViewSegment"
+              className="w-full sm:w-auto"
+            />
+          </div>
+
+          {/* "+ Crear Cita" Pill Button */}
+          <button
+            type="button"
+            data-tour="calendar-create-btn"
+            onClick={() => {
+              setNewSlotData({
+                date: calendarDate,
+                time: "10:00",
+                staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
+              });
+              setNewClientId(null);
+              setNewClientName("");
+              setNewClientPhone("");
+              setSelectedCountryCode("PY");
+              setCountryDropdownOpen(false);
+              setCountrySearchQuery("");
+              setNewServiceId(services[0]?.id || "");
+              setNewModalMode("appointment");
+              setNewModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer hover:brightness-110"
+            style={{
+              backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>+ Cita</span>
+          </button>
+
+          {/* "+ Bloquear Horario" Button */}
+          <button
+            type="button"
+            data-tour="calendar-block-btn"
+            onClick={() => {
+              setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : "all");
+              setBlockDate(calendarDate);
+              setBlockStart("13:00");
+              setBlockEnd("14:00");
+              setBlockReason("Almuerzo / Descanso");
+              setNewModalMode("block");
+              setNewModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-slate-700 dark:text-slate-200 hover:text-amber-600 px-3.5 py-2 text-xs font-bold transition cursor-pointer shadow-xs"
+          >
+            <Ban className="h-3.5 w-3.5 text-amber-500" />
+            <span>Bloquear</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Agenda del Día
+            </span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+                {dayAppointments.length}
+              </span>
+              <span className="text-xs font-semibold text-slate-400">turnos programados</span>
             </div>
+          </div>
 
-            {/* View Switcher iOS Segmented Control */}
-            <div className="w-full sm:w-auto">
-              <IosSegmentedControl
-                options={[
-                  { value: "dia", label: "Día" },
-                  { value: "semana", label: "Semana" },
-                  { value: "mes", label: "Mes" },
-                ]}
-                value={calendarView}
-                onChange={(val) => {
-                  setCalendarView(val as any);
-                  triggerHaptic("selection");
-                }}
-                layoutId="calendarViewSegment"
-                className="w-full sm:w-auto"
-              />
-            </div>
+          <button
+            type="button"
+            onClick={() => {
+              setNewSlotData({
+                date: calendarDate,
+                time: "10:00",
+                staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
+              });
+              setNewClientId(null);
+              setNewClientName("");
+              setNewClientPhone("");
+              setSelectedCountryCode("PY");
+              setCountryDropdownOpen(false);
+              setCountrySearchQuery("");
+              setNewServiceId(services[0]?.id || "");
+              setNewModalMode("appointment");
+              setNewModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>+ Cita</span>
+          </button>
+        </div>
 
-            {/* "+ Crear Cita" Pill Button */}
-            <button
-              type="button"
-              data-tour="calendar-create-btn"
-              onClick={() => {
-                setNewSlotData({
-                  date: calendarDate,
-                  time: "10:00",
-                  staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
-                });
-                setNewClientId(null);
-                setNewClientName("");
-                setNewClientPhone("");
-                setSelectedCountryCode("PY");
-                setCountryDropdownOpen(false);
-                setCountrySearchQuery("");
-                setNewServiceId(services[0]?.id || "");
-                setNewModalMode("appointment");
-                setNewModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
-              style={{
-                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
-                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              <span>+ Cita</span>
-            </button>
-
-            {/* "+ Bloquear Horario" Button */}
-            <button
-              type="button"
-              data-tour="calendar-block-btn"
-              onClick={() => {
-                setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : "all");
-                setBlockDate(calendarDate);
-                setBlockStart("13:00");
-                setBlockEnd("14:00");
-                setBlockReason("Almuerzo / Descanso");
-                setNewModalMode("block");
-                setNewModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-amber-500/20 hover:border-amber-500/40 text-slate-200 hover:text-amber-300 px-3.5 py-2 text-xs font-bold transition cursor-pointer backdrop-blur-md"
-            >
-              <Ban className="h-4 w-4 text-amber-400" />
-              <span>Bloquear</span>
-            </button>
+        <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span className="text-[10px] text-slate-400 block font-medium">Confirmados</span>
+            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono text-xs">{confirmedDayCount}</span>
+          </div>
+          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span className="text-[10px] text-slate-400 block font-medium">Ocupación</span>
+            <span className="font-extrabold text-primary font-mono text-xs">{occupancyPct}%</span>
+          </div>
+          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span className="text-[10px] text-slate-400 block font-medium">Asistencia</span>
+            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs">{attendanceRate}%</span>
           </div>
         </div>
       </div>
 
       {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Card 1: Ocupación & Confirmación */}
           <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
@@ -703,7 +755,7 @@ export default function CalendarBoard() {
               <div className="flex items-center gap-2.5">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <CalendarDays className="h-5 w-5" />
                 </div>
@@ -738,7 +790,7 @@ export default function CalendarBoard() {
                       cx="22"
                       cy="22"
                       r="18"
-                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
                       strokeWidth="4"
                       fill="none"
                       strokeDasharray={113}
@@ -942,10 +994,218 @@ export default function CalendarBoard() {
         </div>
       )}
 
+      {/* ═══ MOBILE AGENDA SWITCHER & DAY STREAM ═══ */}
+      {calendarView === "dia" && (
+        <div className="md:hidden space-y-3">
+          {/* Switcher Pill */}
+          <div className="flex items-center justify-between gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/5">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("selection");
+                setMobileAgendaMode("stream");
+              }}
+              className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+                mobileAgendaMode === "stream"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              Flujo de Citas ({mobileDayAppointments.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("selection");
+                setMobileAgendaMode("grid");
+              }}
+              className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+                mobileAgendaMode === "grid"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              Grilla Horaria
+            </button>
+          </div>
+
+          {/* Stream Content */}
+          {mobileAgendaMode === "stream" && (
+            <div className="space-y-2.5">
+              {mobileDayAppointments.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-300 dark:border-white/10 p-8 text-center bg-white dark:bg-slate-900 shadow-xs">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2.5">
+                    <CalendarIcon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    No hay turnos para {shortLabel}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500 max-w-xs mx-auto">
+                    Este día aún no tiene citas asignadas para el filtro seleccionado.
+                  </p>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewSlotData({
+                          date: calendarDate,
+                          time: "10:00",
+                          staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
+                        });
+                        setNewClientId(null);
+                        setNewClientName("");
+                        setNewClientPhone("");
+                        setSelectedCountryCode("PY");
+                        setCountryDropdownOpen(false);
+                        setCountrySearchQuery("");
+                        setNewServiceId(services[0]?.id || "");
+                        setNewModalMode("appointment");
+                        setNewModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
+                      style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>+ Agendar Primer Turno</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                mobileDayAppointments.map((app) => {
+                  const srv = services.find((s) => s.id === app.serviceId);
+                  const st = staff.find((s) => s.id === app.staffId);
+                  const startTime = formatInTimeZone(new Date(app.start), business.timezone || "America/Asuncion", "HH:mm");
+                  const endTime = formatInTimeZone(new Date(app.end), business.timezone || "America/Asuncion", "HH:mm");
+                  const cleanPhone = app.clientPhone?.replace(/\D/g, "") || "";
+                  const waUrl = cleanPhone
+                    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                        `¡Hola ${app.clientName}! Te escribimos de ${business.name} para confirmar tu turno de hoy a las ${startTime} hs.`
+                      )}`
+                    : null;
+
+                  return (
+                    <div
+                      key={app.id}
+                      onClick={() => {
+                        triggerHaptic("selection");
+                        setSelectedApp(app);
+                      }}
+                      className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs active:bg-slate-50 dark:active:bg-slate-800/60 transition cursor-pointer space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {/* Time Badge */}
+                          <div className="flex flex-col items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 shrink-0 border border-slate-200/60 dark:border-white/5">
+                            <span className="text-xs font-black font-mono text-slate-900 dark:text-white leading-none">
+                              {startTime}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 mt-0.5 leading-none">
+                              {endTime}
+                            </span>
+                          </div>
+
+                          {/* Client & Service */}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                {app.clientName}
+                              </h4>
+                              <span
+                                className={`rounded-full px-2 py-0.2 text-[9px] font-bold uppercase tracking-tight shrink-0 ${
+                                  app.status === "confirmed"
+                                    ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400"
+                                    : app.status === "completed"
+                                    ? "bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-400"
+                                    : "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400"
+                                }`}
+                              >
+                                {app.status === "confirmed" ? "Confirmado" : app.status === "completed" ? "Cobrado" : "Pendiente"}
+                              </span>
+                            </div>
+
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                              {srv?.name || "Servicio"} · <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(srv?.price || 0)}</strong>
+                            </p>
+
+                            {/* Specialist chip */}
+                            {st && (
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <span
+                                  className="flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white shadow-2xs"
+                                  style={{ background: st.color }}
+                                >
+                                  {st.avatar}
+                                </span>
+                                <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 truncate">
+                                  {st.name}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Chevron */}
+                        <ChevronRight className="h-4 w-4 text-slate-400 shrink-0 mt-1" />
+                      </div>
+
+                      {/* Quick Action Footer */}
+                      <div
+                        className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          {cleanPhone && (
+                            <a
+                              href={`tel:${cleanPhone}`}
+                              onClick={() => triggerHaptic("medium")}
+                              className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-500/20 active:scale-95 transition"
+                              title="Llamar"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+
+                          {waUrl && (
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={() => triggerHaptic("medium")}
+                              className="p-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 active:scale-95 transition"
+                              title="WhatsApp"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("selection");
+                            setSelectedApp(app);
+                          }}
+                          className="px-3 py-1 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+                          style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+                        >
+                          {app.status === "completed" ? "Ver Cobro" : "Cobrar Turno"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Main Calendar View Displays */}
       <div
         data-tour="calendar-grid"
-        className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden p-1 shadow-xs"
+        className={`rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden p-1 shadow-xs ${
+          calendarView === "dia" && mobileAgendaMode === "stream" ? "hidden md:block" : "block"
+        }`}
       >
         {calendarView === "dia" && (
           <GoogleCalendarDayView

@@ -54,7 +54,7 @@ const OPERATIONS_LINKS: SidebarLink[] = [
   { href: "/dashboard/crm", label: "Mensajes & CRM", icon: MessagesSquare, roles: ["admin", "cajero"] },
   { href: "/dashboard/fidelizacion", label: "Fidelización", icon: Award, roles: ["admin", "cajero"] },
   { href: "/dashboard/whatsapp", label: "Bot WhatsApp", icon: Bot, roles: ["admin"] },
-  { href: "/dashboard/estadisticas", label: "Estadísticas", icon: BarChart3, roles: ["admin"] },
+  { href: "/dashboard/estadisticas", label: "Métricas y Análisis", icon: BarChart3, roles: ["admin"] },
 ];
 
 const CONFIG_LINKS: SidebarLink[] = [
@@ -168,7 +168,7 @@ export default function Sidebar() {
         <div className="flex h-7 w-7 shrink-0 items-center justify-center">
           <Icon
             className="h-4 w-4 transition-colors duration-150"
-            style={active ? { color: "var(--primary, #4f46e5)" } : undefined}
+            style={active ? { color: "var(--primary, #FF4F2B)" } : undefined}
           />
         </div>
 
@@ -187,7 +187,7 @@ export default function Sidebar() {
           {active && (
             <span
               className="h-1.5 w-1.5 rounded-full shrink-0 ml-1"
-              style={{ backgroundColor: "var(--primary, #4f46e5)" }}
+              style={{ backgroundColor: "var(--primary, #FF4F2B)" }}
             />
           )}
         </div>
@@ -245,7 +245,7 @@ export default function Sidebar() {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
                     className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-white font-black text-[11px] shadow-xs"
-                    style={{ backgroundColor: "var(--primary, #4f46e5)" }}
+                    style={{ backgroundColor: "var(--primary, #FF4F2B)" }}
                   >
                     {business.name.charAt(0).toUpperCase()}
                   </div>
@@ -262,7 +262,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-center py-1">
               <div
                 className="flex h-8 w-8 items-center justify-center rounded-xl text-white font-black text-xs shadow-xs"
-                style={{ backgroundColor: "var(--primary, #4f46e5)" }}
+                style={{ backgroundColor: "var(--primary, #FF4F2B)" }}
                 title={business.name}
               >
                 {business.name.charAt(0).toUpperCase()}

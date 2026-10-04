@@ -457,71 +457,89 @@ export default function ServiciosPage() {
     <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
       {/* ========================================================= */}
       {/* 1. DARK CONSOLE HERO BANNER                                */}
-      {/* ========================================================= */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="servicios-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        {/* Dynamic Brand Ambient Radial Glow */}
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Servicios & Precios
+        </h1>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="uppercase tracking-wider font-semibold text-slate-300">
-                Workspace
-              </span>
-              <span>/</span>
-              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
-              <span className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline text-slate-400">{services.length} servicios</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+        {/* Quick Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-tour="servicios-new-btn"
+            onClick={handleOpenCreateService}
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: business.primaryColor || "#FF4F2B",
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Nuevo Servicio</span>
+          </button>
+
+          <Link
+            href={`/${business.slug || "barberia"}/reservar`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
+            title="Ver cómo ven los clientes tus servicios"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+            <span>Ver Web</span>
+          </Link>
+
+          <Link
+            href="/dashboard/equipo"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
+            title="Administrar comisiones y colaboradores"
+          >
+            <Users className="h-3.5 w-3.5 text-slate-400" />
+            <span className="hidden sm:inline">Equipo</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
               Catálogo de Servicios
-            </h1>
-            <p className="hidden sm:block text-sm text-slate-400">
-              Categorías, duraciones por turno, profesionales asignados y promociones flash.
-            </p>
+            </span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+                {visibleServicesCount}
+              </span>
+              <span className="text-xs font-semibold text-slate-400">visibles de {services.length}</span>
+            </div>
           </div>
 
-          {/* Quick Action Dock */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              data-tour="servicios-new-btn"
-              onClick={handleOpenCreateService}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
-              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
-            >
-              <Plus className="h-4 w-4" />
-              <span>+ Nuevo Servicio</span>
-            </button>
+          <button
+            type="button"
+            onClick={handleOpenCreateService}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>+ Servicio</span>
+          </button>
+        </div>
 
-            <Link
-              href={`/${business.slug || "barberia"}/reservar`}
-              target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition"
-              title="Ver cómo ven los clientes tus servicios"
-            >
-              <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-              <span>Ver Web</span>
-            </Link>
-
-            <Link
-              href="/dashboard/equipo"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition"
-              title="Administrar comisiones y colaboradores"
-            >
-              <Users className="h-3.5 w-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Equipo</span>
-            </Link>
+        <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span className="text-[10px] text-slate-400 block font-medium">Categorías</span>
+            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs">{allCategories.length}</span>
+          </div>
+          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span className="text-[10px] text-slate-400 block font-medium">Promos Flash</span>
+            <span className="font-extrabold text-amber-600 dark:text-amber-400 font-mono text-xs">{services.filter((s) => s.hasPromo).length}</span>
+          </div>
+          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span className="text-[10px] text-slate-400 block font-medium">Precio Medio</span>
+            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs truncate block">{formatGs(avgPrice)}</span>
           </div>
         </div>
       </div>
@@ -529,7 +547,7 @@ export default function ServiciosPage() {
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
           <div className="font-semibold text-sm text-slate-900 dark:text-white">
@@ -587,7 +605,7 @@ export default function ServiciosPage() {
                       strokeDasharray={113}
                       strokeDashoffset={113 - (113 * (services.length > 0 ? Math.round((visibleServicesCount / services.length) * 100) : 100)) / 100}
                       strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      style={{ stroke: "var(--primary, #FF4F2B)" }}
                       className="transition-all duration-700"
                       fill="transparent"
                     />

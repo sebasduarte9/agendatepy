@@ -132,59 +132,29 @@ export default function EstadisticasPage() {
 
   return (
     <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
-      {/* ========================================================= */}
-      {/* 1. DARK CONSOLE HERO BANNER                                */}
-      {/* ========================================================= */}
-      <div
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
-      >
-        {/* Dynamic Brand Ambient Radial Glow */}
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+      {/* ═══ CLEAN NATIVE APP HEADER ═══ */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Métricas y Análisis
+        </h1>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="uppercase tracking-wider font-semibold text-slate-300">
-                Workspace
-              </span>
-              <span>/</span>
-              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
-              <span className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline text-slate-400">{filter}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
-              Métricas & Analítica del Negocio
-            </h1>
-            <p className="text-sm text-slate-400">
-              Evolución de facturación en Gs., tasa de asistencia, métodos de cobro y horarios pico.
-            </p>
-          </div>
-
-          {/* Timeframe Filter Dock */}
-          <div className="flex items-center gap-1 rounded-2xl border border-slate-700 p-1 bg-slate-900/80 backdrop-blur-xl shadow-xs overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
-            {FILTERS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setFilter(item)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition shrink-0 whitespace-nowrap cursor-pointer ${
-                  filter === item
-                    ? "text-white shadow-xs"
-                    : "text-slate-400 hover:text-white"
-                }`}
-                style={filter === item ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
+        {/* Timeframe Filter Dock - Native iOS Style */}
+        <div className="flex items-center gap-1 rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 bg-white dark:bg-slate-900 shadow-xs overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
+          {FILTERS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setFilter(item)}
+              className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition shrink-0 whitespace-nowrap cursor-pointer ${
+                filter === item
+                  ? "text-white shadow-xs font-bold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+              style={filter === item ? { backgroundColor: business.primaryColor || "#FF4F2B" } : undefined}
+            >
+              {item}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -208,10 +178,10 @@ export default function EstadisticasPage() {
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-          <div className="font-semibold text-sm text-slate-900 dark:text-white">
+          <div className="font-bold text-sm text-slate-900 dark:text-white">
             Resumen de Rendimiento · {filter}
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -264,7 +234,7 @@ export default function EstadisticasPage() {
                       strokeDasharray={113}
                       strokeDashoffset={113 - (113 * attendanceRate) / 100}
                       strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      style={{ stroke: "var(--primary, #FF4F2B)" }}
                       className="transition-all duration-700"
                       fill="transparent"
                     />
@@ -416,8 +386,8 @@ export default function EstadisticasPage() {
               <AreaChart data={areaData}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={business.primaryColor || "#6366f1"} stopOpacity={0.4} />
-                    <stop offset="95%" stopColor={business.primaryColor || "#6366f1"} stopOpacity={0.0} />
+                    <stop offset="5%" stopColor={business.primaryColor || "#FF4F2B"} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={business.primaryColor || "#FF4F2B"} stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
@@ -435,7 +405,7 @@ export default function EstadisticasPage() {
                 <Area
                   type="monotone"
                   dataKey="ingresos"
-                  stroke={business.primaryColor || "#6366f1"}
+                  stroke={business.primaryColor || "#FF4F2B"}
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#colorIngresos)"

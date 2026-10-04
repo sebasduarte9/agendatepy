@@ -396,66 +396,46 @@ export default function ProductosPage() {
 
   return (
     <div className="space-y-6">
-      {/* Dark Console Hero Header */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="productos-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Productos & Inventario
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-              />
-              <span>CATÁLOGO DIGITAL & INVENTARIO</span>
-            </div>
-            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-              Productos, Tienda & Inventario
-            </h1>
-            <p className="hidden sm:block text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Control de existencias en tiempo real, márgenes por unidad, alertas de stock bajo y pedidos directos a tu WhatsApp.
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={copyStoreLink}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
+          >
+            {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+            <span>{copiedLink ? "¡Copiado!" : "Copiar Enlace"}</span>
+          </button>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={copyStoreLink}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition cursor-pointer"
-            >
-              {copiedLink ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-slate-300" />}
-              <span>{copiedLink ? "¡Copiado!" : "Copiar Enlace Tienda"}</span>
-            </button>
+          <Link
+            href={publicStoreUrl}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+            <span>Ver Tienda</span>
+          </Link>
 
-            <Link
-              href={publicStoreUrl}
-              target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
-            >
-              <ExternalLink className="h-4 w-4 text-slate-300" />
-              <span>Ver Tienda Web</span>
-            </Link>
-
-            <button
-              type="button"
-              data-tour="productos-new-btn"
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
-              style={{
-                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
-                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Nuevo Producto</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            data-tour="productos-new-btn"
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer hover:brightness-110"
+            style={{
+              backgroundColor: business.primaryColor || "#FF4F2B",
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Nuevo Producto</span>
+          </button>
         </div>
       </div>
 
@@ -495,7 +475,7 @@ export default function ProductosPage() {
               <div className="flex items-center gap-2.5">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <Package className="h-5 w-5" />
                 </div>
@@ -533,7 +513,7 @@ export default function ProductosPage() {
                       cx="22"
                       cy="22"
                       r="18"
-                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
                       strokeWidth="4"
                       fill="none"
                       strokeDasharray={113}
@@ -701,7 +681,7 @@ export default function ProductosPage() {
                           className="h-full rounded-full transition-all duration-500"
                           style={{
                             width: `${pct}%`,
-                            backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                            backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
                           }}
                         />
                       </div>

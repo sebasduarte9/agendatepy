@@ -97,7 +97,7 @@ const invoices: Array<{ id: string; date: string; concept: string; amount: numbe
 
 export default function SuscripcionPage() {
   const { business, updateBusiness, pushToast } = useDashboardStore();
-  const brandColor = business.primaryColor || "var(--primary, #0ea5e9)";
+  const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
   const currentPlan = business.plan || "pro";
 
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
@@ -134,61 +134,42 @@ export default function SuscripcionPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl">
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: brandColor }}
-        />
+      {/* ═══ NATIVE PAGE HEADER ═══ */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Suscripción & Planes
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: brandColor }}
-              />
-              <span>Planes SaaS & Facturación Legal e-Kuatia</span>
+        {/* Current Plan Badge Dock */}
+        <div className="flex flex-wrap items-center gap-3 p-2 sm:px-3 sm:py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-white font-bold"
+              style={{ backgroundColor: brandColor }}
+            >
+              <Crown className="h-4 w-4" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Suscripción & Planes de Crecimiento
-            </h1>
-            <p className="text-sm text-slate-300 max-w-xl">
-              Planes en Guaraníes (PYG) con 0% de comisiones por reservas cobradas. Facturación electrónica DNIT y pagos directos por SIPAP o QR Bancard.
-            </p>
-          </div>
-
-          {/* Current Plan Badge Dock */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-2xl bg-slate-900/80 border border-slate-700/80 backdrop-blur-md">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-bold"
-                style={{ backgroundColor: brandColor }}
-              >
-                <Crown className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                  Tu Plan Activo
-                </span>
-                <span className="text-sm font-extrabold text-white capitalize">
-                  {currentPlan === "gratis"
-                    ? "Plan Gratuito"
-                    : currentPlan === "pro"
-                      ? "Plan Pro VIP"
-                      : currentPlan === "empresa"
-                        ? "Plan Empresa"
-                        : "Plan Básico"}
-                </span>
-              </div>
-            </div>
-
-            <div className="sm:border-l sm:border-slate-700/80 sm:pl-3">
-              <span className="text-[10px] text-slate-400 block font-semibold">Cupo Mensual</span>
-              <span className="font-mono text-xs font-black text-emerald-400">
-                {business.usedBookings} / {business.freeBookingLimit} turnos
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                Plan Activo
+              </span>
+              <span className="text-xs font-extrabold text-slate-800 dark:text-white capitalize">
+                {currentPlan === "gratis"
+                  ? "Plan Gratuito"
+                  : currentPlan === "pro"
+                    ? "Plan Pro VIP"
+                    : currentPlan === "empresa"
+                      ? "Plan Empresa"
+                      : "Plan Básico"}
               </span>
             </div>
+          </div>
+
+          <div className="border-l border-slate-200 dark:border-white/10 pl-3">
+            <span className="text-[10px] text-slate-400 block font-semibold">Cupo Mensual</span>
+            <span className="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400">
+              {business.usedBookings} / {business.freeBookingLimit} turnos
+            </span>
           </div>
         </div>
       </div>

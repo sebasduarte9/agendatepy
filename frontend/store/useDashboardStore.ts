@@ -1121,7 +1121,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     address: "Av. Mariscal López 1420 c/ San Martín, Asunción",
     city: "Asunción",
     timezone: "America/Asuncion",
-    primaryColor: "#4f46e5",
+    primaryColor: "#FF4F2B",
     plan: "pro",
     usedBookings: 24,
     freeBookingLimit: 100,

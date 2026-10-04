@@ -709,74 +709,53 @@ export default function AparienciaPage() {
         }
       `}</style>
 
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
-      <div
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
-      >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+      {/* ═══ NATIVE PAGE HEADER ═══ */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Diseño & Apariencia
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)" }}
-              />
-              <span>Estudio de Marca & Experiencia del Cliente</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Diseño & Apariencia de la Página de Reservas
-            </h1>
-            <p className="text-sm text-slate-300 max-w-xl">
-              Personalizá la identidad visual de tu portal público: tipografías de Google Fonts, paleta de colores, portada panorámica, estilo de botones y orden de secciones.
-            </p>
-          </div>
+        {/* Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Ver Página Pública */}
+          <Link
+            href={publicBookingUrl}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+          >
+            <span>Ver Página Pública</span>
+            <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+          </Link>
 
-          {/* Action Dock */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Ver Página Pública */}
-            <Link
-              href={publicBookingUrl}
-              target="_blank"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition backdrop-blur-md cursor-pointer"
-            >
-              <span>Ver Página Pública</span>
-              <ExternalLink className="h-3.5 w-3.5 text-slate-300" />
-            </Link>
-
-            {/* Clean Save Button with dynamic brand color */}
-            <button
-              type="button"
-              data-tour="tour-save"
-              disabled={isSaving}
-              onClick={() => handleSave()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl text-white px-5 py-2.5 text-xs font-black shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer disabled:opacity-60"
-              style={{
-                backgroundColor: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)",
-                boxShadow: `0 4px 14px -2px ${(business.primaryColor || theme.primaryColor || "#0ea5e9")}55`,
-              }}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Guardando...</span>
-                </>
-              ) : savedSuccess ? (
-                <>
-                  <Check className="h-4 w-4 stroke-[3] text-white animate-bounce" />
-                  <span>¡Guardado!</span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  <span>Guardar Cambios</span>
-                </>
-              )}
-            </button>
-          </div>
+          {/* Clean Save Button with dynamic brand color */}
+          <button
+            type="button"
+            data-tour="tour-save"
+            disabled={isSaving}
+            onClick={() => handleSave()}
+            className="inline-flex items-center justify-center gap-2 rounded-xl text-white px-4 py-2 text-xs font-bold shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer disabled:opacity-60"
+            style={{
+              backgroundColor: business.primaryColor || theme.primaryColor || "var(--primary, #FF4F2B)",
+              boxShadow: `0 4px 14px -2px ${(business.primaryColor || theme.primaryColor || "#FF4F2B")}55`,
+            }}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Guardando...</span>
+              </>
+            ) : savedSuccess ? (
+              <>
+                <Check className="h-4 w-4 stroke-[3] text-white animate-bounce" />
+                <span>¡Guardado!</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                <span>Guardar Cambios</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -837,7 +816,7 @@ export default function AparienciaPage() {
                             100
                         }
                         strokeLinecap="round"
-                        stroke={business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)"}
+                        stroke={business.primaryColor || theme.primaryColor || "var(--primary, #FF4F2B)"}
                         fill="transparent"
                         className="transition-all duration-700 ease-out"
                       />
@@ -873,7 +852,7 @@ export default function AparienciaPage() {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
                   <div
                     className="h-10 w-10 rounded-2xl shrink-0 border-2 border-white dark:border-slate-800 shadow-xs flex items-center justify-center font-bold text-white text-xs"
-                    style={{ backgroundColor: business.primaryColor || theme.primaryColor || "#0ea5e9" }}
+                    style={{ backgroundColor: business.primaryColor || theme.primaryColor || "#FF4F2B" }}
                   >
                     ✓
                   </div>
@@ -882,7 +861,7 @@ export default function AparienciaPage() {
                       {theme.fontFamily || "Inter / Google Font"}
                     </span>
                     <span className="text-[11px] text-slate-400 block font-mono">
-                      {business.primaryColor || theme.primaryColor || "#0ea5e9"}
+                      {business.primaryColor || theme.primaryColor || "#FF4F2B"}
                     </span>
                     <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
                       {theme.layoutStyle || "Moderno"} · {theme.buttonRadius || "Píldora"}
@@ -970,7 +949,7 @@ export default function AparienciaPage() {
                 type="button"
                 onClick={() => handleSave()}
                 className="font-bold hover:underline cursor-pointer flex items-center gap-1"
-                style={{ color: business.primaryColor || theme.primaryColor || "var(--primary, #0ea5e9)" }}
+                style={{ color: business.primaryColor || theme.primaryColor || "var(--primary, #FF4F2B)" }}
               >
                 <span>Guardar ahora</span>
                 <ArrowRight className="h-3 w-3" />

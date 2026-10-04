@@ -292,80 +292,56 @@ export default function DashboardHomePage() {
     >
       {/* ========================================================= */}
       {/* 1. DARK CONSOLE HERO BANNER                                */}
-      {/* ========================================================= */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="welcome-banner"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        {/* Dynamic Brand Ambient Radial Glow */}
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Bienvenido, {userName}
+        </h1>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="uppercase tracking-wider font-semibold text-slate-300">
-                Workspace
-              </span>
-              <span>/</span>
-              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
-              <span className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline capitalize text-slate-400">{todayFormattedDisplay}</span>
-            </div>
-            <h1 className="text-xl sm:text-3xl font-semibold tracking-tight text-white">
-              Welcome back, {userName}
-            </h1>
-            <p className="hidden sm:block text-sm text-slate-400">
-              Overview of {business.name || "tu negocio"}
-            </p>
-          </div>
+        {/* Quick Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setQuickBookingOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: business.primaryColor || "#FF4F2B",
+            }}
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+            <span>Nueva Cita</span>
+          </button>
 
-          {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setQuickBookingOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
-              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
-            >
-              <CalendarPlus className="h-4 w-4" />
-              <span>+ Nueva Cita</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCopyBookingLink}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition cursor-pointer"
-              title="Copiar link de reservas de tu negocio"
-            >
-              {copiedLink ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="text-emerald-400 font-semibold">Copiado</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Link Público</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleCopyBookingLink}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
+            title="Copiar link de reservas de tu negocio"
+          >
+            {copiedLink ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-emerald-500 font-semibold">Copiado</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-3.5 w-3.5 text-slate-400" />
+                <span>Link Público</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD WITH 7-DAY MINI SPARKLINE ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3.5">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Citas para Hoy
+              Citas para Hoy · {todayFormattedDisplay}
             </span>
             <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
               {appointmentsToday.length} <span className="text-xs font-normal text-slate-400">turnos</span>
@@ -378,11 +354,52 @@ export default function DashboardHomePage() {
               setQuickBookingOpen(true);
             }}
             className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
-            style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
+            style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
           >
-            + Cita
+            + Cita Rápida
           </button>
         </div>
+
+        {/* 7-Day Mobile Mini Sparkline Bar Chart */}
+        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-100 dark:border-white/5 space-y-2">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="font-bold text-slate-600 dark:text-slate-400">Semana Activa</span>
+            <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+              {formatGs(weeklySnapshot.reduce((sum, d) => sum + d.amount, 0))}
+            </span>
+          </div>
+          <div className="grid grid-cols-7 gap-1.5 items-end h-16 pt-1">
+            {weeklySnapshot.map((d, idx) => {
+              const heightPct = Math.max(15, Math.min(100, Math.round((d.amount / maxWeeklyAmount) * 100)));
+              return (
+                <div key={d.day} className="flex flex-col items-center gap-1 h-full justify-end">
+                  <div
+                    className={`w-full rounded-md transition-all duration-500 ${
+                      d.isToday ? "shadow-xs" : "opacity-60 dark:opacity-40"
+                    }`}
+                    style={{
+                      height: `${heightPct}%`,
+                      backgroundColor: d.isToday
+                        ? (business.primaryColor || "#FF4F2B")
+                        : "var(--primary, #94a3b8)",
+                    }}
+                    title={`${d.day}: ${formatGs(d.amount)}`}
+                  />
+                  <span
+                    className={`text-[9px] font-bold ${
+                      d.isToday
+                        ? "text-slate-900 dark:text-white"
+                        : "text-slate-400 dark:text-slate-500"
+                    }`}
+                  >
+                    {d.day}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>Cobrado: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{formatGs(revenueToday)}</strong></span>
           <span>Confirmados: <strong className="text-slate-800 dark:text-slate-200 font-mono">{confirmedToday.length}</strong></span>
@@ -450,7 +467,7 @@ export default function DashboardHomePage() {
                       strokeDasharray={113}
                       strokeDashoffset={113 - (113 * occupancyRate) / 100}
                       strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      style={{ stroke: "var(--primary, #FF4F2B)" }}
                       className="transition-all duration-700"
                       fill="transparent"
                     />
@@ -855,35 +872,50 @@ export default function DashboardHomePage() {
                 </div>
               </div>
 
-              {/* Staff Filter Bar (Industry standard in Fresha / Boulevard) */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <span className="text-[11px] font-medium text-slate-400 shrink-0">Filtrar por:</span>
+              {/* Staff Filter Bar (Industry standard tactile chips) */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1">
+                <span className="text-[11px] font-bold text-slate-400 shrink-0">Filtrar:</span>
                 <button
                   type="button"
                   onClick={() => setSelectedStaffFilter("all")}
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition shrink-0 cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer active:scale-95 ${
                     selectedStaffFilter === "all"
-                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
+                      ? "text-white shadow-xs"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
+                  style={selectedStaffFilter === "all" ? { backgroundColor: business.primaryColor || "#FF4F2B" } : undefined}
                 >
-                  Todos los profesionales
+                  <span>Todos</span>
+                  <span className="text-[10px] font-mono opacity-80">({appointmentsToday.length})</span>
                 </button>
-                {activeStaffList.map((st) => (
-                  <button
-                    key={st.id}
-                    type="button"
-                    onClick={() => setSelectedStaffFilter(st.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition shrink-0 cursor-pointer ${
-                      selectedStaffFilter === st.id
-                        ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    <Scissors className="h-3 w-3 opacity-70" />
-                    <span>{st.name}</span>
-                  </button>
-                ))}
+                {activeStaffList.map((st) => {
+                  const staffCount = appointmentsToday.filter((a) => a.staffId === st.id).length;
+                  const isSelected = selectedStaffFilter === st.id;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => setSelectedStaffFilter(st.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer active:scale-95 ${
+                        isSelected
+                          ? "text-white shadow-xs"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                      style={isSelected ? { backgroundColor: business.primaryColor || "#FF4F2B" } : undefined}
+                    >
+                      <span
+                        className="h-4 w-4 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-2xs"
+                        style={{ backgroundColor: st.color || "#6366f1" }}
+                      >
+                        {st.name.slice(0, 1).toUpperCase()}
+                      </span>
+                      <span>{st.name}</span>
+                      {staffCount > 0 && (
+                        <span className="text-[10px] font-mono opacity-80">({staffCount})</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

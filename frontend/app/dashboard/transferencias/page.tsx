@@ -55,7 +55,7 @@ function bankBadgeStyle(bankName?: string) {
 
 export default function TransferenciasPage() {
   const { receipts, business, setReceiptStatus, pushToast } = useDashboardStore();
-  const brandColor = business.primaryColor || "var(--primary, #0ea5e9)";
+  const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
 
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]>("Todos");
   const [bankFilter, setBankFilter] = useState<(typeof BANK_FILTERS)[number]>("Todos los Bancos");
@@ -118,47 +118,28 @@ export default function TransferenciasPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl">
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: brandColor }}
-        />
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Auditoría de Transferencias SIPAP
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: brandColor }}
-              />
-              <span>Auditoría Financiera & Validación OCR</span>
-            </div>
-            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Auditoría de Transferencias SIPAP
-            </h1>
-            <p className="hidden sm:block text-sm text-slate-300 max-w-xl">
-              Comprobantes bancarios detectados automáticamente desde WhatsApp mediante lectura inteligente de códigos QR y montos acreditados en cuenta.
-            </p>
-          </div>
-
-          {/* Action Dock / Status Filters */}
-          <div className="w-full lg:w-auto">
-            <IosSegmentedControl
-              options={STATUS_FILTERS.map((f) => ({
-                value: f,
-                label: f,
-                badge: f === "Pendientes" && pendingCount > 0 ? pendingCount : undefined,
-              }))}
-              value={filter}
-              onChange={(val) => {
-                setFilter(val as any);
-                triggerHaptic("selection");
-              }}
-              layoutId="transferenciasStatusSegment"
-              className="w-full sm:w-auto"
-            />
-          </div>
+        {/* Action Dock / Status Filters */}
+        <div className="w-full lg:w-auto">
+          <IosSegmentedControl
+            options={STATUS_FILTERS.map((f) => ({
+              value: f,
+              label: f,
+              badge: f === "Pendientes" && pendingCount > 0 ? pendingCount : undefined,
+            }))}
+            value={filter}
+            onChange={(val) => {
+              setFilter(val as any);
+              triggerHaptic("selection");
+            }}
+            layoutId="transferenciasStatusSegment"
+            className="w-full sm:w-auto"
+          />
         </div>
       </div>
 

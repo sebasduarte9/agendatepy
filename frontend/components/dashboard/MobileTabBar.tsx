@@ -134,7 +134,7 @@ export default function MobileTabBar() {
           icon: CreditCard,
         },
         {
-          label: "Métricas & Estadísticas",
+          label: "Métricas y Análisis",
           subtitle: "Analítica, ventas y ocupación",
           href: "/dashboard/estadisticas",
           icon: BarChart3,
@@ -200,7 +200,7 @@ export default function MobileTabBar() {
       {/* ═══ APPLE FLOATING SQUIRCLE DOCK (ISLA FLOTANTE CUADRADA CON ESQUINAS REDONDEADAS) ═══ */}
       <nav
         aria-label="Navegación principal móvil"
-        className="fixed bottom-3 inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[22px] bg-white/85 dark:bg-[#0c1017]/92 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/12 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none transition-all duration-300"
+        className="fixed bottom-3 inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[22px] bg-white/85 dark:bg-slate-950/92 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/12 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none transition-all duration-300"
       >
         <div className="flex items-center justify-between h-13 relative">
           {primaryTabs.map((tab) => {

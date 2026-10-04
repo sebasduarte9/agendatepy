@@ -333,90 +333,45 @@ export default function CrmOmnichannelPage() {
 
   return (
     <div className="space-y-6">
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      {/* ═══ NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="crm-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          CRM Omnicanal & Bandeja
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            {/* Live Channel Badges */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold border backdrop-blur-md transition ${
-                evolutionConfig.connected
-                  ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                  : "bg-white/5 text-slate-400 border-white/10"
-              }`}>
-                <span className={`h-2 w-2 rounded-full ${evolutionConfig.connected ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
-                <ChannelIcon channel="whatsapp" size="sm" />
-                <span>{evolutionConfig.connected ? "WhatsApp Conectado" : "WhatsApp Web"}</span>
-              </span>
+        {/* Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setChannelsModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 text-xs font-bold shadow-md transition cursor-pointer hover:brightness-110"
+          >
+            <Settings className="h-3.5 w-3.5" />
+            <span>Canales & Conexión QR</span>
+          </button>
 
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold border backdrop-blur-md transition ${
-                evolutionConfig.instagramConnected
-                  ? "bg-pink-500/15 text-pink-300 border-pink-500/30"
-                  : "bg-white/5 text-slate-400 border-white/10"
-              }`}>
-                <span className={`h-2 w-2 rounded-full ${evolutionConfig.instagramConnected ? "bg-pink-400" : "bg-slate-500"}`} />
-                <ChannelIcon channel="instagram" size="sm" />
-                <span>{evolutionConfig.instagramConnected ? (evolutionConfig.instagramHandle || "@canal") : "Instagram Direct"}</span>
-              </span>
-
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold border backdrop-blur-md transition ${
-                evolutionConfig.messengerConnected
-                  ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
-                  : "bg-white/5 text-slate-400 border-white/10"
-              }`}>
-                <span className={`h-2 w-2 rounded-full ${evolutionConfig.messengerConnected ? "bg-blue-400" : "bg-slate-500"}`} />
-                <ChannelIcon channel="messenger" size="sm" />
-                <span>{evolutionConfig.messengerConnected ? "Facebook Messenger" : "Messenger"}</span>
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              CRM Omnicanal & Bandeja Unificada
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Atención directa a clientes, agendamiento de turnos en 1 clic y procesamiento de pedidos de catálogo.
-            </p>
-          </div>
-
-          {/* Action Dock */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {crmConversations.length > 0 ? (
             <button
               type="button"
-              onClick={() => setChannelsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 text-xs font-bold shadow-lg shadow-emerald-900/30 transition cursor-pointer hover:brightness-110"
+              onClick={clearCrmConversations}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-600 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
             >
-              <Settings className="h-4 w-4" />
-              <span>Canales & Conexión QR</span>
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Limpiar Bandeja</span>
             </button>
-
-            {crmConversations.length > 0 ? (
-              <button
-                type="button"
-                onClick={clearCrmConversations}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-300 px-3.5 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition cursor-pointer"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>Limpiar Bandeja</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={loadDemoConversation}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 px-3.5 py-2.5 text-xs font-bold text-white shadow-xs backdrop-blur-md transition cursor-pointer"
-              >
-                <MessageSquare className="h-4 w-4 text-primary" />
-                <span>Cargar Chat de Prueba</span>
-              </button>
-            )}
-          </div>
+          ) : (
+            <button
+              type="button"
+              onClick={loadDemoConversation}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
+            >
+              <MessageSquare className="h-3.5 w-3.5" style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }} />
+              <span>Cargar Chat de Prueba</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -429,7 +384,7 @@ export default function CrmOmnichannelPage() {
               <div className="flex items-center gap-2.5">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <MessageSquare className="h-5 w-5" />
                 </div>
@@ -467,7 +422,7 @@ export default function CrmOmnichannelPage() {
                       cx="22"
                       cy="22"
                       r="18"
-                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
                       strokeWidth="4"
                       fill="none"
                       strokeDasharray={113}
@@ -938,7 +893,7 @@ export default function CrmOmnichannelPage() {
                     <div className="text-center pb-3 border-b border-slate-100 dark:border-white/10">
                       <div
                         className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl text-white font-black text-lg shadow-md mb-2"
-                        style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                        style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                       >
                         {activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                       </div>
@@ -959,7 +914,7 @@ export default function CrmOmnichannelPage() {
                         onClick={() => {
                           pushToast("success", `Abrí Nueva Reserva para ${activeConversation.clientName} desde la pestaña Calendario.`);
                         }}
-                        style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                        style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                         className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-2.5 text-xs font-bold shadow-sm transition cursor-pointer hover:brightness-110"
                       >
                         <Calendar className="h-4 w-4" /><span>Agendar Turno</span>
@@ -1465,7 +1420,7 @@ export default function CrmOmnichannelPage() {
               <div className="text-center pb-4 border-b border-slate-100 dark:border-white/10">
                 <div
                   className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl text-white font-black text-xl shadow-md mb-3"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   {activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>

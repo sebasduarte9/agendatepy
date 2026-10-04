@@ -49,8 +49,8 @@ export default function DashboardShell({
     <div
       className="flex min-h-screen bg-[var(--background)] font-sans antialiased text-slate-900 dark:text-slate-100"
       style={{
-        ["--primary" as string]: color || "#4f46e5",
-        ["--color-primary" as string]: color || "#4f46e5",
+        ["--primary" as string]: color || "#FF4F2B",
+        ["--color-primary" as string]: color || "#FF4F2B",
       }}
     >
       <Sidebar />

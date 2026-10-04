@@ -374,61 +374,44 @@ function NuevaReservaContent() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      {/* ═══ NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="nueva-reserva-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Agendar Turno Rápido
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-              />
-              <span>AGENDA OPERATIVA & RECEPCIÓN</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Agendar Turno Rápido & Recepción
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Carga manual de turnos presenciales o telefónicos con confirmación instantánea de WhatsApp y base de datos SQL.
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/calendario"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          >
+            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+            <span>Ver Agenda</span>
+          </Link>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/dashboard/calendario"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
-            >
-              <Calendar className="h-4 w-4 text-slate-300" />
-              <span>Ver Agenda Completa</span>
-            </Link>
+          <Link
+            href="/dashboard/clientes"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          >
+            <User className="h-3.5 w-3.5 text-slate-400" />
+            <span>Directorio Clientes</span>
+          </Link>
 
-            <Link
-              href="/dashboard/clientes"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
-            >
-              <User className="h-4 w-4 text-slate-300" />
-              <span>Directorio Clientes</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setMode(mode === "appointment" ? "block" : "appointment")}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-md transition cursor-pointer ${
-                mode === "block" ? "bg-amber-600 hover:bg-amber-500" : "bg-white/10 hover:bg-white/20 border border-white/15"
-              }`}
-            >
-              <Ban className="h-4 w-4" />
-              <span>{mode === "block" ? "Volver a Turno" : "Bloquear Horario"}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setMode(mode === "appointment" ? "block" : "appointment")}
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition cursor-pointer ${
+              mode === "block"
+                ? "bg-amber-600 hover:bg-amber-500 text-white shadow-md"
+                : "border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Ban className="h-3.5 w-3.5" />
+            <span>{mode === "block" ? "Volver a Turno" : "Bloquear Horario"}</span>
+          </button>
         </div>
       </div>
 
@@ -441,7 +424,7 @@ function NuevaReservaContent() {
               <div className="flex items-center gap-2.5">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <CalendarPlus className="h-5 w-5" />
                 </div>
@@ -476,7 +459,7 @@ function NuevaReservaContent() {
                       cx="22"
                       cy="22"
                       r="18"
-                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
                       strokeWidth="4"
                       fill="none"
                       strokeDasharray={113}
@@ -1117,7 +1100,7 @@ function NuevaReservaContent() {
                         key={id}
                         type="button"
                         onClick={() => setPaymentMethod(id)}
-                        style={isSelected ? { backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)", color: "#ffffff", borderColor: business.primaryColor || "var(--primary, #0ea5e9)" } : undefined}
+                        style={isSelected ? { backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)", color: "#ffffff", borderColor: business.primaryColor || "var(--primary, #FF4F2B)" } : undefined}
                         className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 px-2 text-xs font-bold transition cursor-pointer ${
                           isSelected
                             ? "shadow-xs"
@@ -1155,7 +1138,7 @@ function NuevaReservaContent() {
                   <span className="text-[10.5px] text-slate-400 block font-medium">Tarifa del Servicio:</span>
                   <span
                     className="text-base font-black font-mono"
-                    style={{ color: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                    style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}
                   >
                     {formatGs(currentService?.price || 0)}
                   </span>
@@ -1172,8 +1155,8 @@ function NuevaReservaContent() {
                     type="submit"
                     disabled={isSubmitting || !clientName.trim()}
                     style={{
-                      backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
-                      boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+                      backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
+                      boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(255, 79, 43, 0.4)"}`,
                     }}
                     className="rounded-2xl px-6 py-2.5 text-xs font-bold text-white shadow-md hover:brightness-110 disabled:opacity-50 transition cursor-pointer"
                   >

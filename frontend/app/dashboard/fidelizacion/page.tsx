@@ -255,58 +255,38 @@ export default function FidelizacionPage() {
 
   return (
     <div className="space-y-6">
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="fidelizacion-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Fidelización & Clientes VIP
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-              />
-              <span>PROGRAMA DE FIDELIZACIÓN & CLUB VIP</span>
-            </div>
-            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-              Fidelización & Tarjetas Digitales VIP
-            </h1>
-            <p className="hidden sm:block text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Sumá sellos por visita y compartí con cada cliente su enlace web único para consultar sus beneficios y canjes.
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold border transition ${
+              loyalty.enabled
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700"
+            }`}
+          >
+            <Crown className="h-3.5 w-3.5 text-emerald-500" />
+            <span>{loyalty.enabled ? "Club VIP Activo" : "Club en Pausa"}</span>
+          </span>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold border backdrop-blur-md transition ${
-                loyalty.enabled
-                  ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                  : "bg-white/5 text-slate-400 border-white/10"
-              }`}
-            >
-              <Crown className="h-4 w-4 text-emerald-400" />
-              <span>{loyalty.enabled ? "Club VIP Activo" : "Club en Pausa"}</span>
-            </span>
-
-            <button
-              type="button"
-              onClick={() => setEditingSettings(!editingSettings)}
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
-              style={{
-                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
-                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
-              }}
-            >
-              <Settings className="h-4 w-4" />
-              <span>{editingSettings ? "Cerrar Configuración" : "Configurar Reglas"}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setEditingSettings(!editingSettings)}
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer hover:brightness-110"
+            style={{
+              backgroundColor: business.primaryColor || "#FF4F2B",
+            }}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            <span>{editingSettings ? "Cerrar" : "Configurar"}</span>
+          </button>
         </div>
       </div>
 
@@ -340,7 +320,7 @@ export default function FidelizacionPage() {
               <div className="flex items-center gap-2.5">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <Award className="h-5 w-5" />
                 </div>
@@ -375,7 +355,7 @@ export default function FidelizacionPage() {
                       cx="22"
                       cy="22"
                       r="18"
-                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
                       strokeWidth="4"
                       fill="none"
                       strokeDasharray={113}

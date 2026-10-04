@@ -256,82 +256,170 @@ export default function CajaPage() {
 
   return (
     <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
-      {/* ========================================================= */}
-      {/* 1. DARK CONSOLE HERO BANNER                                */}
-      {/* ========================================================= */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="caja-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        {/* Dynamic Brand Ambient Radial Glow */}
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Caja Diaria & Arqueo
+        </h1>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="uppercase tracking-wider font-semibold text-slate-300">
-                Workspace
-              </span>
-              <span>/</span>
-              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
-              <span className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline capitalize text-slate-400">{formattedDayTitle}</span>
+        {/* Quick Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-tour="caja-new-btn"
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: business.primaryColor || "#FF4F2B",
+            }}
+          >
+            <PlusCircle className="h-3.5 w-3.5" />
+            <span>Nuevo Movimiento</span>
+          </button>
+
+          <button
+            type="button"
+            data-tour="caja-close-btn"
+            onClick={() => setArqueoOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
+          >
+            <CheckSquare className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Cierre de Caja</span>
+          </button>
+
+          <a
+            href="/api/reports/cash?type=movements&format=csv"
+            download
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-medium shadow-xs transition"
+            title="Exportar movimientos en formato CSV"
+          >
+            <Download className="h-3.5 w-3.5 text-slate-400" />
+            <span className="hidden sm:inline">Exportar</span>
+          </a>
+        </div>
+      </div>
+
+      {/* ═══ MOBILE APPLE POS WALLET HERO CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3.5">
+        {/* Date Selector Pills on Mobile */}
+        <div className="flex items-center justify-between gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-2xl">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              setSelectedDate(todayStr);
+            }}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+              selectedDate === todayStr
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Hoy
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              setSelectedDate(yesterdayStr);
+            }}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+              selectedDate === yesterdayStr
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Ayer
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              setSelectedDate("all");
+            }}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+              selectedDate === "all"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Historial
+          </button>
+        </div>
+
+        {/* Hero Cash Balance */}
+        <div className="rounded-2xl p-4 bg-gradient-to-br from-slate-900 to-slate-950 dark:from-slate-800/80 dark:to-slate-950 text-white shadow-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-primary/20 blur-xl pointer-events-none" />
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              Efectivo en Gaveta
+            </span>
+            <span className="font-mono text-[11px] text-slate-300 capitalize">{formattedDayTitle}</span>
+          </div>
+
+          <div className="mt-2 flex items-baseline justify-between">
+            <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+              {formatGs(stats.efectivoEnCajaEsperado)}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
-              Caja Diaria & Arqueo
-            </h1>
-            <p className="hidden sm:block text-sm text-slate-400">
-              Control de cobros por turno, arqueo de gaveta y registro de gastos diarios.
-            </p>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              {stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0}% efect.
+            </span>
           </div>
 
-          {/* Quick Action Dock */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              data-tour="caja-new-btn"
-              onClick={() => setModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
-              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>+ Movimiento</span>
-            </button>
-
-            <button
-              type="button"
-              data-tour="caja-close-btn"
-              onClick={() => setArqueoOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition cursor-pointer"
-            >
-              <CheckSquare className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Cierre de Caja</span>
-            </button>
-
-            <a
-              href="/api/reports/cash?type=movements&format=csv"
-              download
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-300 transition"
-              title="Exportar movimientos en formato CSV"
-            >
-              <Download className="h-3.5 w-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Exportar</span>
-            </a>
+          {/* Breakdown Mini Strip */}
+          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-3 gap-2 text-center text-[10px]">
+            <div>
+              <span className="text-slate-400 block">Efectivo</span>
+              <span className="font-bold font-mono text-white">{formatGs(stats.efectivoIngresos)}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block">POS Bancard</span>
+              <span className="font-bold font-mono text-white">{formatGs(stats.posIngresos)}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block">SIPAP</span>
+              <span className="font-bold font-mono text-white">{formatGs(stats.transferenciaIngresos)}</span>
+            </div>
           </div>
+        </div>
+
+        {/* Action Buttons for Mobile */}
+        <div className="grid grid-cols-2 gap-2 pt-0.5">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("medium");
+              setModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>+ Movimiento</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("medium");
+              setArqueoOpen(true);
+            }}
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shadow-xs active:scale-95 transition cursor-pointer"
+          >
+            <CheckSquare className="h-4 w-4 text-emerald-500" />
+            <span>Cierre / Arqueo</span>
+          </button>
         </div>
       </div>
 
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader with Date Filter Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
           <div>
@@ -353,7 +441,7 @@ export default function CajaPage() {
                   ? "text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
-              style={selectedDate === todayStr ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
+              style={selectedDate === todayStr ? { backgroundColor: "var(--primary, #FF4F2B)" } : undefined}
             >
               Hoy
             </button>
@@ -365,7 +453,7 @@ export default function CajaPage() {
                   ? "text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
-              style={selectedDate === yesterdayStr ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
+              style={selectedDate === yesterdayStr ? { backgroundColor: "var(--primary, #FF4F2B)" } : undefined}
             >
               Ayer
             </button>
@@ -392,7 +480,7 @@ export default function CajaPage() {
                   ? "text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
-              style={selectedDate === "all" ? { backgroundColor: "var(--primary, #0ea5e9)" } : undefined}
+              style={selectedDate === "all" ? { backgroundColor: "var(--primary, #FF4F2B)" } : undefined}
             >
               Historial
             </button>
@@ -470,7 +558,7 @@ export default function CajaPage() {
                       strokeDasharray={113}
                       strokeDashoffset={113 - (113 * (stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0)) / 100}
                       strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      style={{ stroke: "var(--primary, #FF4F2B)" }}
                       className="transition-all duration-700"
                       fill="transparent"
                     />

@@ -1197,89 +1197,70 @@ export default function BotWhatsAppPage() {
   const activeConnectedPhone =
     evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
 
-  const brandColor = business.primaryColor || "var(--primary, #0ea5e9)";
+  const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
   const activeNodesCount = nodes.filter((n) => n.enabled).length;
   const nodesActivePct = nodes.length > 0 ? Math.round((activeNodesCount / nodes.length) * 100) : 100;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
+      {/* ═══ NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="bot-header-console"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: brandColor }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Bot WhatsApp & Flujo
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: brandColor }}
-              />
-              <span>Automatización & WhatsApp Bot Inteligente</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Bot WhatsApp & Flujo Conversacional
-            </h1>
-            <p className="text-sm text-slate-300 max-w-xl">
-              Diseñá el flujo visual interactivo para tu local: menú inteligente, confirmaciones de turno con QR SIPAP y recordatorios automáticos 24h y 2h antes.
-            </p>
+        {/* Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Help / Support Button */}
+          <button
+            type="button"
+            data-tour="bot-support-action"
+            onClick={() => setIsHelpModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+          >
+            <PhoneCall className="h-3.5 w-3.5 text-slate-400" />
+            <span>Ayuda / Soporte</span>
+          </button>
+
+          {/* Connection Status Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs">
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                isConnected
+                  ? "bg-emerald-500 ring-4 ring-emerald-500/20 animate-pulse"
+                  : "bg-amber-500 ring-4 ring-amber-500/20"
+              }`}
+            />
+            <span>
+              {isConnected ? "Línea Conectada" : "Desconectado"}
+            </span>
           </div>
 
-          {/* Action Dock */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Help / Support Button */}
+          {/* Direct Connect / QR button */}
+          {isConnected ? (
             <button
               type="button"
-              data-tour="bot-support-action"
-              onClick={() => setIsHelpModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition backdrop-blur-md cursor-pointer"
+              onClick={() => setIsConnectModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition hover:brightness-110 cursor-pointer"
+              style={{ backgroundColor: brandColor }}
             >
-              <PhoneCall className="h-4 w-4 text-slate-300" />
-              <span>Ayuda / Soporte</span>
+              <QrCode className="h-3.5 w-3.5" />
+              <span>Reconectar QR</span>
             </button>
-
-            {/* Connection Status Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-900/80 text-xs font-bold backdrop-blur-md shadow-xs">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  isConnected
-                    ? "bg-emerald-500 ring-4 ring-emerald-500/20 animate-pulse"
-                    : "bg-amber-500 ring-4 ring-amber-500/20"
-                }`}
-              />
-              <span className="text-slate-200">
-                {isConnected ? "Línea Conectada" : "Desconectado"}
-              </span>
-            </div>
-
-            {/* Direct Connect / QR button */}
-            {isConnected ? (
-              <button
-                type="button"
-                onClick={() => setIsConnectModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-black text-white shadow-md transition hover:brightness-110 cursor-pointer"
-                style={{ backgroundColor: brandColor }}
-              >
-                <QrCode className="h-4 w-4" />
-                <span>Reconectar QR</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsConnectModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer bg-emerald-600 hover:bg-emerald-500"
-              >
-                <QrCode className="h-4 w-4" />
-                <span>Vincular con QR</span>
-              </button>
-            )}
-          </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsConnectModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer bg-emerald-600 hover:bg-emerald-500"
+            >
+              <QrCode className="h-3.5 w-3.5" />
+              <span>Vincular con QR</span>
+            </button>
+          )}
         </div>
       </div>
 

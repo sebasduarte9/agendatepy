@@ -339,63 +339,38 @@ export default function EquipoRolesPage() {
   return (
     <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
       {/* ========================================================= */}
-      {/* 1. DARK CONSOLE HERO BANNER                                */}
-      {/* ========================================================= */}
+      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="equipo-header"
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        {/* Dynamic Brand Ambient Radial Glow */}
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Equipo & Especialistas
+        </h1>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="uppercase tracking-wider font-semibold text-slate-300">
-                Workspace
-              </span>
-              <span>/</span>
-              <span className="text-slate-400">{business.slug || "agendatepy"}</span>
-              <span className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline text-slate-400">{activeStaffCount} activos</span>
-            </div>
-            <h1 className="text-xl sm:text-3xl font-semibold tracking-tight text-white">
-              Equipo, Roles & Especialistas
-            </h1>
-            <p className="hidden sm:block text-sm text-slate-400">
-              Invitá a tus colaboradores con Google, configurá comisiones y asigná niveles de acceso.
-            </p>
-          </div>
+        {/* Quick Action Dock */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-tour="equipo-new-btn"
+            onClick={openCreate}
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: business.primaryColor || "#FF4F2B",
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Invitar Colaborador</span>
+          </button>
 
-          {/* Quick Action Dock */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              data-tour="equipo-new-btn"
-              onClick={openCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:opacity-90 active:scale-95 cursor-pointer"
-              style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
-            >
-              <Plus className="h-4 w-4" />
-              <span>+ Invitar Colaborador</span>
-            </button>
-
-            <Link
-              href="/dashboard/servicios"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-300 transition"
-              title="Ir al Catálogo de Servicios"
-            >
-              <Layers className="h-3.5 w-3.5 text-slate-400" />
-              <span>Servicios ({services.length})</span>
-            </Link>
-          </div>
+          <Link
+            href="/dashboard/servicios"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold shadow-xs transition"
+            title="Ir al Catálogo de Servicios"
+          >
+            <Layers className="h-3.5 w-3.5 text-slate-400" />
+            <span>Servicios ({services.length})</span>
+          </Link>
         </div>
       </div>
 
@@ -414,7 +389,7 @@ export default function EquipoRolesPage() {
             type="button"
             onClick={openCreate}
             className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
-            style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
           >
             + Invitar
           </button>
@@ -485,7 +460,7 @@ export default function EquipoRolesPage() {
                       strokeDasharray={113}
                       strokeDashoffset={113 - (113 * activeRate) / 100}
                       strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #0ea5e9)" }}
+                      style={{ stroke: "var(--primary, #FF4F2B)" }}
                       className="transition-all duration-700"
                       fill="transparent"
                     />

@@ -234,64 +234,43 @@ export default function ConfiguracionPage() {
       transition={{ duration: 0.25, ease: "easeOut" }}
       className="space-y-6 max-w-5xl mx-auto"
     >
-      {/* ═══ DARK CONSOLE HERO HEADER ═══ */}
-      <div
-        className="relative overflow-hidden rounded-2xl bg-[#0c1017] dark:bg-[#0c1017] text-white p-6 sm:p-8 border border-slate-800 shadow-xl"
-      >
-        <div
-          className="absolute -right-12 -top-12 h-64 w-64 rounded-full blur-3xl opacity-25 pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-        />
+      {/* ═══ NATIVE PAGE HEADER ═══ */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Configuración del Negocio
+        </h1>
 
-        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
-              <span
-                className="h-2 w-2 rounded-full animate-pulse"
-                style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
-              />
-              <span>AJUSTES GLOBALES & SEGURIDAD OPERATIVA</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Configuración del Negocio
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Información comercial, enlace público agendate.py/{business.slug}, métodos de pago aceptados y seguridad 2FA.
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={copyStoreLink}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+          >
+            {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+            <span>{copiedLink ? "¡Copiado!" : "Copiar Enlace"}</span>
+          </button>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={copyStoreLink}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition cursor-pointer"
-            >
-              {copiedLink ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-slate-300" />}
-              <span>{copiedLink ? "¡Copiado!" : "Copiar Enlace"}</span>
-            </button>
+          <Link
+            href={publicStoreUrl}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+            <span>Ver Web</span>
+          </Link>
 
-            <Link
-              href={publicStoreUrl}
-              target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-white shadow-xs backdrop-blur-md transition"
-            >
-              <ExternalLink className="h-4 w-4 text-slate-300" />
-              <span>Ver Página Web</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleSaveAll}
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-95 cursor-pointer hover:brightness-110"
-              style={{
-                backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
-                boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
-              }}
-            >
-              <Save className="h-4 w-4" />
-              <span>Guardar Cambios</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-md transition active:scale-95 cursor-pointer hover:brightness-110"
+            style={{
+              backgroundColor: business.primaryColor || "#FF4F2B",
+              boxShadow: `0 4px 14px -2px ${business.primaryColor || "#FF4F2B"}50`,
+            }}
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span>Guardar Cambios</span>
+          </button>
         </div>
       </div>
 
@@ -304,7 +283,7 @@ export default function ConfiguracionPage() {
               <div className="flex items-center gap-2.5">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <Store className="h-5 w-5" />
                 </div>
@@ -340,7 +319,7 @@ export default function ConfiguracionPage() {
                       cx="22"
                       cy="22"
                       r="18"
-                      stroke={business.primaryColor || "var(--primary, #0ea5e9)"}
+                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
                       strokeWidth="4"
                       fill="none"
                       strokeDasharray={113}
@@ -460,7 +439,7 @@ export default function ConfiguracionPage() {
                   onClick={copyStoreLink}
                   className="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
                   style={{
-                    backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
+                    backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
                     color: "#ffffff",
                   }}
                 >
@@ -497,8 +476,8 @@ export default function ConfiguracionPage() {
           <label
             className="group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center rounded-3xl text-2xl font-black text-white shadow-xl hover:scale-105 transition-all"
             style={{
-              backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)",
-              boxShadow: `0 10px 25px -5px ${business.primaryColor || "rgba(14, 165, 233, 0.4)"}`,
+              backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
+              boxShadow: `0 10px 25px -5px ${business.primaryColor || "rgba(255, 79, 43, 0.4)"}`,
             }}
           >
             {business.name.slice(0, 2).toUpperCase()}
@@ -523,7 +502,7 @@ export default function ConfiguracionPage() {
             </div>
             <p
               className="font-mono text-xs font-bold"
-              style={{ color: business.primaryColor || "var(--primary, #0ea5e9)" }}
+              style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}
             >
               agendate.py/{business.slug}
             </p>
