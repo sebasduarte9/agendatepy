@@ -3,6 +3,7 @@
 import { Suspense, useEffect, type ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import MobileTabBar from "./MobileTabBar";
 import ToastProvider from "./ui/ToastProvider";
 import GuidedTour from "./GuidedTour";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -55,8 +56,11 @@ export default function DashboardShell({
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <Header />
-        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-hidden p-3.5 sm:p-6">{children}</main>
+        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-hidden p-3.5 sm:p-6 pb-24 lg:pb-6">
+          {children}
+        </main>
       </div>
+      <MobileTabBar />
       <Suspense fallback={null}>
         <GuidedTour />
       </Suspense>

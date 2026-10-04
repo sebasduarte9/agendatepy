@@ -52,6 +52,22 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   transition: background-color 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apple iOS Native Web App Touch Polish */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Dark mode comprehensive visual overrides */

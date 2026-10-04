@@ -77,6 +77,11 @@ export const metadata: Metadata = {
     shortcut: "/logo.svg",
     apple: "/logo.svg",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AgendatePY",
+  },
 };
 
 const jsonLd = [
