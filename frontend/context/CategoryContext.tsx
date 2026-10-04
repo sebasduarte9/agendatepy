@@ -34,28 +34,23 @@ const VALID_CATEGORIES: CategoryId[] = [
   "padel",
 ];
 
-function getInitialCategory(): CategoryId {
-  if (typeof window !== "undefined") {
-    const params = new URLSearchParams(window.location.search);
-    const rubroParam = params.get("rubro") as CategoryId;
-    if (rubroParam && VALID_CATEGORIES.includes(rubroParam)) {
-      return rubroParam;
-    }
-  }
-  return "odontologia";
-}
-
 export function CategoryProvider({ children }: { children: ReactNode }) {
   // Rubro activo en toda la landing (Hero, WhatsApp y widget).
   const [selectedCategory, setSelectedCategory] =
-    useState<CategoryId>(getInitialCategory);
+    useState<CategoryId>("odontologia");
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const rubroParam = params.get("rubro") as CategoryId;
+    if (rubroParam && VALID_CATEGORIES.includes(rubroParam)) {
+      setSelectedCategory(rubroParam);
+    }
+
     const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const rubroParam = params.get("rubro") as CategoryId;
-      if (rubroParam && VALID_CATEGORIES.includes(rubroParam)) {
-        setSelectedCategory(rubroParam);
+      const p = new URLSearchParams(window.location.search);
+      const r = p.get("rubro") as CategoryId;
+      if (r && VALID_CATEGORIES.includes(r)) {
+        setSelectedCategory(r);
       }
     };
     window.addEventListener("popstate", handlePopState);

@@ -342,32 +342,34 @@ export default function AutomatedHubDiagram() {
       });
 
       // Clic en el cerebro: emite una onda expansiva de sonar
-      if (brain) {
-        brain.addEventListener("click", () => {
-          gsap.fromTo(
-            brain,
-            { scale: 1.25 },
-            { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.5)" }
-          );
-          const rings = containerRef.current?.querySelectorAll(".hub-ring");
-          rings?.forEach((ring, i) => {
-            const baseR = 60 + i * 50;
-            gsap
-              .timeline()
-              .to(ring, {
-                attr: { r: baseR + 32 },
-                opacity: 0,
-                duration: 0.8,
-                ease: "power2.out",
-              })
-              .to(ring, {
-                attr: { r: baseR },
-                opacity: 0.25,
-                duration: 0.4,
-                ease: "power2.in",
-              });
-          });
+      const handleBrainClick = () => {
+        gsap.fromTo(
+          brain,
+          { scale: 1.25 },
+          { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.5)" }
+        );
+        const rings = containerRef.current?.querySelectorAll(".hub-ring");
+        rings?.forEach((ring, i) => {
+          const baseR = 60 + i * 50;
+          gsap
+            .timeline()
+            .to(ring, {
+              attr: { r: baseR + 32 },
+              opacity: 0,
+              duration: 0.8,
+              ease: "power2.out",
+            })
+            .to(ring, {
+              attr: { r: baseR },
+              opacity: 0.25,
+              duration: 0.4,
+              ease: "power2.in",
+            });
         });
+      };
+
+      if (brain) {
+        brain.addEventListener("click", handleBrainClick);
       }
 
       return () => {
@@ -375,6 +377,9 @@ export default function AutomatedHubDiagram() {
         cancelAnimationFrame(animId);
         diagram?.removeEventListener("mousemove", handleMouseMove as EventListener);
         diagram?.removeEventListener("mouseleave", handleMouseLeave as EventListener);
+        if (brain) {
+          brain.removeEventListener("click", handleBrainClick);
+        }
       };
     }, containerRef);
 

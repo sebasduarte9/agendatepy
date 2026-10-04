@@ -152,9 +152,8 @@ function LoginForm() {
         {/* Tarjeta Glassmorphic */}
         <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-7 shadow-[0_12px_40px_rgb(0,0,0,0.06)] backdrop-blur-xl sm:p-9">
           {/* Botón Google OAuth 2.0 Real */}
-          <Link
+          <a
             href="/api/auth/google"
-            prefetch={false}
             className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.99]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -176,7 +175,7 @@ function LoginForm() {
               />
             </svg>
             <span>Continuar con Google</span>
-          </Link>
+          </a>
 
           <div className="relative my-6 text-center">
             <div className="absolute inset-0 flex items-center">

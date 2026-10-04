@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { CategoryProvider } from "@/context/CategoryContext";
 import HorizontalScroll from "./HorizontalScroll";
 import Header from "./Header";

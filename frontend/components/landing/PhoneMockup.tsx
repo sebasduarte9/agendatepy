@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -111,6 +111,21 @@ export default function PhoneMockup() {
   // Chat auto-scroll refs
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const safeTimeout = useCallback((fn: () => void, delay: number) => {
+    const id = setTimeout(() => {
+      timeoutsRef.current = timeoutsRef.current.filter((t) => t !== id);
+      fn();
+    }, delay);
+    timeoutsRef.current.push(id);
+    return id;
+  }, []);
+
+  const clearAllTimeouts = useCallback(() => {
+    timeoutsRef.current.forEach((id) => clearTimeout(id));
+    timeoutsRef.current = [];
+  }, []);
 
   const scrollToBottom = () => {
     if (chatScrollRef.current) {
@@ -162,6 +177,7 @@ export default function PhoneMockup() {
   // Restart chat when category changes
   useEffect(() => {
     handleReset();
+    return () => clearAllTimeouts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category.id]);
 
@@ -191,7 +207,7 @@ export default function PhoneMockup() {
     const slot2 = category.timeSlots?.[1] || "18:00 hs";
     const staff = category.staffName || "Atención al Cliente";
 
-    setTimeout(() => {
+    safeTimeout(() => {
       setIsTyping(false);
       const botMsg: Message = {
         id: `b-service-${Date.now()}`,
@@ -229,7 +245,7 @@ export default function PhoneMockup() {
     ]);
     setIsTyping(true);
 
-    setTimeout(() => {
+    safeTimeout(() => {
       setIsTyping(false);
       const confirmationCard: Message = {
         id: `b-card-${Date.now()}`,
@@ -249,7 +265,7 @@ export default function PhoneMockup() {
       };
       setChat((prev) => [...prev, confirmationCard]);
 
-      setTimeout(() => {
+      safeTimeout(() => {
         setShowNotification(true);
         playiOSChime();
       }, 600);
@@ -263,7 +279,7 @@ export default function PhoneMockup() {
     // Remove options from confirmation card
     setChat((prev) => prev.map((m) => (m.options ? { ...m, options: undefined } : m)));
 
-    setTimeout(() => {
+    safeTimeout(() => {
       setIsTyping(false);
       const audioMsg: Message = {
         id: `b-audio-${Date.now()}`,
@@ -277,7 +293,7 @@ export default function PhoneMockup() {
       };
       setChat((prev) => [...prev, audioMsg]);
       setIsPlayingAudio(true);
-      setTimeout(() => setIsPlayingAudio(false), 3500);
+      safeTimeout(() => setIsPlayingAudio(false), 3500);
     }, 700);
   }
 
@@ -289,7 +305,7 @@ export default function PhoneMockup() {
     // Remove options from audio message
     setChat((prev) => prev.map((m) => (m.options ? { ...m, options: undefined } : m)));
 
-    setTimeout(() => {
+    safeTimeout(() => {
       setIsTyping(false);
       const reminderMsg: Message = {
         id: `r-reminder-${Date.now()}`,
@@ -299,7 +315,7 @@ export default function PhoneMockup() {
         time: "14:30",
       };
       setChat((prev) => [...prev, reminderMsg]);
-      setTimeout(() => {
+      safeTimeout(() => {
         setShowNotification(true);
         playiOSChime();
       }, 500);
@@ -307,6 +323,7 @@ export default function PhoneMockup() {
   }
 
   function handleReset() {
+    clearAllTimeouts();
     setShowNotification(false);
     setStep(0);
     setIsTyping(false);

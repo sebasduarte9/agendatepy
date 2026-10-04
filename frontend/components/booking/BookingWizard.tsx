@@ -1660,7 +1660,13 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
               {step === 2 && start ? (
                 <div>
                   <p className="text-xs font-bold text-white truncate">
-                    {formatInTimeZone(new Date(start), tenant.timezone, "d 'de' MMM · HH:mm 'hs'", { locale: es })}
+                    {(() => {
+                      try {
+                        return formatInTimeZone(new Date(start), tenant.timezone || "America/Asuncion", "d 'de' MMM · HH:mm 'hs'", { locale: es });
+                      } catch {
+                        return "Fecha seleccionada";
+                      }
+                    })()}
                   </p>
                   <p className="text-[11px] text-slate-400 truncate">{service?.name}</p>
                 </div>
