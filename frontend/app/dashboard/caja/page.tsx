@@ -287,7 +287,7 @@ export default function CajaPage() {
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
               Caja Diaria & Arqueo
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="hidden sm:block text-sm text-slate-400">
               Control de cobros por turno, arqueo de gaveta y registro de gastos diarios.
             </p>
           </div>

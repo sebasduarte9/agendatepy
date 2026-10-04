@@ -366,10 +366,10 @@ export default function EquipoRolesPage() {
               <span className="hidden sm:inline">·</span>
               <span className="hidden sm:inline text-slate-400">{activeStaffCount} activos</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-semibold tracking-tight text-white">
               Equipo, Roles & Especialistas
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="hidden sm:block text-sm text-slate-400">
               Invitá a tus colaboradores con Google, configurá comisiones y asigná niveles de acceso.
             </p>
           </div>
@@ -399,10 +399,37 @@ export default function EquipoRolesPage() {
         </div>
       </div>
 
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Equipo Activo
+            </span>
+            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+              {activeStaffCount} <span className="text-xs font-normal text-slate-400">de {staff.length} miembros</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
+          >
+            + Invitar
+          </button>
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>Especialistas: <strong className="text-slate-800 dark:text-slate-200">{prosCount}</strong></span>
+          <span>Admins: <strong className="text-slate-800 dark:text-slate-200">{adminCount}</strong></span>
+          <span>Caja: <strong className="text-slate-800 dark:text-slate-200">{cashierCount}</strong></span>
+        </div>
+      </div>
+
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
           <div className="font-semibold text-sm text-slate-900 dark:text-white">
@@ -652,7 +679,7 @@ export default function EquipoRolesPage() {
                 {filteredStaff.length} visibles
               </span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400">
               Cada colaborador puede iniciar sesión con Google para ver su propia agenda y comisiones ganadas.
             </p>
           </div>

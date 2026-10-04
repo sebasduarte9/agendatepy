@@ -227,7 +227,7 @@ export default function ClientesPage() {
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
               Directorio de Clientes
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="hidden sm:block text-sm text-slate-400">
               Historial de visitas, ficha técnica privada, fórmulas y fidelización.
             </p>
           </div>

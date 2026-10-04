@@ -486,7 +486,7 @@ export default function ServiciosPage() {
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
               Catálogo de Servicios
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="hidden sm:block text-sm text-slate-400">
               Categorías, duraciones por turno, profesionales asignados y promociones flash.
             </p>
           </div>

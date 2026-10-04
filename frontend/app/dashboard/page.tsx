@@ -318,10 +318,10 @@ export default function DashboardHomePage() {
               <span className="hidden sm:inline">·</span>
               <span className="hidden sm:inline capitalize text-slate-400">{todayFormattedDisplay}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-semibold tracking-tight text-white">
               Welcome back, {userName}
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="hidden sm:block text-sm text-slate-400">
               Overview of {business.name || "tu negocio"}
             </p>
           </div>
@@ -360,10 +360,40 @@ export default function DashboardHomePage() {
         </div>
       </div>
 
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Citas para Hoy
+            </span>
+            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+              {appointmentsToday.length} <span className="text-xs font-normal text-slate-400">turnos</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              setQuickBookingOpen(true);
+            }}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            style={{ backgroundColor: "var(--primary, #0ea5e9)" }}
+          >
+            + Cita
+          </button>
+        </div>
+        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>Cobrado: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{formatGs(revenueToday)}</strong></span>
+          <span>Confirmados: <strong className="text-slate-800 dark:text-slate-200 font-mono">{confirmedToday.length}</strong></span>
+          <span>Ocupación: <strong className="text-slate-800 dark:text-slate-200 font-mono">{occupancyRate}%</strong></span>
+        </div>
+      </div>
+
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & SNAPSHOT CHART)   */}
       {/* ========================================================= */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs">
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 pb-3 text-xs text-slate-600 dark:text-slate-400">
           <div className="font-semibold text-sm text-slate-900 dark:text-white">
             Resumen operativo de {currentMonthDisplay}
@@ -564,7 +594,95 @@ export default function DashboardHomePage() {
       {/* ========================================================= */}
       {/* 3. SIX-CARD QUICK ACTION GRID                             */}
       {/* ========================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      {/* Mobile Apple Quick Actions: Compact 3x2 Grid */}
+      <div className="grid sm:hidden grid-cols-3 gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic("selection");
+            setQuickBookingOpen(true);
+          }}
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs active:scale-95 transition text-center cursor-pointer"
+        >
+          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5">
+            <Key className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+            + Cita
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic("selection");
+            setQuickBookingOpen(true);
+          }}
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs active:scale-95 transition text-center cursor-pointer"
+        >
+          <div className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
+            <Ban className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+            Bloquear
+          </span>
+        </button>
+
+        <Link
+          href="/dashboard/equipo"
+          onClick={() => triggerHaptic("selection")}
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs active:scale-95 transition text-center"
+        >
+          <div className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
+            <User className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+            Equipo
+          </span>
+        </Link>
+
+        <Link
+          href="/dashboard/caja"
+          onClick={() => triggerHaptic("selection")}
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs active:scale-95 transition text-center"
+        >
+          <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-1.5">
+            <Banknote className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+            Caja
+          </span>
+        </Link>
+
+        <Link
+          href="/dashboard/estadisticas"
+          onClick={() => triggerHaptic("selection")}
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs active:scale-95 transition text-center"
+        >
+          <div className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
+            <TrendingUp className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+            Métricas
+          </span>
+        </Link>
+
+        <Link
+          href="/dashboard/apariencia"
+          onClick={() => triggerHaptic("selection")}
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs active:scale-95 transition text-center"
+        >
+          <div className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
+            <Palette className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+            Perfil Web
+          </span>
+        </Link>
+      </div>
+
+      {/* Desktop Six-Card Quick Action Grid */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {/* Card 1: Crear cita */}
         <button
           type="button"

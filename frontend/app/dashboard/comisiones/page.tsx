@@ -495,18 +495,18 @@ export default function ComisionesPage() {
         />
 
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+          <div className="space-y-1 sm:space-y-2">
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
               <span
                 className="h-2 w-2 rounded-full animate-pulse"
                 style={{ backgroundColor: brandColor }}
               />
               <span>Liquidaciones & Equipo Operativo</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Comisiones & Pagos al Equipo
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Comisiones al Equipo
             </h1>
-            <p className="text-sm text-slate-300 max-w-xl">
+            <p className="hidden sm:block text-sm text-slate-300 max-w-xl">
               Cálculo transparente de ingresos por servicios realizados y venta de productos en mostrador con recibos oficiales imprimibles.
             </p>
           </div>
@@ -562,8 +562,42 @@ export default function ComisionesPage() {
         </div>
       </div>
 
-      {/* ═══ APPLE INSET CONTAINER: BENTO TELEMETRY & GAUGES ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Por Liquidar
+            </span>
+            <span
+              className={`text-2xl font-black font-mono ${
+                metrics.pendingCommission > 0
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-emerald-600 dark:text-emerald-400"
+              }`}
+            >
+              {formatGs(metrics.pendingCommission)}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleOpenLiquidar()}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            style={{ backgroundColor: brandColor }}
+          >
+            Pagar
+          </button>
+        </div>
+
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>Pagado: <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(metrics.totalPaidCommission)}</strong></span>
+          <span>Facturado: <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(metrics.totalBilled)}</strong></span>
+        </div>
+      </div>
+
+      {/* ═══ DESKTOP APPLE INSET CONTAINER: BENTO TELEMETRY & GAUGES ═══ */}
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Card 1: Circular Progress Gauges (Liquidation Rate & Source Breakdown) */}
           <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
@@ -815,14 +849,91 @@ export default function ComisionesPage() {
               Equipo & Desglose de Ganancias
             </h2>
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="hidden sm:inline text-xs text-slate-400">
             Revisá el origen del dinero (% servicios vs % productos) por cada colaborador.
           </span>
         </div>
 
+        {/* Mobile Apple Inset Grouped Collaborators List */}
+        <div className="block md:hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
+          {staffSummaries.map((summary) => {
+            const st = summary.staff;
+            const hasPending = summary.pendingCommission > 0;
+            return (
+              <div
+                key={st.id}
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setSelectedStaffId(st.id);
+                  const el = document.getElementById("seccion-turnos");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="p-3.5 flex items-center justify-between gap-3 active:bg-slate-50 dark:active:bg-slate-800/50 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-black text-white text-xs shadow-xs"
+                    style={{ backgroundColor: st.color || brandColor }}
+                  >
+                    {st.avatar}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">
+                        {st.name}
+                      </h4>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        {st.role}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      {st.commissionPercentage}% serv · {st.productCommissionPercentage ?? 10}% prod
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 shrink-0 text-right">
+                  <div>
+                    <span
+                      className={`font-mono font-black text-sm block ${
+                        hasPending
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      {formatGs(summary.pendingCommission)}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">
+                      {hasPending ? "Por pagar" : "Al día"}
+                    </span>
+                  </div>
+
+                  {hasPending ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHaptic("medium");
+                        handleOpenLiquidar(st.id);
+                      }}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      Pagar
+                    </button>
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Grid Cards */}
         <div
           data-tour="comisiones-staff-list"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4"
         >
           {staffSummaries.map((summary) => {
             const st = summary.staff;
@@ -1002,7 +1113,7 @@ export default function ComisionesPage() {
                   Servicios y Productos Vendidos en el Período
                 </h3>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
                 Cada servicio completado y producto vendido con su ganancia calculada de forma directa.
               </p>
             </div>
@@ -1177,7 +1288,7 @@ export default function ComisionesPage() {
                   Historial de Pagos & Recibos Emitidos
                 </h3>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
                 Comprobantes de pago con el desglose exacto de servicios y productos.
               </p>
             </div>

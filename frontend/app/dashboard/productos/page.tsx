@@ -408,17 +408,17 @@ export default function ProductosPage() {
 
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
               <span
                 className="h-2 w-2 rounded-full animate-pulse"
                 style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
               />
               <span>CATÁLOGO DIGITAL & INVENTARIO</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
               Productos, Tienda & Inventario
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+            <p className="hidden sm:block text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
               Control de existencias en tiempo real, márgenes por unidad, alertas de stock bajo y pedidos directos a tu WhatsApp.
             </p>
           </div>
@@ -459,8 +459,35 @@ export default function ProductosPage() {
         </div>
       </div>
 
-      {/* Apple Inset Telemetry & Intelligence Container */}
-      <div data-tour="productos-kpis" className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Inventario Total
+            </span>
+            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+              {totalStock} <span className="text-xs font-normal text-slate-400">unidades</span>
+            </span>
+          </div>
+          {lowStockCount > 0 ? (
+            <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              ⚠️ {lowStockCount} por reponer
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              ✓ Stock saludable
+            </span>
+          )}
+        </div>
+        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>PVP Total: <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(totalRetailValue)}</strong></span>
+          <span>Margen Prom.: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">+{avgMarginPct}%</strong></span>
+        </div>
+      </div>
+
+      {/* Apple Inset Telemetry & Intelligence Container (Desktop) */}
+      <div data-tour="productos-kpis" className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Card 1: Stock Health & Financial Overview */}
           <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">

@@ -127,17 +127,17 @@ export default function TransferenciasPage() {
 
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
               <span
                 className="h-2 w-2 rounded-full animate-pulse"
                 style={{ backgroundColor: brandColor }}
               />
               <span>Auditoría Financiera & Validación OCR</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
               Auditoría de Transferencias SIPAP
             </h1>
-            <p className="text-sm text-slate-300 max-w-xl">
+            <p className="hidden sm:block text-sm text-slate-300 max-w-xl">
               Comprobantes bancarios detectados automáticamente desde WhatsApp mediante lectura inteligente de códigos QR y montos acreditados en cuenta.
             </p>
           </div>
@@ -162,8 +162,35 @@ export default function TransferenciasPage() {
         </div>
       </div>
 
-      {/* ═══ APPLE INSET CONTAINER: BENTO TELEMETRY & GAUGES ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Por Validar
+            </span>
+            <span className={`text-2xl font-black font-mono ${pendingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+              {pendingCount} {pendingCount === 1 ? "comprobante" : "comprobantes"}
+            </span>
+          </div>
+          {pendingCount > 0 ? (
+            <span className="px-3 py-1 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20">
+              {formatGs(pendingTotal)}
+            </span>
+          ) : (
+            <span className="px-3 py-1 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20">
+              ✓ Al día
+            </span>
+          )}
+        </div>
+        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>Aprobados: <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(approvedTotal)}</strong></span>
+          <span>Aprobación: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{approvalRatePct}%</strong></span>
+        </div>
+      </div>
+
+      {/* ═══ DESKTOP APPLE INSET CONTAINER: BENTO TELEMETRY & GAUGES ═══ */}
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Card 1: Circular Progress Gauges (Approval & OCR Detection) */}
           <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
@@ -374,7 +401,7 @@ export default function TransferenciasPage() {
                 Registro de Pagos y Transferencias Bancarias
               </h2>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
               Pagos procesados vía SIPAP / SPI con lectura inteligente de QR y datos del cliente.
             </p>
           </div>

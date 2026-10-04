@@ -267,17 +267,17 @@ export default function FidelizacionPage() {
 
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/90 border border-white/15 backdrop-blur-md">
               <span
                 className="h-2 w-2 rounded-full animate-pulse"
                 style={{ backgroundColor: business.primaryColor || "var(--primary, #0ea5e9)" }}
               />
               <span>PROGRAMA DE FIDELIZACIÓN & CLUB VIP</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
               Fidelización & Tarjetas Digitales VIP
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+            <p className="hidden sm:block text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
               Sumá sellos por visita y compartí con cada cliente su enlace web único para consultar sus beneficios y canjes.
             </p>
           </div>
@@ -310,8 +310,29 @@ export default function FidelizacionPage() {
         </div>
       </div>
 
-      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Socios VIP Activos
+            </span>
+            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+              {clients.length} <span className="text-xs font-normal text-slate-400">clientes</span>
+            </span>
+          </div>
+          <span className="px-3 py-1 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20">
+            {loyalty.enabled ? "⭐ Programa Activo" : "Pausado"}
+          </span>
+        </div>
+        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>Sellos Entregados: <strong className="text-slate-800 dark:text-slate-200 font-mono">{totalPointsAwarded}</strong></span>
+          <span>Canjes Reclamados: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{totalRewardsRedeemed}</strong></span>
+        </div>
+      </div>
+
+      {/* ═══ DESKTOP APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
+      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Card 1: Adhesión & Retención */}
           <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
