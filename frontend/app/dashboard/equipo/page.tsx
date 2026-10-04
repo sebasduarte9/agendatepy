@@ -352,23 +352,23 @@ export default function EquipoRolesPage() {
       </div>
 
       {/* Services Notification Banner */}
-      <div className="flex items-center justify-between rounded-2xl border border-indigo-200/80 dark:border-indigo-800/40 bg-indigo-50/70 dark:bg-indigo-950/30 p-3.5 shadow-xs">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between rounded-2xl border border-primary/20 bg-primary/5 p-3.5 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white font-bold">
             <Layers className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
+            <p className="text-xs font-bold text-slate-900 dark:text-white">
               ¿Querés asignar qué servicios realiza cada especialista?
             </p>
-            <p className="text-[11px] text-indigo-700/80 dark:text-indigo-400">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400">
               En el Catálogo podés marcar quiénes atienden cada corte, barba o tratamiento con cálculo de comisiones.
             </p>
           </div>
         </div>
         <Link
           href="/dashboard/servicios"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800/50 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:border-indigo-500 shadow-xs transition shrink-0"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-primary/40 shadow-xs transition shrink-0"
         >
           <span>Ir a Servicios ({services.length})</span>
           <ArrowRight className="h-3.5 w-3.5" />

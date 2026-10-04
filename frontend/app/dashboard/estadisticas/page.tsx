@@ -236,8 +236,8 @@ export default function EstadisticasPage() {
               <AreaChart data={areaData}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor={business.primaryColor || "#6366f1"} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={business.primaryColor || "#6366f1"} stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
@@ -255,7 +255,7 @@ export default function EstadisticasPage() {
                 <Area
                   type="monotone"
                   dataKey="ingresos"
-                  stroke="#6366f1"
+                  stroke={business.primaryColor || "#6366f1"}
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#colorIngresos)"
@@ -357,7 +357,7 @@ export default function EstadisticasPage() {
                     fontSize: "12px",
                   }}
                 />
-                <Bar dataKey="citas" fill="#6366f1" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="citas" fill={business.primaryColor || "#6366f1"} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -459,6 +459,7 @@ export default function AparienciaPage() {
       buttonRadius: p.buttonRadius,
       bannerUrl: p.bannerUrl || current.bannerUrl,
     }));
+    updateBusiness({ primaryColor: p.primaryColor });
     setHasUnsavedChanges(true);
     pushToast("success", `Tema "${p.name}" seleccionado.`);
   }
@@ -956,6 +957,7 @@ export default function AparienciaPage() {
                     value={theme.primaryColor}
                     onChange={(hex) => {
                       setTheme({ ...theme, primaryColor: hex });
+                      updateBusiness({ primaryColor: hex });
                       setHasUnsavedChanges(true);
                     }}
                   />

@@ -159,24 +159,21 @@ export default function Sidebar() {
         href={href}
         onClick={() => setOpen(false)}
         title={!expanded ? label : undefined}
-        className={`group relative flex h-9 w-full items-center rounded-lg px-2 transition-colors duration-150 ${
+        className={`group relative flex h-9 w-full items-center rounded-xl px-2.5 transition-all duration-150 ${
           active
-            ? "bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium"
-            : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200"
+            ? "bg-slate-100 dark:bg-white/[0.08] text-slate-950 dark:text-white font-bold shadow-2xs"
+            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200"
         }`}
       >
         <div className="flex h-7 w-7 shrink-0 items-center justify-center">
           <Icon
-            className={`h-4 w-4 transition-colors duration-150 ${
-              active
-                ? "text-slate-900 dark:text-white"
-                : "text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300"
-            }`}
+            className="h-4 w-4 transition-colors duration-150"
+            style={active ? { color: "var(--primary, #4f46e5)" } : undefined}
           />
         </div>
 
         <div
-          className="flex items-center min-w-0 flex-1 overflow-hidden transition-all duration-200 ease-out"
+          className="flex items-center justify-between min-w-0 flex-1 overflow-hidden transition-all duration-200 ease-out"
           style={{
             opacity: expanded ? 1 : 0,
             maxWidth: expanded ? 180 : 0,
@@ -184,9 +181,15 @@ export default function Sidebar() {
             transform: expanded ? "translateX(0)" : "translateX(-4px)",
           }}
         >
-          <span className="truncate text-xs">
+          <span className="truncate text-xs font-medium">
             {label}
           </span>
+          {active && (
+            <span
+              className="h-1.5 w-1.5 rounded-full shrink-0 ml-1"
+              style={{ backgroundColor: "var(--primary, #4f46e5)" }}
+            />
+          )}
         </div>
       </Link>
     );
@@ -216,7 +219,7 @@ export default function Sidebar() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{ width: currentWidth }}
-        className={`sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl transition-[width,box-shadow] duration-300 ease-in-out overflow-hidden ${
+        className={`sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-950 backdrop-blur-2xl transition-[width,box-shadow] duration-300 ease-in-out overflow-hidden ${
           open
             ? "translate-x-0 shadow-2xl"
             : "-translate-x-full lg:translate-x-0"
@@ -226,49 +229,45 @@ export default function Sidebar() {
             : ""
         }`}
       >
-        {/* Brand header */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 dark:border-white/5 px-3.5 overflow-hidden">
-          <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-white/10">
-              <BrandLogo variant="icon" iconClassName="h-6 w-6" />
-            </div>
-            <div
-              className="overflow-hidden whitespace-nowrap transition-all duration-300 ease-out min-w-0"
-              style={{
-                opacity: expanded ? 1 : 0,
-                maxWidth: expanded ? 150 : 0,
-                transform: expanded ? "translateX(0)" : "translateX(-6px)",
-              }}
-            >
-              <div
-                className="flex items-center gap-1.5 font-coolvetica text-base text-slate-900 dark:text-white"
-                style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
-              >
-                <span>agendate<span className="text-[#FF4F2B]">py</span></span>
+        {/* Workspace selector matching console reference */}
+        <div className="flex flex-col justify-center border-b border-slate-100 dark:border-white/5 p-3 overflow-hidden">
+          {expanded ? (
+            <div className="space-y-1.5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  Workspace
+                </span>
                 <span className="rounded px-1.5 py-0.2 text-[9px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800">
                   {roleLabel}
                 </span>
               </div>
-              <p className="truncate text-[11px] text-slate-400 mt-0.5">
-                {business.name}
-              </p>
+              <div className="flex items-center justify-between rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/60 p-2 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition group cursor-pointer">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-white font-black text-[11px] shadow-xs"
+                    style={{ backgroundColor: "var(--primary, #4f46e5)" }}
+                  >
+                    {business.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                    {business.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200">
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              </div>
             </div>
-          </Link>
-
-          {/* Pin toggle button on desktop */}
-          {expanded && (
-            <button
-              type="button"
-              onClick={togglePinned}
-              title={isPinned ? "Desfijar menú (expandir con hover)" : "Fijar menú siempre abierto"}
-              className="hidden lg:flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              {isPinned ? (
-                <PinOff className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
-              ) : (
-                <Pin className="h-3.5 w-3.5" />
-              )}
-            </button>
+          ) : (
+            <div className="flex items-center justify-center py-1">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-white font-black text-xs shadow-xs"
+                style={{ backgroundColor: "var(--primary, #4f46e5)" }}
+                title={business.name}
+              >
+                {business.name.charAt(0).toUpperCase()}
+              </div>
+            </div>
           )}
         </div>
 

@@ -343,11 +343,13 @@ export default function AutomatedHubDiagram() {
 
       // Clic en el cerebro: emite una onda expansiva de sonar
       const handleBrainClick = () => {
-        gsap.fromTo(
-          brain,
-          { scale: 1.25 },
-          { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.5)" }
-        );
+        if (brain) {
+          gsap.fromTo(
+            brain,
+            { scale: 1.25 },
+            { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.5)" }
+          );
+        }
         const rings = containerRef.current?.querySelectorAll(".hub-ring");
         rings?.forEach((ring, i) => {
           const baseR = 60 + i * 50;

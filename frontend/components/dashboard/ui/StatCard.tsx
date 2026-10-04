@@ -40,7 +40,7 @@ export default function StatCard({
         )}
       </div>
 
-      <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary/15 to-primary/5 text-primary dark:text-violet-400 shadow-2xs group-hover:scale-105 transition-transform duration-300">
+      <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary/15 to-primary/5 text-primary shadow-2xs group-hover:scale-105 transition-transform duration-300">
         <Icon className="h-5 w-5" />
       </span>
 

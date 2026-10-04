@@ -278,9 +278,9 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
       >
         <div className="space-y-5 -mt-2">
           {/* Header Profile Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl bg-gradient-to-r from-slate-50 via-indigo-50/40 to-purple-50/30 dark:from-slate-900 dark:via-slate-900/90 dark:to-indigo-950/40 border border-slate-200/80 dark:border-white/10 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl bg-slate-50/80 dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 text-white font-black text-lg shadow-md shadow-primary/20">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-white font-black text-lg shadow-md shadow-primary/20">
                 {client.name
                   .split(" ")
                   .map((n) => n[0])

@@ -37,10 +37,20 @@ export default function DashboardShell({
     }
   }, [initialTenantSlug, syncFromDatabase, updateBusiness, userName, setUserName]);
 
+  useEffect(() => {
+    if (typeof document !== "undefined" && color) {
+      document.documentElement.style.setProperty("--primary", color);
+      document.documentElement.style.setProperty("--color-primary", color);
+    }
+  }, [color]);
+
   return (
     <div
-      className="flex min-h-screen bg-[var(--background)]"
-      style={{ ["--primary" as string]: color }}
+      className="flex min-h-screen bg-[var(--background)] font-sans antialiased text-slate-900 dark:text-slate-100"
+      style={{
+        ["--primary" as string]: color || "#4f46e5",
+        ["--color-primary" as string]: color || "#4f46e5",
+      }}
     >
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
