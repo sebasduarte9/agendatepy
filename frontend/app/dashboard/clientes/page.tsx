@@ -16,20 +16,26 @@ import {
   UserCheck,
   Crown,
   MessagesSquare,
-  CalendarPlus,
   ChevronRight,
+  Sparkles,
+  X,
+  LayoutList,
+  LayoutGrid,
+  CalendarPlus,
+  User,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
-import StatCard from "@/components/dashboard/ui/StatCard";
 import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
 import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
+import { COUNTRY_LIST, findCountryByPhone, type CountryOption } from "@/lib/countries";
 import type { Client } from "@/lib/dashboard-types";
 
 export default function ClientesPage() {
@@ -37,13 +43,38 @@ export default function ClientesPage() {
     useDashboardStore();
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("todos");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [quickBookingOpen, setQuickBookingOpen] = useState(false);
   const [quickBookingClient, setQuickBookingClient] = useState<Client | null>(null);
 
+  // Country Prefix Selector state
+  const [selectedCountryCode, setSelectedCountryCode] = useState("PY");
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
+  const [phoneDigits, setPhoneDigits] = useState("");
+
+  const activeCountry = useMemo(() => {
+    return COUNTRY_LIST.find((c) => c.code === selectedCountryCode) || COUNTRY_LIST[0];
+  }, [selectedCountryCode]);
+
+  const filteredCountries = useMemo(() => {
+    if (!countrySearchQuery.trim()) return COUNTRY_LIST;
+    const q = countrySearchQuery.toLowerCase().trim();
+    return COUNTRY_LIST.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.dialCode.includes(q) ||
+        c.code.toLowerCase().includes(q)
+    );
+  }, [countrySearchQuery]);
+
+  const brandColor = business.primaryColor || "#FF4F2B";
+
   function handleOpenQuickBooking(c: Client) {
+    triggerHaptic("selection");
     setQuickBookingClient(c);
     setQuickBookingOpen(true);
   }
@@ -95,12 +126,20 @@ export default function ClientesPage() {
   const totalSpentAll = clients.reduce((acc, c) => acc + c.totalSpent, 0);
   const avgSpent = clients.length > 0 ? Math.round(totalSpentAll / clients.length) : 0;
   const vipCount = clients.filter((c) => c.tags.includes("VIP")).length;
+  const frecuentesCount = clients.filter((c) => c.tags.includes("Frecuente")).length;
+  const nuevosCount = clients.filter((c) => c.tags.includes("Nuevo")).length;
+  const formulaCount = clients.filter((c) => c.formula && c.formula.trim().length > 0).length;
 
   function openCreateModal() {
+    triggerHaptic("selection");
     setEditingClient(null);
+    setSelectedCountryCode("PY");
+    setPhoneDigits("");
+    setCountrySearchQuery("");
+    setCountryDropdownOpen(false);
     setForm({
       name: "",
-      phone: "+595",
+      phone: "",
       email: "",
       instagram: "",
       messengerId: "",
@@ -112,7 +151,13 @@ export default function ClientesPage() {
   }
 
   function openEditModal(c: Client) {
+    triggerHaptic("selection");
     setEditingClient(c);
+    const parsed = findCountryByPhone(c.phone || "");
+    setSelectedCountryCode(parsed.country.code);
+    setPhoneDigits(parsed.nationalNumber);
+    setCountrySearchQuery("");
+    setCountryDropdownOpen(false);
     setForm({
       name: c.name,
       phone: c.phone,
@@ -127,17 +172,21 @@ export default function ClientesPage() {
   }
 
   function handleSave() {
-    if (!form.name.trim() || !form.phone.trim()) {
+    if (!form.name.trim() || !phoneDigits.trim()) {
       pushToast("error", "Completá al menos el nombre y teléfono del cliente.");
       return;
     }
 
-    const normPhone = normalizeParaguayPhone(form.phone.trim());
+    const cleanDigits = phoneDigits.replace(/\D/g, "");
+    let fullPhone = `${activeCountry.dialCode}${cleanDigits}`;
+    if (activeCountry.code === "PY") {
+      fullPhone = normalizeParaguayPhone(fullPhone) || fullPhone;
+    }
 
     if (editingClient) {
       updateClient(editingClient.id, {
         name: form.name.trim(),
-        phone: normPhone,
+        phone: fullPhone,
         email: form.email.trim(),
         instagram: form.instagram.trim() || undefined,
         messengerId: form.messengerId.trim() || undefined,
@@ -149,7 +198,7 @@ export default function ClientesPage() {
     } else {
       addClient({
         name: form.name.trim(),
-        phone: normPhone,
+        phone: fullPhone,
         email: form.email.trim(),
         instagram: form.instagram.trim() || undefined,
         messengerId: form.messengerId.trim() || undefined,
@@ -168,6 +217,7 @@ export default function ClientesPage() {
   }
 
   function exportCSV() {
+    triggerHaptic("selection");
     const headers = ["Nombre", "Teléfono", "Email", "Total Visitas", "Total Gastado (Gs)", "Ficha Técnica", "Notas"];
     const rows = clients.map((c) => [
       `"${c.name}"`,
@@ -189,32 +239,26 @@ export default function ClientesPage() {
     pushToast("success", "Base de clientes exportada en CSV.");
   }
 
-  const vipRate = useMemo(() => {
-    if (clients.length === 0) return 0;
-    return Math.round((vipCount / clients.length) * 100);
-  }, [vipCount, clients.length]);
-
   return (
-    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
-      {/* ========================================================= */}
-      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
-      <div
-        data-tour="clientes-header"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
-      >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Directorio de Clientes
-        </h1>
+    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6 pb-24 px-1 sm:px-0">
+      {/* ═══ APPLE APP HEADER ═══ */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Clientes
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+            {clients.length} fichas en tu libreta de contactos
+          </p>
+        </div>
 
-        {/* Quick Action Dock */}
+        {/* Action Dock */}
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
-            style={{
-              backgroundColor: business.primaryColor || "#FF4F2B",
-            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            style={{ backgroundColor: brandColor }}
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Nuevo Cliente</span>
@@ -223,297 +267,290 @@ export default function ClientesPage() {
           <button
             type="button"
             onClick={exportCSV}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-zinc-300 px-3 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
-            <span>Exportar CSV</span>
+            <span className="hidden sm:inline">Exportar CSV</span>
           </button>
 
           <Link
             href="/dashboard/crm"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold shadow-xs transition"
-            title="Ir a Mensajes CRM"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-zinc-300 px-3 py-2 text-xs font-semibold shadow-xs transition"
           >
-            <MessagesSquare className="h-3.5 w-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Mensajes</span>
+            <MessagesSquare className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-400" />
+            <span className="hidden sm:inline">CRM</span>
           </Link>
         </div>
       </div>
 
-      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
+      {/* ═══ APPLE GLANCEABLE SUMMARY CARD ═══ */}
+      <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">
               Directorio de Clientes
             </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-                {clients.length}
-              </span>
-              <span className="text-xs font-semibold text-slate-400">fichas registradas</span>
+            <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white mt-1">
+              {clients.length}
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
-            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>+ Cliente</span>
-          </button>
-        </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold font-mono">
+              <Crown className="h-3 w-3" />
+              <span>{vipCount} VIPs</span>
+            </div>
 
-        <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">VIPs</span>
-            <span className="font-extrabold text-amber-600 dark:text-amber-400 font-mono text-xs">{vipCount}</span>
-          </div>
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Fórmulas</span>
-            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono text-xs">{clients.filter((c) => c.formula).length}</span>
-          </div>
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Ticket Medio</span>
-            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs truncate block">{formatGs(avgSpent)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================= */}
-      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
-      {/* ========================================================= */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        {/* Inset Subheader */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-          <div className="font-semibold text-sm text-slate-900 dark:text-white">
-            Métricas de Fidelización & Clientes
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            {vipCount} clientes VIP · Gasto medio {formatGs(avgSpent)}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-zinc-300 text-xs font-bold font-mono">
+              <Sparkles className="h-3 w-3 text-primary" />
+              <span>Ticket: {formatGs(avgSpent)}</span>
+            </div>
           </div>
         </div>
 
-        {/* Dual-Card Inset Telemetry */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left Card: Operational Gauges & Summary */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
-            {/* Top section: Mini status box + 2 circular gauges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
-              {/* Mini status box */}
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
-                <div>
-                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                    Clientes VIP
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
-                    {vipCount} clientes de alto valor identificados.
-                  </p>
-                </div>
-                <div className="mt-3">
-                  <span className="inline-block rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 text-[11px] font-semibold">
-                    {vipCount} VIP
-                  </span>
-                </div>
-              </div>
-
-              {/* Circular Gauge 1: VIP % */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * vipRate) / 100}
-                      strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #FF4F2B)" }}
-                      className="transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {vipRate}%
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  VIP
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {vipCount} frecuentes
-                </div>
-              </div>
-
-              {/* Circular Gauge 2: Fórmulas Técnicas Guardadas */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray="4 2"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.round((clients.filter((c) => c.formula).length / (clients.length || 1)) * 100))) / 100}
-                      strokeLinecap="round"
-                      className="text-emerald-500 transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {clients.filter((c) => c.formula).length}
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Fórmulas
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  fichas con datos
-                </div>
-              </div>
+        {/* 4-Pod Apple Inset Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">VIP</span>
+              <Crown className="h-3.5 w-3.5 text-amber-500" />
             </div>
-
-            {/* Bottom Data Rows */}
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Total de clientes registrados</span>
-                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {clients.length} fichas
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Gasto acumulado total</span>
-                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {formatGs(totalSpentAll)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                <span>Gasto promedio por cliente</span>
-                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                  {formatGs(avgSpent)}
-                </span>
-              </div>
-            </div>
+            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{vipCount}</span>
           </div>
 
-          {/* Right Card: Etiquetas & Segmentación */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
-            <div>
-              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
-                Segmentos de Clientes
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                      <Crown className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Clientes VIP</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{vipCount}</span>
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                      <UserCheck className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Frecuentes</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {clients.filter((c) => c.tags?.includes("Frecuente")).length}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                      <Users className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Nuevos Ingresos</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {clients.filter((c) => c.tags?.includes("Nuevo")).length}
-                  </span>
-                </div>
-              </div>
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">Frecuentes</span>
+              <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
             </div>
+            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{frecuentesCount}</span>
+          </div>
 
-            {/* Bottom notification */}
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                Fichas técnicas con notas privadas y fórmulas químicas:
-              </span>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                100% Confidencial
-              </span>
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">Nuevos</span>
+              <Users className="h-3.5 w-3.5 text-emerald-500" />
             </div>
+            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{nuevosCount}</span>
+          </div>
+
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">Fórmulas</span>
+              <FileText className="h-3.5 w-3.5 text-purple-500" />
+            </div>
+            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{formulaCount}</span>
           </div>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div data-tour="clientes-search" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, teléfono, notas o fórmula técnica..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+      {/* ═══ SEARCH & SEGMENTED CONTROLS DOCK ═══ */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          {/* iOS Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Buscar cliente, teléfono, notas..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] py-2.5 pl-10 pr-9 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs transition"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* View Mode Toggle Button */}
+          <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("selection");
+                setViewMode("list");
+              }}
+              className={`p-2 rounded-xl border transition ${
+                viewMode === "list"
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-xs"
+                  : "bg-white dark:bg-[#121215] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5"
+              }`}
+              title="Vista Lista iOS"
+            >
+              <LayoutList className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("selection");
+                setViewMode("grid");
+              }}
+              className={`p-2 rounded-xl border transition ${
+                viewMode === "grid"
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-xs"
+                  : "bg-white dark:bg-[#121215] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5"
+              }`}
+              title="Vista Tarjetas"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <div className="w-full sm:w-auto">
+
+        {/* Filter Segmented Control */}
+        <div className="w-full overflow-x-auto pb-1">
           <IosSegmentedControl
             value={selectedTag}
-            onChange={(val) => setSelectedTag(val)}
+            onChange={(val) => {
+              triggerHaptic("selection");
+              setSelectedTag(val);
+            }}
             layoutId="clientesTagFilter"
             size="sm"
             options={[
               { value: "todos", label: "Todos", badge: clients.length },
-              { value: "VIP", label: "VIP", badge: clients.filter((c) => c.tags?.includes("VIP")).length },
-              { value: "Frecuente", label: "Frecuentes" },
-              { value: "Nuevo", label: "Nuevos" },
+              { value: "VIP", label: "VIP", badge: vipCount },
+              { value: "Frecuente", label: "Frecuentes", badge: frecuentesCount },
+              { value: "Nuevo", label: "Nuevos", badge: nuevosCount },
             ]}
           />
         </div>
       </div>
 
-      {/* Mobile View: Apple Contacts Inset Grouped Directory */}
-      <div className="md:hidden rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900/60 divide-y divide-slate-100 dark:divide-white/5 shadow-xs overflow-hidden">
-        {filteredClients.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-xs">
-            No se encontraron clientes con el filtro aplicado.
-          </div>
-        ) : (
-          filteredClients.map((client) => {
+      {/* ═══ VIEW MODE: APPLE INSET GROUPED LIST (DEFAULT) ═══ */}
+      {viewMode === "list" && (
+        <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] divide-y divide-slate-100 dark:divide-white/5 shadow-xs overflow-hidden">
+          {filteredClients.length === 0 ? (
+            <div className="py-14 text-center text-slate-400 dark:text-zinc-500 text-xs space-y-2">
+              <Users className="h-8 w-8 mx-auto text-slate-300 dark:text-zinc-600" />
+              <p>No se encontraron clientes con esos filtros.</p>
+            </div>
+          ) : (
+            filteredClients.map((client) => {
+              const initials = client.name
+                .split(" ")
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
+              const cleanPhone = client.phone.replace(/\D/g, "");
+              const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                `¡Hola ${client.name}! Te escribimos desde ${business.name}. ¿Cómo estás?`
+              )}`;
+
+              const isVip = client.tags.includes("VIP");
+
+              return (
+                <div
+                  key={client.id}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setSelectedClient(client);
+                  }}
+                  className="p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {/* Avatar Squircle */}
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-black shadow-xs ${
+                        isVip
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                          : "bg-primary/10 text-primary border border-primary/20"
+                      }`}
+                    >
+                      {initials}
+                    </div>
+
+                    {/* Info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                          {client.name}
+                        </h4>
+                        {client.tags?.map((t) => (
+                          <span
+                            key={t}
+                            className={`rounded-md px-1.5 py-0.2 text-[9px] font-black uppercase tracking-tight shrink-0 ${
+                              t === "VIP"
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                : t === "Frecuente"
+                                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            }`}
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-zinc-400 font-mono mt-0.5 truncate">
+                        <span>{client.phone}</span>
+                        <span>·</span>
+                        <span>{client.totalVisits} visitas</span>
+                        <span>·</span>
+                        <span className="font-bold text-slate-900 dark:text-white">
+                          {formatGs(client.totalSpent)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Dock */}
+                  <div
+                    className="flex items-center gap-1.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {cleanPhone && (
+                      <a
+                        href={`tel:${cleanPhone}`}
+                        onClick={() => triggerHaptic("medium")}
+                        className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-500/20 active:scale-95 transition"
+                        title="Llamar al cliente"
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => triggerHaptic("medium")}
+                      className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 active:scale-95 transition"
+                      title="Enviar WhatsApp"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuickBooking(client)}
+                      className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 text-xs font-semibold transition active:scale-95"
+                      title="Agendar turno"
+                    >
+                      <CalendarPlus className="h-3.5 w-3.5 text-primary" />
+                      <span>Agendar</span>
+                    </button>
+
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-zinc-500 ml-1" />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* ═══ VIEW MODE: RESPONSIVE APPLE CARDS ═══ */}
+      {viewMode === "grid" && (
+        <div className="grid gap-3.5 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredClients.map((client) => {
             const initials = client.name
               .split(" ")
               .map((n) => n[0])
@@ -524,322 +561,157 @@ export default function ClientesPage() {
             const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
               `¡Hola ${client.name}! Te escribimos desde ${business.name}. ¿Cómo estás?`
             )}`;
+            const isVip = client.tags.includes("VIP");
 
             return (
               <div
                 key={client.id}
-                className="p-3.5 flex items-center justify-between gap-3 active:bg-slate-50 dark:active:bg-slate-800/40 transition cursor-pointer"
-                onClick={() => {
-                  triggerHaptic("selection");
-                  setSelectedClient(client);
-                }}
+                className="flex flex-col justify-between rounded-3xl p-4 sm:p-5 bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs hover:border-primary/40 transition space-y-3.5"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xs font-black text-primary shadow-xs">
-                    {initials}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                        {client.name}
-                      </h4>
-                      {client.tags?.map((t) => (
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-black shadow-xs ${
+                          isVip
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                            : "bg-primary/10 text-primary border border-primary/20"
+                        }`}
+                      >
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                          {client.name}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono mt-0.5 truncate">
+                          {client.phone}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {client.tags.map((t) => (
                         <span
                           key={t}
-                          className={`rounded px-1.5 py-0.2 text-[9px] font-black uppercase tracking-tight shrink-0 ${
+                          className={`rounded-md px-1.5 py-0.2 text-[9px] font-black uppercase tracking-tight ${
                             t === "VIP"
-                              ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400"
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                               : t === "Frecuente"
-                              ? "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-400"
-                              : "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400"
+                              ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                           }`}
                         >
                           {t}
                         </span>
                       ))}
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                      {client.phone}
-                    </p>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
-                      <span>{client.totalVisits} visitas</span>
-                      <span>·</span>
-                      <span className="text-primary font-bold">{formatGs(client.totalSpent)}</span>
-                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  {cleanPhone && (
-                    <a
-                      href={`tel:${cleanPhone}`}
-                      onClick={() => triggerHaptic("medium")}
-                      className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:scale-105 active:scale-95 transition"
-                      title="Llamar al cliente"
-                    >
-                      <Phone className="h-3.5 w-3.5" />
-                    </a>
+                  {/* Formula snippet if present */}
+                  {client.formula && (
+                    <div className="mt-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 p-2.5 text-xs">
+                      <span className="font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1 text-[11px]">
+                        <FileText className="h-3 w-3 text-primary" /> Ficha Técnica
+                      </span>
+                      <p className="mt-0.5 line-clamp-2 text-slate-600 dark:text-zinc-400 text-[11px]">
+                        {client.formula}
+                      </p>
+                    </div>
                   )}
 
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => triggerHaptic("medium")}
-                    className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:scale-105 active:scale-95 transition"
-                    title="Enviar WhatsApp"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </a>
+                  {/* Upcoming Appointment */}
+                  {(() => {
+                    const clientNormPhone = normalizeParaguayPhone(client.phone) || client.phone;
+                    const clientApps = appointments.filter(
+                      (a) =>
+                        (a.clientId && a.clientId === client.id) ||
+                        a.clientPhone === client.phone ||
+                        normalizeParaguayPhone(a.clientPhone) === clientNormPhone ||
+                        a.clientName.toLowerCase() === client.name.toLowerCase()
+                    );
+                    const nextApp = clientApps
+                      .filter(
+                        (a) =>
+                          new Date(a.start).getTime() > Date.now() &&
+                          a.status !== "cancelled" &&
+                          a.status !== "no_show" &&
+                          a.status !== "expired"
+                      )
+                      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())[0];
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic("selection");
-                      setSelectedClient(client);
-                    }}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
-                    title="Ver ficha técnica"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                    if (nextApp) {
+                      return (
+                        <div className="mt-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-2 text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center justify-between">
+                          <span className="truncate">
+                            Próximo: <strong>{formatInTimeZone(nextApp.start, business.timezone || "America/Asuncion", "dd/MM HH:mm")} hs</strong>
+                          </span>
+                          <Link href={`/dashboard/calendario?appointmentId=${nextApp.id}`} className="font-bold hover:underline shrink-0 ml-1">
+                            Ver →
+                          </Link>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+
+                {/* Bottom stats and action bar */}
+                <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2.5">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-slate-500 dark:text-zinc-400">{client.totalVisits} visitas</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{formatGs(client.totalSpent)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("selection");
+                        setSelectedClient(client);
+                      }}
+                      className="flex-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2 text-xs font-bold transition hover:opacity-90 active:scale-95 cursor-pointer text-center"
+                    >
+                      Ver Ficha
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuickBooking(client)}
+                      className="px-2.5 py-2 rounded-xl text-white text-xs font-bold transition hover:brightness-110 active:scale-95 cursor-pointer"
+                      style={{ backgroundColor: brandColor }}
+                      title="Agendar turno"
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                    </button>
+
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 rounded-xl border border-slate-200/80 dark:border-white/10 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition active:scale-95"
+                      title="Escribir por WhatsApp"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(client)}
+                      className="p-2 rounded-xl border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/5 transition active:scale-95 cursor-pointer"
+                      title="Editar cliente"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
-
-      {/* Desktop View: Clients Grid */}
-      <div className="hidden md:grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredClients.map((client, index) => {
-          const initials = client.name
-            .split(" ")
-            .map((n) => n[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase();
-          const cleanPhone = client.phone.replace(/\D/g, "");
-          const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-            `¡Hola ${client.name}! Te escribimos desde ${business.name}. ¿Cómo estás?`
-          )}`;
-
-          return (
-            <Card
-              key={client.id}
-              data-tour={index === 0 ? "clientes-card" : undefined}
-              className="flex flex-col justify-between space-y-4 hover:border-primary/40 transition"
-            >
-              <div>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-sm font-bold text-primary">
-                      {initials}
-                    </span>
-                    <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white">{client.name}</h3>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-                        <Phone className="h-3 w-3" />
-                        <span>{client.phone}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {client.tags.map((t) => (
-                      <span
-                        key={t}
-                        className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${
-                          t === "VIP"
-                            ? "bg-amber-100 text-amber-800"
-                            : t === "Frecuente"
-                            ? "bg-indigo-100 text-indigo-800"
-                            : "bg-emerald-100 text-emerald-800"
-                        }`}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Multi-channel handles bar */}
-                <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-white/5 text-[11px]">
-                  {/* WhatsApp badge */}
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 font-mono text-emerald-700 dark:text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    WA: {cleanPhone.slice(-4)}
-                  </span>
-
-                  {/* Instagram badge */}
-                  {client.instagram && (
-                    <a
-                      href={`https://instagram.com/${client.instagram.replace("@", "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-pink-50 dark:bg-pink-950/60 border border-pink-200 dark:border-pink-800/40 px-2 py-0.5 font-mono text-pink-700 dark:text-pink-300 hover:underline"
-                    >
-                      IG: {client.instagram}
-                    </a>
-                  )}
-
-                  {/* Messenger badge */}
-                  {client.messengerId && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/40 px-2 py-0.5 font-mono text-blue-700 dark:text-blue-400">
-                      FB: {client.messengerId}
-                    </span>
-                  )}
-                </div>
-
-                {/* Technical formula badge / alert */}
-                {client.formula && (
-                  <div className="mt-3.5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 text-xs text-indigo-950">
-                    <span className="font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
-                      <FileText className="h-3 w-3" /> Ficha Técnica:
-                    </span>
-                    <p className="mt-1 line-clamp-2 italic text-slate-700">{client.formula}</p>
-                  </div>
-                )}
-
-                {/* Upcoming Appointment Indicator if scheduled */}
-                {(() => {
-                  const clientNormPhone = normalizeParaguayPhone(client.phone) || client.phone;
-                  const clientApps = appointments.filter(
-                    (a) =>
-                      (a.clientId && a.clientId === client.id) ||
-                      a.clientPhone === client.phone ||
-                      normalizeParaguayPhone(a.clientPhone) === clientNormPhone ||
-                      a.clientName.toLowerCase() === client.name.toLowerCase()
-                  );
-                  const nextApp = clientApps
-                    .filter((a) => new Date(a.start).getTime() > Date.now() && a.status !== "cancelled" && a.status !== "no_show" && a.status !== "expired")
-                    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())[0];
-
-                  if (nextApp) {
-                    return (
-                      <div className="mt-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-                        <span className="truncate">
-                          Próximo turno: <strong>{formatInTimeZone(nextApp.start, business.timezone || "America/Asuncion", "dd/MM HH:mm")} hs</strong>
-                        </span>
-                        <Link href={`/dashboard/calendario?appointmentId=${nextApp.id}`} className="text-emerald-600 font-bold hover:underline shrink-0 ml-1">
-                          Ver →
-                        </Link>
-                      </div>
-                    );
-                  }
-                  return (
-                    <p className="mt-2 text-[11px] text-slate-400 italic">Sin turnos próximos agendados</p>
-                  );
-                })()}
-
-                {/* Notes */}
-                {client.notes && (
-                  <p className="mt-2 text-xs text-slate-500 line-clamp-2">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">Nota:</span> {client.notes}
-                  </p>
-                )}
-              </div>
-
-              {/* Stats & Actions */}
-              <div className="border-t border-border pt-3">
-                <div className="mb-3 space-y-1 text-xs text-slate-500">
-                  <div className="flex items-center justify-between">
-                    <span>
-                      Visitas: <strong className="text-slate-900 dark:text-white">{client.totalVisits}</strong>
-                    </span>
-                    <span>
-                      Invertido: <strong className="text-primary">{formatGs(client.totalSpent)}</strong>
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span>Última visita:</span>
-                    <span className="font-medium text-slate-600 dark:text-slate-300">
-                      {client.lastVisit && client.totalVisits > 0
-                        ? formatInTimeZone(client.lastVisit, business.timezone || "America/Asuncion", "dd/MM/yyyy")
-                        : "Sin visitas"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedClient(client)}
-                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-3 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    <span>Ver Ficha</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    data-tour={index === 0 ? "clientes-agendar-btn" : undefined}
-                    onClick={() => handleOpenQuickBooking(client)}
-                    className="inline-flex items-center gap-1 rounded-xl bg-primary text-white px-3 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
-                    title="Agendar turno directamente"
-                  >
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>Agendar</span>
-                  </button>
-
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
-                    title="Escribir por WhatsApp"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                  </a>
-
-                  <Link
-                    href={`/${business.slug || "barberia"}/tarjeta/${client.id}`}
-                    target="_blank"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-amber-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-                    title="Tarjeta Digital VIP"
-                  >
-                    <Crown className="h-3.5 w-3.5" />
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => openEditModal(client)}
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
-                    title="Editar datos del cliente"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      {filteredClients.length === 0 && (
-        <Card className="py-12 text-center">
-          <Users className="mx-auto h-12 w-12 text-slate-300" />
-          <h3 className="mt-3 font-bold text-slate-900 dark:text-white">
-            {search ? "No encontramos clientes con ese criterio" : "No tenés clientes registrados todavía"}
-          </h3>
-          <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
-            {search
-              ? "Probá con otro término de búsqueda o limpiá los filtros."
-              : "Registrá tu primer cliente para llevar su ficha técnica, historial de citas y puntos de fidelización."}
-          </p>
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 transition cursor-pointer"
-            >
-              <Plus className="h-4 w-4" />
-              <span>+ Crear Cliente</span>
-            </button>
-          </div>
-        </Card>
+          })}
+        </div>
       )}
 
-      {/* Modal: Client Details, Visit History, Media Gallery & Formulas */}
+      {/* Modal: Client Details & Technical History */}
       <ClientFichaModal
         client={activeFichaClient}
         onClose={() => setSelectedClient(null)}
@@ -847,7 +719,7 @@ export default function ClientesPage() {
         onOpenQuickBooking={handleOpenQuickBooking}
       />
 
-      {/* Quick Booking Modal: Stays right on this page! */}
+      {/* Quick Booking Modal */}
       <QuickBookingModal
         open={quickBookingOpen}
         onClose={() => setQuickBookingOpen(false)}
@@ -857,131 +729,254 @@ export default function ClientesPage() {
       {/* Modal: Create / Edit Client */}
       <Modal
         open={modalOpen}
-        title={editingClient ? "Editar Ficha de Cliente" : "Nuevo Cliente"}
+        title={editingClient ? `Editar Cliente: ${editingClient.name}` : "Nuevo Cliente"}
         onClose={() => setModalOpen(false)}
+        maxWidth="max-w-md"
       >
-        <div className="space-y-3.5 text-sm">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+          className="space-y-3.5 text-xs pt-1"
+        >
+          {/* Nombre y Apellido */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700">Nombre Completo *</label>
-            <input
-              type="text"
-              className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              placeholder="Ej. Rodrigo Giménez"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700">WhatsApp / Teléfono *</label>
-              <input
-                type="text"
-                className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                placeholder="+595981..."
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700">Categoría</label>
-              <CustomSelect
-                className="mt-1 w-full"
-                buttonClassName="py-2.5 text-sm bg-white dark:bg-slate-900 border-border"
-                value={form.tags}
-                onChange={(val) => setForm({ ...form, tags: val })}
-                options={[
-                  { value: "Nuevo", label: "Nuevo" },
-                  { value: "Frecuente", label: "Frecuente" },
-                  { value: "VIP", label: "VIP" },
-                ]}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700">Instagram Handle (opcional)</label>
-              <input
-                type="text"
-                className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                placeholder="@usuario_py"
-                value={form.instagram}
-                onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700">Facebook Messenger (opcional)</label>
-              <input
-                type="text"
-                className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                placeholder="Usuario o ID Facebook"
-                value={form.messengerId}
-                onChange={(e) => setForm({ ...form, messengerId: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700">Correo Electrónico (opcional)</label>
-            <input
-              type="email"
-              className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              placeholder="cliente@ejemplo.py"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700">
-              Ficha Técnica (Fórmula de tinte, corte, preferencias)
+            <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+              Nombre y Apellido *
             </label>
+            <div className="relative">
+              <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500">
+                <User className="h-4 w-4" />
+              </div>
+              <input
+                type="text"
+                required
+                placeholder="Ej: Marcos Benítez"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition font-medium"
+              />
+            </div>
+          </div>
+
+          {/* Teléfono / WhatsApp con Selector de País y Prefijo */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200">
+                WhatsApp / Teléfono *
+              </label>
+              <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
+                Prefijo: {activeCountry.dialCode}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Country Selector Popover */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
+                  className="flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 shrink-0 transition active:scale-95 cursor-pointer"
+                  title="Seleccionar país y prefijo"
+                >
+                  <span className="text-base leading-none">{activeCountry.flag}</span>
+                  <span className="font-mono text-xs">{activeCountry.dialCode}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-slate-400 dark:text-zinc-400 transition-transform ${countryDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {countryDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 z-50 w-72 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181b] shadow-2xl p-2 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="relative mb-2">
+                      <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Buscar país o prefijo..."
+                        value={countrySearchQuery}
+                        onChange={(e) => setCountrySearchQuery(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 pl-8 pr-2.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                    <div className="max-h-52 overflow-y-auto space-y-0.5">
+                      {filteredCountries.map((c) => {
+                        const isSelected = selectedCountryCode === c.code;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic("selection");
+                              setSelectedCountryCode(c.code);
+                              setCountryDropdownOpen(false);
+                              setCountrySearchQuery("");
+                            }}
+                            className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
+                              isSelected
+                                ? "bg-primary/10 text-primary font-bold dark:bg-primary/20"
+                                : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-zinc-300"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className="text-base leading-none">{c.flag}</span>
+                              <span className="truncate">{c.name}</span>
+                            </div>
+                            <span className="font-mono text-[11px] text-slate-400 dark:text-zinc-500 shrink-0 font-medium">
+                              {c.dialCode}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Phone digits input */}
+              <div className="relative flex-1">
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  required
+                  placeholder={activeCountry.placeholder}
+                  value={phoneDigits}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\D/g, "").slice(0, activeCountry.maxDigits);
+                    setPhoneDigits(clean);
+                  }}
+                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition tracking-wider"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Categoría del Cliente */}
+          <div>
+            <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+              Categoría del Cliente
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: "Nuevo", label: "Nuevo", icon: "🌱", activeClass: "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/50" },
+                { id: "Frecuente", label: "Frecuente", icon: "⚡", activeClass: "border-indigo-500 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/50" },
+                { id: "VIP", label: "VIP 👑", icon: "👑", activeClass: "border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/50" },
+              ].map((cat) => {
+                const isSelected = form.tags === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      setForm({ ...form, tags: cat.id });
+                    }}
+                    className={`py-2 px-2.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                      isSelected
+                        ? `${cat.activeClass} shadow-xs font-black`
+                        : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-white/20"
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Redes Sociales / Contacto Digital */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+                Instagram <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 font-mono text-xs">
+                  @
+                </span>
+                <input
+                  type="text"
+                  placeholder="usuario_py"
+                  value={form.instagram.replace(/^@/, "")}
+                  onChange={(e) => setForm({ ...form, instagram: e.target.value ? `@${e.target.value.replace(/^@/, "")}` : "" })}
+                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] pl-8 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+                Email <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
+              </label>
+              <input
+                type="email"
+                placeholder="cliente@ejemplo.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
+              />
+            </div>
+          </div>
+
+          {/* Ficha Técnica & Preferencias */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200">
+                Ficha Técnica & Preferencias <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
+              </label>
+              <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                Visible para el equipo
+              </span>
+            </div>
             <textarea
-              rows={3}
-              className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              placeholder="Ej: Fade medio a navaja / Tinte 7.1 con 20 volúmenes / Cuidado con piel sensible..."
+              rows={2}
+              placeholder="Ej: Degradé navaja al 0 / Tinte 7.1 con 20 vol / Alergia a lociones..."
               value={form.formula}
               onChange={(e) => setForm({ ...form, formula: e.target.value })}
+              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition leading-relaxed resize-none"
             />
           </div>
 
+          {/* Notas de Atención */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700">Notas de Atención</label>
+            <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+              Notas de Atención <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
+            </label>
             <input
               type="text"
-              className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              placeholder="Ej: Prefiere turnos por la tarde, toma café negro..."
+              placeholder="Ej: Prefiere turnos por la tarde, café sin azúcar..."
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
             />
           </div>
 
-          <div className="flex gap-2 pt-3">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 pt-2">
             {editingClient && (
               <button
                 type="button"
                 onClick={() => {
+                  triggerHaptic("medium");
                   setClientToDelete({ id: editingClient.id, name: editingClient.name });
                 }}
-                className="rounded-xl border border-rose-200 dark:border-rose-900/40 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                className="h-11 w-11 rounded-2xl border border-rose-200 dark:border-rose-900/40 flex items-center justify-center text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition active:scale-95 cursor-pointer shrink-0"
                 title="Eliminar cliente"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
             )}
             <button
-              type="button"
-              onClick={handleSave}
-              className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 cursor-pointer"
+              type="submit"
+              className="flex-1 h-11 rounded-2xl text-xs font-bold text-white shadow-md transition hover:brightness-110 active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+              style={{ backgroundColor: brandColor }}
             >
-              {editingClient ? "Guardar Cambios" : "Crear Cliente"}
+              <span>{editingClient ? "Guardar Cambios" : "Crear Cliente"}</span>
             </button>
           </div>
-        </div>
+        </form>
       </Modal>
 
-      {/* Web Modal for Delete Client Confirmation */}
+      {/* Delete Confirmation Modal */}
       <Modal
         open={!!clientToDelete}
         onClose={() => setClientToDelete(null)}
@@ -1006,7 +1001,7 @@ export default function ClientesPage() {
             <button
               type="button"
               onClick={() => setClientToDelete(null)}
-              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
             >
               Cancelar
             </button>
@@ -1020,7 +1015,7 @@ export default function ClientesPage() {
                   pushToast("success", "Cliente eliminado correctamente.");
                 }
               }}
-              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-xs transition active:scale-95 cursor-pointer"
             >
               Eliminar Cliente
             </button>

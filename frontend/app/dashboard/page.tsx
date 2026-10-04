@@ -413,10 +413,7 @@ export default function DashboardHomePage() {
       <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 pb-3 text-xs text-slate-600 dark:text-slate-400">
           <div className="font-semibold text-sm text-slate-900 dark:text-white">
-            Resumen operativo de {currentMonthDisplay}
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Semana activa · Balance sincronizado
+            Resumen Operativo
           </div>
         </div>
 
@@ -431,9 +428,6 @@ export default function DashboardHomePage() {
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
                     Caja del día
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
-                    {revenueToday > 0 ? "Cobros sincronizados hoy." : "Sin movimientos registrados aún."}
-                  </p>
                 </div>
                 <div className="mt-3">
                   <Link
@@ -799,11 +793,8 @@ export default function DashboardHomePage() {
           </div>
           <div className="mt-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Rendimiento y Métricas
+              Rendimiento & Métricas
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Historial de clientes, facturación y horas punta
-            </p>
           </div>
         </Link>
 
@@ -822,9 +813,6 @@ export default function DashboardHomePage() {
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Personalizar Web
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Colores de marca, portada, fotos y logo
-            </p>
           </div>
         </Link>
       </div>
@@ -851,9 +839,6 @@ export default function DashboardHomePage() {
                       {displayAppointments.length} turnos
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                    Turnos del día, confirmaciones por WhatsApp y cobro en tiempo real.
-                  </p>
                 </div>
 
                 {/* Filter tabs: Apple IosSegmentedControl */}

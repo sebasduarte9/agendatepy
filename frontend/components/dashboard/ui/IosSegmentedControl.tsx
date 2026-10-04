@@ -38,7 +38,7 @@ export default function IosSegmentedControl<T extends string = string>({
   return (
     <div
       role="tablist"
-      className={`relative inline-flex w-full sm:w-auto items-center p-1 rounded-2xl bg-slate-200/75 dark:bg-slate-800/80 border border-slate-300/40 dark:border-white/5 select-none transition-colors ${className}`}
+      className={`relative inline-flex w-full sm:w-auto items-center p-1 rounded-2xl bg-slate-200/75 dark:bg-zinc-800/80 border border-slate-300/40 dark:border-white/5 select-none transition-colors ${className}`}
     >
       {options.map((opt) => {
         const isActive = opt.value === value;
@@ -59,14 +59,14 @@ export default function IosSegmentedControl<T extends string = string>({
             className={`relative z-10 flex flex-1 sm:flex-initial items-center justify-center gap-1.5 font-bold transition-all duration-150 cursor-pointer rounded-xl ${sizeClasses[size]} ${
               isActive
                 ? "text-slate-900 dark:text-white"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
             {/* Apple Floating White/Dark Sliding Pill */}
             {isActive && (
               <motion.div
                 layoutId={layoutId}
-                className="absolute inset-0 rounded-[12px] bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-white/10"
+                className="absolute inset-0 rounded-[12px] bg-white dark:bg-zinc-900 shadow-sm border border-slate-200/60 dark:border-white/10"
                 transition={{ type: "spring", stiffness: 480, damping: 34 }}
               />
             )}
@@ -79,7 +79,7 @@ export default function IosSegmentedControl<T extends string = string>({
                   className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-tight ${
                     isActive
                       ? "bg-slate-100 dark:bg-white/15 text-slate-900 dark:text-white"
-                      : "bg-slate-300/60 dark:bg-slate-700/60 text-slate-600 dark:text-slate-400"
+                      : "bg-slate-300/60 dark:bg-zinc-700/60 text-slate-600 dark:text-zinc-400"
                   }`}
                 >
                   {opt.badge}

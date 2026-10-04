@@ -6,7 +6,7 @@ export default function AuroraBackground() {
   return (
     <div
       aria-hidden="true"
-      className="fixed inset-0 pointer-events-none overflow-hidden select-none -z-10 w-full h-full bg-[#FFFFFF] dark:bg-[#090D16]"
+      className="fixed inset-0 pointer-events-none overflow-hidden select-none -z-10 w-full h-full bg-[#FFFFFF] dark:bg-[#09090b]"
     >
       {/* Fondo predominantemente blanco con ondas animadas en el tono naranja oficial (#FF4F2B) */}
       <div className="absolute inset-0 w-full h-full">

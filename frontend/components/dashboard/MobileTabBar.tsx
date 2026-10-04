@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
@@ -29,9 +29,11 @@ import {
   Compass,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
+import { triggerHaptic } from "@/lib/haptics";
 
 export default function MobileTabBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const business = useDashboardStore((s) => s.business);
   const openTour = useDashboardStore((s) => s.openTour);
   const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
@@ -42,6 +44,17 @@ export default function MobileTabBar() {
   useEffect(() => {
     setIsMoreSheetOpen(false);
   }, [pathname]);
+
+  // Prefetch core routes for 0ms instantaneous section switching
+  useEffect(() => {
+    router.prefetch("/dashboard");
+    router.prefetch("/dashboard/calendario");
+    router.prefetch("/dashboard/caja");
+    router.prefetch("/dashboard/clientes");
+    router.prefetch("/dashboard/servicios");
+    router.prefetch("/dashboard/productos");
+    router.prefetch("/dashboard/bloquear-horario");
+  }, [router]);
 
   // Lock body scroll when sheet is open
   useEffect(() => {
@@ -187,7 +200,7 @@ export default function MobileTabBar() {
         },
         {
           label: "Planes & Suscripción",
-          subtitle: "Facturación legal e-Kuatia SET",
+          subtitle: "Gestión de tu cuenta y planes",
           href: "/dashboard/suscripcion",
           icon: Sparkles,
         },
@@ -200,7 +213,7 @@ export default function MobileTabBar() {
       {/* ═══ APPLE FLOATING SQUIRCLE DOCK (ISLA FLOTANTE CUADRADA CON ESQUINAS REDONDEADAS) ═══ */}
       <nav
         aria-label="Navegación principal móvil"
-        className="fixed bottom-3 inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[22px] bg-white/85 dark:bg-slate-950/92 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/12 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none transition-all duration-300"
+        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[22px] bg-white/85 dark:bg-[#09090b]/92 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/12 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none"
       >
         <div className="flex items-center justify-between h-13 relative">
           {primaryTabs.map((tab) => {
@@ -211,47 +224,39 @@ export default function MobileTabBar() {
               <Link
                 key={tab.id}
                 href={tab.href}
-                className="relative flex flex-col items-center justify-center flex-1 h-full py-1 text-center transition-all duration-200 cursor-pointer group"
+                prefetch={true}
+                onClick={() => triggerHaptic("selection")}
+                className="relative flex flex-col items-center justify-center flex-1 h-full py-1 text-center cursor-pointer group"
               >
                 {/* Gliding Apple Pill Background with Framer Motion spring physics */}
                 {active && (
                   <motion.div
                     layoutId="activeDockPill"
                     className="absolute inset-0 rounded-[16px] bg-slate-100/90 dark:bg-white/10 border border-slate-200/70 dark:border-white/15 shadow-xs"
-                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 36, mass: 0.6 }}
                   />
                 )}
 
                 <motion.div
-                  whileTap={{ scale: 0.86 }}
+                  whileTap={{ scale: 0.94 }}
                   className="relative z-10 flex flex-col items-center justify-center"
                 >
                   <motion.div
-                    animate={{ scale: active ? 1.15 : 1, y: active ? -1 : 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 30 }}
                     className="relative"
                   >
                     <Icon
-                      className={`h-5 w-5 transition-colors duration-200 ${
+                      className={`h-5 w-5 transition-colors duration-150 ${
                         active
                           ? ""
                           : "text-slate-400 dark:text-white/60 group-hover:text-slate-700 dark:group-hover:text-white"
                       }`}
                       style={active ? { color: brandColor } : {}}
                     />
-                    {active && (
-                      <motion.span
-                        layoutId="activeDot"
-                        className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full shadow-sm"
-                        style={{
-                          backgroundColor: brandColor,
-                          boxShadow: `0 0 6px ${brandColor}`,
-                        }}
-                      />
-                    )}
                   </motion.div>
                   <span
-                    className={`text-[10px] tracking-tight mt-1 leading-none transition-colors duration-200 ${
+                    className={`text-[10px] tracking-tight mt-1 leading-none transition-colors duration-150 ${
                       active
                         ? "font-bold text-slate-900 dark:text-white"
                         : "font-medium text-slate-500 dark:text-white/50 group-hover:text-slate-700 dark:group-hover:text-white/80"
@@ -267,51 +272,44 @@ export default function MobileTabBar() {
           {/* Tab 5: "Más" Button with Apple Spring Physics */}
           <button
             type="button"
-            onClick={() => setIsMoreSheetOpen(!isMoreSheetOpen)}
-            className="relative flex flex-col items-center justify-center flex-1 h-full py-1 text-center transition-all duration-200 cursor-pointer group"
+            onClick={() => {
+              triggerHaptic("selection");
+              setIsMoreSheetOpen(!isMoreSheetOpen);
+            }}
+            className="relative flex flex-col items-center justify-center flex-1 h-full py-1 text-center cursor-pointer group"
           >
             {isMoreSheetOpen && (
               <motion.div
                 layoutId="activeDockPill"
                 className="absolute inset-0 rounded-[16px] bg-slate-100/90 dark:bg-white/10 border border-slate-200/70 dark:border-white/15 shadow-xs"
-                transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                transition={{ type: "spring", stiffness: 500, damping: 36, mass: 0.6 }}
               />
             )}
 
             <motion.div
-              whileTap={{ scale: 0.86 }}
+              whileTap={{ scale: 0.94 }}
               className="relative z-10 flex flex-col items-center justify-center"
             >
               <motion.div
                 animate={{
-                  scale: isMoreSheetOpen ? 1.15 : 1,
+                  scale: isMoreSheetOpen ? 1.08 : 1,
                   rotate: isMoreSheetOpen ? 90 : 0,
                   y: isMoreSheetOpen ? -1 : 0,
                 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                transition={{ type: "spring", stiffness: 600, damping: 30 }}
                 className="relative"
               >
                 <Grid2X2
-                  className={`h-5 w-5 transition-colors duration-200 ${
+                  className={`h-5 w-5 transition-colors duration-150 ${
                     isMoreSheetOpen
                       ? ""
                       : "text-slate-400 dark:text-white/60 group-hover:text-slate-700 dark:group-hover:text-white"
                   }`}
                   style={isMoreSheetOpen ? { color: brandColor } : {}}
                 />
-                {isMoreSheetOpen && (
-                  <motion.span
-                    layoutId="activeDot"
-                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full shadow-sm"
-                    style={{
-                      backgroundColor: brandColor,
-                      boxShadow: `0 0 6px ${brandColor}`,
-                    }}
-                  />
-                )}
               </motion.div>
               <span
-                className={`text-[10px] tracking-tight mt-1 leading-none transition-colors duration-200 ${
+                className={`text-[10px] tracking-tight mt-1 leading-none transition-colors duration-150 ${
                   isMoreSheetOpen
                     ? "font-bold text-slate-900 dark:text-white"
                     : "font-medium text-slate-500 dark:text-white/50 group-hover:text-slate-700 dark:group-hover:text-white/80"
@@ -343,7 +341,7 @@ export default function MobileTabBar() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="relative z-10 w-full max-h-[88vh] rounded-t-[32px] bg-[#f8fafc] dark:bg-[#0c1017] text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden"
+              className="relative z-10 w-full max-h-[88vh] rounded-t-[32px] bg-[#f8fafc] dark:bg-[#121215] text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))]"
             >
               {/* iOS Top Drag Indicator Pill */}
               <div className="pt-3 pb-2 shrink-0 flex flex-col items-center cursor-grab active:cursor-grabbing">
@@ -438,7 +436,11 @@ export default function MobileTabBar() {
                           <Link
                             key={item.href}
                             href={item.href}
-                            onClick={() => setIsMoreSheetOpen(false)}
+                            prefetch={true}
+                            onClick={() => {
+                              triggerHaptic("selection");
+                              setIsMoreSheetOpen(false);
+                            }}
                             className={`flex items-center justify-between p-3.5 transition-colors active:bg-slate-50 dark:active:bg-white/5 ${
                               isItemActive
                                 ? "bg-slate-50/80 dark:bg-white/5 font-semibold"

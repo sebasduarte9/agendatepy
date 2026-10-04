@@ -769,7 +769,7 @@ export default function CrmOmnichannelPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafbfc] dark:bg-[#0a0f1d]">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafbfc] dark:bg-[#0e0e11]">
                     <div className="text-center"><span className="rounded-full bg-slate-200/70 dark:bg-slate-800 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">Conversación vía {activeConversation.channel}</span></div>
                     {activeConversation.messages.map((m) => {
                       const isAgent = m.sender === "agent";

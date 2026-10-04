@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MobileTabBar from "./MobileTabBar";
@@ -21,6 +22,7 @@ export default function DashboardShell({
   initialTenantId,
   userName,
 }: DashboardShellProps) {
+  const pathname = usePathname();
   const color = useDashboardStore((s) => s.business.primaryColor);
   const syncFromDatabase = useDashboardStore((s) => s.syncFromDatabase);
   const updateBusiness = useDashboardStore((s) => s.updateBusiness);
@@ -54,10 +56,15 @@ export default function DashboardShell({
       }}
     >
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
         <Header />
-        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-hidden p-3.5 sm:p-6 pb-28 sm:pb-32 lg:pb-8">
-          {children}
+        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-clip p-3.5 sm:p-6 pb-[calc(7rem+env(safe-area-inset-bottom,20px))] sm:pb-32 lg:pb-8">
+          <div
+            key={pathname}
+            className="animate-in fade-in-50 duration-150 ease-out fill-mode-both"
+          >
+            {children}
+          </div>
         </main>
       </div>
       <MobileTabBar />

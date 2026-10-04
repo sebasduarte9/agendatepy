@@ -29,6 +29,7 @@ import {
 import type { UserRole } from "@/lib/dashboard-types";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import BrandLogo from "@/components/ui/BrandLogo";
+import { triggerHaptic } from "@/lib/haptics";
 
 type SidebarLink = {
   href: string;
@@ -157,7 +158,11 @@ export default function Sidebar() {
       <Link
         key={href}
         href={href}
-        onClick={() => setOpen(false)}
+        prefetch={true}
+        onClick={() => {
+          triggerHaptic("selection");
+          setOpen(false);
+        }}
         title={!expanded ? label : undefined}
         className={`group relative flex h-9 w-full items-center rounded-xl px-2.5 transition-all duration-150 ${
           active

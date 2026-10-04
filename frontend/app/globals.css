@@ -10,10 +10,23 @@
 }
 
 .dark {
-  --background: #090d16;
-  --foreground: #f8fafc;
+  --background: #09090b;
+  --foreground: #f4f4f5;
   --primary: #FF4F2B;
-  --border-color: #1e293b;
+  --border-color: #27272a;
+
+  /* True neutral zinc / carbon grayscale in Dark Mode (NO blue tint) */
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f4f4f5;
+  --color-slate-200: #e4e4e7;
+  --color-slate-300: #d4d4d8;
+  --color-slate-400: #a1a1aa;
+  --color-slate-500: #71717a;
+  --color-slate-600: #3f3f46;
+  --color-slate-700: #27272a;
+  --color-slate-800: #18181b;
+  --color-slate-900: #121215;
+  --color-slate-950: #09090b;
 }
 
 @theme inline {
@@ -45,6 +58,7 @@ body {
   min-height: 100%;
   max-width: 100%;
   overflow-x: clip;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -61,8 +75,10 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-button, a, [role="button"] {
+button, a, [role="button"], [role="tab"] {
   touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .overflow-y-auto,
@@ -70,63 +86,93 @@ button, a, [role="button"] {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Dark mode comprehensive visual overrides */
+/* Prevent auto-zooming on iOS Safari when tapping inputs */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Dark mode comprehensive visual overrides - Neutral Grays & Pure Blacks */
 .dark h1,
 .dark h2,
 .dark h3,
 .dark h4 {
-  color: #f8fafc;
+  color: #fafafa;
 }
 
 .dark .text-slate-900 {
-  color: #f8fafc !important;
+  color: #fafafa !important;
 }
 
 .dark .text-slate-800 {
-  color: #f1f5f9 !important;
+  color: #f4f4f5 !important;
 }
 
 .dark .text-slate-700 {
-  color: #e2e8f0 !important;
+  color: #e4e4e7 !important;
 }
 
 .dark .text-slate-600 {
-  color: #cbd5e1 !important;
+  color: #a1a1aa !important;
 }
 
 .dark .text-slate-500 {
-  color: #94a3b8 !important;
+  color: #71717a !important;
 }
 
+.dark .text-slate-400 {
+  color: #a1a1aa !important;
+}
+
+/* Base Card Surfaces */
 .dark .bg-white {
-  background-color: #0f172a;
+  background-color: #121215;
 }
 
+/* Secondary / Inset Surfaces */
 .dark .bg-slate-50 {
-  background-color: #151f32;
+  background-color: #18181b;
 }
 
+/* Controls / Pills / Buttons */
 .dark .bg-slate-100 {
-  background-color: #1e293b;
+  background-color: #27272a;
 }
 
+/* Explicit Slate Dark Utility mappings */
+.dark .bg-slate-950 {
+  background-color: #09090b;
+}
+
+.dark .bg-slate-900 {
+  background-color: #121215;
+}
+
+.dark .bg-slate-800 {
+  background-color: #18181b;
+}
+
+.dark .border-slate-100,
 .dark .border-slate-200,
 .dark .border-slate-300,
 .dark .border-border {
-  border-color: #1e293b !important;
+  border-color: #27272a !important;
 }
 
 .dark input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
 .dark select,
 .dark textarea {
-  background-color: #0f172a !important;
-  border-color: #1e293b !important;
-  color: #f8fafc !important;
+  background-color: #121215 !important;
+  border-color: #27272a !important;
+  color: #fafafa !important;
 }
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: #64748b !important;
+  color: #71717a !important;
 }
 
 @keyframes ticker-scroll {
@@ -169,11 +215,11 @@ button, a, [role="button"] {
 }
 
 .dark .glass-card {
-  background: rgba(11, 15, 25, 0.75);
+  background: rgba(18, 18, 21, 0.75);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
 }
 
 .glass-floating {
@@ -185,11 +231,11 @@ button, a, [role="button"] {
 }
 
 .dark .glass-floating {
-  background: rgba(13, 18, 30, 0.85);
+  background: rgba(24, 24, 28, 0.85);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 }
 
 /* Silicon Valley Ambient Wave & Fluid Background Animations */
@@ -703,13 +749,13 @@ button, a, [role="button"] {
 }
 
 .dark .liquid-glass-surface {
-  background: linear-gradient(135deg, rgba(24, 30, 42, 0.75) 0%, rgba(15, 20, 30, 0.60) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, rgba(28, 28, 32, 0.75) 0%, rgba(18, 18, 21, 0.60) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 
-    0 24px 60px -12px rgba(0, 0, 0, 0.5),
-    0 10px 28px -4px rgba(0, 0, 0, 0.3),
-    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.05);
+    0 24px 60px -12px rgba(0, 0, 0, 0.6),
+    0 10px 28px -4px rgba(0, 0, 0, 0.4),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .liquid-glass-sheen::before {

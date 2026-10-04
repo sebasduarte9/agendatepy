@@ -45,7 +45,7 @@ export default function Header() {
   }
 
   return (
-    <header className="header sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 px-3.5 sm:px-6 backdrop-blur-2xl transition-all duration-300">
+    <header className="header sticky top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] sm:h-16 items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#09090b]/90 px-3.5 sm:px-6 backdrop-blur-xl select-none">
       <div className="flex items-center gap-2.5 min-w-0">
         {/* On mobile, show clean subtle brand name since sidebar is hidden */}
         <Link
@@ -72,10 +72,7 @@ export default function Header() {
           className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition shrink-0"
           title="Abrir tu portal público de reservas en una nueva pestaña"
         >
-          <span
-            className="h-1.5 w-1.5 rounded-full shrink-0 animate-pulse"
-            style={{ backgroundColor: "var(--primary, #10b981)" }}
-          />
+          <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-500 animate-pulse" />
           <span className="hidden sm:inline">agendate.py/{business.slug || "barberia"}</span>
           <span className="sm:hidden text-[11px] font-semibold">Web</span>
           <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />

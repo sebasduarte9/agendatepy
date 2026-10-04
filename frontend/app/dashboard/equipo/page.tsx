@@ -406,12 +406,9 @@ export default function EquipoRolesPage() {
       {/* ========================================================= */}
       <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+        <div className="flex items-center justify-between gap-2 px-1">
           <div className="font-semibold text-sm text-slate-900 dark:text-white">
-            Métricas de Dotación & Roles
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            {activeStaffCount} de {staff.length} colaboradores activos para turnos
+            Dotación & Roles
           </div>
         </div>
 
@@ -427,9 +424,6 @@ export default function EquipoRolesPage() {
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
                     Equipo Activo
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
-                    {activeStaffCount} colaboradores disponibles en salón.
-                  </p>
                 </div>
                 <div className="mt-3">
                   <span className="inline-block rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 text-[11px] font-semibold">

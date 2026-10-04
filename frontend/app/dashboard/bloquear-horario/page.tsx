@@ -20,11 +20,14 @@ import {
   Filter,
   Sparkles,
   Lock,
+  X,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import CustomSelect from "@/components/dashboard/ui/CustomSelect";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import { triggerHaptic } from "@/lib/haptics";
 import type { TimeBlock, StaffMember } from "@/lib/dashboard-types";
 
 // Common preset reasons
@@ -63,6 +66,28 @@ export default function BloquearHorarioPage() {
   }, [staff]);
 
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  // Format date helper for human-readable display
+  const formatDisplayDate = (dateStr: string) => {
+    if (dateStr === todayStr) return "Hoy";
+    try {
+      const parts = dateStr.split("-");
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const d = new Date(year, month, day);
+        return d.toLocaleDateString("es-PY", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        });
+      }
+      return dateStr;
+    } catch {
+      return dateStr;
+    }
+  };
 
   // Filtered blocks
   const filteredBlocks = useMemo(() => {
@@ -205,26 +230,27 @@ export default function BloquearHorarioPage() {
   }, [staff]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* ═══ NATIVE PAGE HEADER ═══ */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+    <div className="mx-auto max-w-7xl space-y-4 sm:space-y-5 pb-20 px-1 sm:px-0">
+      {/* ═══ APPLE APP HEADER ═══ */}
+      <div className="flex items-center justify-between py-1">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
           Bloquear Horarios
         </h1>
 
         {/* Action Dock */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <Link
             href="/dashboard/calendario"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs hover:bg-slate-50 dark:hover:bg-white/5 transition"
           >
             <Calendar className="h-3.5 w-3.5 text-slate-400" />
-            <span>Ver en Calendario</span>
+            <span className="hidden sm:inline">Ver Agenda</span>
           </Link>
 
           <button
             type="button"
             onClick={() => {
+              triggerHaptic("selection");
               setFormStaffId(selectedStaffFilter !== "ALL" ? selectedStaffFilter : "all");
               setFormDate(todayStr);
               setFormStart("12:00");
@@ -232,42 +258,107 @@ export default function BloquearHorarioPage() {
               setFormReason("Almuerzo");
               setIsModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
             style={{
               backgroundColor: brandColor,
-              boxShadow: `0 4px 14px -2px ${brandColor}55`,
             }}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Nuevo Bloqueo</span>
+            <span>Bloquear</span>
           </button>
         </div>
       </div>
 
-      {/* ═══ APPLE INSET CONTAINER: TELEMETRY & PRESET DOCK ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      {/* ═══ MOBILE APPLE GLANCEABLE HERO CARD ═══ */}
+      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+        {/* Top bar with status and live badge */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <CalendarOff className="h-4 w-4" />
+            </div>
+            <span className="text-xs font-black tracking-tight text-slate-900 dark:text-white">
+              Horarios Protegidos
+            </span>
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 font-mono">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span>{telemetry.upcoming} en agenda</span>
+          </span>
+        </div>
+
+        {/* 3-Column Mini KPI Metrics */}
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
+            <span className="text-[10px] text-slate-400 font-medium block">Hoy</span>
+            <span className="font-mono font-black text-sm text-slate-900 dark:text-white">
+              {telemetry.today}
+            </span>
+          </div>
+          <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
+            <span className="text-[10px] text-slate-400 font-medium block">Próximos</span>
+            <span className="font-mono font-black text-sm text-indigo-600 dark:text-indigo-400">
+              {telemetry.upcoming}
+            </span>
+          </div>
+          <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
+            <span className="text-[10px] text-slate-400 font-medium block">Personal</span>
+            <span className="font-mono font-black text-sm text-slate-900 dark:text-white">
+              {telemetry.staffCount}
+            </span>
+          </div>
+        </div>
+
+        {/* Mobile Fast Presets Horizontal Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none -mx-1 px-1">
+          {PRESET_REASONS.map((preset) => {
+            const Icon = preset.icon;
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => {
+                  triggerHaptic("medium");
+                  handleQuickAdd(preset);
+                }}
+                className="inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition text-[11px] font-bold text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/5 cursor-pointer"
+              >
+                <Icon className="h-3 w-3 text-slate-400" />
+                <span>{preset.label}</span>
+                <span className="text-[9px] font-mono text-slate-400">
+                  {preset.defaultStart}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ═══ DESKTOP APPLE INSET CONTAINER: TELEMETRY & PRESET DOCK ═══ */}
+      <div className="hidden md:block rounded-3xl bg-slate-100/90 dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Card 1: Telemetry Gauges & Counter Cards */}
-          <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-white/10 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     <CalendarOff className="h-4 w-4" />
                   </div>
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    Telemetría de Horarios Protegidos
+                    Horarios Protegidos
                   </span>
                 </div>
                 <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
-                  {telemetry.upcoming} bloqueos programados
+                  {telemetry.upcoming} en agenda
                 </span>
               </div>
 
               {/* Gauges & Summary */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                 {/* Circular Gauge */}
-                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
                   <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
                     <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
                       <circle
@@ -301,25 +392,22 @@ export default function BloquearHorarioPage() {
                       Carga de Pausas
                     </span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                      {telemetry.staffCount} colaboradores con pausas
+                      {telemetry.staffCount} colaboradores
                     </span>
                   </div>
                 </div>
 
                 {/* Today Status Card */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
                   <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                      Bloqueos Para Hoy
+                      Bloqueos Hoy
                     </span>
                     <span className="text-base font-extrabold font-mono text-slate-900 dark:text-white">
                       {telemetry.today} intervalos
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">
-                      {telemetry.today > 0 ? "Horarios no disponibles al cliente" : "Agenda 100% libre hoy"}
                     </span>
                   </div>
                 </div>
@@ -327,42 +415,42 @@ export default function BloquearHorarioPage() {
             </div>
 
             {/* Quick KPI Bar */}
-            <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Total Histórico</span>
+            <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-white/10 text-center">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
+                <span className="text-[10px] text-slate-400 font-semibold block">Total</span>
                 <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                  {telemetry.total} bloqueos
+                  {telemetry.total}
                 </span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
                 <span className="text-[10px] text-slate-400 font-semibold block">Próximos</span>
                 <span className="font-mono font-extrabold text-xs text-indigo-600 dark:text-indigo-400">
-                  {telemetry.upcoming} en cola
+                  {telemetry.upcoming}
                 </span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Personal con Pausas</span>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
+                <span className="text-[10px] text-slate-400 font-semibold block">Personal</span>
                 <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                  {telemetry.staffCount} especialistas
+                  {telemetry.staffCount}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Card 2: 1-Click Fast Presets */}
-          <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-white/10 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     <Sparkles className="h-4 w-4" />
                   </div>
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    Bloqueos Rápidos (1 Clic)
+                    Atajos Rápidos
                   </span>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
-                  Para Hoy
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 font-semibold">
+                  Hoy
                 </span>
               </div>
 
@@ -374,8 +462,11 @@ export default function BloquearHorarioPage() {
                     <button
                       key={preset.label}
                       type="button"
-                      onClick={() => handleQuickAdd(preset)}
-                      className="flex flex-col text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition group cursor-pointer"
+                      onClick={() => {
+                        triggerHaptic("medium");
+                        handleQuickAdd(preset);
+                      }}
+                      className="flex flex-col text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition group cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
                         <Icon className="h-4 w-4 text-slate-500 group-hover:text-primary transition" />
@@ -395,13 +486,13 @@ export default function BloquearHorarioPage() {
               </div>
             </div>
 
-            <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                Aplica al filtro actual
-              </span>
+            <div className="pt-3 mt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-end">
               <button
                 type="button"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setIsModalOpen(true);
+                }}
                 className="text-xs font-bold hover:underline cursor-pointer flex items-center gap-1"
                 style={{ color: brandColor }}
               >
@@ -414,87 +505,185 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ FILTER DOCK & SEARCH ═══ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Specialist Filter */}
-          <div className="min-w-[190px]">
-            <CustomSelect
-              value={selectedStaffFilter}
-              onChange={(val) => setSelectedStaffFilter(val)}
-              options={staffFilterOptions}
-              buttonClassName="w-full bg-slate-50 dark:bg-slate-900 text-xs py-2"
+      <div className="flex flex-col gap-3 bg-white dark:bg-[#121215] p-3.5 sm:p-4 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Timeframe Filter with IosSegmentedControl */}
+          <div className="w-full sm:w-auto">
+            <IosSegmentedControl
+              value={timeFilter}
+              onChange={(val) => {
+                triggerHaptic("selection");
+                setTimeFilter(val);
+              }}
+              layoutId="bloquearHorarioTimeFilter"
+              size="sm"
+              options={[
+                { value: "today", label: "Hoy", badge: telemetry.today > 0 ? telemetry.today : undefined },
+                { value: "upcoming", label: "Próximos", badge: telemetry.upcoming > 0 ? telemetry.upcoming : undefined },
+                { value: "all", label: "Todos", badge: telemetry.total > 0 ? telemetry.total : undefined },
+              ]}
             />
           </div>
 
-          {/* Timeframe Filter Pills */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs">
-            <button
-              type="button"
-              onClick={() => setTimeFilter("today")}
-              className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
-                timeFilter === "today"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              Hoy
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeFilter("upcoming")}
-              className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
-                timeFilter === "upcoming"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              Próximos
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeFilter("all")}
-              className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
-                timeFilter === "all"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              Todos
-            </button>
-          </div>
-        </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {/* Specialist Filter */}
+            <div className="min-w-[190px]">
+              <CustomSelect
+                value={selectedStaffFilter}
+                onChange={(val) => {
+                  triggerHaptic("selection");
+                  setSelectedStaffFilter(val);
+                }}
+                options={staffFilterOptions}
+                buttonClassName="w-full bg-slate-50 dark:bg-white/5 text-xs py-2 rounded-xl border border-slate-200/80 dark:border-white/10"
+              />
+            </div>
 
-        {/* Search Input */}
-        <div className="relative min-w-[200px]">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por motivo o nombre..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-primary"
-          />
+            {/* Search Input */}
+            <div className="relative min-w-[200px]">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por motivo o nombre..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-8 py-2 text-xs rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-primary transition"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ═══ ACTIVE BLOCKS LIST / CARDS ═══ */}
-      <div className="space-y-3">
+      {/* ═══ MOBILE APPLE INSET GROUPED LIST ═══ */}
+      <div className="md:hidden">
         {filteredBlocks.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
-            <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400">
+          <div className="p-8 text-center rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
               <CalendarOff className="h-6 w-6" />
             </div>
-            <div className="space-y-1">
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                No hay bloqueos en este rango
-              </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                No se encontraron intervalos de descanso o cierres en la fecha y filtro seleccionados.
-              </p>
-            </div>
+            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+              Sin bloqueos registrados
+            </h3>
             <button
               type="button"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition active:scale-95 cursor-pointer"
+              style={{ backgroundColor: brandColor }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Bloquear Horario</span>
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] divide-y divide-slate-100 dark:divide-white/5 shadow-xs overflow-hidden">
+            {filteredBlocks.map((block) => {
+              const isAllStaff = !block.staffId || block.staffId === "all";
+              const st = !isAllStaff && block.staffId ? staffMap.get(block.staffId) : null;
+              const isToday = block.date === todayStr;
+
+              return (
+                <div
+                  key={block.id}
+                  className="p-3.5 flex items-center justify-between gap-3 active:bg-slate-50 dark:active:bg-white/[0.03] transition"
+                >
+                  {/* Left: Avatar & Info */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Squircle Avatar */}
+                    {isAllStaff ? (
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-600 shadow-xs">
+                        <ShieldAlert className="h-5 w-5" />
+                      </div>
+                    ) : (
+                      <div
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-xs"
+                        style={{ backgroundColor: st?.color || brandColor }}
+                      >
+                        {st?.avatar || (st?.name ? st.name.slice(0, 2).toUpperCase() : "ST")}
+                      </div>
+                    )}
+
+                    {/* Meta info */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                          {block.reason || "Pausa operativa"}
+                        </span>
+                        {isToday ? (
+                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                            HOY
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 font-mono shrink-0">
+                            {formatDisplayDate(block.date)}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {isAllStaff ? "Todo el equipo" : st?.name || "Colaborador"}
+                      </p>
+
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-1">
+                        <Clock className="h-3 w-3 text-slate-400" />
+                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                          {block.start} - {block.end} hs
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Quick Action to Release Time */}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      triggerHaptic("medium");
+                      try {
+                        await removeBlock(block.id);
+                        pushToast("success", "Bloqueo liberado.");
+                      } catch (e) {
+                        pushToast("error", "Error al eliminar el bloqueo.");
+                      }
+                    }}
+                    className="p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-500/20 hover:scale-105 active:scale-95 transition shrink-0 cursor-pointer"
+                    title="Liberar horario"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ═══ DESKTOP GRID VIEW ═══ */}
+      <div className="hidden md:block space-y-3">
+        {filteredBlocks.length === 0 ? (
+          <div className="p-12 text-center rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+              <CalendarOff className="h-6 w-6" />
+            </div>
+            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+              Sin bloqueos registrados
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsModalOpen(true);
+              }}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition hover:brightness-110 cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
@@ -512,14 +701,14 @@ export default function BloquearHorarioPage() {
               return (
                 <div
                   key={block.id}
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 hover:border-primary/40 transition shadow-xs flex flex-col justify-between"
+                  className="p-4 rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 hover:border-primary/40 transition shadow-xs flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     {/* Top: Date & Today badge */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-black text-slate-900 dark:text-white">
-                          {block.date}
+                          {formatDisplayDate(block.date)}
                         </span>
                         {isToday && (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -529,7 +718,7 @@ export default function BloquearHorarioPage() {
                       </div>
 
                       {/* Time Interval Pill */}
-                      <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-900 text-xs font-mono font-extrabold text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-800">
+                      <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-white/5 text-xs font-mono font-extrabold text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-white/10">
                         {block.start} - {block.end} hs
                       </span>
                     </div>
@@ -545,38 +734,30 @@ export default function BloquearHorarioPage() {
                           className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-black text-xs shrink-0"
                           style={{ backgroundColor: st?.color || brandColor }}
                         >
-                          {st?.avatar || "ST"}
+                          {st?.avatar || (st?.name ? st.name.slice(0, 2).toUpperCase() : "ST")}
                         </div>
                       )}
 
                       <div className="min-w-0 flex-1">
                         <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate block">
-                          {isAllStaff ? "Todo el equipo (Cierre)" : st?.name || "Colaborador"}
+                          {isAllStaff ? "Todo el equipo" : st?.name || "Colaborador"}
                         </span>
                         <span className="text-[10px] text-slate-400 truncate block">
-                          {isAllStaff ? "Aplica a toda la sucursal" : st?.role || "Especialista"}
+                          {block.reason || "Pausa operativa"}
                         </span>
                       </div>
-                    </div>
-
-                    {/* Reason */}
-                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-                      <span className="text-slate-500 text-[11px] font-medium">Motivo:</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 font-mono text-[11px]">
-                        {block.reason || "Pausa operativa"}
-                      </span>
                     </div>
                   </div>
 
                   {/* Footer with Delete Action */}
-                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">ID #{block.id.slice(0, 8)}</span>
+                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-end">
                     <button
                       type="button"
                       onClick={async () => {
+                        triggerHaptic("medium");
                         try {
                           await removeBlock(block.id);
-                          pushToast("success", "Bloqueo horario eliminado.");
+                          pushToast("success", "Bloqueo horario liberado.");
                         } catch (e) {
                           pushToast("error", "No se pudo eliminar el bloqueo.");
                         }
@@ -584,7 +765,7 @@ export default function BloquearHorarioPage() {
                       className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-2.5 py-1 rounded-xl transition cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      <span>Liberar Horario</span>
+                      <span>Liberar</span>
                     </button>
                   </div>
                 </div>
@@ -599,37 +780,37 @@ export default function BloquearHorarioPage() {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         maxWidth="max-w-lg"
+        minHeight="min-h-[520px]"
         title="Crear Bloqueo de Horario"
       >
         <form onSubmit={handleCreateBlock} className="space-y-4 text-xs">
-          <p className="text-slate-500 dark:text-slate-400">
-            Los clientes no podrán seleccionar este rango horario para reservar citas.
-          </p>
-
           {/* Specialist */}
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-              Colaborador Afectado *
+              Colaborador *
             </label>
             <CustomSelect
               value={formStaffId}
-              onChange={(val) => setFormStaffId(val)}
+              onChange={(val) => {
+                triggerHaptic("selection");
+                setFormStaffId(val);
+              }}
               options={formStaffOptions}
               className="w-full"
-              buttonClassName="w-full bg-white dark:bg-slate-800"
+              buttonClassName="w-full bg-slate-50 dark:bg-white/5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs"
             />
           </div>
 
           {/* Date Picker */}
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-              Fecha del Bloqueo *
+              Fecha *
             </label>
             <input
               type="date"
               value={formDate}
               onChange={(e) => setFormDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
               required
             />
           </div>
@@ -638,25 +819,25 @@ export default function BloquearHorarioPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                Hora Inicio *
+                Inicio *
               </label>
               <input
                 type="time"
                 value={formStart}
                 onChange={(e) => setFormStart(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-primary"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-primary"
                 required
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                Hora Fin *
+                Fin *
               </label>
               <input
                 type="time"
                 value={formEnd}
                 onChange={(e) => setFormEnd(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-primary"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-primary"
                 required
               />
             </div>
@@ -665,7 +846,7 @@ export default function BloquearHorarioPage() {
           {/* Preset Reason Chips */}
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-              Motivo o Pausa
+              Motivo
             </label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {PRESET_REASONS.map((p) => (
@@ -673,14 +854,15 @@ export default function BloquearHorarioPage() {
                   key={p.label}
                   type="button"
                   onClick={() => {
+                    triggerHaptic("selection");
                     setFormReason(p.label);
                     setFormStart(p.defaultStart);
                     setFormEnd(p.defaultEnd);
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition border cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition border cursor-pointer ${
                     formReason === p.label
                       ? "bg-primary text-white border-primary shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700 hover:bg-slate-200"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-white/10 hover:bg-slate-200"
                   }`}
                   style={formReason === p.label ? { backgroundColor: brandColor, borderColor: brandColor } : {}}
                 >
@@ -693,24 +875,24 @@ export default function BloquearHorarioPage() {
               type="text"
               value={formReason}
               onChange={(e) => setFormReason(e.target.value)}
-              placeholder="Ej: Almuerzo, Médico, Vacaciones, Mantenimiento..."
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
+              placeholder="Motivo del bloqueo..."
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-primary"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl px-5 py-2 font-black text-white shadow-md transition hover:brightness-110 disabled:opacity-50 cursor-pointer"
+              className="rounded-xl px-5 py-2.5 font-black text-white shadow-md transition hover:brightness-110 disabled:opacity-50 cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
               {isSubmitting ? "Guardando..." : "Guardar Bloqueo"}
@@ -721,3 +903,4 @@ export default function BloquearHorarioPage() {
     </div>
   );
 }
+

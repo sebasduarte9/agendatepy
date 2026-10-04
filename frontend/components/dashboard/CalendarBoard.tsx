@@ -1289,11 +1289,12 @@ export default function CalendarBoard() {
       <Modal
         id="quickBookingModal"
         maxWidth="max-w-lg"
+        minHeight="min-h-[580px] sm:min-h-[600px]"
         open={newModalOpen}
         title={newModalMode === "appointment" ? "Agendar Turno" : "Bloquear Horario"}
         onClose={() => setNewModalOpen(false)}
       >
-        <div className="space-y-4 text-xs">
+        <div className="space-y-4 text-xs min-h-[500px] sm:min-h-[520px] flex flex-col justify-between">
           {/* Segmented Switch: Agendar Cita vs Bloquear Horario */}
           <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
             <button
@@ -1323,8 +1324,9 @@ export default function CalendarBoard() {
           </div>
 
           {newModalMode === "appointment" ? (
-            <form onSubmit={handleCreateAppointment} className="space-y-3.5">
-              {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
+            <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+              <div className="space-y-3.5">
+                {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div className="relative">
                   <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
@@ -1704,9 +1706,10 @@ export default function CalendarBoard() {
                   })}
                 </div>
               </div>
+            </div>
 
-              {/* FOOTER ACTIONS & TOTAL */}
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10">
+            {/* FOOTER ACTIONS & TOTAL */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
                 <div>
                   <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
                   <span className="text-sm font-black text-primary">
@@ -1733,11 +1736,12 @@ export default function CalendarBoard() {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleCreateBlock} className="space-y-3.5">
-              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
-                <Ban className="h-4 w-4 shrink-0 text-amber-600" />
-                <span>Impide que se agenden turnos en este intervalo de tiempo.</span>
-              </div>
+            <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+              <div className="space-y-3.5">
+                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                  <Ban className="h-4 w-4 shrink-0 text-amber-600" />
+                  <span>Impide que se agenden turnos en este intervalo de tiempo.</span>
+                </div>
 
               {/* Profesional Afectado */}
               <div>
@@ -1887,28 +1891,29 @@ export default function CalendarBoard() {
                   className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                 />
               </div>
+            </div>
 
-              {/* Footer */}
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setNewModalOpen(false)}
-                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingQuick}
-                  className="rounded-xl bg-amber-600 hover:bg-amber-500 px-5 py-2 text-xs font-bold text-white shadow-md hover:opacity-95 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmittingQuick ? "Guardando..." : "Guardar Bloqueo"}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </Modal>
+            {/* Footer */}
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
+              <button
+                type="button"
+                onClick={() => setNewModalOpen(false)}
+                className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmittingQuick}
+                className="rounded-xl bg-amber-500 hover:bg-amber-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-500/20 hover:opacity-95 disabled:opacity-50 cursor-pointer transition-all"
+              >
+                {isSubmittingQuick ? "Guardando..." : "Confirmar Bloqueo"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </Modal>
     </div>
   );
 }

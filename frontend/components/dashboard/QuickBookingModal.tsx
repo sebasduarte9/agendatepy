@@ -348,11 +348,12 @@ export default function QuickBookingModal({
     <Modal
       id="quickBookingModal"
       maxWidth="max-w-lg"
+      minHeight="min-h-[580px] sm:min-h-[600px]"
       open={open}
       title={modalMode === "appointment" ? "Agendar Turno" : "Bloquear Horario"}
       onClose={onClose}
     >
-      <div className="space-y-4 text-xs">
+      <div className="space-y-4 text-xs min-h-[500px] sm:min-h-[520px] flex flex-col justify-between">
         {/* Mode switcher (Turno vs Bloqueo) */}
         {allowBlock && (
           <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
@@ -384,8 +385,9 @@ export default function QuickBookingModal({
         )}
 
         {modalMode === "appointment" ? (
-          <form onSubmit={handleCreateAppointment} className="space-y-3.5">
-            {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
+          <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+            <div className="space-y-3.5">
+              {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="relative">
                 <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
@@ -776,36 +778,38 @@ export default function QuickBookingModal({
                 })}
               </div>
             </div>
+          </div>
 
-            {/* FOOTER ACTIONS & TOTAL */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10">
-              <div>
-                <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
-                <span className="text-sm font-black text-primary">
-                  {formatGs(currentService?.price || 0)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !clientName.trim()}
-                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmitting ? "Guardando..." : "Confirmar Turno"}
-                </button>
-              </div>
+          {/* FOOTER ACTIONS & TOTAL */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
+            <div>
+              <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
+              <span className="text-sm font-black text-primary">
+                {formatGs(currentService?.price || 0)}
+              </span>
             </div>
-          </form>
-        ) : (
-          <form onSubmit={handleCreateBlock} className="space-y-3.5">
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || !clientName.trim()}
+                className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
+              >
+                {isSubmitting ? "Guardando..." : "Confirmar Turno"}
+              </button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+          <div className="space-y-3.5">
             <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
               <Ban className="h-4 w-4 shrink-0 text-amber-600" />
               <span>Impide que se agenden turnos en este intervalo de tiempo.</span>
@@ -893,26 +897,27 @@ export default function QuickBookingModal({
                 className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
               />
             </div>
+          </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-xl bg-amber-500 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-500/25 hover:bg-amber-600 disabled:opacity-50 cursor-pointer"
-              >
-                {isSubmitting ? "Guardando..." : "Confirmar Bloqueo"}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </Modal>
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-xl bg-amber-500 hover:bg-amber-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-500/25 hover:opacity-95 disabled:opacity-50 cursor-pointer transition-all"
+            >
+              {isSubmitting ? "Guardando..." : "Confirmar Bloqueo"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  </Modal>
   );
 }

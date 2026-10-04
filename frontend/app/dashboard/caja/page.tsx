@@ -503,11 +503,11 @@ export default function CajaPage() {
             </div>
           </div>
         ) : selectedDate === todayStr ? (
-          <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 shadow-xs">
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-2 shadow-xs">
+            <div className="flex items-center gap-2">
               <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-              <p className="text-xs text-amber-900 dark:text-amber-200">
-                <strong>Caja del día activa.</strong> Fondo inicial: <strong>{formatGs(stats.opening)}</strong>. Al terminar la jornada, realizá el <strong>Cierre de Caja</strong> para cuadrar la gaveta.
+              <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                Fondo inicial: <strong className="font-mono">{formatGs(stats.opening)}</strong>
               </p>
             </div>
           </div>
@@ -525,12 +525,9 @@ export default function CajaPage() {
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
                     Gaveta Físico
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
-                    Fondo inicial + cobros en efectivo - egresos.
-                  </p>
                 </div>
                 <div className="mt-3">
-                  <span className="text-xs font-extrabold text-slate-900 dark:text-white">
+                  <span className="text-xs font-extrabold text-slate-900 dark:text-white font-mono">
                     {formatGs(stats.efectivoEnCajaEsperado)}
                   </span>
                 </div>
@@ -711,11 +708,8 @@ export default function CajaPage() {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-black text-slate-900 dark:text-white">
-              Movimientos Registrados
+              Movimientos
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Registro cronológico de entradas y salidas de dinero.
-            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <a
@@ -749,11 +743,8 @@ export default function CajaPage() {
               <Banknote className="h-6 w-6" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              No hay movimientos de caja registrados para esta fecha
+              Sin movimientos registrados
             </h3>
-            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-              Registrá ingresos por servicios, cobros de turnos o gastos menores para mantener el arqueo al día.
-            </p>
             <div className="mt-4">
               <button
                 type="button"
@@ -1017,8 +1008,9 @@ export default function CajaPage() {
         open={modalOpen}
         title="Registrar Movimiento de Caja"
         onClose={() => setModalOpen(false)}
+        minHeight="min-h-[580px] sm:min-h-[640px]"
       >
-        <div className="space-y-4 text-xs">
+        <div className="space-y-4 text-xs min-h-[500px] sm:min-h-[560px] flex flex-col justify-between">
           {/* Movement Type Selection */}
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -1217,7 +1209,7 @@ export default function CajaPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10 mt-auto">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
