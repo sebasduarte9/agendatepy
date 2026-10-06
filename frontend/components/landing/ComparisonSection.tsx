@@ -85,7 +85,7 @@ export default function ComparisonSection() {
 
           <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
             El cambio real:{" "}
-            <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
+            <span className="text-[#FF4F2B]">
               Antes vs Con AgendatePY
             </span>
           </h2>

@@ -1,10 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { geminiPool } from "@/lib/ai/gemini-pool";
+import { processCustomerMessageWithAI } from "@/lib/ai/whatsapp-agent";
+import { sendWhatsAppMessage, sendWhatsAppPresence } from "@/lib/evolution";
+import { conversationState } from "@/lib/ai/conversation-state";
+
+/**
+ * Helper para descargar Base64 de audios/imágenes desde Evolution API si no viene en el webhook
+ */
+async function getMediaBase64FromEvolution(messageData: any): Promise<string | null> {
+  try {
+    const baseUrl = process.env.EVOLUTION_API_URL || "http://localhost:8080";
+    const apiKey = process.env.EVOLUTION_API_KEY || "agendatepy_whatsapp_secure_key_2026";
+    const instance = process.env.EVOLUTION_INSTANCE || "agendatepy";
+
+    const res = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/getBase64FromMediaMessage/${encodeURIComponent(instance)}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        apikey: apiKey,
+      },
+      body: JSON.stringify({ message: messageData, convertToMp4: false }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      return json.base64 || null;
+    }
+  } catch (err: any) {
+    console.warn("[Evolution Media] Error descargando base64:", err?.message);
+  }
+  return null;
+}
 
 /**
  * Webhook Receptor de Mensajería WhatsApp (Evolution API / Gateway)
  *
- * Recibe eventos de mensajes entrantes de clientes, estado de conexión (QR / Open)
- * y entrega de notificaciones en segundo plano.
+ * Características avanzadas:
+ * - Detección de Notas de Voz / Audios (.ogg/.opus) y transcripción multimodal con Gemini Flash.
+ * - Pausa Inteligente por Intervención Humana: Si el dueño escribe desde su celular, el bot se calla 30 min.
+ * - Simulación de "Escribiendo..." y protección anti-baneo de Baileys.
+ * - OCR Multimodal de Comprobantes Bancarios SIPAP (Itaú, Ueno, Continental, BNF).
+ * - Memoria conversacional multi-turno.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -23,131 +61,210 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "success", event, state });
     }
 
-    // Mensaje entrante de un cliente
+    // Mensaje entrante / saliente de WhatsApp
     if (event === "MESSAGES_UPSERT" || event === "messages.upsert") {
       const data = body.data || body;
       const key = data.key || {};
       const fromMe = key.fromMe ?? false;
       const remoteJid = key.remoteJid || "";
 
-      // Ignorar mensajes enviados por nosotros mismos para evitar bucles
-      if (fromMe) {
-        return NextResponse.json({ status: "ignored", reason: "from_me" });
+      // Ignorar grupos de WhatsApp
+      if (remoteJid.includes("@g.us")) {
+        return NextResponse.json({ status: "ignored", reason: "group_message" });
       }
 
-      // Normalizar número telefónico emisor (ej: 595981765432@s.whatsapp.net -> +595 981 765 432)
-      const rawDigits = (remoteJid.split("@")[0] || "").split(":")[0];
+      // Normalizar número telefónico
+      const rawDigits = (remoteJid.split("@")[0] || "").split(":")[0].replace(/\D/g, "");
       const senderPhone = rawDigits.startsWith("595")
         ? `+${rawDigits.slice(0, 3)} ${rawDigits.slice(3, 6)} ${rawDigits.slice(6, 9)} ${rawDigits.slice(9)}`
         : `+${rawDigits}`;
 
+      // 1. Identificar el Tenant (Negocio) correspondiente
+      const tenant = await prisma.tenant.findFirst({
+        where: { status: "ACTIVE" },
+        select: { id: true, name: true, slug: true, timezone: true, settings: true },
+      });
+
+      if (!tenant) {
+        return NextResponse.json({ status: "error", message: "No active tenant found" }, { status: 404 });
+      }
+
+      const evoConfig = (tenant.settings as any)?.evolutionConfig || {};
+      const isBotEnabled = evoConfig.autoBotEnabled !== false;
+
+      if (!isBotEnabled) {
+        console.log(`[WhatsApp Webhook] Bot desactivado por el dueño en ajustes de ${tenant.name}. Ignorando.`);
+        return NextResponse.json({ status: "bot_disabled_by_tenant", senderPhone });
+      }
+
+      // 2. DETECCIÓN DE INTERVENCIÓN HUMANA (El dueño o recepcionista respondió desde su celular)
+      if (fromMe) {
+        conversationState.recordHumanIntervention(tenant.id, senderPhone);
+        console.log(`[WhatsApp Webhook] Mensaje del dueño detectado para ${senderPhone}. Bot silenciado 30 min.`);
+        return NextResponse.json({
+          status: "human_intervention_recorded",
+          senderPhone,
+          pausedForMinutes: 30,
+        });
+      }
+
+      // 3. VERIFICAR SI EL BOT ESTÁ EN SILENCIO PARA ESTE CLIENTE
+      const pauseCheck = conversationState.isBotPaused(tenant.id, senderPhone);
+      if (pauseCheck.paused) {
+        console.log(`[WhatsApp Webhook] Bot en silencio para ${senderPhone} (${pauseCheck.minutesRemaining} min restantes por intervención humana).`);
+        return NextResponse.json({
+          status: "bot_paused_by_human",
+          minutesRemaining: pauseCheck.minutesRemaining,
+        });
+      }
+
       const messageObj = data.message || {};
-      const isMedia = Boolean(messageObj.imageMessage || messageObj.documentMessage);
-      const textContent =
+      const isImage = Boolean(messageObj.imageMessage);
+      const isDocument = Boolean(messageObj.documentMessage);
+      const isAudio = Boolean(messageObj.audioMessage);
+
+      let textContent = (
         messageObj.conversation ||
         messageObj.extendedTextMessage?.text ||
         messageObj.imageMessage?.caption ||
         messageObj.documentMessage?.caption ||
-        "";
+        ""
+      ).trim();
 
-      console.log(`[WhatsApp Webhook] Mensaje recibido de ${senderPhone} (${remoteJid}): "${textContent}" (media: ${isMedia})`);
+      console.log(`[WhatsApp Webhook] Mensaje de ${senderPhone}: "${textContent}" (audio: ${isAudio}, imagen: ${isImage})`);
 
-      // Detección de Comprobante SIPAP / Transferencia bancaria
-      const lowerText = textContent.toLowerCase();
-      const transferKeywords = [
-        "transferencia",
-        "comprobante",
-        "transferí",
-        "transferi",
-        "seña",
-        "sena",
-        "sipap",
-        "spi",
-        "itau",
-        "itaú",
-        "ueno",
-        "continental",
-        "sudameris",
-        "familiar",
-        "bnf",
-        "deposito",
-        "depósito",
-        "boleta",
-        "pago",
-        "bancard",
-      ];
+      let replyText = "";
 
-      const isTransferReceipt = isMedia || transferKeywords.some((kw) => lowerText.includes(kw));
+      // 4. SI ES UNA NOTA DE VOZ / AUDIO: Transcribir con Gemini Flash Multimodal
+      if (isAudio) {
+        console.log(`[WhatsApp Webhook] Nota de voz recibida de ${senderPhone}. Procesando audio con Gemini Flash...`);
+        let base64Audio = messageObj.audioMessage?.directPath || data.base64;
 
-      let detectedReceipt = null;
-
-      if (isTransferReceipt) {
-        // Detección de Banco emisor
-        let bankOrigin = "Banco Itaú";
-        if (lowerText.includes("ueno")) bankOrigin = "Ueno Bank";
-        else if (lowerText.includes("continental")) bankOrigin = "Banco Continental";
-        else if (lowerText.includes("bnf") || lowerText.includes("fomento")) bankOrigin = "BNF";
-        else if (lowerText.includes("sudameris")) bankOrigin = "Sudameris Bank";
-        else if (lowerText.includes("familiar")) bankOrigin = "Banco Familiar";
-        else if (lowerText.includes("gnb")) bankOrigin = "Banco GNB";
-        else if (lowerText.includes("atlas")) bankOrigin = "Banco Atlas";
-        else if (lowerText.includes("basa")) bankOrigin = "Banco Basa";
-
-        // Extracción de Monto en Guaraníes (Gs. o números de 5 a 8 dígitos)
-        let amount = 130000;
-        const amountMatch = textContent.match(/(?:gs\.?|guaran[ií]es|₲)?\s*([0-9]{1,3}(?:\.[0-9]{3})+|[0-9]{5,8})/i);
-        if (amountMatch && amountMatch[1]) {
-          const parsed = parseInt(amountMatch[1].replace(/\./g, ""), 10);
-          if (!isNaN(parsed) && parsed > 5000) {
-            amount = parsed;
-          }
+        if (!base64Audio) {
+          base64Audio = await getMediaBase64FromEvolution(data);
         }
 
-        // Extracción o asignación de Código de Operación SIPAP / SPI
-        const opMatch = textContent.match(/(?:sipap|spi|op|ref)[\s#:-]*([0-9a-z]{5,12})/i);
-        const operationNumber = opMatch
-          ? `SIPAP-${opMatch[1].toUpperCase()}`
-          : `SIPAP-${Math.floor(100000 + Math.random() * 900000)}`;
+        if (base64Audio) {
+          const audioResult = await geminiPool.analyzeAudioVoiceNote(
+            base64Audio,
+            "audio/ogg",
+            senderPhone
+          );
 
-        detectedReceipt = {
-          id: `rec-auto-${Date.now()}`,
+          if (audioResult.transcription) {
+            console.log(`[WhatsApp Webhook] Audio transcripto por IA: "${audioResult.transcription}"`);
+            textContent = audioResult.transcription;
+          }
+        } else {
+          replyText = "¡Hola! Recibí tu nota de voz pero no pude reproducirla. ¿Podrías escribirme qué horario o servicio te gustaría agendar?";
+        }
+      }
+
+      // 5. SI ES UNA IMAGEN: Análisis de Comprobante SIPAP con Visión Multimodal
+      if (isImage || isDocument) {
+        let base64Image = messageObj.imageMessage?.jpegThumbnail || data.base64;
+
+        if (!base64Image) {
+          base64Image = await getMediaBase64FromEvolution(data);
+        }
+
+        if (base64Image) {
+          try {
+            console.log(`[WhatsApp Webhook] Analizando comprobante SIPAP multimodal con Gemini...`);
+            const receiptData = await geminiPool.analyzeSipapReceipt(
+              base64Image,
+              "image/jpeg",
+              senderPhone
+            );
+
+            if (receiptData.isSipap && receiptData.amount > 0) {
+              const pendingAppointment = await prisma.appointment.findFirst({
+                where: {
+                  tenantId: tenant.id,
+                  clientPhone: { contains: rawDigits.slice(-8) },
+                  status: "PENDING_ACTION",
+                },
+                orderBy: { createdAt: "desc" },
+              });
+
+              if (pendingAppointment) {
+                await prisma.appointment.update({
+                  where: { id: pendingAppointment.id },
+                  data: { status: "CONFIRMED" },
+                });
+              }
+
+              replyText = `¡Muchas gracias! 🙌 Recibimos y validamos tu comprobante de transferencia:\n\n` +
+                `🏦 *Banco:* ${receiptData.bank}\n` +
+                `💰 *Monto:* ₲ ${receiptData.amount.toLocaleString("es-PY")}\n` +
+                `🔖 *N° Operación:* ${receiptData.operationNumber}\n\n` +
+                `✅ Tu turno ha quedado *CONFIRMADO*. ¡Te esperamos en ${tenant.name}!`;
+            } else {
+              replyText = `Recibimos tu imagen. Nuestro equipo revisará el comprobante a la brevedad para confirmar tu turno. ¡Muchas gracias!`;
+            }
+          } catch (err: any) {
+            console.error("[WhatsApp Webhook] Error en OCR SIPAP:", err);
+            replyText = `Recibimos tu comprobante. Lo verificaremos enseguida para confirmar tu turno.`;
+          }
+        }
+      }
+      // 6. SI ES TEXTO (O AUDIO TRANSCRIPTO): Ejecutar Agente con Memoria y Function Calling en Prisma
+      else if (textContent) {
+        const agentResult = await processCustomerMessageWithAI(textContent, {
+          tenantId: tenant.id,
+          tenantName: tenant.name,
+          tenantSlug: tenant.slug,
           clientPhone: senderPhone,
-          bankOrigin,
-          amount,
-          operationNumber,
-          ocrVerified: true,
-          ocrConfidence: 99.4,
-          qrCodeDetected: true,
-          status: "pending",
-          detectedAt: new Date().toISOString(),
-          note: `Transferencia detectada automáticamente desde WhatsApp (${senderPhone})`,
-        };
+          clientName: data.pushName || "Cliente WhatsApp",
+        });
 
-        console.log(`[WhatsApp Webhook] ¡Comprobante SIPAP detectado con éxito!`, detectedReceipt);
+        replyText = agentResult.replyText;
+      }
+
+      // 7. RESPONDER AL CLIENTE CON "ESCRIBIENDO..." Y ENVÍO POR EVOLUTION API
+      if (replyText && rawDigits) {
+        try {
+          await sendWhatsAppMessage(rawDigits, replyText, true);
+          console.log(`[WhatsApp Webhook] Respuesta enviada exitosamente a ${rawDigits}`);
+        } catch (evoError: any) {
+          console.warn(`[WhatsApp Webhook] No se pudo enviar por Evolution API:`, evoError?.message);
+        }
       }
 
       return NextResponse.json({
         status: "success",
-        event,
-        from: remoteJid,
+        processed: true,
         senderPhone,
-        isTransferReceipt,
-        receipt: detectedReceipt,
-        receivedAt: new Date().toISOString(),
+        replyText,
+        timestamp: new Date().toISOString(),
       });
     }
 
-    return NextResponse.json({ status: "success", event, processed: true });
-  } catch (error) {
+    return NextResponse.json({ status: "success", event, ignored: true });
+  } catch (error: any) {
     console.error("[WhatsApp Webhook] Error procesando webhook:", error);
-    return NextResponse.json({ status: "error", message: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ status: "error", message: error?.message || "Internal server error" }, { status: 500 });
   }
 }
 
 export async function GET() {
+  const summary = geminiPool.getGlobalSummary();
   return NextResponse.json({
-    service: "AgendatePY WhatsApp Webhook Gateway",
-    status: "active",
+    service: "AgendatePY WhatsApp AI Webhook Gateway",
+    features: {
+      audioVoiceNotesSupport: true,
+      humanInterventionPause: true,
+      sipapMultimodalOcr: true,
+      multiTurnMemory: true,
+      typingPresenceSimulation: true,
+    },
+    cluster: {
+      status: "active",
+      keysCount: summary.totalKeys,
+      activeKeys: summary.activeKeys,
+      maxRpmCapacity: summary.maxRpm,
+      dailyQuota: summary.maxRpd,
+    },
     timestamp: new Date().toISOString(),
   });
 }

@@ -284,7 +284,7 @@ export default function Hero() {
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.14]">
               <span className="font-extrabold text-slate-900 dark:text-white">Gestioná tu agenda</span>{" "}
               <span className="font-medium text-slate-700 dark:text-slate-300">y negocio con</span>{" "}
-              <span className="block mt-1.5 font-black bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
+              <span className="block mt-1.5 font-black text-[#FF4F2B]">
                 AgendatePY
               </span>
             </h1>

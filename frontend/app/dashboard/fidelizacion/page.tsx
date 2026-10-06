@@ -1094,7 +1094,7 @@ export default function FidelizacionPage() {
       >
         {selectedClientForQr && (
           <div className="space-y-4 text-center text-xs">
-            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-2xl bg-amber-400 text-slate-950 font-black text-sm shadow-md">
+            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-2xl bg-amber-400 text-amber-950 font-black text-sm shadow-xs">
               <Crown className="h-6 w-6" />
             </div>
 

@@ -358,7 +358,7 @@ export default function TarjetaClienteView({
                           <div
                             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-black shadow-sm ${
                               isTierUnlocked
-                                ? "bg-emerald-500 text-slate-950"
+                                ? "bg-emerald-500 text-emerald-950"
                                 : "bg-white/10 text-slate-300"
                             }`}
                           >
@@ -390,7 +390,7 @@ export default function TarjetaClienteView({
               </div>
             ) : isRewardReady ? (
               <div className="rounded-2xl border border-emerald-400/40 bg-emerald-500/15 p-3 flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-black shadow-md">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-emerald-950 font-black shadow-xs">
                   <Gift className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">

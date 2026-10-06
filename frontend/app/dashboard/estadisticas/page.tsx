@@ -25,7 +25,7 @@ import {
   QrCode,
   ShieldCheck,
   RefreshCw,
-  Sparkles,
+  Ticket,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
@@ -238,7 +238,7 @@ export default function EstadisticasPage() {
             </div>
 
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-zinc-300 text-xs font-bold font-mono">
-              <Sparkles className="h-3 w-3 text-amber-500" />
+              <Ticket className="h-3.5 w-3.5 text-amber-500" />
               <span>Ticket: {formatGs(avgTicket)}</span>
             </div>
           </div>

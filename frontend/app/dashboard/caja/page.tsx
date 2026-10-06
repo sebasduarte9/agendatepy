@@ -350,39 +350,38 @@ export default function CajaPage() {
           </button>
         </div>
 
-        {/* Hero Cash Balance */}
-        <div className="rounded-2xl p-4 bg-gradient-to-br from-slate-900 to-slate-950 dark:from-slate-800/80 dark:to-slate-950 text-white shadow-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-primary/20 blur-xl pointer-events-none" />
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="flex items-center gap-1.5 font-medium">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+        {/* Hero Cash Balance - Clean Light & Dark Native Style */}
+        <div className="rounded-2xl p-4 bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
+            <span className="flex items-center gap-1.5 font-semibold">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               Efectivo en Gaveta
             </span>
-            <span className="font-mono text-[11px] text-slate-300 capitalize">{formattedDayTitle}</span>
+            <span className="font-mono text-[11px] text-slate-500 dark:text-zinc-400 capitalize">{formattedDayTitle}</span>
           </div>
 
           <div className="mt-2 flex items-baseline justify-between">
-            <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+            <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
               {formatGs(stats.efectivoEnCajaEsperado)}
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               {stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0}% efect.
             </span>
           </div>
 
           {/* Breakdown Mini Strip */}
-          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-[10px]">
             <div>
-              <span className="text-slate-400 block">Efectivo</span>
-              <span className="font-bold font-mono text-white">{formatGs(stats.efectivoIngresos)}</span>
+              <span className="text-slate-400 dark:text-zinc-500 block font-medium">Efectivo</span>
+              <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.efectivoIngresos)}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">POS Bancard</span>
-              <span className="font-bold font-mono text-white">{formatGs(stats.posIngresos)}</span>
+              <span className="text-slate-400 dark:text-zinc-500 block font-medium">POS Bancard</span>
+              <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.posIngresos)}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">SIPAP</span>
-              <span className="font-bold font-mono text-white">{formatGs(stats.transferenciaIngresos)}</span>
+              <span className="text-slate-400 dark:text-zinc-500 block font-medium">SIPAP</span>
+              <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.transferenciaIngresos)}</span>
             </div>
           </div>
         </div>

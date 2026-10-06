@@ -32,6 +32,8 @@ import {
   Landmark,
   Wallet,
   QrCode,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { TIMEZONES, useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
@@ -99,6 +101,26 @@ export default function ConfiguracionPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Theme & Appearance State
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark");
+    setCurrentTheme(isDark ? "dark" : "light");
+  }, []);
+
+  const handleThemeChange = (theme: "light" | "dark") => {
+    setCurrentTheme(theme);
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("agendate_theme_mode", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("agendate_theme_mode", "light");
+    }
+    pushToast("success", `Tema cambiado a Modo ${theme === "dark" ? "Oscuro" : "Claro"}`);
+  };
 
   const activePaymentMethods = business.acceptedPaymentMethods || [
     "efectivo",
@@ -752,6 +774,71 @@ export default function ConfiguracionPage() {
             <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
               {business.primaryColor}
             </span>
+          </div>
+        </Card>
+
+        {/* Tema y Apariencia Visual */}
+        <Card className="space-y-4">
+          <div>
+            <h4 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+              <Sun className="h-4 w-4 text-amber-500" />
+              Tema y Modo Visual
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Elegí cómo preferís ver la plataforma en este dispositivo (Modo Claro u Oscuro).
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleThemeChange("light")}
+              className={`p-3.5 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                currentTheme === "light"
+                  ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                  : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                  <Sun className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Modo Claro</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">Fondos limpios e iluminados</div>
+                </div>
+              </div>
+              {currentTheme === "light" && (
+                <div className="h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
+                  <Check className="h-3 w-3 stroke-[3]" />
+                </div>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleThemeChange("dark")}
+              className={`p-3.5 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                currentTheme === "dark"
+                  ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                  : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0">
+                  <Moon className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Modo Oscuro</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">OLED / alto contraste nocturno</div>
+                </div>
+              </div>
+              {currentTheme === "dark" && (
+                <div className="h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
+                  <Check className="h-3 w-3 stroke-[3]" />
+                </div>
+              )}
+            </button>
           </div>
         </Card>
 

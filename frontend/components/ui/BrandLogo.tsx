@@ -8,6 +8,7 @@ interface BrandLogoProps {
   iconClassName?: string;
   badge?: string;
   showText?: boolean;
+  fill?: string;
 }
 
 export const OFFICIAL_LOGO_PATH =
@@ -24,6 +25,7 @@ export default function BrandLogo({
   iconClassName = "h-8 w-8",
   badge,
   showText = true,
+  fill = "#FF4F2B",
 }: BrandLogoProps) {
   // Símbolo / Isotipo oficial
   const renderIsotype = () => (
@@ -36,7 +38,7 @@ export default function BrandLogo({
       aria-label="AgendatePY Icon"
     >
       <path
-        fill="#FF4F2B"
+        fill={fill}
         fillRule="evenodd"
         d={OFFICIAL_LOGO_PATH}
       />

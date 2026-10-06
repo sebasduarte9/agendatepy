@@ -44,11 +44,48 @@ export class EvolutionError extends Error {
   }
 }
 
-export async function sendWhatsAppMessage(phone: string, message: string): Promise<void> {
+export async function sendWhatsAppPresence(
+  phone: string,
+  presence: "composing" | "recording" | "paused" = "composing",
+  delayMs = 1500
+): Promise<void> {
+  try {
+    const number = normalizePhone(phone);
+    const baseUrl = requiredEnv("EVOLUTION_API_URL").replace(/\/$/, "");
+    const apiKey = requiredEnv("EVOLUTION_API_KEY");
+    const instance = requiredEnv("EVOLUTION_INSTANCE");
+
+    await fetch(`${baseUrl}/chat/sendPresence/${encodeURIComponent(instance)}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        apikey: apiKey,
+      },
+      body: JSON.stringify({ number, presence, delay: delayMs }),
+      signal: AbortSignal.timeout(5000),
+      cache: "no-store",
+    });
+  } catch (err: any) {
+    // Si falla presence no rompemos el envío del mensaje
+    console.warn("[evolution] no se pudo emitir presence:", err?.message);
+  }
+}
+
+export async function sendWhatsAppMessage(
+  phone: string,
+  message: string,
+  simulateTyping = true
+): Promise<void> {
   const number = normalizePhone(phone);
   const text = message.trim();
   if (!text || text.length > TEXT_MAX) {
     throw new EvolutionError("Mensaje vacío o mayor a 4096 caracteres");
+  }
+
+  // Simular "Escribiendo..." para naturalidad y protección anti-baneo
+  if (simulateTyping) {
+    await sendWhatsAppPresence(phone, "composing", 1500);
+    await new Promise((r) => setTimeout(r, 1200));
   }
 
   const baseUrl = requiredEnv("EVOLUTION_API_URL").replace(/\/$/, "");

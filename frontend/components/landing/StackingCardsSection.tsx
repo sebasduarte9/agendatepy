@@ -13,7 +13,7 @@ export default function StackingCardsSection() {
       <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-10 space-y-4">
         <h2 className="text-3xl xs:text-4xl sm:text-5xl font-black tracking-tight text-slate-950 dark:text-white leading-[1.12]">
           Todo tu negocio funcionando en{" "}
-          <span className="bg-gradient-to-r from-[#FF5B37] via-[#FF441F] to-amber-500 bg-clip-text text-transparent">
+          <span className="text-[#FF4F2B]">
             piloto automático
           </span>
         </h2>

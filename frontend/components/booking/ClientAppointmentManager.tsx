@@ -210,11 +210,11 @@ export default function ClientAppointmentManager({ appointment }: Props) {
                   key={s}
                   className={`flex h-9 flex-1 items-center justify-center rounded-xl text-sm font-black transition ${
                     s <= 4
-                      ? "bg-amber-400 text-slate-950 shadow-xs scale-105"
+                      ? "bg-amber-400 text-amber-950 shadow-xs scale-105"
                       : "border-2 border-dashed border-amber-300 bg-white/60 text-amber-300"
                   }`}
                 >
-                  <Award className={`h-4 w-4 ${s <= 4 ? "text-slate-950" : "text-amber-300"}`} />
+                  <Award className={`h-4 w-4 ${s <= 4 ? "text-amber-950" : "text-amber-300"}`} />
                 </div>
               ))}
             </div>

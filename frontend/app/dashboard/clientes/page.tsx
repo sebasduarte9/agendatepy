@@ -17,7 +17,7 @@ import {
   Crown,
   MessagesSquare,
   ChevronRight,
-  Sparkles,
+  Ticket,
   X,
   LayoutList,
   LayoutGrid,
@@ -302,7 +302,7 @@ export default function ClientesPage() {
             </div>
 
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-zinc-300 text-xs font-bold font-mono">
-              <Sparkles className="h-3 w-3 text-primary" />
+              <Ticket className="h-3.5 w-3.5 text-primary" />
               <span>Ticket: {formatGs(avgSpent)}</span>
             </div>
           </div>

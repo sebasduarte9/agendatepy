@@ -4,8 +4,6 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   robots: {
     index: false,

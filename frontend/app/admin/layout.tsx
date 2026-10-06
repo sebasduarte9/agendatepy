@@ -19,6 +19,8 @@ import {
   ExternalLink,
   Menu,
   X,
+  Bot,
+  Zap,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -77,6 +79,12 @@ export default function AdminLayout({
       name: "Mapa de Calor",
       href: "/admin/heatmap",
       icon: Flame,
+      exact: false,
+    },
+    {
+      name: "Bot IA WhatsApp",
+      href: "/admin/whatsapp-ia",
+      icon: Bot,
       exact: false,
     },
     {

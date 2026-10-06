@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, Menu, Settings, Sun, Moon, ExternalLink, HelpCircle, BookOpen, Compass } from "lucide-react";
+import { LogOut, Menu, Settings, ExternalLink, HelpCircle, BookOpen, Compass } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export default function Header() {
   const business = useDashboardStore((s) => s.business);
@@ -11,28 +12,14 @@ export default function Header() {
   const setOpen = useDashboardStore((s) => s.setSidebarOpen);
   const userName = useDashboardStore((s) => s.userName);
   const openTour = useDashboardStore((s) => s.openTour);
-  const [isDark, setIsDark] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("agendate_theme_mode");
     if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setIsDark(true);
       document.documentElement.classList.add("dark");
     }
   }, []);
-
-  function toggleDarkMode() {
-    if (isDark) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("agendate_theme_mode", "light");
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("agendate_theme_mode", "dark");
-      setIsDark(true);
-    }
-  }
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -47,49 +34,51 @@ export default function Header() {
   return (
     <header className="header sticky top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] sm:h-16 items-center justify-between border-b border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#09090b]/90 px-3.5 sm:px-6 backdrop-blur-xl select-none">
       <div className="flex items-center gap-2.5 min-w-0">
-        {/* On mobile, show clean subtle brand name since sidebar is hidden */}
+        {/* On mobile, show clean brand lockup: [Vectorized A Logo] + gendate.py */}
         <Link
           href="/dashboard"
-          className="flex lg:hidden items-center gap-2 select-none group"
+          className="flex lg:hidden items-center gap-1.5 select-none group"
         >
-          <div
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-white text-xs font-black shadow-xs"
-            style={{ backgroundColor: "var(--primary, #FF4F2B)" }}
+          <BrandLogo
+            variant="icon"
+            iconClassName="h-7 w-7 shrink-0"
+            fill={business.primaryColor || "#FF4F2B"}
+          />
+          <span
+            className="font-coolvetica text-xl tracking-normal text-slate-900 dark:text-white flex items-center leading-none"
+            style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
           >
-            A
-          </div>
-          <span className="font-black text-sm tracking-tight text-slate-900 dark:text-white">
-            agendate<span style={{ color: "var(--primary, #FF4F2B)" }}>.py</span>
+            gendate<span style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}>.py</span>
           </span>
         </Link>
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Public Booking Link (Desktop only; on mobile it's in the profile popover & 'Más' sheet) */}
         <Link
           data-tour="header-booking-link"
           href={`/${business.slug || "barberia"}/reservar`}
           target="_blank"
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition shrink-0"
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition shrink-0"
           title="Abrir tu portal público de reservas en una nueva pestaña"
         >
           <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-500 animate-pulse" />
-          <span className="hidden sm:inline">agendate.py/{business.slug || "barberia"}</span>
-          <span className="sm:hidden text-[11px] font-semibold">Web</span>
+          <span>agendate.py/{business.slug || "barberia"}</span>
           <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
         </Link>
 
-        {/* Guided Tour Direct Trigger */}
+        {/* Guided Tour Direct Trigger (Desktop only) */}
         <button
           type="button"
           onClick={() => openTour()}
-          className="rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
+          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
           aria-label="Guía interactiva"
           title="Guía interactiva del sistema"
         >
           <Compass className="h-4 w-4" />
         </button>
 
-        {/* Documentation / Manual Icon (desktop only, accessible on mobile via 'Más') */}
+        {/* Documentation / Manual Icon (Desktop only) */}
         <Link
           href="/dashboard/extras"
           className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
@@ -99,7 +88,7 @@ export default function Header() {
           <BookOpen className="h-4 w-4" />
         </Link>
 
-        {/* Support Help Icon (desktop only, accessible on mobile via WhatsApp) */}
+        {/* Support Help Icon (Desktop only) */}
         <a
           href="https://wa.me/595981700800?text=Hola%20Soporte%20AgendatePY"
           target="_blank"
@@ -111,18 +100,7 @@ export default function Header() {
           <HelpCircle className="h-4 w-4" />
         </a>
 
-        {/* Dark Mode Toggle */}
-        <button
-          type="button"
-          onClick={toggleDarkMode}
-          className="rounded-full p-2 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
-          aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-          title={isDark ? "Modo Claro" : "Modo Oscuro"}
-        >
-          {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-600 dark:text-slate-300" />}
-        </button>
-
-        {/* Settings Button */}
+        {/* Settings Button (Desktop only) */}
         <Link
           href="/dashboard/configuracion"
           className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
@@ -132,12 +110,12 @@ export default function Header() {
           <Settings className="h-4 w-4" />
         </Link>
 
-        {/* Logout Button (Desktop only; on mobile it's in the 'Más' sheet) */}
+        {/* Logout Button (Desktop only) */}
         <button
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition disabled:opacity-50 cursor-pointer"
+          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition disabled:opacity-50 cursor-pointer"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"
         >
@@ -201,23 +179,6 @@ export default function Header() {
                     <ExternalLink className="h-4 w-4 text-slate-400" />
                     <span>Ver Web Pública</span>
                   </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleDarkMode();
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer text-left"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-400" />}
-                      <span>{isDark ? "Modo Claro" : "Modo Oscuro"}</span>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
-                      {isDark ? "Oscuro" : "Claro"}
-                    </span>
-                  </button>
 
                   <a
                     href="https://wa.me/595981700800?text=Hola%20Soporte%20AgendatePY"

@@ -31,3 +31,4 @@ frontend/public/uploads/*
 
 # IDE y agentes locales
 .agents/
+.codex/

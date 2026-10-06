@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import {
   Home,
   Calendar,
@@ -24,7 +24,7 @@ import {
   ChevronRight,
   LogOut,
   Clock,
-  Sparkles,
+  Crown,
   ExternalLink,
   Compass,
 } from "lucide-react";
@@ -39,11 +39,51 @@ export default function MobileTabBar() {
   const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
 
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  const dragControls = useDragControls();
+  const sheetContentRef = React.useRef<HTMLDivElement>(null);
+  const touchStartY = React.useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (sheetContentRef.current && sheetContentRef.current.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+    } else {
+      touchStartY.current = null;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    if (deltaY < 0) {
+      touchStartY.current = null;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const currentY = e.changedTouches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    if (deltaY > 80 && sheetContentRef.current && sheetContentRef.current.scrollTop <= 0) {
+      triggerHaptic("light");
+      setIsMoreSheetOpen(false);
+    }
+    touchStartY.current = null;
+  };
 
   // Close sheet on route change
   useEffect(() => {
     setIsMoreSheetOpen(false);
   }, [pathname]);
+
+  // Optimistic tab active state for 0ms instantaneous visual feedback
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOptimisticPath(null);
+  }, [pathname]);
+
+  const currentPath = optimisticPath || pathname;
 
   // Prefetch core routes for 0ms instantaneous section switching
   useEffect(() => {
@@ -74,7 +114,7 @@ export default function MobileTabBar() {
       label: "Inicio",
       href: "/dashboard",
       icon: Home,
-      isActive: pathname === "/dashboard",
+      isActive: currentPath === "/dashboard",
     },
     {
       id: "agenda",
@@ -82,22 +122,22 @@ export default function MobileTabBar() {
       href: "/dashboard/calendario",
       icon: Calendar,
       isActive:
-        pathname.startsWith("/dashboard/calendario") ||
-        pathname.startsWith("/dashboard/nueva-reserva"),
+        currentPath.startsWith("/dashboard/calendario") ||
+        currentPath.startsWith("/dashboard/nueva-reserva"),
     },
     {
       id: "caja",
       label: "Caja",
       href: "/dashboard/caja",
       icon: Wallet,
-      isActive: pathname.startsWith("/dashboard/caja"),
+      isActive: currentPath.startsWith("/dashboard/caja"),
     },
     {
       id: "clientes",
       label: "Clientes",
       href: "/dashboard/clientes",
       icon: Users,
-      isActive: pathname.startsWith("/dashboard/clientes"),
+      isActive: currentPath.startsWith("/dashboard/clientes"),
     },
   ];
 
@@ -202,7 +242,7 @@ export default function MobileTabBar() {
           label: "Planes & Suscripción",
           subtitle: "Gestión de tu cuenta y planes",
           href: "/dashboard/suscripcion",
-          icon: Sparkles,
+          icon: Crown,
         },
       ],
     },
@@ -225,7 +265,11 @@ export default function MobileTabBar() {
                 key={tab.id}
                 href={tab.href}
                 prefetch={true}
-                onClick={() => triggerHaptic("selection")}
+                onPointerDown={() => router.prefetch(tab.href)}
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setOptimisticPath(tab.href);
+                }}
                 className="relative flex flex-col items-center justify-center flex-1 h-full py-1 text-center cursor-pointer group"
               >
                 {/* Gliding Apple Pill Background with Framer Motion spring physics */}
@@ -335,51 +379,79 @@ export default function MobileTabBar() {
               className="fixed inset-0 bg-slate-950/60 backdrop-blur-md"
             />
 
-            {/* Sheet Container with Apple Spring Physics */}
+            {/* Sheet Container with Apple Spring Physics & Drag-to-Dismiss */}
             <motion.div
+              key="more-action-sheet"
+              drag="y"
+              dragControls={dragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0.05, bottom: 0.7 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 80 || info.velocity.y > 350) {
+                  triggerHaptic("light");
+                  setIsMoreSheetOpen(false);
+                }
+              }}
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
               className="relative z-10 w-full max-h-[88vh] rounded-t-[32px] bg-[#f8fafc] dark:bg-[#121215] text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))]"
             >
-              {/* iOS Top Drag Indicator Pill */}
-              <div className="pt-3 pb-2 shrink-0 flex flex-col items-center cursor-grab active:cursor-grabbing">
-                <span className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto" />
-              </div>
-
-              {/* Sheet Header */}
-              <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-200/80 dark:border-white/10 shrink-0">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-xs"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    {(business.name || "A").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight truncate">
-                      {business.name}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                      Panel de control & herramientas
-                    </p>
-                  </div>
+              {/* Drag Handle & Header Area */}
+              <div
+                onPointerDown={(e) => {
+                  if ((e.target as HTMLElement)?.closest("button, a, input, select, textarea")) return;
+                  dragControls.start(e);
+                }}
+                style={{ touchAction: "none" }}
+                className="shrink-0 select-none cursor-grab active:cursor-grabbing group pt-3.5 pb-3 border-b border-slate-200/80 dark:border-white/10"
+              >
+                {/* iOS Top Drag Indicator Pill */}
+                <div className="pb-2.5 flex flex-col items-center">
+                  <span className="h-1.5 w-12 group-hover:w-16 group-active:w-20 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-slate-400 dark:group-hover:bg-slate-600 transition-all duration-200 mx-auto" />
                 </div>
 
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  type="button"
-                  onClick={() => setIsMoreSheetOpen(false)}
-                  className="p-2 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition cursor-pointer shrink-0"
-                  aria-label="Cerrar menú"
-                >
-                  <X className="h-4 w-4" />
-                </motion.button>
+                {/* Sheet Header Row */}
+                <div className="flex items-center justify-between px-5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-xs"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {(business.name || "A").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight truncate">
+                        {business.name}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        Panel de control & herramientas
+                      </p>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    type="button"
+                    onClick={() => setIsMoreSheetOpen(false)}
+                    className="p-2 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition cursor-pointer shrink-0"
+                    aria-label="Cerrar menú"
+                  >
+                    <X className="h-4 w-4" />
+                  </motion.button>
+                </div>
               </div>
 
               {/* Sheet Scrollable Grouped Content */}
-              <div className="overflow-y-auto px-4 py-4 space-y-5 pb-24">
+              <div
+                ref={sheetContentRef}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                className="overflow-y-auto overscroll-contain px-4 py-4 space-y-5 pb-24"
+              >
                 {/* Interactive Guided Tour Card inside Apple Sheet */}
                 <button
                   type="button"
@@ -437,8 +509,10 @@ export default function MobileTabBar() {
                             key={item.href}
                             href={item.href}
                             prefetch={true}
+                            onPointerDown={() => router.prefetch(item.href)}
                             onClick={() => {
                               triggerHaptic("selection");
+                              setOptimisticPath(item.href);
                               setIsMoreSheetOpen(false);
                             }}
                             className={`flex items-center justify-between p-3.5 transition-colors active:bg-slate-50 dark:active:bg-white/5 ${

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import QRCode from "qrcode";
 import {
   Bot,
-  MessageCircle,
   MessageSquare,
   QrCode,
   CheckCircle2,
@@ -12,93 +11,34 @@ import {
   Send,
   Lock,
   Zap,
-  RefreshCw,
-  ShieldCheck,
   Check,
-  Plus,
-  Trash2,
-  Tag,
-  ListOrdered,
-  Smartphone,
-  X,
-  CheckCheck,
-  ExternalLink,
-  CreditCard,
-  UserCheck,
-  ArrowRight,
   RotateCcw,
-  Layers,
   Phone,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
   Calendar,
   MapPin,
   BadgeCheck,
   Wifi,
   ChevronLeft,
   Video,
-  Play,
   Mic,
-  Share2,
-  ChevronDown,
-  HelpCircle,
-  AlertCircle,
   PhoneCall,
+  Sparkles,
+  CreditCard,
+  Tag,
+  UserCheck,
+  RefreshCw,
+  X,
+  CheckCheck,
+  Plus,
+  ArrowRight,
+  Smile,
+  Briefcase,
+  Layers,
+  HelpCircle,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import type { BotMainMenuOption, BotKeywordRule } from "@/lib/dashboard-types";
 
-// Helper to determine next available unique key for action nodes
-function getNextAvailableKey(currentNodes: CanvasNode[]): string {
-  const usedKeys = new Set(
-    currentNodes
-      .map((n) => n.config?.key?.trim())
-      .filter((k): k is string => Boolean(k && !isNaN(Number(k))))
-      .map((k) => Number(k))
-  );
-  for (let i = 1; i <= 20; i++) {
-    if (!usedKeys.has(i)) return String(i);
-  }
-  return String(currentNodes.length + 1);
-}
-
-// Helper to migrate and sanitize nodes loaded from database / local storage
-function sanitizeNodes(loadedNodes: any[], initialDefaults: CanvasNode[]): CanvasNode[] {
-  if (!Array.isArray(loadedNodes) || loadedNodes.length === 0) {
-    return initialDefaults;
-  }
-
-  return loadedNodes.map((node) => {
-    let type = node.type as NodeType;
-    const title = (node.title || "").toLowerCase();
-    if (type === ("action" as any)) {
-      if (title.includes("link") || title.includes("reserva")) type = "action_link";
-      else if (title.includes("precio") || title.includes("servicio")) type = "action_prices";
-      else if (title.includes("sipap") || title.includes("banco") || title.includes("pago")) type = "action_sipap";
-      else if (title.includes("humano") || title.includes("asesor")) type = "action_human";
-      else if (title.includes("ubicacion") || title.includes("horario")) type = "action_location";
-      else type = "action_link";
-    }
-
-    return {
-      id: node.id,
-      type,
-      title: node.title,
-      x: typeof node.x === "number" ? node.x : 100,
-      y: typeof node.y === "number" ? node.y : 100,
-      enabled: node.enabled !== false,
-      config: {
-        ...node.config,
-        key: node.config?.key || undefined,
-        keywords: Array.isArray(node.config?.keywords) ? node.config.keywords : [],
-        response: node.config?.response || "",
-      },
-    };
-  });
-}
-
-// Dynamic message tags for templates (100% clean, zero emojis)
+// Dynamic message tags for reminder templates
 const AVAILABLE_TAGS = [
   { tag: "{cliente}", label: "Nombre Cliente" },
   { tag: "{servicio}", label: "Servicio" },
@@ -111,58 +51,12 @@ const AVAILABLE_TAGS = [
   { tag: "{link_negocio}", label: "Link del Negocio" },
 ];
 
-// ═══════════════════════════════════════════════════════════════════
-// SPECIALIZED NODE TYPES (Separated Actions, Zero Emojis)
-// ═══════════════════════════════════════════════════════════════════
-
-export type NodeType =
-  | "trigger"
-  | "welcome"
-  | "menu"
-  | "action_link"
-  | "action_prices"
-  | "action_sipap"
-  | "action_human"
-  | "action_location"
-  | "keyword"
-  | "booking_trigger"
-  | "confirmation"
-  | "reminder";
-
-export interface CanvasNode {
-  id: string;
-  type: NodeType;
-  title: string;
-  x: number;
-  y: number;
-  enabled: boolean;
-  config: {
-    key?: string; // "1", "2", "3", etc.
-    keywords?: string[];
-    response?: string;
-    welcomeText?: string;
-    fallbackText?: string;
-    templateTrigger?: "confirmacion" | "recordatorio_24h" | "recordatorio_2h" | "cancelacion";
-  };
-}
-
-export interface CanvasConnection {
-  id: string;
-  fromNodeId: string;
-  fromPort?: string;
-  toNodeId: string;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// WHATSAPP TEXT FORMATTER HELPER (Parses *bold*, _italic_, ~strike~)
-// ═══════════════════════════════════════════════════════════════════
-
+// Helper to format WhatsApp text (*bold*, _italic_, ~strike~)
 function renderWhatsAppFormatted(text: string) {
   if (!text) return null;
   const lines = text.split("\n");
 
   return lines.map((line, lineIdx) => {
-    // Regex splits *bold*, _italic_, ~strike~, `code`
     const parts = line.split(/(\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~|`[^`\n]+`)/g);
 
     return (
@@ -203,10 +97,7 @@ function renderWhatsAppFormatted(text: string) {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// CUSTOM SWITCH COMPONENT
-// ═══════════════════════════════════════════════════════════════════
-
+// Simple switch component
 function CustomSwitch({
   checked,
   onChange,
@@ -243,14 +134,9 @@ function CustomSwitch({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// MAIN PAGE COMPONENT
-// ═══════════════════════════════════════════════════════════════════
-
 export default function BotWhatsAppPage() {
   const {
     business,
-    services,
     evolutionConfig,
     updateEvolutionConfig,
     whatsappTemplates,
@@ -258,305 +144,77 @@ export default function BotWhatsAppPage() {
     toggleWhatsAppTemplate,
     updateBusiness,
     pushToast,
-    openTour,
   } = useDashboardStore();
 
   const isConnected = Boolean(evolutionConfig.connected);
 
-  // Tabs: "Canva de flujo", "SIMULADOR", "Plantillas"
-  const [activeTab, setActiveTab] = useState<"canva" | "simulador" | "plantillas">("canva");
+  // Solamente 2 pestañas simples: "asistente" (por defecto) o "recordatorios"
+  const [activeTab, setActiveTab] = useState<"asistente" | "recordatorios">("asistente");
 
-  const slug = business.slug || "barberia";
-  const [origin, setOrigin] = useState("https://agendatepy.com");
+  // Configuración funcional del Asistente
+  const [autoBotEnabled, setAutoBotEnabled] = useState(evolutionConfig.autoBotEnabled !== false);
+  const [aiTone, setAiTone] = useState<"amigable" | "formal" | "conciso">(evolutionConfig.aiTone || "amigable");
+  const [aiInstructions, setAiInstructions] = useState(evolutionConfig.aiInstructions || "");
+  const [humanHandoffPhone, setHumanHandoffPhone] = useState(
+    evolutionConfig.humanHandoffPhone || business.whatsappNumber || business.phone || ""
+  );
+  const [isSavingAiSettings, setIsSavingAiSettings] = useState(false);
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setOrigin(window.location.origin);
+    if (evolutionConfig.autoBotEnabled !== undefined) {
+      setAutoBotEnabled(evolutionConfig.autoBotEnabled !== false);
     }
-  }, []);
-  const bookingUrl = `${origin}/${slug}/reservar`;
-
-  // Dynamic default texts based on real salon profile & services
-  const defaultPricesText =
-    services && services.length > 0
-      ? `*Servicios y Precios en ${business.name}:*\n` +
-        services
-          .slice(0, 4)
-          .map((s) => `• *${s.name}*: Gs. ${s.price.toLocaleString("es-PY")}`)
-          .join("\n") +
-        `\n\nPodés ver la carta completa y reservar tu turno aquí:\n${bookingUrl}`
-      : `Podés consultar nuestra carta completa de servicios y reservar tu turno al instante aquí:\n${bookingUrl}`;
-
-  const defaultLocationText = `*Ubicación & Horarios:*\nEstamos en ${business.address || "Avda. Santa Teresa 1420 c/ Denis Roa, Asunción"}.\nHorario de atención: Lunes a Sábados de 09:00 a 20:00 hs.`;
-
-  const defaultSipapText = `*Datos para Transferencia SIPAP:*\nBanco: Banco Itaú Paraguay\nTitular: ${business.name}\nRUC: 80012345-6\nAlias SIPAP: pagos@agendate.py\n\nPor favor envianos tu comprobante para validarlo.`;
-
-  const defaultWelcomeText = `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\n*1.* Agendar turno online\n*2.* Servicios y precios\n*3.* Datos de pago SIPAP\n*4.* Hablar con un asesor\n*5.* Ubicación y horarios\n\n_Escribí el número de la opción o tu consulta._`;
-
-  // Default Canvas Graph with separated action nodes
-  const buildInitialNodes = useCallback((): CanvasNode[] => {
-    return [
-      {
-        id: "node-trigger-entry",
-        type: "trigger",
-        title: "Mensaje Entrante",
-        x: 40,
-        y: 190,
-        enabled: true,
-        config: {},
-      },
-      {
-        id: "node-welcome-hub",
-        type: "welcome",
-        title: "Saludo & Menú",
-        x: 270,
-        y: 160,
-        enabled: true,
-        config: {
-          welcomeText: defaultWelcomeText,
-          fallbackText: "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo.",
-        },
-      },
-      {
-        id: "node-menu-router",
-        type: "menu",
-        title: "Enrutador de Opciones",
-        x: 530,
-        y: 130,
-        enabled: true,
-        config: {},
-      },
-      // 4 SEPARATED ACTION NODES + LOCATION
-      {
-        id: "node-act-link",
-        type: "action_link",
-        title: "Link de Reservas",
-        x: 820,
-        y: 20,
-        enabled: true,
-        config: {
-          key: "1",
-          keywords: ["1", "turno", "agendar", "cita", "reserva", "reservar", "hora"],
-          response: `¡Excelente! Podés elegir tu servicio, ver los profesionales y reservar tu turno con confirmación inmediata acá:\n${bookingUrl}`,
-        },
-      },
-      {
-        id: "node-act-prices",
-        type: "action_prices",
-        title: "Servicios & Precios",
-        x: 820,
-        y: 130,
-        enabled: true,
-        config: {
-          key: "2",
-          keywords: ["2", "precio", "costo", "tarifa", "cuanto", "vale", "servicios"],
-          response: defaultPricesText,
-        },
-      },
-      {
-        id: "node-act-sipap",
-        type: "action_sipap",
-        title: "Datos SIPAP",
-        x: 820,
-        y: 240,
-        enabled: true,
-        config: {
-          key: "3",
-          keywords: ["3", "sipap", "transferencia", "banco", "pagos", "cuenta"],
-          response: defaultSipapText,
-        },
-      },
-      {
-        id: "node-act-human",
-        type: "action_human",
-        title: "Asesor Humano",
-        x: 820,
-        y: 350,
-        enabled: true,
-        config: {
-          key: "4",
-          keywords: ["4", "humano", "persona", "asesor", "hablar", "ayuda"],
-          response: "¡Claro que sí! Un integrante de nuestro equipo tomará la conversación en breve. Por favor dejanos tu consulta detallada.",
-        },
-      },
-      {
-        id: "node-act-location",
-        type: "action_location",
-        title: "Ubicación & Horarios",
-        x: 820,
-        y: 460,
-        enabled: true,
-        config: {
-          key: "5",
-          keywords: ["5", "donde", "ubicacion", "direccion", "llegar", "horario"],
-          response: defaultLocationText,
-        },
-      },
-      {
-        id: "node-keywords-trigger",
-        type: "keyword",
-        title: "Palabras Clave",
-        x: 270,
-        y: 400,
-        enabled: true,
-        config: {
-          keywords: ["consulta", "info", "promo", "duda"],
-          response: `Gracias por contactarnos. Podés ver nuestros horarios y reservar tu lugar en tiempo real aquí:\n${bookingUrl}`,
-        },
-      },
-      // APPOINTMENT AUTOMATIONS BRANCH
-      {
-        id: "node-trigger-booking",
-        type: "booking_trigger",
-        title: "Turno Confirmado en Web",
-        x: 40,
-        y: 600,
-        enabled: true,
-        config: {},
-      },
-      {
-        id: "node-confirm-card",
-        type: "confirmation",
-        title: "Confirmación Inmediata",
-        x: 320,
-        y: 580,
-        enabled: true,
-        config: {
-          templateTrigger: "confirmacion",
-          response: "¡Hola {cliente}! Tu turno para *{servicio}* con *{profesional}* quedó confirmado para el *{fecha} a las {hora} hs* en {negocio}.\n\nUbicación: {direccion}\nVer o gestionar tu turno: {link_autogestion}\n\n¡Te esperamos!",
-        },
-      },
-      {
-        id: "node-remind-24h",
-        type: "reminder",
-        title: "Recordatorio 24h Antes",
-        x: 620,
-        y: 580,
-        enabled: true,
-        config: {
-          templateTrigger: "recordatorio_24h",
-          response: "¡Hola {cliente}! Te recordamos tu turno de mañana *{fecha} a las {hora} hs* para *{servicio}* en *{negocio}*.\n\n¿Nos confirmás tu asistencia? Podés autogestionar aquí:\n{link_autogestion}",
-        },
-      },
-      {
-        id: "node-remind-2h",
-        type: "reminder",
-        title: "Recordatorio 2h Antes",
-        x: 900,
-        y: 580,
-        enabled: true,
-        config: {
-          templateTrigger: "recordatorio_2h",
-          response: "¡Hola {cliente}! Te recordamos que tu turno es en 2 horas ({hora} hs). Te estamos esperando en {negocio} ({direccion}). ¡Nos vemos pronto!",
-        },
-      },
-    ];
-  }, [bookingUrl, business.address, business.name, defaultLocationText, defaultPricesText, defaultSipapText, defaultWelcomeText]);
-
-  const defaultConnections: CanvasConnection[] = [
-    { id: "conn-1", fromNodeId: "node-trigger-entry", toNodeId: "node-welcome-hub" },
-    { id: "conn-2", fromNodeId: "node-welcome-hub", toNodeId: "node-menu-router" },
-    { id: "conn-3", fromNodeId: "node-menu-router", toNodeId: "node-act-link" },
-    { id: "conn-4", fromNodeId: "node-menu-router", toNodeId: "node-act-prices" },
-    { id: "conn-5", fromNodeId: "node-menu-router", toNodeId: "node-act-sipap" },
-    { id: "conn-6", fromNodeId: "node-menu-router", toNodeId: "node-act-human" },
-    { id: "conn-7", fromNodeId: "node-menu-router", toNodeId: "node-act-location" },
-    { id: "conn-8", fromNodeId: "node-trigger-entry", toNodeId: "node-keywords-trigger" },
-    { id: "conn-9", fromNodeId: "node-keywords-trigger", toNodeId: "node-act-link" },
-    { id: "conn-10", fromNodeId: "node-trigger-booking", toNodeId: "node-confirm-card" },
-    { id: "conn-11", fromNodeId: "node-confirm-card", toNodeId: "node-remind-24h" },
-    { id: "conn-12", fromNodeId: "node-remind-24h", toNodeId: "node-remind-2h" },
-  ];
-
-  // Canvas State: Loaded from DB/Local if present, otherwise initial nodes
-  const [nodes, setNodes] = useState<CanvasNode[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedLocal = localStorage.getItem("agendate_canvas_nodes");
-        if (savedLocal) {
-          const parsed = JSON.parse(savedLocal);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return sanitizeNodes(parsed, buildInitialNodes());
-          }
-        }
-      } catch (e) {}
+    if (evolutionConfig.aiTone) {
+      setAiTone(evolutionConfig.aiTone);
     }
-    if (
-      evolutionConfig.canvasNodes &&
-      Array.isArray(evolutionConfig.canvasNodes) &&
-      evolutionConfig.canvasNodes.length > 0
-    ) {
-      return sanitizeNodes(evolutionConfig.canvasNodes, buildInitialNodes());
+    if (evolutionConfig.aiInstructions !== undefined) {
+      setAiInstructions(evolutionConfig.aiInstructions);
     }
-    return buildInitialNodes();
-  });
-
-  const [connections, setConnections] = useState<CanvasConnection[]>(() => {
-    if (
-      evolutionConfig.canvasConnections &&
-      Array.isArray(evolutionConfig.canvasConnections) &&
-      evolutionConfig.canvasConnections.length > 0
-    ) {
-      return evolutionConfig.canvasConnections;
+    if (evolutionConfig.humanHandoffPhone !== undefined) {
+      setHumanHandoffPhone(evolutionConfig.humanHandoffPhone);
     }
-    return defaultConnections;
-  });
+  }, [evolutionConfig]);
 
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>("node-act-link");
-  const [zoom, setZoom] = useState(1);
-  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
-
-  // Canvas Pan & Dragging state (fluid position persistence)
-  const [pan, setPan] = useState<{ x: number; y: number }>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedPan = localStorage.getItem("agendate_canvas_pan");
-        if (savedPan) return JSON.parse(savedPan);
-      } catch (e) {}
-    }
-    return { x: 0, y: 0 };
-  });
-  const isPanningRef = useRef(false);
-  const [isPanning, setIsPanning] = useState(false);
-  const panStartRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
-
-  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
-  const dragStartRef = useRef<{ startX: number; startY: number; nodeStartX: number; nodeStartY: number } | null>(null);
-  const canvasRef = useRef<HTMLDivElement | null>(null);
-
-  // Modal State: Support & Assistance
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-
-  // Listen for Guided Tour tab switching
+  // Sincronización de pestaña con el Tour Guiado
   useEffect(() => {
-    const handleTourTab = (e: Event) => {
-      const customEvent = e as CustomEvent<{ tab: "canva" | "simulador" | "plantillas" }>;
-      if (customEvent.detail?.tab) {
-        setActiveTab(customEvent.detail.tab);
+    function handleTabSwitch(e: Event) {
+      const customEvent = e as CustomEvent<{ tab?: string }>;
+      const targetTab = customEvent.detail?.tab;
+      if (targetTab === "recordatorios" || targetTab === "plantillas") {
+        setActiveTab("recordatorios");
+      } else if (targetTab === "asistente" || targetTab === "canva" || targetTab === "simulador") {
+        setActiveTab("asistente");
       }
+    }
+    window.addEventListener("agendate-switch-whatsapp-tab", handleTabSwitch);
+    return () => {
+      window.removeEventListener("agendate-switch-whatsapp-tab", handleTabSwitch);
     };
-    window.addEventListener("agendate-switch-whatsapp-tab", handleTourTab);
-    return () => window.removeEventListener("agendate-switch-whatsapp-tab", handleTourTab);
   }, []);
 
-  // Templates tab state
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
-    whatsappTemplates[0]?.id || "wt-confirmacion"
-  );
-  const [testPhone, setTestPhone] = useState(
-    business.whatsappNumber || business.phone || "+595 981 700 800"
-  );
-  const [sendingTest, setSendingTest] = useState(false);
+  function handleSaveAiSettings() {
+    setIsSavingAiSettings(true);
+    updateEvolutionConfig({
+      autoBotEnabled,
+      aiTone,
+      aiInstructions,
+      humanHandoffPhone: humanHandoffPhone.trim(),
+    });
+    setTimeout(() => {
+      setIsSavingAiSettings(false);
+      pushToast("success", "Configuración guardada correctamente.");
+    }, 350);
+  }
 
-  // Modal QR
+  // Modales
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
-  const [qrCounter, setQrCounter] = useState(45);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [modalPhoneNumber, setModalPhoneNumber] = useState(
     evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800"
   );
 
-  // Simulator State: STARTS COMPLETELY EMPTY (Zero dummy messages)
+  // Simulador de WhatsApp en Vivo
   const [simChatMessages, setSimChatMessages] = useState<
     {
       id: string;
@@ -572,10 +230,26 @@ export default function BotWhatsAppPage() {
         location: string;
       };
     }[]
-  >([]);
+  >([
+    {
+      id: "welcome-init",
+      sender: "bot",
+      type: "text",
+      text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\nPodés preguntarme por *precios*, *horarios libres* o pedirme para *agendar tu turno*.`,
+      time: "10:00",
+    },
+  ]);
   const [simInput, setSimInput] = useState("");
   const [isBotTypingSim, setIsBotTypingSim] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Pestaña de Recordatorios Automáticos
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
+    whatsappTemplates[0]?.id || "wt-confirmacion"
+  );
+  const [testPhone, setTestPhone] = useState(
+    business.whatsappNumber || business.phone || "+595 981 000 000"
+  );
 
   const currentTemplate =
     whatsappTemplates.find((t) => t.id === selectedTemplateId) ||
@@ -587,327 +261,30 @@ export default function BotWhatsAppPage() {
     }
   }, [simChatMessages, isBotTypingSim]);
 
-  // QR Code generator
+  // Generador de Código QR
   const generateQrCode = useCallback(() => {
     const sessionId = `AGPY_${(business.slug || "central").toUpperCase()}_${Date.now()}`;
     const payload = `2@${Array.from({ length: 24 }, () =>
       Math.floor(Math.random() * 16).toString(16)
     ).join("")},${sessionId},${Date.now()}`;
+
     QRCode.toDataURL(payload, {
-      width: 250,
+      width: 260,
       margin: 2,
       color: {
-        dark: "#0f172a",
+        dark: "#111827",
         light: "#ffffff",
       },
     })
-      .then((url) => {
-        setQrCodeDataUrl(url);
-        setQrCounter(45);
-      })
-      .catch((err) => {
-        console.error("Error generating QR:", err);
-      });
+      .then((url) => setQrCodeDataUrl(url))
+      .catch((err) => console.error("Error generating QR:", err));
   }, [business.slug]);
 
   useEffect(() => {
     if (isConnectModalOpen) {
       generateQrCode();
-      const interval = setInterval(() => {
-        setQrCounter((prev) => {
-          if (prev <= 1) {
-            generateQrCode();
-            return 45;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
     }
   }, [isConnectModalOpen, generateQrCode]);
-
-  // ═══════════════════════════════════════════════════════════════════
-  // TWO-WAY SYNCHRONIZATION: CANVAS NODES <-> WHATSAPP TEMPLATES
-  // ═══════════════════════════════════════════════════════════════════
-
-  function updateNode(nodeId: string, patch: Partial<CanvasNode>) {
-    setNodes((prev) =>
-      prev.map((node) => (node.id === nodeId ? { ...node, ...patch } : node))
-    );
-
-    // Two-way synchronization: If a reminder/confirmation node is toggled, update templates store!
-    if (patch.enabled !== undefined) {
-      if (nodeId === "node-remind-24h") {
-        const tmpl = whatsappTemplates.find((t) => t.id === "wt-recordatorio-24h");
-        if (tmpl && tmpl.enabled !== patch.enabled) {
-          toggleWhatsAppTemplate("wt-recordatorio-24h");
-        }
-      } else if (nodeId === "node-remind-2h") {
-        const tmpl = whatsappTemplates.find((t) => t.id === "wt-recordatorio-2h");
-        if (tmpl && tmpl.enabled !== patch.enabled) {
-          toggleWhatsAppTemplate("wt-recordatorio-2h");
-        }
-      } else if (nodeId === "node-confirm-card") {
-        const tmpl = whatsappTemplates.find((t) => t.id === "wt-confirmacion");
-        if (tmpl && tmpl.enabled !== patch.enabled) {
-          toggleWhatsAppTemplate("wt-confirmacion");
-        }
-      }
-    }
-  }
-
-  function handleToggleTemplate(templateId: string) {
-    toggleWhatsAppTemplate(templateId);
-
-    // Reflected in canvas nodes immediately
-    const targetNodeId =
-      templateId === "wt-confirmacion"
-        ? "node-confirm-card"
-        : templateId === "wt-recordatorio-24h"
-        ? "node-remind-24h"
-        : templateId === "wt-recordatorio-2h"
-        ? "node-remind-2h"
-        : null;
-
-    if (targetNodeId) {
-      setNodes((prev) =>
-        prev.map((n) => (n.id === targetNodeId ? { ...n, enabled: !n.enabled } : n))
-      );
-    }
-  }
-
-  function updateNodeConfig(nodeId: string, configPatch: Partial<CanvasNode["config"]>) {
-    setNodes((prev) =>
-      prev.map((node) =>
-        node.id === nodeId
-          ? { ...node, config: { ...node.config, ...configPatch } }
-          : node
-      )
-    );
-  }
-
-  function deleteNode(nodeId: string) {
-    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
-    setConnections((prev) =>
-      prev.filter((c) => c.fromNodeId !== nodeId && c.toNodeId !== nodeId)
-    );
-    if (selectedNodeId === nodeId) {
-      setSelectedNodeId(null);
-    }
-    pushToast("success", "Nodo eliminado del flujo.");
-  }
-
-  // Create specialized action nodes directly with auto-incremented non-duplicate key
-  function createSpecializedNode(type: NodeType, title: string, defaultText: string, suggestedKey?: string) {
-    const nextKey = suggestedKey || getNextAvailableKey(nodes);
-    const newNodeId = `node-${type}-${Date.now()}`;
-    const newNode: CanvasNode = {
-      id: newNodeId,
-      type: type,
-      title: title,
-      x: 820,
-      y: 100 + nodes.length * 35,
-      enabled: true,
-      config: {
-        key: nextKey,
-        response: defaultText,
-        keywords: [nextKey],
-      },
-    };
-
-    setNodes((prev) => {
-      const next = [...prev, newNode];
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("agendate_canvas_nodes", JSON.stringify(next));
-        }
-      } catch (e) {}
-      return next;
-    });
-    setConnections((prev) => [
-      ...prev,
-      { id: `conn-${Date.now()}`, fromNodeId: "node-menu-router", toNodeId: newNodeId },
-    ]);
-    setSelectedNodeId(newNodeId);
-    setIsInspectorOpen(true);
-    setAddMenuOpen(false);
-    pushToast("success", `Nodo '${title}' creado con opción ${nextKey}.`);
-  }
-
-  // Save flow, validate duplicate keys, and sync to DB
-  function handleSaveCanvasFlow() {
-    // Validate uniqueness of option keys among enabled action nodes
-    const keyMap = new Map<string, string[]>();
-    for (const n of nodes) {
-      if (n.enabled && n.config?.key) {
-        const k = n.config.key.trim().toLowerCase();
-        if (!keyMap.has(k)) keyMap.set(k, []);
-        keyMap.get(k)!.push(n.title);
-      }
-    }
-    const duplicateEntries = Array.from(keyMap.entries()).filter(([_, titles]) => titles.length > 1);
-    if (duplicateEntries.length > 0) {
-      const [dupKey, dupTitles] = duplicateEntries[0];
-      pushToast(
-        "error",
-        `Conflicto de opciones: La opción '${dupKey}' está repetida en "${dupTitles.join('" y "')}". Cada opción del menú debe tener un número único.`
-      );
-      return;
-    }
-
-    const actionNodes = nodes.filter((n) =>
-      [
-        "action_link",
-        "action_prices",
-        "action_sipap",
-        "action_human",
-        "action_location",
-      ].includes(n.type)
-    );
-    const keywordNodes = nodes.filter((n) => n.type === "keyword");
-    const welcomeNode = nodes.find((n) => n.type === "welcome");
-    const confirmNode = nodes.find((n) => n.type === "confirmation");
-    const remind24hNode = nodes.find((n) => n.id === "node-remind-24h");
-    const remind2hNode = nodes.find((n) => n.id === "node-remind-2h");
-
-    const mappedMenuOptions: BotMainMenuOption[] = actionNodes.map((n, i) => {
-      let actType: "none" | "send_link" | "send_sipap" | "human_handoff" = "none";
-      if (n.type === "action_link") actType = "send_link";
-      else if (n.type === "action_sipap") actType = "send_sipap";
-      else if (n.type === "action_human") actType = "human_handoff";
-
-      return {
-        id: n.id,
-        key: n.config.key || String(i + 1),
-        title: n.title,
-        response: n.config.response || "Información solicitada.",
-        action: actType,
-        enabled: n.enabled,
-      };
-    });
-
-    const mappedKeywordRules: BotKeywordRule[] = keywordNodes.map((n) => ({
-      id: n.id,
-      keywords: n.config.keywords || ["consulta"],
-      response: n.config.response || "Gracias por comunicarte.",
-      action: "none",
-      enabled: n.enabled,
-    }));
-
-    if (confirmNode?.config.response) {
-      updateWhatsAppTemplate("wt-confirmacion", confirmNode.config.response);
-    }
-    if (remind24hNode?.config.response) {
-      updateWhatsAppTemplate("wt-recordatorio-24h", remind24hNode.config.response);
-    }
-    if (remind2hNode?.config.response) {
-      updateWhatsAppTemplate("wt-recordatorio-2h", remind2hNode.config.response);
-    }
-
-    updateEvolutionConfig({
-      canvasNodes: nodes,
-      canvasConnections: connections,
-      mainMenuOptions: mappedMenuOptions,
-      keywordRules: mappedKeywordRules,
-      welcomeMessage: welcomeNode?.config.welcomeText || evolutionConfig.welcomeMessage,
-      fallbackMessage: welcomeNode?.config.fallbackText || evolutionConfig.fallbackMessage,
-    });
-
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("agendate_canvas_nodes", JSON.stringify(nodes));
-        localStorage.setItem("agendate_canvas_connections", JSON.stringify(connections));
-        localStorage.setItem("agendate_canvas_pan", JSON.stringify(pan));
-      } catch (e) {}
-    }
-
-    pushToast("success", "Flujo y posiciones guardadas con éxito en la base de datos.");
-  }
-
-  // Node Drag & Canvas Pan Handlers
-  function handleNodePointerDown(e: React.PointerEvent, nodeId: string) {
-    e.stopPropagation();
-    setSelectedNodeId(nodeId);
-    setIsInspectorOpen(true);
-
-    const targetNode = nodes.find((n) => n.id === nodeId);
-    if (!targetNode) return;
-
-    setDraggingNodeId(nodeId);
-    dragStartRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      nodeStartX: targetNode.x,
-      nodeStartY: targetNode.y,
-    };
-  }
-
-  function handleCanvasPointerDown(e: React.PointerEvent) {
-    if ((e.target as HTMLElement).closest("[data-canvas-node]")) return;
-    isPanningRef.current = true;
-    setIsPanning(true);
-    panStartRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      initialPanX: pan.x,
-      initialPanY: pan.y,
-    };
-  }
-
-  const handleCanvasPointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (draggingNodeId && dragStartRef.current) {
-        const dx = (e.clientX - dragStartRef.current.startX) / zoom;
-        const dy = (e.clientY - dragStartRef.current.startY) / zoom;
-
-        const newX = Math.max(10, Math.round((dragStartRef.current.nodeStartX + dx) / 10) * 10);
-        const newY = Math.max(10, Math.round((dragStartRef.current.nodeStartY + dy) / 10) * 10);
-
-        setNodes((prev) =>
-          prev.map((node) =>
-            node.id === draggingNodeId ? { ...node, x: newX, y: newY } : node
-          )
-        );
-      } else if (isPanningRef.current && panStartRef.current) {
-        const dx = e.clientX - panStartRef.current.startX;
-        const dy = e.clientY - panStartRef.current.startY;
-        setPan({
-          x: Math.round(panStartRef.current.initialPanX + dx),
-          y: Math.round(panStartRef.current.initialPanY + dy),
-        });
-      }
-    },
-    [draggingNodeId, zoom]
-  );
-
-  const handleCanvasPointerUp = useCallback(() => {
-    if (draggingNodeId) {
-      setNodes((currentNodes) => {
-        try {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("agendate_canvas_nodes", JSON.stringify(currentNodes));
-          }
-        } catch (e) {}
-        return currentNodes;
-      });
-    }
-    if (isPanningRef.current) {
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("agendate_canvas_pan", JSON.stringify(pan));
-        }
-      } catch (e) {}
-    }
-    setDraggingNodeId(null);
-    dragStartRef.current = null;
-    isPanningRef.current = false;
-    setIsPanning(false);
-    panStartRef.current = null;
-  }, [draggingNodeId, pan]);
-
-  // ═══════════════════════════════════════════════════════════════════
-  // SIMULATOR ENGINE (Zero API Buttons, 100% Pure WhatsApp Text)
-  // ═══════════════════════════════════════════════════════════════════
 
   function triggerSimMessage(text: string) {
     setSimInput(text);
@@ -916,14 +293,14 @@ export default function BotWhatsAppPage() {
     }, 50);
   }
 
-  function handleSimSendMessage(e?: React.FormEvent, directText?: string) {
+  async function handleSimSendMessage(e?: React.FormEvent, directText?: string) {
     if (e) e.preventDefault();
     const userMsg = (directText || simInput).trim();
     if (!userMsg || isBotTypingSim) return;
 
     const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    // Client bubble
+    // Mensaje del cliente
     setSimChatMessages((prev) => [
       ...prev,
       {
@@ -937,188 +314,38 @@ export default function BotWhatsAppPage() {
     setSimInput("");
     setIsBotTypingSim(true);
 
-    setTimeout(() => {
-      const lower = userMsg.toLowerCase().trim();
+    try {
       const botTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-      // Special case: Simulation of interactive appointment confirmation card
-      if (
-        lower === "confirmar" ||
-        lower === "confirmar turno" ||
-        lower === "mi turno" ||
-        lower.includes("confirmar")
-      ) {
-        setSimChatMessages((prev) => [
-          ...prev,
-          {
-            id: `msg-${Date.now()}`,
-            sender: "bot",
-            type: "card",
-            time: botTime,
-            cardData: {
-              service: services[0]?.name || "Corte Fade Clásico + Perfilado",
-              staff: "Diego Franco",
-              datetime: "Jueves 24 de Octubre · 15:30 hs",
-              price: services[0]?.price ? `Gs. ${services[0].price.toLocaleString("es-PY")}` : "Gs. 75.000",
-              location: business.address || "Avda. Santa Teresa 1420",
-            },
-          },
-        ]);
-        setIsBotTypingSim(false);
-        return;
-      }
-
-      // Check Canvas Nodes
-      const welcomeNode = nodes.find((n) => n.type === "welcome");
-      const welcomeText = welcomeNode?.config.welcomeText || defaultWelcomeText;
-      const fallbackText =
-        welcomeNode?.config.fallbackText ||
-        "Disculpá, no entendí esa opción. Por favor elegí una opción escribiendo el número correspondiente (ej: 1 o 2) o escribí *humano* para contactar a nuestro equipo.";
-
-      const activeNodes = nodes.filter(
-        (n) =>
-          n.enabled !== false &&
-          (
-            n.type.startsWith("action") ||
-            (n.type as string) === "action" ||
-            n.type === "keyword" ||
-            Boolean(n.config.response)
-          )
-      );
-
-      const isGreeting =
-        lower === "hola" ||
-        lower === "buenas" ||
-        lower === "buen dia" ||
-        lower === "buen día" ||
-        lower === "buenas tardes" ||
-        lower === "buenas noches" ||
-        lower === "menu" ||
-        lower === "menú" ||
-        lower === "inicio" ||
-        lower === "empezar" ||
-        lower === "hola buenas";
-
       let replyText = "";
 
-      if (isGreeting) {
-        replyText = welcomeText;
-      } else {
-        const cleanMsg = lower.replace(/[^a-z0-9áéíóúüñ\s]/gi, "").trim();
-
-        // 1. Direct option number match ("1", "2", "3"...)
-        let matchedNode = activeNodes.find((n) => {
-          const nodeKey = (n.config.key || "").toLowerCase().trim();
-          if (!nodeKey) return false;
-          if (cleanMsg === nodeKey || lower === nodeKey) return true;
-          if (
-            cleanMsg.startsWith(`${nodeKey} `) ||
-            cleanMsg.endsWith(` ${nodeKey}`) ||
-            cleanMsg === `opcion ${nodeKey}` ||
-            cleanMsg === `opción ${nodeKey}` ||
-            cleanMsg === `la ${nodeKey}`
-          ) {
-            return true;
-          }
-          return false;
-        });
-
-        // 2. Keyword match
-        if (!matchedNode) {
-          matchedNode = activeNodes.find((n) => {
-            const keywords = (n.config.keywords || []).map((k) => k.toLowerCase().trim()).filter(Boolean);
-            return keywords.some((kw) => cleanMsg === kw || cleanMsg.includes(kw) || kw.includes(cleanMsg));
+      if (autoBotEnabled) {
+        try {
+          const aiRes = await fetch("/api/ai/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: userMsg,
+              tenantSlug: business.slug,
+              clientPhone: business.whatsappNumber || business.phone || "+595 981 765 432",
+              clientName: "Cliente WhatsApp",
+            }),
           });
-        }
-
-        // 3. Node title match
-        if (!matchedNode) {
-          matchedNode = activeNodes.find((n) => {
-            const title = (n.title || "").toLowerCase().trim();
-            return title.length > 3 && (cleanMsg.includes(title) || title.includes(cleanMsg));
-          });
-        }
-
-        // 4. Semantic fallback matches for common inquiries
-        if (!matchedNode) {
-          if (
-            cleanMsg.includes("precio") ||
-            cleanMsg.includes("costo") ||
-            cleanMsg.includes("tarifa") ||
-            cleanMsg.includes("cuanto") ||
-            cleanMsg.includes("servicio") ||
-            cleanMsg.includes("corte")
-          ) {
-            matchedNode = activeNodes.find(
-              (n) =>
-                n.type === "action_prices" ||
-                n.config.key === "2" ||
-                n.title.toLowerCase().includes("precio")
-            );
-          } else if (
-            cleanMsg.includes("persona") ||
-            cleanMsg.includes("humano") ||
-            cleanMsg.includes("asesor") ||
-            cleanMsg.includes("hablar") ||
-            cleanMsg.includes("alguien") ||
-            cleanMsg.includes("atencion")
-          ) {
-            matchedNode = activeNodes.find(
-              (n) =>
-                n.type === "action_human" ||
-                n.config.key === "4" ||
-                n.title.toLowerCase().includes("humano") ||
-                n.title.toLowerCase().includes("asesor")
-            );
-          } else if (
-            cleanMsg.includes("donde") ||
-            cleanMsg.includes("ubicacion") ||
-            cleanMsg.includes("ubicación") ||
-            cleanMsg.includes("direccion") ||
-            cleanMsg.includes("dirección") ||
-            cleanMsg.includes("horario") ||
-            cleanMsg.includes("llegar")
-          ) {
-            matchedNode = activeNodes.find(
-              (n) =>
-                n.type === "action_location" ||
-                n.config.key === "5" ||
-                n.title.toLowerCase().includes("ubicacion") ||
-                n.title.toLowerCase().includes("horario")
-            );
-          } else if (
-            cleanMsg.includes("reserva") ||
-            cleanMsg.includes("turno") ||
-            cleanMsg.includes("agendar") ||
-            cleanMsg.includes("cita") ||
-            cleanMsg.includes("link")
-          ) {
-            matchedNode = activeNodes.find(
-              (n) =>
-                n.type === "action_link" ||
-                n.config.key === "1" ||
-                n.title.toLowerCase().includes("reserva")
-            );
-          } else if (
-            cleanMsg.includes("sipap") ||
-            cleanMsg.includes("transfer") ||
-            cleanMsg.includes("banco") ||
-            cleanMsg.includes("pago") ||
-            cleanMsg.includes("cuenta")
-          ) {
-            matchedNode = activeNodes.find(
-              (n) =>
-                n.type === "action_sipap" ||
-                n.config.key === "3" ||
-                n.title.toLowerCase().includes("sipap")
-            );
+          if (aiRes.ok) {
+            const aiData = await aiRes.json();
+            if (aiData.replyText) {
+              replyText = aiData.replyText;
+            }
           }
+        } catch (err) {
+          console.error("Error consultando asistente:", err);
         }
+      }
 
-        if (matchedNode && matchedNode.config.response) {
-          replyText = matchedNode.config.response;
+      if (!replyText) {
+        if (!autoBotEnabled) {
+          replyText = "El asistente se encuentra pausado en este momento. Podés activarlo en el interruptor de la izquierda.";
         } else {
-          replyText = fallbackText;
+          replyText = `¡Hola! Gracias por comunicarte con *${business.name}*. Podés consultarme por precios, horarios libres o pedirme agendar tu turno.`;
         }
       }
 
@@ -1132,8 +359,11 @@ export default function BotWhatsAppPage() {
           time: botTime,
         },
       ]);
+    } catch (e) {
+      console.error(e);
+    } finally {
       setIsBotTypingSim(false);
-    }, 800);
+    }
   }
 
   function handleConnectSimulated() {
@@ -1145,15 +375,12 @@ export default function BotWhatsAppPage() {
     });
     updateBusiness({ whatsappNumber: phoneToSet });
     setIsConnectModalOpen(false);
-    pushToast(
-      "success",
-      `WhatsApp vinculado con éxito (${phoneToSet}). Sesión compartida con el CRM.`
-    );
+    pushToast("success", `WhatsApp vinculado con éxito (${phoneToSet}).`);
   }
 
   function handleDisconnect() {
     updateEvolutionConfig({ connected: false, phoneNumber: "" });
-    pushToast("error", "WhatsApp desconectado. Todas las opciones han sido pausadas.");
+    pushToast("error", "WhatsApp desconectado.");
   }
 
   function insertTag(tag: string) {
@@ -1165,57 +392,33 @@ export default function BotWhatsAppPage() {
   function getPreviewText(rawBody: string) {
     return rawBody
       .replace(/{cliente}/g, "Martín Benítez")
-      .replace(/{servicio}/g, services[0]?.name || "Corte Fade + Perfilado")
+      .replace(/{servicio}/g, "Corte Fade Clásico")
       .replace(/{profesional}/g, "Diego Franco")
       .replace(/{fecha}/g, "Jueves 24 de Octubre")
-      .replace(/{hora}/g, "15:30")
+      .replace(/{hora}/g, "15:30 hs")
       .replace(/{negocio}/g, business.name)
       .replace(/{direccion}/g, business.address || "Avda. Santa Teresa 1420")
-      .replace(/{link_autogestion}/g, `${bookingUrl}?token=demo123`)
-      .replace(/{link_negocio}/g, bookingUrl);
+      .replace(/{link_autogestion}/g, `https://agendate.py/${business.slug}/turno/AG-9421`)
+      .replace(/{link_negocio}/g, `https://agendate.py/${business.slug}`);
   }
 
-  async function handleSendTest() {
-    if (!testPhone.trim()) {
-      pushToast("error", "Ingresá un número de teléfono válido.");
-      return;
-    }
-    setSendingTest(true);
-    try {
-      await new Promise((r) => setTimeout(r, 900));
-      pushToast(
-        "success",
-        `Mensaje de prueba enviado exitosamente a ${testPhone}`
-      );
-    } catch {
-      pushToast("error", "Error al enviar mensaje de prueba.");
-    } finally {
-      setSendingTest(false);
-    }
-  }
-
-  const activeConnectedPhone =
-    evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
-
-  const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
-  const activeNodesCount = nodes.filter((n) => n.enabled).length;
-  const nodesActivePct = nodes.length > 0 ? Math.round((activeNodesCount / nodes.length) * 100) : 100;
+  const activeConnectedPhone = evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* ═══ NATIVE PAGE HEADER ═══ */}
-      <div
-        data-tour="bot-header-console"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
-      >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Bot WhatsApp & Flujo
-        </h1>
+      {/* ═══ CABECERA PRINCIPAL ═══ */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Asistente de WhatsApp</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Atención automática de tus clientes y recordatorios de turnos por WhatsApp.
+          </p>
+        </div>
 
-        {/* Action Dock */}
+        {/* Botones de acción */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Help / Support Button */}
           <button
             type="button"
             data-tour="bot-support-action"
@@ -1226,7 +429,7 @@ export default function BotWhatsAppPage() {
             <span>Ayuda / Soporte</span>
           </button>
 
-          {/* Connection Status Badge */}
+          {/* Estado de conexión */}
           <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs">
             <span
               className={`h-2.5 w-2.5 rounded-full ${
@@ -1235,21 +438,17 @@ export default function BotWhatsAppPage() {
                   : "bg-amber-500 ring-4 ring-amber-500/20"
               }`}
             />
-            <span>
-              {isConnected ? "Línea Conectada" : "Desconectado"}
-            </span>
+            <span>{isConnected ? "WhatsApp Conectado" : "WhatsApp Desconectado"}</span>
           </div>
 
-          {/* Direct Connect / QR button */}
           {isConnected ? (
             <button
               type="button"
               onClick={() => setIsConnectModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition hover:brightness-110 cursor-pointer"
-              style={{ backgroundColor: brandColor }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition hover:brightness-110 cursor-pointer bg-slate-800 hover:bg-slate-700"
             >
               <QrCode className="h-3.5 w-3.5" />
-              <span>Reconectar QR</span>
+              <span>Cambiar QR</span>
             </button>
           ) : (
             <button
@@ -1264,909 +463,376 @@ export default function BotWhatsAppPage() {
         </div>
       </div>
 
-      {/* ═══ APPLE INSET CONTAINER: TELEMETRY & GAUGES ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Card 1: Circular Progress Gauges (Active Nodes & Bot Availability) */}
-          <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <Bot className="h-4 w-4" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    Telemetría del Canal WhatsApp
-                  </span>
-                </div>
-                <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
-                  {connections.length} enlaces activos
-                </span>
-              </div>
-
-              {/* Gauges & Summary */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                {/* Gauge 1: Active Nodes Ratio */}
-                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
-                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        className="text-slate-200 dark:text-slate-800"
-                        strokeWidth="4"
-                        stroke="currentColor"
-                        fill="transparent"
-                      />
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        strokeWidth="4"
-                        strokeDasharray={113}
-                        strokeDashoffset={113 - (113 * nodesActivePct) / 100}
-                        strokeLinecap="round"
-                        stroke={brandColor}
-                        fill="transparent"
-                        className="transition-all duration-700 ease-out"
-                      />
-                    </svg>
-                    <span className="absolute font-mono font-bold text-xs text-slate-800 dark:text-white">
-                      {nodesActivePct}%
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                      Nodos Operativos
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                      {activeNodesCount} de {nodes.length} nodos activos
-                    </span>
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                      Canva 100% interactivo
-                    </span>
-                  </div>
-                </div>
-
-                {/* Gauge 2: Automated 24/7 Availability */}
-                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
-                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        className="text-emerald-500/20"
-                        strokeWidth="4"
-                        stroke="currentColor"
-                        fill="transparent"
-                      />
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        strokeWidth="4"
-                        strokeDasharray={113}
-                        strokeDashoffset={0}
-                        strokeLinecap="round"
-                        stroke="#10b981"
-                        fill="transparent"
-                      />
-                    </svg>
-                    <span className="absolute font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
-                      24/7
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                      Respuesta Inmediata
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-mono">
-                      {activeConnectedPhone}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      Disparador sin demoras
-                    </span>
-                  </div>
-                </div>
-              </div>
+      {/* ═══ RESUMEN RÁPIDO DEL SERVICIO ═══ */}
+      <div data-tour="bot-status-card" className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+              <Bot className="h-5 w-5" />
             </div>
-
-            {/* Quick KPI Bar */}
-            <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Recordatorios</span>
-                <span className="font-mono font-extrabold text-xs text-emerald-600 dark:text-emerald-400">
-                  24h y 2h antes
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Canal CRM</span>
-                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                  Sincronizado
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Nodos en Lienzo</span>
-                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                  {nodes.length} bloques
-                </span>
-              </div>
+            <div>
+              <span className="text-[11px] text-slate-400 font-semibold block">Respuestas Automáticas</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                {autoBotEnabled ? "Activo las 24 horas" : "Pausado"}
+              </span>
             </div>
           </div>
 
-          {/* Card 2: Interactive Controls & Live Preview Shortcut */}
-          <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                    <Smartphone className="h-4 w-4" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    Simulador & Vistas Rápidas
-                  </span>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
-                  Interactivo
-                </span>
-              </div>
-
-              <div className="space-y-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("simulador")}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-100 dark:border-slate-800 transition group text-left cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600">
-                      <MessageCircle className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition">
-                        Abrir Simulador WhatsApp
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        Probá en vivo las opciones del menú como si fueras un cliente
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-slate-400">↗</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("plantillas")}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-100 dark:border-slate-800 transition group text-left cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600">
-                      <Layers className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition">
-                        Plantillas & Textos Oficiales
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        Configurá confirmaciones y mensajes predeterminados
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-slate-400">↗</span>
-                </button>
-              </div>
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600">
+              <Clock className="h-5 w-5" />
             </div>
-
-            <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-slate-400 text-[11px]">
-                {isConnected ? "Línea lista para responder" : "Conectá la línea para operar"}
+            <div>
+              <span className="text-[11px] text-slate-400 font-semibold block">Recordatorios a Clientes</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                Avisos 24h y 2h antes
               </span>
-              <button
-                type="button"
-                onClick={() => setActiveTab("canva")}
-                className="font-bold hover:underline cursor-pointer flex items-center gap-1"
-                style={{ color: brandColor }}
-              >
-                <span>Ver lienzo</span>
-                <ArrowRight className="h-3 w-3" />
-              </button>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600">
+              <Phone className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-400 font-semibold block">Línea del Local</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate block max-w-[170px]">
+                {isConnected ? activeConnectedPhone : "Pendiente de vincular"}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Connection warning gate if not connected */}
-      <div data-tour="bot-status-card">
-        {!isConnected && (
-          <div
-            data-tour="bot-connect-gate"
-            className="rounded-2xl border border-amber-300/80 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-950/20 p-5 sm:p-6 text-center space-y-3 shadow-xs"
-          >
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-              <Lock className="h-5 w-5" />
-            </div>
-
-            <div className="max-w-xl mx-auto space-y-1">
-              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                Vinculá tu WhatsApp para activar el Bot en vivo
-              </h2>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                Para responder a clientes reales y enviar recordatorios automáticos 24h y 2h antes, es necesario escanear el código QR con el número del local.
-              </p>
-            </div>
-
-            <div className="pt-1 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setIsConnectModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 text-xs shadow-md transition active:scale-98 cursor-pointer"
-              >
-                <QrCode className="h-4 w-4" />
-                <span>Vincular mi WhatsApp Ahora (Escanear QR)</span>
-              </button>
-            </div>
+      {/* Alerta si WhatsApp no está vinculado */}
+      {!isConnected && (
+        <div className="rounded-2xl border border-amber-300/80 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/20 p-5 text-center space-y-3">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+            <Lock className="h-5 w-5" />
           </div>
-        )}
-      </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+              Vinculá tu WhatsApp para activar las respuestas
+            </h2>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              Escaneá el código QR desde tu celular para que tu asistente pueda atender a tus clientes y enviar recordatorios de turnos.
+            </p>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => setIsConnectModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 text-xs shadow-md transition cursor-pointer"
+            >
+              <QrCode className="h-4 w-4" />
+              <span>Vincular mi WhatsApp Ahora (QR)</span>
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* ═══ 3. MAIN TABS (TITLES: Canva de flujo, SIMULADOR, Plantillas) ═══ */}
-      <div className="p-1 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex flex-wrap gap-1">
+      {/* ═══ PESTAÑAS (SÓLO 2: ASISTENTE VIRTUAL O RECORDATORIOS) ═══ */}
+      <div className="p-1 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex gap-1">
         <button
           type="button"
-          data-tour="bot-tab-canva"
-          onClick={() => setActiveTab("canva")}
-          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-            activeTab === "canva"
+          onClick={() => setActiveTab("asistente")}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            activeTab === "asistente"
               ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          <Share2 className="h-3.5 w-3.5 text-emerald-600" />
-          <span>Canva de flujo</span>
+          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+          <span>Asistente Virtual</span>
         </button>
 
         <button
           type="button"
-          data-tour="bot-tab-simulador"
-          onClick={() => setActiveTab("simulador")}
-          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
-            activeTab === "simulador"
-              ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          <Smartphone className="h-3.5 w-3.5 text-sky-600" />
-          <span>SIMULADOR</span>
-        </button>
-
-        <button
-          type="button"
-          data-tour="bot-tab-plantillas"
-          onClick={() => setActiveTab("plantillas")}
-          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-            activeTab === "plantillas"
+          onClick={() => setActiveTab("recordatorios")}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            activeTab === "recordatorios"
               ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           <Layers className="h-3.5 w-3.5 text-indigo-600" />
-          <span>Plantillas</span>
+          <span>Recordatorios y Mensajes</span>
         </button>
       </div>
 
-      {/* ═══ 4. TAB CONTENTS ═══ */}
-      {activeTab === "canva" ? (
-        /* ═══ TAB 1: CANVA DE FLUJO CON NODOS DE ACCIÓN SEPARADOS ═══ */
-        <div className="space-y-4" data-tour="bot-rules-card">
-          {/* Canvas Top Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-2xs">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                <Share2 className="h-4 w-4" />
-              </span>
-              <div>
-                <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight">
-                  Canva de flujo
-                </h3>
-                <span className="text-[11px] text-slate-400">
-                  Arrastrá nodos individuales para cada acción y hacé clic para editar
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Zoom Controls */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setZoom((z) => Math.max(0.6, Number((z - 0.1).toFixed(1))))}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
-                  title="Alejar"
-                >
-                  <ZoomOut className="h-3.5 w-3.5" />
-                </button>
-                <span className="text-[11px] font-mono font-bold px-1.5 text-slate-700 dark:text-slate-300">
-                  {Math.round(zoom * 100)}%
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setZoom((z) => Math.min(1.4, Number((z + 0.1).toFixed(1))))}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
-                  title="Acercar"
-                >
-                  <ZoomIn className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setZoom(1);
-                    setPan({ x: 0, y: 0 });
-                    try {
-                      if (typeof window !== "undefined") {
-                        localStorage.setItem("agendate_canvas_pan", JSON.stringify({ x: 0, y: 0 }));
-                      }
-                    } catch (e) {}
-                  }}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
-                  title="Restablecer Vista y Centrar"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              {/* Add Node Dropdown (Separated specialized actions) */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setAddMenuOpen(!addMenuOpen)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-xs font-bold transition active:scale-98 cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Agregar Nodo</span>
-                  <ChevronDown className="h-3 w-3 ml-0.5" />
-                </button>
-
-                {addMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-xl p-1.5 z-40 space-y-1">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        createSpecializedNode(
-                          "action_link",
-                          "Link de Reservas",
-                          `¡Excelente! Podés reservar tu turno acá:\n${bookingUrl}`
-                        )
-                      }
-                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 transition cursor-pointer"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 text-emerald-600" />
-                      <span>+ Link de Reservas</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        createSpecializedNode(
-                          "action_prices",
-                          "Servicios y Precios",
-                          defaultPricesText
-                        )
-                      }
-                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:text-sky-600 transition cursor-pointer"
-                    >
-                      <ListOrdered className="h-3.5 w-3.5 text-sky-600" />
-                      <span>+ Servicios y Precios</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        createSpecializedNode(
-                          "action_sipap",
-                          "Datos SIPAP",
-                          defaultSipapText
-                        )
-                      }
-                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-600 transition cursor-pointer"
-                    >
-                      <CreditCard className="h-3.5 w-3.5 text-purple-600" />
-                      <span>+ Datos SIPAP</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        createSpecializedNode(
-                          "action_human",
-                          "Asesor Humano",
-                          "Un asesor humano te responderá a la brevedad."
-                        )
-                      }
-                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 transition cursor-pointer"
-                    >
-                      <UserCheck className="h-3.5 w-3.5 text-amber-600" />
-                      <span>+ Asesor Humano</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        createSpecializedNode(
-                          "action_location",
-                          "Ubicación & Horarios",
-                          defaultLocationText
-                        )
-                      }
-                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition cursor-pointer"
-                    >
-                      <MapPin className="h-3.5 w-3.5 text-rose-600" />
-                      <span>+ Ubicación & Horarios</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* "Probar Flujo" Button NEXT TO "Guardar Flujo" */}
-              <button
-                type="button"
-                onClick={() => setActiveTab("simulador")}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition active:scale-98 cursor-pointer shadow-2xs"
-              >
-                <Play className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Probar Flujo</span>
-              </button>
-
-              {/* Save Workflow Button */}
-              <button
-                type="button"
-                onClick={handleSaveCanvasFlow}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
-              >
-                <Check className="h-3.5 w-3.5" />
-                <span>Guardar Flujo</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Canvas Workspace + Inspector Drawer */}
-          <div className="relative rounded-3xl border border-slate-200/90 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950 overflow-hidden flex h-[680px] shadow-sm">
-            {/* Viewport with Pan and Zoom */}
-            <div
-              ref={canvasRef}
-              onPointerDown={handleCanvasPointerDown}
-              onPointerMove={handleCanvasPointerMove}
-              onPointerUp={handleCanvasPointerUp}
-              className={`flex-1 relative overflow-auto select-none [background-image:radial-gradient(#cbd5e1_1.2px,transparent_1.2px)] dark:[background-image:radial-gradient(#334155_1.2px,transparent_1.2px)] [background-size:20px_20px] ${
-                isPanning ? "cursor-grabbing" : "cursor-grab"
-              }`}
-              style={{ height: "680px" }}
-            >
-              <div
-                className="relative"
-                style={{
-                  width: "2200px",
-                  height: "1400px",
-                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                  transformOrigin: "top left",
-                  transition: draggingNodeId || isPanning ? "none" : "transform 0.15s ease",
-                }}
-              >
-                {/* SVG Connections Layer (Bezier Curves) */}
-                <svg
-                  className="absolute inset-0 pointer-events-none w-full h-full"
-                  style={{ zIndex: 1 }}
-                >
-                  {connections.map((conn) => {
-                    const fromNode = nodes.find((n) => n.id === conn.fromNodeId);
-                    const toNode = nodes.find((n) => n.id === conn.toNodeId);
-                    if (!fromNode || !toNode) return null;
-
-                    const nodeWidth = 210;
-                    const nodeHeight = 85;
-
-                    const x1 = fromNode.x + nodeWidth;
-                    const y1 = fromNode.y + nodeHeight / 2;
-                    const x2 = toNode.x;
-                    const y2 = toNode.y + nodeHeight / 2;
-
-                    const dx = Math.max(40, (x2 - x1) / 2);
-                    const pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-
-                    const isConnectedToSelected =
-                      selectedNodeId === fromNode.id || selectedNodeId === toNode.id;
-
-                    return (
-                      <g key={conn.id}>
-                        <path
-                          d={pathD}
-                          fill="none"
-                          stroke={isConnectedToSelected ? "#10b981" : "#94a3b8"}
-                          strokeWidth={isConnectedToSelected ? 3 : 2}
-                          strokeDasharray={isConnectedToSelected ? "none" : "5,4"}
-                          strokeOpacity={isConnectedToSelected ? 0.9 : 0.4}
-                          strokeLinecap="round"
-                        />
-                        <circle cx={x1} cy={y1} r={4} fill="#10b981" />
-                        <circle cx={x2} cy={y2} r={4} fill={isConnectedToSelected ? "#10b981" : "#64748b"} />
-                      </g>
-                    );
-                  })}
-                </svg>
-
-                {/* Nodes Layer */}
-                <div className="absolute inset-0" style={{ zIndex: 2 }}>
-                  {nodes.map((node) => {
-                    const isSelected = selectedNodeId === node.id;
-                    const isDragging = draggingNodeId === node.id;
-
-                    const typeStyles: Record<
-                      NodeType,
-                      { badge: string; color: string; icon: typeof Bot }
-                    > = {
-                      trigger: { badge: "Disparador", color: "border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-400", icon: MessageCircle },
-                      welcome: { badge: "Bienvenida", color: "border-sky-400 bg-sky-500/10 text-sky-700 dark:text-sky-400", icon: Bot },
-                      menu: { badge: "Enrutador Menú", color: "border-indigo-400 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400", icon: ListOrdered },
-                      action_link: { badge: "Link Reservas", color: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400", icon: ExternalLink },
-                      action_prices: { badge: "Servicios & Precios", color: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-400", icon: ListOrdered },
-                      action_sipap: { badge: "Datos SIPAP", color: "border-purple-500 bg-purple-500/10 text-purple-700 dark:text-purple-400", icon: CreditCard },
-                      action_human: { badge: "Asesor Humano", color: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400", icon: UserCheck },
-                      action_location: { badge: "Ubicación", color: "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400", icon: MapPin },
-                      keyword: { badge: "Palabra Clave", color: "border-purple-400 bg-purple-500/10 text-purple-700 dark:text-purple-400", icon: Tag },
-                      booking_trigger: { badge: "Evento Turno", color: "border-teal-400 bg-teal-500/10 text-teal-700 dark:text-teal-400", icon: Calendar },
-                      confirmation: { badge: "Confirmación", color: "border-emerald-600 bg-emerald-600/15 text-emerald-800 dark:text-emerald-300 font-bold", icon: CheckCircle2 },
-                      reminder: { badge: "Recordatorio", color: "border-blue-400 bg-blue-500/10 text-blue-700 dark:text-blue-400", icon: Clock },
-                    };
-
-                    const style = typeStyles[node.type] || typeStyles.action_link;
-                    const Icon = style.icon;
-
-                    return (
-                      <div
-                        key={node.id}
-                        data-canvas-node="true"
-                        onPointerDown={(e) => handleNodePointerDown(e, node.id)}
-                        className={`absolute w-[210px] rounded-2xl p-3.5 transition-shadow cursor-grab active:cursor-grabbing border ${
-                          isSelected
-                            ? "border-emerald-500 bg-white dark:bg-slate-900 shadow-lg shadow-emerald-500/15 ring-2 ring-emerald-500/40 z-20"
-                            : "border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 shadow-sm hover:border-slate-300 dark:hover:border-white/20 z-10"
-                        } ${!node.enabled ? "opacity-50" : ""}`}
-                        style={{
-                          left: `${node.x}px`,
-                          top: `${node.y}px`,
-                          transform: isDragging ? "scale(1.02)" : "scale(1)",
-                        }}
-                      >
-                        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-white/5">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase ${style.color}`}
-                          >
-                            <Icon className="h-2.5 w-2.5" />
-                            {style.badge}
-                          </span>
-
-                          <span
-                            className={`h-2 w-2 rounded-full ${
-                              node.enabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                            }`}
-                          />
-                        </div>
-
-                        <div className="pt-2">
-                          <p className="text-xs font-black text-slate-900 dark:text-white truncate">
-                            {node.title}
-                          </p>
-                          {node.config.key && (
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                              Opción: *{node.config.key}*
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-700 border-2 border-white dark:border-slate-900" />
-                        <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Inspector Drawer (Node Settings Panel) */}
-            {isInspectorOpen && selectedNode && (
-              <div className="w-[320px] sm:w-[380px] shrink-0 border-l border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 flex flex-col h-[680px] z-30 shadow-md">
-                {/* Header */}
-                <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900">
-                  <div className="min-w-0 pr-2">
-                    <span className="text-[10px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
-                      Configuración del Nodo
-                    </span>
-                    <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
-                      {selectedNode.title}
-                    </h4>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleSaveCanvasFlow();
-                        setIsInspectorOpen(false);
-                      }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
-                      title="Guardar cambios de este nodo"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      <span>Guardar</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsInspectorOpen(false)}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Form Body: Scrollable */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 [scrollbar-width:thin]">
-                  {/* Node State (Active / Paused) */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Estado del Nodo:
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-400">
-                        {selectedNode.enabled ? "Activo" : "Pausado"}
-                      </span>
-                      <CustomSwitch
-                        checked={selectedNode.enabled}
-                        onChange={(checked) => updateNode(selectedNode.id, { enabled: checked })}
-                      />
+      {/* ═══ CONTENIDO DE PESTAÑAS ═══ */}
+      {activeTab === "asistente" ? (
+        /* PESTAÑA 1: ASISTENTE VIRTUAL + SIMULADOR LADO A LADO */
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-12 items-start">
+            {/* Columna Izquierda: Configuración Simple del Asistente */}
+            <div className="lg:col-span-7 space-y-4">
+              {/* 1. Interruptor Maestro */}
+              <div data-tour="bot-asistente-card" className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                        Atención Automática por WhatsApp
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Responde consultas, audios, fotos de pagos y agenda turnos las 24 horas.
+                      </p>
                     </div>
                   </div>
 
-                  {/* Title Input */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Título en el Canva:
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedNode.title}
-                      onChange={(e) => updateNode(selectedNode.id, { title: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans"
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span
+                      className={`text-xs font-bold ${
+                        autoBotEnabled ? "text-emerald-600" : "text-slate-400"
+                      }`}
+                    >
+                      {autoBotEnabled ? "Activado" : "Pausado"}
+                    </span>
+                    <CustomSwitch
+                      checked={autoBotEnabled}
+                      onChange={(nextVal) => {
+                        setAutoBotEnabled(nextVal);
+                        updateEvolutionConfig({ autoBotEnabled: nextVal });
+                        pushToast(
+                          "success",
+                          nextVal
+                            ? "Asistente activado para responder a tus clientes."
+                            : "Asistente pausado temporalmente."
+                        );
+                      }}
+                      label="Activar o pausar asistente"
                     />
                   </div>
+                </div>
+              </div>
 
-                  {/* Option Key Number with Duplicate Detection & Quick Selector */}
-                  {selectedNode.config.key !== undefined && (() => {
-                    const currentKey = selectedNode.config.key?.trim() || "";
-                    const duplicateNode = currentKey
-                      ? nodes.find(
-                          (n) =>
-                            n.id !== selectedNode.id &&
-                            n.enabled &&
-                            n.config.key &&
-                            n.config.key.trim().toLowerCase() === currentKey.toLowerCase()
-                        )
-                      : null;
-
-                    const otherUsedKeys = new Set(
-                      nodes
-                        .filter((n) => n.id !== selectedNode.id && n.enabled && n.config.key)
-                        .map((n) => n.config.key!.trim())
-                    );
-
-                    return (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                            Número de Opción en el Menú:
-                          </label>
-                          {duplicateNode && (
-                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900/50">
-                              Duplicado con &ldquo;{duplicateNode.title}&rdquo;
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={selectedNode.config.key}
-                            onChange={(e) => updateNodeConfig(selectedNode.id, { key: e.target.value })}
-                            className={`w-16 rounded-xl border p-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none text-center ${
-                              duplicateNode
-                                ? "border-rose-500 bg-rose-50/50 dark:bg-rose-950/20 focus:border-rose-600 ring-2 ring-rose-500/20"
-                                : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 focus:border-emerald-500"
-                            }`}
-                          />
-
-                          {/* Quick unique numbers picker */}
-                          <div className="flex-1 flex flex-wrap gap-1">
-                            {["1", "2", "3", "4", "5", "6", "7", "8"].map((num) => {
-                              const isTaken = otherUsedKeys.has(num);
-                              const isSelected = selectedNode.config.key === num;
-                              return (
-                                <button
-                                  key={num}
-                                  type="button"
-                                  disabled={isTaken}
-                                  onClick={() => updateNodeConfig(selectedNode.id, { key: num })}
-                                  className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer ${
-                                    isSelected
-                                      ? "bg-emerald-600 text-white shadow-xs"
-                                      : isTaken
-                                      ? "bg-slate-100 dark:bg-slate-800/40 text-slate-300 dark:text-slate-600 cursor-not-allowed line-through"
-                                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-500/10 hover:text-emerald-600 border border-slate-200/50 dark:border-white/5"
-                                  }`}
-                                  title={isTaken ? `Opción ${num} ya asignada a otro nodo` : `Asignar opción ${num}`}
-                                >
-                                  {num}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {duplicateNode ? (
-                          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
-                            Atención: La opción &ldquo;{selectedNode.config.key}&rdquo; ya está configurada en &ldquo;{duplicateNode.title}&rdquo;. Cada opción debe tener un número único para que el bot responda correctamente.
-                          </p>
-                        ) : (
-                          <p className="text-[10px] text-slate-400">
-                            Número que el cliente escribe para seleccionar esta acción en el menú.
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Keywords for automatic matching */}
-                  {selectedNode.config.keywords !== undefined && (
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Palabras que activan esta opción (separadas por coma):
-                      </label>
-                      <input
-                        type="text"
-                        value={(selectedNode.config.keywords || []).join(", ")}
-                        onChange={(e) =>
-                          updateNodeConfig(selectedNode.id, {
-                            keywords: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                          })
-                        }
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                        placeholder="ej: 1, turno, agendar"
-                      />
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        Si el cliente escribe cualquiera de estas palabras, se dispara esta respuesta.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Response Textarea with WhatsApp formatting rules helper */}
-                  {selectedNode.config.response !== undefined && (
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Respuesta de Texto enviada por WhatsApp:
-                      </label>
-                      <textarea
-                        rows={6}
-                        value={selectedNode.config.response || ""}
-                        onChange={(e) =>
-                          updateNodeConfig(selectedNode.id, { response: e.target.value })
-                        }
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                        placeholder="Texto de respuesta..."
-                      />
-                      {/* Gray helper text for WhatsApp formatting rules */}
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
-                        Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Welcome Node Textarea */}
-                  {selectedNode.type === "welcome" && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Mensaje de Bienvenida:
-                        </label>
-                        <textarea
-                          rows={6}
-                          value={selectedNode.config.welcomeText || ""}
-                          onChange={(e) =>
-                            updateNodeConfig(selectedNode.id, { welcomeText: e.target.value })
-                          }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                        />
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
-                          Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Mensaje de Fallback (No reconocido):
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={selectedNode.config.fallbackText || ""}
-                          onChange={(e) =>
-                            updateNodeConfig(selectedNode.id, { fallbackText: e.target.value })
-                          }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
-                        />
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
-                          Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
-                        </p>
-                      </div>
-                    </div>
-                  )}
+              {/* 2. Lo que hace tu asistente (explicado simple, sin tecnicismos) */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-emerald-600" />
+                    <span>¿Qué hace tu Asistente Automático?</span>
+                  </h3>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                    Todo incluido
+                  </span>
                 </div>
 
-                {/* Fixed Bottom Action Bar */}
-                <div className="p-3 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-slate-800/50 shrink-0 flex items-center gap-2">
-                  {[
-                    "action_link",
-                    "action_prices",
-                    "action_sipap",
-                    "action_human",
-                    "action_location",
-                    "keyword",
-                  ].includes(selectedNode.type) && (
-                    <button
-                      type="button"
-                      onClick={() => deleteNode(selectedNode.id)}
-                      className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-bold transition cursor-pointer"
-                      title="Eliminar este nodo"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                      <Calendar className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      <span>Agenda turnos y dice precios</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Sabe qué horarios y profesionales tenés libres y confirma la cita en tu agenda.
+                    </p>
+                  </div>
 
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                      <RotateCcw className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+                      <span>Cambia o cancela citas</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Si el cliente te avisa que no puede venir o quiere otra hora, el asistente lo cambia solo.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                      <Mic className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                      <span>Escucha audios de WhatsApp</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Si el cliente manda un audio en vez de escribir, el asistente lo escucha y le responde.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                      <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      <span>Revisa fotos de transferencias</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Si te mandan una foto de comprobante SIPAP, revisa el banco y el monto pagado.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                      <Tag className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                      <span>Informa sobre puntos y premios</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Le dice al cliente cuántos puntos tiene acumulados y qué descuentos puede usar.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                      <UserCheck className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                      <span>Pausa si contestás vos</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Si vos contestás desde tu WhatsApp o el cliente pide una persona, se pausa 30 minutos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Personalización Funcional */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                <div className="pb-2 border-b border-slate-100 dark:border-white/5">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                    Personalización de Mensajes
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Elegí cómo querés que se exprese tu asistente con tus clientes.
+                  </p>
+                </div>
+
+                {/* Tono */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    ¿Cómo querés que hable tu asistente?:
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      {
+                        id: "amigable",
+                        icon: Smile,
+                        title: "Amigable y Cercano",
+                        desc: "De 'vos', amable, cálido y con modismos paraguayos.",
+                      },
+                      {
+                        id: "formal",
+                        icon: Briefcase,
+                        title: "Formal y Respetuoso",
+                        desc: "De 'usted', cortés, corporativo y sobrio.",
+                      },
+                      {
+                        id: "conciso",
+                        icon: Zap,
+                        title: "Rápido y Breve",
+                        desc: "Respuestas cortas, directas y al grano.",
+                      },
+                    ].map((t) => {
+                      const IconComp = t.icon;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setAiTone(t.id as any)}
+                          className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                            aiTone === t.id
+                              ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                              : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold flex items-center gap-1.5">
+                                <IconComp className="h-3.5 w-3.5 text-emerald-600" />
+                                {t.title}
+                              </span>
+                              {aiTone === t.id && (
+                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-[10px] opacity-80 leading-snug">{t.desc}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Instrucciones del local */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Datos importantes de tu local (opcional):
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {aiInstructions.length} letras
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={aiInstructions}
+                    onChange={(e) => setAiInstructions(e.target.value)}
+                    placeholder="Poné acá cualquier dato útil. Ejemplo: Tenemos estacionamiento propio gratuito. Los sábados de mañana atendemos por orden de llegada. Aceptamos tarjetas y transferencias."
+                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition resize-none"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Tu asistente recordará esta información cada vez que hable con un cliente.
+                  </p>
+                </div>
+
+                {/* Teléfono de aviso */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Tu WhatsApp para recibir avisos de turnos:
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={humanHandoffPhone}
+                      onChange={(e) => setHumanHandoffPhone(e.target.value)}
+                      placeholder="+595 981 123 456"
+                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Te enviaremos un aviso por WhatsApp cuando un cliente reserve o pida hablar con vos.
+                  </p>
+                </div>
+
+                {/* Botón Guardar Cambios */}
+                <div className="pt-2 flex justify-end">
                   <button
                     type="button"
-                    onClick={() => {
-                      handleSaveCanvasFlow();
-                      setIsInspectorOpen(false);
-                    }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-900/10 transition active:scale-98 cursor-pointer"
+                    onClick={handleSaveAiSettings}
+                    disabled={isSavingAiSettings}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition active:scale-98 cursor-pointer disabled:opacity-50"
                   >
-                    <Check className="h-4 w-4" />
-                    <span>Guardar Nodo</span>
+                    {isSavingAiSettings ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        <span>Guardando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Guardar Cambios</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      ) : activeTab === "simulador" ? (
-        /* ═══ TAB 2: AUTHENTIC iPHONE 16 PRO SIMULATOR (EXACT LANDING UI) ═══ */
-        <div className="space-y-6" data-tour="bot-simulator-card">
-          <div className="grid gap-6 lg:grid-cols-12 items-start">
-            {/* The iPhone 16 Pro Mockup */}
-            <div className="lg:col-span-7 flex flex-col items-center">
-              <div className="relative mx-auto flex w-full items-center justify-center p-2 sm:p-4">
-                {/* 3D Titanium Bezel Container */}
+            </div>
+
+            {/* Columna Derecha: Simulador iPhone en Vivo */}
+            <div data-tour="bot-simulator-card" className="lg:col-span-5 space-y-4">
+              <div className="relative mx-auto flex w-full items-center justify-center p-1 sm:p-2">
+                {/* Marco de iPhone */}
                 <div className="relative w-full max-w-[320px] sm:max-w-[350px] rounded-[44px] sm:rounded-[50px] p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]">
-                  {/* Left Side Buttons */}
+                  {/* Botones laterales */}
                   <div className="absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
                   <div className="absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
                   <div className="absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
-                  {/* Right Side Buttons */}
                   <div className="absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e]" />
-                  <div className="absolute -right-[2.5px] top-[280px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-[#222327] to-[#3a3b40]" />
 
-                  {/* Outer Glass Bezel */}
+                  {/* Pantalla */}
                   <div className="relative overflow-hidden rounded-[38px] sm:rounded-[42px] bg-black p-[2.5px] shadow-inner">
-                    {/* Inner Display Canvas */}
-                    <div className="relative flex h-[580px] sm:h-[620px] flex-col overflow-hidden rounded-[36px] sm:rounded-[40px] bg-[#efeae2]">
-                      {/* WhatsApp Doodle Pattern Overlay */}
+                    <div className="relative flex h-[560px] sm:h-[600px] flex-col overflow-hidden rounded-[36px] sm:rounded-[40px] bg-[#efeae2]">
+                      {/* Fondo patrón WhatsApp */}
                       <div
                         className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-multiply"
                         style={{
@@ -2176,141 +842,88 @@ export default function BotWhatsAppPage() {
                         }}
                       />
 
-                      {/* 1. iOS STATUS BAR */}
-                      <div className="relative z-30 flex h-11 items-center justify-between px-7 pt-2 text-[#000000] font-semibold text-[13px] tracking-tight select-none">
+                      {/* Barra superior de iPhone */}
+                      <div className="relative z-30 flex h-10 items-center justify-between px-7 pt-2 text-[#000000] font-semibold text-[13px] tracking-tight select-none">
                         <span>9:41</span>
-
                         {/* Dynamic Island */}
-                        <div className="absolute left-1/2 top-2.5 -translate-x-1/2 flex h-6 w-24 items-center justify-between rounded-full bg-black px-2 shadow-sm">
-                          <div className="h-2.5 w-2.5 rounded-full bg-[#0a0d17] border border-blue-950/40 relative">
-                            <div className="absolute inset-0.5 rounded-full bg-[#1b2342] opacity-80" />
-                          </div>
-                          <div className="h-2 w-2 rounded-full bg-[#050508]" />
+                        <div className="absolute left-1/2 top-2.5 -translate-x-1/2 flex h-5 w-20 items-center justify-between rounded-full bg-black px-2 shadow-sm">
+                          <div className="h-2 w-2 rounded-full bg-[#1b2342]" />
+                          <div className="h-1.5 w-1.5 rounded-full bg-[#050508]" />
                         </div>
-
-                        {/* Wi-Fi, Signal, Battery */}
-                        <div className="flex items-center gap-1.5 text-black">
-                          <div className="flex items-end gap-[1.5px] h-3">
-                            <span className="w-[2.5px] h-1.5 bg-black rounded-xs" />
-                            <span className="w-[2.5px] h-2 bg-black rounded-xs" />
-                            <span className="w-[2.5px] h-2.5 bg-black rounded-xs" />
-                            <span className="w-[2.5px] h-3 bg-black rounded-xs" />
-                          </div>
-                          <Wifi className="h-3.5 w-3.5 stroke-[2.4]" />
-                          <div className="flex items-center">
-                            <div className="h-3 w-5 rounded-[4px] border border-black p-[1px] flex items-center">
-                              <div className="h-full w-full rounded-[2px] bg-black" />
-                            </div>
-                            <div className="h-1.5 w-[1.5px] rounded-r-xs bg-black ml-[0.5px]" />
+                        {/* Señal y batería */}
+                        <div className="flex items-center gap-1 text-black">
+                          <Wifi className="h-3 w-3 stroke-[2.4]" />
+                          <div className="h-2.5 w-4 rounded-[3px] border border-black p-[1px] flex items-center">
+                            <div className="h-full w-full rounded-[1px] bg-black" />
                           </div>
                         </div>
                       </div>
 
-                      {/* 2. WHATSAPP HEADER WITH LOCAL NAME & PROFILE */}
+                      {/* Cabecera de WhatsApp */}
                       <div className="relative z-20 flex items-center justify-between bg-[#008069] px-3 py-2 text-white shadow-sm">
                         <div className="flex items-center gap-2 min-w-0">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSimChatMessages([
-                                {
-                                  id: `reset-1`,
-                                  sender: "client",
-                                  type: "text",
-                                  text: "Hola",
-                                  time: "14:28",
-                                },
-                                {
-                                  id: `reset-2`,
-                                  sender: "bot",
-                                  type: "text",
-                                  text: defaultWelcomeText,
-                                  time: "14:28",
-                                },
-                              ])
-                            }
-                            className="flex items-center -ml-1 text-white/90 hover:text-white"
-                          >
-                            <ChevronLeft className="h-5 w-5 stroke-[2.5]" />
-                          </button>
-
-                          {/* Profile Avatar (Local's Actual Photo or Initials) */}
+                          <ChevronLeft className="h-5 w-5 stroke-[2.5] -ml-1 text-white/90" />
                           <div className="relative shrink-0">
-                            {business.logo || business.banner ? (
+                            {business.logo ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
-                                src={business.logo || business.banner}
+                                src={business.logo}
                                 alt={business.name}
-                                className="h-9 w-9 rounded-full object-cover border border-white/40 shadow-xs"
+                                className="h-8 w-8 rounded-full object-cover border border-white/40"
                               />
                             ) : (
-                              <div className="h-9 w-9 rounded-full bg-white/20 border border-white/40 flex items-center justify-center font-bold text-xs shadow-xs text-white">
+                              <div className="h-8 w-8 rounded-full bg-white/20 border border-white/40 flex items-center justify-center font-bold text-xs text-white">
                                 {business.name.slice(0, 2).toUpperCase()}
                               </div>
                             )}
-                            <BadgeCheck className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-white fill-[#10b981]" />
+                            <BadgeCheck className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 text-white fill-[#10b981]" />
                           </div>
-
                           <div className="min-w-0">
-                            <p className="truncate text-xs font-black text-white leading-tight">
+                            <p className="truncate text-xs font-bold text-white leading-tight">
                               {business.name}
                             </p>
-                            <p className="text-[10px] text-white/80 leading-none mt-0.5 font-medium">
-                              {isBotTypingSim ? (
-                                <span className="text-white font-bold italic animate-pulse">
-                                  escribiendo...
-                                </span>
-                              ) : (
-                                "en línea · Cuenta Comercial"
-                              )}
+                            <p className="text-[10px] text-white/80 leading-none mt-0.5">
+                              {isBotTypingSim ? "escribiendo..." : "en línea · Cuenta Comercial"}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2.5 text-white/90 pr-1">
-                          <Video className="h-4 w-4" />
-                          <Phone className="h-3.5 w-3.5" />
+                        <div className="flex items-center gap-2 text-white/90">
                           <button
                             type="button"
                             onClick={() => {
                               setSimChatMessages([]);
-                              pushToast("success", "Simulador reiniciado. Chat en blanco.");
+                              pushToast("success", "Conversación reiniciada.");
                             }}
                             title="Reiniciar chat"
-                            className="rounded-full p-1 hover:bg-white/10 transition cursor-pointer"
+                            className="p-1 rounded-full hover:bg-white/10 transition cursor-pointer"
                           >
-                            <RotateCcw className="h-3.5 w-3.5 text-white/90" />
+                            <RotateCcw className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
 
-                      {/* 3. MESSAGE STREAM (WITH WHATSAPP MARKDOWN PARSING) */}
+                      {/* Lista de mensajes */}
                       <div
                         ref={chatScrollRef}
-                        className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                        className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                       >
                         <div className="text-center my-1">
-                          <span className="rounded-lg bg-[#ffffff]/80 px-2.5 py-0.5 text-[10px] font-semibold text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wider">
+                          <span className="rounded-lg bg-[#ffffff]/80 px-2.5 py-0.5 text-[10px] font-semibold text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase">
                             HOY
                           </span>
                         </div>
 
-                        <div className="mx-auto max-w-[260px] rounded-lg bg-[#ffeecd] px-2 py-1 text-center text-[9px] text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] flex items-center justify-center gap-1">
-                          <Lock className="h-2.5 w-2.5 shrink-0 text-[#54656f]" />
-                          <span>Mensajes y llamadas cifrados de extremo a extremo.</span>
-                        </div>
-
-                        {/* Empty chat state */}
                         {simChatMessages.length === 0 && (
                           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                            <div className="h-11 w-11 rounded-full bg-white shadow-xs flex items-center justify-center text-[#54656f] mb-2.5">
-                              <MessageSquare className="h-5 w-5 text-emerald-600" />
+                            <div className="h-10 w-10 rounded-full bg-white shadow-xs flex items-center justify-center text-emerald-600 mb-2">
+                              <MessageSquare className="h-5 w-5" />
                             </div>
                             <p className="text-xs font-bold text-[#111b21]">
-                              Simulador en blanco
+                              Conversación en blanco
                             </p>
-                            <p className="text-[11px] text-[#667781] mt-1 max-w-[210px] leading-relaxed">
-                              Escribí un mensaje abajo o tocá una de las opciones sugeridas a la derecha para ver cómo responde tu bot.
+                            <p className="text-[11px] text-[#667781] mt-1 max-w-[200px]">
+                              Escribí un mensaje o tocá una pregunta sugerida abajo para probar.
                             </p>
                           </div>
                         )}
@@ -2322,83 +935,32 @@ export default function BotWhatsAppPage() {
                               msg.sender === "client" ? "items-end" : "items-start"
                             }`}
                           >
-                            {/* Standard Text Bubble with Bold/Italic Parsing */}
-                            {msg.type === "text" && msg.text && (
-                              <div
-                                className={`relative max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] ${
-                                  msg.sender === "client"
-                                    ? "rounded-tr-xs bg-[#d9fdd3] text-[#111b21]"
-                                    : "rounded-tl-xs bg-white text-[#111b21]"
-                                }`}
-                              >
-                                {renderWhatsAppFormatted(msg.text)}
-                                <div className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#667781]">
-                                  <span>{msg.time}</span>
-                                  {msg.sender === "client" && (
-                                    <CheckCheck className="h-3 w-3 text-[#53bdeb]" />
-                                  )}
-                                </div>
+                            <div
+                              className={`relative max-w-[86%] rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] ${
+                                msg.sender === "client"
+                                  ? "rounded-tr-xs bg-[#d9fdd3] text-[#111b21]"
+                                  : "rounded-tl-xs bg-white text-[#111b21]"
+                              }`}
+                            >
+                              {renderWhatsAppFormatted(msg.text || "")}
+                              <div className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#667781]">
+                                <span>{msg.time}</span>
+                                {msg.sender === "client" && (
+                                  <CheckCheck className="h-3 w-3 text-[#53bdeb]" />
+                                )}
                               </div>
-                            )}
-
-                            {/* Rich Confirmation Card (Official WhatsApp Interactive) */}
-                            {msg.type === "card" && msg.cardData && (
-                              <div className="relative max-w-[90%] overflow-hidden rounded-2xl bg-white text-[#111b21] shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] rounded-tl-xs">
-                                <div className="bg-[#008069] px-3.5 py-2 text-white flex items-center justify-between">
-                                  <span className="text-[11px] font-black flex items-center gap-1">
-                                    <CheckCircle2 className="h-3.5 w-3.5" /> TURNO CONFIRMADO
-                                  </span>
-                                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono">
-                                    AG-9421
-                                  </span>
-                                </div>
-
-                                <div className="p-3 text-xs space-y-1.5">
-                                  <div className="flex items-center justify-between">
-                                    <p className="font-black text-sm text-[#111b21]">
-                                      {msg.cardData.service}
-                                    </p>
-                                    <span className="font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                                      {msg.cardData.price}
-                                    </span>
-                                  </div>
-
-                                  <div className="text-[11px] text-[#54656f] space-y-1 pt-1">
-                                    <p className="flex items-center gap-1.5 font-bold text-slate-800">
-                                      <Calendar className="h-3 w-3 text-[#008069]" />
-                                      {msg.cardData.datetime}
-                                    </p>
-                                    <p className="flex items-center gap-1.5 text-slate-600">
-                                      <MapPin className="h-3 w-3 text-[#008069]" />
-                                      {msg.cardData.location}
-                                    </p>
-                                  </div>
-
-                                  <div className="border-t border-slate-100 pt-1.5 flex items-center justify-between text-[11px]">
-                                    <span className="text-[#54656f]">Especialista:</span>
-                                    <span className="font-bold">{msg.cardData.staff}</span>
-                                  </div>
-                                </div>
-
-                                <div className="bg-slate-50 px-3 py-1 flex items-center justify-between border-t border-slate-100 text-[9px] text-[#667781]">
-                                  <span className="text-[#008069] font-bold">
-                                    agendate.py/{business.slug || "local"}
-                                  </span>
-                                  <span>{msg.time}</span>
-                                </div>
-                              </div>
-                            )}
+                            </div>
                           </div>
                         ))}
 
-                        {/* Realistic Typing Bubble */}
+                        {/* Indicador de escribiendo */}
                         {isBotTypingSim && (
                           <div className="flex justify-start">
                             <div className="rounded-2xl rounded-tl-xs bg-white px-3 py-2 text-slate-500 shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] flex items-center gap-1.5">
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-bounce" />
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-bounce [animation-delay:0.2s]" />
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-bounce [animation-delay:0.4s]" />
-                              <span className="text-[10px] ml-1 text-[#54656f] font-medium">
+                              <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-pulse" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-pulse [animation-delay:200ms]" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-pulse [animation-delay:400ms]" />
+                              <span className="text-[10px] ml-1 text-[#54656f]">
                                 escribiendo...
                               </span>
                             </div>
@@ -2406,66 +968,50 @@ export default function BotWhatsAppPage() {
                         )}
                       </div>
 
-                      {/* 4. WHATSAPP BOTTOM INPUT BAR */}
+                      {/* Barra de entrada de texto */}
                       <form
                         onSubmit={handleSimSendMessage}
                         className="relative z-20 flex items-center gap-2 bg-[#f0f2f5] p-2 border-t border-slate-200"
                       >
-                        <div className="flex h-7 w-7 items-center justify-center text-[#54656f] hover:text-[#008069] cursor-pointer">
-                          <Plus className="h-5 w-5" />
-                        </div>
                         <input
                           type="text"
                           value={simInput}
                           onChange={(e) => setSimInput(e.target.value)}
-                          placeholder="Escribir mensaje..."
-                          className="flex-1 rounded-full bg-white px-3.5 py-1.5 text-xs text-slate-800 outline-none shadow-2xs placeholder:text-slate-400 font-sans"
+                          placeholder="Escribí un mensaje..."
+                          className="flex-1 rounded-full bg-white px-3.5 py-1.5 text-xs text-slate-800 outline-none placeholder:text-slate-400"
                         />
                         <button
                           type="submit"
                           disabled={!simInput.trim() || isBotTypingSim}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#008069] text-white disabled:opacity-40 transition active:scale-95 cursor-pointer shadow-xs"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#008069] text-white disabled:opacity-40 transition cursor-pointer"
                         >
-                          {simInput.trim() ? (
-                            <Send className="h-4 w-4" />
-                          ) : (
-                            <Mic className="h-4 w-4" />
-                          )}
+                          <Send className="h-3.5 w-3.5" />
                         </button>
                       </form>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Quick Test Chips & Simulator Controls */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                    Simulación Interactiva
+              {/* Preguntas de prueba a 1 toque */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-2xs">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                    Probá tu asistente con un toque
                   </h3>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
-                    En Vivo
-                  </span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Tocá cualquiera de estas preguntas comunes de clientes para ver la respuesta:
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tocá cualquiera de estas opciones para probar en tiempo real las respuestas de tu bot en el iPhone:
-                </p>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {[
-                    "Confirmar Turno",
-                    "Hola",
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                    "precio de corte",
-                    "donde queda el local",
-                    "hablar con una persona",
+                    "¿Cuáles son los precios de corte y barba?",
+                    "¿Tenés turno disponible para hoy a las 16:00 hs?",
+                    "Quiero agendar corte para mañana con Diego",
+                    "¿Cómo te puedo transferir por SIPAP?",
+                    "¿Cuántos puntos acumulados tengo?",
+                    "Quiero hablar con una persona",
                   ].map((example) => (
                     <button
                       key={example}
@@ -2473,36 +1019,33 @@ export default function BotWhatsAppPage() {
                       onClick={() => triggerSimMessage(example)}
                       className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition cursor-pointer flex items-center justify-between active:scale-98"
                     >
-                      <span>&ldquo;{example}&rdquo;</span>
+                      <span className="truncate pr-2">&ldquo;{example}&rdquo;</span>
                       <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     </button>
                   ))}
                 </div>
 
-                <div className="pt-3 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between">
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => {
                       setSimChatMessages([]);
-                      pushToast("success", "Simulador reiniciado. Chat en blanco.");
+                      pushToast("success", "Conversación reiniciada.");
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
                   >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    <span>Reiniciar chat</span>
+                    <RotateCcw className="h-3 w-3" />
+                    <span>Limpiar chat</span>
                   </button>
-
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    iPhone 16 Pro · iOS 18
-                  </span>
+                  <span className="text-[10px] text-slate-400">Simulador en vivo</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        /* ═══ TAB 3: PLANTILLAS Y DISPARADORES AUTOMÁTICOS ═══ */
-        <div className="space-y-6" data-tour="bot-templates-card">
+        /* PESTAÑA 2: RECORDATORIOS AUTOMÁTICOS */
+        <div className="space-y-6">
           <div className="flex flex-wrap gap-2">
             {whatsappTemplates.map((template) => (
               <button
@@ -2527,115 +1070,80 @@ export default function BotWhatsAppPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-12 items-start">
-            <div className="lg:col-span-7 space-y-4">
+            <div data-tour="bot-templates-card" className="lg:col-span-7 space-y-4">
               <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
                   <div>
-                    <h2 className="text-base font-black text-slate-900 dark:text-white">
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
                       {currentTemplate?.name}
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Disparo automático despachado sin intervención humana por WhatsApp.
+                      Mensaje enviado automáticamente por WhatsApp a tus clientes.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
                     <span className="text-[11px] text-slate-400">
-                      {currentTemplate?.enabled ? "Activo" : "Pausado"}
+                      {currentTemplate?.enabled ? "Activado" : "Desactivado"}
                     </span>
                     <CustomSwitch
                       checked={Boolean(currentTemplate?.enabled)}
-                      onChange={() => currentTemplate && handleToggleTemplate(currentTemplate.id)}
+                      onChange={() => {
+                        if (currentTemplate) {
+                          toggleWhatsAppTemplate(currentTemplate.id);
+                          pushToast(
+                            "success",
+                            `Plantilla ${currentTemplate.enabled ? "desactivada" : "activada"}.`
+                          );
+                        }
+                      }}
+                      label="Activar o desactivar plantilla"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-2">
-                  <div>
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      Variables dinámicas (tocá para insertar):
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {AVAILABLE_TAGS.map((item) => (
-                        <button
-                          key={item.tag}
-                          type="button"
-                          onClick={() => insertTag(item.tag)}
-                          className="rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 transition cursor-pointer"
-                        >
-                          +{item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Cuerpo del Mensaje:
-                    </label>
-                    <textarea
-                      rows={8}
-                      value={currentTemplate?.body || ""}
-                      onChange={(e) =>
-                        currentTemplate &&
-                        updateWhatsAppTemplate(currentTemplate.id, e.target.value)
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Contenido del Mensaje:
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={currentTemplate?.body || ""}
+                    onChange={(e) => {
+                      if (currentTemplate) {
+                        updateWhatsAppTemplate(currentTemplate.id, e.target.value);
                       }
-                      className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/50 p-3.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition leading-relaxed font-sans"
-                    />
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
-                      Formato WhatsApp: *negrita*, _cursiva_, ~tachado~, ```monospacio```
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                      <Check className="h-3.5 w-3.5" /> Sincronización instantánea en base de datos
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => pushToast("success", "Plantilla guardada y lista para despacho.")}
-                      className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-xs font-bold shadow-xs hover:opacity-90 active:scale-98 transition cursor-pointer"
-                    >
-                      Confirmar Plantilla
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Test Phone Direct */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-2 shadow-2xs">
-                <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                  Probar Envío a mi Teléfono
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Enviá este mensaje de prueba a tu propio número para verificar cómo lo recibirán tus clientes.
-                </p>
-
-                <div className="mt-3 flex gap-2">
-                  <input
-                    type="text"
-                    value={testPhone}
-                    onChange={(e) => setTestPhone(e.target.value)}
-                    placeholder="+595 981 123 456"
-                    className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                    }}
+                    placeholder="Escribí el texto del mensaje..."
+                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3 text-xs text-slate-900 dark:text-white font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
                   />
-                  <button
-                    type="button"
-                    onClick={handleSendTest}
-                    disabled={sendingTest}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-500 disabled:opacity-50 transition active:scale-98 cursor-pointer"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                    <span>{sendingTest ? "Enviando..." : "Enviar Prueba"}</span>
-                  </button>
+                </div>
+
+                {/* Etiquetas para insertar */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">
+                    Hacé clic para insertar datos automáticos del cliente:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {AVAILABLE_TAGS.map((t) => (
+                      <button
+                        key={t.tag}
+                        type="button"
+                        onClick={() => insertTag(t.tag)}
+                        className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-mono text-slate-700 dark:text-slate-300 transition cursor-pointer border border-slate-200/60 dark:border-white/5"
+                      >
+                        {t.tag}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Template Preview Card with WhatsApp formatting parsing */}
+            {/* Vista Previa del Mensaje */}
             <div className="lg:col-span-5 space-y-3">
               <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-3">
-                <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">
-                  Vista Previa del Mensaje
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Así le llega el mensaje al cliente
                 </h4>
                 <div className="p-3.5 rounded-2xl bg-[#d9fdd3] text-slate-900 text-xs shadow-xs leading-relaxed">
                   {renderWhatsAppFormatted(currentTemplate ? getPreviewText(currentTemplate.body) : "")}
@@ -2650,12 +1158,9 @@ export default function BotWhatsAppPage() {
         </div>
       )}
 
-      {/* ═══ 5. IN-PAGE CONNECTION MODAL (QR LINKING) ═══ */}
+      {/* ═══ MODAL PARA VINCULAR CON CÓDIGO QR ═══ */}
       {isConnectModalOpen && (
-        <div
-          data-tour="bot-connect-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
           <div className="relative w-full max-w-md rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2.5">
@@ -2663,11 +1168,11 @@ export default function BotWhatsAppPage() {
                   <QrCode className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-sm text-slate-900 dark:text-white">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                     Vincular WhatsApp Oficial
                   </h3>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Válido para Canva del Bot y CRM Omnicanal
+                    Escaneá con tu celular para conectar
                   </span>
                 </div>
               </div>
@@ -2681,14 +1186,8 @@ export default function BotWhatsAppPage() {
               </button>
             </div>
 
-            {/* Viewfinder QR Container */}
             <div className="relative flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10">
-              <div className="relative p-3 bg-white rounded-2xl shadow-sm">
-                <div className="absolute top-1 left-1 w-4 h-4 border-t-2 border-l-2 border-emerald-600 rounded-tl-sm pointer-events-none" />
-                <div className="absolute top-1 right-1 w-4 h-4 border-t-2 border-r-2 border-emerald-600 rounded-tr-sm pointer-events-none" />
-                <div className="absolute bottom-1 left-1 w-4 h-4 border-b-2 border-l-2 border-emerald-600 rounded-bl-sm pointer-events-none" />
-                <div className="absolute bottom-1 right-1 w-4 h-4 border-b-2 border-r-2 border-emerald-600 rounded-br-sm pointer-events-none" />
-
+              <div className="relative p-4 bg-white rounded-2xl shadow-xs border border-slate-100">
                 {qrCodeDataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -2703,90 +1202,58 @@ export default function BotWhatsAppPage() {
                 )}
               </div>
 
-              <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 font-mono">
-                <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-600" />
-                <span>Actualización en: <strong>{qrCounter}s</strong></span>
+              <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                <RefreshCw className="h-3 w-3 animate-spin text-emerald-600" />
+                <span>Actualiza automáticamente cada 30 segundos</span>
               </div>
             </div>
 
-            {/* Step-by-step instructions */}
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-slate-900 dark:text-white">Pasos para conectar:</p>
-              <div className="grid grid-cols-1 gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-mono font-bold">
-                    01
-                  </span>
-                  <span className="text-[11px] leading-tight">Abrí <strong>WhatsApp</strong> en tu teléfono celular.</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-mono font-bold">
-                    02
-                  </span>
-                  <span className="text-[11px] leading-tight">Tocá los tres puntos o Ajustes &gt; <strong>Dispositivos vinculados</strong>.</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-mono font-bold">
-                    03
-                  </span>
-                  <span className="text-[11px] leading-tight">Escaneá este código QR con la cámara de tu teléfono.</span>
-                </div>
-              </div>
+            <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-100 dark:border-white/5">
+              <p className="font-bold text-slate-900 dark:text-white">¿Cómo vincular tu WhatsApp?:</p>
+              <ol className="list-decimal pl-4 space-y-1 text-[11px]">
+                <li>Abrí WhatsApp en el teléfono de tu negocio.</li>
+                <li>Tocá en <strong>Ajustes</strong> o los 3 puntos y seleccioná <strong>Dispositivos vinculados</strong>.</li>
+                <li>Tocá <strong>Vincular dispositivo</strong> y apuntá la cámara a este código QR.</li>
+              </ol>
             </div>
 
-            {/* Phone input */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Número de WhatsApp de tu Negocio:
-              </label>
-              <input
-                type="text"
-                value={modalPhoneNumber}
-                onChange={(e) => setModalPhoneNumber(e.target.value)}
-                placeholder="+595 981 700 800"
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+            <div className="flex gap-2 pt-1">
               <button
                 type="button"
                 onClick={handleConnectSimulated}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 text-xs shadow-md transition active:scale-98 cursor-pointer"
+                className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 text-xs shadow-md transition cursor-pointer"
               >
-                <CheckCircle2 className="h-4 w-4" />
-                <span>Simular Vinculación / Conectar</span>
+                Confirmar Vinculación
               </button>
-
-              <button
-                type="button"
-                onClick={() => setIsConnectModalOpen(false)}
-                className="w-full text-center py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
-              >
-                Cerrar
-              </button>
+              {isConnected && (
+                <button
+                  type="button"
+                  onClick={handleDisconnect}
+                  className="rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 text-rose-600 hover:bg-rose-100 py-2.5 px-3 text-xs font-bold transition cursor-pointer"
+                >
+                  Desconectar
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ═══ 6. MODAL: ¿NECESITÁS AYUDA? CONTACTANOS ═══ */}
+      {/* ═══ MODAL DE AYUDA / SOPORTE ═══ */}
       {isHelpModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-md rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-5 shadow-2xl">
-            {/* Header */}
+          <div className="relative w-full max-w-md rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
                   <PhoneCall className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-sm text-slate-900 dark:text-white">
-                    Contacto con Soporte Oficial
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                    Soporte & Asistencia
                   </h3>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Asistencia directa para {business.name}
+                    Equipo de AgendatePY
                   </span>
                 </div>
               </div>
@@ -2800,50 +1267,26 @@ export default function BotWhatsAppPage() {
               </button>
             </div>
 
-            {/* Direct WhatsApp Contact */}
-            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
-              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
-                <MessageSquare className="h-4 w-4 text-emerald-600" />
-                <span>Atención Directa por WhatsApp</span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                Escribinos directamente para resolver cualquier duda sobre tu flujo, conexión o configuración.
+            <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+              <p>
+                Si necesitás ayuda para vincular tu WhatsApp o configurar tu negocio, nuestro equipo te asiste en minutos.
               </p>
-              <a
-                href={`https://wa.me/595981700800?text=${encodeURIComponent(
-                  `Hola equipo de Agendate.py, necesito asistencia con la configuración del Bot de WhatsApp para mi negocio "${business.name}".`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 text-xs shadow-md transition active:scale-98"
-              >
-                <MessageSquare className="h-4 w-4" />
-                <span>Chatear por WhatsApp (+595 981 700 800)</span>
-              </a>
-            </div>
-
-            {/* Direct Phone / Schedule Info */}
-            <div className="p-3.5 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-slate-800 dark:text-slate-200">Llamada Telefónica</p>
-                <p className="text-[11px] text-slate-400">Lunes a Sábados: 08:00 a 19:00 hs</p>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 space-y-1">
+                <span className="text-[11px] text-slate-400 block font-semibold">WhatsApp de Soporte Directo:</span>
+                <span className="text-sm font-mono font-bold text-emerald-600">+595 981 700 800</span>
               </div>
-              <a
-                href="tel:+595981700800"
-                className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-              >
-                Llamar
-              </a>
             </div>
 
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => setIsHelpModalOpen(false)}
-                className="w-full py-2 rounded-xl text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+            <div className="pt-2">
+              <a
+                href="https://wa.me/595981700800?text=Hola,%20necesito%20ayuda%20con%20mi%20asistente%20de%20WhatsApp%20en%20AgendatePY"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 text-xs shadow-md transition cursor-pointer"
               >
-                Cerrar
-              </button>
+                <span>Chatear con Soporte</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
         </div>

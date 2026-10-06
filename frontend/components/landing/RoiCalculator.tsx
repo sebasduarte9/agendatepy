@@ -79,7 +79,7 @@ export default function RoiCalculator() {
 
           <h2 className="text-2xl xs:text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
             ¿Cuánto dinero estás perdiendo por{" "}
-            <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
+            <span className="text-[#FF4F2B]">
               turnos vacíos?
             </span>
           </h2>

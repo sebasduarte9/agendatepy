@@ -659,7 +659,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Mensajería",
     icon: Bot,
     summary:
-      "Automatizá la atención con menú interactivo de opciones únicas, respuestas personalizadas y recordatorios automáticos.",
+      "Tu asistente atiende consultas, informa precios, agenda turnos automáticamente y envía recordatorios por WhatsApp.",
     steps: [
       {
         stepNumber: 1,
@@ -671,33 +671,33 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
       {
         stepNumber: 2,
-        taskTitle: "Canva de Flujo Visual",
+        taskTitle: "Asistente Virtual por WhatsApp",
         instruction:
-          "Arrastrá y editá los nodos de respuesta (Reservas, Servicios, SIPAP y Asesor). Asigná un número único a cada opción.",
-        tip: "Podés dar formato usando *negrita*, _cursiva_ o ~tachado~.",
-        targetSelector: '[data-tour="bot-rules-card"]',
+          "Tu asistente atiende a tus clientes las 24 horas, agenda turnos, responde dudas sobre precios, escucha audios y revisa transferencias bancarias.",
+        tip: "Podés elegir si querés que responda de forma amigable, formal o breve.",
+        targetSelector: '[data-tour="bot-asistente-card"]',
       },
       {
         stepNumber: 3,
         taskTitle: "Simulador de WhatsApp en Vivo",
         instruction:
-          "Probá tu flujo en el simulador en tiempo real. Escribí los números de opción o palabras clave para ver la respuesta.",
+          "Probá tu asistente en tiempo real en la pantalla del celular. Escribí cualquier pregunta o tocá los botones de prueba.",
         tip: "Inicia en blanco para que evalúes cualquier consulta real.",
         targetSelector: '[data-tour="bot-simulator-card"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Plantillas y Recordatorios",
+        taskTitle: "Recordatorios Automáticos",
         instruction:
-          "Configurá los recordatorios automáticos 24h y 2h antes. Los interruptores están sincronizados en vivo con el Canva.",
-        tip: "Incluyen enlace para que el cliente confirme o libere su turno.",
+          "Configurá los avisos automáticos por WhatsApp que se envían 24 horas y 2 horas antes de cada turno reservado.",
+        tip: "Incluyen enlace para que el cliente confirme o gestione su cita.",
         targetSelector: '[data-tour="bot-templates-card"]',
       },
       {
         stepNumber: 5,
         taskTitle: "Asistencia y Soporte Directo",
         instruction:
-          "Si necesitás ayuda con tu flujo o tu número, contactá a nuestro equipo técnico directamente con un solo clic.",
+          "Si necesitás ayuda para vincular tu WhatsApp o tenés alguna duda, contactá a nuestro equipo con un solo clic.",
         tip: "Atención personalizada disponible por WhatsApp.",
         targetSelector: '[data-tour="bot-support-action"]',
       },
@@ -1082,16 +1082,15 @@ export default function GuidedTour() {
   const isTransitioningRef = useRef(false);
 
   // Helper to determine the tab required for any step
-  const getTabForStep = useCallback((step?: SectionStep): "estilos" | "fotos" | "botones" | "textos" | "canva" | "simulador" | "plantillas" | null => {
+  const getTabForStep = useCallback((step?: SectionStep): "estilos" | "fotos" | "botones" | "textos" | "asistente" | "recordatorios" | null => {
     if (!step?.targetSelector) return null;
     const sel = step.targetSelector;
     if (sel.includes("tab-fotos") || sel.includes("tour-presets") || sel.includes("tour-colors")) return "estilos";
     if (sel.includes("tab-botones") || sel.includes("tour-cover-logo") || sel.includes("tour-gallery")) return "fotos";
     if (sel.includes("tab-textos") || sel.includes("tour-buttons")) return "botones";
     if (sel.includes("tour-texts")) return "textos";
-    if (sel.includes("bot-rules-card") || sel.includes("bot-tab-canva")) return "canva";
-    if (sel.includes("bot-simulator-card") || sel.includes("bot-tab-simulador")) return "simulador";
-    if (sel.includes("bot-templates-card") || sel.includes("bot-tab-plantillas")) return "plantillas";
+    if (sel.includes("bot-asistente-card") || sel.includes("bot-simulator-card") || sel.includes("bot-rules-card") || sel.includes("bot-tab-canva")) return "asistente";
+    if (sel.includes("bot-templates-card") || sel.includes("bot-tab-plantillas")) return "recordatorios";
     return null;
   }, []);
 
@@ -1105,7 +1104,7 @@ export default function GuidedTour() {
     // Auto-switch tabs if required for this step
     const neededTab = getTabForStep(currentStep);
     if (neededTab && typeof window !== "undefined") {
-      if (["canva", "simulador", "plantillas"].includes(neededTab)) {
+      if (["asistente", "recordatorios"].includes(neededTab)) {
         window.dispatchEvent(
           new CustomEvent("agendate-switch-whatsapp-tab", {
             detail: { tab: neededTab },
@@ -1258,7 +1257,7 @@ export default function GuidedTour() {
         window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "estilos" } }));
       }
       if (selectedSectionKey === "whatsapp") {
-        window.dispatchEvent(new CustomEvent("agendate-switch-whatsapp-tab", { detail: { tab: "canva" } }));
+        window.dispatchEvent(new CustomEvent("agendate-switch-whatsapp-tab", { detail: { tab: "asistente" } }));
       }
       window.dispatchEvent(new CustomEvent("agendate-close-product-modal"));
       window.dispatchEvent(new CustomEvent("agendate-close-product-promo-modal"));
@@ -1289,7 +1288,7 @@ export default function GuidedTour() {
       const nextStep = currentSection.steps[nextIdx];
       const targetTab = getTabForStep(nextStep);
       if (targetTab && typeof window !== "undefined") {
-        if (["canva", "simulador", "plantillas"].includes(targetTab)) {
+        if (["asistente", "recordatorios"].includes(targetTab)) {
           window.dispatchEvent(new CustomEvent("agendate-switch-whatsapp-tab", { detail: { tab: targetTab } }));
         } else {
           window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: targetTab } }));
@@ -1314,7 +1313,7 @@ export default function GuidedTour() {
       const prevStep = currentSection.steps[prevIdx];
       const targetTab = getTabForStep(prevStep);
       if (targetTab && typeof window !== "undefined") {
-        if (["canva", "simulador", "plantillas"].includes(targetTab)) {
+        if (["asistente", "recordatorios"].includes(targetTab)) {
           window.dispatchEvent(new CustomEvent("agendate-switch-whatsapp-tab", { detail: { tab: targetTab } }));
         } else {
           window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: targetTab } }));

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarPlus,
@@ -70,6 +70,15 @@ const EXPANDED_WIDTH = 250;
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOptimisticPath(null);
+  }, [pathname]);
+
+  const currentPath = optimisticPath || pathname;
+
   const open = useDashboardStore((s) => s.sidebarOpen);
   const setOpen = useDashboardStore((s) => s.setSidebarOpen);
   const business = useDashboardStore((s) => s.business);
@@ -151,16 +160,18 @@ export default function Sidebar() {
   const renderLink = ({ href, label, icon: Icon }: SidebarLink) => {
     const active =
       href === "/dashboard"
-        ? pathname === "/dashboard"
-        : pathname.startsWith(href);
+        ? currentPath === "/dashboard"
+        : currentPath.startsWith(href);
 
     return (
       <Link
         key={href}
         href={href}
         prefetch={true}
+        onPointerDown={() => router.prefetch(href)}
         onClick={() => {
           triggerHaptic("selection");
+          setOptimisticPath(href);
           setOpen(false);
         }}
         title={!expanded ? label : undefined}

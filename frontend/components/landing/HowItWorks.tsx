@@ -39,7 +39,7 @@ export default function HowItWorks() {
         </span>
         <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
           De la reserva a la atención,{" "}
-          <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
+          <span className="text-[#FF4F2B]">
             en segundos
           </span>
         </h2>

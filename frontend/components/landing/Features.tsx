@@ -104,7 +104,7 @@ export default function Features() {
         </span>
         <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
           Todo lo que tu negocio necesita en{" "}
-          <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent uppercase">
+          <span className="text-[#FF4F2B] uppercase">
             UN SOLO LUGAR
           </span>
         </h2>

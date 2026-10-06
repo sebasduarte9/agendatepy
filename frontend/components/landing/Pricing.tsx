@@ -180,7 +180,7 @@ export default function Pricing() {
 
           <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-[38px] lg:text-[40px] xl:text-[44px] 2xl:text-5xl font-black tracking-tight text-slate-900 dark:text-white lg:whitespace-nowrap">
             Planes a tu medida,{" "}
-            <span className="bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500 bg-clip-text text-transparent">
+            <span className="text-[#FF4F2B]">
               sin comisiones ocultas
             </span>
           </h2>

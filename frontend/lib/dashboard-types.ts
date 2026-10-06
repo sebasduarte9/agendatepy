@@ -314,6 +314,9 @@ export type EvolutionApiConfig = {
   mainMenuOptions?: BotMainMenuOption[];
   keywordRules?: BotKeywordRule[];
   aiPrompt?: string;
+  aiTone?: "amigable" | "formal" | "conciso";
+  humanHandoffPhone?: string;
+  aiInstructions?: string;
   autoBotCadenceSeconds?: number;
   outOfHoursEnabled?: boolean;
   outOfHoursMessage?: string;

@@ -826,7 +826,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                             e.stopPropagation();
                             deleteClientMedia(client.id, item.id);
                           }}
-                          className="rounded-lg p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
+                          className="rounded-lg p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                           title="Eliminar de la galería"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -842,10 +842,10 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           {/* TAB 3: FICHA TÉCNICA, FÓRMULAS & PREFERENCIAS */}
           {activeTab === "formula" && (
             <div className="space-y-4">
-              <div className="rounded-3xl border border-indigo-200/80 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/50 p-5 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-indigo-100 dark:border-white/10">
-                  <h3 className="font-extrabold text-sm text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50 p-5 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-white/5">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
                     <span>Fórmula Técnica de Tinte / Corte / Barbería</span>
                   </h3>
 
@@ -968,7 +968,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                     href={`/${business.slug || "barberia"}/tarjeta/${client.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-400 text-slate-950 px-3.5 py-2 text-xs font-black hover:bg-amber-300 transition shadow-sm cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-400 text-amber-950 px-3.5 py-2 text-xs font-black hover:bg-amber-300 transition shadow-xs cursor-pointer"
                   >
                     <Crown className="h-3.5 w-3.5" />
                     <span>Ver Tarjeta Digital</span>

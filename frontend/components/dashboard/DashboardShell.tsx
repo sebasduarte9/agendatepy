@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MobileTabBar from "./MobileTabBar";
@@ -23,10 +23,28 @@ export default function DashboardShell({
   userName,
 }: DashboardShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const color = useDashboardStore((s) => s.business.primaryColor);
   const syncFromDatabase = useDashboardStore((s) => s.syncFromDatabase);
   const updateBusiness = useDashboardStore((s) => s.updateBusiness);
   const setUserName = useDashboardStore((s) => s.setUserName);
+
+  // Background warm-up and compilation of all core routes into browser router cache
+  useEffect(() => {
+    const routesToWarm = [
+      "/dashboard",
+      "/dashboard/calendario",
+      "/dashboard/caja",
+      "/dashboard/clientes",
+      "/dashboard/servicios",
+      "/dashboard/productos",
+      "/dashboard/bloquear-horario",
+      "/dashboard/comisiones",
+      "/dashboard/equipo",
+      "/dashboard/configuracion",
+    ];
+    routesToWarm.forEach((r) => router.prefetch(r));
+  }, [router]);
 
   useEffect(() => {
     if (userName) {
@@ -59,12 +77,7 @@ export default function DashboardShell({
       <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
         <Header />
         <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-clip p-3.5 sm:p-6 pb-[calc(7rem+env(safe-area-inset-bottom,20px))] sm:pb-32 lg:pb-8">
-          <div
-            key={pathname}
-            className="animate-in fade-in-50 duration-150 ease-out fill-mode-both"
-          >
-            {children}
-          </div>
+          {children}
         </main>
       </div>
       <MobileTabBar />

@@ -7,7 +7,7 @@ import {
   Zap,
   ShieldCheck,
   CreditCard,
-  Sparkles,
+  BadgePercent,
   ArrowRight,
   TrendingUp,
   PhoneCall,
@@ -182,7 +182,7 @@ export default function SuscripcionPage() {
 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-zinc-300 text-xs font-bold font-mono">
-              <Sparkles className="h-3 w-3 text-amber-500" />
+              <BadgePercent className="h-3.5 w-3.5 text-amber-500" />
               <span>0% Comisiones por Turno</span>
             </span>
           </div>
@@ -339,7 +339,7 @@ export default function SuscripcionPage() {
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-1">
             <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-xs">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <BadgePercent className="h-3.5 w-3.5 text-amber-500" />
               <span>0% Comisiones</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400">

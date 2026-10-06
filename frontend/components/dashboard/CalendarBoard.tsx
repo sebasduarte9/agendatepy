@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -358,9 +357,23 @@ export default function CalendarBoard() {
   }
 
   // Query parameter handling for "Ver en agenda" and "Nueva cita desde cliente"
-  const searchParams = useSearchParams();
-  const queryAppointmentId = searchParams?.get("appointmentId");
-  const queryNewForClient = searchParams?.get("newForClient");
+  const [queryParams, setQueryParams] = useState<{
+    appointmentId: string | null;
+    newForClient: string | null;
+  }>({ appointmentId: null, newForClient: null });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      setQueryParams({
+        appointmentId: sp.get("appointmentId"),
+        newForClient: sp.get("newForClient"),
+      });
+    }
+  }, []);
+
+  const queryAppointmentId = queryParams.appointmentId;
+  const queryNewForClient = queryParams.newForClient;
 
   useEffect(() => {
     if (queryAppointmentId && appointments.length > 0) {
@@ -681,7 +694,7 @@ export default function CalendarBoard() {
               setNewModalMode("block");
               setNewModalOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-slate-700 dark:text-slate-200 hover:text-amber-600 px-3.5 py-2 text-xs font-bold transition cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 px-3.5 py-2 text-xs font-bold transition cursor-pointer shadow-xs"
           >
             <Ban className="h-3.5 w-3.5 text-amber-500" />
             <span>Bloquear</span>

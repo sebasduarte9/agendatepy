@@ -746,7 +746,7 @@ export default function AparienciaPage() {
               </>
             ) : savedSuccess ? (
               <>
-                <Check className="h-4 w-4 stroke-[3] text-white animate-bounce" />
+                <Check className="h-4 w-4 stroke-[3] text-white animate-in zoom-in-75 duration-200" />
                 <span>¡Guardado!</span>
               </>
             ) : (

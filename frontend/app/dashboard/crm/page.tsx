@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   MessageSquare,
   Search,
@@ -72,7 +73,7 @@ function channelBadgeStyles(channel: CrmChannel) {
     case "whatsapp":
       return "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50";
     case "instagram":
-      return "bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800/50";
+      return "bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-400 border-pink-200 dark:border-pink-800/50";
     case "messenger":
       return "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/50";
   }
@@ -88,7 +89,9 @@ export default function CrmOmnichannelPage() {
     receipts, setReceiptStatus,
   } = useDashboardStore();
 
-  const [mainSection, setMainSection] = useState<"mensajes" | "pedidos">("mensajes");
+  const router = useRouter();
+  const [mainSection, setMainSection] = useState<"mensajes" | "pedidos" | "metricas">("mensajes");
+  const [desktopProfileOpen, setDesktopProfileOpen] = useState(true);
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | ProductOrderStatus>("all");
   const [orderSearch, setOrderSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState<"todos" | CrmChannel>("todos");
@@ -125,6 +128,7 @@ export default function CrmOmnichannelPage() {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search);
       if (p.get("tab") === "pedidos") setMainSection("pedidos");
+      if (p.get("tab") === "metricas") setMainSection("metricas");
     }
   }, []);
 
@@ -230,6 +234,54 @@ export default function CrmOmnichannelPage() {
   const igUnread = crmConversations.filter((c) => c.channel === "instagram").reduce((s, c) => s + (c.unreadCount || 0), 0);
   const msUnread = crmConversations.filter((c) => c.channel === "messenger").reduce((s, c) => s + (c.unreadCount || 0), 0);
 
+  /* ── Auto-scroll & Viewport Management ── */
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: "end" });
+    }
+  }, []);
+
+  // When a chat is opened or conversation changes, automatically position viewport and scroll to bottom
+  useEffect(() => {
+    if (activeConversation) {
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }
+      scrollToBottom("instant");
+      const timer = setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 0, behavior: "instant" });
+        }
+        scrollToBottom("instant");
+      }, 40);
+      return () => clearTimeout(timer);
+    }
+  }, [activeConversation?.id, mobileActiveView, scrollToBottom]);
+
+  // When new messages arrive or are sent, scroll down smoothly
+  useEffect(() => {
+    if (activeConversation?.messages.length) {
+      scrollToBottom("smooth");
+    }
+  }, [activeConversation?.messages.length, scrollToBottom]);
+
+  // When typing indicator appears, scroll down smoothly
+  useEffect(() => {
+    if (isTyping) {
+      scrollToBottom("smooth");
+    }
+  }, [isTyping, scrollToBottom]);
+
   /* ── Handlers ── */
   function handleSend() {
     if (!replyText.trim() || !activeConversation) return;
@@ -329,265 +381,61 @@ export default function CrmOmnichannelPage() {
   const resolvedCount = crmConversations.filter((c) => c.status === "resolved").length;
   const resolutionPct = crmConversations.length > 0 ? Math.round((resolvedCount / crmConversations.length) * 100) : 100;
   const waCount = crmConversations.filter((c) => c.channel === "whatsapp").length;
-  const waSharePct = crmConversations.length > 0 ? Math.round((waCount / crmConversations.length) * 100) : 100;
+  const waSharePct = crmConversations.length > 0 ? Math.round((waCount / crmConversations.length) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      {/* ═══ NATIVE PAGE HEADER ═══ */}
+    <div className={mobileActiveView !== "list" ? "space-y-0 lg:space-y-4" : "space-y-4"}>
+      {/* ═══ APP FORMAT TOP NAVIGATION BAR ═══ */}
       <div
         data-tour="crm-header"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
+        className={`flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-white/10 shrink-0 ${
+          mobileActiveView !== "list" ? "hidden lg:flex" : "flex"
+        }`}
       >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          CRM Omnicanal & Bandeja
-        </h1>
-
-        {/* Action Dock */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setChannelsModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 text-xs font-bold shadow-md transition cursor-pointer hover:brightness-110"
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white font-black text-sm shadow-xs"
+            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
           >
-            <Settings className="h-3.5 w-3.5" />
-            <span>Canales & Conexión QR</span>
-          </button>
-
-          {crmConversations.length > 0 ? (
-            <button
-              type="button"
-              onClick={clearCrmConversations}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-600 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              <span>Limpiar Bandeja</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={loadDemoConversation}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
-            >
-              <MessageSquare className="h-3.5 w-3.5" style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }} />
-              <span>Cargar Chat de Prueba</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card 1: Eficiencia de Respuesta & Canales */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                >
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Telemetría de Mensajería & Eficiencia
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Bandeja centralizada y tiempos de respuesta</p>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[11px] font-bold text-slate-400 block">Total Chats</span>
-                <span className="text-sm font-black text-slate-900 dark:text-white font-mono">
-                  {crmConversations.length} conversaciones
-                </span>
-              </div>
-            </div>
-
-            {/* Circular Gauges */}
-            <div className="py-4 grid grid-cols-2 gap-4">
-              {/* Gauge 1: Resolution Rate */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, resolutionPct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
-                    {resolutionPct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Tasa Resolución
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {resolvedCount} de {crmConversations.length} cerrados
-                  </span>
-                </div>
-              </div>
-
-              {/* Gauge 2: WhatsApp Share */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke="#10b981"
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, waSharePct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                    {waSharePct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Canal WhatsApp
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {waCount} mensajes vía WA
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Telemetry Rows */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">En Espera</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
-                  {openCount} abiertos
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Sin Leer</span>
-                <span className={`text-xs font-black font-mono ${unreadTotal > 0 ? "text-rose-500" : "text-slate-900 dark:text-white"}`}>
-                  {unreadTotal} mensajes
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Tiempo Medio</span>
-                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono truncate block">
-                  ~3 minutos
-                </span>
-              </div>
-            </div>
+            <MessageSquare className="h-5 w-5" />
           </div>
-
-          {/* Card 2: Seguridad, Conexión & Pedidos */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Protección Anti-Baneo & Pedidos
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Cadencia humana y sincronización de mostrador</p>
-                </div>
-              </div>
-
-              {pendingOrdersCount > 0 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  <ShoppingBag className="h-3 w-3" />
-                  <span>{pendingOrdersCount} pedidos</span>
-                </span>
-              )}
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                CRM & Mensajería
+              </h1>
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{evolutionConfig.connected ? "En línea" : "Desconectado"}</span>
+              </span>
             </div>
-
-            {/* Anti-Ban Banner */}
-            <div className="py-3">
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 block truncate">
-                    Cadencia Humana Anti-Baneo Activa (10s - 20s)
-                  </span>
-                  <span className="text-[10px] text-emerald-600/90 dark:text-emerald-400/90 block">
-                    Simulación de lectura y escritura automática para proteger tu número de suspensiones.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Operational Status Rows */}
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-medium text-slate-400 block">Bot Asistente</span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    {evolutionConfig.autoBotEnabled ? "Activo (Respuesta IA)" : "Modo Manual"}
-                  </span>
-                </div>
-                <Bot className={`h-4 w-4 ${evolutionConfig.autoBotEnabled ? "text-emerald-500" : "text-slate-400"}`} />
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-medium text-slate-400 block">Pedidos Mostrador</span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    {productOrders.length} registrados
-                  </span>
-                </div>
-                <ShoppingBag className="h-4 w-4 text-primary" />
-              </div>
-            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              WhatsApp, Instagram y Messenger en una sola bandeja
+            </p>
           </div>
         </div>
 
-        {/* ═══ VIEW SWITCHER DOCK ═══ */}
-        <div data-tour="crm-switcher" className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-slate-850 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+        {/* Center / Right: App Navigation Pills + Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-white/5">
             <button
               type="button"
               onClick={() => setMainSection("mensajes")}
-              style={mainSection === "mensajes" ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              style={
+                mainSection === "mensajes"
+                  ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
+                  : undefined
+              }
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                 mainSection === "mensajes"
                   ? "shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <MessageSquare className={`h-4 w-4 ${mainSection === "mensajes" ? "text-white" : "text-emerald-500"}`} />
-              <span>Mensajes & Chat</span>
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>Chats</span>
               {unreadTotal > 0 && (
-                <span className="bg-rose-500 text-white text-[10px] px-1.5 rounded-full font-black">
+                <span className="bg-rose-500 text-white text-[9.5px] px-1.5 rounded-full font-black">
                   {unreadTotal}
                 </span>
               )}
@@ -596,189 +444,428 @@ export default function CrmOmnichannelPage() {
             <button
               type="button"
               onClick={() => setMainSection("pedidos")}
-              style={mainSection === "pedidos" ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              style={
+                mainSection === "pedidos"
+                  ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
+                  : undefined
+              }
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                 mainSection === "pedidos"
                   ? "shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <ShoppingBag className="h-4 w-4" />
-              <span>Pedidos de Productos</span>
+              <ShoppingBag className="h-3.5 w-3.5" />
+              <span>Pedidos</span>
               {pendingOrdersCount > 0 && (
-                <span className="bg-amber-500 text-white text-[10px] px-1.5 rounded-full font-black">
+                <span className="bg-amber-500 text-white text-[9.5px] px-1.5 rounded-full font-black">
                   {pendingOrdersCount}
                 </span>
               )}
             </button>
+
+            <button
+              type="button"
+              onClick={() => setMainSection("metricas")}
+              style={
+                mainSection === "metricas"
+                  ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
+                  : undefined
+              }
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                mainSection === "metricas"
+                  ? "shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Métricas</span>
+            </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setChannelsModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition cursor-pointer"
+          >
+            <QrCode className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Conectar QR</span>
+          </button>
+
+          {crmConversations.length > 0 ? (
+            <button
+              type="button"
+              onClick={clearCrmConversations}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
+              title="Limpiar bandeja de mensajes"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Limpiar</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={loadDemoConversation}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+              <span>Demo</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {mainSection === "mensajes" ? (
+      {/* ═══ VIEW 1: CHATS WORKSPACE (FORMATO APP NATIVO) ═══ */}
+      {mainSection === "mensajes" && (
         crmConversations.length === 0 ? (
           /* ═══ EMPTY STATE ═══ */
-          <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-8 sm:p-12 text-center shadow-sm">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200 dark:border-emerald-800/40 mb-5 shadow-xs">
-              <QrCode className="h-10 w-10" />
+          <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-8 sm:p-12 text-center shadow-xs">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200 dark:border-emerald-800/40 mb-4 shadow-xs">
+              <QrCode className="h-8 w-8" />
             </div>
-            <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-bold text-primary mb-3">Bandeja Vacía</span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight max-w-xl mx-auto">Conectá tus redes y comenzá a recibir mensajes</h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-2.5 leading-relaxed">
-              Vinculá tu WhatsApp escaneando el código QR (como WhatsApp Web), conectá Instagram y Facebook, y gestioná todo desde acá de manera centralizada y segura.
+            <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-bold text-primary mb-2">Bandeja Vacía</span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight max-w-xl mx-auto">Conectá tus redes y recibí mensajes</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto mt-2 leading-relaxed">
+              Vinculá tu WhatsApp escaneando el código QR, recibí consultas de clientes y gestioná turnos y pedidos de forma centralizada.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button type="button" onClick={() => setChannelsModalOpen(true)} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3.5 text-sm font-bold shadow-md transition cursor-pointer">
-                <QrCode className="h-4 w-4" /><span>Conectar Canales</span>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button type="button" onClick={() => setChannelsModalOpen(true)} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 text-xs font-bold shadow-md transition cursor-pointer">
+                <QrCode className="h-4 w-4" /><span>Conectar WhatsApp QR</span>
               </button>
-              <button type="button" onClick={loadDemoConversation} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-white px-5 py-3.5 text-sm font-semibold border border-slate-200/80 dark:border-white/10 transition cursor-pointer">
-                <MessageSquare className="h-4 w-4 text-indigo-500" /><span>Ver Chat de Ejemplo</span>
+              <button type="button" onClick={loadDemoConversation} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-white px-4 py-3 text-xs font-semibold border border-slate-200/80 dark:border-white/10 transition cursor-pointer">
+                <MessageSquare className="h-4 w-4 text-emerald-500" /><span>Cargar Chat de Ejemplo</span>
               </button>
-            </div>
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5 text-left border-t border-slate-100 dark:border-white/10 pt-8">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5 space-y-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><Smartphone className="h-5 w-5" /></div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">WhatsApp Directo & Seguro</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Conexión nativa con protección anti-baneo integrada y cadencia humana 100% cuidada.</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5 space-y-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><Calendar className="h-5 w-5" /></div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Agendar Turnos en 1 Clic</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Si el cliente pide turno por chat, abrís el formulario con sus datos ya cargados.</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5 space-y-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600"><ShoppingBag className="h-5 w-5" /></div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Procesar Pedidos de Productos</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Creá el pedido de productos, elegí entrega o retiro y enviá la confirmación automática.</p>
-              </div>
             </div>
           </div>
         ) : (
-          /* ═══ 3-COLUMN CRM WORKSPACE ═══ */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[720px]">
-            {/* LEFT: Conversations */}
-            <div className={`lg:col-span-4 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden ${mobileActiveView !== "list" ? "hidden lg:flex" : "flex"}`}>
-              <div data-tour="crm-channels" className="p-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/60 dark:bg-slate-950/40">
-                <div className="grid grid-cols-4 gap-1 p-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-white/5">
+          /* ═══ 3-PANE NATIVE MESSENGER WORKSPACE ═══ */
+          <div
+            className={`w-full rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs overflow-hidden flex flex-col lg:flex-row ${
+              mobileActiveView !== "list"
+                ? "h-[calc(100dvh-11.8rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-7.8rem)] min-h-0 sm:min-h-[560px]"
+                : "h-[calc(100dvh-14.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-7.8rem)] min-h-0 sm:min-h-[560px]"
+            }`}
+          >
+            {/* ── LEFT PANE: CONVERSATION LIST ── */}
+            <div
+              data-tour="crm-channels"
+              className={`w-full lg:w-[320px] xl:w-[350px] shrink-0 border-r border-slate-200/80 dark:border-white/10 flex-col bg-slate-50/70 dark:bg-[#141418] ${
+                mobileActiveView !== "list" ? "hidden lg:flex" : "flex h-full"
+              }`}
+            >
+              {/* Left Top Search & Filter Bar */}
+              <div className="p-3 border-b border-slate-200/70 dark:border-white/10 space-y-2.5 shrink-0 bg-white/60 dark:bg-[#141418]">
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar cliente o chat..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-white/10 pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Channel Filter Tabs */}
+                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-200/60 dark:bg-slate-800/80 rounded-xl text-[10.5px]">
                   {(["todos", "whatsapp", "instagram", "messenger"] as const).map((ch) => {
-                    const counts: Record<string, number> = { todos: crmConversations.length, whatsapp: crmConversations.filter((c) => c.channel === "whatsapp").length, instagram: crmConversations.filter((c) => c.channel === "instagram").length, messenger: crmConversations.filter((c) => c.channel === "messenger").length };
-                    const unreads: Record<string, number> = { todos: 0, whatsapp: waUnread, instagram: igUnread, messenger: msUnread };
+                    const counts: Record<string, number> = {
+                      todos: crmConversations.length,
+                      whatsapp: crmConversations.filter((c) => c.channel === "whatsapp").length,
+                      instagram: crmConversations.filter((c) => c.channel === "instagram").length,
+                      messenger: crmConversations.filter((c) => c.channel === "messenger").length,
+                    };
+                    const unreads: Record<string, number> = { todos: unreadTotal, whatsapp: waUnread, instagram: igUnread, messenger: msUnread };
                     const labels: Record<string, string> = { todos: "Todos", whatsapp: "WA", instagram: "IG", messenger: "Msg" };
                     const active = channelFilter === ch;
-                    const activeClasses: Record<string, string> = { todos: "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs", whatsapp: "bg-emerald-500 text-white shadow-xs", instagram: "bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 text-white shadow-xs", messenger: "bg-blue-600 text-white shadow-xs" };
+
                     return (
-                      <button key={ch} type="button" onClick={() => setChannelFilter(ch)} className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition relative cursor-pointer ${active ? activeClasses[ch] : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
-                        {ch !== "todos" && <div className="flex items-center gap-1"><ChannelIcon channel={ch} size="sm" /><span>{labels[ch]}</span></div>}
-                        {ch === "todos" && <span>{labels[ch]}</span>}
-                        {unreads[ch] > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white">{unreads[ch]}</span>}
-                        <span className="text-[9.5px] opacity-80">{counts[ch]}</span>
+                      <button
+                        key={ch}
+                        type="button"
+                        onClick={() => setChannelFilter(ch)}
+                        className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold transition relative cursor-pointer ${
+                          active
+                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                        }`}
+                      >
+                        {ch !== "todos" && <ChannelIcon channel={ch} size="sm" />}
+                        <span>{labels[ch]}</span>
+                        {unreads[ch] > 0 && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
+                        )}
                       </button>
                     );
                   })}
                 </div>
-                <div className="relative mt-2.5">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                  <input type="text" placeholder="Buscar cliente o mensaje..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 pl-9 pr-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                </div>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/40 dark:border-white/5 text-[11px]">
+
+                {/* Sub-Filter: Abiertos / Resueltos */}
+                <div className="flex items-center justify-between text-[11px] px-1">
                   <div className="flex items-center gap-2">
                     {(["open", "resolved", "all"] as const).map((st) => (
-                      <button key={st} type="button" onClick={() => setStatusFilter(st)} className={`font-semibold transition cursor-pointer ${statusFilter === st ? "text-primary font-bold border-b-2 border-primary pb-0.5" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setStatusFilter(st)}
+                        className={`font-semibold transition cursor-pointer ${
+                          statusFilter === st
+                            ? "text-primary font-bold border-b-2 border-primary pb-0.5"
+                            : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                        }`}
+                      >
                         {st === "open" ? "Abiertos" : st === "resolved" ? "Resueltos" : "Todos"}
                       </button>
                     ))}
                   </div>
-                  {unreadTotal > 0 && <span className="rounded-full bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-0.5">{unreadTotal} sin leer</span>}
+                  {unreadTotal > 0 && (
+                    <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                      {unreadTotal} sin leer
+                    </span>
+                  )}
                 </div>
               </div>
-              <div data-tour="crm-conversations-list" className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
+
+              {/* Scrollable Conversation Items */}
+              <div
+                data-tour="crm-conversations-list"
+                className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100 dark:divide-white/5"
+              >
                 {filteredConversations.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-400">No hay conversaciones con estos filtros.</div>
-                ) : filteredConversations.map((c) => {
-                  const sel = activeConversation?.id === c.id;
-                  const ini = c.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-                  return (
-                    <button key={c.id} type="button" onClick={() => { setSelectedId(c.id); setMobileActiveView("chat"); }} className={`w-full text-left p-3.5 flex items-start gap-3 transition cursor-pointer ${sel ? "bg-primary/10 dark:bg-primary/20 border-l-4 border-primary" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}>
-                      <div className="relative shrink-0">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs shadow-2xs">{ini}</div>
-                        <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-white/10"><ChannelIcon channel={c.channel} size="sm" /></span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{c.clientName}</h4>
-                          <span className="text-[10px] text-slate-400 shrink-0 font-medium">{new Date(c.lastMessageTime).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <div className="p-8 text-center text-xs text-slate-400">
+                    No hay conversaciones con estos filtros.
+                  </div>
+                ) : (
+                  filteredConversations.map((c) => {
+                    const sel = activeConversation?.id === c.id;
+                    const ini = c.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedId(c.id);
+                          setMobileActiveView("chat");
+                          if (typeof window !== "undefined") {
+                            window.scrollTo({ top: 0, behavior: "instant" });
+                          }
+                        }}
+                        className={`w-full text-left p-3.5 flex items-start gap-3 transition cursor-pointer relative ${
+                          sel
+                            ? "bg-white dark:bg-white/10 shadow-xs ring-1 ring-slate-900/5 dark:ring-white/10"
+                            : "hover:bg-slate-100/70 dark:hover:bg-white/5"
+                        }`}
+                      >
+                        {/* Avatar */}
+                        <div className="relative shrink-0">
+                          <div
+                            className="flex h-11 w-11 items-center justify-center rounded-2xl text-white font-black text-xs shadow-2xs"
+                            style={{ backgroundColor: business.primaryColor || "#0f172a" }}
+                          >
+                            {ini}
+                          </div>
+                          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-[#121215] shadow-xs border border-slate-200/60 dark:border-white/10">
+                            <ChannelIcon channel={c.channel} size="sm" />
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between gap-1">
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[190px]">{c.lastMessage}</p>
-                          {c.unreadCount > 0 && <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary text-[9.5px] font-extrabold text-white shrink-0">{c.unreadCount}</span>}
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1 mb-0.5">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {c.clientName}
+                            </h4>
+                            <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                              {new Date(c.lastMessageTime).toLocaleTimeString("es-PY", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[170px]">
+                              {c.lastMessage}
+                            </p>
+                            {c.unreadCount > 0 && (
+                              <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[9.5px] font-extrabold text-white shrink-0">
+                                {c.unreadCount}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+                            <span className="truncate">{c.channelIdentifier}</span>
+                            {c.status === "resolved" && (
+                              <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-1 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">
+                                Resuelto
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-                          <span className="truncate">{c.channelIdentifier}</span>
-                          {c.status === "resolved" && <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-1 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">Resuelto</span>}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
 
-            {/* CENTER: Chat */}
-            <div data-tour="crm-chat-box" className={`lg:col-span-5 flex flex-col rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden ${mobileActiveView !== "chat" ? "hidden lg:flex" : "flex"}`}>
+            {/* ── CENTER PANE: ACTIVE CHAT SCREEN ── */}
+            <div
+              data-tour="crm-chat-box"
+              className={`flex-1 flex flex-col min-w-0 bg-[#f8fafc] dark:bg-[#0c0c0e] relative ${
+                mobileActiveView !== "chat" ? "hidden lg:flex" : "flex h-full"
+              }`}
+            >
               {activeConversation ? (
                 <>
-                  <div className="p-3.5 border-b border-slate-100 dark:border-white/10 bg-slate-50/70 dark:bg-slate-950/40 flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  {/* Chat Top Header */}
+                  <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#121215]/95 backdrop-blur-md flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <button
                         type="button"
-                        onClick={() => setMobileActiveView("list")}
-                        className="lg:hidden -ml-1 p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0 cursor-pointer"
-                        aria-label="Volver a conversaciones"
-                        title="Volver a conversaciones"
+                        onClick={() => {
+                          setMobileActiveView("list");
+                          if (typeof window !== "undefined") {
+                            window.scrollTo({ top: 0, behavior: "instant" });
+                          }
+                        }}
+                        className="lg:hidden -ml-1.5 p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0 cursor-pointer"
+                        aria-label="Volver a lista"
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </button>
+
                       <div className="relative shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xs">{activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
-                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs"><ChannelIcon channel={activeConversation.channel} size="sm" /></span>
+                        <div
+                          className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold text-xs shadow-xs"
+                          style={{ backgroundColor: business.primaryColor || "#0f172a" }}
+                        >
+                          {activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                        </div>
+                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs">
+                          <ChannelIcon channel={activeConversation.channel} size="sm" />
+                        </span>
                       </div>
+
                       <div className="min-w-0">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
                           <span className="truncate">{activeConversation.clientName}</span>
-                          <span className={`rounded-full border px-1.5 py-0.2 text-[9px] font-extrabold capitalize shrink-0 ${channelBadgeStyles(activeConversation.channel)}`}>{activeConversation.channel}</span>
+                          <span
+                            className={`rounded-full border px-1.5 py-0.2 text-[8.5px] font-extrabold capitalize shrink-0 ${channelBadgeStyles(
+                              activeConversation.channel
+                            )}`}
+                          >
+                            {activeConversation.channel}
+                          </span>
                         </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">{activeConversation.channelIdentifier}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">En línea</span>
+                          <span>·</span>
+                          <span className="truncate">{activeConversation.channelIdentifier}</span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Right Action Icons in Chat Header */}
                     <div className="flex items-center gap-1.5 shrink-0">
+                      <a
+                        href={
+                          activeConversation.channel === "whatsapp"
+                            ? `https://wa.me/${activeConversation.channelIdentifier.replace(/[^0-9]/g, "")}`
+                            : `tel:${activeConversation.channelIdentifier.replace(/[^0-9+]/g, "")}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-emerald-700 hover:bg-emerald-500/10 dark:hover:text-emerald-400 transition cursor-pointer"
+                        title="Contactar directamente por WhatsApp"
+                      >
+                        <Phone className="h-4 w-4" />
+                      </a>
+
+                      {activeConversation.status === "resolved" ? (
+                        <button
+                          type="button"
+                          onClick={() => reopenCrmConversation(activeConversation.id)}
+                          className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-white transition cursor-pointer"
+                        >
+                          Reabrir
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => resolveCrmConversation(activeConversation.id)}
+                          className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer"
+                        >
+                          Resuelto
+                        </button>
+                      )}
+
+                      {/* Desktop Toggle Profile Drawer / Mobile Open Profile View */}
                       <button
                         type="button"
-                        onClick={() => setMobileActiveView("profile")}
-                        className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-                        title="Ver datos del cliente"
-                        aria-label="Ver datos del cliente"
+                        onClick={() => {
+                          if (window.innerWidth < 1024) {
+                            setMobileActiveView("profile");
+                          } else {
+                            setDesktopProfileOpen(!desktopProfileOpen);
+                          }
+                        }}
+                        className={`p-2 rounded-xl transition cursor-pointer ${
+                          desktopProfileOpen
+                            ? "bg-primary/10 text-primary"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                        }`}
+                        title="Ver ficha y acciones del cliente"
                       >
                         <User className="h-4 w-4" />
                       </button>
-                      {activeConversation.status === "resolved" ? (
-                        <button type="button" onClick={() => reopenCrmConversation(activeConversation.id)} className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 px-2.5 sm:px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-white transition cursor-pointer">Reabrir</button>
-                      ) : (
-                        <button type="button" onClick={() => resolveCrmConversation(activeConversation.id)} className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 px-2.5 sm:px-3 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer">
-                          <span className="hidden sm:inline">Marcar </span>Resuelto
-                        </button>
-                      )}
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafbfc] dark:bg-[#0e0e11]">
-                    <div className="text-center"><span className="rounded-full bg-slate-200/70 dark:bg-slate-800 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">Conversación vía {activeConversation.channel}</span></div>
+
+                  {/* Messages Canvas */}
+                  <div
+                    ref={messagesContainerRef}
+                    className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3 bg-[#f8fafc] dark:bg-[#09090b]"
+                  >
+                    {/* Security Notice */}
+                    <div className="text-center">
+                      <span className="rounded-full bg-slate-200/60 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
+                        <Shield className="h-3 w-3 text-emerald-500" />
+                        <span>Conversación cifrada vía {activeConversation.channel}</span>
+                      </span>
+                    </div>
+
+                    {/* Messages stream */}
                     {activeConversation.messages.map((m) => {
                       const isAgent = m.sender === "agent";
                       return (
                         <div key={m.id} className={`flex flex-col ${isAgent ? "items-end" : "items-start"}`}>
-                          <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${isAgent ? "bg-primary text-white rounded-br-xs" : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-white/5 rounded-bl-xs"}`}>
-                            <p>{m.text}</p>
+                          <div
+                            className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-2xs leading-relaxed ${
+                              isAgent
+                                ? "text-white rounded-tr-xs"
+                                : "bg-white dark:bg-[#1a1a22] text-slate-900 dark:text-white border border-slate-200/70 dark:border-white/5 rounded-tl-xs"
+                            }`}
+                            style={isAgent ? { backgroundColor: business.primaryColor || "#0f172a" } : undefined}
+                          >
+                            <p className="whitespace-pre-wrap">{m.text}</p>
+
+                            {/* SIPAP Receipt Attachment */}
                             {m.receiptAttachment && (
-                              <div className="mt-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-950/50 p-3 text-slate-800 dark:text-slate-100 space-y-2">
+                              <div className="mt-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-50/90 dark:bg-emerald-950/50 p-3 text-slate-800 dark:text-slate-100 space-y-2">
                                 <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5">
                                   <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-800 dark:text-emerald-300">
                                     <Building2 className="h-4 w-4 text-emerald-600" />
@@ -798,7 +885,9 @@ export default function CrmOmnichannelPage() {
 
                                 <div className="flex items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400 font-mono">
                                   <span>Operación:</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200">{m.receiptAttachment.operationNumber}</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                                    {m.receiptAttachment.operationNumber}
+                                  </span>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px]">
@@ -818,7 +907,10 @@ export default function CrmOmnichannelPage() {
                                       type="button"
                                       onClick={() => {
                                         setReceiptStatus(m.receiptAttachment!.receiptId, "approved");
-                                        pushToast("success", `Comprobante ${m.receiptAttachment!.operationNumber} de ${activeConversation.clientName} APROBADO.`);
+                                        pushToast(
+                                          "success",
+                                          `Comprobante ${m.receiptAttachment!.operationNumber} de ${activeConversation.clientName} APROBADO.`
+                                        );
                                       }}
                                       className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 text-[11px] transition shadow-xs cursor-pointer"
                                     >
@@ -834,140 +926,252 @@ export default function CrmOmnichannelPage() {
                                 </div>
                               </div>
                             )}
-                            <div className={`mt-1 flex items-center justify-end gap-1 text-[9.5px] ${isAgent ? "text-white/80" : "text-slate-400"}`}>
-                              <span>{new Date(m.timestamp).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit" })}</span>
-                              {isAgent && <CheckCheck className="h-3.5 w-3.5 text-emerald-200" />}
+
+                            <div
+                              className={`mt-1 flex items-center justify-end gap-1 text-[9.5px] ${
+                                isAgent ? "text-white/80" : "text-slate-400"
+                              }`}
+                            >
+                              <span>
+                                {new Date(m.timestamp).toLocaleTimeString("es-PY", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                              {isAgent && <CheckCheck className="h-3.5 w-3.5 text-sky-200" />}
                             </div>
                           </div>
                         </div>
                       );
                     })}
+
+                    {/* Typing Bouncing Dots */}
                     {isTyping && (
                       <div className="flex flex-col items-start gap-1">
-                        <div className="flex items-center gap-2.5 rounded-2xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-white/5 px-4 py-2.5 text-xs shadow-xs rounded-bl-xs">
+                        <div className="flex items-center gap-2.5 rounded-2xl bg-white dark:bg-[#1a1a22] text-slate-800 dark:text-slate-200 border border-slate-200/70 dark:border-white/5 px-4 py-2.5 text-xs shadow-2xs rounded-tl-xs">
                           <div className="flex items-center gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.3s]" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.15s]" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse [animation-delay:200ms]" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse [animation-delay:400ms]" />
                           </div>
-                          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                             {typingSender} está escribiendo...
                           </span>
                         </div>
                       </div>
                     )}
+                    <div ref={messagesEndRef} className="h-1 shrink-0" />
                   </div>
-                  <div className="px-3 pt-2 pb-1 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1"><Zap className="h-3 w-3 text-amber-500" /> Respuestas Rápidas:</p>
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                      {quickReplies.map((qr) => (<button key={qr.title} type="button" onClick={() => setReplyText(qr.text)} className="shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary px-2.5 py-1 text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 transition cursor-pointer">{qr.title}</button>))}
-                    </div>
+
+                  {/* Quick Replies Carousel */}
+                  <div className="px-3.5 py-1.5 border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-[#121215] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1 mr-1">
+                      <Zap className="h-3 w-3 text-amber-500" />
+                      <span>Rápidas:</span>
+                    </span>
+                    {quickReplies.map((qr) => (
+                      <button
+                        key={qr.title}
+                        type="button"
+                        onClick={() => {
+                          setReplyText(qr.text);
+                          inputRef.current?.focus();
+                        }}
+                        className="shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-primary/10 hover:text-primary px-3 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                      >
+                        {qr.title}
+                      </button>
+                    ))}
                   </div>
-                  <div className="p-3 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900 flex items-center gap-2">
-                    <input type="text" placeholder={`Responder a ${activeConversation.clientName}...`} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSend(); } }} className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 text-base sm:text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                    <button type="button" onClick={handleSend} disabled={!replyText.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:opacity-95 disabled:opacity-40 transition shadow-sm cursor-pointer" aria-label="Enviar"><Send className="h-4 w-4" /></button>
+
+                  {/* Message Input Dock */}
+                  <div className="p-2.5 sm:p-3 border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] flex items-center gap-2 shrink-0">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      placeholder={`Escribe un mensaje a ${activeConversation.clientName}...`}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      className="flex-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-white/10 px-4 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSend}
+                      disabled={!replyText.trim()}
+                      style={replyText.trim() ? { backgroundColor: business.primaryColor || "#0f172a" } : undefined}
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white transition shadow-xs cursor-pointer ${
+                        replyText.trim() ? "hover:brightness-110 active:scale-95" : "bg-slate-300 dark:bg-slate-700 opacity-50 cursor-not-allowed"
+                      }`}
+                      aria-label="Enviar mensaje"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
                   </div>
                 </>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                   <MessageSquare className="h-12 w-12 text-slate-300 dark:text-slate-700 mb-3" />
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Seleccioná una conversación</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    Seleccioná una conversación para chatear
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* RIGHT: Client Profile & Actions */}
-            <div data-tour="crm-client-profile" className={`lg:col-span-3 flex flex-col gap-4 ${mobileActiveView !== "profile" ? "hidden lg:flex" : "flex"}`}>
+            {/* ── RIGHT PANE: CLIENT INTELLIGENCE & ACTIONS DRAWER ── */}
+            <div
+              data-tour="crm-client-profile"
+              className={`w-full lg:w-[290px] xl:w-[330px] shrink-0 border-l border-slate-200/80 dark:border-white/10 flex-col bg-white dark:bg-[#15151a] ${
+                mobileActiveView === "profile"
+                  ? "flex h-full"
+                  : desktopProfileOpen
+                  ? "hidden lg:flex"
+                  : "hidden"
+              }`}
+            >
               {activeConversation ? (
                 <>
-                  <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-4 shadow-sm space-y-4">
-                    {/* Back to chat button on mobile */}
+                  {/* Right Header */}
+                  <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-[#15151a]">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setMobileActiveView("chat")}
+                        className="lg:hidden p-1.5 rounded-xl text-slate-600 hover:bg-slate-100"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">
+                        Ficha del Contacto
+                      </h4>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setMobileActiveView("chat")}
-                      className="lg:hidden inline-flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-xl transition w-fit cursor-pointer"
+                      onClick={() => setDesktopProfileOpen(false)}
+                      className="hidden lg:flex p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                      title="Ocultar ficha"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span>Volver al chat</span>
+                      <X className="h-4 w-4" />
                     </button>
+                  </div>
+
+                  {/* Scrollable Profile Body */}
+                  <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
+                    {/* Contact Card */}
                     <div className="text-center pb-3 border-b border-slate-100 dark:border-white/10">
                       <div
-                        className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl text-white font-black text-lg shadow-md mb-2"
-                        style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+                        className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl text-white font-black text-lg shadow-xs mb-2"
+                        style={{ backgroundColor: business.primaryColor || "#0f172a" }}
                       >
                         {activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                       </div>
-                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">{activeConversation.clientName}</h3>
-                      <p className="text-[11px] text-slate-400 font-medium font-mono">{activeConversation.channelIdentifier}</p>
+                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        {activeConversation.clientName}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                        {activeConversation.channelIdentifier}
+                      </p>
                       {linkedClient?.tags && (
                         <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
-                          {linkedClient.tags.map((t) => (<span key={t} className="rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5">{t}</span>))}
+                          {linkedClient.tags.map((t) => (
+                            <span key={t} className="rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5">
+                              {t}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>
 
-                    {/* ── Actions (all modals, no navigation) ── */}
+                    {/* Action Buttons */}
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Acciones Rápidas:</p>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        Acciones Operativas:
+                      </p>
                       <button
                         type="button"
                         onClick={() => {
-                          pushToast("success", `Abrí Nueva Reserva para ${activeConversation.clientName} desde la pestaña Calendario.`);
+                          router.push(`/dashboard/calendario?newForClient=${linkedClient?.id || ""}`);
+                          pushToast("success", `Abriendo calendario para agendar a ${activeConversation.clientName}`);
                         }}
                         style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-2.5 text-xs font-bold shadow-sm transition cursor-pointer hover:brightness-110"
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-2.5 text-xs font-bold shadow-xs transition cursor-pointer hover:brightness-110 active:scale-98"
                       >
-                        <Calendar className="h-4 w-4" /><span>Agendar Turno</span>
+                        <Calendar className="h-4 w-4" />
+                        <span>Agendar Turno</span>
                       </button>
+
                       <button
                         type="button"
                         onClick={() => setOrderModalOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white py-2.5 text-xs font-bold shadow-sm transition cursor-pointer"
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white py-2.5 text-xs font-bold shadow-xs transition cursor-pointer active:scale-98"
                       >
-                        <ShoppingBag className="h-4 w-4" /><span>Crear Pedido de Producto</span>
+                        <ShoppingBag className="h-4 w-4" />
+                        <span>Crear Pedido de Producto</span>
                       </button>
-                      <button type="button" onClick={() => setClientProfileModalOpen(true)} className="w-full flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer">
-                        <User className="h-3.5 w-3.5" /><span>Ver Ficha del Cliente</span>
+
+                      <button
+                        type="button"
+                        onClick={() => setClientProfileModalOpen(true)}
+                        className="w-full flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+                      >
+                        <User className="h-3.5 w-3.5" />
+                        <span>Ver Ficha Completa</span>
                       </button>
                     </div>
 
-                    {/* Channel */}
-                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
+                    {/* Active Channel Card */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
                       <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Canal Activo:</p>
-                      <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
+                      <div className="flex items-center justify-between text-xs p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
                         <div className="flex items-center gap-2">
                           <ChannelIcon channel={activeConversation.channel} size="sm" />
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">{activeConversation.channel}</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                            {activeConversation.channel}
+                          </span>
                         </div>
                         <span className="text-[10px] text-emerald-600 font-bold">Conectado</span>
                       </div>
                     </div>
 
-                    {/* Loyalty */}
+                    {/* Loyalty Info */}
                     {linkedClient && (
                       <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> Fidelización:</span>
-                          <span className="font-mono font-black text-amber-800 dark:text-amber-200">{linkedClient.loyaltyPoints} / 5 sellos</span>
+                          <span className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
+                            <Award className="h-3.5 w-3.5 text-amber-500" /> Fidelización:
+                          </span>
+                          <span className="font-mono font-black text-amber-800 dark:text-amber-200">
+                            {linkedClient.loyaltyPoints} / 5 sellos
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
                           <span>Consumo total:</span>
-                          <span className="font-bold text-slate-900 dark:text-white">{formatGs(linkedClient.totalSpent)}</span>
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {formatGs(linkedClient.totalSpent)}
+                          </span>
                         </div>
                       </div>
                     )}
 
-                    {/* Order history preview */}
+                    {/* Order History */}
                     {clientOrderHistory.length > 0 && (
                       <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1"><History className="h-3 w-3" /> Últimos Pedidos:</p>
+                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                          <History className="h-3 w-3" /> Últimos Pedidos:
+                        </p>
                         {clientOrderHistory.slice(0, 3).map((o) => (
-                          <div key={o.id} className="flex items-center justify-between text-[11px] p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/40">
+                          <div key={o.id} className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
                             <div>
                               <span className="font-bold text-slate-800 dark:text-slate-200">{o.orderNumber}</span>
-                              <span className={`ml-1.5 rounded px-1 py-0.5 text-[9px] font-bold capitalize ${o.status === "delivered" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400" : o.status === "pending" ? "bg-amber-100 text-amber-700" : o.status === "cancelled" ? "bg-rose-100 text-rose-700" : "bg-blue-100 text-blue-700"}`}>{o.status === "delivered" ? "Entregado" : o.status === "pending" ? "Pendiente" : o.status === "confirmed" ? "Confirmado" : "Cancelado"}</span>
+                              <span className="ml-1.5 text-[9.5px] font-semibold text-slate-400 capitalize">{o.status}</span>
                             </div>
-                            <span className="font-mono font-bold text-slate-600 dark:text-slate-400">{formatGs(o.totalAmount)}</span>
+                            <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{formatGs(o.totalAmount)}</span>
                           </div>
                         ))}
                       </div>
@@ -987,8 +1191,8 @@ export default function CrmOmnichannelPage() {
                             </div>
                             <div className="text-right">
                               <span className="font-mono font-bold text-slate-900 dark:text-white block">{formatGs(r.amount)}</span>
-                              <span className={`text-[9.5px] font-bold ${r.status === "approved" ? "text-emerald-600" : r.status === "rejected" ? "text-rose-600" : "text-amber-600"}`}>
-                                {r.status === "approved" ? "Aprobado" : r.status === "rejected" ? "Rechazado" : "Pendiente"}
+                              <span className={`text-[9.5px] font-bold ${r.status === "approved" ? "text-emerald-600" : "text-amber-600"}`}>
+                                {r.status === "approved" ? "Aprobado" : "Pendiente"}
                               </span>
                             </div>
                           </div>
@@ -996,25 +1200,218 @@ export default function CrmOmnichannelPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* Status Card */}
-                  <div className="rounded-3xl bg-gradient-to-br from-emerald-50/70 via-white to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/40 border border-emerald-200/60 dark:border-white/10 p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-emerald-500" /><span>Estado de Conexión</span></h4>
-                      <span className={`rounded-full px-2 py-0.5 text-[9.5px] font-bold ${evolutionConfig.connected ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400" : "bg-amber-100 text-amber-700"}`}>{evolutionConfig.connected ? "En línea" : "Desconectado"}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Los mensajes entrantes se procesan automáticamente sin costos adicionales.</p>
-                    <button type="button" onClick={() => setChannelsModalOpen(true)} className="w-full text-center text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline pt-1 cursor-pointer">Configurar canales →</button>
-                  </div>
                 </>
               ) : (
-                <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 p-5 text-center text-xs text-slate-400">Seleccioná un chat para ver su ficha.</div>
+                <div className="p-6 text-center text-xs text-slate-400">
+                  Seleccioná un chat para ver su ficha.
+                </div>
               )}
             </div>
           </div>
         )
-      ) : (
-        /* ═══ ORDERS TAB ═══ */
+      )}
+
+      {/* ═══ VIEW 2: TELEMETRY & METRICS TAB ═══ */}
+      {mainSection === "metricas" && (
+        <div className="space-y-4 animate-in fade-in-50 duration-150">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Card 1: Eficiencia de Respuesta & Canales */}
+            <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                    style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                      Telemetría de Mensajería & Eficiencia
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Bandeja centralizada y tiempos de respuesta</p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[11px] font-bold text-slate-400 block">Total Chats</span>
+                  <span className="text-sm font-black text-slate-900 dark:text-white font-mono">
+                    {crmConversations.length} conversaciones
+                  </span>
+                </div>
+              </div>
+
+              {/* Circular Gauges */}
+              <div className="py-4 grid grid-cols-2 gap-4">
+                {/* Gauge 1: Resolution Rate */}
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5">
+                  <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                    <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="stroke-slate-200 dark:stroke-slate-700"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
+                        strokeWidth="4"
+                        fill="none"
+                        strokeDasharray={113}
+                        strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, resolutionPct))) / 100}
+                        strokeLinecap="round"
+                        className="transition-all duration-700"
+                      />
+                    </svg>
+                    <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                      {resolutionPct}%
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                      Tasa Resolución
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      {resolvedCount} de {crmConversations.length} cerrados
+                    </span>
+                  </div>
+                </div>
+
+                {/* Gauge 2: WhatsApp Share */}
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5">
+                  <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
+                    <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="stroke-slate-200 dark:stroke-slate-700"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        stroke="#10b981"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeDasharray={113}
+                        strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, waSharePct))) / 100}
+                        strokeLinecap="round"
+                        className="transition-all duration-700"
+                      />
+                    </svg>
+                    <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                      {waSharePct}%
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                      Vía WhatsApp
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      {waCount} mensajes vía WA
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Telemetry Rows */}
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-white/10 text-xs">
+                <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
+                  <span className="text-[10px] font-medium text-slate-400 block">En Espera</span>
+                  <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                    {openCount} abiertos
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
+                  <span className="text-[10px] font-medium text-slate-400 block">Sin Leer</span>
+                  <span className={`text-xs font-black font-mono ${unreadTotal > 0 ? "text-rose-500" : "text-slate-900 dark:text-white"}`}>
+                    {unreadTotal} mensajes
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
+                  <span className="text-[10px] font-medium text-slate-400 block">Tiempo Medio</span>
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono truncate block">
+                    ~3 minutos
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Seguridad, Conexión & Pedidos */}
+            <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                      Protección Anti-Baneo & Seguridad
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Cadencia humana y protección de cuenta</p>
+                  </div>
+                </div>
+
+                {pendingOrdersCount > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    <ShoppingBag className="h-3 w-3" />
+                    <span>{pendingOrdersCount} pedidos</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Anti-Ban Banner */}
+              <div className="py-3">
+                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 block truncate">
+                      Cadencia Humana Anti-Baneo Activa (10s - 20s)
+                    </span>
+                    <span className="text-[10px] text-emerald-600/90 dark:text-emerald-400/90 block">
+                      Simulación de lectura y escritura automática para proteger tu línea de suspensiones.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Operational Status Rows */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-white/10 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-medium text-slate-400 block">Bot Asistente</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {evolutionConfig.autoBotEnabled ? "Activo (Respuesta IA)" : "Modo Manual"}
+                    </span>
+                  </div>
+                  <Bot className={`h-4 w-4 ${evolutionConfig.autoBotEnabled ? "text-emerald-500" : "text-slate-400"}`} />
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-medium text-slate-400 block">Estado de Red</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {evolutionConfig.connected ? "En línea" : "Desconectado"}
+                    </span>
+                  </div>
+                  <ShieldCheck className={`h-4 w-4 ${evolutionConfig.connected ? "text-emerald-500" : "text-slate-400"}`} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ VIEW 3: ORDERS TAB ═══ */}
+      {mainSection === "pedidos" && (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="p-4 flex items-center justify-between">
@@ -1303,7 +1700,7 @@ export default function CrmOmnichannelPage() {
                           });
                           pushToast("success", "Instagram Direct vinculado exitosamente.");
                         }}
-                        className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-95 text-white font-bold py-3 text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full rounded-xl bg-[#E1306C] hover:bg-[#d02560] text-white font-bold py-3 text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-2"
                       >
                         <ChannelIcon channel="instagram" size="sm" />
                         <span>Autorizar Instagram Direct (@barberia_central)</span>

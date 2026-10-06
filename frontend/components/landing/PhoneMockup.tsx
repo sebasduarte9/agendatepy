@@ -661,9 +661,9 @@ export default function PhoneMockup() {
                     exit={{ opacity: 0 }}
                     className="flex items-center gap-1 rounded-2xl rounded-tl-xs bg-white px-3.5 py-2.5 shadow-[0_1px_0.5px_rgba(11,20,26,0.15)] w-14"
                   >
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-bounce" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-bounce [animation-delay:0.15s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-bounce [animation-delay:0.3s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-pulse" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-pulse [animation-delay:200ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#008069] animate-pulse [animation-delay:400ms]" />
                   </motion.div>
                 )}
               </AnimatePresence>
