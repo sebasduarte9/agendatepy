@@ -198,8 +198,8 @@ export default function MobileTabBar() {
       title: "Marketing & Fidelización",
       items: [
         {
-          label: "Bot de WhatsApp & Flujos",
-          subtitle: "Automatización de respuestas y QR",
+          label: "Asistente de WhatsApp",
+          subtitle: "Respuestas con IA y avisos automáticos",
           href: "/dashboard/whatsapp",
           icon: MessageSquare,
         },

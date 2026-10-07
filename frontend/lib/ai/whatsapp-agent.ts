@@ -17,6 +17,15 @@ export interface AgentContext {
   tenantSlug: string;
   clientPhone: string;
   clientName?: string;
+  configOverrides?: {
+    allowEmojis?: boolean;
+    askStaffPreference?: boolean;
+    handoffOnUnknownTopic?: boolean;
+    aiTone?: "amigable" | "formal" | "conciso";
+    aiInstructions?: string;
+    notifyPersonalPhoneOnBooking?: boolean;
+    personalPhone?: string;
+  };
 }
 
 // Herramientas declaradas para Gemini Function Calling
@@ -45,6 +54,10 @@ const AGENT_TOOLS = [
               type: "STRING",
               description: "Nombre aproximado del servicio que el cliente desea (ej: 'Corte', 'Barba', 'Manicura').",
             },
+            profesionalNombre: {
+              type: "STRING",
+              description: "Nombre opcional del profesional/especialista con quien el cliente desea atenderse.",
+            },
           },
           required: ["fecha"],
         },
@@ -66,6 +79,10 @@ const AGENT_TOOLS = [
             nombreCliente: {
               type: "STRING",
               description: "Nombre de la persona que agenda.",
+            },
+            profesionalNombre: {
+              type: "STRING",
+              description: "Nombre o apodo del profesional/especialista elegido por el cliente, o 'cualquiera' si no tiene preferencia.",
             },
           },
           required: ["servicioId", "horarioInicio", "nombreCliente"],
@@ -124,15 +141,16 @@ const AGENT_TOOLS = [
       },
       {
         name: "derivar_a_humano",
-        description: "Se invoca cuando el cliente solicita expresamente hablar con una persona, asesor o recepcionista, o tiene una queja que la IA no puede resolver.",
+        description: "Se invoca cuando el cliente consulta sobre un tema, producto, servicio especial, duda técnica o información del local que la IA desconoce o no tiene en su catálogo, o cuando pide hablar con una persona o encargado del local.",
         parameters: {
           type: "OBJECT",
           properties: {
             motivo: {
               type: "STRING",
-              description: "Breve explicación de por qué requiere atención humana.",
+              description: "Pregunta o motivo exacto del cliente que requiere atención de un encargado del local.",
             },
           },
+          required: ["motivo"],
         },
       },
     ],
@@ -160,6 +178,14 @@ export async function processCustomerMessageWithAI(
         where: { active: true },
         select: { id: true, name: true, durationMinutes: true, price: true },
       },
+      staff: {
+        where: { active: true },
+        select: { id: true, name: true },
+      },
+      products: {
+        where: { isActive: true },
+        select: { id: true, name: true, price: true, description: true },
+      },
     },
   });
 
@@ -181,15 +207,62 @@ export async function processCustomerMessageWithAI(
     .map((s) => `• ${s.name} (ID: ${s.id}) - ₲ ${s.price.toLocaleString("es-PY")} (${s.durationMinutes} min)`)
     .join("\n");
 
-  const evoConfig = (tenant.settings as any)?.evolutionConfig || {};
+  const productsListText = tenant.products?.length
+    ? tenant.products
+        .map((p) => `• ${p.name} - ₲ ${p.price.toLocaleString("es-PY")}${p.description ? ` (${p.description})` : ""}`)
+        .join("\n")
+    : "No hay catálogo de productos de venta cargado actualmente.";
+
+  const evoConfig = {
+    ...((tenant.settings as any)?.evolutionConfig || {}),
+    ...(context.configOverrides || {}),
+  };
   const customInstructions = evoConfig.aiInstructions || "";
   const tone = evoConfig.aiTone || "amigable";
+  const allowEmojis = Boolean(evoConfig.allowEmojis); // Por defecto: false (cero emojis)
+  const askStaffPreference = evoConfig.askStaffPreference !== false; // Por defecto: true si hay más de 1
+  const notifyPersonalPhoneOnBooking = evoConfig.notifyPersonalPhoneOnBooking !== false;
+  const handoffOnUnknownTopic = evoConfig.handoffOnUnknownTopic !== false; // Por defecto: true
+  const personalAlertPhone = evoConfig.personalPhone || evoConfig.humanHandoffPhone || (tenant.settings as any)?.whatsappPhone || "";
+
   const toneGuide =
     tone === "formal"
-      ? "Utiliza un trato respetuoso y formal (de 'usted'), educado y profesional."
+      ? "Utiliza un trato respetuoso y formal (de 'usted'), educado y sobrio."
       : tone === "conciso"
       ? "Sé ultra breve y directo al grano, sin rodeos, respondiendo en 1 o 2 líneas concisas."
       : "Sé cercano, cálido, amigable (de 'vos') y propio de Paraguay.";
+
+  const emojiRule = allowEmojis
+    ? "FORMATO DE EMOJIS: Puedes incluir emojis sutiles y amigables (1 o 2 por mensaje) para brindar una atención cercana."
+    : "REGLA OBLIGATORIA DE EMOJIS: NO USES NINGÚN EMOJI NI CARITAS bajo ninguna circunstancia (nada de 😉, 💈, ✂️, 🕒, 👍, ni ningún icono). Los mensajes deben ser totalmente sobrios, limpios y redactados con palabras y formato en negrita (*negrita*) solamente.";
+
+  const staffMembers = tenant.staff || [];
+  let staffPreferenceRule = "";
+  if (staffMembers.length > 1 && askStaffPreference) {
+    const staffNames = staffMembers.map((s) => s.name).join(", ");
+    staffPreferenceRule = `
+PREFERENCIA DE PROFESIONAL / EQUIPO:
+El local cuenta con los siguientes miembros en su equipo: ${staffNames}.
+Cuando un cliente consulte por disponibilidad o quiera agendar un servicio, y todavía NO haya indicado con quién desea atenderse:
+1. Pregúntale con amabilidad y naturalidad si tiene preferencia por algún profesional en particular (adaptando el término al rubro del negocio, por ejemplo: peluquero/barbero si es barbería o peluquería, manicurista/estilista si es salón o estética, masajista/terapeuta si es spa o salud, técnico si es mecánica/taller, o profesional/especialista en general) o si prefiere con cualquiera que esté disponible.
+2. Si el cliente elige a uno de ellos, agenda con ese profesional pasando su nombre en 'profesionalNombre' en 'crear_reserva'.
+3. Si el cliente dice "con cualquiera", "el primero que tenga libre" o no tiene preferencia, no insistas y agenda con el primer profesional disponible.`;
+  }
+
+  const unknownTopicRule = handoffOnUnknownTopic
+    ? `
+REGLA ESTRICTA DE CONOCIMIENTO, PRODUCTOS Y DERIVACIÓN A ASESOR DEL LOCAL (HONESTIDAD Y CERO ALUCINACIÓN):
+Si el cliente consulta sobre:
+- Algún producto, marca o artículo que no esté en la lista oficial de productos del local.
+- Algún servicio, tratamiento especial, duda técnica, contraindicación, o consulta médica/estética de la que no tengas certeza absoluta en esta instrucción.
+- Convenios particulares, promociones especiales, horarios excepcionales o dudas del local que desconozcas.
+- O solicita expresamente hablar con una persona/asesor:
+1. NUNCA inventes respuestas ni supongas cosas de las que no tengas certeza.
+2. Dile con amabilidad, honestidad y educación que no dispones de esa información exacta en este momento, pero que le avisás a un encargado o asistente del local para que se comunique con él/ella y le responda directamente.
+3. Invoca OBLIGATORIAMENTE la herramienta 'derivar_a_humano' pasando en 'motivo' la consulta exacta del cliente (ej: "El cliente consulta si tienen minoxidil o productos anticaída").
+4. Al ejecutarse la herramienta, el sistema le enviará una notificación automática por WhatsApp al encargado del local con la duda del cliente para que le responda.`
+    : `
+Si el cliente solicita hablar con una persona humana o tiene dudas complejas sobre transferencias o reclamos, utiliza 'derivar_a_humano'.`;
 
   const systemInstruction = `Sos el asistente virtual oficial de "${tenant.name}" en WhatsApp (Paraguay).
 Tu objetivo es atender a los clientes con calidez, rapidez y profesionalismo, respondiendo dudas sobre precios, ubicación y ayudándoles a agendar turnos.
@@ -201,18 +274,22 @@ INFORMACIÓN DEL NEGOCIO:
 ${customInstructions ? `- REGLAS PARTICULARES DEL LOCAL:\n${customInstructions}\n` : ""}
 - Servicios disponibles:
 ${servicesListText}
+- Productos disponibles en el local:
+${productsListText}
+${staffPreferenceRule}
 
 REGLAS DE ATENCIÓN:
 1. Sé conciso y claro (es WhatsApp, no mandes parrafadas gigantes). Usa formato amigable con negritas (*negrita*).
-2. Usa SIEMPRE formato de hora paraguayo estándar con 'hs' (ej: "10:00 hs", "15:30 hs", "18:00 hs"). Nunca uses "a. m." ni "p. m.".
-3. Si el cliente pregunta por turnos u horarios, utiliza la herramienta 'consultar_disponibilidad' con la fecha correspondiente.
-4. Si el cliente elige un horario y confirma, invoca 'crear_reserva'.
-5. Si el cliente desea cambiar o reprogramar la fecha/hora de su turno existente, utiliza 'reprogramar_reserva'.
-6. Si el cliente desea cancelar su turno, utiliza 'cancelar_reserva'.
-7. Si el cliente consulta por puntos acumulados o programa de fidelización, utiliza 'consultar_puntos'.
-8. Al confirmar o reprogramar una reserva, incluye el enlace de su turno digital (para ver detalles y agregar a Google Calendar o ver cómo llegar en Google Maps/Waze). NO menciones Apple Wallet bajo ningún concepto.
-9. Si el cliente pide hablar con alguien humano o tiene dudas complejas sobre transferencias o reclamos, utiliza 'derivar_a_humano'.
-10. Mantén un tono respetuoso, cálido y propio de Paraguay.`;
+2. ${emojiRule}
+3. Usa SIEMPRE formato de hora paraguayo estándar con 'hs' (ej: "10:00 hs", "15:30 hs", "18:00 hs"). Nunca uses "a. m." ni "p. m.".
+4. Si el cliente pregunta por turnos u horarios, utiliza la herramienta 'consultar_disponibilidad' con la fecha correspondiente.
+5. Si el cliente elige un horario y confirma, invoca 'crear_reserva'.
+6. Si el cliente desea cambiar o reprogramar la fecha/hora de su turno existente, utiliza 'reprogramar_reserva'.
+7. Si el cliente desea cancelar su turno, utiliza 'cancelar_reserva'.
+8. Si el cliente consulta por puntos acumulados o programa de fidelización, utiliza 'consultar_puntos'.
+9. Al confirmar o reprogramar una reserva, incluye el enlace de su turno digital (para ver detalles y agregar a Google Calendar o ver cómo llegar en Google Maps/Waze). NO menciones Apple Wallet bajo ningún concepto.
+10. ${unknownTopicRule}
+11. Mantén un trato educado, cálido y propio de Paraguay.`;
 
   const history = conversationState.getHistoryForGemini(context.tenantId, context.clientPhone);
 
@@ -316,11 +393,20 @@ REGLAS DE ATENCIÓN:
     } else if (fnName === "crear_reserva") {
       try {
         const service = tenant.services.find((s) => s.id === fnArgs.servicioId) || tenant.services[0];
-        const staff = await prisma.staff.findFirst({
-          where: { tenantId: tenant.id, active: true },
-        });
+        const staffMembers = tenant.staff || [];
 
-        if (!staff) {
+        let chosenStaff = null;
+        if (fnArgs.profesionalNombre && fnArgs.profesionalNombre.toLowerCase() !== "cualquiera") {
+          const query = fnArgs.profesionalNombre.toLowerCase();
+          chosenStaff = staffMembers.find((s) => s.name.toLowerCase().includes(query));
+        }
+        if (!chosenStaff) {
+          chosenStaff = staffMembers[0] || (await prisma.staff.findFirst({
+            where: { tenantId: tenant.id, active: true },
+          }));
+        }
+
+        if (!chosenStaff) {
           throw new Error("No hay profesionales disponibles en este momento");
         }
 
@@ -331,7 +417,7 @@ REGLAS DE ATENCIÓN:
           data: {
             tenantId: tenant.id,
             serviceId: service.id,
-            staffId: staff.id,
+            staffId: chosenStaff.id,
             clientName: fnArgs.nombreCliente || context.clientName || "Cliente WhatsApp",
             clientPhone: context.clientPhone,
             startTime: startDate,
@@ -349,18 +435,33 @@ REGLAS DE ATENCIÓN:
         const linkGoogleCalendar = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(tenant.name + " · " + service.name)}&dates=${gStart}/${gEnd}&details=${encodeURIComponent("Turno en " + tenant.name)}&location=${encodeURIComponent(address)}`;
         const linkComoLlegar = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
-        // Notificar al barbero/profesional por WhatsApp
+        // 1. Notificar al número personal del dueño si está configurado
+        if (notifyPersonalPhoneOnBooking && personalAlertPhone) {
+          const cleanOwnerDigits = personalAlertPhone.replace(/\D/g, "");
+          if (cleanOwnerDigits.length >= 8) {
+            const clientNameDisp = fnArgs.nombreCliente || context.clientName || "Cliente WhatsApp";
+            const ownerMsg = allowEmojis
+              ? `🔔 *Nuevo turno agendado en ${tenant.name}*\n👤 Cliente: ${clientNameDisp} (${context.clientPhone})\n✂️ Servicio: ${service.name}\n🕒 Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}\n💈 Profesional: ${chosenStaff.name}`
+              : `*Nuevo turno agendado en ${tenant.name}*\nCliente: ${clientNameDisp} (${context.clientPhone})\nServicio: ${service.name}\nHorario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}\nProfesional: ${chosenStaff.name}`;
+
+            sendWhatsAppMessage(cleanOwnerDigits, ownerMsg, false).catch((err) => {
+              console.warn("[Notif Dueño] Error enviando alerta al celular personal:", err?.message);
+            });
+          }
+        }
+
+        // 2. Notificar al profesional asignado si tiene teléfono asociado
         prisma.staff.findUnique({
-          where: { id: staff.id },
+          where: { id: chosenStaff.id },
           include: { user: true },
         }).then((s) => {
           const staffPhone = s?.user?.phone?.replace(/\D/g, "");
-          if (staffPhone && staffPhone.length >= 8) {
-            sendWhatsAppMessage(
-              staffPhone,
-              `💈 *Nuevo turno agendado en ${tenant.name}*\n👤 Cliente: ${fnArgs.nombreCliente || context.clientName}\n✂️ Servicio: ${service.name}\n🕒 Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`,
-              false
-            ).catch(() => {});
+          if (staffPhone && staffPhone.length >= 8 && staffPhone !== personalAlertPhone.replace(/\D/g, "")) {
+            const staffMsg = allowEmojis
+              ? `💈 *Nuevo turno asignado en ${tenant.name}*\n👤 Cliente: ${fnArgs.nombreCliente || context.clientName}\n✂️ Servicio: ${service.name}\n🕒 Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`
+              : `*Nuevo turno asignado en ${tenant.name}*\nCliente: ${fnArgs.nombreCliente || context.clientName}\nServicio: ${service.name}\nHorario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`;
+
+            sendWhatsAppMessage(staffPhone, staffMsg, false).catch(() => {});
           }
         }).catch(() => {});
 
@@ -369,7 +470,7 @@ REGLAS DE ATENCIÓN:
           appointmentId: newAppointment.id,
           servicio: service.name,
           fechaHora: startDate.toLocaleString("es-PY", { timeZone: tenant.timezone }),
-          profesional: staff.name,
+          profesional: chosenStaff.name,
           linkTurno,
           linkGoogleCalendar,
           linkComoLlegar,
@@ -536,9 +637,29 @@ REGLAS DE ATENCIÓN:
       };
       detectedIntent = "consulta";
     } else if (fnName === "derivar_a_humano") {
+      const motivoConsulta = fnArgs.motivo || userMessage;
+      let avisoEnviado = false;
+
+      // Notificar al celular personal del encargado/dueño por WhatsApp
+      if (personalAlertPhone) {
+        const cleanOwnerDigits = personalAlertPhone.replace(/\D/g, "");
+        if (cleanOwnerDigits.length >= 8) {
+          const clientNameDisp = context.clientName || "Cliente WhatsApp";
+          const alertMsg = allowEmojis
+            ? `⚠️ *Consulta de Cliente para Asesor Humano en ${tenant.name}*\n👤 Cliente: ${clientNameDisp} (${context.clientPhone})\n❓ Consulta: "${motivoConsulta}"\n📲 Por favor comunícate con el cliente para responderle a la brevedad.`
+            : `*Consulta de Cliente para Asesor Humano en ${tenant.name}*\nCliente: ${clientNameDisp} (${context.clientPhone})\nConsulta: "${motivoConsulta}"\nPor favor comunícate con el cliente para responderle a la brevedad.`;
+
+          sendWhatsAppMessage(cleanOwnerDigits, alertMsg, false).catch((err) => {
+            console.warn("[Notif Asesor] Error enviando alerta al celular del local:", err?.message);
+          });
+          avisoEnviado = true;
+        }
+      }
+
       toolResultData = {
         derivado: true,
-        mensaje: "El chat ha sido derivado a nuestro equipo humano. Te responderán a la brevedad.",
+        notificadoAlLocal: avisoEnviado,
+        mensaje: "He registrado la consulta y ya le avisé a un encargado del local para que se comunique con el cliente a la brevedad.",
       };
       detectedIntent = "humano";
     }

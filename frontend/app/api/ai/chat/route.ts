@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
       tenantSlug,
       clientPhone,
       clientName,
+      configOverrides: body.configOverrides,
     });
     const latencyMs = Date.now() - startTime;
 

@@ -99,8 +99,8 @@ export default function Integrations() {
                 Google Calendar
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 select-none">
-                <Smartphone className="h-3.5 w-3.5 text-slate-800 dark:text-white shrink-0" />
-                Apple Wallet & iOS
+                <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                Google Maps & Waze
               </span>
             </div>
           </motion.div>

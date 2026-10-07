@@ -930,7 +930,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
             </div>
           )}
 
-          {/* TAB 4: CLUB VIP & APPLE WALLET */}
+          {/* TAB 4: CLUB VIP & TARJETA DIGITAL */}
           {activeTab === "vip" && (
             <div className="space-y-4">
               {/* Regla de Fidelización VIP obligatoria */}

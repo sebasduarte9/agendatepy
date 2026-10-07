@@ -121,7 +121,7 @@ const ORBIT_NOTIFICATIONS: NotificationItem[] = [
     icon: Smartphone,
     iconBg: "bg-sky-500 text-white shadow-xs shadow-sky-500/40",
     title: "Tarjeta Fidelidad",
-    subtitle: "Apple Wallet",
+    subtitle: "Club VIP",
     badge: "+50 Pts",
     badgeStyle: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
     angle: 315,

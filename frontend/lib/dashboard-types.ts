@@ -315,7 +315,15 @@ export type EvolutionApiConfig = {
   keywordRules?: BotKeywordRule[];
   aiPrompt?: string;
   aiTone?: "amigable" | "formal" | "conciso";
+  allowEmojis?: boolean;
+  askStaffPreference?: boolean;
+  notifyPersonalPhoneOnBooking?: boolean;
+  personalPhone?: string;
+  phoneType?: "business" | "personal";
+  minNoticeMinutes?: number;
+  serviceScheduleMode?: "always" | "business_hours";
   humanHandoffPhone?: string;
+  handoffOnUnknownTopic?: boolean;
   aiInstructions?: string;
   autoBotCadenceSeconds?: number;
   outOfHoursEnabled?: boolean;

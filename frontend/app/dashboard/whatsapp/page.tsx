@@ -35,6 +35,12 @@ import {
   Briefcase,
   Layers,
   HelpCircle,
+  Users,
+  Bell,
+  Smartphone,
+  Sun,
+  Moon,
+  ShieldAlert,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
@@ -153,6 +159,18 @@ export default function BotWhatsAppPage() {
 
   // Configuración funcional del Asistente
   const [autoBotEnabled, setAutoBotEnabled] = useState(evolutionConfig.autoBotEnabled !== false);
+  const [allowEmojis, setAllowEmojis] = useState(Boolean(evolutionConfig.allowEmojis));
+  const [askStaffPreference, setAskStaffPreference] = useState(evolutionConfig.askStaffPreference !== false);
+  const [notifyPersonalPhone, setNotifyPersonalPhone] = useState(evolutionConfig.notifyPersonalPhoneOnBooking !== false);
+  const [handoffOnUnknownTopic, setHandoffOnUnknownTopic] = useState(evolutionConfig.handoffOnUnknownTopic !== false);
+  const [personalPhone, setPersonalPhone] = useState(
+    evolutionConfig.personalPhone || evolutionConfig.humanHandoffPhone || business.whatsappNumber || business.phone || ""
+  );
+  const [phoneType, setPhoneType] = useState<"business" | "personal">(evolutionConfig.phoneType || "business");
+  const [minNoticeMinutes, setMinNoticeMinutes] = useState<number>(evolutionConfig.minNoticeMinutes ?? 60);
+  const [serviceScheduleMode, setServiceScheduleMode] = useState<"always" | "business_hours">(
+    evolutionConfig.serviceScheduleMode || "always"
+  );
   const [aiTone, setAiTone] = useState<"amigable" | "formal" | "conciso">(evolutionConfig.aiTone || "amigable");
   const [aiInstructions, setAiInstructions] = useState(evolutionConfig.aiInstructions || "");
   const [humanHandoffPhone, setHumanHandoffPhone] = useState(
@@ -163,6 +181,30 @@ export default function BotWhatsAppPage() {
   useEffect(() => {
     if (evolutionConfig.autoBotEnabled !== undefined) {
       setAutoBotEnabled(evolutionConfig.autoBotEnabled !== false);
+    }
+    if (evolutionConfig.allowEmojis !== undefined) {
+      setAllowEmojis(Boolean(evolutionConfig.allowEmojis));
+    }
+    if (evolutionConfig.askStaffPreference !== undefined) {
+      setAskStaffPreference(evolutionConfig.askStaffPreference !== false);
+    }
+    if (evolutionConfig.notifyPersonalPhoneOnBooking !== undefined) {
+      setNotifyPersonalPhone(evolutionConfig.notifyPersonalPhoneOnBooking !== false);
+    }
+    if (evolutionConfig.handoffOnUnknownTopic !== undefined) {
+      setHandoffOnUnknownTopic(evolutionConfig.handoffOnUnknownTopic !== false);
+    }
+    if (evolutionConfig.personalPhone !== undefined) {
+      setPersonalPhone(evolutionConfig.personalPhone);
+    }
+    if (evolutionConfig.phoneType !== undefined) {
+      setPhoneType(evolutionConfig.phoneType);
+    }
+    if (evolutionConfig.minNoticeMinutes !== undefined) {
+      setMinNoticeMinutes(evolutionConfig.minNoticeMinutes);
+    }
+    if (evolutionConfig.serviceScheduleMode !== undefined) {
+      setServiceScheduleMode(evolutionConfig.serviceScheduleMode);
     }
     if (evolutionConfig.aiTone) {
       setAiTone(evolutionConfig.aiTone);
@@ -196,9 +238,17 @@ export default function BotWhatsAppPage() {
     setIsSavingAiSettings(true);
     updateEvolutionConfig({
       autoBotEnabled,
+      allowEmojis,
+      askStaffPreference,
+      notifyPersonalPhoneOnBooking: notifyPersonalPhone,
+      handoffOnUnknownTopic,
+      personalPhone: personalPhone.trim(),
+      phoneType,
+      minNoticeMinutes,
+      serviceScheduleMode,
       aiTone,
       aiInstructions,
-      humanHandoffPhone: humanHandoffPhone.trim(),
+      humanHandoffPhone: personalPhone.trim() || humanHandoffPhone.trim(),
     });
     setTimeout(() => {
       setIsSavingAiSettings(false);
@@ -328,6 +378,15 @@ export default function BotWhatsAppPage() {
               tenantSlug: business.slug,
               clientPhone: business.whatsappNumber || business.phone || "+595 981 765 432",
               clientName: "Cliente WhatsApp",
+              configOverrides: {
+                allowEmojis,
+                askStaffPreference,
+                handoffOnUnknownTopic,
+                aiTone,
+                aiInstructions,
+                notifyPersonalPhoneOnBooking: notifyPersonalPhone,
+                personalPhone: personalPhone.trim(),
+              },
             }),
           });
           if (aiRes.ok) {
@@ -682,21 +741,31 @@ export default function BotWhatsAppPage() {
                       Si vos contestás desde tu WhatsApp o el cliente pide una persona, se pausa 30 minutos.
                     </p>
                   </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1 sm:col-span-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                      <ShieldAlert className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      <span>Te avisa a tu celular si no sabe algo o consultan por un producto</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Si preguntan por un producto no cargado o una duda particular del local, la IA no inventa nada: le dice con amabilidad que no dispone de esa información y te manda un WhatsApp con la consulta para que lo contactes.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* 3. Personalización Funcional */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-                <div className="pb-2 border-b border-slate-100 dark:border-white/5">
+              {/* 3. Personalización Funcional del Asistente */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-5 shadow-2xs">
+                <div className="pb-3 border-b border-slate-100 dark:border-white/5">
                   <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                    Personalización de Mensajes
+                    Personalización & Reglas de Atención
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Elegí cómo querés que se exprese tu asistente con tus clientes.
+                    Ajustá cómo querés que hable tu asistente y qué reglas debe seguir con tus clientes.
                   </p>
                 </div>
 
-                {/* Tono */}
+                {/* 3.1 Tono de Conversación */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     ¿Cómo querés que hable tu asistente?:
@@ -752,7 +821,272 @@ export default function BotWhatsAppPage() {
                   </div>
                 </div>
 
-                {/* Instrucciones del local */}
+                {/* 3.2 Interruptor de Emojis */}
+                <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        Permitir emojis en los mensajes
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                          allowEmojis
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60"
+                            : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                        }`}
+                      >
+                        {allowEmojis ? "Con emojis" : "Sin emojis (Recomendado)"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {allowEmojis
+                        ? "Tu asistente usará emojis amigables para una atención cercana."
+                        : "Desactivado por defecto. Mensajes 100% sobrios, limpios y sin emoticones ni caritas."}
+                    </p>
+                  </div>
+                  <CustomSwitch
+                    checked={allowEmojis}
+                    onChange={(val) => setAllowEmojis(val)}
+                    label="Permitir emojis"
+                  />
+                </div>
+
+                {/* 3.3 Preferencia de Profesional / Especialista */}
+                <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-indigo-600" />
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        Preguntar preferencia de profesional al cliente
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Si tenés más de un profesional o peluquero en tu equipo, la IA le preguntará al cliente con quién desea atenderse o si prefiere al primero libre.
+                    </p>
+                  </div>
+                  <CustomSwitch
+                    checked={askStaffPreference}
+                    onChange={(val) => setAskStaffPreference(val)}
+                    label="Preguntar preferencia de profesional"
+                  />
+                </div>
+
+                {/* 3.4 Derivación Automática si la IA no sabe algo o consultan por un producto no cargado */}
+                <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="h-4 w-4 text-amber-600" />
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        Avisar al encargado si la IA no sabe algo o consultan por un producto no cargado
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/60">
+                        Honestidad & Cero inventos
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Si el cliente pregunta por un producto que no está en tu lista, una duda técnica del local o un tratamiento especial que la IA desconoce, le dirá con educación que no lo sabe en este momento, le ofrecerá ayuda humana y te enviará un aviso inmediato a tu WhatsApp para que lo asesores.
+                    </p>
+                  </div>
+                  <CustomSwitch
+                    checked={handoffOnUnknownTopic}
+                    onChange={(val) => setHandoffOnUnknownTopic(val)}
+                    label="Avisar al encargado si la IA no sabe algo"
+                  />
+                </div>
+
+                {/* 3.5 Anticipación Mínima para Reservar */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-slate-400" />
+                      <span>¿Con cuánta anticipación mínima pueden agendar?:</span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                    {[
+                      { minutes: 0, label: "En cualquier momento" },
+                      { minutes: 30, label: "30 min antes" },
+                      { minutes: 60, label: "1 hora antes" },
+                      { minutes: 120, label: "2 horas antes" },
+                      { minutes: 1440, label: "24 horas antes" },
+                    ].map((item) => (
+                      <button
+                        key={item.minutes}
+                        type="button"
+                        onClick={() => setMinNoticeMinutes(item.minutes)}
+                        className={`p-2 rounded-xl text-center border text-xs font-bold transition cursor-pointer ${
+                          minNoticeMinutes === item.minutes
+                            ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 ring-2 ring-emerald-600/20"
+                            : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Evita que los clientes reserven para dentro de 10 minutos cuando ya estás ocupado.
+                  </p>
+                </div>
+
+                {/* 3.5 Horario de Atención del Asistente */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    ¿Cuándo debe responder tu Asistente?:
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setServiceScheduleMode("always")}
+                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                        serviceScheduleMode === "always"
+                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                          : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <Sun className="h-4 w-4 text-amber-500" />
+                        <span className="text-xs font-bold">Las 24 horas del día (Recomendado)</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Responde y agenda a toda hora, incluso de madrugada o días feriados.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setServiceScheduleMode("business_hours")}
+                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                        serviceScheduleMode === "business_hours"
+                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                          : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <Moon className="h-4 w-4 text-indigo-500" />
+                        <span className="text-xs font-bold">Solo en horario comercial</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Fuera de hora envía un saludo informando cuándo abre el local.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3.6 Tipo de Línea de WhatsApp */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    ¿Qué tipo de número es esta línea de WhatsApp?:
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPhoneType("business")}
+                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                        phoneType === "business"
+                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                          : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <Briefcase className="h-4 w-4 text-emerald-600" />
+                        <span className="text-xs font-bold">Línea del Negocio</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Chip o celular exclusivo para clientes y atención comercial.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPhoneType("personal")}
+                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                        phoneType === "personal"
+                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                          : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <Smartphone className="h-4 w-4 text-sky-600" />
+                        <span className="text-xs font-bold">Mi Número Personal Compartido</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Atiendo clientes y recibo avisos desde mi propio WhatsApp.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3.7 Alerta a tu WhatsApp Personal cuando reserven */}
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-brand" />
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                          Avisarme a mi WhatsApp personal cuando reserven
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Recibí un mensaje cada vez que un cliente agende una cita o con qué profesional se reservó.
+                        </span>
+                      </div>
+                    </div>
+                    <CustomSwitch
+                      checked={notifyPersonalPhone}
+                      onChange={(val) => setNotifyPersonalPhone(val)}
+                      label="Avisarme al celular personal"
+                    />
+                  </div>
+
+                  {notifyPersonalPhone && (
+                    <div className="pt-2 space-y-2.5 border-t border-slate-200/60 dark:border-white/5">
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                          Tu número de WhatsApp personal para recibir alertas:
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                          <input
+                            type="tel"
+                            value={personalPhone}
+                            onChange={(e) => setPersonalPhone(e.target.value)}
+                            placeholder="+595 981 700 800"
+                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Vista previa de la alerta */}
+                      <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 p-3 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">
+                          Así te llegará el aviso a tu WhatsApp:
+                        </span>
+                        <p className="text-[11px] text-slate-700 dark:text-slate-300 font-mono leading-relaxed">
+                          🔔 *Nuevo turno agendado en {business.name}*<br />
+                          👤 Cliente: Juan Pérez (+595 981 111 222)<br />
+                          ✂️ Servicio: Corte Clásico / Fade<br />
+                          🕒 Horario: Mañana 15:30 hs<br />
+                          💈 Profesional: Diego Franco
+                        </p>
+                      </div>
+
+                      {/* Vista previa 2: Alerta de consulta no resuelta / producto */}
+                      <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-1">
+                        <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase block tracking-wider">
+                          Así te llegará el aviso si preguntan por un producto no cargado o duda del local:
+                        </span>
+                        <p className="text-[11px] text-slate-800 dark:text-slate-200 font-mono leading-relaxed">
+                          ⚠️ *Consulta de Cliente para Asesor Humano en {business.name}*<br />
+                          👤 Cliente: Carlos Giménez (+595 981 333 444)<br />
+                          ❓ Consulta: "¿Tienen shampoo anticaída o minoxidil?"<br />
+                          📲 Por favor comunícate con el cliente para responderle a la brevedad.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3.8 Instrucciones Particulares del Local */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -771,26 +1105,6 @@ export default function BotWhatsAppPage() {
                   />
                   <p className="text-[10px] text-slate-400">
                     Tu asistente recordará esta información cada vez que hable con un cliente.
-                  </p>
-                </div>
-
-                {/* Teléfono de aviso */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Tu WhatsApp para recibir avisos de turnos:
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                    <input
-                      type="text"
-                      value={humanHandoffPhone}
-                      onChange={(e) => setHumanHandoffPhone(e.target.value)}
-                      placeholder="+595 981 123 456"
-                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400">
-                    Te enviaremos un aviso por WhatsApp cuando un cliente reserve o pida hablar con vos.
                   </p>
                 </div>
 

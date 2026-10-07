@@ -54,7 +54,7 @@ const OPERATIONS_LINKS: SidebarLink[] = [
   { href: "/dashboard/transferencias", label: "SIPAP Bancario", icon: Receipt, roles: ["admin", "cajero"] },
   { href: "/dashboard/crm", label: "Mensajes & CRM", icon: MessagesSquare, roles: ["admin", "cajero"] },
   { href: "/dashboard/fidelizacion", label: "Fidelización", icon: Award, roles: ["admin", "cajero"] },
-  { href: "/dashboard/whatsapp", label: "Bot WhatsApp", icon: Bot, roles: ["admin"] },
+  { href: "/dashboard/whatsapp", label: "Asistente WhatsApp", icon: Bot, roles: ["admin"] },
   { href: "/dashboard/estadisticas", label: "Métricas y Análisis", icon: BarChart3, roles: ["admin"] },
 ];
 

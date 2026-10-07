@@ -1378,6 +1378,40 @@ Cada entrada debe detallar:
     - Se recalibraron las 4 tarjetas a 7 ítems homogéneos cada una, con paddings optimizados y menor altura para que no se corten en la parte inferior y los botones de acción queden perfectamente visibles.
     - **Panel Móvil Interactivo Flotante:** En dispositivos móviles (`< lg`), se reemplazó el apilamiento vertical largo por un selector táctil interactivo con pestañas de planes (`[ Gratis ] [ Básico ] [ Plan Pro ⭐ ] [ Empresa ]`), botones laterales flotantes (`<` y `>`) y puntos de posición para cambiar entre planes sin necesidad de desplazarse verticalmente. En desktop (`>= lg`) se mantiene la grilla completa de 4 columnas en paralelo.
 
+---
+
+### [Reorganización Desktop Dashboard & Configuración Avanzada WhatsApp IA] — 2026-10-07
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Dashboard Principal (`/dashboard`), Módulo WhatsApp IA (`/dashboard/whatsapp`), Registro / Onboarding (`/onboarding`) y tipos del sistema.
+- **Archivos Modificados:**
+  - `frontend/app/dashboard/page.tsx`
+  - `frontend/app/dashboard/whatsapp/page.tsx`
+  - `frontend/lib/ai/whatsapp-agent.ts`
+  - `frontend/app/api/ai/chat/route.ts`
+  - `frontend/app/onboarding/page.tsx`
+  - `frontend/lib/dashboard-types.ts`
+  - `frontend/store/useDashboardStore.ts`
+  - `frontend/lib/tenant/actions.ts`
+  - `frontend/components/landing/*` (Hero, Integrations, PhoneOrbitNotifications)
+  - `frontend/components/dashboard/*` (Sidebar, MobileTabBar, ClientFichaModal)
+  - `frontend/app/showcase/page.tsx`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Reorganización Ergonómica de Escritorio (`/dashboard`):**
+     - **Banda Ejecutiva Superior:** Reemplazo de bloques redundantes por un Command Strip de 4 KPIs equilibrados (Recaudación de Hoy, Agenda de Hoy, Ocupación de Sillas con anillo animado SVG y Tasa de Asistencia).
+     - **Agenda Operativa en Primer Plano:** Acceso inmediato a la lista de turnos diarios sin scroll vertical ("above the fold"), con filtros segmentados y chips por personal.
+     - **Columna Lateral Derecha (1/3):** Integración de tarjeta Spotlight del Próximo Turno con indicador en vivo y cobro en 1 clic (o Inspección Rápida al seleccionar una cita), Gráfico de Trayectoria Semanal de 7 días con tooltip de importes, Buzón CRM con badge numérico de no leídos y Cuadrícula 2x2 de accesos operativos directos.
+  2. **Configuración y Reglas del Asistente WhatsApp IA:**
+     - **Control de Emojis:** Opción de permitir o restringir emojis en las respuestas automáticas de la IA.
+     - **Aviso de Turnos al Número Personal / Negocio:** Switch en configuración y durante el onboarding para elegir si notificar turnos confirmados al WhatsApp personal del dueño o del negocio.
+     - **Preferencia de Profesional Multirubro:** Si múltiples profesionales ofrecen el mismo servicio, la IA consulta al cliente si tiene preferencia de profesional antes de agendar.
+     - **Manejo de Dudas Desconocidas y Asistencia Humana:** Regla para que ante consultas de productos o temas específicos que la IA no conozca, responda cordialmente ofreciendo transferir la consulta a un asistente humano del local notificando al comercio.
+  3. **Alineación de Marca:**
+     - Eliminación rigurosa de menciones de Apple Wallet en todos los componentes (manteniendo exclusivamente Google Maps, Google Calendar y Tarjeta VIP).
+- **Validación:**
+  - `npx tsc --noEmit` completado con **0 errores**.
+  - `npm run dev` activo y sin incidencias.
+
+
 
 
 

@@ -29,6 +29,7 @@ import {
   X,
   Sparkles,
   FileText,
+  Bell,
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -65,6 +66,9 @@ export default function OnboardingPage() {
   const [price, setPrice] = useState("80000");
 
   const [whatsapp, setWhatsapp] = useState("");
+  const [phoneType, setPhoneType] = useState<"business" | "personal">("business");
+  const [personalPhone, setPersonalPhone] = useState("");
+  const [notifyPersonal, setNotifyPersonal] = useState(false);
   const [ownerName, setOwnerName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
 
@@ -151,6 +155,8 @@ export default function OnboardingPage() {
       duration: Number(duration) || 45,
       price: Number(price.replace(/\D/g, "")) || 80000,
       whatsapp,
+      phoneType,
+      personalPhone: phoneType === "personal" ? whatsapp : (notifyPersonal ? personalPhone : ""),
       ruc: ruc.trim(),
       logoUrl,
       ownerName: ownerName.trim() || businessName,
@@ -579,10 +585,53 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-4">
-                {/* 3.1 WhatsApp con teclado tel nativo */}
+                {/* 3.1 Selector Switch: Personal o Negocio */}
+                <div className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 block">
+                        ¿Qué número de contacto vas a registrar?
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {phoneType === "business"
+                          ? "Línea comercial o chip exclusivo del local"
+                          : "Mi número de WhatsApp personal"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center rounded-xl bg-slate-200/80 p-0.5 text-xs font-bold shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setPhoneType("business")}
+                        className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                          phoneType === "business"
+                            ? "bg-white text-slate-900 shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        Negocio
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhoneType("personal")}
+                        className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                          phoneType === "personal"
+                            ? "bg-white text-brand shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        Personal
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3.2 WhatsApp con teclado tel nativo */}
                 <div>
                   <label htmlFor="whatsapp-input" className="block text-xs font-bold text-slate-700">
-                    Número de WhatsApp del Negocio *
+                    {phoneType === "personal"
+                      ? "Tu Número de WhatsApp Personal *"
+                      : "Número de WhatsApp del Negocio *"}
                   </label>
                   <div className="relative mt-1.5">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -601,9 +650,57 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <p className="mt-1 text-[10px] text-slate-400">
-                    Teclado telefónico directo. Se utilizará para enviar recordatorios automáticos.
+                    {phoneType === "personal"
+                      ? "Acá tus clientes escribirán y además te avisaremos en tiempo real cada vez que reserven un turno."
+                      : "Línea comercial donde tus clientes escribirán y tu asistente atenderá automáticamente."}
                   </p>
                 </div>
+
+                {/* Opción adicional si es número de negocio: avisar al personal */}
+                {phoneType === "business" && (
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 space-y-2.5 shadow-2xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-brand shrink-0" />
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 block">
+                            Avisarme a mi WhatsApp personal cuando reserven
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Recibí un mensaje cada vez que un cliente agende una cita
+                          </span>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={notifyPersonal}
+                        onChange={(e) => setNotifyPersonal(e.target.checked)}
+                        className="h-4 w-4 rounded text-brand focus:ring-brand/30 border-slate-300 cursor-pointer"
+                      />
+                    </div>
+
+                    {notifyPersonal && (
+                      <div className="pt-1">
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                            🇵🇾 +595
+                          </span>
+                          <input
+                            type="tel"
+                            inputMode="tel"
+                            value={personalPhone}
+                            onChange={(e) => setPersonalPhone(e.target.value)}
+                            placeholder="981 700 800 (tu celular personal)"
+                            className="w-full rounded-xl border border-slate-200/90 bg-slate-50 py-2 pl-20 pr-3 text-xs font-semibold text-slate-900 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition"
+                          />
+                        </div>
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          Te enviaremos quién reservó, qué servicio y con qué profesional.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 3.2 Nombre del Dueño/a */}
                 <div>

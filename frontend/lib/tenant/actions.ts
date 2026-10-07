@@ -12,6 +12,8 @@ export interface OnboardingInput {
   duration: number;
   price: number;
   whatsapp: string;
+  phoneType?: "business" | "personal";
+  personalPhone?: string;
   ruc?: string;
   logoUrl?: string;
   ownerEmail?: string;
@@ -74,6 +76,11 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
       }
     }
 
+    const cleanWhatsapp = input.whatsapp.replace(/\D/g, "");
+    const cleanPersonalPhone = (
+      input.personalPhone || (input.phoneType === "personal" ? input.whatsapp : "")
+    ).replace(/\D/g, "");
+
     // Crear tenant, user, staff, servicio y horarios en una sola transacción atómica
     const result = await prisma.$transaction(async (tx) => {
       // 1. Crear Tenant
@@ -87,10 +94,24 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
           timezone: "America/Asuncion",
           settings: {
             category: input.category,
-            whatsappPhone: input.whatsapp.replace(/\D/g, ""),
+            whatsappPhone: cleanWhatsapp,
             ruc: (input.ruc || "").trim(),
             slotStepMinutes: 30,
             maxAdvanceDays: 30,
+            evolutionConfig: {
+              connected: false,
+              phoneNumber: cleanWhatsapp,
+              phoneType: input.phoneType || "business",
+              personalPhone: cleanPersonalPhone,
+              humanHandoffPhone: cleanPersonalPhone || cleanWhatsapp,
+              autoBotEnabled: true,
+              aiTone: "amigable",
+              allowEmojis: false,
+              askStaffPreference: true,
+              notifyPersonalPhoneOnBooking: true,
+              minNoticeMinutes: 60,
+              serviceScheduleMode: "always",
+            },
           },
           themeSettings: {
             primaryColor: "#5b31e6",

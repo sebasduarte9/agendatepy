@@ -103,7 +103,7 @@ const ROW1_CARDS = [
     icon: Smartphone,
     iconBg: "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
     title: "Tarjeta Digital",
-    badge: "Apple Wallet",
+    badge: "Tarjeta VIP",
     badgeColor: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
     desc: "Puntos fidelización OK",
   },

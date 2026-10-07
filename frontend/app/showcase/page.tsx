@@ -874,7 +874,7 @@ export default function ShowcasePage() {
                 </div>
                 <div className="rounded-2xl border border-black/10 dark:border-white/10 p-3 space-y-1">
                   <span className="font-bold block text-primary">Sincronización Total</span>
-                  <span className="text-[11px] opacity-70">Google Calendar & Apple Wallet</span>
+                  <span className="text-[11px] opacity-70">Google Calendar & Google Maps</span>
                 </div>
               </div>
             </div>
