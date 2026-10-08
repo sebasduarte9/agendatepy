@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock, Bell, ArrowRight, MessageCircle, Calendar, CheckCheck, MapPin, User, Sparkles, RefreshCw, Check } from "lucide-react";
+import { CheckCircle2, Clock, Bell, ArrowRight, MessageCircle, Calendar, CheckCheck, MapPin, User, Scissors, RefreshCw, Check } from "lucide-react";
 import { useCategory } from "@/context/CategoryContext";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 
@@ -121,7 +121,7 @@ export default function WhatsAppShowcase() {
                 <span>¡Tu turno está confirmado!</span>
               </div>
               <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2 text-[11px] font-medium space-y-1 border border-slate-100 dark:border-white/5">
-                <p className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-brand shrink-0" /> <strong className="text-slate-900 dark:text-white">Servicio:</strong> {category.heroExample}</p>
+                <p className="flex items-center gap-1.5"><Scissors className="h-3 w-3 text-brand shrink-0" /> <strong className="text-slate-900 dark:text-white">Servicio:</strong> {category.heroExample}</p>
                 <p className="flex items-center gap-1.5"><User className="h-3 w-3 text-emerald-600 shrink-0" /> <strong className="text-slate-900 dark:text-white">Profesional:</strong> Colaborador 1</p>
                 <p className="flex items-center gap-1.5"><Calendar className="h-3 w-3 text-brand shrink-0" /> <strong className="text-slate-900 dark:text-white">Fecha:</strong> Este viernes · 16:30 hs</p>
                 <p className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-emerald-600 shrink-0" /> <strong className="text-slate-900 dark:text-white">Lugar:</strong> {category.businessName} (Asunción)</p>

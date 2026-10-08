@@ -310,7 +310,7 @@ Responde únicamente con el JSON sin bloques de markdown extra ni explicaciones.
         isSipap: Boolean(parsed.isSipap),
         bank: parsed.bank || "Banco no identificado",
         amount: Number(parsed.amount) || 0,
-        operationNumber: parsed.operationNumber || `SIPAP-${Date.now().toString().slice(-6)}`,
+        operationNumber: parsed.operationNumber || `TRF-${Date.now().toString().slice(-6)}`,
         senderName: parsed.senderName || "",
         recipientName: parsed.recipientName || "",
         date: parsed.date || new Date().toISOString(),

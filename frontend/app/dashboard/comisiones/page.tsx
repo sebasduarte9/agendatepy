@@ -97,7 +97,7 @@ export default function ComisionesPage() {
 
   // Liquidation form state
   const [liqStaffId, setLiqStaffId] = useState<string>("");
-  const [liqPaymentMethod, setLiqPaymentMethod] = useState<"SIPAP" | "Efectivo" | "POS Bancard">("SIPAP");
+  const [liqPaymentMethod, setLiqPaymentMethod] = useState<"Transferencia" | "Efectivo" | "POS Bancard">("Transferencia");
   const [liqAutoCashExpense, setLiqAutoCashExpense] = useState(true);
   const [liqAdvancesDeducted, setLiqAdvancesDeducted] = useState(0);
   const [liqNotes, setLiqNotes] = useState("");
@@ -325,7 +325,7 @@ export default function ComisionesPage() {
     const targetStaff = staffMap.get(targetId);
     setLiqStaffId(targetId);
     setLiqAdvancesDeducted(targetStaff?.advanceBalance || 0);
-    setLiqPaymentMethod("SIPAP");
+    setLiqPaymentMethod("Transferencia");
     setLiqNotes("");
     setIsLiquidarModalOpen(true);
   };
@@ -475,7 +475,7 @@ export default function ComisionesPage() {
 
   const liqPaymentMethodOptions = useMemo(
     () => [
-      { value: "SIPAP", label: "Transferencia Bancaria SIPAP" },
+      { value: "Transferencia", label: "Transferencia Bancaria" },
       { value: "Efectivo", label: "Efectivo (Caja Mostrador)" },
       { value: "POS Bancard", label: "POS Bancard / Tarjeta" },
     ],

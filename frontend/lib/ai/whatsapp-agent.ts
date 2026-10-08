@@ -287,7 +287,7 @@ REGLAS DE ATENCIÓN:
 6. Si el cliente desea cambiar o reprogramar la fecha/hora de su turno existente, utiliza 'reprogramar_reserva'.
 7. Si el cliente desea cancelar su turno, utiliza 'cancelar_reserva'.
 8. Si el cliente consulta por puntos acumulados o programa de fidelización, utiliza 'consultar_puntos'.
-9. Al confirmar o reprogramar una reserva, incluye el enlace de su turno digital (para ver detalles y agregar a Google Calendar o ver cómo llegar en Google Maps/Waze). NO menciones Apple Wallet bajo ningún concepto.
+9. Al confirmar o reprogramar una reserva, incluye el enlace de su turno digital (para ver detalles y agregar a Google Calendar o ver cómo llegar en Google Maps/Waze).
 10. ${unknownTopicRule}
 11. Mantén un trato educado, cálido y propio de Paraguay.`;
 

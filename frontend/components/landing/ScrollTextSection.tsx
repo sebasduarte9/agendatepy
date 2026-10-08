@@ -3,7 +3,7 @@
 import React from 'react';
 import TextAnimation from '@/components/ui/scroll-text';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
-import { Sparkles, CalendarCheck2 } from 'lucide-react';
+import { CalendarCheck2 } from 'lucide-react';
 
 export default function ScrollTextAnimation() {
   return (
@@ -31,7 +31,7 @@ export default function ScrollTextAnimation() {
         <TextAnimation
           as="p"
           letterAnime={true}
-          text="Multiplicá tus citas y ganá tiempo libre ✨"
+          text="Multiplicá tus citas y ganá tiempo libre."
           classname="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white max-w-2xl"
           variants={{
             hidden: { filter: 'blur(4px)', opacity: 0, y: 20 },

@@ -686,7 +686,7 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                           <ShieldCheck className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
                           <div>
                             <p className="font-bold text-[11px]">
-                              Seña requerida: Gs. {(service.prepaymentAmount || Math.round((service.promoPrice || service.price) * 0.5)).toLocaleString("es-PY")} ({service.prepaymentMethod?.toUpperCase() || "SIPAP"})
+                              Seña requerida: Gs. {(service.prepaymentAmount || Math.round((service.promoPrice || service.price) * 0.5)).toLocaleString("es-PY")} ({service.prepaymentMethod?.toUpperCase() === "SIPAP" ? "TRANSFERENCIA" : (service.prepaymentMethod?.toUpperCase() || "TRANSFERENCIA")})
                             </p>
                             <p className="text-[10px] text-amber-800 dark:text-amber-300 mt-0.5">
                               {service.prepaymentInstructions || "Enviar comprobante por WhatsApp al agendar para congelar tu lugar."}
@@ -758,7 +758,7 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                           {[
                             { id: "efectivo", label: "Efectivo", icon: Banknote },
                             { id: "pos_bancard", label: "Tarjeta (POS)", icon: CreditCard },
-                            { id: "sipap", label: "Transferencia (SIPAP)", icon: Landmark },
+                            { id: "sipap", label: "Transferencia", icon: Landmark },
                             { id: "billetera_py", label: "Giros / Billetera", icon: Smartphone },
                           ].map((m) => {
                             const IconComp = m.icon;

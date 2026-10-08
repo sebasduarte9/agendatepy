@@ -12,7 +12,7 @@
 3. [Experiencia del Cliente Final (Portal Público)](#3-experiencia-del-cliente-final-portal-público)
    - 3.1 Portal de Reservas Online 24/7 (`/[tenant]/reservar`)
    - 3.2 Portal de Autogestión del Turno (`/[tenant]/turno/[id]`)
-   - 3.3 Tarjeta Digital de Fidelización & Apple Wallet (`/[tenant]/tarjeta/[clientId]`)
+   - 3.3 Tarjeta Digital de Fidelización (`/[tenant]/tarjeta/[clientId]`)
 4. [Módulos del Panel de Administración (Dashboard)](#4-módulos-del-panel-de-administración-dashboard)
    - 4.1 Panel de Control & Métricas Diarias (`/dashboard`)
    - 4.2 Agenda & Calendario de Turnos (`/dashboard/calendario`)
@@ -23,14 +23,14 @@
    - 4.7 Directorio de Clientes & CRM Individual (`/dashboard/clientes`)
    - 4.8 Control de Caja Chica & Arqueo Diario (`/dashboard/caja`)
    - 4.9 Liquidación de Comisiones & Recibos Oficiales (`/dashboard/comisiones`)
-   - 4.10 Validación de Comprobantes Bancarios SIPAP (`/dashboard/transferencias`)
+   - 4.10 Validación de Comprobantes de Transferencia (`/dashboard/transferencias`)
    - 4.11 Club VIP & Programa de Lealtad (`/dashboard/fidelizacion`)
    - 4.12 CRM Omnicanal & Bandeja de Conversaciones (`/dashboard/crm`)
    - 4.13 Bot de WhatsApp Oficial & Canva de Flujo Visual (`/dashboard/whatsapp`)
    - 4.14 Personalización Visual & Apariencia de Marca (`/dashboard/apariencia`)
    - 4.15 Gestión de Equipo, Horarios & Permisos (`/dashboard/equipo`)
    - 4.16 Reportes Financieros & Estadísticas (`/dashboard/estadisticas`)
-   - 4.17 Ajustes del Negocio & Datos SIPAP (`/dashboard/configuracion`)
+   - 4.17 Ajustes del Negocio & Datos de Transferencia (`/dashboard/configuracion`)
    - 4.18 Planes & Suscripción SaaS (`/dashboard/suscripcion`)
 5. [Sistema de Visita Guiada Interactiva (Guided Tour)](#5-sistema-de-visita-guiada-interactiva-guided-tour)
 6. [Módulo de Super Administración SaaS (`/admin`)](#6-módulo-de-super-administración-saas-admin)
@@ -47,8 +47,8 @@
 ### Pilares Fundamentales
 1. **Reducción a Cero del Ausentismo (*No-Show*):** Recordatorios automáticos en WhatsApp 24 horas y 2 horas antes de cada cita con enlace de confirmación/reprogramación.
 2. **Disponibilidad 24/7 sin Intermediarios:** Los clientes agendan desde cualquier navegador móvil o de escritorio sin registrarse ni descargar apps.
-3. **Flujos Financieros Adaptados a Paraguay:** Gestión nativa en Guaraníes (PYG), validación de comprobantes SIPAP de bancos locales y liquidación de comisiones separadas por servicios y productos.
-4. **Fidelización Móvil Moderna:** Sellos digitales acumulables con integración nativa para **Apple Wallet** (`.pkpass`).
+3. **Flujos Financieros Adaptados a Paraguay:** Gestión nativa en Guaraníes (PYG), validación de comprobantes de transferencia de bancos locales y liquidación de comisiones separadas por servicios y productos.
+4. **Fidelización Móvil Moderna:** Sellos y puntos digitales acumulables sin descargas obligatorias, accesibles desde el navegador y agregables a la pantalla de inicio del smartphone.
 5. **Autonomía Visual Total:** Cada negocio define sus colores corporativos, tipografías de Google Fonts y galerías de fotos, funcionando como su propia página web profesional.
 
 ---
@@ -61,7 +61,7 @@
   - Google OAuth 2.0 con vinculación de perfil.
   - Autenticación Passwordless con códigos OTP transaccionales por email (vencimiento de 10 minutos).
 - **Mensajería & WhatsApp:** Integración con Evolution API (sesión multi-dispositivo en la nube vía QR).
-- **Pases Digitales:** Generador criptográfico de tarjetas para Apple Wallet (`node-passbook` con firma PKCS#7).
+- **Tarjetas Digitales:** Tarjetas web responsivas PWA con código QR identificador de cliente.
 - **Procesamiento de Imágenes con IA:** Recorte de fondos en servidor con `@imgly/background-removal-node` y compresión WebP en cliente.
 - **Estilos & UI:** Tailwind CSS v4, Lucide Icons, animaciones Framer Motion y componentes customizados (sin componentes genéricos ni emojis en la UI).
 
@@ -83,7 +83,7 @@
   - Campo opcional de notas o solicitudes especiales.
 - **Modalidades de Pago:**
   - *Pago en el Local:* El cliente paga en efectivo o POS al asistir.
-  - *Transferencia Bancaria SIPAP:* Visualización de los datos de la cuenta (Banco, Titular, RUC, Alias) con cargador de archivo del comprobante digital.
+  - *Transferencia Bancaria:* Visualización de los datos de la cuenta (Banco, Titular, RUC, Alias) con cargador de archivo del comprobante digital.
 - **Pantalla de Éxito (`/listo`):**
   - Resumen detallado con número de turno, profesional, fecha, hora y ubicación del local.
   - Botón *"Añadir a Google Calendar"*.
@@ -94,11 +94,11 @@
 - **Reprogramación:** Posibilidad de cambiar fecha y hora según los horarios libres disponibles.
 - **Cancelación Anticipada:** Botón para liberar el turno con anticipación configurable (ej. hasta 2 horas antes), liberando automáticamente el cupo en el calendario del negocio.
 
-### 3.3 Tarjeta Digital de Fidelización & Apple Wallet (`/[tenant]/tarjeta/[clientId]`)
+### 3.3 Tarjeta Digital de Fidelización (`/[tenant]/tarjeta/[clientId]`)
 - **Tarjeta de Sellos Digital:** Visualización de sellos activos (ej. 8 sellos necesarios para un corte gratis).
 - **Tarjeta de Puntos:** Saldo de puntos acumulados en base al monto gastado en el comercio.
 - **Catálogo de Premios:** Lista de beneficios canjeables por puntos con estado desbloqueado/bloqueado.
-- **Botón Oficial "Add to Apple Wallet":** Descarga directa de archivo `.pkpass` para guardar la tarjeta en el iPhone con actualización remota de puntos.
+- **Acceso Directo:** Acceso instantáneo desde el celular para guardar en la pantalla principal sin requerir descargas de apps.
 
 ---
 
@@ -115,7 +115,7 @@
   - Marcar asistencia / Completar turno.
   - Abrir chat de WhatsApp con el cliente con mensaje predefinido.
   - Cobrar en caja chica directamente desde el turno.
-- **Atajos de Operación Rápida:** Botones de acceso a Bloquear Horarios, Nueva Cita y Validar SIPAP.
+- **Atajos de Operación Rápida:** Botones de acceso a Bloquear Horarios, Nueva Cita y Validar Transferencias.
 - **Checklist de Activación:** Barra de progreso para guiar al dueño a configurar logo, servicios, horarios y WhatsApp.
 
 ### 4.2 Agenda & Calendario de Turnos (`/dashboard/calendario`)
@@ -130,7 +130,7 @@
 - **Búsqueda predictiva de clientes:** Autocompleta datos de clientes frecuentes al tipear nombre o número.
 - **Alta express de nuevo cliente:** Creación inmediata sin salir del formulario.
 - **Asignación de servicio y profesional:** Cálculo automático de la hora de finalización en base a la duración del servicio.
-- **Selección de método de pago:** Efectivo, Tarjeta, SIPAP o Pendiente.
+- **Selección de método de pago:** Efectivo, Tarjeta, Transferencia o Pendiente.
 
 ### 4.4 Bloqueo de Horarios & Feriados (`/dashboard/bloquear-horario`)
 - Creación de bloqueos de tiempo para:
@@ -169,7 +169,7 @@
 - **Desglose Multimétodo:** Separación exacta de ingresos por:
   - Efectivo.
   - Tarjeta de Débito / Crédito (POS).
-  - Transferencia Bancaria SIPAP.
+  - Transferencia Bancaria.
   - Billeteras Electrónicas / Códigos QR.
 - **Cierre y Arqueo de Caja:** Comparación del dinero real contado en caja contra el monto calculado por el sistema, registrando sobrantes o faltantes.
 - **Exportación:** Generación de balances del día listos para auditoría contable.
@@ -182,7 +182,7 @@
 - **Gestión de Deducciones:** Descuento automático de vales, adelantos de sueldo o compras internas tomadas por el colaborador.
 - **Liquidación Oficial:** Botón para pagar la comisión con fecha de corte y generación de **Recibo Oficial Imprimible** con número de folio, desglose de citas liquidadas y firma de conformidad, compartible por WhatsApp.
 
-### 4.10 Validación de Comprobantes Bancarios SIPAP (`/dashboard/transferencias`)
+### 4.10 Validación de Comprobantes de Transferencia (`/dashboard/transferencias`)
 - **Bandeja de Pagos Electrónicos:** Lista de turnos donde el cliente adjuntó comprobante de transferencia bancaria al agendar.
 - **Visor de Comprobante:** Previsualización del archivo (imagen o PDF) con datos de banco emisor, fecha, importe y número de referencia.
 - **Aprobación en 1 Clic:**
@@ -210,7 +210,7 @@
   - Nodos de acción independientes:
     - *Link de Reservas:* Envía el enlace directo al portal de reservas.
     - *Servicios & Precios:* Lista los servicios y tarifas en Guaraníes adaptados al local.
-    - *Datos SIPAP:* Envía cuenta bancaria, RUC y alias para pagos.
+    - *Datos de Transferencia:* Envía cuenta bancaria, RUC y alias para pagos.
     - *Ubicación & Horarios:* Envía dirección y horarios de apertura.
     - *Asesor Humano:* Pausa el bot y deriva el chat al equipo comercial en el CRM.
   - Prevención de duplicados: Valida que cada opción tenga un número único (1 al 8).
@@ -253,14 +253,13 @@
   - Tasa de retención de clientes nuevos vs recurrentes.
   - Porcentaje de ausentismo (*no-show*) histórico.
 
-### 4.17 Ajustes del Negocio & Datos SIPAP (`/dashboard/configuracion`)
-- **Identidad del Negocio:** Nombre comercial, slug de subdominio, categoría, RUC, teléfono y dirección física.
-- **Datos Bancarios Oficiales (SIPAP):**
+### 4.17 Ajustes del Negocio & Datos de Transferencia (`/dashboard/configuracion`)
+- **Datos Bancarios Oficiales para Transferencias:**
   - Entidad Bancaria (ej: Itaú, Continental, Ueno, Familiar, etc.).
   - Nombre del Titular de la Cuenta.
   - RUC o Cédula de Identidad del Titular.
   - Tipo y Número de Cuenta.
-  - Alias SIPAP para transferencias rápidas.
+  - Alias Bancario para transferencias rápidas.
 - **Políticas de Turnos:**
   - Intervalo de la agenda (15, 30, 45 o 60 minutos).
   - Tiempo mínimo de anticipación para agendar.
@@ -305,7 +304,7 @@ Página de inicio comercial orientada a la adquisición de nuevos negocios:
   1. *Agenda Inteligente:* Prevención de solapamientos y portal 24/7.
   2. *WhatsApp Oficial:* Automatización de respuestas y recordatorios.
   3. *Control de Caja & Comisiones:* Arqueo diario y cálculo de ganancias.
-  4. *Fidelización & Apple Wallet:* Tarjetas de sellos con descarga directa al iPhone.
+  4. *Fidelización Digital:* Tarjetas de sellos y puntos desde el navegador del cliente.
 - **Simulador Interactivo:** Demostración en vivo del portal de reservas dentro de un iPhone 16 Pro.
 - **Tabla de Precios:** Selector mensual/anual con panel móvil flotante y pestañas táctiles.
 - **Preguntas Frecuentes (FAQ):** Respuestas a dudas operativas, legales y técnicas.
@@ -336,11 +335,10 @@ Página de inicio comercial orientada a la adquisición de nuevos negocios:
 | `/api/commission-payouts` | `GET`, `POST` | Liquidaciones de pago a colaboradores. |
 | `/api/reports/cash` | `GET` | Reporte consolidado de flujo de caja. |
 | `/api/reports/commissions` | `GET` | Reporte de comisiones por período. |
-| `/api/tenant/settings` | `GET`, `PUT` | Ajustes generales y datos bancarios SIPAP. |
+| `/api/tenant/settings` | `GET`, `PUT` | Ajustes generales y datos bancarios de transferencia. |
 | `/api/tenant/theme` | `GET`, `PUT` | Configuración estética, colores y estilos. |
 | `/api/upload` | `POST` | Carga de archivos multimedia (WebP, PNG, JPG). |
 | `/api/upload/remove-bg` | `POST` | Recorte inteligente de fondo con IA. |
-| `/api/wallet/apple/[clientId]` | `GET` | Generación y entrega de pase Apple Wallet `.pkpass`. |
 | `/api/webhooks/whatsapp` | `POST` | Webhook de mensajería entrante de WhatsApp. |
 | `/api/analytics/collect` | `POST` | Registro de telemetría y conversión. |
 | `/api/analytics/heatmap` | `GET` | Mapa de calor de horarios más demandados. |

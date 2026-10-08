@@ -234,7 +234,7 @@ export type TickerItem = {
   iconKey:
     | "scissors"
     | "smile"
-    | "sparkles"
+    | "gem"
     | "activity"
     | "stethoscope"
     | "dumbbell"
@@ -245,7 +245,7 @@ export type TickerItem = {
 export const TICKER_ITEMS: TickerItem[] = [
   { label: "Peluquerías & Barberías", iconKey: "scissors" },
   { label: "Odontología & Salud Dental", iconKey: "smile" },
-  { label: "Estética & Spas", iconKey: "sparkles" },
+  { label: "Estética & Spas", iconKey: "gem" },
   { label: "Pilates & Fitness", iconKey: "activity" },
   { label: "Médicos & Especialistas", iconKey: "stethoscope" },
   { label: "Gimnasios & Entrenamiento", iconKey: "dumbbell" },

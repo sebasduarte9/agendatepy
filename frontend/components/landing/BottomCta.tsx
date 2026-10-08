@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle2, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, MessageCircle, CalendarCheck } from "lucide-react";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import { useCategory } from "@/context/CategoryContext";
 
@@ -42,7 +42,7 @@ export default function BottomCta() {
           <div className="relative z-10 mx-auto max-w-2xl">
             {/* Pill Badge */}
             <div className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
-              <Sparkles className="h-3.5 w-3.5 text-brand" />
+              <CalendarCheck className="h-3.5 w-3.5 text-brand" />
               <span>Empezá a recibir turnos hoy</span>
             </div>
 
@@ -55,7 +55,7 @@ export default function BottomCta() {
             </h2>
 
             {/* Subtitle */}
-            <p className="mt-3 sm:mt-4 text-sm sm:text-lg font-medium text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
+            <p className="mt-3 sm:mt-4 text-sm sm:text-lg font-medium text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto whitespace-nowrap">
               Mejor control para tu negocio y tus reservas 24/7
             </p>
 

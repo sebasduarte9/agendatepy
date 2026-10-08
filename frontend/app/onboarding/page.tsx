@@ -758,7 +758,7 @@ export default function OnboardingPage() {
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-emerald-800 leading-relaxed">
-                    Tu cuenta incluye <strong>20 turnos por mes para siempre</strong> y cobro opcional de seña SIPAP para evitar plantones.
+                    Tu cuenta incluye <strong>20 turnos por mes para siempre</strong> y cobro opcional de seña por transferencia para evitar plantones.
                   </p>
                 </div>
 

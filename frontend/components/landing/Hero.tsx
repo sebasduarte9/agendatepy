@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   ShieldCheck,
   ArrowRight,
-  Sparkles,
+  Gem,
   Scissors,
   Smile,
   StretchHorizontal,
@@ -17,12 +17,13 @@ import {
   Wrench,
   Trophy,
   MessageCircle,
+  Activity,
 } from "lucide-react";
-import { CATEGORIES, type CategoryId } from "@/lib/categories";
+import { CATEGORIES, TICKER_ITEMS, type CategoryId, type TickerItem } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import CircularOrbitHero from "./CircularOrbitHero";
-import AIAnimationOptions from "./AIAnimationOptions";
+import WhatsAppToAgendaLive from "./WhatsAppToAgendaLive";
 import HorizontalCardOrbit from "./HorizontalCardOrbit";
 import Marquee from "@/components/ui/Marquee";
 import LiquidGlass from "@/components/ui/LiquidGlass";
@@ -41,6 +42,17 @@ const ICONS: Record<CategoryId, typeof Scissors> = {
   padel: Trophy,
 };
 
+const TICKER_ICON_MAP: Record<TickerItem["iconKey"], typeof Scissors> = {
+  scissors: Scissors,
+  smile: Smile,
+  gem: Gem,
+  activity: Activity,
+  stethoscope: Stethoscope,
+  dumbbell: Dumbbell,
+  paw: PawPrint,
+  wrench: Wrench,
+};
+
 export default function Hero() {
   const { selectedCategory, setSelectedCategory, category } = useCategory();
 
@@ -51,7 +63,7 @@ export default function Hero() {
   return (
     <section
       id="inicio"
-      className="relative pt-4 xs:pt-6 sm:pt-10 pb-16 sm:pb-24 scroll-mt-24 overflow-x-clip max-w-full"
+      className="relative pt-2 sm:pt-4 pb-16 sm:pb-24 scroll-mt-24 overflow-x-clip max-w-full"
     >
       <div className="relative mx-auto max-w-7xl px-3 sm:px-6">
         {/* ============================================================== */}
@@ -100,8 +112,8 @@ export default function Hero() {
           </div>
 
           {/* Subtítulo móvil */}
-          <div className="relative z-20 mb-3.5 mt-5 xs:mt-7 text-center w-full">
-            <p className="text-center text-base xs:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug mx-auto max-w-sm">
+          <div className="relative z-20 mb-3.5 mt-5 xs:mt-7 text-center w-full px-2 overflow-x-visible">
+            <p className="text-center text-xs xs:text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 leading-snug mx-auto whitespace-nowrap">
               Mejor control para tu negocio y tus reservas{" "}
               <span className="text-[#FF4F2B] font-black">24/7</span>
             </p>
@@ -161,50 +173,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Selector de Rubros Móvil */}
-          <div
-            className="mt-14 xs:mt-16 sm:mt-18 pt-7 pb-6 border-t border-slate-200/80 dark:border-white/10 w-full"
-            style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
-          >
-            <p className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 text-center mb-3.5">
-              SOLUCIÓN A MEDIDA PARA TU NEGOCIO:
-            </p>
-            <div className="relative overflow-hidden max-w-full ticker-mask py-2">
-              <Marquee duration="32s" gap="0.625rem" repeat={3} pauseOnHover>
-                {CATEGORIES.map((item, idx) => {
-                  const Icon = ICONS[item.id] || Scissors;
-                  const active = selectedCategory === item.id;
-                  return (
-                    <button
-                      key={`mob-cat-${item.id}-${idx}`}
-                      type="button"
-                      onClick={() => setSelectedCategory(item.id)}
-                      className="group cursor-pointer active:scale-95 transition-transform pointer-events-auto z-10 touch-manipulation select-none"
-                    >
-                      <LiquidGlass
-                        cornerRadius={999}
-                        padding="6px 14px"
-                        overLight={!active}
-                        showGlare={false}
-                        useDisplacement={false}
-                        interactive={false}
-                        className={`transition-all duration-200 ${
-                          active
-                            ? "bg-[#FF4F2B] text-white border border-white/20 shadow-sm shadow-[#FF4F2B]/20"
-                            : "bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300"
-                        }`}
-                      >
-                        <div className="inline-flex items-center gap-2 text-xs font-semibold whitespace-nowrap">
-                          <Icon className="h-3.5 w-3.5" />
-                          <span>{item.label}</span>
-                        </div>
-                      </LiquidGlass>
-                    </button>
-                  );
-                })}
-              </Marquee>
-            </div>
-          </div>
+
         </div>
 
         {/* ============================================================== */}
@@ -224,7 +193,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black tracking-tight text-slate-950 dark:text-white leading-[1.06] mt-28 sm:mt-32 md:mt-36 lg:mt-40"
+            className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black tracking-tight text-slate-950 dark:text-white leading-[1.06] mt-22 sm:mt-24 md:mt-26 lg:mt-28"
           >
             <span>Gestioná tu agenda y</span>{" "}
             <span className="block mt-1 sm:mt-2">
@@ -256,9 +225,9 @@ export default function Hero() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            className="mt-6 sm:mt-8 max-w-2xl mx-auto"
+            className="mt-4 sm:mt-5 w-full max-w-4xl mx-auto px-4"
           >
-            <p className="text-xl xs:text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 leading-snug">
+            <p className="text-lg sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 leading-snug text-center whitespace-nowrap">
               Mejor control para tu negocio y tus reservas{" "}
               <span className="text-[#FF4F2B] font-black">24/7</span>
             </p>
@@ -269,7 +238,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25 }}
-            className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-2xl mx-auto"
+            className="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-2xl mx-auto"
           >
             <Link
               href="/onboarding"
@@ -306,7 +275,7 @@ export default function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.35 }}
-            className="mt-4 flex items-center justify-center"
+            className="mt-3 flex items-center justify-center"
           >
             <LiquidGlass
               cornerRadius={999}
@@ -328,79 +297,72 @@ export default function Hero() {
             </LiquidGlass>
           </motion.div>
 
-          {/* Selector de Rubros / Solución a Medida Centrado */}
-          <div className="mt-12 sm:mt-16 w-full max-w-4xl pt-6 border-t border-slate-200/70 dark:border-white/10">
-            <p className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 text-center mb-4">
-              SOLUCIÓN A MEDIDA PARA TU NEGOCIO:
-            </p>
-            <div className="relative overflow-hidden max-w-full ticker-mask py-1">
-              <Marquee duration="34s" gap="0.75rem" repeat={3} pauseOnHover>
-                {CATEGORIES.map((item, idx) => {
-                  const Icon = ICONS[item.id] || Scissors;
-                  const active = selectedCategory === item.id;
-                  return (
-                    <button
-                      key={`hero-cat-${item.id}-${idx}`}
-                      type="button"
-                      onClick={() => setSelectedCategory(item.id)}
-                      className="group cursor-pointer active:scale-95 transition-transform pointer-events-auto z-10 touch-manipulation select-none"
-                    >
-                      <LiquidGlass
-                        cornerRadius={999}
-                        padding="7px 16px"
-                        overLight={!active}
-                        showGlare={false}
-                        useDisplacement={false}
-                        interactive={false}
-                        className={`transition-all duration-200 ${
-                          active
-                            ? "bg-[#FF4F2B] text-white border border-white/20 shadow-md shadow-[#FF4F2B]/25"
-                            : "bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-[#FF4F2B]/40 hover:bg-white dark:hover:bg-slate-800"
-                        }`}
-                      >
-                        <div className="inline-flex items-center gap-2 text-xs font-semibold whitespace-nowrap">
-                          <Icon className="h-3.5 w-3.5" />
-                          <span>{item.label}</span>
-                        </div>
-                      </LiquidGlass>
-                    </button>
-                  );
-                })}
-              </Marquee>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
 
       {/* ============================================================== */}
+      {/* FRANJA FULL-WIDTH DE RUBROS CON DISEÑO TICKER ELEGANTE         */}
+      {/* ============================================================== */}
+      <div className="relative z-20 w-full mt-8 sm:mt-12 mb-4 sm:mb-8">
+        <div className="text-center mb-2.5 sm:mb-3">
+          <p className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            SOLUCIÓN A MEDIDA PARA TU NEGOCIO:
+          </p>
+        </div>
+        <div className="w-full border-y border-slate-200/70 dark:border-white/10 bg-white/40 dark:bg-slate-950/40 backdrop-blur-md py-3 sm:py-4 transition-colors overflow-hidden overflow-x-clip max-w-full">
+          <div className="ticker-mask overflow-hidden max-w-full">
+            <Marquee duration="30s" gap="2.5rem" repeat={3} pauseOnHover>
+              {TICKER_ITEMS.map((item, idx) => {
+                const IconComponent = TICKER_ICON_MAP[item.iconKey] || Scissors;
+                return (
+                  <div
+                    key={`hero-ticker-${item.label}-${idx}`}
+                    className="inline-flex items-center gap-2 select-none whitespace-nowrap text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#FF4F2B]/10 text-[#FF4F2B] dark:text-[#FF6B4A] shrink-0">
+                      <IconComponent className="h-3.5 w-3.5" />
+                    </span>
+                    <span>{item.label}</span>
+                    <span className="text-slate-300 dark:text-slate-700 ml-4 sm:ml-6 select-none">·</span>
+                  </div>
+                );
+              })}
+            </Marquee>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
       {/* SEGUNDA SECCIÓN: DEMO INTERACTIVA DE WHATSAPP Y AGENDA EN VIVO */}
-      {/* (Ubicada fuera de la primera pantalla como solicitaste)        */}
       {/* ============================================================== */}
       <div
         id="simulador-whatsapp"
-        className="relative mt-20 sm:mt-28 pt-12 sm:pt-16 border-t border-slate-200/70 dark:border-white/10 flex flex-col items-center scroll-mt-20 overflow-x-clip px-4"
+        className="relative pt-6 sm:pt-10 flex flex-col items-center scroll-mt-20 overflow-x-clip px-4"
       >
         {/* Encabezado explicativo del módulo de WhatsApp y Agenda */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-[#008069] dark:text-emerald-300 text-xs font-bold mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#008069] animate-pulse" />
-            <span>DEMO INTERACTIVA EN TIEMPO REAL</span>
-          </div>
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-3"
+        >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-950 dark:text-white leading-[1.12]">
             De una conversación en WhatsApp a tu{" "}
             <span className="bg-gradient-to-r from-[#FF5B37] via-[#FF441F] to-amber-500 bg-clip-text text-transparent">
-              agenda confirmada
+              agenda web
             </span>
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Tus clientes conversan naturalmente con la IA y tu calendario se actualiza al milisegundo con 0 minutos invertidos por vos.
+            Tus clientes chatean con la IA y ella se encarga de hacer el registro por ti.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Las 3 opciones interactivas para elegir cuál te gusta más */}
+        {/* Demo en vivo: WhatsApp a la izquierda y Agenda sincronizándose a la derecha */}
         <div className="w-full flex justify-center max-w-full">
-          <AIAnimationOptions />
+          <WhatsAppToAgendaLive />
         </div>
 
         {/* Simulador de reserva en vivo colocado directamente debajo */}

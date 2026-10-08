@@ -38,7 +38,7 @@ const ORBIT_PILLS: NotificationCardItem[] = [
     icon: Landmark,
     iconBg: "bg-[#FF4F2B] text-white shadow-xs shadow-[#FF4F2B]/40",
     title: "Seña Recibida",
-    subtitle: "SIPAP Verificado",
+    subtitle: "Transferencia Verificada",
     badge: "Gs. 80.000",
     badgeStyle: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300",
   },
@@ -278,7 +278,7 @@ export default function HorizontalCardOrbit() {
   }, []);
 
   return (
-    <div className="absolute top-8 sm:top-10 md:top-12 left-1/2 -translate-x-1/2 w-0 h-0 pointer-events-none select-none z-10 overflow-visible">
+    <div className="absolute top-4 sm:top-5 md:top-6 left-1/2 -translate-x-1/2 w-0 h-0 pointer-events-none select-none z-10 overflow-visible">
       {/* 8 Cards con curvatura pronunciada y movimiento continuo sin freno */}
       {ORBIT_PILLS.map((item, idx) => {
         const Icon = item.icon;

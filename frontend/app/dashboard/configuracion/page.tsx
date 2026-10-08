@@ -58,10 +58,10 @@ const AVAILABLE_PAYMENT_METHODS = [
   },
   {
     id: "transferencia",
-    title: "Transferencias SIPAP / Bancos",
-    description: "Transferencias directas entre cuentas de bancos locales (SIPAP / SPI 24/7).",
+    title: "Transferencias Bancarias",
+    description: "Transferencias directas entre cuentas de bancos locales.",
     icon: Landmark,
-    badge: "SIPAP / SPI",
+    badge: "Transferencias",
     activeColor: "border-indigo-500/40 bg-indigo-500/5 text-indigo-600 dark:text-indigo-400",
   },
   {

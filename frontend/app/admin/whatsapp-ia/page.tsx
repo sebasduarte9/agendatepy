@@ -428,7 +428,7 @@ export default function WhatsAppIaAdminPage() {
                             : "bg-slate-800 text-slate-300"
                         }`}
                       >
-                        {log.intent}
+                        {log.intent === "sipap_ocr" ? "transferencia" : log.intent}
                       </span>
                     </td>
                     <td className="py-2.5 px-3 font-mono text-violet-300">{log.keyUsed}</td>

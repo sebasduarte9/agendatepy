@@ -109,7 +109,7 @@ async function createOgImage() {
         <rect x="235" y="0" width="230" height="38" rx="12" fill="#1E293B" stroke="#334155" stroke-width="1"/>
         <circle cx="255" cy="19" r="6" fill="#FF4F2B"/>
         <text x="271" y="24" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#F1F5F9">
-          Cobros en Gs. (SIPAP)
+          Cobros en Gs. (Transferencia)
         </text>
 
         <!-- Badge 3 -->

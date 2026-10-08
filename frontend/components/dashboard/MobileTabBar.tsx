@@ -181,7 +181,7 @@ export default function MobileTabBar() {
           icon: Users,
         },
         {
-          label: "Transferencias SIPAP & OCR",
+          label: "Transferencias Bancarias",
           subtitle: "Verificación de comprobantes bancarios",
           href: "/dashboard/transferencias",
           icon: CreditCard,

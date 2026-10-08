@@ -73,7 +73,7 @@ export default function TerminosPage() {
                 4. Reservas, Señas y Cancelaciones
               </h2>
               <p className="mt-2">
-                AgendatePY facilita la intermediación tecnológica para el agendamiento. Cada comercio o profesional adherido define de forma soberana sus políticas de cancelación, tolerancia de espera y cobro de señas anticipadas mediante pasarelas como uPay, Bancard o transferencias bancarias SIPAP. AgendatePY no es responsable por incumplimientos o cancelaciones de las partes en la cita presencial.
+                AgendatePY facilita la intermediación tecnológica para el agendamiento. Cada comercio o profesional adherido define de forma soberana sus políticas de cancelación, tolerancia de espera y cobro de señas anticipadas mediante pasarelas como uPay, Bancard o transferencias bancarias. AgendatePY no es responsable por incumplimientos o cancelaciones de las partes en la cita presencial.
               </p>
             </section>
 

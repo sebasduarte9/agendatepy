@@ -718,7 +718,7 @@ export default function BotWhatsAppPage() {
                       <span>Revisa fotos de transferencias</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Si te mandan una foto de comprobante SIPAP, revisa el banco y el monto pagado.
+                      Si te mandan una foto de comprobante de transferencia, revisa el banco y el monto pagado.
                     </p>
                   </div>
 
@@ -1323,7 +1323,7 @@ export default function BotWhatsAppPage() {
                     "¿Cuáles son los precios de corte y barba?",
                     "¿Tenés turno disponible para hoy a las 16:00 hs?",
                     "Quiero agendar corte para mañana con Diego",
-                    "¿Cómo te puedo transferir por SIPAP?",
+                    "¿Cómo te puedo hacer una transferencia?",
                     "¿Cuántos puntos acumulados tengo?",
                     "Quiero hablar con una persona",
                   ].map((example) => (

@@ -14,7 +14,7 @@ Plataforma SaaS integral de reservas online, gestión de citas, fidelización de
 - **Simulador Interactivo de WhatsApp:** Mockup fotorrealista de iPhone 16 Pro con simulación de flujo de agendamiento, confirmaciones automáticas, notas de voz interactivas y botones nativos de respuesta rápida (*Quick Replies*).
 - **Panel Administrativo (Dashboard):**
   - Calendario interactivo con vista diaria, semanal y mensual.
-  - Gestión de caja con arqueo ciego, registro de ingresos/egresos y soporte para Efectivo, Tarjeta POS, SIPAP y Billeteras electrónicas.
+  - Gestión de caja con arqueo ciego, registro de ingresos/egresos y soporte para Efectivo, Tarjeta POS, Transferencias y Billeteras electrónicas.
   - Cálculo automático de comisiones por profesional y equipo de trabajo.
   - Club de fidelización con tarjetas de sellos digitales y recompensas personalizables.
   - Catálogo de servicios y tienda de productos para retiro en local.
@@ -127,7 +127,7 @@ Una vez levantado el servidor local, puedes navegar por los siguientes módulos:
 | **Página de Reservas** | [http://localhost:3000/barberia/reservar](http://localhost:3000/barberia/reservar) | Portal público donde el cliente final agenda turnos, selecciona pagos y productos. |
 | **Panel de Control** | [http://localhost:3000/dashboard](http://localhost:3000/dashboard) | Panel central de administración de agenda, métricas del día y estado de citas. |
 | **Editor de Apariencia** | [http://localhost:3000/dashboard/apariencia](http://localhost:3000/dashboard/apariencia) | Personalización de colores, tipografías de Google, fotos y layouts en vivo. |
-| **Arqueo & Caja** | [http://localhost:3000/dashboard/caja](http://localhost:3000/dashboard/caja) | Control de ingresos en efectivo, POS, transferencias SIPAP y arqueo ciego. |
+| **Arqueo & Caja** | [http://localhost:3000/dashboard/caja](http://localhost:3000/dashboard/caja) | Control de ingresos en efectivo, POS, transferencias bancarias y arqueo ciego. |
 | **Fidelización VIP** | [http://localhost:3000/dashboard/fidelizacion](http://localhost:3000/dashboard/fidelizacion) | Club de sellos digitales para premiar a clientes recurrentes. |
 | **Integración WhatsApp** | [http://localhost:3000/dashboard/whatsapp](http://localhost:3000/dashboard/whatsapp) | Plantillas automáticas de recordatorios, confirmaciones y webhook de chat. |
 | **Laboratorio de Diseño** | [http://localhost:3000/showcase](http://localhost:3000/showcase) | Catálogo interactivo de diseño, paletas cromáticas y componentes UI. |

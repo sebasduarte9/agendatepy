@@ -190,7 +190,7 @@ export default function CrmOmnichannelPage() {
     { title: "Enlace de Turnos", text: `¡Hola! Podés reservar tu turno en nuestra web: https://${business.slug || "barberia"}.agendate.py/reservar` },
     { title: "Precios", text: "Nuestros servicios van desde Gs. 50.000 hasta Gs. 120.000 (Combo Corte + Barba VIP). ¿Te gustaría agendar?" },
     { title: "Ubicación", text: `Estamos en ${business.address}, ${business.city}. Contamos con estacionamiento exclusivo.` },
-    { title: "Datos SIPAP", text: "Transferencias SIPAP: Banco Itaú · Titular: AgendatePY · RUC: 80012345-6 · Cta: 0123456789. Enviar comprobante." },
+    { title: "Datos Transferencia", text: "Transferencias: Banco Itaú · Titular: AgendatePY · RUC: 80012345-6 · Cta: 0123456789. Enviar comprobante." },
   ];
 
   const filteredConversations = useMemo(() => crmConversations.filter((c) => {
@@ -216,7 +216,7 @@ export default function CrmOmnichannelPage() {
     );
   }, [activeConversation, productOrders]);
 
-  // SIPAP Bank receipts for active conversation client
+  // Transfer receipts for active conversation client
   const clientReceipts = useMemo(() => {
     if (!activeConversation) return [];
     return receipts.filter((r) =>
@@ -372,7 +372,7 @@ export default function CrmOmnichannelPage() {
     { value: "delivery", label: "Delivery (Asunción y alrededores)", icon: <Truck className="h-4 w-4 text-indigo-500" /> },
   ];
   const paymentOptions: CustomSelectOption[] = [
-    { value: "transferencia", label: "Transferencia SIPAP", icon: <CreditCard className="h-4 w-4 text-indigo-500" /> },
+    { value: "transferencia", label: "Transferencia Bancaria", icon: <CreditCard className="h-4 w-4 text-indigo-500" /> },
     { value: "efectivo", label: "Efectivo / Contraentrega", icon: <Tag className="h-4 w-4 text-emerald-500" /> },
     { value: "pos", label: "Tarjeta / POS Bancard", icon: <CheckCircle2 className="h-4 w-4 text-blue-500" /> },
   ];
@@ -863,7 +863,7 @@ export default function CrmOmnichannelPage() {
                           >
                             <p className="whitespace-pre-wrap">{m.text}</p>
 
-                            {/* SIPAP Receipt Attachment */}
+                            {/* Transfer Receipt Attachment */}
                             {m.receiptAttachment && (
                               <div className="mt-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-50/90 dark:bg-emerald-950/50 p-3 text-slate-800 dark:text-slate-100 space-y-2">
                                 <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5">
@@ -872,7 +872,7 @@ export default function CrmOmnichannelPage() {
                                     <span>{m.receiptAttachment.bankOrigin}</span>
                                   </div>
                                   <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9.5px] font-extrabold text-emerald-700 dark:text-emerald-300">
-                                    SIPAP
+                                    Transferencia
                                   </span>
                                 </div>
 
@@ -915,7 +915,7 @@ export default function CrmOmnichannelPage() {
                                       className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 text-[11px] transition shadow-xs cursor-pointer"
                                     >
                                       <CheckCircle2 className="h-3.5 w-3.5" />
-                                      <span>Aprobar Transferencia SIPAP</span>
+                                      <span>Aprobar Transferencia</span>
                                     </button>
                                   ) : (
                                     <div className="w-full py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5">
@@ -1177,17 +1177,17 @@ export default function CrmOmnichannelPage() {
                       </div>
                     )}
 
-                    {/* SIPAP Transfers History */}
+                    {/* Transfers History */}
                     {clientReceipts.length > 0 && (
                       <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
                         <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                          <Building2 className="h-3 w-3 text-emerald-500" /> Transferencias SIPAP:
+                          <Building2 className="h-3 w-3 text-emerald-500" /> Transferencias Bancarias:
                         </p>
                         {clientReceipts.map((r) => (
                           <div key={r.id} className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-500/20">
                             <div>
                               <span className="font-bold text-slate-800 dark:text-slate-200 block">{r.bankOrigin || "Banco Itaú"}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">{r.operationNumber || "SIPAP"}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">{r.operationNumber || "Transferencia"}</span>
                             </div>
                             <div className="text-right">
                               <span className="font-mono font-bold text-slate-900 dark:text-white block">{formatGs(r.amount)}</span>

@@ -12,7 +12,7 @@
 1. **Eliminar el ausentismo (*no-show*):** Recordatorios automáticos por WhatsApp y confirmaciones en tiempo real.
 2. **Autonomía 24/7 para clientes:** Portal de reservas público disponible en subdominios personalizados (`[negocio].agendatepy.com`) sin necesidad de instalar aplicaciones nativas.
 3. **Gestión integral de equipo y finanzas:** Control de arqueo de caja diario, cálculo automatizado de comisiones por profesional y registro de movimientos de ingresos/egresos en Guaraníes (PYG).
-4. **Fidelización recurrente:** Tarjeta digital de puntos y sellos con soporte de integración para **Apple Wallet**.
+4. **Fidelización recurrente:** Tarjeta digital de puntos y sellos con acceso móvil directo desde el navegador (PWA).
 5. **Adaptabilidad estética corporativa:** Personalización profunda de marca con fuentes de Google Fonts, colores a medida, diseño de portadas y modo oscuro (*Luxe Dark Mode*).
 
 ---
@@ -34,7 +34,6 @@ graph TD
         NextApp -->|OAuth 2.0| GoogleAuth[Google Cloud Console]
         NextApp -->|Transaccional OTP| Resend[Resend Email API]
         NextApp -->|Mensajería| Evolution[Evolution API / WhatsApp Gateway]
-        NextApp -->|Passbook .pkpass| AppleWallet[Apple Wallet Passes]
         NextApp -->|Pasarela Cobros| UPay[uPay / Bancard Gateway]
     end
 ```
@@ -95,7 +94,7 @@ erDiagram
 8. **`Commission`:**
    - Registro de comisiones generadas por citas completadas con porcentaje y monto en PYG, con estados `PENDING` y `PAID`.
 9. **`CashMovement`:**
-   - Asientos de caja chica y arqueo: Tipo (`INCOME` / `EXPENSE`), monto en PYG, categoría, descripción y método de pago (`Efectivo`, `Tarjeta POS`, `SIPAP`, `Billetera`).
+   - Asientos de caja chica y arqueo: Tipo (`INCOME` / `EXPENSE`), monto en PYG, categoría, descripción y método de pago (`Efectivo`, `Tarjeta POS`, `Transferencia`, `Billetera`).
 10. **`LoyaltyReward`:**
     - Catálogo de beneficios canjeables por puntos acumulados con descuento aplicable en Guaraníes.
 
@@ -114,11 +113,9 @@ erDiagram
 
 ---
 
-### B. Club de Fidelización Digital & Apple Wallet (`/[tenant]/tarjeta/[clientId]`)
+### B. Club de Fidelización Digital (`/[tenant]/tarjeta/[clientId]`)
 - **Tarjeta de Sellos Digital:** Cada visita suma puntos calculados automáticamente en base al consumo o por turno asistido.
-- **Pase Oficial para Apple Wallet:**
-  - Endpoint `/api/wallet/apple/[clientId]` que genera el paquete firmado `.pkpass` para que los clientes almacenen su tarjeta en el iPhone.
-  - Actualización en tiempo real del saldo de puntos y notificaciones de bienvenida.
+- **Acceso Móvil Inmediato:** Tarjeta digital responsiva accesible desde cualquier smartphone con opción de agregar a pantalla de inicio sin descargas de apps.
 - **Canje de Recompensas:** Los clientes pueden visualizar qué premios o descuentos tienen desbloqueados directamente desde su navegador móvil.
 
 ---
@@ -160,7 +157,7 @@ erDiagram
 - Múltiples medios de cobro adaptados al mercado paraguayo:
   - Efectivo.
   - Tarjetas de Débito y Crédito (POS).
-  - Transferencias bancarias instantáneas (SIPAP / Bancos locales).
+  - Transferencias bancarias instantáneas (Bancos locales).
   - Billeteras móviles (Zimple, Tigo Money, Personal Pay).
 - Registro y conciliación de transferencias bancarias para evitar fraudes con comprobantes falsos.
 
@@ -263,7 +260,7 @@ agendatepy/
     │   └── migrations/           # Historial de migraciones SQL
     ├── app/
     │   ├── [tenant]/             # Rutas públicas del negocio (reservar, tarjeta, turno)
-    │   ├── api/                  # Endpoints REST (auth Google, webhooks, Apple Wallet)
+    │   ├── api/                  # Endpoints REST (auth Google, webhooks, transferencias)
     │   ├── dashboard/            # Panel administrativo privado (agenda, CRM, caja, staff)
     │   ├── login/                # Pantalla de login unificada (Google + OTP Email)
     │   ├── onboarding/           # Flujo de bienvenida y configuración de nuevo local

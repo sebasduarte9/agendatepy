@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   MessageSquare,
-  Sparkles,
   Calendar,
   CheckCircle2,
   Clock,
@@ -63,7 +62,7 @@ const SCENARIOS: Scenario[] = [
     clientName: "Camila D.",
     clientMessage: "Hola chicas, ¿a qué hora tienen disponible limpieza facial profunda?",
     service: "Limpieza Facial Profunda",
-    aiThought: "Detecta preferencia horaria · Bloquea cabina 2 y envía seña SIPAP",
+    aiThought: "Detecta preferencia horaria · Bloquea cabina 2 y envía seña por Transferencia",
     slot: "17:30 hs",
     staff: "Lic. Paola",
     aiReply: "¡Hola Camila! Hoy tenemos libre a las 17:30 hs con Paola. Te paso el QR de seña para asegurar tu turno.",
@@ -355,7 +354,7 @@ export default function AIResponse3DAnimation() {
                   boxShadow: "rgba(30, 30, 60, 0.4) 0px 8px 15px -4px",
                 }}
               >
-                <Sparkles className="h-5 w-5 text-[#3c2f80] fill-[#3c2f80]" />
+                <Bot className="h-5 w-5 text-[#3c2f80]" />
               </span>
             </div>
 
@@ -413,7 +412,7 @@ export default function AIResponse3DAnimation() {
                       <span>3. Seña Bancaria</span>
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     </div>
-                    <p className="text-[11px] text-slate-600">Genera QR Bancard / SIPAP</p>
+                    <p className="text-[11px] text-slate-600">Genera QR Bancard / Transferencia</p>
                   </div>
                 </div>
               </div>

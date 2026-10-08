@@ -225,11 +225,11 @@ export default function ClientAppointmentManager({ appointment }: Props) {
           </div>
         )}
 
-        {/* SIPAP Bank Transfer Card */}
+        {/* Transferencia Bancaria Card */}
         {!isCancelled && (
           <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-emerald-900">Datos para Transferencia SIPAP</span>
+              <span className="font-bold text-emerald-900">Datos para Transferencia Bancaria</span>
               <button
                 type="button"
                 onClick={async () => {
@@ -245,7 +245,7 @@ export default function ClientAppointmentManager({ appointment }: Props) {
             </div>
             <div className="text-[11px] text-emerald-800 space-y-0.5">
               <p>Banco: <strong>Banco Itaú Paraguay</strong></p>
-              <p>Alias SIPAP: <strong>agendate.py</strong></p>
+              <p>Alias Bancario: <strong>agendate.py</strong></p>
               <p>Titular: <strong>{tenant.name}</strong></p>
               <p className="text-[10px] text-emerald-700/90 pt-1">
                 Podés transferir el importe ({formatGs(appointment.service.price)}) y enviar tu comprobante por WhatsApp.

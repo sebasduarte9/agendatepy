@@ -1245,7 +1245,7 @@ export default function DashboardHomePage() {
                 <div className="h-7 w-7 rounded-lg bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center mb-1.5 text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition">
                   <Receipt className="h-3.5 w-3.5" />
                 </div>
-                <span className="font-semibold text-slate-900 dark:text-white leading-tight">SIPAP Bancario</span>
+                <span className="font-semibold text-slate-900 dark:text-white leading-tight">Transferencias</span>
                 <span className="text-[10px] text-slate-400 mt-0.5">Validar comprobantes</span>
               </Link>
 

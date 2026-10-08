@@ -121,7 +121,7 @@ export default function TransferenciasPage() {
       {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Auditoría de Transferencias SIPAP
+          Auditoría de Transferencias Bancarias
         </h1>
 
         {/* Action Dock / Status Filters */}
@@ -316,7 +316,7 @@ export default function TransferenciasPage() {
                   </span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
-                  SIPAP / SPI
+                  Transferencias
                 </span>
               </div>
 
@@ -383,7 +383,7 @@ export default function TransferenciasPage() {
               </h2>
             </div>
             <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
-              Pagos procesados vía SIPAP / SPI con lectura inteligente de QR y datos del cliente.
+              Pagos procesados vía Transferencia Bancaria con lectura inteligente de QR y datos del cliente.
             </p>
           </div>
 
@@ -443,7 +443,7 @@ export default function TransferenciasPage() {
                       <span>{row.bankOrigin || "Banco Itaú"}</span>
                     </span>
                     <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-mono block">
-                      {row.operationNumber || "SIPAP-849201"}
+                      {row.operationNumber || "TRF-849201"}
                     </span>
                   </div>
                 ),
@@ -629,7 +629,7 @@ export default function TransferenciasPage() {
                     </span>
 
                     <span className="text-[10px] font-mono text-slate-400">
-                      {row.operationNumber || "SIPAP"}
+                      {row.operationNumber || "Transferencia"}
                     </span>
                   </div>
 
@@ -682,14 +682,14 @@ export default function TransferenciasPage() {
       <Modal
         open={!!viewingReceipt}
         onClose={() => setViewingReceipt(null)}
-        title="Comprobante Bancario SIPAP Verificado"
+        title="Comprobante Bancario Verificado"
         maxWidth="max-w-xl"
       >
         {viewingReceipt && (
           <div className="space-y-4 text-xs">
             {/* Bank Ticket Card */}
             <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-6 shadow-inner space-y-4">
-              {/* Header with Bank & SIPAP seal */}
+              {/* Header with Bank & Transfer seal */}
               <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
                   <div
@@ -703,7 +703,7 @@ export default function TransferenciasPage() {
                       {viewingReceipt.bankOrigin || "Banco Itaú Paraguay"}
                     </span>
                     <span className="text-[10px] text-slate-400 font-semibold">
-                      Sistema de Pagos del Paraguay (SIPAP · SPI)
+                      Transferencia Bancaria en Paraguay
                     </span>
                   </div>
                 </div>
@@ -768,7 +768,7 @@ export default function TransferenciasPage() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">Fecha y Hora SIPAP:</span>
+                  <span className="text-slate-400 font-medium">Fecha y Hora:</span>
                   <span className="font-mono text-slate-700 dark:text-slate-300">
                     {formatInTimeZone(viewingReceipt.submittedAt, business.timezone, "dd/MM/yyyy HH:mm 'hs'")}
                   </span>
@@ -776,13 +776,13 @@ export default function TransferenciasPage() {
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-medium">N° de Operación:</span>
                   <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {viewingReceipt.operationNumber || "SIPAP-849201"}
+                    {viewingReceipt.operationNumber || "TRF-849201"}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-medium">Concepto / Nota:</span>
                   <span className="text-slate-700 dark:text-slate-300 font-medium">
-                    {viewingReceipt.note || "Transferencia SIPAP Bancaria"}
+                    {viewingReceipt.note || "Transferencia Bancaria"}
                   </span>
                 </div>
               </div>

@@ -2,7 +2,7 @@ import { TICKER_ITEMS, type TickerItem } from "@/lib/categories";
 import {
   Scissors,
   Smile,
-  Sparkles,
+  Gem,
   Activity,
   Stethoscope,
   Dumbbell,
@@ -14,7 +14,7 @@ import {
 const ICON_MAP: Record<TickerItem["iconKey"], LucideIcon> = {
   scissors: Scissors,
   smile: Smile,
-  sparkles: Sparkles,
+  gem: Gem,
   activity: Activity,
   stethoscope: Stethoscope,
   dumbbell: Dumbbell,
@@ -30,7 +30,7 @@ export default function Ticker() {
       <div className="ticker-mask overflow-hidden max-w-full">
         <div className="ticker-track flex w-max gap-6 sm:gap-10 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">
           {loop.map((item, index) => {
-            const IconComponent = ICON_MAP[item.iconKey] || Sparkles;
+            const IconComponent = ICON_MAP[item.iconKey] || Scissors;
             return (
               <span key={`${item.label}-${index}`} className="whitespace-nowrap flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand/10 text-brand dark:text-[#FF6B4A]">

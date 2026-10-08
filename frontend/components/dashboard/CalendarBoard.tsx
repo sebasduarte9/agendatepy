@@ -1696,7 +1696,7 @@ export default function CalendarBoard() {
                 <div className="grid grid-cols-4 gap-1.5">
                   {[
                     { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
-                    { id: "sipap" as const, label: "SIPAP", icon: Landmark },
+                    { id: "sipap" as const, label: "Transferencia", icon: Landmark },
                     { id: "pos_bancard" as const, label: "POS", icon: CreditCard },
                     { id: "billetera_py" as const, label: "Billetera", icon: Smartphone },
                   ].map(({ id, label, icon: Icon }) => {
@@ -2733,7 +2733,7 @@ function RescheduleEditModal({
                     options={[
                       { value: "efectivo", label: "Efectivo" },
                       { value: "pos", label: "POS / Tarjeta" },
-                      { value: "transferencia", label: "SIPAP / Transferencia" },
+                      { value: "transferencia", label: "Transferencia" },
                       { value: "billetera", label: "Billetera Móvil" },
                     ]}
                     className="w-full"

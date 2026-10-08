@@ -380,7 +380,7 @@ export default function CajaPage() {
               <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.posIngresos)}</span>
             </div>
             <div>
-              <span className="text-slate-400 dark:text-zinc-500 block font-medium">SIPAP</span>
+              <span className="text-slate-400 dark:text-zinc-500 block font-medium">Transferencia</span>
               <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.transferenciaIngresos)}</span>
             </div>
           </div>
@@ -571,7 +571,7 @@ export default function CajaPage() {
                 </div>
               </div>
 
-              {/* Circular Gauge 2: Digital % (SIPAP + POS) */}
+              {/* Circular Gauge 2: Digital % (Transferencias + POS) */}
               <div className="flex flex-col items-center justify-center text-center">
                 <div className="relative h-14 w-14 flex items-center justify-center">
                   <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
@@ -603,7 +603,7 @@ export default function CajaPage() {
                   </span>
                 </div>
                 <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Digital (POS/SIPAP)
+                  Digital (POS/Transferencia)
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {formatGs(stats.posIngresos + stats.transferenciaIngresos)}
@@ -674,14 +674,14 @@ export default function CajaPage() {
                   </span>
                 </div>
 
-                {/* Method 3: Transferencias SIPAP */}
+                {/* Method 3: Transferencias Bancarias */}
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2.5">
                     <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                       <Building2 className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">Transferencias SIPAP / SPI</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">Transferencias Bancarias</div>
                       <div className="text-[10px] text-slate-400">Acreditaciones bancarias directas</div>
                     </div>
                   </div>
@@ -693,7 +693,7 @@ export default function CajaPage() {
             </div>
 
             <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-              <span>Total en canales digitales (POS + SIPAP):</span>
+              <span>Total en canales digitales (POS + Transferencias):</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
                 {formatGs(stats.posIngresos + stats.transferenciaIngresos)}
               </span>
@@ -729,7 +729,7 @@ export default function CajaPage() {
                   { value: "todos", label: "Todos" },
                   { value: "efectivo", label: "Efectivo" },
                   { value: "pos", label: "POS" },
-                  { value: "transferencia", label: "SIPAP" },
+                  { value: "transferencia", label: "Transferencia" },
                 ]}
               />
             </div>
@@ -808,7 +808,7 @@ export default function CajaPage() {
                         {item.method === "pos"
                           ? "POS Bancard"
                           : item.method === "transferencia"
-                          ? "SIPAP Bancario"
+                          ? "Transferencia"
                           : "Efectivo"}
                       </span>
                     ),
@@ -870,7 +870,7 @@ export default function CajaPage() {
                           {item.concept}
                         </span>
                         <span className="rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-tight bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                          {item.method === "pos" ? "POS" : item.method === "transferencia" ? "SIPAP" : "Efectivo"}
+                          {item.method === "pos" ? "POS" : item.method === "transferencia" ? "Transferencia" : "Efectivo"}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
@@ -1151,8 +1151,8 @@ export default function CajaPage() {
                 },
                 {
                   id: "transferencia",
-                  label: "SIPAP",
-                  sub: "Transferencia",
+                  label: "Transferencia",
+                  sub: "Bancaria",
                   icon: Building2,
                   color: "border-purple-500 bg-purple-50/70 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300",
                 },

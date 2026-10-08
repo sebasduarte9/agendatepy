@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { AnimatedBeam, Circle } from "@/components/ui/animated-beam";
-import { Link2, Sparkles, MessageCircle } from "lucide-react";
+import { Link2, Zap, MessageCircle } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
 
 // Custom SVG Icons for the 4 communication channels

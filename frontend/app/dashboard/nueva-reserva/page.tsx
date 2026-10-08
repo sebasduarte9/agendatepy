@@ -1089,7 +1089,7 @@ function NuevaReservaContent() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
-                    { id: "sipap" as const, label: "SIPAP", icon: Landmark },
+                    { id: "sipap" as const, label: "Transferencia", icon: Landmark },
                     { id: "pos_bancard" as const, label: "POS Bancard", icon: CreditCard },
                     { id: "billetera_py" as const, label: "Billetera", icon: Smartphone },
                   ].map(({ id, label, icon: Icon }) => {

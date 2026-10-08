@@ -275,11 +275,11 @@ async function runSecurityAudit() {
   console.log("\n--- VECTOR 7: HTTP HEADER INJECTION (CRLF) ---");
   try {
     const crlfPayload = "1001%0d%0aInjected-Header:%20pwned%0d%0a";
-    const res = await requestHttp(`${BASE_URL}/api/wallet/apple/${crlfPayload}`);
+    const res = await requestHttp(`${BASE_URL}/api/clients/${crlfPayload}`);
     const hasInjectedHeader = Boolean(res.headers["injected-header"]);
     report(
       !hasInjectedHeader,
-      "Prevención de HTTP Response Splitting / CRLF en Apple Wallet",
+      "Prevención de HTTP Response Splitting / CRLF",
       `Injected-Header presente en respuesta: ${hasInjectedHeader ? "SÍ (PELIGRO)" : "NO (SEGURO)"}`
     );
   } catch (e) {

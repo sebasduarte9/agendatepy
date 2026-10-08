@@ -112,7 +112,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         stepNumber: 6,
         taskTitle: "Atención CRM & Operaciones Rápidas",
         instruction:
-          "Atendé consultas de tus clientes y ejecutá operaciones frecuentes como bloquear horarios de almuerzo o validar comprobantes bancarios SIPAP.",
+          "Atendé consultas de tus clientes y ejecutá operaciones frecuentes como bloquear horarios de almuerzo o validar comprobantes de transferencia.",
         tip: "¡Listo! Ya conocés tu panel principal. Estás listo para comenzar.",
         targetSelector: '[data-tour="quick-actions-crm"]',
       },
@@ -212,7 +212,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         stepNumber: 5,
         taskTitle: "Método de Pago",
         instruction:
-          "Definí cómo abonará el cliente: Efectivo en caja, Transferencia SIPAP, POS Bancard o Billetera Móvil.",
+          "Definí cómo abonará el cliente: Efectivo en caja, Transferencia Bancaria, POS Bancard o Billetera Móvil.",
         targetSelector: '[data-tour="nueva-reserva-payment"]',
       },
       {
@@ -266,7 +266,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         stepNumber: 5,
         taskTitle: "Chat en Vivo & Respuestas Rápidas",
         instruction:
-          "Conversá en tiempo real con el cliente y utilizá los botones de respuestas rápidas para enviar enlaces de reserva o datos SIPAP al instante.",
+          "Conversá en tiempo real con el cliente y utilizá los botones de respuestas rápidas para enviar enlaces de reserva o datos de transferencia al instante.",
         tip: "Presioná Enter para enviar el mensaje directamente.",
         targetSelector: '[data-tour="crm-chat-box"]',
       },
@@ -469,7 +469,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     badge: "Finanzas",
     icon: Wallet,
     summary:
-      "Llevá el control de cobros en Efectivo, transferencias SIPAP y tarjetas Bancard, con cierre diario de caja transparente.",
+      "Llevá el control de cobros en Efectivo, transferencias bancarias y tarjetas Bancard, con cierre diario de caja transparente.",
     steps: [
       {
         stepNumber: 1,
@@ -492,14 +492,14 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         taskTitle: "Métricas & Saldo Esperado en Caja",
         instruction:
           "Consultá el total de ingresos, los egresos y el efectivo físico exacto que debe haber en tu cajón (Fondo inicial + Efectivo cobrado - Egresos).",
-        tip: "Los cobros por POS y transferencias bancarias SIPAP van directo a tu cuenta comercial.",
+        tip: "Los cobros por POS y transferencias bancarias van directo a tu cuenta comercial.",
         targetSelector: '[data-tour="caja-kpis"]',
       },
       {
         stepNumber: 4,
         taskTitle: "Desglose por Medios de Pago",
         instruction:
-          "Separá con precisión cuánto dinero ingresó en Efectivo Físico, cuánto vía tarjeta POS Bancard y cuánto por transferencias bancarias SIPAP.",
+          "Separá con precisión cuánto dinero ingresó en Efectivo Físico, cuánto vía tarjeta POS Bancard y cuánto por transferencias bancarias.",
         tip: "Facilita la conciliación con tu extracto bancario en cuestión de segundos.",
         targetSelector: '[data-tour="caja-methods"]',
       },
@@ -845,11 +845,11 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
   },
   transferencias: {
     id: "transferencias",
-    title: "Transferencias Bancarias SIPAP",
+    title: "Transferencias Bancarias",
     badge: "Pagos Online",
     icon: Receipt,
     summary:
-      "Verificá comprobantes bancarios que envían tus clientes al señar o pagar sus turnos por transferencia SIPAP en Paraguay.",
+      "Verificá comprobantes bancarios que envían tus clientes al señar o pagar sus turnos por transferencia bancaria en Paraguay.",
     steps: [
       {
         stepNumber: 1,

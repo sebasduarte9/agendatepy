@@ -1,597 +1,353 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar } from "lucide-react";
 
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+// ============================================================================
+// ICONOS OFICIALES DE ALTA FIDELIDAD VECTORIAL (CRISP, SIN ESTRELLAS)
+// ============================================================================
+
+function WhatsAppIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.63C8.75 21.41 10.38 21.82 12.04 21.82C17.5 21.82 21.95 17.37 21.95 11.91C21.95 6.45 17.5 2 12.04 2ZM12.04 20.13C10.57 20.13 9.13 19.74 7.87 19L7.56 18.82L4.44 19.64L5.27 16.6L5.07 16.28C4.26 14.99 3.84 13.47 3.84 11.91C3.84 7.4 7.52 3.71 12.04 3.71C16.56 3.71 20.24 7.4 20.24 11.91C20.24 16.42 16.56 20.13 12.04 20.13ZM16.53 14.39C16.28 14.27 15.08 13.68 14.86 13.6C14.64 13.52 14.47 13.48 14.31 13.73C14.14 13.98 13.68 14.52 13.54 14.68C13.4 14.84 13.26 14.86 13.01 14.74C12.76 14.62 11.97 14.36 11.03 13.52C10.3 12.87 9.8 12.07 9.66 11.82C9.52 11.57 9.65 11.44 9.77 11.32C9.88 11.21 10.02 11.03 10.15 10.89C10.27 10.74 10.31 10.64 10.4 10.47C10.48 10.31 10.44 10.16 10.38 10.04C10.32 9.92 9.82 8.71 9.61 8.21C9.41 7.72 9.2 7.78 9.05 7.78C8.91 7.77 8.74 7.77 8.58 7.77C8.41 7.77 8.14 7.83 7.91 8.08C7.68 8.33 7.03 8.94 7.03 10.19C7.03 11.44 7.94 12.65 8.07 12.82C8.2 12.98 9.86 15.54 12.4 16.63C13 16.89 13.48 17.05 13.84 17.16C14.45 17.35 15.01 17.33 15.45 17.26C15.94 17.19 16.96 16.64 17.17 16.06C17.38 15.47 17.38 14.98 17.32 14.88C17.25 14.77 17.08 14.71 16.83 14.59L16.53 14.39Z" />
+    </svg>
+  );
 }
 
-interface ChannelTile {
-  id: string;
-  name: string;
-  category: string;
-  badge: string;
-  className: string;
-  icon: React.ReactNode;
+function InstagramIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069ZM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0ZM12 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324ZM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8ZM18.406 4.155a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881Z" />
+    </svg>
+  );
 }
 
-const CHANNELS: ChannelTile[] = [
-  {
-    id: "whatsapp",
-    name: "WhatsApp",
-    category: "Mensajería",
-    badge: "Bot 24/7",
-    className: "tile-1",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="#FAFAF7" className="w-7 h-7 sm:w-8 sm:h-8">
-        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.976.58 1.968.928 3.149.929 3.182 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.768-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.129-.533-1.636-.677-2.73-2.316-2.812-2.425-.082-.108-.669-.89-.669-1.697 0-.807.423-1.205.574-1.368.151-.163.329-.204.439-.204.11 0 .219.002.315.006.101.004.237-.038.37.283.138.334.47 1.144.512 1.228.041.085.069.184.013.295-.056.111-.084.18-.167.278-.083.098-.175.219-.25.295-.083.083-.17.172-.073.338.097.165.433.714.929 1.155.638.567 1.176.743 1.342.825.166.083.263.073.361-.039.098-.112.42-.489.532-.656.113-.167.227-.139.38-.083.153.056.97.457 1.137.539.167.082.278.123.319.192.041.07.041.405-.103.81z" />
-      </svg>
-    ),
-  },
-  {
-    id: "instagram",
-    name: "Instagram",
-    category: "Redes",
-    badge: "Direct & Bio",
-    className: "tile-2",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#FAFAF7"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="w-6 h-6 sm:w-7 sm:h-7"
-      >
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-      </svg>
-    ),
-  },
-  {
-    id: "messenger",
-    name: "Messenger",
-    category: "Meta Inbox",
-    badge: "Sincronizado",
-    className: "tile-3",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="#FAFAF7" className="w-6 h-6 sm:w-7 sm:h-7">
-        <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.455 5.513 3.735 7.202V22l3.39-1.86c.915.254 1.884.39 2.875.39 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.066 12.463l-2.56-2.73-4.996 2.73 5.498-5.836 2.624 2.73 4.932-2.73-5.498 5.836z" />
-      </svg>
-    ),
-  },
-  {
-    id: "portal",
-    name: "Portal Web",
-    category: "Autogestión",
-    badge: "Link en Bio",
-    className: "tile-4",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#FAFAF7"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="w-6 h-6 sm:w-7 sm:h-7"
-      >
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-      </svg>
-    ),
-  },
-  {
-    id: "calendar",
-    name: "Google Calendar",
-    category: "Agenda",
-    badge: "En Vivo",
-    className: "tile-5",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#FAFAF7"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="w-6 h-6 sm:w-7 sm:h-7"
-      >
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    ),
-  },
-  {
-    id: "bancard",
-    name: "Cobro QR & Señas",
-    category: "Finanzas",
-    badge: "SIPAP / Bancard",
-    className: "tile-6",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#FAFAF7"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="w-6 h-6 sm:w-7 sm:h-7"
-      >
-        <rect x="3" y="3" width="7" height="7" />
-        <rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" />
-        <rect x="3" y="14" width="7" height="7" />
-        <path d="M10 7h4v4h-4z" />
-      </svg>
-    ),
-  },
+function MessengerIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.19 5.43 3.12 7.14v3.54c0 .35.39.56.68.37l3.29-2.06c.92.26 1.89.4 2.91.4 5.64 0 10-4.13 10-9.69C22 6.13 17.64 2 12 2zm1.18 12.98l-2.73-2.91-5.32 2.91 5.86-6.22 2.79 2.91 5.25-2.91-5.85 6.22z" />
+    </svg>
+  );
+}
+
+function WebLinkIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20" />
+    </svg>
+  );
+}
+
+// ============================================================================
+// BANCO DE DATOS DE RESERVAS: HORARIOS TOTALMENTE DISTINTOS Y SECUENCIALES
+// (Demostración real de "Cero solapamiento de horarios")
+// ============================================================================
+
+type ChannelKey = "whatsapp" | "instagram" | "facebook" | "web";
+
+interface BookingEntry {
+  clientName: string;
+  serviceName: string;
+  slotTime: string;
+}
+
+const WHATSAPP_ITEMS: BookingEntry[] = [
+  { clientName: "Lucas Romero", serviceName: "Corte Degradé + Barba", slotTime: "14:00 hs" },
+  { clientName: "Mateo Benítez", serviceName: "Corte Clásico + Lavado", slotTime: "17:00 hs" },
+  { clientName: "Andrés Galeano", serviceName: "Perfilado de Barba", slotTime: "20:00 hs" },
+  { clientName: "Franco Vera", serviceName: "Corte Texturizado", slotTime: "Mañana 09:00 hs" },
 ];
 
+const INSTAGRAM_ITEMS: BookingEntry[] = [
+  { clientName: "Valeria Duarte", serviceName: "Manicura Rusa + Esmaltado", slotTime: "14:45 hs" },
+  { clientName: "Camila Torres", serviceName: "Diseño de Cejas + Henna", slotTime: "17:45 hs" },
+  { clientName: "Sofía Giménez", serviceName: "Tratamiento Capilar", slotTime: "20:45 hs" },
+  { clientName: "Belén Ortíz", serviceName: "Uñas Esculpidas Semipermanente", slotTime: "Mañana 09:45 hs" },
+];
+
+const FACEBOOK_ITEMS: BookingEntry[] = [
+  { clientName: "Carlos Benítez", serviceName: "Perfilado de Barba", slotTime: "15:30 hs" },
+  { clientName: "Jorge Ramírez", serviceName: "Corte Clásico & Peinado", slotTime: "18:30 hs" },
+  { clientName: "Rodrigo Sosa", serviceName: "Lavado + Masaje Capilar", slotTime: "21:30 hs" },
+  { clientName: "Esteban Rolón", serviceName: "Barba & Bigote Tradicional", slotTime: "Mañana 10:30 hs" },
+];
+
+const WEB_ITEMS: BookingEntry[] = [
+  { clientName: "María Silva", serviceName: "Limpieza Facial Profunda", slotTime: "16:15 hs" },
+  { clientName: "Florencia Galeano", serviceName: "Lifting de Pestañas", slotTime: "19:15 hs" },
+  { clientName: "Diego Romero", serviceName: "Masaje Descontracturante", slotTime: "22:15 hs" },
+  { clientName: "Patricia Vera", serviceName: "Peinado & Brushing Spa", slotTime: "Mañana 11:15 hs" },
+];
+
+const POOLS: Record<ChannelKey, BookingEntry[]> = {
+  whatsapp: WHATSAPP_ITEMS,
+  instagram: INSTAGRAM_ITEMS,
+  facebook: FACEBOOK_ITEMS,
+  web: WEB_ITEMS,
+};
+
+interface QueueItem extends BookingEntry {
+  channel: ChannelKey;
+  keyId: number;
+}
+
 export default function AutomatedHubDiagram() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [activeChannel, setActiveChannel] = useState<ChannelTile | null>(null);
+  // Punteros para ciclar sobre cada pool de canales
+  const channelPointers = useRef({
+    whatsapp: 0,
+    instagram: 0,
+    facebook: 0,
+    web: 0,
+  });
 
+  // Generador monótono de claves únicas para React
+  const keyCounter = useRef(100);
+
+  // Cola inicial en orden estricto y con horarios secuenciales:
+  // WhatsApp (14:00) -> Instagram (14:45) -> Facebook (15:30) -> Link de Reserva (16:15)
+  const [queue, setQueue] = useState<QueueItem[]>(() => [
+    { channel: "whatsapp", ...WHATSAPP_ITEMS[0], keyId: 1 },
+    { channel: "instagram", ...INSTAGRAM_ITEMS[0], keyId: 2 },
+    { channel: "facebook", ...FACEBOOK_ITEMS[0], keyId: 3 },
+    { channel: "web", ...WEB_ITEMS[0], keyId: 4 },
+  ]);
+
+  // Rotación continua cada 1.6s:
+  // El turno en la posición 1 sube y pasa a la posición 4 con nuevos datos.
+  // La posición 2 sube a la 1, la 3 sube a la 2 y la 4 sube a la 3.
+  // Secuencia de canales: WhatsApp -> Instagram -> Facebook -> Link de Reserva -> WhatsApp...
   useEffect(() => {
-    if (!containerRef.current) return;
+    const timer = setInterval(() => {
+      setQueue((prevQueue) => {
+        const [first, ...rest] = prevQueue;
+        const ch = first.channel;
 
-    const ctx = gsap.context(() => {
-      // Estado Inicial
-      gsap.set(".hub-ring", { transformOrigin: "400px 250px", scale: 0, opacity: 0 });
-      gsap.set(".hub-brain", { scale: 0, opacity: 0 });
-      gsap.set(".hub-icon-tile", { scale: 0, opacity: 0 });
-      gsap.set(".hub-link", { strokeDashoffset: 600 });
-      gsap.set(".hub-pointer", { scale: 0, opacity: 0, rotation: -20 });
-      gsap.set(".hub-tagline", { opacity: 0, y: 10 });
+        // Avanzar el puntero del canal que acaba de rotar
+        channelPointers.current[ch] = (channelPointers.current[ch] + 1) % POOLS[ch].length;
+        const nextData = POOLS[ch][channelPointers.current[ch]];
 
-      // Intro Timeline disparada con ScrollTrigger
-      const intro = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 80%",
-        },
-        defaults: { ease: "power3.out" },
-      });
-
-      intro
-        .to(
-          ".hub-ring",
-          {
-            scale: 1,
-            opacity: 1,
-            duration: 1.4,
-            stagger: 0.12,
-            ease: "power3.out",
-          },
-          0.1
-        )
-        .to(
-          ".hub-brain",
-          {
-            scale: 1,
-            opacity: 1,
-            duration: 1.1,
-            ease: "back.out(1.8)",
-          },
-          0.3
-        )
-        .from(
-          ".hub-icon-tile",
-          {
-            y: (i: number) => (i % 2 === 0 ? -60 : 60),
-            x: (i: number) => (i < 3 ? -40 : 40),
-            duration: 1,
-            ease: "back.out(1.6)",
-          },
-          0.7
-        )
-        .to(
-          ".hub-icon-tile",
-          {
-            scale: 1,
-            opacity: 1,
-            duration: 1,
-            stagger: 0.07,
-            ease: "back.out(1.6)",
-          },
-          0.7
-        )
-        .to(
-          ".hub-link",
-          {
-            strokeDashoffset: 0,
-            duration: 1.2,
-            stagger: 0.08,
-            ease: "power2.inOut",
-          },
-          1.0
-        )
-        .to(
-          ".hub-pointer",
-          {
-            scale: 1,
-            opacity: 1,
-            rotation: 0,
-            duration: 0.7,
-            ease: "back.out(1.6)",
-          },
-          1.5
-        )
-        .to(".hub-tagline", { opacity: 1, y: 0, duration: 0.8 }, 1.7);
-
-      // Movimiento continuo: Cerebro flotando
-      gsap.to(".hub-brain", {
-        y: "+=8",
-        rotation: "+=3",
-        duration: 3,
-        delay: 2,
-        ease: "sine.inOut",
-        yoyo: true,
-        repeat: -1,
-      });
-
-      // Sonar pulse continuo en los anillos concéntricos
-      [1, 2, 3, 4].forEach((num, i) => {
-        gsap.to(`.ring-${num}`, {
-          attr: { r: 60 + i * 50 + 8 },
-          opacity: 0.38,
-          duration: 2.2,
-          delay: 2 + i * 0.5,
-          ease: "sine.inOut",
-          yoyo: true,
-          repeat: -1,
-        });
-      });
-
-      // Pointer wiggle periódico
-      const pointerTween = () => {
-        gsap
-          .timeline()
-          .to(".hub-pointer", { rotation: -15, duration: 0.2, ease: "power2.out" })
-          .to(".hub-pointer", { rotation: 0, duration: 0.6, ease: "elastic.out(1.2, 0.4)" })
-          .to(".hub-pointer", { rotation: -15, duration: 0.2, delay: 0.2, ease: "power2.out" })
-          .to(".hub-pointer", { rotation: 0, duration: 0.6, ease: "elastic.out(1.2, 0.4)" });
-      };
-      const pointerInterval = setInterval(pointerTween, 4500);
-
-      // Mouse Parallax interactivo sobre el diagrama
-      const diagram = containerRef.current?.querySelector(".hub-diagram");
-      const tiles = containerRef.current?.querySelectorAll(".hub-icon-tile");
-      const brain = containerRef.current?.querySelector(".hub-brain");
-
-      let mx = 0,
-        my = 0,
-        tx = 0,
-        ty = 0;
-      let animId: number;
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!diagram) return;
-        const r = diagram.getBoundingClientRect();
-        mx = ((e.clientX - r.left) / r.width - 0.5) * 2;
-        my = ((e.clientY - r.top) / r.height - 0.5) * 2;
-      };
-
-      const handleMouseLeave = () => {
-        mx = 0;
-        my = 0;
-      };
-
-      diagram?.addEventListener("mousemove", handleMouseMove as EventListener);
-      diagram?.addEventListener("mouseleave", handleMouseLeave as EventListener);
-
-      const renderParallax = () => {
-        tx += (mx - tx) * 0.06;
-        ty += (my - ty) * 0.06;
-        tiles?.forEach((tile, i) => {
-          const depth = 6 + (i % 3) * 3;
-          (tile as HTMLElement).style.translate = `${tx * depth}px ${ty * depth}px`;
-        });
-        if (brain) {
-          (brain as HTMLElement).style.translate = `${tx * 4}px ${ty * 4}px`;
-        }
-        animId = requestAnimationFrame(renderParallax);
-      };
-      renderParallax();
-
-      // Efecto 3D Tilt y feedback táctil en cada tarjeta
-      tiles?.forEach((tile) => {
-        const onTileMove = (e: MouseEvent) => {
-          const r = (tile as HTMLElement).getBoundingClientRect();
-          const px = (e.clientX - r.left) / r.width - 0.5;
-          const py = (e.clientY - r.top) / r.height - 0.5;
-          gsap.to(tile, {
-            rotateX: -py * 20,
-            rotateY: px * 20,
-            scale: 1.15,
-            duration: 0.35,
-            ease: "power2.out",
-            transformPerspective: 600,
-            overwrite: "auto",
-          });
+        const newKey = keyCounter.current++;
+        const newQueueItem: QueueItem = {
+          channel: ch,
+          ...nextData,
+          keyId: newKey,
         };
 
-        const onTileLeave = () => {
-          gsap.to(tile, {
-            rotateX: 0,
-            rotateY: 0,
-            scale: 1,
-            duration: 0.7,
-            ease: "elastic.out(1, 0.6)",
-            overwrite: "auto",
-          });
-        };
-
-        const onTileClick = () => {
-          gsap.fromTo(
-            tile,
-            { scale: 1.15 },
-            { scale: 0.92, duration: 0.1, yoyo: true, repeat: 1, ease: "power2.inOut" }
-          );
-        };
-
-        tile.addEventListener("mousemove", onTileMove as EventListener);
-        tile.addEventListener("mouseleave", onTileLeave as EventListener);
-        tile.addEventListener("click", onTileClick as EventListener);
+        // La cola rota físicamente: los 3 restantes suben y el renovado entra en la fila 4
+        return [...rest, newQueueItem];
       });
+    }, 1600);
 
-      // Clic en el cerebro: emite una onda expansiva de sonar
-      const handleBrainClick = () => {
-        if (brain) {
-          gsap.fromTo(
-            brain,
-            { scale: 1.25 },
-            { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.5)" }
-          );
-        }
-        const rings = containerRef.current?.querySelectorAll(".hub-ring");
-        rings?.forEach((ring, i) => {
-          const baseR = 60 + i * 50;
-          gsap
-            .timeline()
-            .to(ring, {
-              attr: { r: baseR + 32 },
-              opacity: 0,
-              duration: 0.8,
-              ease: "power2.out",
-            })
-            .to(ring, {
-              attr: { r: baseR },
-              opacity: 0.25,
-              duration: 0.4,
-              ease: "power2.in",
-            });
-        });
-      };
-
-      if (brain) {
-        brain.addEventListener("click", handleBrainClick);
-      }
-
-      return () => {
-        clearInterval(pointerInterval);
-        cancelAnimationFrame(animId);
-        diagram?.removeEventListener("mousemove", handleMouseMove as EventListener);
-        diagram?.removeEventListener("mouseleave", handleMouseLeave as EventListener);
-        if (brain) {
-          brain.removeEventListener("click", handleBrainClick);
-        }
-      };
-    }, containerRef);
-
-    return () => ctx.revert();
+    return () => clearInterval(timer);
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col items-center select-none py-2 relative">
-      {/* Indicador interactivo dinámico al hacer hover */}
-      <div className="h-8 flex items-center justify-center mb-1">
-        {activeChannel ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 dark:bg-white/95 text-white dark:text-slate-900 text-xs font-bold shadow-md animate-in fade-in zoom-in-95 duration-200">
-            <span className="w-2 h-2 rounded-full bg-[#FF4F2B] animate-pulse" />
-            <span>{activeChannel.name}</span>
-            <span className="text-slate-400 dark:text-slate-500 font-normal">·</span>
-            <span className="text-[11px] font-medium opacity-80">{activeChannel.badge}</span>
-          </div>
-        ) : (
-          <div className="text-[11px] tracking-wider uppercase font-semibold text-slate-400 dark:text-slate-500">
-            Conectá todos tus canales a un cerebro central
-          </div>
-        )}
-      </div>
-
+    <div className="w-full max-w-6xl mx-auto py-2 select-none px-2 sm:px-4">
       {/* ============================================================== */}
-      {/* EL DIAGRAMA HUB & SPOKE CON RINGS, BRAIN Y 6 TILES FLOTANTES     */}
+      {/* COMPOSICIÓN LIMPIA: CARDS DESCRIPTIVAS + CRM CENTRAL           */}
       {/* ============================================================== */}
-      <div className="hub-diagram relative w-full max-w-[820px] aspect-[1.6/1] max-sm:aspect-[1/1.05] mx-auto my-3">
-        {/* SVG de fondo con anillos concéntricos y líneas curvas conectadas */}
-        <svg
-          className="hub-bg absolute inset-0 w-full h-full overflow-visible pointer-events-none"
-          viewBox="0 0 800 500"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          {/* Anillos concéntricos de pulso radar */}
-          <circle className="hub-ring ring-1" cx="400" cy="250" r="60" />
-          <circle className="hub-ring ring-2" cx="400" cy="250" r="110" />
-          <circle className="hub-ring ring-3" cx="400" cy="250" r="160" />
-          <circle className="hub-ring ring-4" cx="400" cy="250" r="210" />
+      <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 items-stretch">
+        
+        {/* ============================================================ */}
+        {/* COLUMNA IZQUIERDA: WHATSAPP & FACEBOOK                      */}
+        {/* ============================================================ */}
+        <div className="lg:col-span-3 flex flex-col justify-between gap-4 sm:gap-5 order-2 lg:order-1">
+          
+          {/* TARJETA 1: WHATSAPP */}
+          <div className="flex-1 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 flex flex-col justify-center">
+            <div className="flex items-center gap-2.5 pb-2.5 mb-2.5 border-b border-slate-100 dark:border-white/5">
+              <div className="h-7 w-7 rounded-lg bg-[#25D366] flex items-center justify-center text-white shadow-xs shrink-0">
+                <WhatsAppIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                WhatsApp
+              </span>
+            </div>
+            <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+              Tu IA responde consultas y agenda turnos automáticamente 24/7.
+            </p>
+          </div>
 
-          {/* Líneas conectoras que fluyen de cada tile hacia el centro */}
-          <path className="hub-link link-1" id="link-1" d="M 140 75 Q 250 170, 395 247" />
-          <path className="hub-link link-2" id="link-2" d="M 660 75 Q 545 170, 405 247" />
-          <path className="hub-link link-3" id="link-3" d="M 80 270 Q 230 258, 388 250" />
-          <path className="hub-link link-4" id="link-4" d="M 720 270 Q 570 258, 412 250" />
-          <path className="hub-link link-5" id="link-5" d="M 140 425 Q 250 335, 395 253" />
-          <path className="hub-link link-6" id="link-6" d="M 660 425 Q 545 335, 405 253" />
-        </svg>
+          {/* TARJETA 2: FACEBOOK */}
+          <div className="flex-1 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 flex flex-col justify-center">
+            <div className="flex items-center gap-2.5 pb-2.5 mb-2.5 border-b border-slate-100 dark:border-white/5">
+              <div className="h-7 w-7 rounded-lg bg-[#0084FF] flex items-center justify-center text-white shadow-xs shrink-0">
+                <MessengerIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                Facebook
+              </span>
+            </div>
+            <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+              Citas directas desde el botón de tu página sin esperas.
+            </p>
+          </div>
 
-        {/* Cerebro Central interactivo */}
-        <div
-          className="hub-brain absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[70px] sm:text-[84px] leading-none z-10 cursor-pointer select-none will-change-transform"
-          title="Hacé clic para enviar un pulso"
-          style={{
-            filter:
-              "drop-shadow(0 14px 22px rgba(255, 79, 43, 0.35)) drop-shadow(0 4px 6px rgba(40, 10, 20, 0.25))",
-          }}
-        >
-          🧠
         </div>
 
-        {/* 6 Icon Tiles alrededor del cerebro */}
-        {CHANNELS.map((ch) => (
-          <div
-            key={ch.id}
-            className={`hub-icon-tile ${ch.className}`}
-            data-name={ch.name}
-            onMouseEnter={() => setActiveChannel(ch)}
-            onMouseLeave={() => setActiveChannel(null)}
-          >
-            {ch.icon}
+        {/* ============================================================ */}
+        {/* COLUMNA CENTRAL: EL CRM (ROTACIÓN REAL Y HORARIOS ÚNICOS)    */}
+        {/* ============================================================ */}
+        <div className="lg:col-span-6 order-1 lg:order-2">
+          <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-lg p-5 sm:p-7 relative overflow-hidden text-left h-full flex flex-col justify-between">
+            {/* Borde sutil superior con degradé oficial de Agendate.py */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500" />
+
+            {/* Cabecera del CRM */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-[#FF4F2B]/10 dark:bg-[#FF4F2B]/20 flex items-center justify-center text-[#FF4F2B] font-black text-sm shrink-0">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                    Tu CRM & Agenda Central
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                    Sincronización en tiempo real
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shrink-0">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>4 canales conectados</span>
+              </div>
+            </div>
+
+            {/* CONTENEDOR DE LA COLA: ROTACIÓN FÍSICA LIMPIA (SIN ETIQUETAS SOBRANTES) */}
+            <div className="mt-4 h-[252px] overflow-hidden flex flex-col justify-between relative">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {queue.map((item) => {
+                  return (
+                    <motion.div
+                      key={item.keyId}
+                      layout="position"
+                      initial={{ y: 55, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -55, opacity: 0 }}
+                      transition={{
+                        layout: { duration: 0.48, ease: [0.16, 1, 0.3, 1] },
+                        y: { duration: 0.48, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.28 },
+                      }}
+                      className="h-[52px] w-full flex items-center justify-between px-3.5 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-slate-800/40 text-xs shrink-0"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Badge oficial limpio por canal (sin etiquetas secundarias) */}
+                        {item.channel === "whatsapp" && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#25D366] text-white shrink-0">
+                            <WhatsAppIcon className="w-3.5 h-3.5 text-white" />
+                            WhatsApp
+                          </span>
+                        )}
+                        {item.channel === "instagram" && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white shrink-0">
+                            <InstagramIcon className="w-3.5 h-3.5 text-white" />
+                            Instagram
+                          </span>
+                        )}
+                        {item.channel === "facebook" && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#0084FF] text-white shrink-0">
+                            <MessengerIcon className="w-3.5 h-3.5 text-white" />
+                            Facebook
+                          </span>
+                        )}
+                        {item.channel === "web" && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#FF4F2B] text-white shrink-0">
+                            <WebLinkIcon className="w-3.5 h-3.5 text-white" />
+                            Link de Reserva
+                          </span>
+                        )}
+
+                        {/* Nombre del cliente y servicio */}
+                        <div className="min-w-0 flex-1 ml-1 sm:ml-2">
+                          <strong className="text-slate-900 dark:text-white block truncate leading-tight text-xs sm:text-[13px]">
+                            {item.clientName}
+                          </strong>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block mt-0.5">
+                            {item.serviceName}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Horario estrictamente único y estado */}
+                      <div className="text-right shrink-0 ml-3">
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-[13px] tabular-nums block">
+                          {item.slotTime}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Confirmado
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+
+            {/* Sincronización en tiempo real sin solapamiento */}
+            <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                <span className="font-medium">Agenda centralizada en tiempo real</span>
+              </div>
+              <span className="font-bold text-[#FF4F2B] text-xs">
+                Cero solapamiento de horarios
+              </span>
+            </div>
           </div>
-        ))}
+        </div>
+
+        {/* ============================================================ */}
+        {/* COLUMNA DERECHA: INSTAGRAM & LINK DE RESERVA                */}
+        {/* ============================================================ */}
+        <div className="lg:col-span-3 flex flex-col justify-between gap-4 sm:gap-5 order-3">
+          
+          {/* TARJETA 3: INSTAGRAM */}
+          <div className="flex-1 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 flex flex-col justify-center">
+            <div className="flex items-center gap-2.5 pb-2.5 mb-2.5 border-b border-slate-100 dark:border-white/5">
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-[#833AB4] via-[#FD1D1D] to-[#F77737] flex items-center justify-center text-white shadow-xs shrink-0">
+                <InstagramIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                Instagram
+              </span>
+            </div>
+            <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+              Reservas al instante desde el link de tu perfil e historias.
+            </p>
+          </div>
+
+          {/* TARJETA 4: LINK DE RESERVA */}
+          <div className="flex-1 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 flex flex-col justify-center">
+            <div className="flex items-center gap-2.5 pb-2.5 mb-2.5 border-b border-slate-100 dark:border-white/5">
+              <div className="h-7 w-7 rounded-lg bg-[#FF4F2B] flex items-center justify-center text-white shadow-xs shrink-0">
+                <WebLinkIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                Link de Reserva
+              </span>
+            </div>
+            <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+              Tu enlace propio para agendar desde cualquier canal o código QR.
+            </p>
+          </div>
+
+        </div>
+
       </div>
-
-      {/* Puntero reactivo con animación elástica */}
-      <div className="hub-pointer text-3xl sm:text-4xl my-2 cursor-pointer select-none drop-shadow-md">
-        👉
-      </div>
-
-      {/* Tagline con espaciado amplio estilo editorial */}
-      <div className="hub-tagline text-[11px] sm:text-xs tracking-[0.38em] text-slate-500 dark:text-slate-400 font-bold uppercase mt-2">
-        A&nbsp;U&nbsp;T&nbsp;O&nbsp;M&nbsp;A&nbsp;T&nbsp;I&nbsp;Z&nbsp;A&nbsp;C&nbsp;I&nbsp;Ó&nbsp;N<span className="inline-block w-4 sm:w-6" />2&nbsp;4&nbsp;/&nbsp;7
-      </div>
-
-      {/* Estilos CSS Scoped para mantener la fidelidad visual idéntica al diseño */}
-      <style jsx>{`
-        .hub-ring {
-          fill: rgba(60, 60, 64, 0.035);
-          stroke: rgba(60, 60, 64, 0.07);
-          stroke-width: 1.2;
-        }
-        :global(.dark) .hub-ring {
-          fill: rgba(255, 255, 255, 0.02);
-          stroke: rgba(255, 255, 255, 0.08);
-        }
-
-        .hub-link {
-          fill: none;
-          stroke: rgba(20, 20, 22, 0.45);
-          stroke-width: 1.4;
-          stroke-linecap: round;
-          stroke-dasharray: 600;
-          stroke-dashoffset: 600;
-        }
-        :global(.dark) .hub-link {
-          stroke: rgba(255, 255, 255, 0.35);
-        }
-
-        .hub-icon-tile {
-          position: absolute;
-          width: 70px;
-          height: 70px;
-          border-radius: 18px;
-          background: #0e0e11;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #fafaf7;
-          box-shadow: 0 24px 40px -16px rgba(0, 0, 0, 0.5),
-            0 10px 20px -6px rgba(0, 0, 0, 0.32),
-            0 3px 6px -1px rgba(0, 0, 0, 0.18),
-            inset 0 2px 0 rgba(255, 255, 255, 0.14),
-            inset 0 -3px 6px rgba(0, 0, 0, 0.5);
-          cursor: pointer;
-          z-index: 10;
-          transition: box-shadow 0.5s cubic-bezier(0.6, 0, 0.2, 1);
-          will-change: transform;
-        }
-
-        .hub-icon-tile::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            155deg,
-            rgba(255, 255, 255, 0.14) 0%,
-            transparent 35%,
-            transparent 70%,
-            rgba(0, 0, 0, 0.3) 100%
-          );
-          pointer-events: none;
-          border-radius: inherit;
-        }
-
-        .hub-icon-tile:hover {
-          box-shadow: 0 32px 50px -16px rgba(0, 0, 0, 0.6),
-            0 14px 26px -6px rgba(0, 0, 0, 0.38),
-            0 4px 8px -1px rgba(0, 0, 0, 0.2),
-            inset 0 2px 0 rgba(255, 255, 255, 0.2),
-            inset 0 -3px 6px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Posiciones absolutas de los 6 tiles */
-        .tile-1 {
-          left: 12%;
-          top: 8%;
-        }
-        .tile-2 {
-          right: 12%;
-          top: 8%;
-        }
-        .tile-3 {
-          left: 4%;
-          top: 46%;
-        }
-        .tile-4 {
-          right: 4%;
-          top: 46%;
-        }
-        .tile-5 {
-          left: 12%;
-          bottom: 8%;
-        }
-        .tile-6 {
-          right: 12%;
-          bottom: 8%;
-        }
-
-        @media (max-width: 900px) {
-          .hub-icon-tile {
-            width: 56px;
-            height: 56px;
-            border-radius: 15px;
-          }
-        }
-
-        @media (max-width: 600px) {
-          .tile-1,
-          .tile-2 {
-            top: 2%;
-          }
-          .tile-3,
-          .tile-4 {
-            top: 44%;
-          }
-          .tile-5,
-          .tile-6 {
-            bottom: 2%;
-          }
-          .hub-icon-tile {
-            width: 48px;
-            height: 48px;
-            border-radius: 13px;
-          }
-          .hub-brain {
-            font-size: 52px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

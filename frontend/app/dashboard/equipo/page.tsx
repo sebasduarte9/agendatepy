@@ -56,7 +56,7 @@ const ROLE_DEFINITIONS: {
     shortTitle: "Caja / Mostrador",
     badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
     icon: Banknote,
-    desc: "Gestión de cobros en mostrador, comprobantes SIPAP, apertura/cierre de caja y fidelización.",
+    desc: "Gestión de cobros en mostrador, comprobantes de transferencia, apertura/cierre de caja y fidelización.",
   },
   {
     role: "barbero",
@@ -79,7 +79,7 @@ const ROLE_DEFINITIONS: {
 const PERMISSIONS_LIST = [
   { id: "finances", label: "Ver Facturación Global & Finanzas" },
   { id: "cashier", label: "Cobrar en Caja & Arqueo Diario" },
-  { id: "sipap", label: "Validar Comprobantes SIPAP / QR" },
+  { id: "sipap", label: "Validar Comprobantes de Transferencia / QR" },
   { id: "all_schedule", label: "Ver Agenda Completa del Salón" },
   { id: "own_schedule", label: "Ver Únicamente su Propia Agenda" },
   { id: "breaks", label: "Bloquear Horarios de Almuerzo / Descanso" },

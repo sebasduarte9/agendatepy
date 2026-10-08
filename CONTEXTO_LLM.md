@@ -134,7 +134,7 @@ Client: id(uuid), tenantId, phone(normalizado), formula(ficha tecnica), tags[], 
 Appointment: id(uuid), tenantId, staffId, clientId(nullable), startTime(Timestamptz), endTime(Timestamptz), status(PENDING_ACTION/CONFIRMED/CANCELLED/COMPLETED/EXPIRED/NO_SHOW)
   -- GiST exclusion constraint: evita double-booking fisico en PostgreSQL
 
-CashMovement: id(uuid), tenantId, type(INCOME/EXPENSE), amount(PYG), paymentMethod(Efectivo/Tarjeta POS/SIPAP/Billetera), appointmentId(nullable, para idempotencia), commissionPayout(relation nullable)
+CashMovement: id(uuid), tenantId, type(INCOME/EXPENSE), amount(PYG), paymentMethod(Efectivo/Tarjeta POS/Transferencia/Billetera), appointmentId(nullable, para idempotencia), commissionPayout(relation nullable)
 
 CommissionPayout: id(uuid), tenantId, staffId, periodStart, periodEnd, grossCommission, amountPaid, paymentMethod, cashMovementId, status(PENDING/PAID/CANCELLED), notes, paidAt, paidBy, createdAt, items[]
 
@@ -552,7 +552,6 @@ FUERA de scope en todas las fases actuales:
 - NO: Billing real (Bancard / Pagopar)
 - NO: Analytics avanzado / reportes complejos
 - NO: Facturacion electronica
-- NO: Apple Wallet (implementacion real)
 - NO: Rediseno completo de la aplicacion
 - NO: Nuevas funcionalidades grandes no especificadas
 

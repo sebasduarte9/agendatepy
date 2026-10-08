@@ -1070,7 +1070,7 @@ export default function ServiciosPage() {
                             {item.prepaymentType === "full"
                               ? "Pago 100% anticipado"
                               : `Seña: ${formatGs(item.prepaymentAmount || Math.round((item.promoPrice || item.price) * 0.5))}`}{" "}
-                            ({item.prepaymentMethod === "sipap" ? "SIPAP" : item.prepaymentMethod === "qr" ? "QR" : "Transferencia"})
+                            ({item.prepaymentMethod === "qr" ? "QR" : "Transferencia"})
                           </span>
                         </span>
                       )}
@@ -1673,7 +1673,7 @@ export default function ServiciosPage() {
                   )}
                 </div>
 
-                {/* 3. Seña y Pago Anticipado (Transferencia / SIPAP) */}
+                {/* 3. Seña y Pago Anticipado (Transferencia) */}
                 <div className="pt-2 border-t border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
                     <div className="flex items-center gap-2.5">
@@ -1685,7 +1685,7 @@ export default function ServiciosPage() {
                           Exigir Seña o Pago por Transferencia
                         </span>
                         <span className="text-[11px] text-slate-500">
-                          Garantizá asistencia y congelá el precio con seña o SIPAP previo.
+                          Garantizá asistencia y congelá el precio con seña o transferencia previa.
                         </span>
                       </div>
                     </div>
@@ -1818,7 +1818,7 @@ export default function ServiciosPage() {
                             }`}
                           >
                             <Building2 className="h-3.5 w-3.5 mx-auto mb-0.5" />
-                            <span>SIPAP Bancario</span>
+                            <span>Transferencia</span>
                           </button>
 
                           <button

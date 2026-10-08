@@ -45,16 +45,6 @@ const PRO_FEATURES = [
   { ok: true, label: "Ficha CRM y Google Calendar" },
 ];
 
-const EMPRESA_FEATURES = [
-  { ok: true, label: "Profesionales ilimitados" },
-  { ok: true, label: "Múltiples sucursales / locales" },
-  { ok: true, label: "WhatsApp desde el número propio" },
-  { ok: true, label: "Reportes avanzados y exportación" },
-  { ok: true, label: "Capacitación a tu equipo incluida" },
-  { ok: true, label: "Factura legal con IVA y RUC" },
-  { ok: true, label: "Soporte VIP telefónico y WhatsApp" },
-];
-
 const PLANS_DATA = [
   {
     id: "gratis",
@@ -110,24 +100,6 @@ const PLANS_DATA = [
     features: PRO_FEATURES,
     highlighted: true,
   },
-  {
-    id: "empresa",
-    name: "Plan Empresa",
-    shortName: "Empresa",
-    badge: undefined,
-    description: "Para franquicias, sucursales y clínicas.",
-    priceMonthly: "Gs. 650.000",
-    priceAnnual: "Gs. 520.000",
-    period: "/mes",
-    isFree: false,
-    savings: "Ahorrás Gs. 1.560.000 al año",
-    billedDetail: "Gs. 6.240.000 facturado anual",
-    cta: "Consultar por Empresa",
-    href: getCommercialWhatsAppUrl("Hola AgendatePY, quisiera asesoramiento sobre el Plan Empresa"),
-    isExternal: true,
-    features: EMPRESA_FEATURES,
-    highlighted: false,
-  },
 ];
 
 export default function Pricing() {
@@ -174,9 +146,6 @@ export default function Pricing() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-4xl xl:max-w-5xl mx-auto space-y-2 sm:space-y-2.5"
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 dark:bg-brand/20 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Precios Transparentes en Guaraníes (PYG)
-          </span>
 
           <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-[38px] lg:text-[40px] xl:text-[44px] 2xl:text-5xl font-black tracking-tight text-slate-900 dark:text-white lg:whitespace-nowrap">
             Planes a tu medida,{" "}
@@ -256,7 +225,7 @@ export default function Pricing() {
                   >
                     <span>{plan.shortName}</span>
                     {plan.highlighted && (
-                      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-amber-300 animate-pulse" : "bg-brand"}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-amber-300" : "bg-brand"}`} />
                     )}
                   </button>
                 );
@@ -334,9 +303,9 @@ export default function Pricing() {
         </div>
 
         {/* ============================================================== */}
-        {/* DESKTOP (PC/Laptops): Grilla Completa de 4 Columnas Lado a Lado */}
+        {/* DESKTOP (PC/Laptops): Grilla de 3 Columnas Lado a Lado */}
         {/* ============================================================== */}
-        <div className="hidden lg:grid lg:grid-cols-4 lg:gap-3 xl:gap-4.5 items-stretch mt-6 sm:mt-8">
+        <div className="hidden lg:grid lg:grid-cols-3 max-w-5xl mx-auto lg:gap-5 xl:gap-6 items-stretch mt-6 sm:mt-8">
           {PLANS_DATA.map((plan) => (
             <motion.div
               key={plan.id}

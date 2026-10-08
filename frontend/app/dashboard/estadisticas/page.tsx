@@ -134,7 +134,7 @@ export default function EstadisticasPage() {
     return [
       { name: "Efectivo", amount: Math.round(revenue * 0.45), percentage: 45, color: "#10b981", icon: Banknote },
       { name: "POS Bancard", amount: Math.round(revenue * 0.35), percentage: 35, color: "#6366f1", icon: CreditCard },
-      { name: "SIPAP / Transferencia", amount: Math.round(revenue * 0.20), percentage: 20, color: "#f59e0b", icon: ArrowUpRight },
+      { name: "Transferencia Bancaria", amount: Math.round(revenue * 0.20), percentage: 20, color: "#f59e0b", icon: ArrowUpRight },
     ];
   }, [dbStats, revenue]);
 

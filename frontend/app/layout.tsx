@@ -139,7 +139,7 @@ const jsonLd = [
         "name": "¿Qué medios de pago puedo ofrecer a mis clientes en Paraguay?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Podés recibir transferencias bancarias SIPAP con confirmación por comprobante, cobros con QR Bancard o billeteras (Tigo Money, Personal Pay), o simplemente cobro presencial en efectivo o POS al momento de atenderlos.",
+          "text": "Podés recibir transferencias bancarias con confirmación por comprobante, cobros con QR Bancard o billeteras (Tigo Money, Personal Pay), o simplemente cobro presencial en efectivo o POS al momento de atenderlos.",
         },
       },
     ],

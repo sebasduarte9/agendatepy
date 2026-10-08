@@ -36,7 +36,7 @@ export type CommissionPayoutRecord = {
   grossCommission: number;
   advancesDeducted: number;
   amountPaid: number;
-  paymentMethod: "Efectivo" | "SIPAP" | "POS Bancard" | "Billetera" | string;
+  paymentMethod: "Efectivo" | "Transferencia" | "SIPAP" | "POS Bancard" | "Billetera" | string;
   status: "PAID" | "PENDING";
   paidAt: string;
   paidBy?: string;
