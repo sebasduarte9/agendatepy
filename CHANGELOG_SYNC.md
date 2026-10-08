@@ -1411,7 +1411,31 @@ Cada entrada debe detallar:
   - `npx tsc --noEmit` completado con **0 errores**.
   - `npm run dev` activo y sin incidencias.
 
+---
 
-
-
+### [Rediseño Hero Mobile, Nuevo Arco de Notificaciones y Despliegue en Producción] — 2026-10-08
+- **Responsable:** IDE 1 (Sebas Duarte)
+- **Sección:** Landing Page Mobile (`/`), Header, BrandLogo, Órbita de Notificaciones y Despliegue VPS (`149.104.76.16`).
+- **Archivos Modificados:**
+  - `frontend/components/landing/Hero.tsx`
+  - `frontend/components/landing/HorizontalCardOrbit.tsx`
+  - `frontend/components/landing/AutomatedHubDiagram.tsx`
+  - `frontend/components/landing/StickyMobileCta.tsx`
+  - `frontend/components/landing/WhatsAppToAgendaLive.tsx`
+  - `frontend/components/ui/BrandLogo.tsx`
+- **Descripción de Cambios y Razonamiento:**
+  1. **Rediseño Hero Mobile y Balance de Alturas:**
+     - Se eliminó el exceso de compresión vertical y los huecos en la primera pantalla móvil.
+     - Se ajustó el centrado vertical con respiro natural respecto al navbar y al slider inferior.
+     - Tipografía del titular calibrada armónicamente en 3 líneas con interlineado holgado (`leading-[1.08]`) y márgenes balanceados.
+  2. **Identidad de Marca Unificada ([A] gendatepy):**
+     - En `BrandLogo.tsx` y `Hero.tsx`, se redujo el espacio entre el isotipo oficial `[A]` y `gendatepy` de `gap-2` (8px) a `gap-0.5 xs:gap-1` (2px-4px) para integrarlo fluidamente como una sola palabra sin cortes.
+     - Marca en minúsculas oficial (`gendatepy`).
+  3. **Órbita de Notificaciones Móvil:**
+     - Separación física entre tarjetas reducida a `3px` para formar un tren continuo y compacto.
+     - Curvatura cóncava invertida (`hDrop: -48`, `yApex: 6`) que entra desde arriba y enmarca el titular con trayectoria fluida y continua.
+  4. **Despliegue Exitoso en Producción:**
+     - Sincronización a `origin/main` y al VPS (`149.104.76.16`).
+     - Reconstrucción y arranque exitoso del contenedor `agendatepy_app` vía Docker Compose.
+     - Verificación en vivo: **HTTP 200** en `https://agendatepy.com`.
 
