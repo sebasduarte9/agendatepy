@@ -6,6 +6,7 @@ interface BrandLogoProps {
   variant?: "icon" | "horizontal" | "full";
   className?: string;
   iconClassName?: string;
+  textClassName?: string;
   badge?: string;
   showText?: boolean;
   fill?: string;
@@ -23,6 +24,7 @@ export default function BrandLogo({
   variant = "horizontal",
   className = "",
   iconClassName = "h-8 w-8",
+  textClassName = "",
   badge,
   showText = true,
   fill = "#FF4F2B",
@@ -92,7 +94,7 @@ export default function BrandLogo({
           letterSpacing="-1"
           fill="currentColor"
         >
-          Agendate<tspan fill="#FF4F2B">PY</tspan>
+          gendate<tspan fill="#FF4F2B">py</tspan>
         </text>
       </svg>
     );
@@ -100,7 +102,7 @@ export default function BrandLogo({
 
   // Variante: Horizontal Navbar Lockup (Isotipo a la izquierda + Wordmark en Coolvetica a la derecha)
   return (
-    <div className={`flex items-center gap-2 xs:gap-2.5 shrink-0 ${className}`}>
+    <div className={`flex items-center gap-0.5 xs:gap-1 shrink-0 ${className}`}>
       <div className="relative flex items-center justify-center shrink-0">
         {renderIsotype()}
         {badge && (
@@ -113,10 +115,10 @@ export default function BrandLogo({
       {showText && (
         <div className="flex items-center">
           <span
-            className="font-coolvetica text-xl sm:text-2xl text-slate-900 dark:text-white leading-none tracking-normal select-none"
+            className={`font-coolvetica text-slate-900 dark:text-white leading-none tracking-normal select-none ${textClassName || "text-xl sm:text-2xl"}`}
             style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
           >
-            Agendate<span className="text-[#FF4F2B]">PY</span>
+            gendate<span className="text-[#FF4F2B]">py</span>
           </span>
         </div>
       )}

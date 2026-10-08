@@ -162,7 +162,7 @@ export default function AutomatedHubDiagram() {
         {/* ============================================================ */}
         {/* COLUMNA IZQUIERDA: WHATSAPP & FACEBOOK                      */}
         {/* ============================================================ */}
-        <div className="lg:col-span-3 flex flex-col justify-between gap-4 sm:gap-5 order-2 lg:order-1">
+        <div className="hidden lg:flex lg:col-span-3 flex-col justify-between gap-4 sm:gap-5 order-2 lg:order-1">
           
           {/* TARJETA 1: WHATSAPP */}
           <div className="flex-1 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 flex flex-col justify-center">
@@ -199,7 +199,7 @@ export default function AutomatedHubDiagram() {
         {/* ============================================================ */}
         {/* COLUMNA CENTRAL: EL CRM (ROTACIÓN REAL Y HORARIOS ÚNICOS)    */}
         {/* ============================================================ */}
-        <div className="lg:col-span-6 order-1 lg:order-2">
+        <div className="w-full lg:col-span-6 order-1 lg:order-2">
           <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-lg p-5 sm:p-7 relative overflow-hidden text-left h-full flex flex-col justify-between">
             {/* Borde sutil superior con degradé oficial de Agendate.py */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500" />
@@ -313,7 +313,7 @@ export default function AutomatedHubDiagram() {
         {/* ============================================================ */}
         {/* COLUMNA DERECHA: INSTAGRAM & LINK DE RESERVA                */}
         {/* ============================================================ */}
-        <div className="lg:col-span-3 flex flex-col justify-between gap-4 sm:gap-5 order-3">
+        <div className="hidden lg:flex lg:col-span-3 flex-col justify-between gap-4 sm:gap-5 order-3">
           
           {/* TARJETA 3: INSTAGRAM */}
           <div className="flex-1 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 flex flex-col justify-center">

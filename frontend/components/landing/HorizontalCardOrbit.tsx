@@ -100,6 +100,7 @@ const ORBIT_PILLS: NotificationCardItem[] = [
 
 // Anchos base calibrados por forma para cada una de las 8 tarjetas
 const BASE_CARD_WIDTHS = [216, 222, 210, 212, 200, 200, 212, 208];
+const MOBILE_CARD_WIDTHS = [104, 110, 100, 102, 95, 95, 102, 98];
 
 // Separación física libre deseada entre el borde de una tarjeta y la siguiente (constante)
 const UNIFORM_EDGE_GAP = 48;
@@ -109,14 +110,17 @@ export default function HorizontalCardOrbit() {
   const progressRef = useRef<number>(0);
   const animRef = useRef<number | null>(null);
 
-  const widthsRef = useRef<number[]>([...BASE_CARD_WIDTHS]);
+  const isMobInit = typeof window !== "undefined" && window.innerWidth < 640;
+  const widthsRef = useRef<number[]>([
+    ...(isMobInit ? MOBILE_CARD_WIDTHS : BASE_CARD_WIDTHS),
+  ]);
 
   // Parámetros de geometría del arco con mayor curvatura (círculo más cerrado y envolvente)
   const paramsRef = useRef({
-    w: 640, // Ancho más ceñido para pronunciar la curvatura
-    hDrop: 210, // Mayor caída para formar un arco circular más definido
-    yApex: -12, // Cúspide que corona en la parte alta
-    speed: 0.028, // Movimiento ininterrumpido fluido y constante
+    w: isMobInit ? 260 : 640,
+    hDrop: isMobInit ? -48 : 210,
+    yApex: isMobInit ? 6 : -12,
+    speed: isMobInit ? 0.024 : 0.028,
   });
 
   // Longitud de arco euclídea precalculada desde el ápice (s = 0)
@@ -152,8 +156,16 @@ export default function HorizontalCardOrbit() {
   useEffect(() => {
     const handleResize = () => {
       const sw = window.innerWidth;
-      if (sw < 1024) {
-        paramsRef.current = { w: 520, hDrop: 180, yApex: 4, speed: 0.028 };
+      if (sw < 640) {
+        // En móviles (< 640px): curva cóncava invertida desde arriba (U-shape), más pegadas entre sí
+        paramsRef.current = {
+          w: Math.min(sw * 0.72, 260),
+          hDrop: -48,
+          yApex: 6,
+          speed: 0.024,
+        };
+      } else if (sw < 1024) {
+        paramsRef.current = { w: 500, hDrop: 160, yApex: 4, speed: 0.028 };
       } else if (sw < 1280) {
         paramsRef.current = { w: 580, hDrop: 195, yApex: 5, speed: 0.028 };
       } else {
@@ -170,12 +182,14 @@ export default function HorizontalCardOrbit() {
   // Medir anchos reales de las tarjetas en el DOM tras renderizado de fuentes
   useEffect(() => {
     const measure = () => {
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+      const fallback = isMobile ? MOBILE_CARD_WIDTHS : BASE_CARD_WIDTHS;
       const measured = cardRefs.current.map((el, i) => {
-        if (!el) return BASE_CARD_WIDTHS[i];
+        if (!el) return fallback[i];
         const inner = el.firstElementChild as HTMLElement;
-        return inner ? inner.offsetWidth : BASE_CARD_WIDTHS[i];
+        return inner ? inner.offsetWidth : fallback[i];
       });
-      if (measured.every((w) => w > 100)) {
+      if (measured.every((w) => w > 40)) {
         widthsRef.current = measured;
       }
     };
@@ -219,11 +233,14 @@ export default function HorizontalCardOrbit() {
       const { w, hDrop, yApex } = paramsRef.current;
       const currentWidths = widthsRef.current;
 
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+      const currentGap = isMobile ? 3 : UNIFORM_EDGE_GAP;
+
       // Cálculo de espaciado borde a borde constante basado en la silueta física real
       const centerDists: number[] = [];
       for (let i = 0; i < total; i++) {
         const next = (i + 1) % total;
-        centerDists.push((currentWidths[i] + currentWidths[next]) / 2 + UNIFORM_EDGE_GAP);
+        centerDists.push((currentWidths[i] + currentWidths[next]) / 2 + currentGap);
       }
 
       // Longitud del ciclo cerrado
@@ -258,9 +275,10 @@ export default function HorizontalCardOrbit() {
         const angleDeg = Math.atan(slope) * (180 / Math.PI);
 
         // Desvanecimiento suave en los extremos exteriores
+        const fadeLimit = isMobile ? 0.88 : 0.88;
         let opacity = 1;
-        if (sMag > 0.88) {
-          opacity = Math.max(0, 1 - (sMag - 0.88) / 0.35);
+        if (sMag > fadeLimit) {
+          opacity = Math.max(0, 1 - (sMag - fadeLimit) / (isMobile ? 0.15 : 0.35));
         }
 
         // GPU direct transform
@@ -278,7 +296,7 @@ export default function HorizontalCardOrbit() {
   }, []);
 
   return (
-    <div className="absolute top-4 sm:top-5 md:top-6 left-1/2 -translate-x-1/2 w-0 h-0 pointer-events-none select-none z-10 overflow-visible">
+    <div className="absolute top-2 xs:top-3 sm:top-5 md:top-6 left-1/2 -translate-x-1/2 w-0 h-0 pointer-events-none select-none z-10 overflow-visible">
       {/* 8 Cards con curvatura pronunciada y movimiento continuo sin freno */}
       {ORBIT_PILLS.map((item, idx) => {
         const Icon = item.icon;
@@ -296,23 +314,23 @@ export default function HorizontalCardOrbit() {
               zIndex: 30,
             }}
           >
-            <div className="group flex items-center gap-2 xs:gap-2.5 rounded-full py-1.5 pl-1.5 pr-3 cursor-pointer bg-white/98 dark:bg-slate-900/98 border border-slate-200/90 dark:border-white/10 shadow-md shadow-slate-900/10 dark:shadow-black/50 transition-all duration-150 hover:border-[#FF4F2B] hover:shadow-xl hover:shadow-[#FF4F2B]/20">
+            <div className="group flex items-center gap-1 sm:gap-2.5 rounded-full py-0.5 sm:py-1.5 pl-0.5 sm:pl-1.5 pr-1.5 sm:pr-3 cursor-pointer bg-white/98 dark:bg-slate-900/98 border border-slate-200/90 dark:border-white/10 shadow-xs sm:shadow-md shadow-slate-950/10 dark:shadow-black/50 transition-all duration-150 hover:border-[#FF4F2B] hover:shadow-xl hover:shadow-[#FF4F2B]/20">
               <div
-                className={`flex h-7 w-7 xs:h-8 xs:w-8 items-center justify-center rounded-full shrink-0 transition-transform duration-150 ${item.iconBg} group-hover:scale-105`}
+                className={`flex h-5 w-5 sm:h-8 sm:w-8 items-center justify-center rounded-full shrink-0 transition-transform duration-150 ${item.iconBg} group-hover:scale-105`}
               >
-                <Icon className="h-3.5 w-3.5 xs:h-4 xs:w-4" />
+                <Icon className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
               </div>
               <div className="flex flex-col text-left whitespace-nowrap">
-                <span className="text-[11px] xs:text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                <span className="text-[9px] sm:text-xs font-bold text-slate-900 dark:text-white leading-tight">
                   {item.title}
                 </span>
-                <span className="text-[9px] xs:text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                <span className="text-[7.5px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
                   {item.subtitle}
                 </span>
               </div>
               {item.badge && (
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[8.5px] xs:text-[9px] font-bold shrink-0 ml-0.5 whitespace-nowrap ${item.badgeStyle}`}
+                  className={`rounded-full px-1.5 sm:px-2 py-0.2 sm:py-0.5 text-[6.5px] sm:text-[9px] font-bold shrink-0 ml-0.5 whitespace-nowrap ${item.badgeStyle}`}
                 >
                   {item.badge}
                 </span>

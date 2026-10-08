@@ -64,6 +64,7 @@ export default function WhatsAppToAgendaLive() {
   const isBotTyping2 = step === 5;
   const isBot2Visible = step >= 6;
   const isBooked = step >= 6;
+  const [mobileTab, setMobileTab] = useState<"chat" | "agenda">("chat");
 
   return (
     <motion.div
@@ -74,6 +75,37 @@ export default function WhatsAppToAgendaLive() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-5xl mx-auto py-2 select-none"
     >
+      {/* Selector de pestañas para móvil (< lg) */}
+      <div className="flex lg:hidden items-center justify-center mb-4">
+        <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 gap-1 text-xs font-bold shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setMobileTab("chat")}
+            className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+              mobileTab === "chat"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                : "text-slate-500"
+            }`}
+          >
+            <span>💬 WhatsApp Bot</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("agenda")}
+            className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+              mobileTab === "agenda"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                : "text-slate-500"
+            }`}
+          >
+            <span>📅 Tu Agenda Web</span>
+            {isBooked && (
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            )}
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-7 items-stretch">
         
         {/* ============================================================== */}
@@ -84,7 +116,9 @@ export default function WhatsAppToAgendaLive() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-          className="lg:col-span-7 flex flex-col h-[520px] rounded-[28px] overflow-hidden shadow-[0_20px_50px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)] border border-slate-300/80 dark:border-white/10 bg-[#EFEAE2] dark:bg-[#0b141a]"
+          className={`lg:col-span-7 flex-col h-[480px] sm:h-[520px] rounded-[28px] overflow-hidden shadow-[0_20px_50px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)] border border-slate-300/80 dark:border-white/10 bg-[#EFEAE2] dark:bg-[#0b141a] ${
+            mobileTab === "chat" ? "flex" : "hidden lg:flex"
+          }`}
         >
           
           {/* Cabecera oficial de WhatsApp */}
@@ -253,6 +287,19 @@ export default function WhatsAppToAgendaLive() {
                 </div>
               </motion.div>
             )}
+            {/* Aviso interactivo para móviles al confirmar el turno */}
+            {isBooked && (
+              <div className="lg:hidden mx-auto py-1.5 px-3 flex justify-center shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setMobileTab("agenda")}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-md shadow-emerald-600/30 active:scale-95 transition-transform"
+                >
+                  <CalendarCheck className="h-3.5 w-3.5" />
+                  <span>¡Turno confirmado! Ver en agenda →</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Barra inferior de entrada de WhatsApp */}
@@ -276,7 +323,9 @@ export default function WhatsAppToAgendaLive() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-          className="lg:col-span-5 flex flex-col justify-between h-[520px] rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] overflow-hidden text-left"
+          className={`lg:col-span-5 flex-col justify-between h-[480px] sm:h-[520px] rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] overflow-hidden text-left ${
+            mobileTab === "agenda" ? "flex" : "hidden lg:flex"
+          }`}
         >
           
           {/* Cabecera del Panel de Agenda */}

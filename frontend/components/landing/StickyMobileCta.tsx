@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarPlus, ArrowRight } from "lucide-react";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export default function StickyMobileCta() {
   const [isVisible, setIsVisible] = useState(false);
@@ -36,12 +37,7 @@ export default function StickyMobileCta() {
           <div className="flex items-center justify-between gap-1.5 xs:gap-2.5">
             {/* Texto limpio sin nombres de negocio ficticios ni rubro */}
             <div className="min-w-0 flex-1">
-              <p
-                className="truncate text-base font-coolvetica text-slate-900 dark:text-white leading-tight"
-                style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
-              >
-                Agendate<span className="text-[#FF4F2B]">PY</span>
-              </p>
+              <BrandLogo variant="horizontal" iconClassName="h-4.5 w-4.5" textClassName="text-base" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
                 Automatizá tus turnos 24/7
               </p>
