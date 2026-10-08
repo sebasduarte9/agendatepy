@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import AuroraBackground from "./AuroraBackground";
+import RainStreamBackground from "./RainStreamBackground";
 
 // ============================================================================
 // SIMPLEX 3D NOISE SHADER (Liquid wave gradient inspired by ShaderGradient)
@@ -254,6 +255,9 @@ export default function ThreeGradientBackground() {
     <>
       {/* Fallback de gradiente Aurora siempre activo como base estable con tonos naranja vivos */}
       <AuroraBackground />
+
+      {/* Lluvia de luz y gotas radiales animadas en blanco y tonos naranja AgendatePY */}
+      <RainStreamBackground />
 
       {/* Capa WebGL de Three.js animada por encima con tono naranja claramente perceptible */}
       {mounted && supportsWebGL && (
