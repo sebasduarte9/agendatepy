@@ -14,6 +14,7 @@ export default function Modal({
   maxWidth = "max-w-lg",
   minHeight = "",
   className = "",
+  variant = "center",
 }: {
   open: boolean;
   title: string;
@@ -23,8 +24,10 @@ export default function Modal({
   maxWidth?: string;
   minHeight?: string;
   className?: string;
+  variant?: "center" | "side";
 }) {
   const [isMobile, setIsMobile] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const dragControls = useDragControls();
   const bodyRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
@@ -32,6 +35,7 @@ export default function Modal({
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640);
+      setIsDesktop(window.innerWidth >= 1024);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -80,12 +84,14 @@ export default function Modal({
     touchStartY.current = null;
   };
 
+  const isSide = variant === "side" && isDesktop;
+
   return (
     <AnimatePresence>
       {open && (
         <motion.div
           id={id}
-          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/60 dark:bg-black/75 backdrop-blur-md p-0 sm:p-4 overflow-hidden"
+          className={`fixed inset-0 z-[80] flex bg-black/60 dark:bg-black/75 backdrop-blur-md overflow-hidden ${isSide ? "items-stretch justify-end p-0" : "items-end sm:items-center justify-center p-0 sm:p-4"}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -106,27 +112,33 @@ export default function Modal({
               }
             }}
             initial={
-              isMobile
+              isSide
+                ? { x: "100%", opacity: 1 }
+                : isMobile
                 ? { y: "100%", opacity: 1 }
                 : { y: 24, opacity: 0, scale: 0.98 }
             }
             animate={
-              isMobile
+              isSide
+                ? { x: 0, opacity: 1 }
+                : isMobile
                 ? { y: 0, opacity: 1 }
                 : { y: 0, opacity: 1, scale: 1 }
             }
             exit={
-              isMobile
+              isSide
+                ? { x: "100%", opacity: 1 }
+                : isMobile
                 ? { y: "100%", opacity: 1 }
                 : { y: 16, opacity: 0, scale: 0.98 }
             }
             transition={
-              isMobile
-                ? { type: "spring", stiffness: 360, damping: 32 }
+              isMobile || isSide
+                ? { type: "spring", stiffness: 360, damping: 34 }
                 : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
             }
             onClick={(event) => event.stopPropagation()}
-            className={`max-h-[92vh] sm:max-h-[88vh] w-full ${maxWidth} ${minHeight} ${className} flex flex-col rounded-t-[32px] sm:rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] text-slate-900 dark:text-white shadow-2xl overflow-hidden`}
+            className={`${isSide ? "h-full max-h-full max-w-2xl rounded-l-3xl" : `max-h-[92dvh] sm:max-h-[88dvh] ${maxWidth} ${minHeight} rounded-t-[32px] sm:rounded-3xl`} w-full ${className} flex flex-col border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] text-slate-900 dark:text-white shadow-2xl overflow-hidden`}
           >
             {/* Drag Handle & Header Area */}
             <div

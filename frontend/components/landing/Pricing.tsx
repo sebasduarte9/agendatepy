@@ -2,47 +2,31 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import {
-  Check,
-  X,
-  Shield,
-  CheckCircle2,
-  Zap,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Check, Shield, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
-
 const FREE_FEATURES = [
-  { ok: true, label: "1 profesional / agenda personal" },
-  { ok: true, label: "Hasta 20 turnos por mes gratis" },
-  { ok: true, label: "Página web propia con tu logo" },
-  { ok: true, label: "Confirmaciones por WhatsApp" },
-  { ok: true, label: "0% de comisión por turno cobrado" },
-  { ok: false, label: "Cálculo de comisiones de empleados" },
-  { ok: false, label: "Módulo de caja y arqueo diario" },
+  "1 profesional / agenda personal",
+  "Hasta 20 turnos por mes",
+  "Tu propia página web de reservas con tu logo",
+  "Link de reservas para Instagram y Google Maps",
+  "0% de comisión por turno",
 ];
 
 const BASIC_FEATURES = [
-  { ok: true, label: "1 profesional / agenda personal" },
-  { ok: true, label: "Hasta 100 turnos por mes" },
-  { ok: true, label: "Página web propia con logo" },
-  { ok: true, label: "Confirmaciones por WhatsApp" },
-  { ok: true, label: "Recordatorios automáticos" },
-  { ok: true, label: "Sincronización Google Calendar" },
-  { ok: false, label: "Módulo de caja y comisiones" },
+  "Hasta 100 turnos por mes",
+  "Asistente IA que agenda por WhatsApp",
+  "Confirmaciones automáticas por WhatsApp",
+  "Tus clientes agendan el turno en Google Calendar",
 ];
 
 const PRO_FEATURES = [
-  { ok: true, label: "Hasta 10 profesionales en equipo" },
-  { ok: true, label: "Turnos y citas 100% ilimitadas" },
-  { ok: true, label: "Recordatorios automáticos WhatsApp" },
-  { ok: true, label: "WhatsApp Masivo & Campañas" },
-  { ok: true, label: "Cálculo automático de comisiones" },
-  { ok: true, label: "Módulo de Caja y arqueo diario" },
-  { ok: true, label: "Ficha CRM y Google Calendar" },
+  "Hasta 10 profesionales en equipo",
+  "Turnos ilimitados",
+  "Recordatorios automáticos por WhatsApp",
+  "Comisiones automáticas por profesional",
+  "Caja y arqueo diario",
+  "Ficha y CRM de clientes",
+  "Soporte prioritario por WhatsApp",
 ];
 
 const PLANS_DATA = [
@@ -61,6 +45,7 @@ const PLANS_DATA = [
     cta: "Comenzar Gratis",
     href: "/onboarding",
     isExternal: false,
+    includes: undefined,
     features: FREE_FEATURES,
     highlighted: false,
   },
@@ -79,6 +64,7 @@ const PLANS_DATA = [
     cta: "Elegir Básico",
     href: "/onboarding",
     isExternal: false,
+    includes: "Todo lo del Gratis, y además:",
     features: BASIC_FEATURES,
     highlighted: false,
   },
@@ -86,7 +72,7 @@ const PLANS_DATA = [
     id: "pro",
     name: "Plan Pro",
     shortName: "Plan Pro",
-    badge: "Más Popular en PY",
+    badge: "Recomendado",
     description: "Para salones, barberías y spas con equipo.",
     priceMonthly: "Gs. 250.000",
     priceAnnual: "Gs. 200.000",
@@ -97,6 +83,7 @@ const PLANS_DATA = [
     cta: "Probar Plan Pro",
     href: "/onboarding",
     isExternal: false,
+    includes: "Todo lo del Básico, y además:",
     features: PRO_FEATURES,
     highlighted: true,
   },
@@ -164,15 +151,16 @@ export default function Pricing() {
           <button
             type="button"
             onClick={() => setAnnual(false)}
-            className={`transition-colors cursor-pointer ${!annual ? "text-brand dark:text-white font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"}`}
+            className={`min-h-10 px-1 transition-colors cursor-pointer ${!annual ? "text-brand dark:text-white font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"}`}
           >
-            Facturación Mensual
+            <span className="sm:hidden">Mensual</span>
+            <span className="hidden sm:inline">Facturación Mensual</span>
           </button>
 
           <button
             type="button"
             onClick={() => setAnnual((value) => !value)}
-            className={`relative h-7 sm:h-8 w-13 sm:w-15 rounded-full p-1 transition-all duration-300 shadow-inner cursor-pointer ${
+            className={`relative h-8 w-15 rounded-full p-1 transition-all duration-300 shadow-inner cursor-pointer ${
               annual ? "bg-gradient-to-r from-brand to-[#FF6B4A]" : "bg-slate-300 dark:bg-slate-700"
             }`}
             aria-label="Cambiar facturación mensual o anual"
@@ -180,14 +168,14 @@ export default function Pricing() {
             <motion.div
               layout
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-white shadow-md ${annual ? "ml-auto" : "mr-auto"}`}
+              className={`h-6 w-6 rounded-full bg-white shadow-md ${annual ? "ml-auto" : "mr-auto"}`}
             />
           </button>
 
           <button
             type="button"
             onClick={() => setAnnual(true)}
-            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`flex min-h-10 items-center gap-1.5 px-1 transition-colors cursor-pointer ${
               annual ? "text-brand dark:text-[#FF6B4A] font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
@@ -215,7 +203,7 @@ export default function Pricing() {
                     }}
                     type="button"
                     onClick={() => setMobilePlanIndex(idx)}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
+                    className={`flex min-h-10 items-center gap-1.5 rounded-xl px-4 py-2 text-[13px] font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
                       isActive
                         ? plan.highlighted
                           ? "bg-gradient-to-r from-brand to-[#FF6B4A] text-white shadow-xs font-black"
@@ -234,28 +222,8 @@ export default function Pricing() {
           </div>
 
           {/* Tarjeta Flotante con Botones Laterales en los Bordes */}
-          <div className="relative mt-4 px-3 sm:px-6 max-w-md mx-auto">
-            {/* Botón Lateral Izquierdo */}
-            <button
-              type="button"
-              onClick={handlePrevPlan}
-              className="absolute left-0 sm:left-1 top-1/2 -translate-y-1/2 z-20 h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-lg border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-all cursor-pointer active:scale-90"
-              aria-label="Ver plan anterior"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-
-            {/* Botón Lateral Derecho */}
-            <button
-              type="button"
-              onClick={handleNextPlan}
-              className="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-20 h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-lg border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-all cursor-pointer active:scale-90"
-              aria-label="Ver plan siguiente"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-
-            {/* Tarjeta Animada del Plan Activo */}
+          <div className="relative mt-4 px-1 max-w-md mx-auto">
+            {/* Tarjeta del plan activo: se desliza con el dedo para cambiar de plan */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeMobilePlan.id}
@@ -263,6 +231,14 @@ export default function Pricing() {
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.97, x: -15 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.25}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -60) handleNextPlan();
+                  else if (info.offset.x > 60) handlePrevPlan();
+                }}
+                className="touch-pan-y"
               >
                 <PriceCard
                   name={activeMobilePlan.name}
@@ -277,26 +253,31 @@ export default function Pricing() {
                   cta={activeMobilePlan.cta}
                   href={activeMobilePlan.href}
                   isExternal={activeMobilePlan.isExternal}
+                  includes={activeMobilePlan.includes}
                   features={activeMobilePlan.features}
                   highlighted={activeMobilePlan.highlighted}
                 />
               </motion.div>
             </AnimatePresence>
 
-            {/* Indicador de Posición en Puntos */}
-            <div className="mt-3.5 flex items-center justify-center gap-1.5">
+            {/* Indicador de posición: el área táctil es más grande que el punto */}
+            <div className="mt-2 flex items-center justify-center">
               {PLANS_DATA.map((plan, idx) => (
                 <button
                   key={plan.id}
                   type="button"
                   onClick={() => setMobilePlanIndex(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                    mobilePlanIndex === idx
-                      ? "w-6 bg-brand dark:bg-[#FF6B4A]"
-                      : "w-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400"
-                  }`}
+                  className="flex h-8 items-center px-1.5 cursor-pointer"
                   aria-label={`Ir al ${plan.name}`}
-                />
+                >
+                  <span
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      mobilePlanIndex === idx
+                        ? "w-6 bg-brand dark:bg-[#FF6B4A]"
+                        : "w-1.5 bg-slate-300 dark:bg-slate-700"
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           </div>
@@ -328,6 +309,7 @@ export default function Pricing() {
                 cta={plan.cta}
                 href={plan.href}
                 isExternal={plan.isExternal}
+                includes={plan.includes}
                 features={plan.features}
                 highlighted={plan.highlighted}
               />
@@ -359,6 +341,7 @@ function PriceCard({
   cta,
   href = "/dashboard",
   isExternal = false,
+  includes,
   features,
   badge,
   highlighted = false,
@@ -374,12 +357,11 @@ function PriceCard({
   cta: string;
   href?: string;
   isExternal?: boolean;
-  features: { ok: boolean; label: string }[];
+  includes?: string;
+  features: string[];
   badge?: string;
   highlighted?: boolean;
 }) {
-  const [showAllMobile, setShowAllMobile] = useState(false);
-
   return (
     <motion.article
       whileHover={{ y: -6, scale: 1.015 }}
@@ -411,7 +393,7 @@ function PriceCard({
         {/* Precio y desglose de ahorro con altura reservada homogénea */}
         <div className="my-3 sm:my-4 border-b border-slate-100 dark:border-slate-800 pb-3 sm:pb-4">
           <div className="flex items-baseline gap-1 whitespace-nowrap">
-            <span className="text-2xl sm:text-3xl lg:text-[23px] xl:text-[28px] font-black tracking-tight text-slate-900 dark:text-white font-mono shrink-0">
+            <span className="text-2xl sm:text-3xl lg:text-[23px] xl:text-[28px] font-black tracking-tight tabular-nums text-slate-900 dark:text-white shrink-0">
               {price}
             </span>
             <span className="text-xs font-semibold text-slate-400 shrink-0">{period}</span>
@@ -424,7 +406,7 @@ function PriceCard({
                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold leading-tight">
                   100% Gratis · Sin ingresar tarjeta
                 </p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
+                <p className="hidden sm:block text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
                   Activación inmediata sin contrato
                 </p>
               </div>
@@ -465,48 +447,19 @@ function PriceCard({
           </div>
         </div>
 
-        {/* Lista de características (7 ítems homogéneos por tarjeta) */}
-        <ul className="space-y-2 sm:space-y-2.5 text-xs">
-          {features.map((item, idx) => (
-            <li
-              key={item.label}
-              className={`items-start gap-2.5 ${
-                idx >= 4 && !showAllMobile ? "hidden sm:flex" : "flex"
-              }`}
-            >
-              <span
-                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] mt-0.5 ${
-                  item.ok
-                    ? "bg-brand/15 text-brand dark:text-[#FF6B4A] font-bold"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-400"
-                }`}
-              >
-                {item.ok ? <Check className="h-3 w-3 stroke-[3]" /> : <X className="h-3 w-3" />}
+        {includes && (
+          <p className="mb-2.5 text-xs font-bold text-slate-900 dark:text-white">{includes}</p>
+        )}
+        <ul className="space-y-2.5 text-[13px] sm:text-xs">
+          {features.map((label) => (
+            <li key={label} className="flex items-start gap-2.5">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full mt-0.5 bg-brand/15 text-brand dark:text-[#FF6B4A]">
+                <Check className="h-3 w-3 stroke-[3]" />
               </span>
-              <span
-                className={
-                  item.ok
-                    ? "font-medium text-slate-700 dark:text-slate-200 leading-snug"
-                    : "text-slate-400 line-through leading-snug"
-                }
-              >
-                {item.label}
-              </span>
+              <span className="font-medium text-slate-700 dark:text-slate-200 leading-snug">{label}</span>
             </li>
           ))}
         </ul>
-
-        {features.length > 4 && (
-          <button
-            type="button"
-            onClick={() => setShowAllMobile(!showAllMobile)}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/5 dark:bg-brand/10 px-3 py-1 text-[11px] font-bold text-brand hover:bg-brand/10 transition sm:hidden cursor-pointer active:scale-95"
-            aria-expanded={showAllMobile}
-          >
-            <span>{showAllMobile ? "Ver menos características" : `Ver más características (+${features.length - 4})`}</span>
-            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showAllMobile ? "rotate-180" : ""}`} />
-          </button>
-        )}
       </div>
 
       <div className="relative z-10 pt-4 sm:pt-5">

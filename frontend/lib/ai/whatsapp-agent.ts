@@ -5,6 +5,7 @@
  * para consultar disponibilidad en tiempo real en la base de datos de Prisma y agendar turnos.
  */
 
+import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots } from "@/lib/scheduling/availability";
 import { geminiPool } from "@/lib/ai/gemini-pool";
@@ -196,7 +197,7 @@ export async function processCustomerMessageWithAI(
     };
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = formatInTimeZone(new Date(), tenant.timezone || "America/Asuncion", "yyyy-MM-dd");
   const currentTimeStr = new Date().toLocaleTimeString("es-PY", {
     hour: "2-digit",
     minute: "2-digit",
@@ -234,7 +235,7 @@ export async function processCustomerMessageWithAI(
 
   const emojiRule = allowEmojis
     ? "FORMATO DE EMOJIS: Puedes incluir emojis sutiles y amigables (1 o 2 por mensaje) para brindar una atención cercana."
-    : "REGLA OBLIGATORIA DE EMOJIS: NO USES NINGÚN EMOJI NI CARITAS bajo ninguna circunstancia (nada de 😉, 💈, ✂️, 🕒, 👍, ni ningún icono). Los mensajes deben ser totalmente sobrios, limpios y redactados con palabras y formato en negrita (*negrita*) solamente.";
+    : "REGLA OBLIGATORIA DE EMOJIS: NO USES NINGÚN EMOJI NI CARITAS bajo ninguna circunstancia (ni ningún icono). Los mensajes deben ser totalmente sobrios, limpios y redactados con palabras y formato en negrita (*negrita*) solamente.";
 
   const staffMembers = tenant.staff || [];
   let staffPreferenceRule = "";
@@ -441,7 +442,7 @@ REGLAS DE ATENCIÓN:
           if (cleanOwnerDigits.length >= 8) {
             const clientNameDisp = fnArgs.nombreCliente || context.clientName || "Cliente WhatsApp";
             const ownerMsg = allowEmojis
-              ? `🔔 *Nuevo turno agendado en ${tenant.name}*\n👤 Cliente: ${clientNameDisp} (${context.clientPhone})\n✂️ Servicio: ${service.name}\n🕒 Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}\n💈 Profesional: ${chosenStaff.name}`
+              ? ` *Nuevo turno agendado en ${tenant.name}*\n Cliente: ${clientNameDisp} (${context.clientPhone})\n Servicio: ${service.name}\n Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}\n Profesional: ${chosenStaff.name}`
               : `*Nuevo turno agendado en ${tenant.name}*\nCliente: ${clientNameDisp} (${context.clientPhone})\nServicio: ${service.name}\nHorario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}\nProfesional: ${chosenStaff.name}`;
 
             sendWhatsAppMessage(cleanOwnerDigits, ownerMsg, false).catch((err) => {
@@ -458,7 +459,7 @@ REGLAS DE ATENCIÓN:
           const staffPhone = s?.user?.phone?.replace(/\D/g, "");
           if (staffPhone && staffPhone.length >= 8 && staffPhone !== personalAlertPhone.replace(/\D/g, "")) {
             const staffMsg = allowEmojis
-              ? `💈 *Nuevo turno asignado en ${tenant.name}*\n👤 Cliente: ${fnArgs.nombreCliente || context.clientName}\n✂️ Servicio: ${service.name}\n🕒 Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`
+              ? ` *Nuevo turno asignado en ${tenant.name}*\n Cliente: ${fnArgs.nombreCliente || context.clientName}\n Servicio: ${service.name}\n Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`
               : `*Nuevo turno asignado en ${tenant.name}*\nCliente: ${fnArgs.nombreCliente || context.clientName}\nServicio: ${service.name}\nHorario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`;
 
             sendWhatsAppMessage(staffPhone, staffMsg, false).catch(() => {});
@@ -520,7 +521,7 @@ REGLAS DE ATENCIÓN:
           if (staffPhone && staffPhone.length >= 8) {
             sendWhatsAppMessage(
               staffPhone,
-              `📅 *Turno Reprogramado en ${tenant.name}*\n👤 Cliente: ${activeAppt.clientName}\n✂️ Servicio: ${activeAppt.service.name}\n🕒 Nuevo Horario: ${newStart.toLocaleString("es-PY", { timeZone: tenant.timezone })}`,
+              ` *Turno Reprogramado en ${tenant.name}*\n Cliente: ${activeAppt.clientName}\n Servicio: ${activeAppt.service.name}\n Nuevo Horario: ${newStart.toLocaleString("es-PY", { timeZone: tenant.timezone })}`,
               false
             ).catch(() => {});
           }
@@ -569,7 +570,7 @@ REGLAS DE ATENCIÓN:
           if (staffPhone && staffPhone.length >= 8) {
             sendWhatsAppMessage(
               staffPhone,
-              `❌ *Turno Cancelado en ${tenant.name}*\nEl cliente ${activeAppt.clientName} canceló su turno para ${activeAppt.service.name} (${activeAppt.startTime.toLocaleString("es-PY", { timeZone: tenant.timezone })}). El horario quedó libre.`,
+              ` *Turno Cancelado en ${tenant.name}*\nEl cliente ${activeAppt.clientName} canceló su turno para ${activeAppt.service.name} (${activeAppt.startTime.toLocaleString("es-PY", { timeZone: tenant.timezone })}). El horario quedó libre.`,
               false
             ).catch(() => {});
           }
@@ -646,7 +647,7 @@ REGLAS DE ATENCIÓN:
         if (cleanOwnerDigits.length >= 8) {
           const clientNameDisp = context.clientName || "Cliente WhatsApp";
           const alertMsg = allowEmojis
-            ? `⚠️ *Consulta de Cliente para Asesor Humano en ${tenant.name}*\n👤 Cliente: ${clientNameDisp} (${context.clientPhone})\n❓ Consulta: "${motivoConsulta}"\n📲 Por favor comunícate con el cliente para responderle a la brevedad.`
+            ? ` *Consulta de Cliente para Asesor Humano en ${tenant.name}*\n Cliente: ${clientNameDisp} (${context.clientPhone})\n Consulta: "${motivoConsulta}"\n Por favor comunícate con el cliente para responderle a la brevedad.`
             : `*Consulta de Cliente para Asesor Humano en ${tenant.name}*\nCliente: ${clientNameDisp} (${context.clientPhone})\nConsulta: "${motivoConsulta}"\nPor favor comunícate con el cliente para responderle a la brevedad.`;
 
           sendWhatsAppMessage(cleanOwnerDigits, alertMsg, false).catch((err) => {

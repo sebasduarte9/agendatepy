@@ -1,7 +1,27 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
+import { Store, Share2, CalendarCheck } from "lucide-react";
 import AutomatedHubDiagram from "./AutomatedHubDiagram";
+
+const STEPS = [
+  {
+    icon: Store,
+    title: "Creá tu página",
+    text: "Cargá tus servicios, horarios y logo. Queda lista en 3 minutos.",
+  },
+  {
+    icon: Share2,
+    title: "Compartí tu link",
+    text: "Ponelo en Instagram, en tu WhatsApp o en Google Maps.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Los turnos caen solos",
+    text: "Tus clientes reservan 24/7 y vos recibís todo confirmado en tu agenda.",
+  },
+];
 
 export default function StackingCardsSection() {
   return (
@@ -26,6 +46,37 @@ export default function StackingCardsSection() {
       <div className="w-full flex justify-center">
         <AutomatedHubDiagram />
       </div>
+
+      <ol className="mt-10 sm:mt-14 grid gap-3 sm:grid-cols-3 sm:gap-5 max-w-5xl mx-auto">
+        {STEPS.map((step, idx) => {
+          const Icon = step.icon;
+          return (
+            <motion.li
+              key={step.title}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: idx * 0.08 }}
+              className="relative flex items-start gap-3.5 sm:flex-col sm:gap-4 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/70 p-4 sm:p-6 shadow-[0_12px_32px_-20px_rgba(15,23,42,0.25)] backdrop-blur-sm"
+            >
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF4F2B]/10 text-[#FF4F2B]">
+                <Icon className="h-5 w-5" />
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-950 dark:bg-white text-[10px] font-black text-white dark:text-slate-950 tabular-nums">
+                  {idx + 1}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-950 dark:text-white leading-tight">
+                  {step.title}
+                </h3>
+                <p className="mt-1 text-[13px] sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {step.text}
+                </p>
+              </div>
+            </motion.li>
+          );
+        })}
+      </ol>
     </section>
   );
 }

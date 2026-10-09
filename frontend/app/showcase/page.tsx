@@ -253,7 +253,6 @@ export default function ShowcasePage() {
       }}
     >
       {/* Dynamic Google Font link for active theme */}
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={googleFontHref(selectedPalette.font)} />
 
       {/* Top Navbar */}

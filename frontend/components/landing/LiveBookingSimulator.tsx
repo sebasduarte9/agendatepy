@@ -83,7 +83,7 @@ export default function LiveBookingSimulator() {
         <h3 className="text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
           Tu propio agendamiento web
         </h3>
-        <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
+        <p className="hidden sm:block text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
           Tus clientes pueden reservar de forma autónoma desde cualquier dispositivo en segundos.
         </p>
       </div>

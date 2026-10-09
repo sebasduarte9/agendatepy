@@ -10,13 +10,8 @@ import {
   Phone,
   Globe,
   Clock,
-  Palette,
-  MessageCircle,
   Save,
-  CheckCircle2,
   Calendar,
-  ShieldCheck,
-  Building,
   Key,
   Smartphone,
   Trash2,
@@ -25,7 +20,6 @@ import {
   Check,
   Copy,
   Laptop,
-  Lock,
   ExternalLink,
   CreditCard,
   Banknote,
@@ -38,6 +32,16 @@ import {
 import { TIMEZONES, useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import CustomSelect from "@/components/dashboard/ui/CustomSelect";
+import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
+import { ROOT_DOMAIN, tenantBookingUrl, tenantHost } from "@/lib/tenant/public-url";
+
+const CONFIG_SECTIONS = [
+  { id: "perfil", label: "Perfil" },
+  { id: "horarios", label: "Horarios" },
+  { id: "pagos", label: "Medios de pago" },
+  { id: "apariencia", label: "Apariencia" },
+  { id: "seguridad", label: "Seguridad" },
+];
 
 const AVAILABLE_PAYMENT_METHODS = [
   {
@@ -234,16 +238,21 @@ export default function ConfiguracionPage() {
     }
   }
 
-  const profileFields = [business.name, business.slug, business.phone, business.address, business.timezone];
-  const filledFieldsCount = profileFields.filter(Boolean).length;
-  const profileCompletionPct = Math.round((filledFieldsCount / profileFields.length) * 100);
-  const paymentMethodsPct = Math.round((activePaymentMethods.length / AVAILABLE_PAYMENT_METHODS.length) * 100);
-  const publicStoreUrl = `/${business.slug || "barberia"}/reservar`;
+  const publicStoreUrl = tenantBookingUrl(business.slug || "barberia");
   const [copiedLink, setCopiedLink] = useState(false);
 
+  const setupItems = [
+    { label: "Nombre y link", done: Boolean(business.name && business.slug), section: "perfil" },
+    { label: "WhatsApp del negocio", done: Boolean(business.phone), section: "perfil" },
+    { label: "Dirección del local", done: Boolean(business.address), section: "perfil" },
+    { label: "Logo", done: Boolean(business.logoUrl), section: "perfil" },
+    { label: "Medios de pago", done: activePaymentMethods.length > 0, section: "pagos" },
+    { label: "Verificación en dos pasos", done: is2faEnabled, section: "seguridad" },
+  ];
+  const setupPct = Math.round((setupItems.filter((i) => i.done).length / setupItems.length) * 100);
+
   async function copyStoreLink() {
-    const fullUrl = `${window.location.origin}${publicStoreUrl}`;
-    await navigator.clipboard.writeText(fullUrl);
+    await navigator.clipboard.writeText(publicStoreUrl);
     setCopiedLink(true);
     pushToast("success", "Enlace público de reservas copiado");
     setTimeout(() => setCopiedLink(false), 2000);
@@ -296,222 +305,101 @@ export default function ConfiguracionPage() {
         </div>
       </div>
 
-      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card 1: Perfil del Negocio & Estado */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                >
-                  <Store className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Estado & Completitud del Negocio
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Parámetros comerciales esenciales</p>
-                </div>
-              </div>
-
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Verificado</span>
-              </span>
-            </div>
-
-            {/* Circular SVG Gauges */}
-            <div className="py-4 grid grid-cols-2 gap-4">
-              {/* Gauge 1: Profile Completion */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, profileCompletionPct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
-                    {profileCompletionPct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Perfil Completo
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {filledFieldsCount} de {profileFields.length} campos listos
-                  </span>
-                </div>
-              </div>
-
-              {/* Gauge 2: Payment Methods Coverage */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke="#10b981"
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, paymentMethodsPct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                    {paymentMethodsPct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Medios de Cobro
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {activePaymentMethods.length} de {AVAILABLE_PAYMENT_METHODS.length} activos
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Operational Telemetry Rows */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Horario Semanal</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
-                  {openingTime} - {closingTime}
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Domingos</span>
-                <span className={`text-xs font-black font-mono ${sundayOpen ? "text-emerald-500" : "text-slate-400"}`}>
-                  {sundayOpen ? "Abierto" : "Cerrado"}
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Seguridad 2FA</span>
-                <span className={`text-xs font-black font-mono ${is2faEnabled ? "text-emerald-500" : "text-amber-500"}`}>
-                  {is2faEnabled ? "Protegido" : "Pendiente"}
-                </span>
-              </div>
-            </div>
+      {/* ═══ PROFILE CHECKLIST ═══ */}
+      <div className="kpi-rise rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 shadow-xs">
+        <div className="flex items-center gap-4">
+          <div className="relative h-16 w-16 shrink-0">
+            <svg className="h-16 w-16 -rotate-90" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="18" className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="4" fill="none" />
+              <circle
+                cx="22"
+                cy="22"
+                r="18"
+                stroke={setupPct === 100 ? "#10b981" : business.primaryColor || "#FF4F2B"}
+                strokeWidth="4"
+                fill="none"
+                strokeDasharray={113}
+                strokeDashoffset={113 - (113 * setupPct) / 100}
+                strokeLinecap="round"
+                className="transition-[stroke-dashoffset] duration-1000 ease-out"
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-sm font-black font-mono text-slate-900 dark:text-white">
+              <AnimatedValue value={`${setupPct}%`} />
+            </span>
           </div>
-
-          {/* Card 2: Enlace Web & Métodos de Pago Activos */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 font-bold">
-                  <Globe className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Enlace Público de Reservas
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Portal web directo para tus clientes</p>
-                </div>
-              </div>
-
-              <span className="text-xs font-mono font-bold text-slate-400">
-                {business.timezone}
-              </span>
-            </div>
-
-            {/* URL Box */}
-            <div className="py-3">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800">
-                <div className="min-w-0 pr-3">
-                  <span className="text-[10px] text-slate-400 block font-medium">Subdominio Activo:</span>
-                  <span className="text-xs font-bold font-mono text-slate-900 dark:text-white truncate block">
-                    agendate.py/{business.slug}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyStoreLink}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                  style={{
-                    backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
-                    color: "#ffffff",
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  <span>Copiar</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Active Payment Pills */}
-            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-700/60">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Métodos de Pago Habilitados ({activePaymentMethods.length})
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {AVAILABLE_PAYMENT_METHODS.filter((m) => activePaymentMethods.includes(m.id)).map((m) => (
-                  <span
-                    key={m.id}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700"
-                  >
-                    <Check className="h-3 w-3 text-emerald-500" />
-                    <span>{m.title}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+              {setupPct === 100 ? "Tu negocio está listo para recibir reservas" : "Completá tu negocio"}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {setupPct === 100
+                ? "Todo configurado. Podés ajustar cualquier dato cuando quieras."
+                : `Te faltan ${setupItems.filter((i) => !i.done).length} pasos para que tus clientes vean todo.`}
+            </p>
           </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {setupItems.map((item) => (
+            <a
+              key={item.label}
+              href={`#${item.section}`}
+              className={`flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-xs transition hover:-translate-y-0.5 ${
+                item.done
+                  ? "border-emerald-200/70 bg-emerald-50/60 text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+                  : "border-slate-200/80 bg-slate-50 text-slate-700 hover:border-primary/40 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+              }`}
+            >
+              <span
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                  item.done ? "bg-emerald-500 text-white" : "border-2 border-slate-300 dark:border-slate-600"
+                }`}
+              >
+                {item.done && <Check className="h-3 w-3 stroke-[3]" />}
+              </span>
+              <span className="font-semibold">{item.label}</span>
+            </a>
+          ))}
         </div>
       </div>
 
+      {/* ═══ SECTION NAV ═══ */}
+      <nav className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:top-16 z-20 -mx-1 overflow-x-auto bg-[var(--background)]/85 px-1 py-2 backdrop-blur-md [scrollbar-width:none]">
+        <div className="flex gap-1.5">
+          {CONFIG_SECTIONS.map((sec) => (
+            <a
+              key={sec.id}
+              href={`#${sec.id}`}
+              className="shrink-0 rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 shadow-xs transition hover:border-primary/40 hover:text-primary"
+            >
+              {sec.label}
+            </a>
+          ))}
+        </div>
+      </nav>
+
       <form onSubmit={handleSaveAll} className="space-y-6">
         {/* Brand & Logo Header Card */}
-        <Card className="flex flex-col sm:flex-row items-center gap-5">
-          <label
-            className="group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center rounded-3xl text-2xl font-black text-white shadow-xl hover:scale-105 transition-all"
+        <Card id="perfil" className="scroll-mt-32 flex flex-col sm:flex-row items-center gap-5">
+          <Link
+            href="/dashboard/apariencia"
+            className="group relative flex h-20 w-20 shrink-0 cursor-pointer overflow-hidden items-center justify-center rounded-3xl text-2xl font-black text-white shadow-xl hover:scale-105 transition-all"
             style={{
               backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
               boxShadow: `0 10px 25px -5px ${business.primaryColor || "rgba(255, 79, 43, 0.4)"}`,
             }}
           >
-            {business.name.slice(0, 2).toUpperCase()}
-            <input
-              type="file"
-              className="hidden"
-              onChange={() => pushToast("success", "Logo del local actualizado")}
-            />
+            {business.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={business.logoUrl} alt="" className="h-full w-full rounded-3xl object-cover" />
+            ) : (
+              business.name.slice(0, 2).toUpperCase()
+            )}
             <span className="absolute inset-0 flex items-center justify-center rounded-3xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold">
               Cambiar
             </span>
-          </label>
+          </Link>
 
           <div className="space-y-1 text-center sm:text-left flex-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
@@ -526,10 +414,10 @@ export default function ConfiguracionPage() {
               className="font-mono text-xs font-bold"
               style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}
             >
-              agendate.py/{business.slug}
+              {tenantHost(business.slug)}
             </p>
             <p className="text-xs text-slate-400">
-              Haz clic en el avatar para subir un nuevo logotipo o imagen de portada.
+              Tocá el logo para cambiarlo junto con la portada desde Apariencia.
             </p>
           </div>
         </Card>
@@ -564,15 +452,15 @@ export default function ConfiguracionPage() {
                   <Globe className="h-3.5 w-3.5 text-slate-400" /> Slug / Subdominio Web *
                 </label>
                 <div className="flex rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden focus-within:border-primary">
-                  <span className="bg-slate-100 dark:bg-slate-800 px-3 py-2 text-slate-400 text-xs font-mono">
-                    agendate.py/
-                  </span>
                   <input
                     required
                     className="w-full bg-transparent px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none"
                     value={business.slug}
                     onChange={(e) => updateBusiness({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
                   />
+                  <span className="bg-slate-100 dark:bg-slate-800 px-3 py-2 text-slate-400 text-xs font-mono shrink-0">
+                    .{ROOT_DOMAIN}
+                  </span>
                 </div>
               </div>
 
@@ -604,7 +492,7 @@ export default function ConfiguracionPage() {
         </Card>
 
         {/* Operating Hours & Timezone */}
-        <Card className="space-y-4">
+        <Card id="horarios" className="scroll-mt-32 space-y-4">
           <div className="border-b border-slate-100 dark:border-white/5 pb-3">
             <h3 className="font-bold text-slate-900 dark:text-white text-base">
               Horarios de Apertura & Zona Horaria
@@ -668,22 +556,24 @@ export default function ConfiguracionPage() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3 cursor-pointer">
+            <label className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3 cursor-pointer">
+              <span>
+                <span className="block font-semibold text-slate-700 dark:text-slate-200">Abrir los domingos</span>
+                <span className="block text-[11px] text-slate-400">{sundayOpen ? "Tus clientes pueden reservar el domingo" : "El domingo aparece como cerrado"}</span>
+              </span>
               <input
                 type="checkbox"
                 checked={sundayOpen}
                 onChange={(e) => setSundayOpen(e.target.checked)}
-                className="h-4 w-4 rounded text-primary focus:ring-primary"
+                className="peer sr-only"
               />
-              <span className="font-semibold text-slate-700 dark:text-slate-200">
-                Abrir atención los días Domingos
-              </span>
+              <span className="relative h-6 w-11 shrink-0 rounded-full bg-slate-300 transition-colors peer-checked:bg-emerald-500 dark:bg-slate-700 after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
             </label>
           </div>
         </Card>
 
         {/* Medios de Pago Habilitados */}
-        <Card className="space-y-4">
+        <Card id="pagos" className="scroll-mt-32 space-y-4">
           <div className="border-b border-slate-100 dark:border-white/5 pb-3 flex items-center justify-between">
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
@@ -754,7 +644,7 @@ export default function ConfiguracionPage() {
         </Card>
 
         {/* Branding Color Accent */}
-        <Card className="flex items-center justify-between">
+        <Card id="apariencia" className="scroll-mt-32 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white text-sm">
               Color de Marca Principal
@@ -843,10 +733,10 @@ export default function ConfiguracionPage() {
         </Card>
 
         {/* Action Save Button */}
-        <div className="flex justify-end">
+        <div className="sticky bottom-[calc(88px+env(safe-area-inset-bottom,0px))] lg:bottom-4 z-20 flex justify-end">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3 text-xs font-bold text-white shadow-xl shadow-primary/25 hover:opacity-95 transition cursor-pointer"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3 text-xs font-bold text-white shadow-xl shadow-primary/25 hover:opacity-95 active:scale-[0.98] transition cursor-pointer"
           >
             <Save className="h-4 w-4" />
             <span>Guardar Información del Local</span>
@@ -855,7 +745,7 @@ export default function ConfiguracionPage() {
       </form>
 
       {/* Seguridad & Verificación de Google Authenticator (2FA) */}
-      <Card className="space-y-4">
+      <Card id="seguridad" className="scroll-mt-32 space-y-4">
         <div className="border-b border-slate-100 dark:border-white/5 pb-3 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
@@ -955,7 +845,7 @@ export default function ConfiguracionPage() {
               ¿Deseas cerrar permanentemente este local?
             </p>
             <p className="text-[11px]">
-              Se cancelará el plan activo y se liberará el slug <code className="font-mono text-primary font-bold">agendate.py/{business.slug}</code>.
+              Se cancelará el plan activo y se liberará el slug <code className="font-mono text-primary font-bold">{tenantHost(business.slug)}</code>.
             </p>
           </div>
 

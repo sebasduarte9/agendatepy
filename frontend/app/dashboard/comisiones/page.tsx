@@ -1,5 +1,7 @@
 "use client";
 
+import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
+
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Coins,
@@ -543,7 +545,7 @@ export default function ComisionesPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+      <div data-tour="comisiones-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -556,7 +558,7 @@ export default function ComisionesPage() {
                   : "text-emerald-600 dark:text-emerald-400"
               }`}
             >
-              {formatGs(metrics.pendingCommission)}
+              <AnimatedValue value={formatGs(metrics.pendingCommission)} />
             </span>
           </div>
 
@@ -577,7 +579,7 @@ export default function ComisionesPage() {
       </div>
 
       {/* ═══ DESKTOP APPLE INSET CONTAINER: BENTO TELEMETRY & GAUGES ═══ */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="comisiones-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Card 1: Circular Progress Gauges (Liquidation Rate & Source Breakdown) */}
           <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
@@ -691,7 +693,7 @@ export default function ComisionesPage() {
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] text-slate-400 font-semibold block">Total Ganado</span>
                 <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                  {formatGs(metrics.totalCommissionEarned)}
+                  <AnimatedValue value={formatGs(metrics.totalCommissionEarned)} />
                 </span>
               </div>
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
@@ -703,13 +705,13 @@ export default function ComisionesPage() {
                       : "text-emerald-600 dark:text-emerald-400"
                   }`}
                 >
-                  {formatGs(metrics.pendingCommission)}
+                  <AnimatedValue value={formatGs(metrics.pendingCommission)} />
                 </span>
               </div>
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] text-slate-400 font-semibold block">Facturación</span>
                 <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                  {formatGs(metrics.totalBilled)}
+                  <AnimatedValue value={formatGs(metrics.totalBilled)} />
                 </span>
               </div>
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
@@ -835,7 +837,7 @@ export default function ComisionesPage() {
         </div>
 
         {/* Mobile Apple Inset Grouped Collaborators List */}
-        <div className="block md:hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
+        <div data-tour="comisiones-staff-list" className="block md:hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
           {staffSummaries.map((summary) => {
             const st = summary.staff;
             const hasPending = summary.pendingCommission > 0;

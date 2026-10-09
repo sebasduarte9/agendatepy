@@ -37,7 +37,6 @@ export default async function ReservarLayout({
       style={themeStyle(theme)}
     >
       {/* Carga dinámica del Google Font seleccionado por el negocio */}
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={fontLink} />
       {children}
       {chatwootToken ? <ChatwootWidget token={chatwootToken} /> : null}

@@ -30,6 +30,7 @@ import type { UserRole } from "@/lib/dashboard-types";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import BrandLogo from "@/components/ui/BrandLogo";
 import { triggerHaptic } from "@/lib/haptics";
+import { tenantHost } from "@/lib/tenant/public-url";
 
 type SidebarLink = {
   href: string;
@@ -355,7 +356,7 @@ export default function Sidebar() {
                 target="_blank"
                 className="mt-0.5 flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white group"
               >
-                <span className="truncate">agendate.py/{business.slug || "barberia"}</span>
+                <span className="truncate">{tenantHost(business.slug || "barberia")}</span>
                 <ExternalLink className="h-3 w-3 shrink-0 ml-1 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
               </Link>
             </div>
@@ -363,7 +364,7 @@ export default function Sidebar() {
             <Link
               href={`/${business.slug || "barberia"}/reservar`}
               target="_blank"
-              title={`Ver web: agendate.py/${business.slug || "barberia"}`}
+              title={`Ver web: ${tenantHost(business.slug || "barberia")}`}
               className="flex h-9 w-full items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition"
             >
               <ExternalLink className="h-4 w-4" />

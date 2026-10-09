@@ -1142,20 +1142,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     openingCash: 300000,
     acceptedPaymentMethods: ["efectivo", "pos", "transferencia", "billetera", "qr"],
   },
-  staff: initialStaff,
-  services: services,
-  products: initialProducts,
-  productOrders: initialProductOrders,
-  appointments: appointments,
-  clients: initialClients,
-  cashMovements: initialCashMovements,
-  commissionPayouts: initialCommissionPayouts,
+  staff: [],
+  services: [],
+  products: [],
+  productOrders: [],
+  appointments: [],
+  clients: [],
+  cashMovements: [],
+  commissionPayouts: [],
   whatsappTemplates: initialWhatsAppTemplates,
   loyalty: initialLoyalty,
   sipap: initialSipap,
   evolutionApi: initialEvolutionApi,
   blocks: [],
-  receipts: initialReceipts,
+  receipts: [],
   currentUserRole: "admin",
   currentStaffId: undefined,
   userName: "Sebas Duarte",
@@ -1164,7 +1164,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({
       currentUserRole: role,
       currentStaffId: staffId,
-      selectedStaffId: role === "barbero" || role === "estilista" ? staffId || "st-marcos" : "all",
+      selectedStaffId: (role === "barbero" || role === "estilista") && staffId ? staffId : "all",
     }),
   calendarDate: defaultCivilDate,
   calendarView: "dia",
@@ -1280,7 +1280,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
                   productCommissionPercentage: st.productCommissionPercentage ?? 10,
                   advanceBalance: st.advanceBalance ?? 0,
                 }))
-              : initialStaff;
+              : [];
         }
 
         if (Array.isArray(data.clients)) {
@@ -1295,7 +1295,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             instagram: c.instagram || "",
             totalVisits: c.totalVisits ?? 0,
             totalSpent: c.totalSpent ?? 0,
-            lastVisit: c.lastVisit || new Date().toISOString(),
+            lastVisit: c.lastVisit || null,
             loyaltyPoints: c.loyaltyPoints ?? 0,
             loyaltyRedeemed: 0,
           }));
@@ -1336,7 +1336,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }
 
         if (Array.isArray(data.products)) {
-          nextState.products = data.products.length > 0 ? data.products : initialProducts;
+          nextState.products = data.products;
         }
 
         return nextState;
@@ -2190,7 +2190,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       ),
     }),
 
-  crmConversations: initialCrmConversations,
+  crmConversations: [],
   evolutionConfig: initialEvolutionApi,
   updateEvolutionConfig: (config) => {
     const next = { ...get().evolutionConfig, ...config };
@@ -2319,11 +2319,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   isTourOpen: false,
   tourSectionKey: "inicio",
   openTour: (sectionKey?: string) => {
-    if (sectionKey === "crm" || !sectionKey) {
-      if (get().crmConversations.length === 0) {
-        set({ crmConversations: initialCrmConversations });
-      }
-    }
     set({
       isTourOpen: true,
       ...(sectionKey ? { tourSectionKey: sectionKey } : {}),

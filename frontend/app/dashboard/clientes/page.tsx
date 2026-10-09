@@ -38,6 +38,13 @@ import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import { COUNTRY_LIST, findCountryByPhone, type CountryOption } from "@/lib/countries";
 import type { Client } from "@/lib/dashboard-types";
 
+const INACTIVE_DAYS = 30;
+
+function isInactive(c: Client) {
+  if (!c.lastVisit || c.totalVisits === 0) return false;
+  return Date.now() - new Date(c.lastVisit).getTime() > INACTIVE_DAYS * 24 * 60 * 60 * 1000;
+}
+
 export default function ClientesPage() {
   const { clients, appointments, services, business, addClient, updateClient, deleteClient, pushToast } =
     useDashboardStore();
@@ -117,7 +124,9 @@ export default function ClientesPage() {
 
       const matchesTag =
         selectedTag === "todos" ||
-        c.tags.some((t) => t.toLowerCase() === selectedTag.toLowerCase());
+        (selectedTag === "inactivos"
+          ? isInactive(c)
+          : c.tags.some((t) => t.toLowerCase() === selectedTag.toLowerCase()));
 
       return matchesSearch && matchesTag;
     });
@@ -128,6 +137,7 @@ export default function ClientesPage() {
   const vipCount = clients.filter((c) => c.tags.includes("VIP")).length;
   const frecuentesCount = clients.filter((c) => c.tags.includes("Frecuente")).length;
   const nuevosCount = clients.filter((c) => c.tags.includes("Nuevo")).length;
+  const inactivosCount = clients.filter(isInactive).length;
   const formulaCount = clients.filter((c) => c.formula && c.formula.trim().length > 0).length;
 
   function openCreateModal() {
@@ -242,7 +252,7 @@ export default function ClientesPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6 pb-24 px-1 sm:px-0">
       {/* ═══ APPLE APP HEADER ═══ */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+      <div data-tour="clientes-header" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             Clientes
@@ -309,7 +319,7 @@ export default function ClientesPage() {
         </div>
 
         {/* 4-Pod Apple Inset Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div data-tour="clientes-kpis" className="kpi-stagger grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
           <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">VIP</span>
@@ -348,7 +358,7 @@ export default function ClientesPage() {
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {/* iOS Search Input */}
-          <div className="relative flex-1">
+          <div data-tour="clientes-search" className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500" />
             <input
               type="text"
@@ -418,6 +428,7 @@ export default function ClientesPage() {
               { value: "VIP", label: "VIP", badge: vipCount },
               { value: "Frecuente", label: "Frecuentes", badge: frecuentesCount },
               { value: "Nuevo", label: "Nuevos", badge: nuevosCount },
+              { value: "inactivos", label: "+30 días sin venir", badge: inactivosCount },
             ]}
           />
         </div>
@@ -432,7 +443,7 @@ export default function ClientesPage() {
               <p>No se encontraron clientes con esos filtros.</p>
             </div>
           ) : (
-            filteredClients.map((client) => {
+            filteredClients.map((client, index) => {
               const initials = client.name
                 .split(" ")
                 .map((n) => n[0])
@@ -449,6 +460,7 @@ export default function ClientesPage() {
               return (
                 <div
                   key={client.id}
+                  data-tour={index === 0 ? "clientes-card" : undefined}
                   onClick={() => {
                     triggerHaptic("selection");
                     setSelectedClient(client);
@@ -530,12 +542,13 @@ export default function ClientesPage() {
 
                     <button
                       type="button"
+                      data-tour={index === 0 ? "clientes-agendar-btn" : undefined}
                       onClick={() => handleOpenQuickBooking(client)}
-                      className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 text-xs font-semibold transition active:scale-95"
+                      className="inline-flex items-center gap-1 h-8 px-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 text-xs font-semibold transition active:scale-95"
                       title="Agendar turno"
                     >
                       <CalendarPlus className="h-3.5 w-3.5 text-primary" />
-                      <span>Agendar</span>
+                      <span className="hidden sm:inline">Agendar</span>
                     </button>
 
                     <ChevronRight className="h-4 w-4 text-slate-400 dark:text-zinc-500 ml-1" />
@@ -856,9 +869,9 @@ export default function ClientesPage() {
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: "Nuevo", label: "Nuevo", icon: "🌱", activeClass: "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/50" },
-                { id: "Frecuente", label: "Frecuente", icon: "⚡", activeClass: "border-indigo-500 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/50" },
-                { id: "VIP", label: "VIP 👑", icon: "👑", activeClass: "border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/50" },
+                { id: "Nuevo", label: "Nuevo", icon: "", activeClass: "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/50" },
+                { id: "Frecuente", label: "Frecuente", icon: "", activeClass: "border-indigo-500 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/50" },
+                { id: "VIP", label: "VIP", icon: "", activeClass: "border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/50" },
               ].map((cat) => {
                 const isSelected = form.tags === cat.id;
                 return (
@@ -875,7 +888,6 @@ export default function ClientesPage() {
                         : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-white/20"
                     }`}
                   >
-                    <span>{cat.icon}</span>
                     <span>{cat.label}</span>
                   </button>
                 );

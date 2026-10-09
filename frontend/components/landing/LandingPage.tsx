@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { CategoryProvider } from "@/context/CategoryContext";
 import HorizontalScroll from "./HorizontalScroll";
 import Header from "./Header";
@@ -9,13 +10,16 @@ import ThreeGradientBackground from "./ThreeGradientBackground";
 import StackingCardsSection from "./StackingCardsSection";
 import Features from "./Features";
 import Pricing from "./Pricing";
-import Differentiators from "./Differentiators";
 import FAQ from "./FAQ";
 import Footer from "./Footer";
 import WhatsAppFloatingButton from "./WhatsAppFloatingButton";
 import StickyMobileCta from "./StickyMobileCta";
 
 export default function LandingPage() {
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+  }, []);
+
   return (
     <HorizontalScroll>
       <CategoryProvider>
@@ -26,7 +30,6 @@ export default function LandingPage() {
           <StackingCardsSection />
           <Features />
           <Pricing />
-          <Differentiators />
           <FAQ />
         </main>
         <Footer />

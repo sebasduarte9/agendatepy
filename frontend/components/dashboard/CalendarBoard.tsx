@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { format, parseISO, addMinutes, setHours, setMinutes } from "date-fns";
 import { es } from "date-fns/locale";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import type { Appointment, PaymentMethod, AppointmentStatus } from "@/lib/dashboard-types";
 import { addDaysIso, phoneWa, formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
@@ -174,7 +174,6 @@ export default function CalendarBoard() {
   const currentUserRole = useDashboardStore((s) => s.currentUserRole);
   const currentStaffId = useDashboardStore((s) => s.currentStaffId);
   const pushToast = useDashboardStore((s) => s.pushToast);
-  const timezoneNote = useDashboardStore((s) => s.timezoneNote);
 
   // If user is a professional (barbero / estilista), enforce viewing their own agenda
   useEffect(() => {
@@ -218,6 +217,8 @@ export default function CalendarBoard() {
   const [newServiceId, setNewServiceId] = useState(services[0]?.id || "");
   const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [mobileAgendaMode, setMobileAgendaMode] = useState<"stream" | "grid">("stream");
+  const [swipeDir, setSwipeDir] = useState<1 | -1>(1);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const activeCountry = useMemo(() => {
     return COUNTRY_LIST.find((c) => c.code === selectedCountryCode) || COUNTRY_LIST[0];
@@ -578,7 +579,6 @@ export default function CalendarBoard() {
 
   return (
     <div className="space-y-6">
-      <p className="sr-only">{timezoneNote}</p>
 
       {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
@@ -1009,7 +1009,63 @@ export default function CalendarBoard() {
 
       {/* ═══ MOBILE AGENDA SWITCHER & DAY STREAM ═══ */}
       {calendarView === "dia" && (
-        <div className="md:hidden space-y-3">
+        <div
+          data-tour="calendar-grid"
+          className="md:hidden space-y-3"
+          onTouchStart={(e) => {
+            swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }}
+          onTouchEnd={(e) => {
+            const start = swipeStartRef.current;
+            swipeStartRef.current = null;
+            if (!start) return;
+            const dx = e.changedTouches[0].clientX - start.x;
+            const dy = e.changedTouches[0].clientY - start.y;
+            if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            if ((e.target as HTMLElement).closest("[data-no-swipe]")) return;
+            triggerHaptic("selection");
+            setSwipeDir(dx < 0 ? 1 : -1);
+            setCalendarDate(addDaysIso(calendarDate, dx < 0 ? 1 : -1));
+          }}
+        >
+          {/* Day strip */}
+          <div data-no-swipe className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+            {Array.from({ length: 7 }, (_, i) => addDaysIso(calendarDate, i - 3)).map((iso) => {
+              const d = parseISO(iso);
+              const isSelected = iso === calendarDate;
+              const isTodayIso = iso === formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd");
+              const count = appointments.filter(
+                (a) => a.status !== "cancelled" && formatInTimeZone(a.start, business.timezone || "America/Asuncion", "yyyy-MM-dd") === iso
+              ).length;
+              return (
+                <button
+                  key={iso}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setSwipeDir(iso > calendarDate ? 1 : -1);
+                    setCalendarDate(iso);
+                  }}
+                  className={`flex min-w-[46px] flex-1 flex-col items-center rounded-2xl border py-2 transition active:scale-95 cursor-pointer ${
+                    isSelected
+                      ? "border-primary bg-primary text-white shadow-md shadow-primary/25"
+                      : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200"
+                  }`}
+                >
+                  <span className={`text-[10px] font-bold uppercase ${isSelected ? "text-white/80" : "text-slate-400"}`}>
+                    {format(d, "EEE", { locale: es }).slice(0, 3)}
+                  </span>
+                  <span className="text-base font-black leading-tight">{format(d, "d")}</span>
+                  <span
+                    className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
+                      count > 0 ? (isSelected ? "bg-white" : "bg-primary") : "bg-transparent"
+                    } ${isTodayIso && !isSelected ? "ring-2 ring-primary/30" : ""}`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+
           {/* Switcher Pill */}
           <div className="flex items-center justify-between gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/5">
             <button
@@ -1044,7 +1100,7 @@ export default function CalendarBoard() {
 
           {/* Stream Content */}
           {mobileAgendaMode === "stream" && (
-            <div className="space-y-2.5">
+            <div key={calendarDate} className={`space-y-2.5 ${swipeDir === 1 ? "day-slide-left" : "day-slide-right"}`}>
               {mobileDayAppointments.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 dark:border-white/10 p-8 text-center bg-white dark:bg-slate-900 shadow-xs">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2.5">
@@ -1951,12 +2007,48 @@ function GoogleCalendarDayView({
 }) {
   const services = useDashboardStore((s) => s.services);
   const blocks = useDashboardStore((s) => s.blocks);
+  const updateAppointment = useDashboardStore((s) => s.updateAppointment);
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropHint, setDropHint] = useState<{ staffId: string; hour: number; minute: number } | null>(null);
 
-  // Current time position in minutes
-  const now = new Date();
-  const currentHours = now.getHours();
-  const currentMinutes = now.getMinutes();
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const tzName = timezone || "America/Asuncion";
+  const currentHours = Number(formatInTimeZone(now, tzName, "H"));
+  const currentMinutes = Number(formatInTimeZone(now, tzName, "m"));
+
+  const minuteFromEvent = (e: React.DragEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(0.99, Math.max(0, (e.clientY - rect.top) / rect.height));
+    return Math.floor((ratio * 60) / 15) * 15;
+  };
+
+  async function handleDrop(e: React.DragEvent<HTMLElement>, hour: number, staffId: string) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/appointment-id");
+    setDraggingId(null);
+    setDropHint(null);
+    const app = appointments.find((a) => a.id === id);
+    if (!app) return;
+    const minute = minuteFromEvent(e);
+    const hh = String(hour).padStart(2, "0");
+    const mm = String(minute).padStart(2, "0");
+    const newStart = fromZonedTime(`${date}T${hh}:${mm}:00`, tzName);
+    const duration = new Date(app.end).getTime() - new Date(app.start).getTime();
+    if (newStart.getTime() === new Date(app.start).getTime() && staffId === app.staffId) return;
+    const staffName = staffList.find((p) => p.id === staffId)?.name || "";
+    if (!window.confirm(`¿Mover el turno de ${app.clientName} a las ${hh}:${mm}${staffName ? ` con ${staffName}` : ""}?`)) return;
+    triggerHaptic("success");
+    await updateAppointment(app.id, {
+      start: newStart.toISOString(),
+      end: new Date(newStart.getTime() + duration).toISOString(),
+      staffId,
+    });
+  }
   const minutesFromStart = (currentHours - START_HOUR) * 60 + currentMinutes;
   const isToday =
     formatInTimeZone(now, timezone || "America/Asuncion", "yyyy-MM-dd") === date;
@@ -2048,12 +2140,32 @@ function GoogleCalendarDayView({
                     key={`${hour}-${person.id}`}
                     type="button"
                     onClick={() => onEmptySlotClick(date, hour, person.id)}
-                    className="border-r border-slate-100 dark:border-white/5 last:border-r-0 h-full w-full text-left p-1 group hover:bg-primary/[0.04] transition relative"
+                    onDragOver={(e) => {
+                      if (!draggingId) return;
+                      e.preventDefault();
+                      const minute = minuteFromEvent(e);
+                      if (!dropHint || dropHint.staffId !== person.id || dropHint.hour !== hour || dropHint.minute !== minute) {
+                        setDropHint({ staffId: person.id, hour, minute });
+                      }
+                    }}
+                    onDrop={(e) => handleDrop(e, hour, person.id)}
+                    className={`border-r border-slate-100 dark:border-white/5 last:border-r-0 h-full w-full text-left p-1 group hover:bg-primary/[0.04] transition relative ${
+                      dropHint && dropHint.staffId === person.id && dropHint.hour === hour ? "bg-primary/[0.08]" : ""
+                    }`}
                     title={`Click para agendar o bloquear con ${person.name} a las ${hour}:00`}
                   >
-                    <span className="opacity-0 group-hover:opacity-100 text-[10px] text-primary font-bold pl-2">
-                      + Agendar
-                    </span>
+                    {dropHint && dropHint.staffId === person.id && dropHint.hour === hour ? (
+                      <span
+                        className="absolute left-1 right-1 rounded-lg border-2 border-dashed border-primary/60 bg-primary/10 px-2 text-[10px] font-bold text-primary"
+                        style={{ top: `${(dropHint.minute / 60) * 100}%` }}
+                      >
+                        {String(hour).padStart(2, "0")}:{String(dropHint.minute).padStart(2, "0")}
+                      </span>
+                    ) : (
+                      <span className="opacity-0 group-hover:opacity-100 text-[10px] text-primary font-bold pl-2">
+                        + Agendar
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -2143,8 +2255,20 @@ function GoogleCalendarDayView({
                 <button
                   key={item.id}
                   type="button"
+                  draggable={item.status !== "cancelled" && item.status !== "completed"}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/appointment-id", item.id);
+                    e.dataTransfer.effectAllowed = "move";
+                    setDraggingId(item.id);
+                  }}
+                  onDragEnd={() => {
+                    setDraggingId(null);
+                    setDropHint(null);
+                  }}
                   onClick={() => onSelectAppointment(item)}
-                  className="group absolute z-10 overflow-hidden rounded-2xl p-2.5 text-left shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-200 border text-slate-900 dark:text-white"
+                  className={`group absolute overflow-hidden rounded-2xl p-2.5 text-left shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-200 border text-slate-900 dark:text-white cursor-grab active:cursor-grabbing ${
+                    draggingId === item.id ? "z-0 opacity-40" : draggingId ? "z-0 pointer-events-none" : "z-10"
+                  }`}
                   style={{
                     top,
                     height,

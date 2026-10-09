@@ -1,5 +1,7 @@
 "use client";
 
+import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   Banknote,
@@ -20,6 +22,7 @@ import {
   History,
   X,
   Filter,
+  Plus,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
@@ -197,10 +200,11 @@ export default function CajaPage() {
       pushToast("error", "Ingresá un monto válido en Guaraníes.");
       return;
     }
-    if (!form.concept.trim()) {
-      pushToast("error", "Ingresá un concepto para el movimiento.");
-      return;
-    }
+    const concept =
+      form.concept.trim() ||
+      (form.type === "egreso"
+        ? "Gasto"
+        : `Cobro ${form.method === "efectivo" ? "en efectivo" : form.method === "pos" ? "con POS" : "por transferencia"}`);
 
     if (selectedProductId) {
       updateProductStock(selectedProductId, -1);
@@ -216,7 +220,7 @@ export default function CajaPage() {
       type: form.type,
       amount: amt,
       method: form.method,
-      concept: form.concept.trim(),
+      concept,
       date: movementDate,
       voucherNumber: form.voucherNumber.trim() || undefined,
     });
@@ -234,6 +238,13 @@ export default function CajaPage() {
   }
 
   // Quick amount increment buttons for easy entry
+  function handleKeypad(key: string) {
+    triggerHaptic("selection");
+    const digits = form.amount.replace(/\D/g, "");
+    const next = key === "del" ? digits.slice(0, -1) : (digits + key).replace(/^0+/, "").slice(0, 10);
+    setForm({ ...form, amount: next ? Number(next).toLocaleString("es-PY") : "" });
+  }
+
   function handleAddAmount(increment: number) {
     const current = Number(form.amount.replace(/\D/g, "")) || 0;
     const next = current + increment;
@@ -303,9 +314,9 @@ export default function CajaPage() {
       </div>
 
       {/* ═══ MOBILE APPLE POS WALLET HERO CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3.5">
+      <div data-tour="caja-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3.5">
         {/* Date Selector Pills on Mobile */}
-        <div className="flex items-center justify-between gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-2xl">
+        <div data-tour="caja-date-filter" className="flex items-center justify-between gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-2xl">
           <button
             type="button"
             onClick={() => {
@@ -362,7 +373,7 @@ export default function CajaPage() {
 
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
-              {formatGs(stats.efectivoEnCajaEsperado)}
+              <AnimatedValue value={formatGs(stats.efectivoEnCajaEsperado)} />
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               {stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0}% efect.
@@ -370,7 +381,7 @@ export default function CajaPage() {
           </div>
 
           {/* Breakdown Mini Strip */}
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div data-tour="caja-methods" className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-[10px]">
             <div>
               <span className="text-slate-400 dark:text-zinc-500 block font-medium">Efectivo</span>
               <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.efectivoIngresos)}</span>
@@ -418,7 +429,7 @@ export default function CajaPage() {
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="caja-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader with Date Filter Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
           <div>
@@ -431,7 +442,7 @@ export default function CajaPage() {
           </div>
 
           {/* Date Filter Segmented Controls */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+          <div data-tour="caja-date-filter" className="flex flex-wrap items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
             <button
               type="button"
               onClick={() => setSelectedDate(todayStr)}
@@ -527,7 +538,7 @@ export default function CajaPage() {
                 </div>
                 <div className="mt-3">
                   <span className="text-xs font-extrabold text-slate-900 dark:text-white font-mono">
-                    {formatGs(stats.efectivoEnCajaEsperado)}
+                    <AnimatedValue value={formatGs(stats.efectivoEnCajaEsperado)} />
                   </span>
                 </div>
               </div>
@@ -567,7 +578,7 @@ export default function CajaPage() {
                   Efectivo
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {formatGs(stats.efectivoIngresos)}
+                  <AnimatedValue value={formatGs(stats.efectivoIngresos)} />
                 </div>
               </div>
 
@@ -606,7 +617,7 @@ export default function CajaPage() {
                   Digital (POS/Transferencia)
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {formatGs(stats.posIngresos + stats.transferenciaIngresos)}
+                  <AnimatedValue value={formatGs(stats.posIngresos + stats.transferenciaIngresos)} />
                 </div>
               </div>
             </div>
@@ -616,7 +627,7 @@ export default function CajaPage() {
               <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                 <span>Total Ingresos Brutos</span>
                 <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {formatGs(stats.totalIngresos)}
+                  <AnimatedValue value={formatGs(stats.totalIngresos)} />
                 </span>
               </div>
               <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
@@ -628,14 +639,14 @@ export default function CajaPage() {
               <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
                 <span>Balance Neto del Período</span>
                 <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                  {formatGs(stats.balanceNeto)}
+                  <AnimatedValue value={formatGs(stats.balanceNeto)} />
                 </span>
               </div>
             </div>
           </div>
 
           {/* Right Card: Methods Breakdown Cards */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+          <div data-tour="caja-methods" className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
             <div>
               <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
                 Desglose por Canal de Cobro
@@ -654,7 +665,7 @@ export default function CajaPage() {
                     </div>
                   </div>
                   <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
-                    {formatGs(stats.efectivoIngresos)}
+                    <AnimatedValue value={formatGs(stats.efectivoIngresos)} />
                   </span>
                 </div>
 
@@ -670,7 +681,7 @@ export default function CajaPage() {
                     </div>
                   </div>
                   <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
-                    {formatGs(stats.posIngresos)}
+                    <AnimatedValue value={formatGs(stats.posIngresos)} />
                   </span>
                 </div>
 
@@ -686,7 +697,7 @@ export default function CajaPage() {
                     </div>
                   </div>
                   <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
-                    {formatGs(stats.transferenciaIngresos)}
+                    <AnimatedValue value={formatGs(stats.transferenciaIngresos)} />
                   </span>
                 </div>
               </div>
@@ -695,7 +706,7 @@ export default function CajaPage() {
             <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
               <span>Total en canales digitales (POS + Transferencias):</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
-                {formatGs(stats.posIngresos + stats.transferenciaIngresos)}
+                <AnimatedValue value={formatGs(stats.posIngresos + stats.transferenciaIngresos)} />
               </span>
             </div>
           </div>
@@ -1002,6 +1013,21 @@ export default function CajaPage() {
         )}
       </Card>
 
+      {/* Mobile quick charge button */}
+      {!modalOpen && !arqueoOpen && (
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic("medium");
+            setForm((f) => ({ ...f, type: "ingreso" }));
+            setModalOpen(true);
+          }}
+          className="lg:hidden fixed right-4 bottom-[calc(96px+env(safe-area-inset-bottom,0px))] z-30 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-primary/30 transition active:scale-95 cursor-pointer"
+        >
+          <Plus className="h-4 w-4" /> Cobrar
+        </button>
+      )}
+
       {/* Modal 1: Custom Web Modal for New Cash Movement */}
       <Modal
         open={modalOpen}
@@ -1109,9 +1135,26 @@ export default function CajaPage() {
                 type="text"
                 placeholder="Ej. 120.000"
                 value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 pl-11 pr-3 text-base font-black text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "");
+                  setForm({ ...form, amount: digits ? Number(digits).toLocaleString("es-PY") : "" });
+                }}
+                inputMode="numeric"
+                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 pl-11 pr-3 text-base max-lg:py-4 max-lg:text-3xl max-lg:text-center font-black font-mono text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               />
+            </div>
+            <div className="lg:hidden mt-2 grid grid-cols-3 gap-1.5">
+              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "000", "0", "del"].map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => handleKeypad(k)}
+                  aria-label={k === "del" ? "Borrar" : k}
+                  className="h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-lg font-black text-slate-900 dark:text-white transition active:scale-95 active:bg-slate-200 cursor-pointer"
+                >
+                  {k === "del" ? "⌫" : k}
+                </button>
+              ))}
             </div>
             {/* Quick Add Chips */}
             <div className="flex items-center gap-1.5 mt-2 overflow-x-auto">
@@ -1182,7 +1225,7 @@ export default function CajaPage() {
           {/* Concept Input */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Concepto / Motivo *
+              Concepto (opcional)
             </label>
             <input
               type="text"
@@ -1283,6 +1326,46 @@ export default function CajaPage() {
               />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              setPhysicalCash(stats.efectivoEnCajaEsperado.toLocaleString("es-PY"));
+            }}
+            className="-mt-2 text-[11px] font-bold text-primary hover:underline cursor-pointer"
+          >
+            Cuadra exacto ({formatGs(stats.efectivoEnCajaEsperado)})
+          </button>
+
+          {physicalCash && (
+            <div className="space-y-2 rounded-2xl border border-slate-200/80 dark:border-white/10 p-3">
+              {[
+                { label: "Esperado", value: stats.efectivoEnCajaEsperado, color: "bg-slate-400" },
+                {
+                  label: "Contado",
+                  value: countedVal,
+                  color: diferenciaArqueo === 0 ? "bg-emerald-500" : diferenciaArqueo > 0 ? "bg-indigo-500" : "bg-rose-500",
+                },
+              ].map((row) => {
+                const max = Math.max(stats.efectivoEnCajaEsperado, countedVal, 1);
+                return (
+                  <div key={row.label} className="space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="font-semibold text-slate-500">{row.label}</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">{formatGs(row.value)}</span>
+                    </div>
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${row.color}`}
+                        style={{ width: `${(row.value / max) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {physicalCash && (
             <div

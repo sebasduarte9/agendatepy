@@ -28,6 +28,8 @@ import Modal from "@/components/dashboard/ui/Modal";
 import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
+import { formatInTimeZone } from "date-fns-tz";
+import { PY_TZ } from "@/lib/dashboard-dates";
 import type { TimeBlock, StaffMember } from "@/lib/dashboard-types";
 
 // Common preset reasons
@@ -52,7 +54,7 @@ export default function BloquearHorarioPage() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formStaffId, setFormStaffId] = useState<string>("all");
-  const [formDate, setFormDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
+  const [formDate, setFormDate] = useState<string>(() => formatInTimeZone(new Date(), PY_TZ, "yyyy-MM-dd"));
   const [formStart, setFormStart] = useState("12:00");
   const [formEnd, setFormEnd] = useState("13:00");
   const [formReason, setFormReason] = useState("Almuerzo");
@@ -65,7 +67,7 @@ export default function BloquearHorarioPage() {
     return map;
   }, [staff]);
 
-  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const todayStr = useMemo(() => formatInTimeZone(new Date(), PY_TZ, "yyyy-MM-dd"), []);
 
   // Format date helper for human-readable display
   const formatDisplayDate = (dateStr: string) => {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogOut, Menu, Settings, ExternalLink, HelpCircle, BookOpen, Compass } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import BrandLogo from "@/components/ui/BrandLogo";
+import { tenantHost } from "@/lib/tenant/public-url";
 
 export default function Header() {
   const business = useDashboardStore((s) => s.business);
@@ -16,9 +17,7 @@ export default function Header() {
 
   useEffect(() => {
     const saved = localStorage.getItem("agendate_theme_mode");
-    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      document.documentElement.classList.add("dark");
-    }
+    document.documentElement.classList.toggle("dark", saved === "dark");
   }, []);
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -63,7 +62,7 @@ export default function Header() {
           title="Abrir tu portal público de reservas en una nueva pestaña"
         >
           <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-500 animate-pulse" />
-          <span>agendate.py/{business.slug || "barberia"}</span>
+          <span>{tenantHost(business.slug || "barberia")}</span>
           <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
         </Link>
 

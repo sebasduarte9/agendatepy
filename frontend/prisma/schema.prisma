@@ -107,10 +107,19 @@ model OtpCode {
   code      String
   expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
   used      Boolean  @default(false)
+  attempts  Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@index([email, code])
   @@map("otp_codes")
+}
+
+model PlatformSetting {
+  key       String   @id
+  value     Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("platform_settings")
 }
 
 model Client {

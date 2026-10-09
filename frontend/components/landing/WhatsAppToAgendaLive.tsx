@@ -13,6 +13,7 @@ import {
   Paperclip,
   Mic,
   ArrowLeft,
+  RotateCcw,
   CalendarCheck,
   Zap,
   TrendingUp,
@@ -57,6 +58,14 @@ export default function WhatsAppToAgendaLive() {
     return () => clearTimeout(timer);
   }, [step, isInView]);
 
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = chatBodyRef.current;
+    if (!el || step === 0) return;
+    const id = requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }));
+    return () => cancelAnimationFrame(id);
+  }, [step]);
+
   const isClient1Visible = step >= 1;
   const isBotTyping1 = step === 2;
   const isBot1Visible = step >= 3;
@@ -64,7 +73,22 @@ export default function WhatsAppToAgendaLive() {
   const isBotTyping2 = step === 5;
   const isBot2Visible = step >= 6;
   const isBooked = step >= 6;
-  const [mobileTab, setMobileTab] = useState<"chat" | "agenda">("chat");
+
+  const [flipped, setFlipped] = useState(false);
+  useEffect(() => {
+    if (!isBooked) return;
+    const t = setTimeout(() => setFlipped(true), 1400);
+    return () => clearTimeout(t);
+  }, [isBooked]);
+
+  useEffect(() => {
+    if (!flipped) return;
+    const t = setTimeout(() => setFlipped(false), 3000);
+    return () => clearTimeout(t);
+  }, [flipped]);
+
+  const faceBase =
+    "col-start-1 row-start-1 md:col-start-auto md:row-start-auto max-md:[backface-visibility:hidden] transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none";
 
   return (
     <motion.div
@@ -75,58 +99,30 @@ export default function WhatsAppToAgendaLive() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-5xl mx-auto py-2 select-none"
     >
-      {/* Selector de pestañas para móvil (< lg) */}
-      <div className="flex lg:hidden items-center justify-center mb-4">
-        <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 gap-1 text-xs font-bold shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setMobileTab("chat")}
-            className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
-              mobileTab === "chat"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                : "text-slate-500"
-            }`}
-          >
-            <span>💬 WhatsApp Bot</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("agenda")}
-            className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
-              mobileTab === "agenda"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                : "text-slate-500"
-            }`}
-          >
-            <span>📅 Tu Agenda Web</span>
-            {isBooked && (
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-7 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-7 items-stretch max-md:[perspective:1600px]">
         
         {/* ============================================================== */}
         {/* COLUMNA IZQUIERDA: CHAT AUTÉNTICO DE WHATSAPP                 */}
         {/* ============================================================== */}
+        <div
+          className={`${faceBase} md:col-span-6 lg:col-span-7 ${
+            flipped ? "max-md:[transform:rotateY(180deg)] max-md:pointer-events-none" : ""
+          }`}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-          className={`lg:col-span-7 flex-col h-[480px] sm:h-[520px] rounded-[28px] overflow-hidden shadow-[0_20px_50px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)] border border-slate-300/80 dark:border-white/10 bg-[#EFEAE2] dark:bg-[#0b141a] ${
-            mobileTab === "chat" ? "flex" : "hidden lg:flex"
-          }`}
+          className="flex flex-col h-[440px] md:h-[520px] rounded-[28px] overflow-hidden shadow-[0_20px_50px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)] border border-slate-300/80 dark:border-white/10 bg-[#EFEAE2] dark:bg-[#0b141a]"
         >
           
           {/* Cabecera oficial de WhatsApp */}
           <div className="bg-[#008069] dark:bg-[#1f2c34] text-white px-4 py-3 flex items-center justify-between shadow-sm shrink-0">
             <div className="flex items-center gap-3">
-              <button type="button" aria-label="Volver" className="text-white/90 hover:text-white transition-opacity">
+              <span aria-hidden="true" className="text-white/90">
                 <ArrowLeft className="h-5 w-5" />
-              </button>
+              </span>
               <div className="relative">
                 <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm tracking-wider text-white border border-white/30">
                   AP
@@ -160,12 +156,15 @@ export default function WhatsAppToAgendaLive() {
           </div>
 
           {/* Cuerpo del Chat fluido y anclado de arriba hacia abajo */}
-          <div className="flex-1 p-4 sm:p-5 space-y-3 flex flex-col justify-start overflow-y-auto">
+          <div
+            ref={chatBodyRef}
+            className="flex-1 p-4 sm:p-5 space-y-3 flex flex-col justify-start overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             
             {/* Aviso de cifrado */}
-            <div className="mx-auto mb-1 text-center shrink-0">
+            <div className="hidden sm:block mx-auto mb-1 text-center shrink-0">
               <span className="text-[10px] text-slate-600 dark:text-slate-400 bg-white/85 dark:bg-slate-800/80 px-3 py-1 rounded-lg shadow-2xs font-medium">
-                🔒 Los mensajes están cifrados de extremo a extremo
+                 Los mensajes están cifrados de extremo a extremo
               </span>
             </div>
 
@@ -218,7 +217,7 @@ export default function WhatsAppToAgendaLive() {
               >
                 <div className="relative max-w-[88%] sm:max-w-[80%] bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] px-3.5 py-2.5 rounded-2xl rounded-tl-xs shadow-xs text-sm">
                   <p className="leading-snug">
-                    ¡Hola! 👋 Con gusto. ¿Para qué servicio y horario te gustaría? Tenemos libre hoy a las{" "}
+                    ¡Hola!  Con gusto. ¿Para qué servicio y horario te gustaría? Tenemos libre hoy a las{" "}
                     <strong className="text-[#008069] dark:text-emerald-400 font-bold">16:30 hs</strong> con Marcos para corte y barba.
                   </p>
                   <div className="flex items-center justify-end mt-1 text-[10px] text-slate-400">
@@ -277,28 +276,15 @@ export default function WhatsAppToAgendaLive() {
               >
                 <div className="relative max-w-[88%] sm:max-w-[80%] bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] px-3.5 py-2.5 rounded-2xl rounded-tl-xs shadow-xs text-sm">
                   <p className="leading-snug">
-                    ¡Listo! ✂️ Tu turno quedó confirmado para hoy{" "}
+                    ¡Listo!  Tu turno quedó confirmado para hoy{" "}
                     <strong className="text-[#008069] dark:text-emerald-400 font-bold">16:30 hs con Marcos</strong>.
-                    ¡Te esperamos! 🙌
+                    ¡Te esperamos! 
                   </p>
                   <div className="flex items-center justify-end mt-1 text-[10px] text-slate-400">
                     <span className="tabular-nums">16:21</span>
                   </div>
                 </div>
               </motion.div>
-            )}
-            {/* Aviso interactivo para móviles al confirmar el turno */}
-            {isBooked && (
-              <div className="lg:hidden mx-auto py-1.5 px-3 flex justify-center shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setMobileTab("agenda")}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-md shadow-emerald-600/30 active:scale-95 transition-transform"
-                >
-                  <CalendarCheck className="h-3.5 w-3.5" />
-                  <span>¡Turno confirmado! Ver en agenda →</span>
-                </button>
-              </div>
             )}
           </div>
 
@@ -314,18 +300,22 @@ export default function WhatsAppToAgendaLive() {
             </div>
           </div>
         </motion.div>
+        </div>
 
         {/* ============================================================== */}
         {/* COLUMNA DERECHA: AGENDA WEB EN VIVO (DISEÑO SAAS SIN CARDS ANIDADAS) */}
         {/* ============================================================== */}
+        <div
+          className={`${faceBase} md:col-span-6 lg:col-span-5 ${
+            flipped ? "" : "max-md:[transform:rotateY(-180deg)] max-md:pointer-events-none"
+          }`}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-          className={`lg:col-span-5 flex-col justify-between h-[480px] sm:h-[520px] rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] overflow-hidden text-left ${
-            mobileTab === "agenda" ? "flex" : "hidden lg:flex"
-          }`}
+          className="flex flex-col justify-between h-[440px] md:h-[520px] rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] overflow-hidden text-left"
         >
           
           {/* Cabecera del Panel de Agenda */}
@@ -422,7 +412,7 @@ export default function WhatsAppToAgendaLive() {
                         <div className="flex items-center gap-1.5 font-bold text-slate-950 dark:text-white min-w-0">
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                           <span className="truncate">Lucas Romero</span>
-                          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded font-semibold tabular-nums shrink-0">
+                          <span className="hidden sm:inline text-[10px] font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded font-semibold tabular-nums shrink-0">
                             16:30 - 17:15
                           </span>
                         </div>
@@ -486,7 +476,8 @@ export default function WhatsAppToAgendaLive() {
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
                   <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  <span>Ocupación de hoy:</span>
+                  <span className="sm:hidden">Hoy:</span>
+                  <span className="hidden sm:inline">Ocupación de hoy:</span>
                   <strong className="text-slate-900 dark:text-white tabular-nums">
                     {isBooked ? "3 de 4 turnos (75%)" : "2 de 4 turnos (50%)"}
                   </strong>
@@ -507,7 +498,7 @@ export default function WhatsAppToAgendaLive() {
           </div>
 
           {/* Pie informativo de la Agenda */}
-          <div className="px-5 py-3.5 bg-slate-50/80 dark:bg-slate-950/40 border-t border-slate-100 dark:border-white/5 flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex px-5 py-3.5 bg-slate-50/80 dark:bg-slate-950/40 border-t border-slate-100 dark:border-white/5 items-center gap-3 shrink-0">
             <div className="h-8 w-8 rounded-lg bg-[#FF4F2B]/10 dark:bg-[#FF4F2B]/20 flex items-center justify-center text-[#FF4F2B] shrink-0">
               <CalendarCheck className="h-4 w-4" />
             </div>
@@ -516,7 +507,39 @@ export default function WhatsAppToAgendaLive() {
             </p>
           </div>
         </motion.div>
+        </div>
 
+      </div>
+
+      <div className="mt-4 flex h-11 items-center justify-center md:hidden">
+        {!isBooked ? (
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-500 dark:text-slate-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#25D366] animate-pulse" />
+            La IA está agendando el turno…
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setFlipped((v) => !v)}
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[13px] font-bold active:scale-95 transition cursor-pointer ${
+              flipped
+                ? "border-slate-200 bg-white text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/60 dark:text-emerald-300"
+            }`}
+          >
+            {flipped ? (
+              <>
+                <RotateCcw className="h-4 w-4" />
+                Ver la conversación
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Ver el turno en tu agenda
+              </>
+            )}
+          </button>
+        )}
       </div>
     </motion.div>
   );

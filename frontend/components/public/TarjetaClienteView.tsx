@@ -508,7 +508,7 @@ export default function TarjetaClienteView({
             <div className="space-y-3 text-xs text-slate-300">
               <div className="rounded-2xl bg-white/5 border border-white/10 p-3 space-y-1">
                 <p className="font-bold text-white flex items-center gap-1.5">
-                  <span>📱 En iPhone (Safari):</span>
+                  <span> En iPhone (Safari):</span>
                 </p>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
                   1. Tocá el botón <strong>Compartir</strong> (ícono cuadrado con flecha hacia arriba).<br />
@@ -519,7 +519,7 @@ export default function TarjetaClienteView({
 
               <div className="rounded-2xl bg-white/5 border border-white/10 p-3 space-y-1">
                 <p className="font-bold text-white flex items-center gap-1.5">
-                  <span>🤖 En Android (Chrome):</span>
+                  <span> En Android (Chrome):</span>
                 </p>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
                   1. Tocá los <strong>tres puntos (⋮)</strong> arriba a la derecha.<br />

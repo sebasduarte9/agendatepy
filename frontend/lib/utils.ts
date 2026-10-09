@@ -1,5 +1,3 @@
-import { type ClassValue, clsx } from "clsx";
-
 /**
  * Standard utility to merge Tailwind and custom classes conditionally
  */

@@ -4,20 +4,18 @@ import { useState } from "react";
 import {
   Check,
   Crown,
-  Zap,
   ShieldCheck,
   CreditCard,
   BadgePercent,
   ArrowRight,
-  TrendingUp,
   PhoneCall,
-  Calendar,
   Lock,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Modal from "@/components/dashboard/ui/Modal";
 import { formatGs } from "@/lib/dashboard-dates";
 import { triggerHaptic } from "@/lib/haptics";
+import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
 import type { PlanId } from "@/lib/dashboard-types";
 
 const PLANS = [
@@ -31,7 +29,7 @@ const PLANS = [
       "1 profesional / agenda personal",
       "Hasta 20 turnos por mes",
       "Página web de reservas con tu logo",
-      "Confirmaciones por WhatsApp",
+      "Link de reservas para Instagram y Google Maps",
       "0% de comisión por turno cobrado",
       "Sin tarjeta de crédito requerida",
     ],
@@ -46,6 +44,7 @@ const PLANS = [
       "1 profesional / agenda personal",
       "Hasta 100 turnos por mes",
       "Página web de reservas con tu logo",
+      "Asistente IA que agenda por WhatsApp",
       "Confirmaciones automáticas por WhatsApp",
       "Sincronización con Google Calendar",
       "0% de comisión por turno cobrado",
@@ -155,83 +154,86 @@ export default function SuscripcionPage() {
         </div>
       </div>
 
-      {/* ═══ ACTIVE SUBSCRIPTION GLANCE CARD (APPLE PASS STYLE) ═══ */}
-      <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-xs"
-              style={{ backgroundColor: brandColor }}
-            >
+      {/* ═══ ACTIVE SUBSCRIPTION PASS ═══ */}
+      <div className="kpi-rise grid gap-3.5 lg:grid-cols-5">
+        <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs lg:col-span-3">
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Plan activo
+              </span>
+              <h2 className="mt-3 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">{currentPlanObj.name}</h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 max-w-sm">{currentPlanObj.description}</p>
+            </div>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-xs" style={{ backgroundColor: brandColor }}>
               <Crown className="h-6 w-6" />
             </div>
+          </div>
+
+          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-white/10 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                  {currentPlanObj.name}
-                </h2>
-                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                  Activo
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono mt-0.5">
-                {currentPlanObj.price === 0 ? "Gratis para siempre" : `${formatGs(currentPlanObj.price)} / mes`}
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pagás por mes</p>
+              <p className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+                {currentPlanObj.price === 0 ? "Gratis" : <AnimatedValue value={formatGs(currentPlanObj.price)} />}
               </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-zinc-300 text-xs font-bold font-mono">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.05] px-3 py-1 text-[11px] font-bold text-slate-700 dark:text-zinc-300">
               <BadgePercent className="h-3.5 w-3.5 text-amber-500" />
-              <span>0% Comisiones por Turno</span>
+              0% comisión por turno
             </span>
           </div>
         </div>
 
-        {/* Usage Progress Track */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-slate-700 dark:text-zinc-300">
-              Cupo de Turnos del Mes
-            </span>
-            <span className="font-mono font-bold text-slate-900 dark:text-white">
-              {isUnlimited
-                ? `${business.usedBookings} turnos (Ilimitado)`
-                : `${business.usedBookings} de ${bookingLimit} usados`}
-            </span>
-          </div>
-
-          <div className="h-2 w-full rounded-full bg-slate-200/70 dark:bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: isUnlimited ? "100%" : `${Math.max(4, Math.min(100, pct))}%`,
-                backgroundColor: isUnlimited ? "#10b981" : pct > 80 ? "#f43f5e" : brandColor,
-              }}
-            />
-          </div>
-
-          {!isUnlimited && (
-            <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-zinc-400 pt-0.5">
-              <span>{bookingLimit - business.usedBookings > 0 ? `${bookingLimit - business.usedBookings} turnos disponibles` : "Cupo alcanzado"}</span>
-              <span>{pct}% utilizado</span>
+        {/* Usage ring */}
+        <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs lg:col-span-2 flex items-center gap-5">
+          <div className="relative h-28 w-28 shrink-0">
+            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="none" strokeWidth="10" className="stroke-slate-100 dark:stroke-white/10" />
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                strokeWidth="10"
+                strokeLinecap="round"
+                stroke={isUnlimited ? "#10b981" : pct > 80 ? "#f43f5e" : brandColor}
+                strokeDasharray={2 * Math.PI * 42}
+                strokeDashoffset={2 * Math.PI * 42 * (1 - (isUnlimited ? 1 : pct / 100))}
+                className="transition-[stroke-dashoffset] duration-1000 ease-out"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-xl font-black font-mono text-slate-900 dark:text-white">
+                {isUnlimited ? "∞" : <AnimatedValue value={`${pct}%`} />}
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400">usado</span>
             </div>
-          )}
-        </div>
-
-        {/* 3-Mini Specs Grid */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 text-center text-xs">
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
-            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold block uppercase">Comisión</span>
-            <span className="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">0%</span>
           </div>
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
-            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold block uppercase">Cancelación</span>
-            <span className="font-mono font-black text-sm text-slate-900 dark:text-white">Libre</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
-            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold block uppercase">Moneda</span>
-            <span className="font-mono font-black text-sm text-slate-900 dark:text-white">PYG (Gs.)</span>
+          <div className="min-w-0 space-y-1.5">
+            <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Turnos de este mes</p>
+            <p className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+              <AnimatedValue value={String(business.usedBookings)} />
+              {!isUnlimited && <span className="text-sm text-slate-400"> / {bookingLimit}</span>}
+            </p>
+            <p className={`text-xs font-semibold ${!isUnlimited && pct > 80 ? "text-rose-600" : "text-emerald-600 dark:text-emerald-400"}`}>
+              {isUnlimited
+                ? "Turnos ilimitados"
+                : bookingLimit - business.usedBookings > 0
+                  ? `Te quedan ${bookingLimit - business.usedBookings} turnos`
+                  : "Llegaste al cupo del mes"}
+            </p>
+            {!isUnlimited && pct > 80 && (
+              <button
+                type="button"
+                onClick={() => handleSelectPlan(PLANS[2])}
+                className="inline-flex items-center gap-1 text-xs font-bold hover:underline cursor-pointer"
+                style={{ color: brandColor }}
+              >
+                Pasar a ilimitado <ArrowRight className="h-3 w-3" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -242,18 +244,19 @@ export default function SuscripcionPage() {
           Planes Disponibles
         </h2>
 
-        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="kpi-stagger -mx-1 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-1 pt-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4 [scrollbar-width:none]">
           {PLANS.map((plan) => {
             const isActive = currentPlan === plan.id;
+            const isUpgrade = plan.price > currentPlanObj.price;
 
             return (
               <div
                 key={plan.id}
-                className={`relative flex flex-col justify-between rounded-3xl p-5 transition-all bg-white dark:bg-[#121215] border shadow-xs ${
+                className={`relative flex w-[78vw] max-w-[300px] shrink-0 snap-center flex-col justify-between rounded-3xl p-5 transition-all duration-300 bg-white dark:bg-[#121215] border shadow-xs hover:-translate-y-1 hover:shadow-lg sm:w-auto sm:max-w-none ${
                   isActive
                     ? "border-primary/40 ring-2 ring-primary/20 dark:border-primary/50"
                     : plan.popular
-                      ? "border-slate-300 dark:border-white/20"
+                      ? "border-slate-300 dark:border-white/20 lg:scale-[1.02]"
                       : "border-slate-200/80 dark:border-white/10"
                 }`}
               >
@@ -310,7 +313,7 @@ export default function SuscripcionPage() {
                     }`}
                     style={!isActive && plan.popular ? { backgroundColor: brandColor } : {}}
                   >
-                    {isActive ? "Tu Plan Actual" : "Seleccionar"}
+                    {isActive ? "Tu plan actual" : isUpgrade ? "Mejorar a este plan" : "Cambiar a este plan"}
                   </button>
                 </div>
               </div>
@@ -406,6 +409,29 @@ export default function SuscripcionPage() {
                 {selectedPlanForUpgrade.description}
               </p>
             </div>
+
+            {(() => {
+              const gained = selectedPlanForUpgrade.features.filter((f) => !currentPlanObj.features.includes(f));
+              const lost = currentPlanObj.features.filter((f) => !selectedPlanForUpgrade.features.includes(f));
+              const isUpgrade = selectedPlanForUpgrade.price > currentPlanObj.price;
+              const list = isUpgrade ? gained : lost;
+              if (list.length === 0) return null;
+              return (
+                <div className="space-y-2">
+                  <span className="font-bold text-slate-900 dark:text-white block">
+                    {isUpgrade ? "Lo que ganás" : "Lo que dejarías de tener"}
+                  </span>
+                  <ul className="space-y-1.5">
+                    {list.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-slate-600 dark:text-zinc-300">
+                        <Check className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${isUpgrade ? "text-emerald-500" : "text-rose-400"}`} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
 
             <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-2.5">
               <span className="font-bold text-slate-900 dark:text-white block">

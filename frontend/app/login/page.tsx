@@ -152,6 +152,8 @@ function LoginForm() {
         {/* Tarjeta Glassmorphic */}
         <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-7 shadow-[0_12px_40px_rgb(0,0,0,0.06)] backdrop-blur-xl sm:p-9">
           {/* Botón Google OAuth 2.0 Real */}
+          {/* OAuth necesita navegación completa del navegador, no client-side. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/auth/google"
             className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.99]"

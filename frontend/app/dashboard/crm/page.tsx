@@ -45,6 +45,7 @@ import Modal from "@/components/dashboard/ui/Modal";
 import CustomSelect, { CustomSelectOption } from "@/components/dashboard/ui/CustomSelect";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { CrmChannel, ProductOrderStatus } from "@/lib/dashboard-types";
+import { tenantPublicUrl } from "@/lib/tenant/public-url";
 
 /* ── Channel SVG Icons ── */
 function ChannelIcon({ channel, size = "md" }: { channel: CrmChannel; size?: "sm" | "md" | "lg" }) {
@@ -133,6 +134,15 @@ export default function CrmOmnichannelPage() {
   }, []);
 
   useEffect(() => {
+    const onTourView = (e: Event) => {
+      const view = (e as CustomEvent<{ view: "list" | "chat" | "profile" }>).detail?.view;
+      if (view) setMobileActiveView(view);
+    };
+    window.addEventListener("agendate-crm-view", onTourView);
+    return () => window.removeEventListener("agendate-crm-view", onTourView);
+  }, []);
+
+  useEffect(() => {
     if (crmConversations.length > 0 && (!selectedId || !crmConversations.some((c) => c.id === selectedId)))
       setSelectedId(crmConversations[0].id);
   }, [crmConversations, selectedId]);
@@ -187,7 +197,7 @@ export default function CrmOmnichannelPage() {
   const totalOrderRevenue = productOrders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + o.totalAmount, 0);
 
   const quickReplies = [
-    { title: "Enlace de Turnos", text: `¡Hola! Podés reservar tu turno en nuestra web: https://${business.slug || "barberia"}.agendate.py/reservar` },
+    { title: "Enlace de Turnos", text: `¡Hola! Podés reservar tu turno en nuestra web: ${tenantPublicUrl(business.slug || "barberia")}` },
     { title: "Precios", text: "Nuestros servicios van desde Gs. 50.000 hasta Gs. 120.000 (Combo Corte + Barba VIP). ¿Te gustaría agendar?" },
     { title: "Ubicación", text: `Estamos en ${business.address}, ${business.city}. Contamos con estacionamiento exclusivo.` },
     { title: "Datos Transferencia", text: "Transferencias: Banco Itaú · Titular: AgendatePY · RUC: 80012345-6 · Cta: 0123456789. Enviar comprobante." },
@@ -317,7 +327,7 @@ export default function CrmOmnichannelPage() {
         setTypingStep("idle");
 
         const botReply = isBot
-          ? `¡Hola ${clientName.split(" ")[0]}! Recibimos tu mensaje. Si querés agendar un turno ahora podés acceder a nuestra web: https://${business.slug || "barberia"}.agendate.py/reservar`
+          ? `¡Hola ${clientName.split(" ")[0]}! Recibimos tu mensaje. Si querés agendar un turno ahora podés acceder a nuestra web: ${tenantPublicUrl(business.slug || "barberia")}`
           : "¡Perfecto, muchas gracias! Ya lo anoto y quedamos así.";
 
         const newMsg: import("@/lib/dashboard-types").CrmMessage = {
@@ -417,7 +427,7 @@ export default function CrmOmnichannelPage() {
 
         {/* Center / Right: App Navigation Pills + Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-white/5">
+          <div data-tour="crm-switcher" className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-white/5">
             <button
               type="button"
               onClick={() => setMainSection("mensajes")}

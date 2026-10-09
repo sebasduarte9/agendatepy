@@ -11,8 +11,6 @@ import {
 } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
 import { scrollToSection } from "@/lib/smoothScroll";
-import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
-
 export default function Header() {
   const [activeTab, setActiveTab] = useState("inicio");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -187,22 +185,23 @@ export default function Header() {
             Probar gratis
           </Link>
 
-          {/* Mobile Iniciar sesión CTA */}
+          {/* Mobile CTA */}
           <Link
-            href="/login"
-            className="sm:hidden inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-[#FF4F2B] hover:bg-[#F04420] text-white text-xs font-bold shadow-sm shadow-[#FF4F2B]/25 active:scale-95 transition-all border border-white/20"
+            href="/onboarding"
+            className="sm:hidden inline-flex h-10 items-center justify-center px-4 rounded-full bg-[#FF4F2B] hover:bg-[#F04420] text-white text-[13px] font-bold shadow-sm shadow-[#FF4F2B]/25 active:scale-95 transition-all border border-white/20"
           >
-            Iniciar sesión
+            Probar gratis
           </Link>
 
           {/* Mobile Hamburger Toggle */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/80 dark:border-white/10 bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 shadow-xs lg:hidden shrink-0 transition-colors active:scale-95"
-            aria-label="Abrir menú"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 shadow-xs lg:hidden shrink-0 transition-colors active:scale-95"
+            aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="h-3.5 w-3.5" /> : <Menu className="h-3.5 w-3.5" />}
+            {mobileMenuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
           </button>
         </div>
       </nav>
@@ -250,6 +249,14 @@ export default function Header() {
                   </a>
                 );
               })}
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="sm:hidden mt-1 flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-3 text-[13px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 active:scale-[0.99] transition-all"
+              >
+                <LogIn className="h-4 w-4 opacity-70" />
+                <span>Ya tengo cuenta · Iniciar sesión</span>
+              </Link>
             </div>
           </motion.div>
         )}

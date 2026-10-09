@@ -32,3 +32,5 @@ frontend/public/uploads/*
 # IDE y agentes locales
 .agents/
 .codex/
+# Estado local de la herramienta impeccable
+frontend/.impeccable/live/

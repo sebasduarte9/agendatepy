@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { triggerHaptic } from "@/lib/haptics";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -172,6 +173,17 @@ function NuevaReservaContent() {
     end: string;
   } | null>(null);
 
+  // Pasos en el celular (en escritorio se ve todo el formulario)
+  const isTourOpen = useDashboardStore((s) => s.isTourOpen);
+  const [mobileStep, setMobileStep] = useState(0);
+  const stepHidden = (i: number) => (!isTourOpen && mobileStep !== i ? "max-lg:hidden" : "");
+  const stepValid = [
+    clientName.trim().length > 1 && clientPhone.trim().length > 5,
+    Boolean(serviceId && staffId),
+    Boolean(date && time),
+    true,
+  ];
+
   // Block state
   const [blockStaffId, setBlockStaffId] = useState<string>("all");
   const [blockStart, setBlockStart] = useState("13:00");
@@ -266,6 +278,10 @@ function NuevaReservaContent() {
   // Handle appointment creation and SQL sync
   async function handleCreateAppointment(e: React.FormEvent) {
     e.preventDefault();
+    if (!isTourOpen && window.innerWidth < 1024 && mobileStep < MOBILE_STEPS.length - 1) {
+      if (stepValid[mobileStep]) setMobileStep((p) => p + 1);
+      return;
+    }
     if (!clientName.trim()) {
       pushToast("error", "Ingresá el nombre del cliente.");
       return;
@@ -310,6 +326,7 @@ function NuevaReservaContent() {
         notes: clientNotes.trim() || "Reserva manual desde Dashboard",
       });
 
+      setMobileStep(0);
       setCreatedAppointment({
         clientName: clientName.trim(),
         clientPhone: formattedFullPhone || clientPhone,
@@ -349,7 +366,7 @@ function NuevaReservaContent() {
     if (!createdAppointment) return "#";
     const phoneClean = createdAppointment.clientPhone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `¡Hola ${createdAppointment.clientName}! Tu turno para *${createdAppointment.serviceName}* con *${createdAppointment.staffName}* en *${business.name}* quedó agendado para el *${createdAppointment.date} a las ${createdAppointment.time} hs*.\n\n📍 Ubicación: ${business.address || "Asunción"}\n¡Te esperamos!`
+      `¡Hola ${createdAppointment.clientName}! Tu turno para *${createdAppointment.serviceName}* con *${createdAppointment.staffName}* en *${business.name}* quedó agendado para el *${createdAppointment.date} a las ${createdAppointment.time} hs*.\n\n Ubicación: ${business.address || "Asunción"}\n¡Te esperamos!`
     );
     return `https://wa.me/${phoneClean}?text=${msg}`;
   }, [createdAppointment, business]);
@@ -711,8 +728,29 @@ function NuevaReservaContent() {
 
           {mode === "appointment" ? (
             <form onSubmit={handleCreateAppointment} className="space-y-4 text-xs">
+              {/* Mobile step progress */}
+              {!isTourOpen && (
+                <div className="lg:hidden space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-bold">
+                    <span className="text-slate-900 dark:text-white">{MOBILE_STEPS[mobileStep]}</span>
+                    <span className="text-slate-400">Paso {mobileStep + 1} de {MOBILE_STEPS.length}</span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {MOBILE_STEPS.map((label, i) => (
+                      <button
+                        key={label}
+                        type="button"
+                        aria-label={label}
+                        onClick={() => i < mobileStep && setMobileStep(i)}
+                        className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= mobileStep ? "bg-primary" : "bg-slate-200 dark:bg-white/10"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* SECTION 1: CLIENTE (NOMBRE Y WHATSAPP CON SELECTOR DE PAÍS) */}
-              <div data-tour="nueva-reserva-client" className="space-y-3">
+              <div data-tour="nueva-reserva-client" className={`${stepHidden(0)} space-y-3`}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Name Input with Autocomplete */}
                   <div className="relative">
@@ -863,7 +901,7 @@ function NuevaReservaContent() {
               </div>
 
               {/* SECTION 2: SERVICIO & ESPECIALISTA */}
-              <div data-tour="nueva-reserva-service" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div data-tour="nueva-reserva-service" className={`${stepHidden(1)} grid grid-cols-1 sm:grid-cols-2 gap-3`}>
                 {/* Custom Service Selector */}
                 <div className="relative">
                   <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
@@ -984,7 +1022,7 @@ function NuevaReservaContent() {
               </div>
 
               {/* SECTION 3: FECHA Y HORA (INTERACTIVE BAR) */}
-              <div data-tour="nueva-reserva-datetime">
+              <div data-tour="nueva-reserva-datetime" className={stepHidden(2)}>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Fecha y Horario *
                 </label>
@@ -1082,7 +1120,7 @@ function NuevaReservaContent() {
               </div>
 
               {/* SECTION 4: MÉTODO DE PAGO */}
-              <div data-tour="nueva-reserva-payment">
+              <div data-tour="nueva-reserva-payment" className={stepHidden(3)}>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Método de Pago
                 </label>
@@ -1115,7 +1153,7 @@ function NuevaReservaContent() {
               </div>
 
               {/* SECTION 5: NOTAS OPCIONALES */}
-              <div>
+              <div className={stepHidden(3)}>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Notas / Observaciones (opcional)
                 </label>
@@ -1129,10 +1167,45 @@ function NuevaReservaContent() {
               </div>
 
               {/* FOOTER ACTIONS & CONFIRM BUTTON */}
+              {/* Mobile step navigation */}
+              {!isTourOpen && mobileStep < MOBILE_STEPS.length - 1 && (
+                <div className="lg:hidden sticky bottom-[calc(88px+env(safe-area-inset-bottom,0px))] z-20 flex gap-2 pt-2">
+                  {mobileStep > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setMobileStep((p) => p - 1)}
+                      className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-5 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
+                    >
+                      Atrás
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!stepValid[mobileStep]}
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      setMobileStep((p) => p + 1);
+                    }}
+                    className="flex-1 rounded-2xl bg-primary py-3 text-xs font-bold text-white shadow-lg shadow-primary/25 transition active:scale-[0.98] disabled:opacity-40 cursor-pointer"
+                  >
+                    {stepValid[mobileStep] ? "Siguiente" : mobileStep === 0 ? "Completá nombre y WhatsApp" : "Completá este paso"}
+                  </button>
+                </div>
+              )}
+
               <div
                 data-tour="nueva-reserva-confirm"
-                className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/10"
+                className={`${stepHidden(3)} flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/10 max-lg:sticky max-lg:bottom-[calc(80px+env(safe-area-inset-bottom,0px))] max-lg:z-20 max-lg:bg-white/95 max-lg:dark:bg-slate-900/95 max-lg:backdrop-blur max-lg:-mx-1 max-lg:px-1 max-lg:pb-2`}
               >
+                {mobileStep > 0 && !isTourOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setMobileStep((p) => p - 1)}
+                    className="lg:hidden mr-2 rounded-2xl border border-slate-200/80 dark:border-white/10 px-3 py-2.5 text-xs font-semibold text-slate-600 cursor-pointer"
+                  >
+                    Atrás
+                  </button>
+                )}
                 <div>
                   <span className="text-[10.5px] text-slate-400 block font-medium">Tarifa del Servicio:</span>
                   <span
@@ -1260,6 +1333,8 @@ function NuevaReservaContent() {
     </div>
   );
 }
+
+const MOBILE_STEPS = ["Cliente", "Servicio y profesional", "Día y hora", "Pago y confirmación"];
 
 export default function NuevaReservaPage() {
   return (

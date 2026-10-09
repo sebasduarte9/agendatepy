@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireTenantSession, isGuardError } from "@/lib/api-guard";
 import { prisma } from "@/lib/db";
 import { processCustomerMessageWithAI } from "@/lib/ai/whatsapp-agent";
 
@@ -6,6 +7,9 @@ import { processCustomerMessageWithAI } from "@/lib/ai/whatsapp-agent";
  * Endpoint de Chat Inteligente para el Simulador de WhatsApp y Clientes
  */
 export async function POST(req: NextRequest) {
+  const auth = await requireTenantSession(req);
+  if (isGuardError(auth)) return auth;
+
   try {
     const body = await req.json();
     const userMessage = (body.message || "").trim();
@@ -16,9 +20,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "error", message: "Mensaje vacío" }, { status: 400 });
     }
 
-    // Buscar tenant por ID, slug o tomar el primero activo
     let tenant = null;
-    if (body.tenantId) {
+    if (auth.session.role !== "SUPERADMIN") {
+      tenant = await prisma.tenant.findUnique({
+        where: { id: auth.tenantId },
+        select: { id: true, name: true, slug: true },
+      });
+    } else if (body.tenantId) {
       tenant = await prisma.tenant.findUnique({
         where: { id: body.tenantId },
         select: { id: true, name: true, slug: true },
@@ -30,7 +38,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!tenant) {
+    if (!tenant && auth.session.role === "SUPERADMIN") {
       tenant = await prisma.tenant.findFirst({
         where: { status: "ACTIVE" },
         select: { id: true, name: true, slug: true },

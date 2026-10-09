@@ -7,13 +7,21 @@ import type { SessionUser } from "./types";
 const COOKIE_NAME = "agendate_session";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 días
 
-const SESSION_SECRET =
-  process.env.SESSION_SECRET ||
-  "agendatepy-secure-hmac-sha256-secret-key-paraguay-production-2026";
+const DEV_SESSION_SECRET = "agendatepy-dev-only-session-secret";
+
+/** En producción sin SESSION_SECRET no hay sesiones: una clave pública permitiría falsificarlas. */
+function sessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Falta SESSION_SECRET en el entorno de producción.");
+  }
+  return DEV_SESSION_SECRET;
+}
 
 function signPayload(payload: string): string {
   const signature = crypto
-    .createHmac("sha256", SESSION_SECRET)
+    .createHmac("sha256", sessionSecret())
     .update(payload)
     .digest("base64url");
   return `${payload}.${signature}`;
@@ -28,7 +36,7 @@ function verifyAndExtract(token: string): string | null {
 
   const [payload, signature] = parts;
   const expectedSig = crypto
-    .createHmac("sha256", SESSION_SECRET)
+    .createHmac("sha256", sessionSecret())
     .update(payload)
     .digest("base64url");
 

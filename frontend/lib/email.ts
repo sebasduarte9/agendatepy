@@ -123,7 +123,7 @@ export async function sendOtpEmail(email: string, code: string) {
           <tr>
             <td style="padding: 24px 32px; background-color: #ffffff; font-size: 12px; color: #64748b; line-height: 1.6; border-top: 1px solid #f1f5f9;">
               <p style="margin: 0 0 8px 0;">
-                🔒 Si no solicitaste este código, puedes ignorar este correo con tranquilidad. Nadie puede acceder a tu cuenta sin él.
+                 Si no solicitaste este código, puedes ignorar este correo con tranquilidad. Nadie puede acceder a tu cuenta sin él.
               </p>
               <p style="margin: 0; color: #94a3b8; font-size: 11px;">
                 AgendatePY · Sistema de Agendamiento & Gestión para Negocios en Paraguay.<br>

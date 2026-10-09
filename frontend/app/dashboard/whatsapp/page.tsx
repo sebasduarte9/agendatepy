@@ -43,6 +43,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
+import { tenantPublicUrl } from "@/lib/tenant/public-url";
 
 // Dynamic message tags for reminder templates
 const AVAILABLE_TAGS = [
@@ -457,8 +458,8 @@ export default function BotWhatsAppPage() {
       .replace(/{hora}/g, "15:30 hs")
       .replace(/{negocio}/g, business.name)
       .replace(/{direccion}/g, business.address || "Avda. Santa Teresa 1420")
-      .replace(/{link_autogestion}/g, `https://agendate.py/${business.slug}/turno/AG-9421`)
-      .replace(/{link_negocio}/g, `https://agendate.py/${business.slug}`);
+      .replace(/{link_autogestion}/g, tenantPublicUrl(business.slug, "/turno/AG-9421"))
+      .replace(/{link_negocio}/g, tenantPublicUrl(business.slug));
   }
 
   const activeConnectedPhone = evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
@@ -1062,11 +1063,11 @@ export default function BotWhatsAppPage() {
                           Así te llegará el aviso a tu WhatsApp:
                         </span>
                         <p className="text-[11px] text-slate-700 dark:text-slate-300 font-mono leading-relaxed">
-                          🔔 *Nuevo turno agendado en {business.name}*<br />
-                          👤 Cliente: Juan Pérez (+595 981 111 222)<br />
-                          ✂️ Servicio: Corte Clásico / Fade<br />
-                          🕒 Horario: Mañana 15:30 hs<br />
-                          💈 Profesional: Diego Franco
+                           *Nuevo turno agendado en {business.name}*<br />
+                           Cliente: Juan Pérez (+595 981 111 222)<br />
+                           Servicio: Corte Clásico / Fade<br />
+                           Horario: Mañana 15:30 hs<br />
+                           Profesional: Diego Franco
                         </p>
                       </div>
 
@@ -1076,10 +1077,10 @@ export default function BotWhatsAppPage() {
                           Así te llegará el aviso si preguntan por un producto no cargado o duda del local:
                         </span>
                         <p className="text-[11px] text-slate-800 dark:text-slate-200 font-mono leading-relaxed">
-                          ⚠️ *Consulta de Cliente para Asesor Humano en {business.name}*<br />
-                          👤 Cliente: Carlos Giménez (+595 981 333 444)<br />
-                          ❓ Consulta: "¿Tienen shampoo anticaída o minoxidil?"<br />
-                          📲 Por favor comunícate con el cliente para responderle a la brevedad.
+                           *Consulta de Cliente para Asesor Humano en {business.name}*<br />
+                           Cliente: Carlos Giménez (+595 981 333 444)<br />
+                           Consulta: &ldquo;¿Tienen shampoo anticaída o minoxidil?&rdquo;<br />
+                           Por favor comunícate con el cliente para responderle a la brevedad.
                         </p>
                       </div>
                     </div>

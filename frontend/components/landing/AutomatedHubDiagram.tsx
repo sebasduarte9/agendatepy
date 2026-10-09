@@ -123,12 +123,14 @@ export default function AutomatedHubDiagram() {
     { channel: "web", ...WEB_ITEMS[0], keyId: 4 },
   ]);
 
-  // Rotación continua cada 1.6s:
+  // Rotación continua cada 2.2s:
   // El turno en la posición 1 sube y pasa a la posición 4 con nuevos datos.
   // La posición 2 sube a la 1, la 3 sube a la 2 y la 4 sube a la 3.
   // Secuencia de canales: WhatsApp -> Instagram -> Facebook -> Link de Reserva -> WhatsApp...
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = setInterval(() => {
+      if (document.hidden) return;
       setQueue((prevQueue) => {
         const [first, ...rest] = prevQueue;
         const ch = first.channel;
@@ -147,7 +149,7 @@ export default function AutomatedHubDiagram() {
         // La cola rota físicamente: los 3 restantes suben y el renovado entra en la fila 4
         return [...rest, newQueueItem];
       });
-    }, 1600);
+    }, 2200);
 
     return () => clearInterval(timer);
   }, []);
@@ -205,8 +207,8 @@ export default function AutomatedHubDiagram() {
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand via-[#FF6B4A] to-amber-500" />
 
             {/* Cabecera del CRM */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/5">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-2 pb-4 border-b border-slate-100 dark:border-white/5">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="h-10 w-10 rounded-xl bg-[#FF4F2B]/10 dark:bg-[#FF4F2B]/20 flex items-center justify-center text-[#FF4F2B] font-black text-sm shrink-0">
                   <Calendar className="h-5 w-5" />
                 </div>
@@ -220,54 +222,68 @@ export default function AutomatedHubDiagram() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shrink-0">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span>4 canales conectados</span>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 sm:px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shrink-0">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse motion-reduce:animate-none" />
+                <span>4 canales<span className="hidden sm:inline"> conectados</span></span>
               </div>
             </div>
 
             {/* CONTENEDOR DE LA COLA: ROTACIÓN FÍSICA LIMPIA (SIN ETIQUETAS SOBRANTES) */}
             <div className="mt-4 h-[252px] overflow-hidden flex flex-col justify-between relative">
               <AnimatePresence mode="popLayout" initial={false}>
-                {queue.map((item) => {
+                {queue.map((item, idx) => {
+                  const isNewest = idx === queue.length - 1 && item.keyId > 4;
+                  const isTomorrow = item.slotTime.startsWith("Mañana");
+                  const time = item.slotTime.replace("Mañana ", "");
                   return (
                     <motion.div
                       key={item.keyId}
                       layout="position"
-                      initial={{ y: 55, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -55, opacity: 0 }}
+                      initial={{ y: 40, opacity: 0, scale: 0.94, filter: "blur(4px)" }}
+                      animate={{ y: 0, opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ y: -36, opacity: 0, scale: 0.94, filter: "blur(4px)" }}
                       transition={{
-                        layout: { duration: 0.48, ease: [0.16, 1, 0.3, 1] },
-                        y: { duration: 0.48, ease: [0.16, 1, 0.3, 1] },
-                        opacity: { duration: 0.28 },
+                        layout: { type: "spring", stiffness: 260, damping: 30, mass: 0.9 },
+                        y: { type: "spring", stiffness: 260, damping: 26 },
+                        scale: { type: "spring", stiffness: 300, damping: 24 },
+                        opacity: { duration: 0.3 },
+                        filter: { duration: 0.35 },
                       }}
-                      className="h-[52px] w-full flex items-center justify-between px-3.5 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-slate-800/40 text-xs shrink-0"
+                      className="relative h-[52px] w-full flex items-center justify-between px-3 sm:px-3.5 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-slate-800/40 text-xs shrink-0 overflow-hidden"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {isNewest && (
+                        <motion.span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-0 rounded-2xl bg-emerald-400/15 ring-1 ring-inset ring-emerald-400/50"
+                          initial={{ opacity: 1 }}
+                          animate={{ opacity: 0 }}
+                          transition={{ duration: 1.4, delay: 0.3, ease: "easeOut" }}
+                        />
+                      )}
+                      <div className="relative flex items-center gap-2.5 min-w-0 flex-1">
                         {/* Badge oficial limpio por canal (sin etiquetas secundarias) */}
                         {item.channel === "whatsapp" && (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#25D366] text-white shrink-0">
-                            <WhatsAppIcon className="w-3.5 h-3.5 text-white" />
-                            WhatsApp
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-[#25D366] text-white shrink-0">
+                            <WhatsAppIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-white" />
+                            <span className="hidden sm:inline">WhatsApp</span>
                           </span>
                         )}
                         {item.channel === "instagram" && (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white shrink-0">
-                            <InstagramIcon className="w-3.5 h-3.5 text-white" />
-                            Instagram
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white shrink-0">
+                            <InstagramIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-white" />
+                            <span className="hidden sm:inline">Instagram</span>
                           </span>
                         )}
                         {item.channel === "facebook" && (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#0084FF] text-white shrink-0">
-                            <MessengerIcon className="w-3.5 h-3.5 text-white" />
-                            Facebook
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-[#0084FF] text-white shrink-0">
+                            <MessengerIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-white" />
+                            <span className="hidden sm:inline">Facebook</span>
                           </span>
                         )}
                         {item.channel === "web" && (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#FF4F2B] text-white shrink-0">
-                            <WebLinkIcon className="w-3.5 h-3.5 text-white" />
-                            Link de Reserva
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-[#FF4F2B] text-white shrink-0">
+                            <WebLinkIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-white" />
+                            <span className="hidden sm:inline">Link de Reserva</span>
                           </span>
                         )}
 
@@ -283,12 +299,28 @@ export default function AutomatedHubDiagram() {
                       </div>
 
                       {/* Horario estrictamente único y estado */}
-                      <div className="text-right shrink-0 ml-3">
+                      <div className="relative text-right shrink-0 ml-3">
                         <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-[13px] tabular-nums block">
-                          {item.slotTime}
+                          {isTomorrow && <span className="hidden sm:inline">Mañana </span>}
+                          {time}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          Confirmado
+                        <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                          {isNewest && (
+                            <motion.span
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: "spring", stiffness: 500, damping: 18, delay: 0.35 }}
+                              className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                            />
+                          )}
+                          {isTomorrow ? (
+                            <>
+                              <span className="sm:hidden">Mañana</span>
+                              <span className="hidden sm:inline">Confirmado</span>
+                            </>
+                          ) : (
+                            "Confirmado"
+                          )}
                         </span>
                       </div>
                     </motion.div>

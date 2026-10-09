@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Copy, Check, ExternalLink, QrCode, X, Globe } from "lucide-react";
 import QRCode from "qrcode";
+import { ROOT_DOMAIN, tenantBookingUrl, tenantHost, tenantPublicUrl } from "@/lib/tenant/public-url";
 
 interface PublicBookingLinkProps {
   slug: string;
@@ -32,7 +33,7 @@ export default function PublicBookingLink({
   }, []);
 
   const path = `/${slug || "barberia"}/reservar`;
-  const fullUrl = origin ? `${origin}${path}` : `https://agendate.py${path}`;
+  const fullUrl = origin ? tenantBookingUrl(slug || "barberia") : tenantPublicUrl(slug || "barberia");
 
   const handleCopy = async () => {
     try {
@@ -77,7 +78,7 @@ export default function PublicBookingLink({
     return (
       <div className={`inline-flex items-center gap-2 text-xs ${className}`}>
         <code className="rounded-lg bg-slate-100 dark:bg-slate-800/80 px-2 py-1 font-mono text-slate-800 dark:text-slate-200 font-semibold border border-slate-200 dark:border-slate-700">
-          agendate.py/{slug || "barberia"}
+          {tenantHost(slug || "barberia")}
         </code>
         <button
           type="button"
@@ -123,8 +124,8 @@ export default function PublicBookingLink({
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 shadow-2xs">
-                <span className="text-slate-400 select-none mr-1">agendate.py/</span>
                 <span className="font-bold text-primary">{slug || "barberia"}</span>
+                <span className="text-slate-400 select-none">.{ROOT_DOMAIN}</span>
               </div>
 
               <button

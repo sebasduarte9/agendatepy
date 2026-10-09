@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, HelpCircle } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 
 const FAQS = [
@@ -16,7 +16,7 @@ const FAQS = [
   },
   {
     q: "¿Mis clientes necesitan descargar alguna app para reservar?",
-    a: "No. Tus clientes acceden a tu enlace web personalizado o reservan conversando por WhatsApp. Sin descargar nada ni crear contraseñas.",
+    a: "No. Tus clientes reservan desde tu enlace web personalizado y, en los planes pagos, también conversando por WhatsApp. Sin descargar nada ni crear contraseñas.",
   },
   {
     q: "¿Puedo colocar mi enlace de reserva en Instagram, Google Maps o TikTok?",
@@ -32,22 +32,26 @@ const FAQS = [
   },
   {
     q: "¿Cómo funcionan los recordatorios automáticos por WhatsApp?",
-    a: "El sistema envía confirmación al agendar, recordatorio 24 horas antes y un aviso 2 horas antes de la cita. En el mensaje se incluye un enlace para que el cliente pueda confirmar o cancelar con un solo clic si no puede asistir, liberando el horario de inmediato.",
+    a: "El sistema envía confirmación al agendar, recordatorio 24 horas antes y un aviso 2 horas antes de la cita. En el mensaje se incluye un enlace para que el cliente pueda confirmar o cancelar con un solo clic si no puede asistir, liberando el horario de inmediato. Los mensajes por WhatsApp están incluidos desde el Plan Básico.",
   },
   {
     q: "¿Puedo probar el sistema gratuitamente?",
-    a: "Sí. Podés registrarte y comenzar a recibir turnos de inmediato sin tarjeta de crédito. Configurás tu negocio en menos de 3 minutos y recibís reservas hoy mismo.",
+    a: "Sí. Podés registrarte y comenzar a recibir turnos de inmediato sin tarjeta de crédito. Configurás tu negocio en menos de 3 minutos y recibís reservas hoy mismo por tu link. WhatsApp se activa al pasar a un plan pago.",
   },
 ];
 
+const MOBILE_VISIBLE = 5;
+
 export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const leftColumnFaqs = FAQS.slice(0, 4);
   const rightColumnFaqs = FAQS.slice(4, 8);
 
   const renderFaqItem = (item: (typeof FAQS)[0], index: number) => {
     const isOpen = open === index;
+    const collapsedOnMobile = !showAll && index >= MOBILE_VISIBLE;
     return (
       <LiquidGlassCard
         key={item.q}
@@ -55,7 +59,7 @@ export default function FAQ() {
         blurIntensity="lg"
         glowIntensity="xs"
         shadowIntensity="sm"
-        className="border border-white/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-[#FF4F2B]/40"
+        className={`${collapsedOnMobile ? "hidden md:block " : ""}border border-white/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-[#FF4F2B]/40`}
       >
         <button
           type="button"
@@ -109,6 +113,19 @@ export default function FAQ() {
           {rightColumnFaqs.map((item, i) => renderFaqItem(item, i + 4))}
         </div>
       </div>
+
+      {!showAll && (
+        <div className="mt-4 flex justify-center md:hidden">
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-5 text-[13px] font-bold text-slate-700 dark:text-slate-200 active:scale-95 transition cursor-pointer"
+          >
+            Ver más preguntas ({FAQS.length - MOBILE_VISIBLE})
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </section>
   );
 }

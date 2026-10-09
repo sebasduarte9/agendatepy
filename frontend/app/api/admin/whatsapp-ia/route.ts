@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSuperAdminSession, isGuardError } from "@/lib/api-guard";
 import { geminiPool } from "@/lib/ai/gemini-pool";
 
 /**
@@ -11,6 +12,9 @@ import { geminiPool } from "@/lib/ai/gemini-pool";
  * - Ping sintético de verificación.
  */
 export async function GET(req: NextRequest) {
+  const auth = await requireSuperAdminSession(req);
+  if (isGuardError(auth)) return auth;
+
   try {
     const summary = geminiPool.getGlobalSummary();
     const keys = geminiPool.getStats();
@@ -32,6 +36,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireSuperAdminSession(req);
+  if (isGuardError(auth)) return auth;
+
   try {
     const body = await req.json().catch(() => ({}));
     const action = body.action || "ping";

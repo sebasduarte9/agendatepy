@@ -47,13 +47,14 @@ export class EvolutionError extends Error {
 export async function sendWhatsAppPresence(
   phone: string,
   presence: "composing" | "recording" | "paused" = "composing",
-  delayMs = 1500
+  delayMs = 1500,
+  instanceOverride?: string
 ): Promise<void> {
   try {
     const number = normalizePhone(phone);
     const baseUrl = requiredEnv("EVOLUTION_API_URL").replace(/\/$/, "");
     const apiKey = requiredEnv("EVOLUTION_API_KEY");
-    const instance = requiredEnv("EVOLUTION_INSTANCE");
+    const instance = instanceOverride || requiredEnv("EVOLUTION_INSTANCE");
 
     await fetch(`${baseUrl}/chat/sendPresence/${encodeURIComponent(instance)}`, {
       method: "POST",
@@ -74,7 +75,8 @@ export async function sendWhatsAppPresence(
 export async function sendWhatsAppMessage(
   phone: string,
   message: string,
-  simulateTyping = true
+  simulateTyping = true,
+  instanceOverride?: string
 ): Promise<void> {
   const number = normalizePhone(phone);
   const text = message.trim();
@@ -84,13 +86,13 @@ export async function sendWhatsAppMessage(
 
   // Simular "Escribiendo..." para naturalidad y protección anti-baneo
   if (simulateTyping) {
-    await sendWhatsAppPresence(phone, "composing", 1500);
+    await sendWhatsAppPresence(phone, "composing", 1500, instanceOverride);
     await new Promise((r) => setTimeout(r, 1200));
   }
 
   const baseUrl = requiredEnv("EVOLUTION_API_URL").replace(/\/$/, "");
   const apiKey = requiredEnv("EVOLUTION_API_KEY");
-  const instance = requiredEnv("EVOLUTION_INSTANCE");
+  const instance = instanceOverride || requiredEnv("EVOLUTION_INSTANCE");
 
   const response = await fetch(`${baseUrl}/message/sendText/${encodeURIComponent(instance)}`, {
     method: "POST",

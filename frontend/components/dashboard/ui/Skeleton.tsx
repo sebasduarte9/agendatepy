@@ -15,7 +15,7 @@ export function Skeleton({
 }
 
 /**
- * 📅 Skeleton ultra-realista para la vista de Agenda / Calendario
+ *  Skeleton ultra-realista para la vista de Agenda / Calendario
  */
 export function CalendarSkeleton() {
   return (
@@ -87,7 +87,7 @@ export function CalendarSkeleton() {
 }
 
 /**
- * 💵 Skeleton para la sección de Caja & Cobros
+ *  Skeleton para la sección de Caja & Cobros
  */
 export function CajaSkeleton() {
   return (
@@ -141,7 +141,7 @@ export function CajaSkeleton() {
 }
 
 /**
- * 👥 Skeleton para la sección de Clientes
+ *  Skeleton para la sección de Clientes
  */
 export function ClientesSkeleton() {
   return (
@@ -181,7 +181,7 @@ export function ClientesSkeleton() {
 }
 
 /**
- * ✂️ Skeleton para Servicios & Catálogo
+ *  Skeleton para Servicios & Catálogo
  */
 export function ServiciosSkeleton() {
   return (

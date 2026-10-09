@@ -9,37 +9,23 @@ import {
   Gem,
   Scissors,
   Smile,
-  StretchHorizontal,
-  Flower2,
   Stethoscope,
   PawPrint,
   Dumbbell,
   Wrench,
-  Trophy,
   MessageCircle,
   Activity,
 } from "lucide-react";
-import { CATEGORIES, TICKER_ITEMS, type CategoryId, type TickerItem } from "@/lib/categories";
+import { TICKER_ITEMS, type TickerItem } from "@/lib/categories";
 import { useCategory } from "@/context/CategoryContext";
 import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
 import WhatsAppToAgendaLive from "./WhatsAppToAgendaLive";
 import HorizontalCardOrbit from "./HorizontalCardOrbit";
+import NotificationStack from "./NotificationStack";
 import Marquee from "@/components/ui/Marquee";
 import LiquidGlass from "@/components/ui/LiquidGlass";
 import LiveBookingSimulator from "./LiveBookingSimulator";
 import { OFFICIAL_LOGO_PATH } from "@/components/ui/BrandLogo";
-
-const ICONS: Record<CategoryId, typeof Scissors> = {
-  peluqueria: Scissors,
-  odontologia: Smile,
-  pilates: StretchHorizontal,
-  spas: Flower2,
-  medicos: Stethoscope,
-  veterinarias: PawPrint,
-  gimnasios: Dumbbell,
-  talleres: Wrench,
-  padel: Trophy,
-};
 
 const TICKER_ICON_MAP: Record<TickerItem["iconKey"], typeof Scissors> = {
   scissors: Scissors,
@@ -53,7 +39,7 @@ const TICKER_ICON_MAP: Record<TickerItem["iconKey"], typeof Scissors> = {
 };
 
 export default function Hero() {
-  const { selectedCategory, setSelectedCategory, category } = useCategory();
+  const { category } = useCategory();
 
   const whatsappMessage = `Hola AgendatePY, tengo un negocio de ${
     category?.label?.toLowerCase() || "servicios"
@@ -62,39 +48,34 @@ export default function Hero() {
   return (
     <section
       id="inicio"
-      className="relative pt-1 sm:pt-4 pb-0 sm:pb-24 scroll-mt-24 overflow-x-clip max-w-full min-h-[calc(100dvh-4.25rem)] md:min-h-0 flex flex-col justify-between"
+      className="relative pt-1 sm:pt-4 pb-0 sm:pb-24 scroll-mt-24 overflow-x-clip max-w-full"
     >
+      <div className="flex flex-col min-h-[calc(100svh-4.25rem)] md:min-h-0">
       <div className="relative mx-auto max-w-7xl px-3 sm:px-6 w-full flex-1 flex flex-col justify-between">
         
         {/* ============================================================== */}
         {/* MOBILE LAYOUT (< md): Con el arco superior exacto de la captura*/}
         {/* ============================================================== */}
-        <div className="md:hidden flex flex-col items-center text-center w-full my-auto py-3 xs:py-5 flex-1 justify-center overflow-visible">
+        <div className="md:hidden flex flex-col items-center text-center w-full pt-6 xs:pt-8 pb-6 flex-1 justify-start overflow-visible">
           
           {/* Bloque superior: Órbita coronando el titular con respiro natural */}
           <div className="w-full flex flex-col items-center">
-            {/* Órbita en arco parabólico continuo */}
-            <div className="relative w-full flex justify-center h-12 xs:h-14 mb-3.5 xs:mb-4.5 overflow-visible">
-              <HorizontalCardOrbit />
-            </div>
+            <NotificationStack className="w-full max-w-[330px] mb-5 xs:mb-6" />
 
             {/* Titular móvil centrado y proporcionado con respiración entre líneas */}
             <motion.h1
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="text-center font-sans tracking-tight"
+              className="text-center font-sans text-[clamp(28px,9.6vw,38px)] font-black leading-[1.05] tracking-[-0.03em] text-slate-950 dark:text-white"
+              aria-label="Gestioná tu agenda y tu negocio con AgendatePY"
             >
-              <span className="block text-[34px] xs:text-[40px] font-black text-slate-950 dark:text-white leading-[1.08] tracking-tight">
-                Gestioná tu agenda
-              </span>
-              <span className="block text-[22px] xs:text-[26px] font-bold text-slate-800 dark:text-slate-200 leading-snug mt-1.5 xs:mt-2">
-                y tu negocio con
-              </span>
-              <span className="inline-flex items-center justify-center gap-0.5 xs:gap-1 text-[42px] xs:text-[48px] font-black text-[#FF4F2B] tracking-tight mt-1.5 xs:mt-2">
+              <span className="block whitespace-nowrap">Gestioná tu agenda</span>
+              <span className="block whitespace-nowrap">y tu negocio con</span>
+              <span className="mt-1.5 inline-flex items-center justify-center gap-[0.04em] text-[clamp(42px,14vw,56px)] leading-none text-[#FF4F2B]">
                 <svg
                   viewBox="160 90 880 810"
-                  className="h-[40px] w-[40px] xs:h-[46px] xs:w-[46px] shrink-0"
+                  className="h-[0.92em] w-[0.92em] shrink-0"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                   role="img"
@@ -111,14 +92,16 @@ export default function Hero() {
             </motion.h1>
 
             {/* Subtítulo móvil */}
-            <p className="mt-3.5 xs:mt-4 text-center text-xs xs:text-sm font-semibold text-slate-600 dark:text-slate-300 max-w-[320px] xs:max-w-[340px] mx-auto leading-relaxed">
-              Mejor control para tu negocio y tus reservas{" "}
-              <span className="text-[#FF4F2B] font-black">24/7</span>
+            <p className="mt-4 text-center text-[15px] xs:text-base font-semibold text-slate-600 dark:text-slate-300 max-w-[320px] xs:max-w-[340px] mx-auto leading-relaxed [text-wrap:balance]">
+              Mejor control para tu negocio y tus{" "}
+              <span className="whitespace-nowrap">
+                reservas <span className="text-[#FF4F2B] font-black">24/7</span>
+              </span>
             </p>
           </div>
 
           {/* CTAs Móvil conectados armónicamente sin huecos gigantes */}
-          <div className="mt-6 xs:mt-7 flex flex-col gap-3 w-full max-w-[340px] xs:max-w-sm mx-auto px-2">
+          <div className="mt-12 xs:mt-14 flex flex-col gap-3 w-full max-w-[340px] xs:max-w-sm mx-auto px-2">
             <Link
               href="/onboarding"
               className="w-full block group active:scale-98 transition-transform"
@@ -178,7 +161,6 @@ export default function Hero() {
         {/* ============================================================== */}
         <div className="hidden md:flex relative min-h-[78vh] flex-col items-center justify-center px-4 sm:px-6 max-w-7xl mx-auto w-full">
           <div className="relative z-20 flex flex-col items-center text-center max-w-4xl mx-auto py-8 pointer-events-auto">
-            {/* Órbita en arco parabólico continuo que sigue el trazo rojo */}
             <HorizontalCardOrbit />
 
             {/* Titular Monumental Centrado */}
@@ -186,7 +168,8 @@ export default function Hero() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black tracking-tight text-slate-950 dark:text-white leading-[1.06] mt-22 sm:mt-24 md:mt-26 lg:mt-28"
+              aria-label="Gestioná tu agenda y negocio con AgendatePY"
+              className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black tracking-tight text-slate-950 dark:text-white leading-[1.06] mt-24 sm:mt-26 md:mt-28 lg:mt-30"
             >
               <span>Gestioná tu agenda y</span>{" "}
               <span className="block mt-1 sm:mt-2">
@@ -297,7 +280,7 @@ export default function Hero() {
       {/* FRANJA FULL-WIDTH DE RUBROS CON DISEÑO TICKER ELEGANTE         */}
       {/* ============================================================== */}
       <div className="relative z-20 w-full mt-auto pt-2 sm:pt-12 mb-1 sm:mb-8">
-        <div className="text-center mb-1.5 sm:mb-3">
+        <div className="hidden sm:block text-center mb-1.5 sm:mb-3">
           <p className="text-[10px] xs:text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
             SOLUCIÓN A MEDIDA PARA TU NEGOCIO:
           </p>
@@ -324,13 +307,14 @@ export default function Hero() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* ============================================================== */}
       {/* SEGUNDA SECCIÓN: DEMO INTERACTIVA DE WHATSAPP Y AGENDA EN VIVO */}
       {/* ============================================================== */}
       <div
         id="simulador-whatsapp"
-        className="hidden md:flex relative pt-6 sm:pt-10 flex-col items-center scroll-mt-20 overflow-x-clip px-4"
+        className="flex relative pt-14 md:pt-10 flex-col items-center scroll-mt-20 overflow-x-clip px-4"
       >
         {/* Encabezado explicativo del módulo de WhatsApp y Agenda */}
         <motion.div
@@ -338,16 +322,16 @@ export default function Hero() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-3"
+          className="text-center max-w-3xl mx-auto mb-7 sm:mb-12 space-y-3"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-950 dark:text-white leading-[1.12]">
+          <h2 className="text-[28px] xs:text-3xl sm:text-4xl [text-wrap:balance] md:text-5xl font-black tracking-tight text-slate-950 dark:text-white leading-[1.12]">
             De una conversación en WhatsApp a tu{" "}
             <span className="bg-gradient-to-r from-[#FF5B37] via-[#FF441F] to-amber-500 bg-clip-text text-transparent">
               agenda web
             </span>
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Tus clientes chatean con la IA y ella se encarga de hacer el registro por ti.
+          <p className="hidden sm:block text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            Tus clientes chatean con la IA y ella registra el turno por vos.
           </p>
         </motion.div>
 
@@ -357,7 +341,7 @@ export default function Hero() {
         </div>
 
         {/* Simulador de reserva en vivo colocado directamente debajo */}
-        <div className="mt-16 sm:mt-24 w-full">
+        <div className="mt-12 sm:mt-24 w-full">
           <LiveBookingSimulator />
         </div>
       </div>

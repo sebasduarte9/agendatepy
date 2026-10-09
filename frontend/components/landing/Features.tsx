@@ -9,7 +9,6 @@ import {
   Award,
   CheckCircle2,
   CreditCard,
-  QrCode,
   Banknote,
   Clock,
   Scissors,
@@ -94,6 +93,7 @@ export default function Features() {
     {
       id: "agenda",
       tabLabel: "Agenda & Calendario",
+      shortLabel: "Agenda",
       category: "Gestión de Turnos",
       title: "Calendario visual por colaborador y cero choques",
       description: "Visualizá los turnos por profesional con colores distintivos, bloqueá descansos o feriados y coordiná tu equipo en tiempo real.",
@@ -108,6 +108,7 @@ export default function Features() {
     {
       id: "caja",
       tabLabel: "Caja & Arqueo",
+      shortLabel: "Caja",
       category: "Control Financiero",
       title: "Arqueo diario multimétodo en Guaraníes",
       description: "Apertura de caja chica, cobros en Efectivo, POS, QR y validación de transferencias bancarias con balance exacto al cierre.",
@@ -122,6 +123,7 @@ export default function Features() {
     {
       id: "comisiones",
       tabLabel: "Comisiones",
+      shortLabel: "Comisiones",
       category: "Pago al Equipo",
       title: "Cálculo automático de comisiones y recibos oficiales",
       description: "Liquidación por servicios y productos con descuentos de vales y generación de recibo oficial con firma compartible por WhatsApp.",
@@ -136,6 +138,7 @@ export default function Features() {
     {
       id: "fidelizacion",
       tabLabel: "Fidelización",
+      shortLabel: "Fidelidad",
       category: "Club VIP de Clientes",
       title: "Sellos digitales y beneficios para clientes",
       description: "Premiá la recurrencia de tus clientes con sellos digitales automáticos por visita, directo en su celular sin descargar apps.",
@@ -176,7 +179,7 @@ export default function Features() {
 
       {/* Selector de Pestañas con barra de progreso temporal y scroll optimizado en móvil */}
       <div className="flex flex-col items-center mb-6 sm:mb-8 px-1">
-        <div className="inline-flex p-1 sm:p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 max-w-full overflow-x-auto scrollbar-none gap-1">
+        <div className="grid w-full grid-cols-4 sm:inline-flex sm:w-auto p-1 sm:p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 max-w-full gap-1">
           {PILLARS.map((pillar, idx) => {
             const isActive = activeTab === idx;
             const Icon = pillar.icon;
@@ -189,17 +192,18 @@ export default function Features() {
                   setIsPaused(true);
                   setTimeout(() => setIsPaused(false), 8000);
                 }}
-                className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap overflow-hidden active:scale-95 ${
+                className={`relative flex min-h-14 sm:min-h-10 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-1 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap overflow-hidden active:scale-95 ${
                   isActive
                     ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 <Icon
-                  className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
+                  className="h-4.5 w-4.5 sm:h-4 sm:w-4 shrink-0"
                   style={{ color: isActive ? pillar.accentColor : "currentColor" }}
                 />
-                <span>{pillar.tabLabel}</span>
+                <span className="sm:hidden">{pillar.shortLabel}</span>
+                <span className="hidden sm:inline">{pillar.tabLabel}</span>
 
                 {/* Barra de progreso de auto-rotación */}
                 {isActive && !isPaused && (
@@ -216,20 +220,6 @@ export default function Features() {
           })}
         </div>
 
-        {/* Indicador de Posición en Puntos para Móviles */}
-        <div className="flex sm:hidden items-center justify-center gap-1.5 mt-2.5">
-          {PILLARS.map((p, idx) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setActiveTab(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                activeTab === idx ? "w-5 bg-[#FF4F2B]" : "w-1.5 bg-slate-300 dark:bg-slate-700"
-              }`}
-              aria-label={`Ir a ${p.tabLabel}`}
-            />
-          ))}
-        </div>
       </div>
 
       {/* Contenedor Principal: Valor Conciso (Izquierda) + Widget Hero Real (Derecha) */}
@@ -469,7 +459,7 @@ export default function Features() {
                         <button
                           type="button"
                           onClick={() => setActiveStaff("marcos")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded text-[10px] font-bold transition cursor-pointer ${
                             activeStaff === "marcos" ? "bg-blue-600 text-white" : "text-slate-500"
                           }`}
                         >
@@ -478,7 +468,7 @@ export default function Features() {
                         <button
                           type="button"
                           onClick={() => setActiveStaff("lucas")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded text-[10px] font-bold transition cursor-pointer ${
                             activeStaff === "lucas" ? "bg-blue-600 text-white" : "text-slate-500"
                           }`}
                         >
@@ -503,9 +493,31 @@ export default function Features() {
                             </span>
                           </div>
                         </div>
-                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/50">
+                        <span className="shrink-0 whitespace-nowrap text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/50">
                           {activeStaff === "marcos" ? "Recibo #REC-084" : "Recibo #REC-085"}
                         </span>
+                      </div>
+
+                      {/* Desglose de lo facturado por el colaborador */}
+                      <div className="divide-y divide-dashed divide-slate-200 dark:divide-white/10 text-xs">
+                        {(activeStaff === "marcos"
+                          ? [
+                              { label: "Servicios (8)", detail: "Comisión 50%", amount: "Gs. 540.000" },
+                              { label: "Productos (2)", detail: "Sin comisión", amount: "Gs. 100.000" },
+                            ]
+                          : [
+                              { label: "Servicios (5)", detail: "Comisión 45%", amount: "Gs. 300.000" },
+                              { label: "Productos (0)", detail: "Sin comisión", amount: "Gs. 0" },
+                            ]
+                        ).map((row) => (
+                          <div key={row.label} className="flex items-center justify-between py-2">
+                            <div>
+                              <span className="font-semibold text-slate-700 dark:text-slate-200 block leading-tight">{row.label}</span>
+                              <span className="text-[10px] text-slate-400">{row.detail}</span>
+                            </div>
+                            <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{row.amount}</span>
+                          </div>
+                        ))}
                       </div>
 
                       {/* Split de ingresos: Colaborador vs Local */}

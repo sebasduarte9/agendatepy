@@ -240,11 +240,11 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
     if (singleProduct) {
       const price = getProductPrice(singleProduct);
       const isOffer = isProductOfferActive(singleProduct);
-      const offerTag = isOffer ? " 🔥 (EN OFERTA)" : "";
+      const offerTag = isOffer ? "  (EN OFERTA)" : "";
       const text = encodeURIComponent(
-        `¡Hola ${tenant.name}! 👋 Quiero consultar o pedir este producto de su tienda online:\n\n` +
-        `🛍️ *${singleProduct.name}*${offerTag}\n` +
-        `💰 *Precio:* Gs. ${price.toLocaleString("es-PY")}\n\n` +
+        `¡Hola ${tenant.name}!  Quiero consultar o pedir este producto de su tienda online:\n\n` +
+        ` *${singleProduct.name}*${offerTag}\n` +
+        ` *Precio:* Gs. ${price.toLocaleString("es-PY")}\n\n` +
         `¿Tienen disponibilidad para retiro o delivery? ¡Muchas gracias!`
       );
       return `https://wa.me/${rawPhone}?text=${text}`;
@@ -255,11 +255,11 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
       const isOffer = isProductOfferActive(item.product) ? " (Oferta)" : "";
       return `• ${item.qty}x ${item.product.name}${isOffer} (Gs. ${(pPrice * item.qty).toLocaleString("es-PY")})`;
     });
-    const clientSignature = name.trim() ? `\n👤 *Cliente:* ${name.trim()} (${phone.trim()})` : "";
+    const clientSignature = name.trim() ? `\n *Cliente:* ${name.trim()} (${phone.trim()})` : "";
     const text = encodeURIComponent(
-      `¡Hola ${tenant.name}! 👋 Quiero realizar un pedido desde la tienda online:${clientSignature}\n\n` +
-      `🛍️ *Productos solicitados:*\n${lines.join("\n")}\n\n` +
-      `💰 *Total del pedido:* Gs. ${totalCartPrice.toLocaleString("es-PY")}\n\n` +
+      `¡Hola ${tenant.name}!  Quiero realizar un pedido desde la tienda online:${clientSignature}\n\n` +
+      ` *Productos solicitados:*\n${lines.join("\n")}\n\n` +
+      ` *Total del pedido:* Gs. ${totalCartPrice.toLocaleString("es-PY")}\n\n` +
       `¿Tienen stock disponible para retiro o delivery? ¡Muchas gracias!`
     );
     return `https://wa.me/${rawPhone}?text=${text}`;

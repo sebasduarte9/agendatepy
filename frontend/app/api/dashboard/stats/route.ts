@@ -1,15 +1,37 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireTenantSession, isGuardError } from "@/lib/api-guard";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { CashMovementType, AppointmentStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
+
+const RANGE_DAYS = { hoy: 1, semana: 7, mes: 30, "90": 90 } as const;
+type Range = keyof typeof RANGE_DAYS;
+
+const DAY_NAMES: Record<string, string> = {
+  Mon: "Lun",
+  Tue: "Mar",
+  Wed: "Mié",
+  Thu: "Jue",
+  Fri: "Vie",
+  Sat: "Sáb",
+  Sun: "Dom",
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function isAttended(status: AppointmentStatus) {
+  return status === AppointmentStatus.CONFIRMED || status === AppointmentStatus.COMPLETED;
+}
 
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireTenantSession(request, ["OWNER", "SUPERADMIN"]);
     if (isGuardError(auth)) return auth;
+
+    const rawRange = request.nextUrl.searchParams.get("range") || "semana";
+    const range: Range = rawRange in RANGE_DAYS ? (rawRange as Range) : "semana";
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: auth.tenantId },
@@ -17,33 +39,87 @@ export async function GET(request: NextRequest) {
     });
     const tz = tenant?.timezone || "America/Asuncion";
 
-    // 1. Citas del tenant
-    const appointments = await prisma.appointment.findMany({
+    const now = new Date();
+    const todayStart = fromZonedTime(`${formatInTimeZone(now, tz, "yyyy-MM-dd")}T00:00:00`, tz);
+    const periodStart = new Date(todayStart.getTime() - (RANGE_DAYS[range] - 1) * DAY_MS);
+    const periodEnd = new Date(todayStart.getTime() + DAY_MS);
+    const periodLength = periodEnd.getTime() - periodStart.getTime();
+    const prevStart = new Date(periodStart.getTime() - periodLength);
+
+    const allAppointments = await prisma.appointment.findMany({
       where: { tenantId: auth.tenantId },
-      include: { service: { select: { price: true } } },
+      select: {
+        clientId: true,
+        clientPhone: true,
+        startTime: true,
+        status: true,
+        service: { select: { price: true } },
+      },
       orderBy: { startTime: "asc" },
     });
 
-    const confirmedApps = appointments.filter(
-      (a) => a.status === AppointmentStatus.CONFIRMED || a.status === AppointmentStatus.COMPLETED
-    );
-    const totalApps = appointments.length;
-    const attendanceRate = totalApps > 0 ? Math.round((confirmedApps.length / totalApps) * 100) : 100;
+    const inRange = (d: Date, from: Date, to: Date) => d >= from && d < to;
+    const appointments = allAppointments.filter((a) => inRange(a.startTime, periodStart, periodEnd));
+    const prevAppointments = allAppointments.filter((a) => inRange(a.startTime, prevStart, periodStart));
 
-    // Facturación confirmada en base a servicios
-    const confirmedRevenue = confirmedApps.reduce((sum, a) => sum + (a.service?.price || 0), 0);
-    const avgTicket = confirmedApps.length > 0 ? Math.round(confirmedRevenue / confirmedApps.length) : 0;
+    const attended = appointments.filter((a) => isAttended(a.status));
+    const prevAttended = prevAppointments.filter((a) => isAttended(a.status));
+    const cancelled = appointments.filter((a) => a.status === AppointmentStatus.CANCELLED).length;
+    const noShows = appointments.filter((a) => a.status === AppointmentStatus.NO_SHOW).length;
 
-    // 2. Movimientos de caja
+    const revenueOf = (list: typeof appointments) => list.reduce((sum, a) => sum + (a.service?.price || 0), 0);
+    const revenue = revenueOf(attended);
+    const prevRevenue = revenueOf(prevAttended);
+    const delta = (cur: number, prev: number) => (prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null);
+
+    const attendanceRate = appointments.length > 0 ? Math.round((attended.length / appointments.length) * 100) : null;
+    const avgTicket = attended.length > 0 ? Math.round(revenue / attended.length) : 0;
+
+    const clientKey = (a: { clientId: string | null; clientPhone: string }) => a.clientId || a.clientPhone;
+    const periodClients = new Set(appointments.map(clientKey));
+
+    // Retención: clientes del período que ya habían venido antes.
+    const firstVisit = new Map<string, Date>();
+    for (const a of allAppointments) {
+      if (!isAttended(a.status)) continue;
+      const k = clientKey(a);
+      if (!firstVisit.has(k)) firstVisit.set(k, a.startTime);
+    }
+    const returning = [...periodClients].filter((k) => {
+      const first = firstVisit.get(k);
+      return first !== undefined && first < periodStart;
+    }).length;
+    const retentionRate = periodClients.size > 0 ? Math.round((returning / periodClients.size) * 100) : null;
+
+    // Ciclo de retorno: días promedio entre visitas consecutivas del mismo cliente.
+    const visitsByClient = new Map<string, number[]>();
+    for (const a of allAppointments) {
+      if (!isAttended(a.status)) continue;
+      const k = clientKey(a);
+      const list = visitsByClient.get(k) ?? [];
+      list.push(a.startTime.getTime());
+      visitsByClient.set(k, list);
+    }
+    let gapSum = 0;
+    let gapCount = 0;
+    for (const visits of visitsByClient.values()) {
+      for (let i = 1; i < visits.length; i++) {
+        gapSum += visits[i] - visits[i - 1];
+        gapCount++;
+      }
+    }
+    const returnCycleDays = gapCount > 0 ? Math.round(gapSum / gapCount / DAY_MS) : null;
+
+    const lifetimeRevenue = revenueOf(allAppointments.filter((a) => isAttended(a.status)));
+    const lifetimeValue = visitsByClient.size > 0 ? Math.round(lifetimeRevenue / visitsByClient.size) : 0;
+
     const cashMovements = await prisma.cashMovement.findMany({
-      where: { tenantId: auth.tenantId },
-      orderBy: { createdAt: "asc" },
+      where: { tenantId: auth.tenantId, createdAt: { gte: periodStart, lt: periodEnd } },
+      select: { type: true, amount: true, paymentMethod: true },
     });
-
     let totalIncome = 0;
     let totalExpense = 0;
     const methodCounts: Record<string, number> = {};
-
     for (const cm of cashMovements) {
       if (cm.type === CashMovementType.INCOME) {
         totalIncome += cm.amount;
@@ -53,79 +129,63 @@ export async function GET(request: NextRequest) {
         totalExpense += cm.amount;
       }
     }
+    const paymentMethodsData = Object.entries(methodCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
 
-    const cashBalance = totalIncome - totalExpense;
-
-    // Métodos de pago reales (agrupación porcentual)
-    const paymentMethodsData = Object.entries(methodCounts).map(([name, value]) => ({
-      name,
-      value,
-    }));
-
-    // 3. Distribución real por día de la semana (últimos 7 días o citas activas)
-    const daysMap: Record<string, { ingresos: number; turnos: number }> = {
-      Lun: { ingresos: 0, turnos: 0 },
-      Mar: { ingresos: 0, turnos: 0 },
-      Mié: { ingresos: 0, turnos: 0 },
-      Jue: { ingresos: 0, turnos: 0 },
-      Vie: { ingresos: 0, turnos: 0 },
-      Sáb: { ingresos: 0, turnos: 0 },
-      Dom: { ingresos: 0, turnos: 0 },
-    };
-
-    const dayNameMap: Record<string, string> = {
-      Mon: "Lun",
-      Tue: "Mar",
-      Wed: "Mié",
-      Thu: "Jue",
-      Fri: "Vie",
-      Sat: "Sáb",
-      Sun: "Dom",
-    };
-
-    for (const app of confirmedApps) {
-      const engDay = formatInTimeZone(app.startTime, tz, "EEE");
-      const shortDay = dayNameMap[engDay] || "Lun";
-      if (daysMap[shortDay]) {
-        daysMap[shortDay].turnos += 1;
-        daysMap[shortDay].ingresos += app.service?.price || 0;
+    let areaData: { name: string; ingresos: number; turnos: number }[];
+    if (range === "hoy") {
+      const byHour = new Map<string, { ingresos: number; turnos: number }>();
+      for (const a of attended) {
+        const h = formatInTimeZone(a.startTime, tz, "HH:00");
+        const cur = byHour.get(h) ?? { ingresos: 0, turnos: 0 };
+        cur.turnos += 1;
+        cur.ingresos += a.service?.price || 0;
+        byHour.set(h, cur);
       }
+      areaData = [...byHour.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, d]) => ({ name, ...d }));
+    } else {
+      const days: Record<string, { ingresos: number; turnos: number }> = {};
+      for (const name of Object.values(DAY_NAMES)) days[name] = { ingresos: 0, turnos: 0 };
+      for (const a of attended) {
+        const name = DAY_NAMES[formatInTimeZone(a.startTime, tz, "EEE")] || "Lun";
+        days[name].turnos += 1;
+        days[name].ingresos += a.service?.price || 0;
+      }
+      areaData = Object.entries(days).map(([name, d]) => ({ name, ...d }));
     }
 
-    const areaData = Object.entries(daysMap).map(([name, data]) => ({
-      name,
-      ingresos: data.ingresos,
-      turnos: data.turnos,
-    }));
-
-    // 4. Distribución horaria real
     const hourCounts: Record<string, number> = {};
-    for (const app of appointments) {
-      const hourStr = formatInTimeZone(app.startTime, tz, "HH:00");
-      hourCounts[hourStr] = (hourCounts[hourStr] || 0) + 1;
+    for (const a of appointments) {
+      const h = formatInTimeZone(a.startTime, tz, "HH:00");
+      hourCounts[h] = (hourCounts[h] || 0) + 1;
     }
-
     const hourlyDistribution = Object.entries(hourCounts)
       .map(([hour, citas]) => ({ hour, citas }))
       .sort((a, b) => a.hour.localeCompare(b.hour));
 
-    // 5. Total clientes únicos
-    const totalClientsCount = await prisma.client.count({
-      where: { tenantId: auth.tenantId },
-    });
-
     return NextResponse.json({
       ok: true,
       stats: {
-        totalRevenue: confirmedRevenue,
-        totalAppointments: totalApps,
-        confirmedAppointments: confirmedApps.length,
+        range,
+        totalRevenue: revenue,
+        revenueDelta: delta(revenue, prevRevenue),
+        totalAppointments: appointments.length,
+        appointmentsDelta: delta(appointments.length, prevAppointments.length),
+        confirmedAppointments: attended.length,
+        cancelledAppointments: cancelled,
+        noShowAppointments: noShows,
         attendanceRate,
         avgTicket,
         totalIncome,
         totalExpense,
-        cashBalance,
-        totalClients: totalClientsCount,
+        cashBalance: totalIncome - totalExpense,
+        totalClients: periodClients.size,
+        retentionRate,
+        returnCycleDays,
+        lifetimeValue,
         areaData,
         paymentMethodsData,
         hourlyDistribution,

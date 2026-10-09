@@ -40,6 +40,32 @@ import {
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
+/**
+ * Casi todas las marcas data-tour existen dos veces (versión desktop y versión
+ * mobile, una oculta con `hidden lg:block` o similar). querySelector devolvería
+ * la primera aunque esté oculta, así que buscamos la que realmente se ve.
+ * `a || b` define alternativas por prioridad: si `a` no se ve (p. ej. un botón
+ * que solo existe en desktop), se resalta `b`.
+ */
+function findVisibleTarget(selector: string): HTMLElement | null {
+  for (const candidate of selector.split("||")) {
+    let nodes: NodeListOf<HTMLElement>;
+    try {
+      nodes = document.querySelectorAll<HTMLElement>(candidate.trim());
+    } catch {
+      continue;
+    }
+    for (const el of Array.from(nodes)) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      const style = window.getComputedStyle(el);
+      if (style.visibility === "hidden" || style.display === "none") continue;
+      return el;
+    }
+  }
+  return null;
+}
+
 export interface SectionStep {
   stepNumber: number;
   taskTitle: string;
@@ -90,7 +116,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         instruction:
           "Hacé clic en 'Ver mi página' para abrir tu web de turnos pública. Tus clientes podrán ver tus servicios, precios en Guaraníes y horarios disponibles 24/7.",
         tip: "Pegá ese enlace en la biografía de tu Instagram o en la respuesta rápida de WhatsApp.",
-        targetSelector: '[data-tour="header-booking-link"]',
+        targetSelector: '[data-tour="header-booking-link"] || [data-tour="home-copy-link"]',
       },
       {
         stepNumber: 4,
@@ -325,7 +351,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         instruction:
           "Tocá 'Agendar' en cualquier tarjeta para abrir el agendador rápido con los datos del cliente ya pre-cargados, manteniéndote en esta misma pantalla.",
         tip: "Al confirmar, el turno se registra en la agenda en tiempo real sin recargar la página.",
-        targetSelector: '[data-tour="clientes-agendar-btn"]',
+        targetSelector: '[data-tour="clientes-agendar-btn"] || [data-tour="clientes-card"]',
       },
     ],
   },
@@ -562,14 +588,6 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         targetSelector: '[data-tour="comisiones-rules"]',
       },
       {
-        stepNumber: 4,
-        taskTitle: "Pestañas de Navegación",
-        instruction:
-          "Utilizá estas pestañas para acceder directamente al equipo y sus ganancias, al detalle de turnos y ventas, y al historial de pagos.",
-        tip: "Te permite moverte de forma ágil entre las diferentes áreas del módulo.",
-        targetSelector: '[data-tour="comisiones-tabs"]',
-      },
-      {
         stepNumber: 5,
         taskTitle: "Perfil y Ganancias (% Servicios vs % Productos)",
         instruction:
@@ -623,7 +641,7 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         stepNumber: 2,
         taskTitle: "Enlace Web Exclusivo & Tarjeta del Cliente",
         instruction:
-          "Cada cliente tiene su propio link web personalizado (ej: agendate.py/tu-salon/tarjeta/...). Sin instalar aplicaciones pesadas: lo abren en su celular, ven sus sellos acumulados y consultan su premio disponible.",
+          "Cada cliente tiene su propio link web personalizado (ej: tu-salon.agendatepy.com/tarjeta/...). Sin instalar aplicaciones pesadas: lo abren en su celular, ven sus sellos acumulados y consultan su premio disponible.",
         tip: "En la lista de clientes podés abrir directamente la tarjeta de cualquiera de ellos, copiar su link o enviárselo por WhatsApp.",
         targetSelector: '[data-tour="fidelizacion-wallet-banner"]',
       },
@@ -968,6 +986,7 @@ export default function GuidedTour() {
   const closeTour = useDashboardStore((s) => s.closeTour);
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const stepDirectionRef = useRef<1 | -1>(1);
   const [selectedSectionKey, setSelectedSectionKey] = useState<string>("inicio");
   const [showSectionPicker, setShowSectionPicker] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -1018,6 +1037,13 @@ export default function GuidedTour() {
     setCurrentStepIndex(0);
   }, [detectedSectionKey, storeTourSectionKey]);
 
+  useEffect(() => {
+    if (isTourOpen) {
+      stepDirectionRef.current = 1;
+      setCurrentStepIndex(0);
+    }
+  }, [isTourOpen]);
+
   // Check URL triggers (?tour=start or ?tour=apariencia)
   useEffect(() => {
     const tourParam = searchParams.get("tour");
@@ -1058,8 +1084,9 @@ export default function GuidedTour() {
     }
   }, [pathname, openTour]);
 
-  const currentSection =
-    ALL_SECTION_TOURS[selectedSectionKey] || ALL_SECTION_TOURS.inicio;
+  const currentSection = ALL_SECTION_TOURS[selectedSectionKey]?.steps.length
+    ? ALL_SECTION_TOURS[selectedSectionKey]
+    : ALL_SECTION_TOURS.inicio;
   const currentStep =
     currentSection.steps[currentStepIndex] || currentSection.steps[0];
   const IconComponent = currentSection.icon;
@@ -1122,6 +1149,12 @@ export default function GuidedTour() {
       }
     }
 
+    if (currentSection?.id === "crm" && typeof window !== "undefined") {
+      const sel = currentStep.targetSelector;
+      const view = sel.includes("crm-chat-box") ? "chat" : sel.includes("crm-client-profile") ? "profile" : "list";
+      window.dispatchEvent(new CustomEvent("agendate-crm-view", { detail: { view } }));
+    }
+
     // Auto-open or auto-close product creation modal for product tour steps
     if (typeof window !== "undefined") {
       const isProductModalStep =
@@ -1135,10 +1168,10 @@ export default function GuidedTour() {
       }
     }
 
-    let retriesLeft = 20;
+    let retriesLeft = 40;
     const checkElement = () => {
       try {
-        const el = document.querySelector(currentStep.targetSelector!) as HTMLElement | null;
+        const el = findVisibleTarget(currentStep.targetSelector!);
         if (el) {
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
@@ -1169,10 +1202,19 @@ export default function GuidedTour() {
           }
         }
         if (retriesLeft > 0) {
+          if (retriesLeft === 40) setTargetRect(null);
           retriesLeft--;
           setTimeout(checkElement, 50);
         } else {
           setTargetRect(null);
+          // Bloques que solo existen en escritorio: en móvil se saltan en la dirección de navegación.
+          if (window.innerWidth < 1024) {
+            const dir = stepDirectionRef.current;
+            setCurrentStepIndex((idx) => {
+              const next = idx + dir;
+              return next >= 0 && next < currentSection.steps.length ? next : idx;
+            });
+          }
         }
       } catch {
         setTargetRect(null);
@@ -1180,7 +1222,7 @@ export default function GuidedTour() {
     };
 
     setTimeout(checkElement, 30);
-  }, [currentStep, getTabForStep]);
+  }, [currentStep, getTabForStep, currentSection]);
 
   // Recalculate spotlight whenever tour opens or step changes (60fps requestAnimationFrame tracking on scroll)
   useEffect(() => {
@@ -1198,7 +1240,7 @@ export default function GuidedTour() {
         animationFrameId = null;
         if (!currentStep?.targetSelector) return;
         try {
-          const el = document.querySelector(currentStep.targetSelector) as HTMLElement | null;
+          const el = findVisibleTarget(currentStep.targetSelector);
           if (el) {
             const r = el.getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
@@ -1222,7 +1264,7 @@ export default function GuidedTour() {
   const scrollToTarget = useCallback((selector?: string) => {
     if (!selector) return;
     try {
-      const el = document.querySelector(selector) as HTMLElement | null;
+      const el = findVisibleTarget(selector);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "nearest" });
         setTimeout(() => {
@@ -1261,6 +1303,9 @@ export default function GuidedTour() {
       }
       window.dispatchEvent(new CustomEvent("agendate-close-product-modal"));
       window.dispatchEvent(new CustomEvent("agendate-close-product-promo-modal"));
+      if (selectedSectionKey === "crm") {
+        window.dispatchEvent(new CustomEvent("agendate-crm-view", { detail: { view: "list" } }));
+      }
     }
     closeTour();
   }, [selectedSectionKey, closeTour]);
@@ -1283,6 +1328,7 @@ export default function GuidedTour() {
       isTransitioningRef.current = false;
     }, 220);
 
+    stepDirectionRef.current = 1;
     if (currentStepIndex < currentSection.steps.length - 1) {
       const nextIdx = currentStepIndex + 1;
       const nextStep = currentSection.steps[nextIdx];
@@ -1308,6 +1354,7 @@ export default function GuidedTour() {
       isTransitioningRef.current = false;
     }, 220);
 
+    stepDirectionRef.current = -1;
     if (currentStepIndex > 0) {
       const prevIdx = currentStepIndex - 1;
       const prevStep = currentSection.steps[prevIdx];
@@ -1359,7 +1406,7 @@ export default function GuidedTour() {
     if (!currentStep.targetSelector.startsWith('[data-tour="tab-')) return;
 
     try {
-      const el = document.querySelector(currentStep.targetSelector) as HTMLElement | null;
+      const el = findVisibleTarget(currentStep.targetSelector);
       if (el) {
         const prevZIndex = el.style.zIndex;
         const prevPosition = el.style.position;
@@ -1439,28 +1486,46 @@ export default function GuidedTour() {
 
   let cardStyle: React.CSSProperties = {};
 
+  // Mismo corte que el layout del dashboard: debajo de lg no hay sidebar y aparece el dock inferior.
+  const isCompactLayout = windowDimensions.width < 1024;
+  const dockClearance = "calc(88px + env(safe-area-inset-bottom, 0px))";
+
   if (!targetRect) {
-    cardStyle = {
-      position: "fixed",
-      left: Math.max(16, Math.round((windowDimensions.width - cardWidth) / 2)),
-      bottom: 24,
-      width: cardWidth,
-      zIndex: 99999,
-    };
+    cardStyle = isCompactLayout
+      ? {
+          position: "fixed",
+          left: 16,
+          right: 16,
+          bottom: dockClearance,
+          width: "auto",
+          maxWidth: 480,
+          marginInline: "auto",
+          zIndex: 99999,
+        }
+      : {
+          position: "fixed",
+          left: Math.max(16, Math.round((windowDimensions.width - cardWidth) / 2)),
+          bottom: 24,
+          width: cardWidth,
+          zIndex: 99999,
+        };
   } else {
     const W = windowDimensions.width;
     const H = windowDimensions.height;
-    const isMobile = W < 768;
 
-    if (isMobile) {
+    if (isCompactLayout) {
+      // La tarjeta va del lado opuesto al elemento resaltado para no taparlo.
+      const targetInLowerHalf = targetRect.top + targetRect.height / 2 > H / 2;
       cardStyle = {
         position: "fixed",
         left: 16,
         right: 16,
-        bottom: 16,
+        ...(targetInLowerHalf ? { top: "calc(68px + env(safe-area-inset-top, 0px))" } : { bottom: dockClearance }),
         width: "auto",
-        maxWidth: "calc(100vw - 32px)",
-        maxHeight: "calc(100vh - 80px)",
+        maxWidth: 480,
+        marginInline: "auto",
+        maxHeight: "calc(100dvh - 180px)",
+        overflowY: "auto",
         zIndex: 99999,
       };
     } else {
@@ -1725,7 +1790,10 @@ export default function GuidedTour() {
                         <button
                           key={s.stepNumber}
                           type="button"
-                          onClick={() => setCurrentStepIndex(idx)}
+                          onClick={() => {
+                            stepDirectionRef.current = idx < currentStepIndex ? -1 : 1;
+                            setCurrentStepIndex(idx);
+                          }}
                           className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                             idx === currentStepIndex
                               ? "w-8 bg-primary"

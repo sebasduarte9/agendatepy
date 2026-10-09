@@ -7,6 +7,7 @@ import type { SessionUser } from "@/lib/auth/types";
 export interface OnboardingInput {
   businessName: string;
   category: string;
+  categoryLabel?: string;
   slug: string;
   serviceName: string;
   duration: number;
@@ -18,6 +19,70 @@ export interface OnboardingInput {
   logoUrl?: string;
   ownerEmail?: string;
   ownerName?: string;
+  theme?: OnboardingTheme;
+}
+
+export interface OnboardingTheme {
+  primaryColor?: string;
+  backgroundColor?: string;
+  fontFamily?: string;
+  themeMode?: "light" | "dark";
+  layoutStyle?: "panoramic" | "split-gallery" | "floating-card";
+  buttonRadius?: "full" | "lg" | "md";
+}
+
+const RESERVED_SLUGS = new Set([
+  "admin",
+  "api",
+  "dashboard",
+  "login",
+  "onboarding",
+  "superadmin",
+  "showcase",
+  "terminos",
+  "privacidad",
+  "www",
+]);
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+function sanitizeOnboardingTheme(theme: OnboardingTheme | undefined) {
+  if (!theme) return {};
+  const out: Record<string, string> = {};
+  if (theme.primaryColor && HEX_COLOR.test(theme.primaryColor)) out.primaryColor = theme.primaryColor;
+  if (theme.backgroundColor && HEX_COLOR.test(theme.backgroundColor)) out.backgroundColor = theme.backgroundColor;
+  if (theme.fontFamily && /^[a-z0-9-]{2,40}$/.test(theme.fontFamily)) out.fontFamily = theme.fontFamily;
+  if (theme.themeMode === "light" || theme.themeMode === "dark") out.themeMode = theme.themeMode;
+  if (
+    theme.layoutStyle === "panoramic" ||
+    theme.layoutStyle === "split-gallery" ||
+    theme.layoutStyle === "floating-card"
+  ) {
+    out.layoutStyle = theme.layoutStyle;
+  }
+  if (theme.buttonRadius === "full" || theme.buttonRadius === "lg" || theme.buttonRadius === "md") {
+    out.buttonRadius = theme.buttonRadius;
+  }
+  return out;
+}
+
+export async function checkSlugAvailabilityAction(slug: string) {
+  const clean = slug
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (clean.length < 3) return { available: false, reason: "short" as const };
+  if (RESERVED_SLUGS.has(clean)) return { available: false, reason: "taken" as const };
+  try {
+    const existing = await prisma.tenant.findUnique({
+      where: { subdomain: clean },
+      select: { id: true },
+    });
+    return { available: !existing, reason: existing ? ("taken" as const) : undefined };
+  } catch {
+    return { available: true };
+  }
 }
 
 export async function createTenantOnboardingAction(input: OnboardingInput) {
@@ -28,7 +93,8 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, "")
       .replace(/-+/g, "-")
-      .trim();
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 63);
 
     if (!cleanSlug || cleanSlug.length < 2) {
       cleanSlug = `negocio-${Date.now().toString().slice(-4)}`;
@@ -38,7 +104,7 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
     const existing = await prisma.tenant.findUnique({
       where: { subdomain: cleanSlug },
     });
-    if (existing) {
+    if (existing || RESERVED_SLUGS.has(cleanSlug)) {
       cleanSlug = `${cleanSlug}-${Math.floor(100 + Math.random() * 900)}`;
     }
 
@@ -77,6 +143,21 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
     }
 
     const cleanWhatsapp = input.whatsapp.replace(/\D/g, "");
+
+    const { isPhoneVerificationRequired, isPhoneRecentlyVerified } = await import(
+      "@/lib/verification/phone-otp"
+    );
+    const verificationRequired = await isPhoneVerificationRequired();
+    const phoneVerified = verificationRequired ? await isPhoneRecentlyVerified(cleanWhatsapp) : false;
+    if (verificationRequired && !phoneVerified) {
+      return {
+        ok: false,
+        error: "Verificá tu WhatsApp con el código que te enviamos para continuar.",
+      };
+    }
+
+    const categoryLabel =
+      input.category === "otro" ? (input.categoryLabel || "").trim().slice(0, 60) : "";
     const cleanPersonalPhone = (
       input.personalPhone || (input.phoneType === "personal" ? input.whatsapp : "")
     ).replace(/\D/g, "");
@@ -94,7 +175,10 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
           timezone: "America/Asuncion",
           settings: {
             category: input.category,
+            ...(categoryLabel ? { categoryLabel } : {}),
             whatsappPhone: cleanWhatsapp,
+            whatsappVerified: phoneVerified,
+            ...(phoneVerified ? { whatsappVerifiedAt: new Date().toISOString() } : {}),
             ruc: (input.ruc || "").trim(),
             slotStepMinutes: 30,
             maxAdvanceDays: 30,
@@ -116,9 +200,11 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
           themeSettings: {
             primaryColor: "#5b31e6",
             backgroundColor: "#f8fafc",
-            fontFamily: "Plus Jakarta Sans",
+            fontFamily: "plus-jakarta-sans",
+            ...sanitizeOnboardingTheme(input.theme),
+            bannerUrl: "",
             logoUrl: finalLogoUrl,
-            whatsapp: input.whatsapp,
+            whatsapp: cleanWhatsapp,
           },
         },
       });

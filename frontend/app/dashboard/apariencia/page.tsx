@@ -681,7 +681,6 @@ export default function AparienciaPage() {
   return (
     <div className="space-y-6">
       {/* Dynamic Google Font link for active theme */}
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={googleFontHref(theme.fontFamily)} />
 
       {/* Global CSS Animation Keyframes for Real Background Effects */}
@@ -2881,7 +2880,7 @@ export default function AparienciaPage() {
 
                               {hasPromo && (
                                 <div className="flex items-center justify-between text-[9px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-0.5">
-                                  <span>🔥 Quedan {promoLimitQuantity} cupos con descuento</span>
+                                  <span> Quedan {promoLimitQuantity} cupos con descuento</span>
                                   <span className="font-bold underline cursor-pointer">Agendar</span>
                                 </div>
                               )}

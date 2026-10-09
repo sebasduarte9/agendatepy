@@ -1,5 +1,7 @@
 "use client";
 
+import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,6 +48,7 @@ import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
 import { formatGs, phoneWa } from "@/lib/dashboard-dates";
 import type { Appointment, Client } from "@/lib/dashboard-types";
+import { tenantBookingUrl } from "@/lib/tenant/public-url";
 
 export default function DashboardHomePage() {
   const appointments = useDashboardStore((s) => s.appointments);
@@ -251,7 +254,7 @@ export default function DashboardHomePage() {
   // Copy Public Booking Link
   const handleCopyBookingLink = () => {
     const slug = business.slug || "reservar";
-    const url = typeof window !== "undefined" ? `${window.location.origin}/${slug}/reservar` : `https://agendate.py/${slug}/reservar`;
+    const url = tenantBookingUrl(slug);
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     pushToast("success", "¡Enlace de reserva pública copiado al portapapeles!");
@@ -338,6 +341,7 @@ export default function DashboardHomePage() {
 
           <button
             type="button"
+            data-tour="home-copy-link"
             onClick={handleCopyBookingLink}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
             title="Copiar link de reservas de tu negocio"
@@ -358,7 +362,7 @@ export default function DashboardHomePage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD WITH 7-DAY MINI SPARKLINE ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3.5">
+      <div data-tour="kpi-cards" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3.5">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -386,7 +390,7 @@ export default function DashboardHomePage() {
           <div className="flex items-center justify-between text-[11px]">
             <span className="font-bold text-slate-600 dark:text-slate-400">Semana Activa</span>
             <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
-              {formatGs(weeklySnapshot.reduce((sum, d) => sum + d.amount, 0))}
+              <AnimatedValue value={formatGs(weeklySnapshot.reduce((sum, d) => sum + d.amount, 0))} />
             </span>
           </div>
           <div className="grid grid-cols-7 gap-1.5 items-end h-16 pt-1">
@@ -516,7 +520,7 @@ export default function DashboardHomePage() {
       </div>
 
       {/* ═══ DESKTOP EXECUTIVE KPI STRIP (4 BALANCED COMMAND CARDS) ═══ */}
-      <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-4 gap-3.5">
+      <div data-tour="kpi-cards" className="kpi-stagger hidden md:grid md:grid-cols-2 xl:grid-cols-4 gap-3.5">
         {/* KPI 1: Recaudación del Día */}
         <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
           <div className="flex items-center justify-between">
@@ -529,7 +533,7 @@ export default function DashboardHomePage() {
           </div>
           <div className="mt-2.5">
             <div className="text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums tracking-tight">
-              {formatGs(revenueToday)}
+              <AnimatedValue value={formatGs(revenueToday)} />
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>{confirmedToday.length} cobros registrados</span>

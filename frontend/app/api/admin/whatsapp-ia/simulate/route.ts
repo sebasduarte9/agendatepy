@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSuperAdminSession, isGuardError } from "@/lib/api-guard";
 import { prisma } from "@/lib/db";
 import { processCustomerMessageWithAI } from "@/lib/ai/whatsapp-agent";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireSuperAdminSession(req);
+  if (isGuardError(auth)) return auth;
+
   try {
     const body = await req.json();
     const userMessage = body.message || "Hola, ¿qué servicios tienen?";

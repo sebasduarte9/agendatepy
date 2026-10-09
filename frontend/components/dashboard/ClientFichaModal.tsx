@@ -275,6 +275,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
         title=""
         onClose={onClose}
         maxWidth="max-w-4xl"
+        variant="side"
         minHeight="min-h-[580px] sm:min-h-[620px]"
       >
         <div className="space-y-5 -mt-2">

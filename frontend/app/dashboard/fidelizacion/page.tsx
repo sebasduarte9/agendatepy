@@ -39,6 +39,7 @@ import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { Client, LoyaltyRewardTier } from "@/lib/dashboard-types";
+import { tenantHost } from "@/lib/tenant/public-url";
 
 const REWARD_PRESETS = [
   "50% OFF en tu próximo corte o servicio",
@@ -243,7 +244,7 @@ export default function FidelizacionPage() {
     const cardUrl = getCardUrl(clientId);
     const cleanPhone = clientPhone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `¡Hola ${clientName}! 👋 Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n📲 ${cardUrl}\n\nPodés abrir tu enlace en cualquier momento para consultar tus sellos acumulados y premios. ¡Acumulás sellos en cada visita para canjear tus premios en *${business.name}*!`
+      `¡Hola ${clientName}!  Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n ${cardUrl}\n\nPodés abrir tu enlace en cualquier momento para consultar tus sellos acumulados y premios. ¡Acumulás sellos en cada visita para canjear tus premios en *${business.name}*!`
     );
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   }
@@ -302,7 +303,7 @@ export default function FidelizacionPage() {
             </span>
           </div>
           <span className="px-3 py-1 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20">
-            {loyalty.enabled ? "⭐ Programa Activo" : "Pausado"}
+            {loyalty.enabled ? " Programa Activo" : "Pausado"}
           </span>
         </div>
         <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -467,7 +468,7 @@ export default function FidelizacionPage() {
                 Estructura de Tarjeta Digital Móvil:
               </span>
               <div className="font-mono text-xs text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 rounded-xl px-3 py-2 select-all">
-                agendate.py/{business.slug || "salon"}/tarjeta/<span className="text-emerald-600 dark:text-emerald-400 font-bold">[id-cliente]</span>
+                {tenantHost(business.slug || "salon")}/tarjeta/<span className="text-emerald-600 dark:text-emerald-400 font-bold">[id-cliente]</span>
               </div>
             </div>
 
@@ -509,7 +510,7 @@ export default function FidelizacionPage() {
 
             <div>
               <div className="font-mono text-xs text-emerald-700 dark:text-emerald-400 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 inline-block select-all">
-                agendate.py/{business.slug || "salon"}/tarjeta/<span className="text-slate-400 dark:text-white/60">[id-cliente]</span>
+                {tenantHost(business.slug || "salon")}/tarjeta/<span className="text-slate-400 dark:text-white/60">[id-cliente]</span>
               </div>
             </div>
 
@@ -584,7 +585,7 @@ export default function FidelizacionPage() {
               </div>
 
               <div className="rounded-lg bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 px-2.5 py-1 text-[10px] text-slate-700 dark:text-slate-300 truncate">
-                🎁 1° Premio: <strong className="text-slate-900 dark:text-white">{activeRewards[0]?.description || loyalty.rewardDescription}</strong>
+                 1° Premio: <strong className="text-slate-900 dark:text-white">{activeRewards[0]?.description || loyalty.rewardDescription}</strong>
               </div>
             </div>
           </div>

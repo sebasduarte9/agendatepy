@@ -12,41 +12,44 @@ import {
   Share2,
   ExternalLink,
   Target,
-  BarChart3,
-  Layers,
-  Save,
+  Sparkles,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import { triggerHaptic } from "@/lib/haptics";
+import { tenantBookingUrl, tenantHost } from "@/lib/tenant/public-url";
+
+type PosterStyle = "claro" | "oscuro" | "marca";
+
+const POSTER_STYLES: { id: PosterStyle; label: string }[] = [
+  { id: "claro", label: "Claro" },
+  { id: "oscuro", label: "Oscuro" },
+  { id: "marca", label: "Tu color" },
+];
 
 export default function ExtrasPage() {
   const { business, updateBusiness, pushToast } = useDashboardStore();
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const [posterStyle, setPosterStyle] = useState<PosterStyle>("claro");
+  const [canNativeShare, setCanNativeShare] = useState(false);
 
+  const brandColor = business.primaryColor || "#FF4F2B";
   const slug = business.slug || "barberia";
-  const bookingUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/${slug}/reservar`
-      : `https://agendate.py/${slug}/reservar`;
+  const bookingUrl = tenantBookingUrl(slug);
+  const shareText = `Reservá tu turno en ${business.name} en segundos: ${bookingUrl}`;
+
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+  }, []);
 
   useEffect(() => {
     QRCode.toDataURL(
       bookingUrl,
-      {
-        width: 400,
-        margin: 2,
-        color: {
-          dark: "#090d16",
-          light: "#ffffff",
-        },
-      },
+      { width: 600, margin: 1, color: { dark: "#090d16", light: "#ffffff" } },
       (err, url) => {
-        if (!err && url) {
-          setQrDataUrl(url);
-        }
+        if (!err && url) setQrDataUrl(url);
       }
     );
   }, [bookingUrl]);
@@ -55,8 +58,17 @@ export default function ExtrasPage() {
     triggerHaptic("selection");
     await navigator.clipboard.writeText(bookingUrl);
     setCopiedUrl(true);
-    pushToast("success", "Enlace de reservas copiado al portapapeles");
+    pushToast("success", "Enlace de reservas copiado");
     setTimeout(() => setCopiedUrl(false), 2000);
+  }
+
+  async function handleNativeShare() {
+    triggerHaptic("light");
+    try {
+      await navigator.share({ title: business.name, text: shareText, url: bookingUrl });
+    } catch {
+      // el usuario cerró el menú de compartir
+    }
   }
 
   function handlePrint() {
@@ -64,407 +76,253 @@ export default function ExtrasPage() {
     window.print();
   }
 
-  const hasPixel = Boolean(business.metaPixel && business.metaPixel.trim());
+  const hasMetaPixel = Boolean(business.metaPixel?.trim());
+  const hasTiktokPixel = Boolean(business.tiktokPixel?.trim());
+
+  const posterClasses: Record<PosterStyle, string> = {
+    claro: "bg-white text-slate-900 border-slate-200",
+    oscuro: "bg-slate-950 text-white border-slate-800",
+    marca: "text-white border-transparent",
+  };
+
+  const channels = [
+    {
+      name: "WhatsApp",
+      hint: "Mandalo a tus clientes o ponelo en tu estado",
+      icon: MessageCircle,
+      color: "#22c55e",
+      href: `https://wa.me/?text=${encodeURIComponent(shareText)}`,
+    },
+    {
+      name: "Instagram",
+      hint: "Pegalo en el campo “Sitio web” de tu perfil",
+      icon: Camera,
+      color: "#ec4899",
+      onClick: handleCopy,
+    },
+    {
+      name: "Abrir mi página",
+      hint: "Mirá lo que ven tus clientes al reservar",
+      icon: ExternalLink,
+      color: "#3b82f6",
+      href: bookingUrl,
+    },
+  ];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-20">
-      {/* ═══ NATIVE PAGE HEADER ═══ */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Kit de Marketing & Carteles QR
+    <div className="mx-auto max-w-5xl space-y-5 sm:space-y-6 pb-24 px-1 sm:px-0">
+      <style>{`@media print { body * { visibility: hidden !important; } #printable-card, #printable-card * { visibility: visible !important; } #printable-card { position: fixed; inset: 0; margin: auto; width: 100mm; height: fit-content; box-shadow: none !important; } }`}</style>
+
+      {/* Header */}
+      <div className="kpi-rise flex flex-col gap-1 py-1">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Kit de marketing
         </h1>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <a
-            href={qrDataUrl || "#"}
-            download={`qr_${business.slug || "reserva"}.png`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-          >
-            <Download className="h-3.5 w-3.5 text-slate-400" />
-            <span>Descargar QR</span>
-          </a>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
-          >
-            <Printer className="h-3.5 w-3.5 text-slate-400" />
-            <span>Imprimir</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-md transition active:scale-95 cursor-pointer hover:brightness-110"
-            style={{
-              backgroundColor: business.primaryColor || "#FF4F2B",
-              boxShadow: `0 4px 14px -2px ${business.primaryColor || "#FF4F2B"}50`,
-            }}
-          >
-            {copiedUrl ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copiedUrl ? "¡Copiado!" : "Copiar Enlace"}</span>
-          </button>
-        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Tu link, tu QR y tus carteles para que te reserven desde cualquier lado.
+        </p>
       </div>
 
-      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
-      <div className="rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card 1: Estado del Kit */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                >
-                  <QrCode className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Resolución & Estado de Escaneo
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Cartelería física y fidelización rápida</p>
-                </div>
-              </div>
-
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <Check className="h-3.5 w-3.5" />
-                <span>400x400 HD</span>
-              </span>
-            </div>
-
-            {/* Circular Gauges */}
-            <div className="py-4 grid grid-cols-2 gap-4">
-              {/* Gauge 1: QR Ready */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={0}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
-                    100%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Código QR
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    Listo para imprimir
-                  </span>
-                </div>
-              </div>
-
-              {/* Gauge 2: Meta Pixel */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke={hasPixel ? "#10b981" : "#f59e0b"}
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={hasPixel ? 0 : 56}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className={`absolute text-[10px] font-black font-mono ${hasPixel ? "text-emerald-500" : "text-amber-500"}`}>
-                    {hasPixel ? "100%" : "0%"}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Meta Pixel
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {hasPixel ? "Activo" : "Pendiente"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Operational Telemetry Rows */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Formato</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
-                  PNG / PDF
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Escaneo</span>
-                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                  Cámara Nativa
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Velocidad</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
-                  &lt; 30 seg
-                </span>
-              </div>
-            </div>
+      {/* Link hero */}
+      <div className="kpi-rise rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+              <Sparkles className="h-3 w-3" /> Tu link de reservas
+            </span>
+            <p className="mt-3 truncate font-mono text-lg sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              {tenantHost(slug)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Abierto 24/7. Tus clientes reservan sin descargar nada.</p>
           </div>
-
-          {/* Card 2: Enlace Web & Canales */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 font-bold">
-                  <Share2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Enlace Oficial para Redes Sociales
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Instagram Bio, WhatsApp Business y Facebook</p>
-                </div>
-              </div>
-
-              <span className="text-xs font-mono font-bold text-slate-400">
-                {slug}
-              </span>
-            </div>
-
-            {/* URL Box */}
-            <div className="py-2.5">
-              <span className="text-[10px] text-slate-400 block font-medium mb-1">
-                URL Pública de Agendamiento:
-              </span>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800">
-                <span className="font-mono text-xs text-slate-800 dark:text-slate-200 truncate pr-2">
-                  {bookingUrl}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 shrink-0"
-                  style={{
-                    backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
-                    color: "#ffffff",
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  <span>{copiedUrl ? "Copiado" : "Copiar"}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Tip */}
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-              <span>Pegá este enlace en el botón de tu perfil de Instagram para captar reservas automáticas 24/7.</span>
-            </div>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold text-white shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer"
+              style={{ backgroundColor: brandColor }}
+            >
+              {copiedUrl ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedUrl ? "¡Copiado!" : "Copiar link"}
+            </button>
+            {canNativeShare && (
+              <button
+                type="button"
+                onClick={handleNativeShare}
+                className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 active:scale-95 cursor-pointer"
+              >
+                <Share2 className="h-4 w-4" /> Compartir
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Countertop QR Card Generator */}
-        <Card className="flex flex-col justify-between space-y-4">
-          <div>
+      {/* Channels */}
+      <div className="kpi-stagger grid gap-3 sm:grid-cols-3">
+        {channels.map((c) => {
+          const Icon = c.icon;
+          const content = (
+            <>
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110"
+                style={{ backgroundColor: `${c.color}1a`, color: c.color }}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 text-left">
+                <span className="block text-sm font-bold text-slate-900 dark:text-white">{c.name}</span>
+                <span className="block text-[11px] text-slate-500 dark:text-slate-400">{c.hint}</span>
+              </span>
+            </>
+          );
+          const cls =
+            "group flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-4 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md cursor-pointer";
+          return c.href ? (
+            <a key={c.name} href={c.href} target="_blank" rel="noopener noreferrer" className={cls}>
+              {content}
+            </a>
+          ) : (
+            <button key={c.name} type="button" onClick={c.onClick} className={cls}>
+              {content}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-5">
+        {/* Poster */}
+        <Card className="kpi-rise md:col-span-3 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
               <QrCode className="h-5 w-5 text-primary shrink-0" />
-              <h2>Código QR para Mostrador / Vidriera</h2>
+              <h2>Cartel para mostrador</h2>
             </div>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Colocalo en la recepción o en la entrada para que tus clientes agenden su próximo turno antes de retirarse.
-            </p>
+            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+              {POSTER_STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setPosterStyle(s.id);
+                  }}
+                  className={`rounded-lg px-3 py-1 text-[11px] font-bold transition cursor-pointer ${
+                    posterStyle === s.id
+                      ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-xs"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {/* Printable Preview Card */}
+          <div className="rounded-3xl bg-slate-100/80 dark:bg-slate-950/60 p-4 sm:p-8">
             <div
               id="printable-card"
-              className="mt-4 rounded-3xl border-2 border-slate-900/10 dark:border-white/10 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-4 sm:p-6 text-center shadow-lg"
+              className={`mx-auto max-w-[300px] rounded-3xl border p-6 text-center shadow-xl transition-colors duration-300 ${posterClasses[posterStyle]}`}
+              style={posterStyle === "marca" ? { backgroundColor: brandColor } : undefined}
             >
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white font-black text-lg shadow-md shadow-primary/25">
-                {business.name.slice(0, 2).toUpperCase()}
-              </div>
-              <h3 className="mt-3 font-black text-slate-900 dark:text-white text-base">
-                {business.name}
-              </h3>
-              <p className="text-xs text-primary font-bold mt-0.5">
-                ¡Agendá tu turno online en 30 segundos!
-              </p>
+              {business.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={business.logoUrl} alt="" className="mx-auto h-14 w-14 rounded-2xl object-cover" />
+              ) : (
+                <div
+                  className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-black text-white"
+                  style={{ backgroundColor: posterStyle === "marca" ? "rgba(255,255,255,0.2)" : brandColor }}
+                >
+                  {business.name.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <h3 className="mt-3 text-lg font-black leading-tight">{business.name}</h3>
+              <p className="mt-1 text-xs font-bold opacity-80">Escaneá y reservá tu turno</p>
 
-              {/* QR Image */}
-              <div className="my-4 mx-auto w-36 h-36 sm:w-44 sm:h-44 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white p-2.5 shadow-xs flex items-center justify-center">
+              <div className="my-5 mx-auto aspect-square w-44 rounded-2xl bg-white p-2.5 shadow-md">
                 {qrDataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={qrDataUrl}
-                    alt={`QR de reservas para ${business.name}`}
-                    className="w-full h-full object-contain rounded-xl"
-                  />
+                  <img src={qrDataUrl} alt={`QR de reservas para ${business.name}`} className="h-full w-full" />
                 ) : (
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <div className="h-full w-full animate-pulse rounded-xl bg-slate-100" />
                 )}
               </div>
 
-              <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                <p className="font-semibold text-slate-800 dark:text-slate-200">1. Escaneá con la cámara de tu celular</p>
-                <p>2. Elegí servicio, estilista, fecha y hora</p>
-                <p>3. Recibí confirmación inmediata por WhatsApp</p>
-              </div>
-
-              <div className="mt-4 border-t border-slate-100 dark:border-white/5 pt-3">
-                <p className="font-mono text-[10px] text-slate-400">
-                  agendate.py/{business.slug}
-                </p>
-              </div>
+              <ol className="space-y-1 text-[11px] opacity-80">
+                <li>1. Abrí la cámara de tu celular</li>
+                <li>2. Elegí servicio, día y hora</li>
+                <li>3. Recibí la confirmación por WhatsApp</li>
+              </ol>
+              <p className="mt-4 border-t border-current/10 pt-3 font-mono text-[10px] opacity-60">{tenantHost(slug)}</p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <a
               href={qrDataUrl || "#"}
-              download={`qr_${business.slug || "reserva"}.png`}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-800/80 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+              download={`qr_${slug}.png`}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-700"
             >
-              <Download className="h-4 w-4 text-slate-400" />
-              <span>Descargar QR</span>
+              <Download className="h-4 w-4 text-slate-400" /> Descargar solo el QR
             </a>
             <button
               type="button"
               onClick={handlePrint}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-white py-2.5 text-xs font-bold text-white dark:text-slate-900 shadow-sm hover:opacity-90 transition cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-white py-2.5 text-xs font-bold text-white dark:text-slate-900 transition hover:opacity-90 active:scale-[0.98] cursor-pointer"
             >
-              <Printer className="h-4 w-4" />
-              <span>Imprimir Cartel</span>
+              <Printer className="h-4 w-4" /> Imprimir cartel
             </button>
           </div>
         </Card>
 
-        {/* Link Sharing & Channels */}
-        <div className="space-y-6">
-          <Card className="space-y-4">
+        {/* Pixels */}
+        <Card className="kpi-rise md:col-span-2 space-y-4 self-start">
+          <div>
             <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
-              <Share2 className="h-4 w-4 text-primary shrink-0" />
-              <span>Tu Enlace Oficial de Reservas</span>
+              <Target className="h-4 w-4 text-primary shrink-0" /> Medí tus anuncios
             </h2>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/50 p-2 sm:pl-3">
-              <span className="flex-1 truncate font-mono text-xs text-slate-700 dark:text-slate-300 px-1 py-1 sm:p-0">
-                {bookingUrl}
-              </span>
-              <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0">
-                <a
-                  href={bookingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-                  title="Abrir web de reservas"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="hidden sm:inline">Abrir</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-95 transition cursor-pointer"
-                >
-                  {copiedUrl ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedUrl ? "Copiado" : "Copiar"}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1 text-xs">
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 space-y-1">
-                <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                  <Camera className="h-3.5 w-3.5 text-pink-500 shrink-0" /> Instagram Bio
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Pegalo en el campo &ldquo;Sitio web&rdquo; de tu perfil para captar reservas directas.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 space-y-1">
-                <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                  <MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> WhatsApp
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Configuralo como mensaje de bienvenida o respuesta rápida /agenda.
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Marketing Pixels & Configuration */}
-          <Card className="space-y-4">
-            <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
-              <Target className="h-4 w-4 text-primary shrink-0" />
-              <span>Tracking de Pauta & Anuncios (Meta / TikTok)</span>
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Medí el retorno de inversión de tus campañas en Instagram Ads y TikTok en Asunción.
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Conectá tus píxeles para saber cuántas reservas trae cada campaña de Instagram o TikTok.
             </p>
+          </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                  Meta Pixel ID (Facebook / Instagram Ads)
+          <div className="space-y-3 text-xs">
+            {[
+              { label: "Meta Pixel (Facebook / Instagram)", key: "metaPixel" as const, placeholder: "Ej. 182749102948192", active: hasMetaPixel },
+              { label: "TikTok Pixel", key: "tiktokPixel" as const, placeholder: "Ej. C192837482", active: hasTiktokPixel },
+            ].map((f) => (
+              <div key={f.key}>
+                <label className="mb-1 flex items-center justify-between font-semibold text-slate-700 dark:text-slate-200">
+                  {f.label}
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      f.active ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                    }`}
+                  >
+                    {f.active ? "Conectado" : "Sin conectar"}
+                  </span>
                 </label>
                 <input
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none font-mono"
-                  placeholder="Ej. 182749102948192"
-                  value={business.metaPixel}
-                  onChange={(e) => updateBusiness({ metaPixel: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-mono text-slate-900 dark:text-white placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder={f.placeholder}
+                  value={business[f.key] ?? ""}
+                  onChange={(e) => updateBusiness({ [f.key]: e.target.value })}
                 />
               </div>
+            ))}
 
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                  TikTok Pixel ID
-                </label>
-                <input
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none font-mono"
-                  placeholder="Ej. C192837482"
-                  value={business.tiktokPixel}
-                  onChange={(e) => updateBusiness({ tiktokPixel: e.target.value })}
-                />
-              </div>
-
-              <button
-                type="button"
-                className="w-full rounded-2xl bg-primary py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
-                onClick={() => pushToast("success", "Píxeles y configuraciones de pauta guardadas")}
-              >
-                Guardar Píxeles de Conversión
-              </button>
-            </div>
-          </Card>
-        </div>
+            <button
+              type="button"
+              className="w-full rounded-2xl bg-primary py-2.5 text-xs font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
+              onClick={() => {
+                triggerHaptic("success");
+                pushToast("success", "Píxeles guardados");
+              }}
+            >
+              Guardar píxeles
+            </button>
+          </div>
+        </Card>
       </div>
     </div>
   );

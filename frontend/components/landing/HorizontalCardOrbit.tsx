@@ -2,13 +2,13 @@
 
 import React, { useEffect, useRef } from "react";
 import {
-  CheckCircle2,
+  MessageCircle,
   Landmark,
   QrCode,
-  Bell,
+  BellRing,
   Coins,
-  Calendar,
-  Scissors,
+  Link2,
+  CalendarClock,
   Smartphone,
 } from "lucide-react";
 
@@ -16,96 +16,89 @@ interface NotificationCardItem {
   id: string;
   icon: React.ElementType;
   iconBg: string;
+  source: string;
   title: string;
-  subtitle: string;
-  badge?: string;
-  badgeStyle?: string;
+  body: string;
 }
 
-// 8 Píldoras de notificación que viajan en arco envolvente
+// 8 notificaciones con el mismo diseño que el stack de móvil, viajando en arco
 const ORBIT_PILLS: NotificationCardItem[] = [
   {
-    id: "notif-reserva",
-    icon: CheckCircle2,
-    iconBg: "bg-emerald-500 text-white shadow-xs shadow-emerald-500/40",
-    title: "Turno Confirmado",
-    subtitle: "WhatsApp Bot",
-    badge: "15:30 hs",
-    badgeStyle: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+    id: "notif-whatsapp",
+    icon: MessageCircle,
+    iconBg: "bg-[#25D366]",
+    source: "WhatsApp IA",
+    title: "Nuevo turno agendado",
+    body: "Martín · Corte y barba · Hoy 16:30",
   },
   {
     id: "notif-sena",
     icon: Landmark,
-    iconBg: "bg-[#FF4F2B] text-white shadow-xs shadow-[#FF4F2B]/40",
-    title: "Seña Recibida",
-    subtitle: "Transferencia Verificada",
-    badge: "Gs. 80.000",
-    badgeStyle: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300",
-  },
-  {
-    id: "notif-qr",
-    icon: QrCode,
-    iconBg: "bg-violet-500 text-white shadow-xs shadow-violet-500/40",
-    title: "Cobro QR Listo",
-    subtitle: "Bancard / Dinelco",
-    badge: "0% Com.",
-    badgeStyle: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300",
+    iconBg: "bg-[#FF4F2B]",
+    source: "Agendatepy",
+    title: "Seña recibida",
+    body: "Gs. 50.000 por transferencia",
   },
   {
     id: "notif-recordatorio",
-    icon: Bell,
-    iconBg: "bg-amber-500 text-white shadow-xs shadow-amber-500/40",
-    title: "Recordatorio 2h",
-    subtitle: "Anti-ausencias",
-    badge: "Sin faltas",
-    badgeStyle: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+    icon: BellRing,
+    iconBg: "bg-amber-500",
+    source: "Recordatorios",
+    title: "Ana confirmó su turno",
+    body: "Mañana 10:00 · Recordatorio 24 h",
+  },
+  {
+    id: "notif-link",
+    icon: Link2,
+    iconBg: "bg-violet-500",
+    source: "Link de reserva",
+    title: "Reserva desde Instagram",
+    body: "Diego · Limpieza dental · Vie 9:00",
   },
   {
     id: "notif-caja",
     icon: Coins,
-    iconBg: "bg-indigo-500 text-white shadow-xs shadow-indigo-500/40",
-    title: "Arqueo de Caja",
-    subtitle: "Cierre Diario",
-    badge: "Cuadrado",
-    badgeStyle: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300",
+    iconBg: "bg-indigo-500",
+    source: "Caja",
+    title: "Cierre del día listo",
+    body: "14 turnos · Gs. 1.240.000",
   },
   {
-    id: "notif-gcal",
-    icon: Calendar,
-    iconBg: "bg-blue-500 text-white shadow-xs shadow-blue-500/40",
-    title: "Google Sync",
-    subtitle: "Calendar en vivo",
-    badge: "Sync OK",
-    badgeStyle: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
+    id: "notif-agenda",
+    icon: CalendarClock,
+    iconBg: "bg-blue-500",
+    source: "Agenda",
+    title: "Turno reprogramado",
+    body: "Lucía pasó al jueves 18:00",
   },
   {
-    id: "notif-corte",
-    icon: Scissors,
-    iconBg: "bg-purple-500 text-white shadow-xs shadow-purple-500/40",
-    title: "Corte & Barba",
-    subtitle: "Marcos Benítez",
-    badge: "Confirmado",
-    badgeStyle: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300",
+    id: "notif-qr",
+    icon: QrCode,
+    iconBg: "bg-fuchsia-500",
+    source: "Cobros",
+    title: "Cobro QR recibido",
+    body: "Bancard · 0% de comisión",
   },
   {
-    id: "notif-wallet",
+    id: "notif-fidelidad",
     icon: Smartphone,
-    iconBg: "bg-sky-500 text-white shadow-xs shadow-sky-500/40",
-    title: "Tarjeta Fidelidad",
-    subtitle: "Club VIP",
-    badge: "+50 Pts",
-    badgeStyle: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
+    iconBg: "bg-sky-500",
+    source: "Fidelidad",
+    title: "+50 puntos sumados",
+    body: "Club VIP · Tarjeta digital",
   },
 ];
 
-// Anchos base calibrados por forma para cada una de las 8 tarjetas
-const BASE_CARD_WIDTHS = [216, 222, 210, 212, 200, 200, 212, 208];
+// Ancho fijo de cada notificación en el arco
+const BASE_CARD_WIDTHS = Array(ORBIT_PILLS.length).fill(270);
 const MOBILE_CARD_WIDTHS = [104, 110, 100, 102, 95, 95, 102, 98];
 
 // Separación física libre deseada entre el borde de una tarjeta y la siguiente (constante)
 const UNIFORM_EDGE_GAP = 48;
 
 export default function HorizontalCardOrbit() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const isOnScreenRef = useRef(true);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const progressRef = useRef<number>(0);
   const animRef = useRef<number | null>(null);
@@ -217,17 +210,36 @@ export default function HorizontalCardOrbit() {
     return sTable[i1] + frac * (sTable[i2] - sTable[i1]);
   };
 
+  useEffect(() => {
+    const target = rootRef.current?.parentElement;
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      isOnScreenRef.current = entry.isIntersecting;
+    });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
   // Bucle de animación ininterrumpido (nunca se detiene al posar o interactuar)
   useEffect(() => {
     const total = ORBIT_PILLS.length;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let lastTime = performance.now();
+    let hasRendered = false;
 
     const loop = (now: number) => {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
+      if (hasRendered && (!isOnScreenRef.current || document.hidden)) {
+        animRef.current = requestAnimationFrame(loop);
+        return;
+      }
+      hasRendered = true;
+
       // Movimiento continuo sin pausa por hover o selección
-      progressRef.current = (progressRef.current + dt * paramsRef.current.speed) % 1;
+      const speed = reduceMotion ? 0 : paramsRef.current.speed;
+      progressRef.current = (progressRef.current + dt * speed) % 1;
 
       const p = progressRef.current;
       const { w, hDrop, yApex } = paramsRef.current;
@@ -281,8 +293,11 @@ export default function HorizontalCardOrbit() {
           opacity = Math.max(0, 1 - (sMag - fadeLimit) / (isMobile ? 0.15 : 0.35));
         }
 
+        // Profundidad: las tarjetas se achican al alejarse del ápice
+        const depthScale = 1 - 0.12 * Math.min(sMag, 1);
+
         // GPU direct transform
-        el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%) rotate(${angleDeg.toFixed(2)}deg)`;
+        el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%) rotate(${angleDeg.toFixed(2)}deg) scale(${depthScale.toFixed(3)})`;
         el.style.opacity = opacity.toFixed(3);
       }
 
@@ -296,7 +311,11 @@ export default function HorizontalCardOrbit() {
   }, []);
 
   return (
-    <div className="absolute top-2 xs:top-3 sm:top-5 md:top-6 left-1/2 -translate-x-1/2 w-0 h-0 pointer-events-none select-none z-10 overflow-visible">
+    <div
+      ref={rootRef}
+      aria-hidden="true"
+      className="absolute top-2 xs:top-3 sm:top-7 md:top-9 left-1/2 -translate-x-1/2 w-0 h-0 pointer-events-none select-none z-10 overflow-visible"
+    >
       {/* 8 Cards con curvatura pronunciada y movimiento continuo sin freno */}
       {ORBIT_PILLS.map((item, idx) => {
         const Icon = item.icon;
@@ -314,27 +333,26 @@ export default function HorizontalCardOrbit() {
               zIndex: 30,
             }}
           >
-            <div className="group flex items-center gap-1 sm:gap-2.5 rounded-full py-0.5 sm:py-1.5 pl-0.5 sm:pl-1.5 pr-1.5 sm:pr-3 cursor-pointer bg-white/98 dark:bg-slate-900/98 border border-slate-200/90 dark:border-white/10 shadow-xs sm:shadow-md shadow-slate-950/10 dark:shadow-black/50 transition-all duration-150 hover:border-[#FF4F2B] hover:shadow-xl hover:shadow-[#FF4F2B]/20">
-              <div
-                className={`flex h-5 w-5 sm:h-8 sm:w-8 items-center justify-center rounded-full shrink-0 transition-transform duration-150 ${item.iconBg} group-hover:scale-105`}
+            <div className="flex w-[270px] items-center gap-3 rounded-[18px] px-3 py-2.5 bg-white dark:bg-slate-900 shadow-[0_12px_32px_-10px_rgba(15,23,42,0.30)] dark:shadow-[0_12px_32px_-10px_rgba(0,0,0,0.6)]">
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] text-white ${item.iconBg}`}
               >
-                <Icon className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
-              </div>
-              <div className="flex flex-col text-left whitespace-nowrap">
-                <span className="text-[9px] sm:text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} />
+              </span>
+              <div className="min-w-0 flex-1 text-left">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 truncate">
+                    {item.source}
+                  </span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">ahora</span>
+                </div>
+                <p className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight truncate">
                   {item.title}
-                </span>
-                <span className="text-[7.5px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                  {item.subtitle}
-                </span>
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug truncate tabular-nums">
+                  {item.body}
+                </p>
               </div>
-              {item.badge && (
-                <span
-                  className={`rounded-full px-1.5 sm:px-2 py-0.2 sm:py-0.5 text-[6.5px] sm:text-[9px] font-bold shrink-0 ml-0.5 whitespace-nowrap ${item.badgeStyle}`}
-                >
-                  {item.badge}
-                </span>
-              )}
             </div>
           </div>
         );

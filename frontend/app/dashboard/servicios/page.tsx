@@ -1,5 +1,7 @@
 "use client";
 
+import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
+
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -503,7 +505,7 @@ export default function ServiciosPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+      <div data-tour="servicios-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -547,7 +549,7 @@ export default function ServiciosPage() {
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="servicios-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
         <div className="flex items-center justify-between gap-2 px-1">
           <div className="font-semibold text-sm text-slate-900 dark:text-white">
@@ -671,7 +673,7 @@ export default function ServiciosPage() {
               <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
                 <span>Precio promedio por servicio</span>
                 <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                  {formatGs(avgPrice)}
+                  <AnimatedValue value={formatGs(avgPrice)} />
                 </span>
               </div>
             </div>
@@ -846,12 +848,12 @@ export default function ServiciosPage() {
           {/* Mobile Apple Inset Grouped Services List */}
           <div className="block sm:hidden space-y-3">
             <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
-              {filteredServices.map((item) => {
+              {filteredServices.map((item, index) => {
                 const isVisible = item.active !== false;
                 const hasActivePromo = item.hasPromo && item.promoPrice;
                 const currentPrice = hasActivePromo ? item.promoPrice! : item.price;
                 return (
-                  <div key={item.id} className="p-3.5 space-y-2.5">
+                  <div key={item.id} data-tour={index === 0 ? "servicios-card" : undefined} className="p-3.5 space-y-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         {/* Apple Squircle Icon with Brand Accent */}
@@ -915,6 +917,7 @@ export default function ServiciosPage() {
                           triggerHaptic("light");
                           handleOpenPromoModal(item);
                         }}
+                        data-tour={index === 0 ? "servicios-promo-btn" : undefined}
                         className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 cursor-pointer"
                       >
                         <Flame className="h-3 w-3" />
@@ -928,6 +931,7 @@ export default function ServiciosPage() {
                             triggerHaptic("light");
                             handleCopyServiceLink(item.id, item.name);
                           }}
+                          data-tour={index === 0 ? "servicios-share-btn" : undefined}
                           className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
                           title="Copiar link"
                         >

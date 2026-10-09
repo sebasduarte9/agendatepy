@@ -440,7 +440,7 @@ export default function ProductosPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+      <div data-tour="productos-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -452,7 +452,7 @@ export default function ProductosPage() {
           </div>
           {lowStockCount > 0 ? (
             <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              ⚠️ {lowStockCount} por reponer
+               {lowStockCount} por reponer
             </span>
           ) : (
             <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -467,7 +467,7 @@ export default function ProductosPage() {
       </div>
 
       {/* Apple Inset Telemetry & Intelligence Container (Desktop) */}
-      <div data-tour="productos-kpis" className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="productos-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Card 1: Stock Health & Financial Overview */}
           <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
@@ -843,9 +843,9 @@ export default function ProductosPage() {
       ) : (
         <>
           {/* Mobile Apple Inset Grouped Inventory List */}
-          <div className="block sm:hidden space-y-3">
+          <div data-tour="productos-grid" className="block sm:hidden space-y-3">
             <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
-              {filteredProducts.map((p) => {
+              {filteredProducts.map((p, index) => {
                 const isLowStock = p.stock <= 5;
                 const marginPercent = Math.round(((p.price - p.cost) / p.price) * 100);
                 const isBroken = brokenImages[p.id] || !p.imageUrl;
@@ -951,6 +951,7 @@ export default function ProductosPage() {
                             triggerHaptic("light");
                             handleOpenPromoModal(p);
                           }}
+                          data-tour={index === 0 ? "productos-promo-btn" : undefined}
                           className={`px-2 py-0.5 rounded-lg text-[10.5px] font-bold flex items-center gap-1 transition cursor-pointer ${
                             p.isOnSale && p.salePrice && p.salePrice < p.price
                               ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"

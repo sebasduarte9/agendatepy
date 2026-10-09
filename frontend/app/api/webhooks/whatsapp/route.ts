@@ -194,11 +194,11 @@ export async function POST(req: NextRequest) {
                 });
               }
 
-              replyText = `¡Muchas gracias! 🙌 Recibimos y validamos tu comprobante de transferencia:\n\n` +
-                `🏦 *Banco:* ${receiptData.bank}\n` +
-                `💰 *Monto:* ₲ ${receiptData.amount.toLocaleString("es-PY")}\n` +
-                `🔖 *N° Operación:* ${receiptData.operationNumber}\n\n` +
-                `✅ Tu turno ha quedado *CONFIRMADO*. ¡Te esperamos en ${tenant.name}!`;
+              replyText = `¡Muchas gracias! Recibimos y validamos tu comprobante de transferencia:\n\n` +
+                ` *Banco:* ${receiptData.bank}\n` +
+                ` *Monto:* ₲ ${receiptData.amount.toLocaleString("es-PY")}\n` +
+                ` *N° Operación:* ${receiptData.operationNumber}\n\n` +
+                ` Tu turno ha quedado *CONFIRMADO*. ¡Te esperamos en ${tenant.name}!`;
             } else {
               replyText = `Recibimos tu imagen. Nuestro equipo revisará el comprobante a la brevedad para confirmar tu turno. ¡Muchas gracias!`;
             }

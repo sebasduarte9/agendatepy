@@ -68,7 +68,7 @@ export default function Footer() {
           {COLUMNS.map((column) => (
             <div key={column.title} className="col-span-1">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">{column.title}</p>
-              <ul className="mt-2 sm:mt-3 space-y-1.5 sm:space-y-2">
+              <ul className="mt-1 sm:mt-3 sm:space-y-2">
                 {column.links.map((link) => (
                   <li key={link.label}>
                     {link.isExternal ? (
@@ -76,7 +76,7 @@ export default function Footer() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
+                        className="inline-flex min-h-10 sm:min-h-0 items-center gap-1 text-[13px] sm:text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
                       >
                         <span>{link.label}</span>
                         <ExternalLink className="h-2.5 w-2.5 opacity-60" />
@@ -84,14 +84,14 @@ export default function Footer() {
                     ) : link.href.startsWith("#") ? (
                       <a
                         href={link.href}
-                        className="text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
+                        className="inline-flex min-h-10 sm:min-h-0 items-center text-[13px] sm:text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
+                        className="inline-flex min-h-10 sm:min-h-0 items-center text-[13px] sm:text-xs text-slate-600 dark:text-slate-400 hover:text-brand transition"
                       >
                         {link.label}
                       </Link>

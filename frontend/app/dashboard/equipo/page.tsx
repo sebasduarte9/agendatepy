@@ -375,7 +375,7 @@ export default function EquipoRolesPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+      <div data-tour="equipo-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -404,7 +404,7 @@ export default function EquipoRolesPage() {
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="equipo-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
         <div className="flex items-center justify-between gap-2 px-1">
           <div className="font-semibold text-sm text-slate-900 dark:text-white">

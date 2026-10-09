@@ -67,7 +67,7 @@ export default function DashboardShell({
 
   return (
     <div
-      className="flex min-h-screen bg-[var(--background)] font-sans antialiased text-slate-900 dark:text-slate-100"
+      className="flex min-h-dvh bg-[var(--background)] font-sans antialiased text-slate-900 dark:text-slate-100"
       style={{
         ["--primary" as string]: color || "#FF4F2B",
         ["--color-primary" as string]: color || "#FF4F2B",

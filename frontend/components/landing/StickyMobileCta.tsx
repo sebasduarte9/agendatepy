@@ -43,18 +43,15 @@ export default function StickyMobileCta() {
               </p>
             </div>
 
-            {/* Botón Principal con línea glow neón rotando alrededor */}
             <div className="flex items-center gap-1.5 xs:gap-2 shrink-0">
               <Link
                 href="/onboarding"
-                className="relative group p-[1.5px] rounded-xl overflow-hidden active:scale-95 transition-transform"
+                className="group rounded-xl active:scale-95 transition-transform"
               >
-                {/* Línea glow neón que va dando vueltas de a poco sobre el borde */}
-                <span className="absolute inset-[-150%] animate-[spin_3.5s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_0_300deg,#FF4F2B_360deg)] pointer-events-none" />
-                <span className="relative flex h-8.5 xs:h-9 items-center justify-center gap-1.5 rounded-[10px] bg-[#FF4F2B] hover:bg-[#F04420] px-3.5 xs:px-4 text-xs font-black text-white shadow-md shadow-[#FF4F2B]/25 transition shrink-0 whitespace-nowrap">
-                  <CalendarPlus className="h-3.5 w-3.5 text-white shrink-0" />
+                <span className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#FF4F2B] hover:bg-[#F04420] px-4 text-[13px] font-black text-white shadow-md shadow-[#FF4F2B]/25 transition shrink-0 whitespace-nowrap">
+                  <CalendarPlus className="h-4 w-4 text-white shrink-0" />
                   <span>Empezar gratis</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                  <ArrowRight className="h-4 w-4 shrink-0" />
                 </span>
               </Link>
             </div>

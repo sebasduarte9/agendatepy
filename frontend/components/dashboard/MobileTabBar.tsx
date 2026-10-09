@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { triggerHaptic } from "@/lib/haptics";
+import { tenantHost } from "@/lib/tenant/public-url";
 
 export default function MobileTabBar() {
   const pathname = usePathname();
@@ -397,7 +398,7 @@ export default function MobileTabBar() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="relative z-10 w-full max-h-[88vh] rounded-t-[32px] bg-[#f8fafc] dark:bg-[#121215] text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))]"
+              className="relative z-10 w-full max-h-[88dvh] rounded-t-[32px] bg-[#f8fafc] dark:bg-[#121215] text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))]"
             >
               {/* Drag Handle & Header Area */}
               <div
@@ -580,7 +581,7 @@ export default function MobileTabBar() {
                           Ver Portal Público de Reservas
                         </span>
                         <span className="text-[10px] text-slate-400 font-mono">
-                          agendate.py/{business.slug || "barberia"}
+                          {tenantHost(business.slug || "barberia")}
                         </span>
                       </div>
                     </div>

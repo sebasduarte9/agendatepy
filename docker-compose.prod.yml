@@ -35,7 +35,7 @@ services:
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
       RESEND_API_KEY: "${RESEND_API_KEY}"
       EMAIL_FROM: "${EMAIL_FROM:-AgendatePY <seguridad@agendatepy.com>}"
-      SESSION_SECRET: "${SESSION_SECRET:-agendatepy-super-secure-production-secret-key-2026}"
+      SESSION_SECRET: "${SESSION_SECRET:?Definí SESSION_SECRET en el .env del servidor}"
       NODE_ENV: production
     ports:
       - "127.0.0.1:3000:3000"

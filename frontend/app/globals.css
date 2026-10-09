@@ -30,6 +30,7 @@
 }
 
 @theme inline {
+  --breakpoint-xs: 23.4375rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
@@ -173,6 +174,50 @@ button, a, [role="button"], [role="tab"] {
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #71717a !important;
+}
+
+@keyframes kpi-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kpi-rise {
+  animation: kpi-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kpi-stagger > * {
+  animation: kpi-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.kpi-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.kpi-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.kpi-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.kpi-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.kpi-stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+@keyframes day-slide-left {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes day-slide-right {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.day-slide-left { animation: day-slide-left 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.day-slide-right { animation: day-slide-right 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .day-slide-left,
+  .day-slide-right,
+  .kpi-rise,
+  .kpi-stagger > * {
+    animation: none;
+  }
 }
 
 @keyframes ticker-scroll {
@@ -502,17 +547,22 @@ button, a, [role="button"], [role="tab"] {
 }
 
 .animate-aurora-1 {
-  animation: aurora-wave-1 24s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: aurora-wave-1 14s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   will-change: transform;
 }
 
 .animate-aurora-2 {
-  animation: aurora-wave-2 30s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: aurora-wave-2 17s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   will-change: transform;
 }
 
 .animate-aurora-3 {
-  animation: aurora-wave-3 26s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: aurora-wave-3 15s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: transform;
+}
+
+.animate-aurora-4 {
+  animation: aurora-wave-2 11s cubic-bezier(0.4, 0, 0.6, 1) infinite reverse;
   will-change: transform;
 }
 
@@ -525,6 +575,7 @@ button, a, [role="button"], [role="tab"] {
   .animate-aurora-1,
   .animate-aurora-2,
   .animate-aurora-3,
+  .animate-aurora-4,
   .animate-aurora-wave {
     animation: none;
   }
