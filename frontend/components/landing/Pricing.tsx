@@ -13,6 +13,7 @@ const FREE_FEATURES = [
 ];
 
 const BASIC_FEATURES = [
+  "14 días de prueba gratis sin compromiso",
   "Hasta 100 turnos por mes",
   "Asistente IA que agenda por WhatsApp",
   "Confirmaciones automáticas por WhatsApp",
@@ -53,7 +54,7 @@ const PLANS_DATA = [
     id: "basico",
     name: "Plan Básico",
     shortName: "Básico",
-    badge: undefined,
+    badge: "14 Días Gratis",
     description: "Para profesionales independientes en crecimiento.",
     priceMonthly: "Gs. 100.000",
     priceAnnual: "Gs. 80.000",
@@ -61,7 +62,7 @@ const PLANS_DATA = [
     isFree: false,
     savings: "Ahorrás Gs. 240.000 al año",
     billedDetail: "Gs. 960.000 facturado anual",
-    cta: "Elegir Básico",
+    cta: "Probar 14 días gratis",
     href: "/onboarding",
     isExternal: false,
     includes: "Todo lo del Gratis, y además:",
@@ -80,7 +81,7 @@ const PLANS_DATA = [
     isFree: false,
     savings: "Ahorrás Gs. 600.000 al año",
     billedDetail: "Gs. 2.400.000 facturado anual",
-    cta: "Probar Plan Pro",
+    cta: "Elegir Plan Pro",
     href: "/onboarding",
     isExternal: false,
     includes: "Todo lo del Básico, y además:",

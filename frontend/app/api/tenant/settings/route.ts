@@ -126,6 +126,11 @@ export async function PATCH(request: NextRequest) {
     } else if (customSettings?.loyalty !== undefined) {
       mergedSettings.loyalty = customSettings.loyalty;
     }
+    if (body.whatsappTemplates !== undefined) {
+      mergedSettings.whatsappTemplates = body.whatsappTemplates;
+    } else if (customSettings?.whatsappTemplates !== undefined) {
+      mergedSettings.whatsappTemplates = customSettings.whatsappTemplates;
+    }
 
     updateData.settings = mergedSettings;
 

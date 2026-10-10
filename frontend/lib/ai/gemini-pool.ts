@@ -1,13 +1,13 @@
 /**
  * Gemini Multi-Key Pool Manager & Load Balancer
  *
- * Administra el clúster de 4 API Keys gratuitas de Google AI Studio / Antigravity Pro.
+ * Administra el clúster de API Keys gratuitas de Google AI Studio / Antigravity Pro.
  * Proporciona:
- * - Round-Robin con selección inteligente por menor carga de RPM.
- * - Monitoreo en tiempo real de RPM (0-15) y RPD (0-1500) por clave.
+ * - Round-Robin con selección inteligente por menor carga de RPM y RPD.
+ * - Monitoreo en tiempo real de RPM (0-15) y RPD (0-500) por clave.
  * - Failover / Fallback transparente en caso de error 429 o 503.
  * - Soporte de modelos Flash (gemini-3.1-flash-lite con fallback a gemini-3.5-flash-lite).
- * - Visión Multimodal para análisis de comprobantes SIPAP bancarios de Paraguay.
+ * - Visión Multimodal para análisis de comprobantes de transferencias bancarias de Paraguay.
  * - Registro de auditoría en memoria para el panel Superadmin.
  */
 
@@ -58,7 +58,13 @@ class GeminiPoolManager {
   }
 
   public reloadKeys(): void {
-    const rawKeys = process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || "";
+    const rawKeys = [
+      process.env.AGENDATE_ASSISTANT_GEMINI_KEY,
+      process.env.GEMINI_API_KEYS,
+      process.env.GEMINI_API_KEY,
+    ]
+      .filter(Boolean)
+      .join(",");
     this.keys = rawKeys
       .split(",")
       .map((k) => k.trim())
@@ -77,7 +83,7 @@ class GeminiPoolManager {
           requestsThisMinute: 0,
           requestsToday: 0,
           limitRpm: 15,
-          limitRpd: 1500,
+          limitRpd: 500, // Límite oficial gratuito de Google AI Studio: 500 peticiones por día por clave
           avgLatencyMs: 0,
           lastPingMs: 0,
           lastUsedAt: null,
@@ -109,24 +115,31 @@ class GeminiPoolManager {
       this.minuteBuckets.set(key, bucket);
       stats.requestsThisMinute = bucket.length;
 
-      // Chequear reseteo de día
+      // Chequear reseteo de día (medianoche UTC)
       const dayData = this.dailyCounts.get(key);
       if (!dayData || dayData.date !== todayStr) {
         this.dailyCounts.set(key, { date: todayStr, count: 0 });
         stats.requestsToday = 0;
+        if (stats.status === "exhausted") {
+          stats.status = "active";
+        }
       } else {
         stats.requestsToday = dayData.count;
+        // Si superó el límite diario de 500, marcar como agotada para el resto del día
+        if (stats.requestsToday >= stats.limitRpd) {
+          stats.status = "exhausted";
+        }
       }
 
-      // Desbloquear cooldown si ya pasó más de 45 segundos
-      if (stats.status === "cooldown" && stats.requestsThisMinute < 12) {
+      // Desbloquear cooldown si ya pasó más de 45 segundos y no está agotada por el día
+      if (stats.status === "cooldown" && stats.requestsThisMinute < 12 && stats.requestsToday < stats.limitRpd) {
         stats.status = "active";
       }
     }
   }
 
   /**
-   * Selecciona la clave más óptima con menor ocupación de RPM y que no esté en cooldown
+   * Selecciona la clave más óptima con menor ocupación de RPM y que no esté en cooldown ni agotada
    */
   private getNextKey(): { key: string; stats: KeyStats } {
     this.updateMinuteWindows();
@@ -135,18 +148,38 @@ class GeminiPoolManager {
       throw new Error("No hay API keys de Gemini configuradas en GEMINI_API_KEYS");
     }
 
-    // Filtrar candidatas disponibles
+    // Filtrar candidatas disponibles que tengan cuota diaria (< 500) y de minuto (< 14)
     const candidates = this.keys
       .map((k) => ({ key: k, stats: this.keyStats.get(k)! }))
-      .filter((item) => item.stats.status === "active" && item.stats.requestsThisMinute < 14);
+      .filter(
+        (item) =>
+          item.stats.status === "active" &&
+          item.stats.requestsThisMinute < 14 &&
+          item.stats.requestsToday < item.stats.limitRpd
+      );
 
     if (candidates.length > 0) {
-      // Ordenar por menor RPM actual
-      candidates.sort((a, b) => a.stats.requestsThisMinute - b.stats.requestsThisMinute);
+      // Ordenar primero por menor ocupación diaria y luego por menor RPM actual
+      candidates.sort((a, b) => {
+        if (a.stats.requestsThisMinute !== b.stats.requestsThisMinute) {
+          return a.stats.requestsThisMinute - b.stats.requestsThisMinute;
+        }
+        return a.stats.requestsToday - b.stats.requestsToday;
+      });
       return candidates[0];
     }
 
-    // Si todas están al límite, tomar por Round-Robin la que no esté en error permanente
+    // Si todas están cerca del límite de minuto pero tienen cuota diaria, elegir la de menor uso diario
+    const dailyAvailable = this.keys
+      .map((k) => ({ key: k, stats: this.keyStats.get(k)! }))
+      .filter((item) => item.stats.requestsToday < item.stats.limitRpd);
+
+    if (dailyAvailable.length > 0) {
+      dailyAvailable.sort((a, b) => a.stats.requestsToday - b.stats.requestsToday);
+      return dailyAvailable[0];
+    }
+
+    // Si todas las claves del clúster alcanzaron los 500 RPD, tomar por Round-Robin la que no esté en error permanente
     this.roundRobinIdx = (this.roundRobinIdx + 1) % this.keys.length;
     const key = this.keys[this.roundRobinIdx];
     return { key, stats: this.keyStats.get(key)! };
@@ -155,7 +188,10 @@ class GeminiPoolManager {
   /**
    * Ejecuta una llamada a Gemini con rotación automática de claves y tolerancia a fallos
    */
-  public async generateContent(payload: any, options?: { intent?: ChatAuditLog["intent"]; clientPhone?: string }): Promise<any> {
+  public async generateContent(
+    payload: any,
+    options?: { intent?: ChatAuditLog["intent"]; clientPhone?: string; modelOverride?: string }
+  ): Promise<any> {
     this.updateMinuteWindows();
 
     let attempts = 0;
@@ -167,7 +203,7 @@ class GeminiPoolManager {
     while (attempts < maxAttempts) {
       attempts++;
       const { key, stats } = this.getNextKey();
-      const model = attempts > this.keys.length ? candidateModels[1] : candidateModels[0];
+      const model = options?.modelOverride || (attempts > this.keys.length ? candidateModels[1] : candidateModels[0]);
 
       const startTime = Date.now();
       try {
@@ -248,7 +284,7 @@ class GeminiPoolManager {
   }
 
   /**
-   * Análisis Multimodal de Comprobantes SIPAP (Itaú, Ueno, Continental, BNF, etc.)
+   * Análisis Multimodal de Comprobantes de Transferencias Bancarias (Itaú, Ueno, Continental, BNF, etc.)
    */
   public async analyzeSipapReceipt(
     base64Data: string,
@@ -265,13 +301,13 @@ class GeminiPoolManager {
     confidence: number;
     rawNotes?: string;
   }> {
-    const prompt = `Analiza detenidamente esta imagen de comprobante bancario o transferencia de Paraguay (SIPAP / SPI / Bancard / QR / Itaú / Ueno / Continental / Atlas / BNF / etc.).
+    const prompt = `Analiza detenidamente esta imagen de comprobante bancario o transferencia bancaria de Paraguay (Itaú / Ueno / Continental / Atlas / BNF / Familiar / Sudameris / GNB / etc.).
 Extrae estrictamente un objeto JSON con los siguientes campos:
 {
   "isSipap": boolean (true si es un comprobante de transferencia bancaria real),
   "bank": string (nombre del banco de origen o app, ej: "Banco Itaú", "Ueno Bank", "Continental", "BNF", "Familiar"),
   "amount": number (monto transferido en Guaraníes, solo número entero sin puntos ni comas, ej: 80000),
-  "operationNumber": string (código de operación, referencia o transacción SIPAP / SPI),
+  "operationNumber": string (código de operación, referencia o número de transacción bancaria),
   "senderName": string (nombre del ordenante o emisor si figura),
   "recipientName": string (nombre del beneficiario o negocio si figura),
   "date": string (fecha y hora del comprobante si figura),
@@ -364,6 +400,7 @@ Responde estrictamente con el texto transcripto, sin agregar prefijos, comillas 
       const response = await this.generateContent(payload, {
         intent: "consulta",
         clientPhone,
+        modelOverride: "gemini-3.5-flash-lite",
       });
 
       const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";

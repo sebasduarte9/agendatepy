@@ -1,18 +1,57 @@
-version: "3.8"
-
 services:
+  agendatepy-postgres:
+    image: postgres:15-alpine
+    container_name: agendatepy_evolution_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agendatepy
+      POSTGRES_PASSWORD: agendatepy_db_secret_pass
+      POSTGRES_DB: evolution_agendatepy
+    volumes:
+      - agendatepy_evo_pgdata:/var/lib/postgresql/data
+    networks:
+      - agendatepy_evo_net
+
+  agendatepy-redis:
+    image: redis:7-alpine
+    container_name: agendatepy_evolution_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - agendatepy_evo_redisdata:/data
+    networks:
+      - agendatepy_evo_net
+
   whatsapp-gateway:
-    image: atendai/evolution-api:v2.1.2
+    image: evoapicloud/evolution-api:latest
     container_name: agendatepy_whatsapp_gateway
     restart: unless-stopped
+    depends_on:
+      - agendatepy-postgres
+      - agendatepy-redis
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
-      - SERVER_URL=${EVOLUTION_SERVER_URL:-http://localhost:8080}
+      - SERVER_PORT=8080
+      - SERVER_URL=${EVOLUTION_SERVER_URL:-http://localhost:8081}
+      - DOCKER_ENV=true
       - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-agendatepy_whatsapp_secure_key_2026}
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
       
-      # Webhook global para AgendatePY
+      # Database & Redis aislados
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://agendatepy:agendatepy_db_secret_pass@agendatepy-postgres:5432/evolution_agendatepy?schema=public
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      - DATABASE_SAVE_DATA_CHATS=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://agendatepy-redis:6379/1
+      - CACHE_REDIS_PREFIX_KEY=agendatepy_evo
+      - CACHE_REDIS_SAVE_INSTANCES=false
+      - CACHE_LOCAL_ENABLED=false
+      
+      # Webhook Global hacia AgendatePY
       - WEBHOOK_GLOBAL_ENABLED=true
       - WEBHOOK_GLOBAL_URL=${EVOLUTION_WEBHOOK_URL:-http://host.docker.internal:3000/api/webhooks/whatsapp}
       - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false
@@ -20,21 +59,26 @@ services:
       - WEBHOOK_EVENTS_QRCODE_UPDATED=true
       - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
 
-      # Identificador de sesión para clientes
+      # Sesión y configuración
       - CONFIG_SESSION_PHONE_CLIENT=AgendatePY
       - CONFIG_SESSION_PHONE_NAME=Chrome
       - QRCODE_LIMIT=30
-      - LOG_LEVEL=ERROR
-
-      # Base de datos interna ligera
-      - DATABASE_ENABLED=false
-      - REDIS_ENABLED=false
+      - LOG_LEVEL=ERROR,WARN,INFO
+      - DEL_INSTANCE=false
     volumes:
-      - evolution_instances:/evolution/instances
-      - evolution_store:/evolution/store
+      - agendatepy_evo_instances:/evolution/instances
+      - agendatepy_evo_store:/evolution/store
+    networks:
+      - agendatepy_evo_net
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
 volumes:
-  evolution_instances:
-  evolution_store:
+  agendatepy_evo_pgdata:
+  agendatepy_evo_redisdata:
+  agendatepy_evo_instances:
+  agendatepy_evo_store:
+
+networks:
+  agendatepy_evo_net:
+    driver: bridge

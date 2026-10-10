@@ -41,21 +41,52 @@ import {
   Sun,
   Moon,
   ShieldAlert,
+  Save,
+  Trash2,
+  Timer,
+  Sliders,
+  Eye,
+  Copy,
+  ArrowUpRight,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { tenantPublicUrl } from "@/lib/tenant/public-url";
 
+// Timing presets for automatic reminder cron jobs
+const TIMING_PRESETS = [
+  { label: "24h Antes (1 día)", minutes: 1440, desc: "Día anterior" },
+  { label: "12h Antes", minutes: 720, desc: "12 horas previas" },
+  { label: "6h Antes", minutes: 360, desc: "6 horas previas" },
+  { label: "4h Antes", minutes: 240, desc: "4 horas previas" },
+  { label: "2h Antes", minutes: 120, desc: "2 horas previas" },
+  { label: "1h Antes", minutes: 60, desc: "1 hora previa" },
+  { label: "30 Minutos", minutes: 30, desc: "Última media hora" },
+];
+
+function formatTimingLabel(minutes?: number): string {
+  if (!minutes || minutes <= 0) return "Inmediato (sin espera)";
+  if (minutes % 1440 === 0) {
+    const days = minutes / 1440;
+    return `${days} ${days === 1 ? "día" : "días"} antes`;
+  }
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} ${hours === 1 ? "hora" : "horas"} antes`;
+  }
+  return `${minutes} minutos antes`;
+}
+
 // Dynamic message tags for reminder templates
 const AVAILABLE_TAGS = [
-  { tag: "{cliente}", label: "Nombre Cliente" },
-  { tag: "{servicio}", label: "Servicio" },
-  { tag: "{profesional}", label: "Profesional" },
-  { tag: "{fecha}", label: "Fecha" },
-  { tag: "{hora}", label: "Hora" },
-  { tag: "{negocio}", label: "Nombre Negocio" },
-  { tag: "{direccion}", label: "Dirección" },
-  { tag: "{link_autogestion}", label: "Link Autogestión" },
-  { tag: "{link_negocio}", label: "Link del Negocio" },
+  { tag: "{cliente}", label: "Nombre Cliente", sample: "Martín Benítez" },
+  { tag: "{servicio}", label: "Servicio", sample: "Corte Fade Clásico" },
+  { tag: "{profesional}", label: "Profesional", sample: "Diego Franco" },
+  { tag: "{fecha}", label: "Fecha", sample: "Viernes 25 de Octubre" },
+  { tag: "{hora}", label: "Hora", sample: "16:00 hs" },
+  { tag: "{negocio}", label: "Nombre Negocio", sample: "Tu Negocio" },
+  { tag: "{direccion}", label: "Dirección", sample: "Avda. Santa Teresa 1420" },
+  { tag: "{link_autogestion}", label: "Link Autogestión", sample: "https://agendatepy.com/turno/AG-9421" },
+  { tag: "{link_negocio}", label: "Link del Negocio", sample: "https://agendatepy.com/mi-local" },
 ];
 
 // Helper to format WhatsApp text (*bold*, _italic_, ~strike~)
@@ -148,12 +179,19 @@ export default function BotWhatsAppPage() {
     updateEvolutionConfig,
     whatsappTemplates,
     updateWhatsAppTemplate,
+    createWhatsAppTemplate,
+    deleteWhatsAppTemplate,
     toggleWhatsAppTemplate,
     updateBusiness,
     pushToast,
   } = useDashboardStore();
 
   const isConnected = Boolean(evolutionConfig.connected);
+
+  // Estados para Cron Job y Recordatorios configurables
+  const [isSavingTemplates, setIsSavingTemplates] = useState(false);
+  const [isSendingTestReminder, setIsSendingTestReminder] = useState(false);
+  const [customMinutesInput, setCustomMinutesInput] = useState<string>("");
 
   // Solamente 2 pestañas simples: "asistente" (por defecto) o "recordatorios"
   const [activeTab, setActiveTab] = useState<"asistente" | "recordatorios">("asistente");
@@ -460,6 +498,85 @@ export default function BotWhatsAppPage() {
       .replace(/{direccion}/g, business.address || "Avda. Santa Teresa 1420")
       .replace(/{link_autogestion}/g, tenantPublicUrl(business.slug, "/turno/AG-9421"))
       .replace(/{link_negocio}/g, tenantPublicUrl(business.slug));
+  }
+
+  async function handleSaveTemplates() {
+    setIsSavingTemplates(true);
+    try {
+      const res = await fetch("/api/tenant/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whatsappTemplates,
+        }),
+      });
+      if (!res.ok) throw new Error("Error en el servidor");
+      pushToast("success", "Plantillas y tiempos de recordatorio guardados exitosamente.");
+    } catch (e: any) {
+      console.error(e);
+      pushToast("error", "No se pudo guardar la configuración en la base de datos.");
+    } finally {
+      setIsSavingTemplates(false);
+    }
+  }
+
+  async function handleSendTestReminder() {
+    if (!currentTemplate) return;
+    const cleanNumber = testPhone.trim();
+    if (!cleanNumber) {
+      pushToast("error", "Ingresá un número de WhatsApp para probar el envío.");
+      return;
+    }
+    setIsSendingTestReminder(true);
+    try {
+      const res = await fetch("/api/cron/reminders/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: cleanNumber,
+          templateBody: currentTemplate.body,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Error al enviar mensaje de prueba.");
+      }
+      pushToast("success", data.message || `Mensaje de prueba enviado con éxito a ${cleanNumber}`);
+    } catch (err: any) {
+      console.error(err);
+      pushToast("error", err.message || "Error al enviar mensaje de prueba a WhatsApp.");
+    } finally {
+      setIsSendingTestReminder(false);
+    }
+  }
+
+  function handleCreateNewReminder() {
+    const count = whatsappTemplates.length + 1;
+    const newId = `wt-reminder-${Date.now()}`;
+    const newTemplate = {
+      id: newId,
+      name: `Recordatorio Personalizado ${count}`,
+      trigger: `recordatorio_custom_${Date.now()}`,
+      timingMinutesBefore: 60,
+      body: "¡Hola {cliente}! Te recordamos tu turno para *{servicio}* en *{negocio}* hoy a las *{hora} hs*.\n\nDirección: {direccion}\nGestión de turno: {link_autogestion}\n¡Te esperamos!",
+      enabled: true,
+    };
+    createWhatsAppTemplate(newTemplate);
+    setSelectedTemplateId(newId);
+    pushToast("success", "Nuevo recordatorio creado. Podés configurar el tiempo y el texto.");
+  }
+
+  function handleDeleteCurrentTemplate(id: string) {
+    if (whatsappTemplates.length <= 1) {
+      pushToast("error", "Debés mantener al menos una plantilla configurada.");
+      return;
+    }
+    deleteWhatsAppTemplate(id);
+    const remaining = whatsappTemplates.filter((t) => t.id !== id);
+    if (remaining.length > 0) {
+      setSelectedTemplateId(remaining[0].id);
+    }
+    pushToast("success", "Plantilla eliminada.");
   }
 
   const activeConnectedPhone = evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
@@ -1359,114 +1476,498 @@ export default function BotWhatsAppPage() {
           </div>
         </div>
       ) : (
-        /* PESTAÑA 2: RECORDATORIOS AUTOMÁTICOS */
+        /* PESTAÑA 2: RECORDATORIOS AUTOMÁTICOS Y CRON JOB CONFIGURABLE */
         <div className="space-y-6">
-          <div className="flex flex-wrap gap-2">
-            {whatsappTemplates.map((template) => (
-              <button
-                key={template.id}
-                type="button"
-                onClick={() => setSelectedTemplateId(template.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                  selectedTemplateId === template.id
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs font-bold"
-                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
-                }`}
-              >
-                <Clock className="h-3 w-3" />
-                <span>{template.name}</span>
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    template.enabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                  }`}
-                />
-              </button>
-            ))}
+          {/* Barra superior de plantillas y botón de crear nuevo */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 shadow-xs">
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Timer className="h-4 w-4 text-[#FF4F2B]" />
+                <span>Plantillas de Mensajes y Cron Job de Recordatorios</span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Configurá con cuánta antelación querés que el servidor despache automáticamente los recordatorios por WhatsApp a cada cliente.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCreateNewReminder}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer bg-[#FF4F2B]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Nuevo Recordatorio</span>
+            </button>
           </div>
 
+          {/* Selector de plantillas tipo Pills con tiempos */}
+          <div className="flex flex-wrap gap-2">
+            {whatsappTemplates.map((template) => {
+              const isSelected = selectedTemplateId === template.id;
+              const hasTiming = typeof template.timingMinutesBefore === "number" && template.timingMinutesBefore > 0;
+              return (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => setSelectedTemplateId(template.id)}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs transition cursor-pointer ${
+                    isSelected
+                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm font-bold border border-transparent ring-2 ring-[#FF4F2B]/40"
+                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <Clock className={`h-3.5 w-3.5 ${isSelected ? "text-[#FF4F2B]" : "text-slate-400"}`} />
+                  <span>{template.name}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold ${
+                      isSelected
+                        ? "bg-white/20 dark:bg-black/15 text-white dark:text-slate-900"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    {hasTiming ? formatTimingLabel(template.timingMinutesBefore) : "Inmediato"}
+                  </span>
+                  <span
+                    className={`h-2 w-2 rounded-full shrink-0 ${
+                      template.enabled ? "bg-emerald-500 ring-2 ring-emerald-500/20" : "bg-slate-300 dark:bg-slate-700"
+                    }`}
+                    title={template.enabled ? "Plantilla activada" : "Plantilla pausada"}
+                  />
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Grid principal: Editor a la izquierda, Preview y Test a la derecha */}
           <div className="grid gap-6 lg:grid-cols-12 items-start">
             <div data-tour="bot-templates-card" className="lg:col-span-7 space-y-4">
+              {/* CARD 1: CONFIGURACIÓN DEL CRON JOB (TIEMPO DE ANTELACIÓN) */}
               <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                      {currentTemplate?.name}
-                    </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Mensaje enviado automáticamente por WhatsApp a tus clientes.
-                    </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF4F2B]/10 text-[#FF4F2B]">
+                      <Timer className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                        Tiempo de Envío (Cron Job Configurable)
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Elegí con cuánta antelación previa a la cita querés que el sistema mande este aviso.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    <span className="text-[11px] text-slate-400">
-                      {currentTemplate?.enabled ? "Activado" : "Desactivado"}
-                    </span>
-                    <CustomSwitch
-                      checked={Boolean(currentTemplate?.enabled)}
-                      onChange={() => {
+
+                  <span className="text-[11px] font-mono font-bold text-[#FF4F2B] bg-[#FF4F2B]/10 px-2.5 py-1 rounded-full">
+                    {formatTimingLabel(currentTemplate?.timingMinutesBefore)}
+                  </span>
+                </div>
+
+                {/* Presets de tiempo rápido */}
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 block">
+                    Seleccionar tiempo predefinido:
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {TIMING_PRESETS.map((preset) => {
+                      const isActive = currentTemplate?.timingMinutesBefore === preset.minutes;
+                      return (
+                        <button
+                          key={preset.minutes}
+                          type="button"
+                          onClick={() => {
+                            if (currentTemplate) {
+                              updateWhatsAppTemplate(currentTemplate.id, {
+                                timingMinutesBefore: preset.minutes,
+                              });
+                            }
+                          }}
+                          className={`px-3 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center text-center transition cursor-pointer border ${
+                            isActive
+                              ? "bg-[#FF4F2B] text-white border-[#FF4F2B] shadow-xs font-bold"
+                              : "bg-slate-50 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <span>{preset.label}</span>
+                          <span
+                            className={`text-[9px] mt-0.5 ${
+                              isActive ? "text-white/80" : "text-slate-400 dark:text-slate-500"
+                            }`}
+                          >
+                            {preset.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+
+                    {/* Botón para tiempo inmediato (sin cron de antelación) */}
+                    <button
+                      type="button"
+                      onClick={() => {
                         if (currentTemplate) {
-                          toggleWhatsAppTemplate(currentTemplate.id);
-                          pushToast(
-                            "success",
-                            `Plantilla ${currentTemplate.enabled ? "desactivada" : "activada"}.`
-                          );
+                          updateWhatsAppTemplate(currentTemplate.id, {
+                            timingMinutesBefore: 0,
+                          });
                         }
                       }}
-                      label="Activar o desactivar plantilla"
-                    />
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center text-center transition cursor-pointer border ${
+                        !currentTemplate?.timingMinutesBefore || currentTemplate?.timingMinutesBefore === 0
+                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-xs font-bold"
+                          : "bg-slate-50 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <span>Inmediato</span>
+                      <span className="text-[9px] text-slate-400 mt-0.5">Al momento</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Contenido del Mensaje:
-                  </label>
+                {/* Personalizar minutos exactos */}
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    O personalizar en minutos exactos:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={5}
+                      max={10080}
+                      step={5}
+                      value={customMinutesInput}
+                      onChange={(e) => setCustomMinutesInput(e.target.value)}
+                      placeholder={String(currentTemplate?.timingMinutesBefore || 60)}
+                      className="w-24 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-[#FF4F2B]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const parsed = parseInt(customMinutesInput, 10);
+                        if (!isNaN(parsed) && parsed > 0 && currentTemplate) {
+                          updateWhatsAppTemplate(currentTemplate.id, {
+                            timingMinutesBefore: parsed,
+                          });
+                          pushToast("success", `Tiempo configurado a ${formatTimingLabel(parsed)}.`);
+                          setCustomMinutesInput("");
+                        } else {
+                          pushToast("error", "Ingresá un número válido de minutos (ej: 45, 90, 180).");
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-bold text-slate-800 dark:text-slate-200 transition cursor-pointer"
+                    >
+                      Fijar Minutos
+                    </button>
+                  </div>
+                </div>
+
+                {/* Banner de estado del Cron Job */}
+                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 flex items-start gap-2.5">
+                  <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                    <strong className="font-bold">Ejecución del Cron Job:</strong> Nuestro servidor escanea periódicamente las citas y, cuando falten exactamente{" "}
+                    <span className="underline font-bold">
+                      {formatTimingLabel(currentTemplate?.timingMinutesBefore)}
+                    </span>{" "}
+                    para el turno de un cliente confirmado, le despachará este WhatsApp con sus datos personalizados.
+                  </div>
+                </div>
+              </div>
+
+              {/* CARD 2: EDITOR DE PLANTILLA */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5 gap-3">
+                  <div className="flex-1">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      Nombre de la Plantilla
+                    </label>
+                    <input
+                      type="text"
+                      value={currentTemplate?.name || ""}
+                      onChange={(e) => {
+                        if (currentTemplate) {
+                          updateWhatsAppTemplate(currentTemplate.id, { name: e.target.value });
+                        }
+                      }}
+                      className="w-full text-sm font-bold text-slate-900 dark:text-white bg-transparent border-b border-slate-200 dark:border-white/10 pb-1 focus:outline-none focus:border-[#FF4F2B] transition"
+                      placeholder="Nombre de la plantilla..."
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      <span className="text-[11px] text-slate-400">
+                        {currentTemplate?.enabled ? "Activado" : "Pausado"}
+                      </span>
+                      <CustomSwitch
+                        checked={Boolean(currentTemplate?.enabled)}
+                        onChange={() => {
+                          if (currentTemplate) {
+                            toggleWhatsAppTemplate(currentTemplate.id);
+                            pushToast(
+                              "success",
+                              `Plantilla ${currentTemplate.enabled ? "pausada" : "activada"}.`
+                            );
+                          }
+                        }}
+                        label="Activar o pausar plantilla"
+                      />
+                    </div>
+
+                    {currentTemplate && !["wt-confirmacion", "wt-recordatorio-24h", "wt-recordatorio-2h", "wt-cancelacion"].includes(currentTemplate.id) && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCurrentTemplate(currentTemplate.id)}
+                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                        title="Eliminar este recordatorio"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Área de texto */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Contenido del Mensaje de WhatsApp:
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {currentTemplate?.body?.length || 0} caracteres
+                    </span>
+                  </div>
                   <textarea
-                    rows={5}
+                    rows={6}
                     value={currentTemplate?.body || ""}
                     onChange={(e) => {
                       if (currentTemplate) {
                         updateWhatsAppTemplate(currentTemplate.id, e.target.value);
                       }
                     }}
-                    placeholder="Escribí el texto del mensaje..."
-                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3 text-xs text-slate-900 dark:text-white font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
+                    placeholder="Escribí el texto que le llegará a tus clientes..."
+                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3.5 text-xs text-slate-900 dark:text-white font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#FF4F2B]/40 transition resize-y"
                   />
                 </div>
 
-                {/* Etiquetas para insertar */}
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">
-                    Hacé clic para insertar datos automáticos del cliente:
-                  </span>
+                {/* Chips de variables dinámicas */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block">
+                      Variables Inteligentes (hacé clic para insertar):
+                    </span>
+                    <span className="text-[10px] text-slate-400">Se reemplazan automáticamente</span>
+                  </div>
                   <div className="flex flex-wrap gap-1.5">
                     {AVAILABLE_TAGS.map((t) => (
                       <button
                         key={t.tag}
                         type="button"
                         onClick={() => insertTag(t.tag)}
-                        className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-mono text-slate-700 dark:text-slate-300 transition cursor-pointer border border-slate-200/60 dark:border-white/5"
+                        className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#FF4F2B]/10 hover:border-[#FF4F2B]/30 dark:hover:bg-slate-700 text-[11px] font-mono text-slate-700 dark:text-slate-300 transition cursor-pointer border border-slate-200/60 dark:border-white/5 active:scale-95"
+                        title={`Ejemplo: ${t.sample}`}
                       >
-                        {t.tag}
+                        <span className="font-bold text-[#FF4F2B]">{t.tag}</span>
+                        <span className="text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                          ({t.label})
+                        </span>
                       </button>
                     ))}
                   </div>
                 </div>
+
+                {/* Ayuda de formato WhatsApp */}
+                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">Formato:</span>
+                  <span>*negrita*</span>
+                  <span>_cursiva_</span>
+                  <span>~tachado~</span>
+                  <span className="font-mono bg-black/5 dark:bg-white/5 px-1 rounded">`código`</span>
+                </div>
+              </div>
+
+              {/* CARD 3: BOTÓN DE GUARDADO EN BASE DE DATOS */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Recordá guardar tus cambios para que el Cron Job tome los nuevos tiempos y textos.
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveTemplates}
+                  disabled={isSavingTemplates}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer bg-[#FF4F2B] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingTemplates ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Guardando en el Servidor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      <span>Guardar Configuración de Recordatorios</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Vista Previa del Mensaje */}
-            <div className="lg:col-span-5 space-y-3">
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-3">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Así le llega el mensaje al cliente
-                </h4>
-                <div className="p-3.5 rounded-2xl bg-[#d9fdd3] text-slate-900 text-xs shadow-xs leading-relaxed">
-                  {renderWhatsAppFormatted(currentTemplate ? getPreviewText(currentTemplate.body) : "")}
-                  <div className="flex justify-end gap-1 text-[9px] text-slate-500 mt-2">
-                    <span>14:30</span>
-                    <CheckCheck className="h-3 w-3 text-blue-500" />
+            {/* COLUMNA DERECHA: VISTA PREVIA VISUAL EN VIVO + PRUEBA EN TIEMPO REAL */}
+            <div className="lg:col-span-5 space-y-4">
+              {/* Simulador de WhatsApp Estilo Móvil */}
+              <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+                {/* Cabecera estilo WhatsApp oficial */}
+                <div className="bg-[#008069] text-white px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white font-bold text-sm shrink-0 border border-white/30">
+                      {business.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs sm:text-sm tracking-tight truncate max-w-[170px]">
+                          {business.name}
+                        </span>
+                        <BadgeCheck className="h-3.5 w-3.5 text-white/90 shrink-0" />
+                      </div>
+                      <span className="text-[10px] text-white/80 block">
+                        Cuenta de empresa oficial • En línea
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-white/80">
+                    <Video className="h-4 w-4" />
+                    <Phone className="h-4 w-4" />
                   </div>
                 </div>
+
+                {/* Fondo de conversación de WhatsApp */}
+                <div
+                  className="p-4 min-h-[300px] flex flex-col justify-end bg-[#efeae2] dark:bg-[#0b141a]"
+                  style={{
+                    backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px)`,
+                    backgroundSize: "16px 16px",
+                  }}
+                >
+                  {/* Etiqueta de aviso de cifrado / antelación */}
+                  <div className="self-center mb-3 px-3 py-1 rounded-lg bg-white/80 dark:bg-slate-800/80 shadow-2xs text-[10px] text-slate-500 dark:text-slate-400 font-semibold text-center max-w-[260px]">
+                    ⏱️ Envío programado:{" "}
+                    <span className="text-[#FF4F2B] font-bold">
+                      {formatTimingLabel(currentTemplate?.timingMinutesBefore)}
+                    </span>
+                  </div>
+
+                  {/* Globo de mensaje saliente de WhatsApp */}
+                  <div className="relative self-end max-w-[88%] rounded-2xl rounded-tr-xs bg-[#d9fdd3] dark:bg-[#005c4b] text-slate-900 dark:text-slate-100 p-3.5 shadow-sm text-xs leading-relaxed">
+                    {renderWhatsAppFormatted(currentTemplate ? getPreviewText(currentTemplate.body) : "")}
+
+                    <div className="flex items-center justify-end gap-1 text-[9px] text-slate-500 dark:text-slate-300 mt-2 font-mono">
+                      <span>14:30</span>
+                      <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb]" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Barra inferior del simulador */}
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-500">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Eye className="h-3.5 w-3.5 text-[#FF4F2B]" />
+                    <span>Vista previa en vivo con datos reales de muestra</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* CARD DE PRUEBA REAL EN VIVO A MI WHATSAPP */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                    <Send className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                      Probar Envío a mi WhatsApp
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Enviate esta plantilla a tu propio celular para verificar el formato antes de activarla.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block">
+                    Número de teléfono receptor (con código de país ej: 595981...):
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="tel"
+                      value={testPhone}
+                      onChange={(e) => setTestPhone(e.target.value)}
+                      placeholder="+595 981 123 456"
+                      className="flex-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendTestReminder}
+                      disabled={isSendingTestReminder || !isConnected}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      {isSendingTestReminder ? (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          <span>Enviando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-3.5 w-3.5" />
+                          <span>Enviar Prueba</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {!isConnected && (
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold block">
+                      ⚠️ Tu WhatsApp oficial no está vinculado aún. Conectalo con el código QR para enviar mensajes reales.
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BANNER INFORMATIVO INFERIOR: ARQUITECTURA DEL CRON JOB */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900/60 p-5 shadow-2xs space-y-3">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#FF4F2B]" />
+              <span>¿Cómo funciona el Cron Job de Recordatorios de AgendatePY?</span>
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-white/5 space-y-1">
+                <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-indigo-600" />
+                  <span>Escaneo Continuo en Segundo Plano</span>
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  El servidor ejecuta un Cron Job continuo que monitorea la base de datos PostgreSQL y detecta turnos confirmados según el tiempo de antelación fijado.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-white/5 space-y-1">
+                <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Filtro Anti-Duplicados y Cero Spam</span>
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Cada aviso despachado genera un evento único en la base de datos. Ningún cliente recibirá jamás un recordatorio duplicado.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-white/5 space-y-1">
+                <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Bot className="h-3.5 w-3.5 text-[#FF4F2B]" />
+                  <span>Despacho Directo por tu WhatsApp</span>
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Los mensajes salen de tu número conectado mediante Evolution API, por lo que el cliente puede responder directamente para confirmar o consultar.
+                </p>
               </div>
             </div>
           </div>

@@ -28,6 +28,15 @@ export async function requireTenantSession(
   }
 
   if (!session.tenantId) {
+    if (session.role === "SUPERADMIN") {
+      const { prisma } = await import("@/lib/db");
+      const defaultTenant = await prisma.tenant.findFirst({
+        where: { status: "ACTIVE" },
+        select: { id: true },
+      });
+      return { session, tenantId: defaultTenant?.id || "bbdc08a3-1038-4c2d-8ddb-189451a0e54a" };
+    }
+
     return NextResponse.json(
       { ok: false, error: "FORBIDDEN", message: "Usuario sin negocio asignado." },
       { status: 403 }

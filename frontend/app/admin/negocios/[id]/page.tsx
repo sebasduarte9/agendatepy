@@ -110,7 +110,7 @@ export default function SingleTenantAdminPage() {
   const getPlanBadge = (plan: string) => {
     const p = (plan || "PROFESIONAL").toUpperCase();
     return (
-      <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-slate-800 text-slate-300 border border-slate-700/80">
+      <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-orange-50 text-[#FF4F2B] border border-orange-200/80">
         Plan {p}
       </span>
     );
@@ -119,7 +119,7 @@ export default function SingleTenantAdminPage() {
   if (loading) {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-slate-400 space-y-3">
-        <div className="h-6 w-6 border-2 border-slate-600 border-t-slate-200 rounded-full animate-spin" />
+        <div className="h-6 w-6 border-2 border-[#FF4F2B] border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-mono text-slate-500">Cargando perfil del negocio...</p>
       </div>
     );
@@ -130,12 +130,12 @@ export default function SingleTenantAdminPage() {
       <div className="p-4 sm:p-6 md:p-8 space-y-4 max-w-7xl mx-auto w-full">
         <Link
           href="/admin/negocios"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 transition"
         >
           <ArrowLeft className="h-4 w-4" /> Volver al directorio
         </Link>
-        <div className="p-4 rounded-xl bg-red-950/40 border border-red-800/60 text-red-300 text-sm flex items-center gap-3">
-          <AlertCircle className="h-5 w-5 shrink-0" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
           <span>{error || "Tenant no encontrado."}</span>
         </div>
       </div>
@@ -145,74 +145,74 @@ export default function SingleTenantAdminPage() {
   const { tenant, operationalActivity, milestones, counts, aggregatedFinances, appointmentsByStatus, recentOperationalActivity } = data;
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-900">
       {/* Navigation Breadcrumb */}
       <div className="flex items-center justify-between">
         <Link
           href="/admin/negocios"
-          className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white transition bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-slate-900 transition bg-white px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs hover:bg-slate-50"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Volver al Directorio</span>
         </Link>
 
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-900/40 px-2.5 py-1 rounded-lg border border-slate-800 font-mono">
-          <Lock className="h-3 w-3 text-slate-500" />
-          <span>Modo Lectura</span>
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-white px-2.5 py-1 rounded-xl border border-slate-200/80 font-mono shadow-2xs">
+          <Lock className="h-3 w-3 text-slate-400" />
+          <span>Modo Supervisión</span>
         </div>
       </div>
 
       {/* Tenant Identity & Account Header Card */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 sm:p-6 relative overflow-hidden">
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 relative overflow-hidden shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">{tenant.name}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{tenant.name}</h1>
               {getPlanBadge(tenant.plan)}
-              <span className="px-2 py-0.5 rounded-md text-xs font-mono text-slate-400 bg-slate-800/60 border border-slate-700/60">
+              <span className="px-2 py-0.5 rounded-full text-xs font-mono text-slate-600 font-semibold bg-slate-100 border border-slate-200">
                 {tenant.status}
               </span>
             </div>
 
             {/* Subdomain & Identity Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs text-slate-400 font-mono">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs text-slate-500 font-mono">
               <div className="flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-slate-500" />
-                <span>/{tenant.slug} • {tenant.subdomain}.agendatepy.com</span>
+                <Globe className="w-3.5 h-3.5 text-[#FF4F2B]" />
+                <span className="text-slate-700 font-semibold">/{tenant.slug} • {tenant.subdomain}.agendatepy.com</span>
               </div>
               {tenant.ownerEmail && (
                 <div className="flex items-center gap-1.5 truncate">
-                  <Mail className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-slate-300">{tenant.ownerEmail}</span>
+                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-slate-700">{tenant.ownerEmail}</span>
                 </div>
               )}
               {tenant.ownerPhone && (
                 <div className="flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-slate-300">{tenant.ownerPhone}</span>
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-slate-700">{tenant.ownerPhone}</span>
                 </div>
               )}
               <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>Registrado: {new Date(tenant.createdAt).toLocaleDateString("es-PY")}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                <MapPin className="w-3.5 h-3.5 text-slate-400" />
                 <span>Zona: {tenant.timezone || "America/Asuncion"}</span>
               </div>
             </div>
           </div>
 
           {/* Activity State Badge */}
-          <div className="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-lg shrink-0 min-w-[180px]">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+          <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl shrink-0 min-w-[180px]">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
               Estado de Actividad
             </div>
-            <div className="text-sm font-medium text-slate-200 mt-1 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <div className="text-sm font-bold text-slate-900 mt-1 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
               {operationalActivity.status}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1 font-mono">
+            <div className="text-[11px] text-slate-400 mt-1 font-mono">
               {operationalActivity.lastActivityAt
                 ? `Última: ${new Date(operationalActivity.lastActivityAt).toLocaleDateString("es-PY")}`
                 : "Sin actividad registrada"}
@@ -223,109 +223,109 @@ export default function SingleTenantAdminPage() {
 
       {/* Aggregate Counts Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-slate-900/40 border border-slate-800/80 p-4 rounded-xl">
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <Users className="h-3.5 w-3.5 text-slate-500" /> Staff
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
+            <Users className="h-3.5 w-3.5 text-[#FF4F2B]" /> Staff
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">{counts.staff}</div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">{counts.staff}</div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 p-4 rounded-xl">
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <Scissors className="h-3.5 w-3.5 text-slate-500" /> Servicios
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
+            <Scissors className="h-3.5 w-3.5 text-[#FF4F2B]" /> Servicios
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">{counts.services}</div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">{counts.services}</div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 p-4 rounded-xl">
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <Users className="h-3.5 w-3.5 text-slate-500" /> Clientes
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
+            <Users className="h-3.5 w-3.5 text-[#FF4F2B]" /> Clientes
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">{counts.clients}</div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">{counts.clients}</div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 p-4 rounded-xl">
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <CalendarCheck className="h-3.5 w-3.5 text-slate-500" /> Citas
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
+            <CalendarCheck className="h-3.5 w-3.5 text-[#FF4F2B]" /> Citas
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">{counts.appointments}</div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">{counts.appointments}</div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 p-4 rounded-xl">
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <Coins className="h-3.5 w-3.5 text-slate-500" /> Mov. Caja
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
+            <Coins className="h-3.5 w-3.5 text-[#FF4F2B]" /> Mov. Caja
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">{counts.cashMovements}</div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">{counts.cashMovements}</div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 p-4 rounded-xl">
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <DollarSign className="h-3.5 w-3.5 text-slate-500" /> Liquidaciones
+        <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
+            <DollarSign className="h-3.5 w-3.5 text-[#FF4F2B]" /> Liquidaciones
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">{counts.commissionPayouts}</div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">{counts.commissionPayouts}</div>
         </div>
       </div>
 
       {/* Activation Milestones */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
-        <h2 className="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-2">
-          <Target className="h-4 w-4 text-slate-500" />
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-xs">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <Target className="h-4 w-4 text-[#FF4F2B]" />
           Hitos de Activación del Negocio
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/70 flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
             <div>
-              <div className="text-xs text-slate-400">1. Configuración Inicial</div>
-              <div className="text-sm font-medium text-white mt-0.5">
+              <div className="text-xs text-slate-500">1. Configuración Inicial</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {milestones.isConfigured ? "Completado" : "Pendiente"}
               </div>
             </div>
             <CheckCircle2
               className={`h-4 w-4 ${
-                milestones.isConfigured ? "text-emerald-400" : "text-slate-700"
+                milestones.isConfigured ? "text-emerald-600" : "text-slate-300"
               }`}
             />
           </div>
 
-          <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/70 flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
             <div>
-              <div className="text-xs text-slate-400">2. Portal Público</div>
-              <div className="text-sm font-medium text-white mt-0.5">
+              <div className="text-xs text-slate-500">2. Portal Público</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {milestones.isReadyToBook ? "Habilitado" : "Incompleto"}
               </div>
             </div>
             <CheckCircle2
               className={`h-4 w-4 ${
-                milestones.isReadyToBook ? "text-emerald-400" : "text-slate-700"
+                milestones.isReadyToBook ? "text-emerald-600" : "text-slate-300"
               }`}
             />
           </div>
 
-          <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/70 flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
             <div>
-              <div className="text-xs text-slate-400">3. Primera Reserva</div>
-              <div className="text-sm font-medium text-white mt-0.5">
+              <div className="text-xs text-slate-500">3. Primera Reserva</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {milestones.hasFirstBooking ? "Recibida" : "Sin reservas"}
               </div>
             </div>
             <CheckCircle2
               className={`h-4 w-4 ${
-                milestones.hasFirstBooking ? "text-emerald-400" : "text-slate-700"
+                milestones.hasFirstBooking ? "text-emerald-600" : "text-slate-300"
               }`}
             />
           </div>
 
-          <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/70 flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
             <div>
-              <div className="text-xs text-slate-400">4. Primer Cobro</div>
-              <div className="text-sm font-medium text-white mt-0.5">
+              <div className="text-xs text-slate-500">4. Primer Cobro</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {milestones.hasFirstCash ? "Registrado" : "Sin cobros"}
               </div>
             </div>
             <CheckCircle2
               className={`h-4 w-4 ${
-                milestones.hasFirstCash ? "text-emerald-400" : "text-slate-700"
+                milestones.hasFirstCash ? "text-emerald-600" : "text-slate-300"
               }`}
             />
           </div>
@@ -335,10 +335,10 @@ export default function SingleTenantAdminPage() {
       {/* Financials & Status Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Business Recorded Cash Volume */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-xs">
           <div>
-            <h2 className="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <Coins className="h-4 w-4 text-slate-500" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <Coins className="h-4 w-4 text-[#FF4F2B]" />
               Volumen de Caja Manejado por el Negocio
             </h2>
             <p className="text-xs text-slate-500 mt-1">
@@ -347,63 +347,63 @@ export default function SingleTenantAdminPage() {
           </div>
 
           <div className="space-y-3">
-            <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/70 flex justify-between items-center">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
               <div>
-                <div className="text-xs text-slate-400">Ingresos Registrados en Caja</div>
-                <div className="text-lg font-semibold text-white tracking-tight tabular-nums mt-0.5">
+                <div className="text-xs text-slate-500">Ingresos Registrados en Caja</div>
+                <div className="text-lg font-bold text-slate-900 tracking-tight tabular-nums mt-0.5">
                   {formatGs(aggregatedFinances.totalCashVolume)}
                 </div>
               </div>
-              <Coins className="h-5 w-5 text-slate-600" />
+              <Coins className="h-5 w-5 text-emerald-600" />
             </div>
 
-            <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/70 flex justify-between items-center">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
               <div>
-                <div className="text-xs text-slate-400">Gastos Registrados en Caja</div>
-                <div className="text-lg font-semibold text-rose-300 tracking-tight tabular-nums mt-0.5">
+                <div className="text-xs text-slate-500">Gastos Registrados en Caja</div>
+                <div className="text-lg font-bold text-rose-600 tracking-tight tabular-nums mt-0.5">
                   {formatGs(aggregatedFinances.totalExpenses)}
                 </div>
               </div>
-              <DollarSign className="h-5 w-5 text-slate-600" />
+              <DollarSign className="h-5 w-5 text-rose-500" />
             </div>
           </div>
         </div>
 
         {/* Appointment Status Breakdown */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-2">
-            <CalendarCheck className="h-4 w-4 text-slate-500" />
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-xs">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <CalendarCheck className="h-4 w-4 text-[#FF4F2B]" />
             Desglose de Estados de Citas
           </h2>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-            <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/70">
-              <div className="text-slate-400 font-mono text-[11px]">COMPLETED</div>
-              <div className="text-base font-semibold text-white tracking-tight tabular-nums mt-1">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-slate-500 font-mono text-[11px]">COMPLETED</div>
+              <div className="text-base font-bold text-slate-900 tracking-tight tabular-nums mt-1">
                 {appointmentsByStatus.COMPLETED}
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/70">
-              <div className="text-slate-400 font-mono text-[11px]">CONFIRMED</div>
-              <div className="text-base font-semibold text-white tracking-tight tabular-nums mt-1">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-slate-500 font-mono text-[11px]">CONFIRMED</div>
+              <div className="text-base font-bold text-slate-900 tracking-tight tabular-nums mt-1">
                 {appointmentsByStatus.CONFIRMED}
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/70">
-              <div className="text-slate-400 font-mono text-[11px]">PENDING</div>
-              <div className="text-base font-semibold text-white tracking-tight tabular-nums mt-1">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-slate-500 font-mono text-[11px]">PENDING</div>
+              <div className="text-base font-bold text-slate-900 tracking-tight tabular-nums mt-1">
                 {appointmentsByStatus.PENDING || appointmentsByStatus.PENDING_ACTION || 0}
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/70">
-              <div className="text-slate-400 font-mono text-[11px]">CANCELLED</div>
-              <div className="text-base font-semibold text-slate-300 tracking-tight tabular-nums mt-1">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-slate-500 font-mono text-[11px]">CANCELLED</div>
+              <div className="text-base font-bold text-slate-700 tracking-tight tabular-nums mt-1">
                 {appointmentsByStatus.CANCELLED}
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/70">
-              <div className="text-slate-400 font-mono text-[11px]">NO_SHOW</div>
-              <div className="text-base font-semibold text-slate-400 tracking-tight tabular-nums mt-1">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-slate-500 font-mono text-[11px]">NO_SHOW</div>
+              <div className="text-base font-bold text-slate-500 tracking-tight tabular-nums mt-1">
                 {appointmentsByStatus.NO_SHOW}
               </div>
             </div>
@@ -412,31 +412,31 @@ export default function SingleTenantAdminPage() {
       </div>
 
       {/* Recent Operational Appointments */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
-        <h2 className="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-2">
-          <Clock className="h-4 w-4 text-slate-500" />
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-xs">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <Clock className="h-4 w-4 text-[#FF4F2B]" />
           Últimas Citas Operativas (Preservación de Privacidad)
         </h2>
 
-        <div className="divide-y divide-slate-800/60 text-xs">
+        <div className="divide-y divide-slate-100 text-xs">
           {recentOperationalActivity.length === 0 ? (
-            <p className="text-slate-500 py-4 text-center">Sin actividad reciente de citas.</p>
+            <p className="text-slate-400 py-4 text-center">Sin actividad reciente de citas.</p>
           ) : (
             recentOperationalActivity.map((app: any) => (
               <div key={app.id} className="py-2.5 flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-slate-200">
+                  <div className="font-bold text-slate-900">
                     {app.serviceName} • {app.staffName}
                   </div>
-                  <div className="text-[11px] text-slate-500 font-mono">
+                  <div className="text-[11px] text-slate-400 font-mono">
                     Fecha: {new Date(app.date).toLocaleDateString("es-PY")}
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-slate-800/70 border border-slate-700/60">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono text-slate-600 bg-slate-100 border border-slate-200">
                     {app.status}
                   </span>
-                  <div className="text-[11px] font-mono text-slate-300 mt-0.5">
+                  <div className="text-[11px] font-mono text-slate-800 font-bold mt-0.5">
                     {formatGs(app.price)}
                   </div>
                 </div>
@@ -447,15 +447,15 @@ export default function SingleTenantAdminPage() {
       </div>
 
       {/* Client & Business Media Gallery Control */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4 text-slate-500" />
-              <h2 className="text-xs font-mono uppercase tracking-wider text-slate-300">
+              <ImageIcon className="h-4 w-4 text-[#FF4F2B]" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
                 Galería & Archivos Multimedia
               </h2>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700/60">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold text-[#FF4F2B] bg-orange-50 border border-orange-200">
                 {mediaItems.length} archivos
               </span>
             </div>
@@ -465,7 +465,7 @@ export default function SingleTenantAdminPage() {
           </div>
 
           {/* Filter Segmented Control */}
-          <div className="flex items-center gap-1 p-0.5 bg-slate-950/80 rounded-lg border border-slate-800 text-xs shrink-0">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs shrink-0">
             {[
               { id: "ALL", label: "Todos" },
               { id: "client", label: "Clientes" },
@@ -476,10 +476,10 @@ export default function SingleTenantAdminPage() {
                 key={f.id}
                 type="button"
                 onClick={() => setMediaFilter(f.id as any)}
-                className={`px-3 py-1 rounded-md text-xs transition cursor-pointer ${
+                className={`px-3 py-1 rounded-lg text-xs transition cursor-pointer ${
                   mediaFilter === f.id
-                    ? "bg-slate-800 text-white font-medium shadow-xs"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-slate-900 font-bold shadow-2xs border border-slate-200/60"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 {f.label}
@@ -496,7 +496,7 @@ export default function SingleTenantAdminPage() {
 
           if (filtered.length === 0) {
             return (
-              <div className="py-12 text-center text-slate-500 space-y-2">
+              <div className="py-12 text-center text-slate-400 space-y-2">
                 <ImageIcon className="h-8 w-8 mx-auto opacity-30 text-slate-400" />
                 <p className="text-xs">No hay archivos multimedia registrados en esta categoría.</p>
               </div>
@@ -508,12 +508,12 @@ export default function SingleTenantAdminPage() {
               {filtered.map((item) => (
                 <div
                   key={item.id}
-                  className="group relative rounded-lg bg-slate-950/60 border border-slate-800/80 overflow-hidden flex flex-col hover:border-slate-700 transition duration-150"
+                  className="group relative rounded-xl bg-slate-50 border border-slate-200 overflow-hidden flex flex-col hover:border-slate-300 transition duration-150"
                 >
                   {/* Thumbnail Container */}
                   <div
                     onClick={() => setSelectedMedia(item)}
-                    className="relative h-28 w-full bg-slate-900 cursor-pointer overflow-hidden flex items-center justify-center"
+                    className="relative h-28 w-full bg-slate-100 cursor-pointer overflow-hidden flex items-center justify-center"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -524,35 +524,35 @@ export default function SingleTenantAdminPage() {
 
                     {/* Badge */}
                     <div className="absolute top-2 left-2 z-10">
-                      <span className="px-2 py-0.5 rounded text-[9px] font-mono uppercase bg-slate-900/90 text-slate-300 border border-slate-700/60">
+                      <span className="px-2 py-0.5 rounded text-[9px] font-mono uppercase bg-white/90 text-slate-700 border border-slate-200 font-bold">
                         {item.type === "client" ? "Cliente" : item.type === "product" ? "Producto" : "Branding"}
                       </span>
                     </div>
 
                     {/* Quick Hover Zoom Icon */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Eye className="h-5 w-5 text-white" />
                     </div>
                   </div>
 
                   {/* Metadata & Controls */}
-                  <div className="p-2.5 flex-1 flex flex-col justify-between space-y-2">
+                  <div className="p-2.5 flex-1 flex flex-col justify-between space-y-2 bg-white">
                     <div>
-                      <h3 className="text-xs font-medium text-slate-200 line-clamp-1" title={item.title}>
+                      <h3 className="text-xs font-bold text-slate-900 line-clamp-1" title={item.title}>
                         {item.title}
                       </h3>
-                      <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{item.subtitle}</p>
+                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{item.subtitle}</p>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-800/80 pt-2">
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-2">
                       <button
                         type="button"
                         onClick={() => handleCopyUrl(item.url)}
-                        className="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 transition cursor-pointer"
+                        className="text-[10px] text-slate-500 hover:text-slate-900 flex items-center gap-1 transition cursor-pointer font-semibold"
                         title="Copiar URL"
                       >
                         {copiedUrl === item.url ? (
-                          <Check className="h-3 w-3 text-emerald-400" />
+                          <Check className="h-3 w-3 text-emerald-600" />
                         ) : (
                           <Copy className="h-3 w-3" />
                         )}
@@ -563,7 +563,7 @@ export default function SingleTenantAdminPage() {
                         type="button"
                         disabled={deletingId === item.id}
                         onClick={() => handleDeleteMediaItem(item.id, item.type)}
-                        className="text-[10px] text-slate-500 hover:text-rose-400 flex items-center gap-1 p-1 hover:bg-slate-800 rounded transition disabled:opacity-50 cursor-pointer"
+                        className="text-[10px] text-slate-400 hover:text-rose-600 flex items-center gap-1 p-1 hover:bg-rose-50 rounded transition disabled:opacity-50 cursor-pointer"
                         title="Eliminar archivo del servidor"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -579,28 +579,28 @@ export default function SingleTenantAdminPage() {
 
       {/* Lightbox Preview Modal */}
       {selectedMedia && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative max-w-2xl w-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="relative max-w-2xl w-full bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl p-5 space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-sm font-semibold text-white">{selectedMedia.title}</h3>
-                <p className="text-xs text-slate-400">{selectedMedia.subtitle}</p>
+                <h3 className="text-sm font-bold text-slate-900">{selectedMedia.title}</h3>
+                <p className="text-xs text-slate-500">{selectedMedia.subtitle}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedMedia(null)}
-                className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="max-h-[60vh] flex items-center justify-center bg-black/40 rounded-lg p-2 overflow-hidden">
+            <div className="max-h-[60vh] flex items-center justify-center bg-slate-50 rounded-2xl p-2 overflow-hidden border border-slate-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedMedia.url}
                 alt={selectedMedia.title}
-                className="max-h-[55vh] w-auto object-contain rounded"
+                className="max-h-[55vh] w-auto object-contain rounded-xl"
               />
             </div>
 
@@ -614,7 +614,7 @@ export default function SingleTenantAdminPage() {
                   href={selectedMedia.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition font-medium"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition font-bold"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Abrir directo
@@ -622,7 +622,7 @@ export default function SingleTenantAdminPage() {
                 <button
                   type="button"
                   onClick={() => handleDeleteMediaItem(selectedMedia.id, selectedMedia.type)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/30 hover:bg-rose-500/20 transition font-medium cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition font-bold cursor-pointer"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Eliminar archivo

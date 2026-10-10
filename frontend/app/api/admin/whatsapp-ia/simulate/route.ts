@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSuperAdminSession, isGuardError } from "@/lib/api-guard";
 import { prisma } from "@/lib/db";
 import { processCustomerMessageWithAI } from "@/lib/ai/whatsapp-agent";
+import { processAgendatePlatformMessage } from "@/lib/ai/agendate-platform-agent";
 
 export async function POST(req: NextRequest) {
   const auth = await requireSuperAdminSession(req);
@@ -10,8 +11,27 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const userMessage = body.message || "Hola, ¿qué servicios tienen?";
+    const target = body.target || "tenant"; // "platform" o "tenant"
 
-    // Buscar el tenant principal o primer tenant para simular contexto real
+    // Simulación del Bot Oficial de la Plataforma AgendatePY
+    if (target === "platform") {
+      const phone = body.phone || "+595 981 765 432";
+      const name = body.name || "Usuario Test";
+      const startTime = Date.now();
+      const result = await processAgendatePlatformMessage(userMessage, phone, name);
+      const latencyMs = Date.now() - startTime;
+
+      return NextResponse.json({
+        status: "success",
+        target: "platform",
+        userProfile: result.userProfile,
+        replyText: result.replyText,
+        latencyMs,
+        model: "gemini-3.8-flash",
+      });
+    }
+
+    // Buscar el tenant principal o primer tenant para simular contexto real de negocio
     const tenant = await prisma.tenant.findFirst({
       where: { status: "ACTIVE" },
       select: { id: true, name: true, slug: true },
@@ -33,6 +53,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       status: "success",
+      target: "tenant",
       replyText: result.replyText,
       intent: result.intent,
       actionPerformed: result.actionPerformed || null,

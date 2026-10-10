@@ -40,22 +40,22 @@ export default function SystemHealthPage() {
   }, [period]);
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-900">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
-            <Cpu className="h-5 w-5 text-slate-400 shrink-0" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <Cpu className="h-6 w-6 text-[#FF4F2B] shrink-0" />
             <span>Salud del Sistema</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Monitoreo de tasa de error, códigos HTTP y disponibilidad de endpoints.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Monitoreo de tasa de error, códigos HTTP y disponibilidad de endpoints en tiempo real.
           </p>
         </div>
 
         {/* Period Selector */}
         <div className="flex items-center gap-2 overflow-x-auto max-w-full shrink-0">
-          <div className="flex items-center gap-0.5 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
             {[
               { label: "7d", val: "7d" },
               { label: "30d", val: "30d" },
@@ -65,10 +65,10 @@ export default function SystemHealthPage() {
               <button
                 key={p.val}
                 onClick={() => setPeriod(p.val)}
-                className={`px-2.5 py-1 rounded-md text-xs transition whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-lg text-xs transition whitespace-nowrap ${
                   period === p.val
-                    ? "bg-slate-800 text-white font-medium"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {p.label}
@@ -78,44 +78,44 @@ export default function SystemHealthPage() {
 
           <button
             onClick={fetchHealth}
-            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer shrink-0"
+            className="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-slate-900 hover:border-slate-300 transition shadow-xs cursor-pointer shrink-0"
             title="Recargar telemetría"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-[#FF4F2B]" : ""}`} />
           </button>
         </div>
       </div>
 
       {/* Main Health Status Banner */}
       {data && (
-        <div className="p-4 sm:p-5 rounded-xl border border-slate-800/80 bg-slate-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700/70 flex items-center justify-center text-slate-300 shrink-0">
-              <Cpu className="w-4 h-4" />
+        <div className="p-5 sm:p-6 rounded-2xl border border-slate-200/80 bg-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FF4F2B] shrink-0">
+              <Cpu className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${
-                  data.errorRate < 2 ? "bg-emerald-400" : data.errorRate < 5 ? "bg-amber-400" : "bg-rose-400"
+                <span className={`w-2.5 h-2.5 rounded-full ${
+                  data.errorRate < 2 ? "bg-emerald-500 shadow-xs shadow-emerald-500/40" : data.errorRate < 5 ? "bg-amber-500" : "bg-rose-500"
                 }`} />
-                <span className="text-sm font-semibold text-white">
+                <span className="text-base font-bold text-slate-900">
                   {data.errorRate < 2 ? "Sistema Saludable" : data.errorRate < 5 ? "Degradación Menor" : "Incidencias Detectadas"}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Tasa de error: {data.errorRate}% sobre {data.totalMonitoredRequests} eventos monitorizados.
+              <p className="text-xs text-slate-500 mt-1">
+                Tasa de error global: <span className="font-semibold text-slate-800">{data.errorRate}%</span> sobre {data.totalMonitoredRequests} eventos monitorizados.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 self-start md:self-auto border-t md:border-t-0 md:border-l border-slate-800/80 pt-3 md:pt-0 md:pl-6">
+          <div className="flex items-center gap-8 self-start md:self-auto border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-8">
             <div>
-              <div className="text-[11px] text-slate-500 font-mono">Error Rate</div>
-              <div className="text-xl font-semibold font-mono text-white tabular-nums">{data.errorRate}%</div>
+              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Error Rate</div>
+              <div className="text-2xl font-bold font-mono text-[#FF4F2B] tabular-nums mt-0.5">{data.errorRate}%</div>
             </div>
             <div>
-              <div className="text-[11px] text-slate-500 font-mono">Total Errores</div>
-              <div className="text-xl font-semibold font-mono text-slate-200 tabular-nums">{data.errors.total}</div>
+              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Total Errores</div>
+              <div className="text-2xl font-bold font-mono text-slate-900 tabular-nums mt-0.5">{data.errors.total}</div>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function SystemHealthPage() {
 
       {/* HTTP Status Breakdown Cards */}
       {data?.errors && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
           {[
             { label: "401 Unauthorized", count: data.errors.http401, desc: "Sesión / Auth" },
             { label: "403 Forbidden", count: data.errors.http403, desc: "RBAC denegado" },
@@ -134,49 +134,49 @@ export default function SystemHealthPage() {
           ].map((item) => (
             <div
               key={item.label}
-              className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3.5 flex flex-col justify-between"
+              className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-orange-200 transition"
             >
-              <div className="text-xs text-slate-400 truncate font-medium">{item.label}</div>
-              <div className="my-2">
-                <div className="text-xl font-semibold font-mono text-white tabular-nums">{item.count}</div>
+              <div className="text-xs font-semibold text-slate-600 truncate">{item.label}</div>
+              <div className="my-2.5">
+                <div className="text-2xl font-bold font-mono text-slate-900 tabular-nums">{item.count}</div>
               </div>
-              <div className="text-[10px] text-slate-500 truncate">{item.desc}</div>
+              <div className="text-[11px] text-slate-400 truncate">{item.desc}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Endpoint Breakdown & Recent Errors Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Endpoints Error Breakdown */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Server className="w-4 h-4 text-slate-400" />
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Server className="w-4 h-4 text-[#FF4F2B]" />
               Errores por Endpoint API
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Distribución de incidencias registradas por ruta de la API.
             </p>
           </div>
 
-          <div className="divide-y divide-slate-800/60 pt-1">
+          <div className="divide-y divide-slate-100 pt-1">
             {!data?.endpointBreakdown || data.endpointBreakdown.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 text-xs">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500/50 mx-auto mb-1.5" />
+              <div className="py-8 text-center text-slate-400 text-xs">
+                <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto mb-2 opacity-80" />
                 No se registraron errores en endpoints durante el período seleccionado.
               </div>
             ) : (
               data.endpointBreakdown.map((ep: any) => (
-                <div key={ep.endpoint} className="py-2.5 flex items-center justify-between text-xs">
+                <div key={ep.endpoint} className="py-3 flex items-center justify-between text-xs">
                   <div>
-                    <div className="font-mono text-xs text-slate-200">{ep.endpoint}</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="font-mono text-xs font-semibold text-slate-900">{ep.endpoint}</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">
                       Códigos: {JSON.stringify(ep.statusCodes)}
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono text-xs text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700/60">
+                    <span className="font-mono text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/80">
                       {ep.totalErrors} errores
                     </span>
                   </div>
@@ -187,37 +187,37 @@ export default function SystemHealthPage() {
         </div>
 
         {/* Recent Error Feed */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-slate-400" />
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#FF4F2B]" />
               Últimos Eventos de Error
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Registro cronológico de excepciones operacionales.
             </p>
           </div>
 
-          <div className="divide-y divide-slate-800/60 pt-1 max-h-96 overflow-y-auto pr-1">
+          <div className="divide-y divide-slate-100 pt-1 max-h-96 overflow-y-auto pr-1">
             {!data?.recentErrors || data.recentErrors.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 text-xs">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500/50 mx-auto mb-1.5" />
+              <div className="py-8 text-center text-slate-400 text-xs">
+                <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto mb-2 opacity-80" />
                 Sin eventos de error recientes.
               </div>
             ) : (
               data.recentErrors.map((err: any) => (
-                <div key={err.id} className="py-2.5 space-y-1">
+                <div key={err.id} className="py-3 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-slate-300">{err.event}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="font-mono font-semibold text-slate-800">{err.event}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
                       {new Date(err.createdAt).toLocaleTimeString("es-PY")}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400">
-                    Endpoint: <span className="font-mono text-slate-300">{err.entityId || "N/A"}</span>
+                  <div className="text-[11px] text-slate-500">
+                    Endpoint: <span className="font-mono text-slate-700 font-medium">{err.entityId || "N/A"}</span>
                   </div>
                   {err.metadata?.message && (
-                    <div className="text-[11px] text-slate-400 font-mono bg-slate-950 p-1.5 rounded border border-slate-800/80">
+                    <div className="text-[11px] text-slate-700 font-mono bg-slate-50 p-2 rounded-xl border border-slate-200/80">
                       {err.metadata.message}
                     </div>
                   )}

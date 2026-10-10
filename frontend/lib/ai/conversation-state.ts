@@ -24,7 +24,7 @@ interface ClientConversationState {
 class ConversationStateManager {
   private states: Map<string, ClientConversationState> = new Map();
   private readonly DEFAULT_PAUSE_MS = 30 * 60 * 1000; // 30 minutos de pausa
-  private readonly MAX_TURNS = 8; // Máximo número de mensajes en memoria
+  private readonly MAX_TURNS = 30; // Almacenar hasta 30 turnos para memoria prolongada sin amnesia
 
   private getKey(tenantId: string, clientPhone: string): string {
     const cleanPhone = clientPhone.replace(/\D/g, "").slice(-8); // últimos 8 dígitos
@@ -115,6 +115,25 @@ class ConversationStateManager {
   }
 
   /**
+   * Obtiene el historial en formato crudo para análisis contextual
+   */
+  public getRawHistory(tenantId: string, clientPhone: string): ChatMessageTurn[] {
+    const state = this.getOrCreate(tenantId, clientPhone);
+    return [...state.messages];
+  }
+
+  /**
+   * Hidrata la memoria a partir de mensajes persistentes del CRM si la memoria en RAM estaba vacía
+   */
+  public hydrateTurns(tenantId: string, clientPhone: string, turns: ChatMessageTurn[]): void {
+    const state = this.getOrCreate(tenantId, clientPhone);
+    if (state.messages.length === 0 && turns.length > 0) {
+      state.messages = turns.slice(-this.MAX_TURNS);
+      state.lastActivity = Date.now();
+    }
+  }
+
+  /**
    * Limpia estados inactivos de más de 24 horas para liberar RAM
    */
   public cleanupStale(): void {
@@ -125,6 +144,21 @@ class ConversationStateManager {
         this.states.delete(key);
       }
     }
+  }
+
+  /**
+   * Borra todo el historial de memoria
+   */
+  public clearAll(): void {
+    this.states.clear();
+  }
+
+  /**
+   * Borra el historial de un número específico
+   */
+  public clearPhone(tenantId: string, clientPhone: string): void {
+    const key = this.getKey(tenantId, clientPhone);
+    this.states.delete(key);
   }
 }
 

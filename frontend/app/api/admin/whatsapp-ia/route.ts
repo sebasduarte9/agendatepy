@@ -6,7 +6,7 @@ import { geminiPool } from "@/lib/ai/gemini-pool";
  * Endpoint de Telemetría y Salud del Clúster de IA WhatsApp (Gemini Multi-Key Pool)
  *
  * Provee:
- * - Métricas en tiempo real de consumo de RPM (0-15) y RPD (0-1500) por clave.
+ * - Métricas en tiempo real de consumo de RPM (0-15) y RPD (0-500) por clave.
  * - Estado de salud de las 4 cuentas.
  * - Registro de auditoría en vivo de consultas de clientes.
  * - Ping sintético de verificación.

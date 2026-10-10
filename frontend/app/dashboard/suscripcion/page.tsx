@@ -10,6 +10,9 @@ import {
   ArrowRight,
   PhoneCall,
   Lock,
+  Copy,
+  Landmark,
+  MessageCircle,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Modal from "@/components/dashboard/ui/Modal";
@@ -91,6 +94,7 @@ export default function SuscripcionPage() {
 
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<(typeof PLANS)[number] | null>(null);
+  const [copiedAlias, setCopiedAlias] = useState(false);
 
   const bookingLimit = business.freeBookingLimit || (currentPlan === "gratis" ? 20 : currentPlan === "basico" ? 100 : 9999);
   const isUnlimited = bookingLimit >= 9999;
@@ -433,38 +437,83 @@ export default function SuscripcionPage() {
               );
             })()}
 
-            <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-2.5">
-              <span className="font-bold text-slate-900 dark:text-white block">
-                Método de Pago Seguro:
-              </span>
-              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white dark:bg-[#121215] border border-slate-200/60 dark:border-white/5">
-                <CreditCard className="h-4 w-4" style={{ color: brandColor }} />
-                <span className="text-slate-700 dark:text-zinc-300 font-medium">
-                  Tarjeta de Crédito o Débito
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 dark:text-zinc-500">
-                Cobro recurrente mensual automático. Podés cancelar en cualquier momento desde tu panel.
-              </p>
-            </div>
+            {/* PAGO VÍA TRANSFERENCIA Y WHATSAPP */}
+            {selectedPlanForUpgrade.price > 0 ? (
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Landmark className="h-4 w-4 text-emerald-600" />
+                      Datos para Transferencia Bancaria
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText("pagos@agendate.py");
+                        setCopiedAlias(true);
+                        setTimeout(() => setCopiedAlias(false), 2000);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-2.5 py-1 text-[11px] font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
+                    >
+                      {copiedAlias ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedAlias ? "Copiado" : "Copiar Alias"}
+                    </button>
+                  </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setCheckoutModalOpen(false)}
-                className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmUpgrade}
-                className="rounded-xl px-5 py-2 font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
-                style={{ backgroundColor: brandColor }}
-              >
-                Confirmar y Activar
-              </button>
-            </div>
+                  <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-white/5 p-3 text-[11px] space-y-1 text-slate-700 dark:text-zinc-300 font-mono">
+                    <p>Banco: <strong className="text-slate-900 dark:text-white">Banco Itaú Paraguay</strong></p>
+                    <p>Titular: <strong className="text-slate-900 dark:text-white">AgendatePY S.A.</strong></p>
+                    <p>Cta Cte: <strong className="text-slate-900 dark:text-white">720045678</strong></p>
+                    <p>RUC: <strong className="text-slate-900 dark:text-white">80099881-2</strong></p>
+                    <p>Alias: <strong className="text-emerald-600 dark:text-emerald-400">pagos@agendate.py</strong></p>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                    💡 Transferí los <strong>{formatGs(selectedPlanForUpgrade.price)}</strong> y tocá el botón de abajo para enviar el comprobante a nuestro WhatsApp de soporte. Un asesor activará tu plan inmediatamente.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutModalOpen(false)}
+                    className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer text-xs"
+                  >
+                    Cerrar
+                  </button>
+
+                  <a
+                    href={`https://wa.me/595974244669?text=${encodeURIComponent(
+                      `¡Hola equipo de AgendatePY! 👋\n\nQuiero activar el *${selectedPlanForUpgrade.name}* (${formatGs(selectedPlanForUpgrade.price)}/mes) para mi local:\n• *Negocio:* ${business.name}\n• *Enlace:* agendatepy.com/${business.slug || "mi-local"}\n\nAdjunto mi comprobante de transferencia bancaria para la activación. ¡Muchas gracias!`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-md bg-emerald-600 hover:bg-emerald-500 transition cursor-pointer"
+                  >
+                    <span>Enviar Comprobante por WhatsApp</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutModalOpen(false)}
+                  className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmUpgrade}
+                  className="rounded-xl px-5 py-2 font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  Activar Plan Gratuito
+                </button>
+              </div>
+            )}
           </div>
         )}
       </Modal>

@@ -189,21 +189,21 @@ export default function WebHeatmapAdminPage() {
   }, [data, mode, deviceType]);
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-100">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full min-w-0 text-slate-900">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
-            <Flame className="h-5 w-5 text-slate-400 shrink-0" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <Flame className="h-6 w-6 text-[#FF4F2B] shrink-0" />
             <span>Web Heatmap</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Visualización analítica de clics, profundidad de scroll y movimiento de usuarios.
           </p>
         </div>
 
         {/* Global Filters */}
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           {/* Tenant Selector */}
           <CustomSelect
             value={tenantId}
@@ -212,7 +212,7 @@ export default function WebHeatmapAdminPage() {
               { value: "ALL", label: "Todos los Negocios" },
               ...tenants.map((t) => ({ value: t.id, label: t.name })),
             ]}
-            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 min-w-[170px]"
+            buttonClassName="bg-white border-slate-200/80 text-slate-700 min-w-[170px] shadow-xs"
           />
 
           {/* Page Selector */}
@@ -227,23 +227,23 @@ export default function WebHeatmapAdminPage() {
                 badge: `${p.count} ses`,
               })) || []),
             ]}
-            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 font-mono min-w-[170px]"
+            buttonClassName="bg-white border-slate-200/80 text-slate-700 font-mono min-w-[170px] shadow-xs"
           />
 
           {/* Device Filter */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
+          <div className="flex items-center bg-slate-100 border border-slate-200/80 rounded-xl p-1 text-xs">
             <button
               onClick={() => setDeviceType("all")}
-              className={`px-2.5 py-1 rounded-md transition ${
-                deviceType === "all" ? "bg-slate-800 text-white font-medium" : "text-slate-400 hover:text-white"
+              className={`px-3 py-1 rounded-lg transition ${
+                deviceType === "all" ? "bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Todos
             </button>
             <button
               onClick={() => setDeviceType("desktop")}
-              className={`px-2 py-1 rounded-md flex items-center gap-1 transition ${
-                deviceType === "desktop" ? "bg-slate-800 text-white font-medium" : "text-slate-400 hover:text-white"
+              className={`px-2.5 py-1 rounded-lg flex items-center gap-1 transition ${
+                deviceType === "desktop" ? "bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60" : "text-slate-600 hover:text-slate-900"
               }`}
               title="Desktop"
             >
@@ -251,8 +251,8 @@ export default function WebHeatmapAdminPage() {
             </button>
             <button
               onClick={() => setDeviceType("mobile")}
-              className={`px-2 py-1 rounded-md flex items-center gap-1 transition ${
-                deviceType === "mobile" ? "bg-slate-800 text-white font-medium" : "text-slate-400 hover:text-white"
+              className={`px-2.5 py-1 rounded-lg flex items-center gap-1 transition ${
+                deviceType === "mobile" ? "bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60" : "text-slate-600 hover:text-slate-900"
               }`}
               title="Mobile"
             >
@@ -269,33 +269,33 @@ export default function WebHeatmapAdminPage() {
               { value: "30d", label: "Últimos 30 días" },
               { value: "90d", label: "Últimos 90 días" },
             ]}
-            buttonClassName="bg-slate-900 border-slate-800 text-slate-300 min-w-[140px]"
+            buttonClassName="bg-white border-slate-200/80 text-slate-700 min-w-[140px] shadow-xs"
           />
         </div>
       </div>
 
       {/* KPI Stats Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Sesiones Analizadas</span>
-            <Activity className="w-4 h-4 text-slate-500" />
+            <Activity className="w-4 h-4 text-[#FF4F2B]" />
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">
             {data?.stats?.totalSessions?.toLocaleString("es-PY") || 0}
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Visitantes rastreados</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Visitantes rastreados</div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Clics Totales</span>
-            <MousePointer className="w-4 h-4 text-slate-500" />
+            <MousePointer className="w-4 h-4 text-[#FF4F2B]" />
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">
+          <div className="text-2xl font-bold text-[#FF4F2B] tracking-tight tabular-nums mt-1">
             {data?.stats?.totalClicks?.toLocaleString("es-PY") || 0}
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">
+          <div className="text-[11px] text-slate-400 mt-0.5">
             {data?.stats?.totalSessions
               ? ((data.stats.totalClicks / data.stats.totalSessions) || 0).toFixed(1)
               : 0}{" "}
@@ -303,83 +303,83 @@ export default function WebHeatmapAdminPage() {
           </div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Profundidad Scroll</span>
-            <Scroll className="w-4 h-4 text-slate-500" />
+            <Scroll className="w-4 h-4 text-[#FF4F2B]" />
           </div>
-          <div className="text-2xl font-semibold text-white tracking-tight tabular-nums mt-1">
+          <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-1">
             {data?.stats?.avgScrollDepth || 0}%
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Promedio de lectura</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Promedio de lectura</div>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Dispositivos</span>
-            <Monitor className="w-4 h-4 text-slate-500" />
+            <Monitor className="w-4 h-4 text-[#FF4F2B]" />
           </div>
-          <div className="text-sm font-semibold text-white mt-2 flex items-center gap-3">
-            <span className="flex items-center gap-1 text-xs text-slate-300">
+          <div className="text-sm font-bold text-slate-900 mt-2 flex items-center gap-3">
+            <span className="flex items-center gap-1 text-xs text-slate-700">
               <Monitor className="w-3.5 h-3.5 text-slate-400" />
               {data?.stats?.deviceBreakdown?.desktop || 0}
             </span>
-            <span className="flex items-center gap-1 text-xs text-slate-300">
+            <span className="flex items-center gap-1 text-xs text-slate-700">
               <Smartphone className="w-3.5 h-3.5 text-slate-400" />
               {data?.stats?.deviceBreakdown?.mobile || 0}
             </span>
-            <span className="flex items-center gap-1 text-xs text-slate-300">
+            <span className="flex items-center gap-1 text-xs text-slate-700">
               <Tablet className="w-3.5 h-3.5 text-slate-400" />
               {data?.stats?.deviceBreakdown?.tablet || 0}
             </span>
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Desktop / Mobile / Tablet</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Desktop / Mobile / Tablet</div>
         </div>
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 gap-2 overflow-x-auto">
-        <div className="flex items-center gap-0.5 bg-slate-900 p-0.5 rounded-lg border border-slate-800 shrink-0">
+      <div className="flex items-center justify-between border-b border-slate-200/80 pb-3.5 gap-2 overflow-x-auto">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 shrink-0">
           <button
             onClick={() => setMode("click")}
-            className={`px-3 py-1.5 rounded-md text-xs transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 ${
               mode === "click"
-                ? "bg-slate-800 text-white font-medium"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <MousePointer className="w-3.5 h-3.5" />
+            <MousePointer className="w-3.5 h-3.5 text-[#FF4F2B]" />
             <span>Clics</span>
           </button>
 
           <button
             onClick={() => setMode("scroll")}
-            className={`px-3 py-1.5 rounded-md text-xs transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 ${
               mode === "scroll"
-                ? "bg-slate-800 text-white font-medium"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Scroll className="w-3.5 h-3.5" />
+            <Scroll className="w-3.5 h-3.5 text-[#FF4F2B]" />
             <span>Scroll</span>
           </button>
 
           <button
             onClick={() => setMode("move")}
-            className={`px-3 py-1.5 rounded-md text-xs transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 ${
               mode === "move"
-                ? "bg-slate-800 text-white font-medium"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Move className="w-3.5 h-3.5" />
+            <Move className="w-3.5 h-3.5 text-[#FF4F2B]" />
             <span>Movimiento</span>
           </button>
         </div>
 
         {/* Legend */}
-        <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-400 font-mono bg-slate-900/60 px-3 py-1 rounded-lg border border-slate-800">
-          <span>Intensidad:</span>
+        <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-600 font-mono bg-white px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
+          <span className="font-semibold text-slate-700">Intensidad:</span>
           <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" /> Frío
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block ml-1.5" /> Medio
           <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block ml-1.5" /> Caliente
@@ -387,8 +387,8 @@ export default function WebHeatmapAdminPage() {
       </div>
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-rose-950/20 border border-rose-900/40 text-rose-300 text-xs flex items-center gap-2.5">
-          <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2.5">
+          <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
@@ -396,103 +396,103 @@ export default function WebHeatmapAdminPage() {
       {/* Main Heatmap Visual Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Visual Page Representation with Overlay Layer */}
-        <div className="lg:col-span-2 bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 md:p-6 relative overflow-hidden flex flex-col items-center">
+        <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-4 md:p-6 relative overflow-hidden flex flex-col items-center shadow-xs">
           {/* Browser Top Bar Mock */}
-          <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl px-4 py-2.5 mb-4 flex items-center justify-between text-xs text-slate-400">
+          <div className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2.5 mb-4 flex items-center justify-between text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-rose-500/70" />
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
+                <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               </div>
-              <span className="ml-3 font-mono text-[11px] text-slate-400 truncate max-w-[280px]">
+              <span className="ml-3 font-mono text-[11px] text-slate-600 font-medium truncate max-w-[280px]">
                 {pagePath === "all" ? "agendatepy.com/[tenant]/reservar" : `agendatepy.com${pagePath}`}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-mono bg-slate-800/80 px-2 py-0.5 rounded-md text-slate-300">
+            <div className="flex items-center gap-2 text-[10px] font-mono bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-md text-slate-700 shadow-2xs font-semibold">
               {deviceType.toUpperCase()} MODE
             </div>
           </div>
 
           {/* Interactive Mock Frame with Canvas Overlay */}
           <div
-            className={`relative rounded-2xl border border-slate-800/90 bg-slate-900 overflow-hidden shadow-inner transition-all duration-300 ${
+            className={`relative rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-inner transition-all duration-300 ${
               deviceType === "mobile"
                 ? "w-full max-w-[360px] min-h-[500px] sm:min-h-[640px]"
                 : "w-full min-h-[500px] sm:min-h-[600px] max-w-[760px]"
             }`}
           >
             {/* Background Page Representation (Booking Page Mock Layout) */}
-            <div className="p-6 space-y-6 select-none opacity-85 pointer-events-none">
+            <div className="p-6 space-y-6 select-none opacity-90 pointer-events-none bg-slate-50/50">
               {/* Business Header Mock */}
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-black text-lg">
+              <div className="flex items-center gap-3 border-b border-slate-200/80 pb-4">
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FF4F2B] font-black text-lg">
                   AP
                 </div>
                 <div>
-                  <div className="h-4 w-32 bg-slate-700 rounded mb-1.5 animate-pulse" />
-                  <div className="h-3 w-48 bg-slate-800 rounded" />
+                  <div className="h-4 w-32 bg-slate-300 rounded mb-1.5 animate-pulse" />
+                  <div className="h-3 w-48 bg-slate-200 rounded" />
                 </div>
               </div>
 
               {/* Service Selection Cards Mock */}
               <div className="space-y-3">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   1. Seleccionar Servicio
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl border border-indigo-500/30 bg-indigo-950/20">
-                    <div className="h-3.5 w-24 bg-indigo-400/50 rounded mb-1" />
-                    <div className="h-3 w-16 bg-slate-700 rounded" />
+                  <div className="p-3.5 rounded-xl border border-orange-200 bg-orange-50/40">
+                    <div className="h-3.5 w-24 bg-orange-400/50 rounded mb-1" />
+                    <div className="h-3 w-16 bg-slate-300 rounded" />
                   </div>
-                  <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/50">
-                    <div className="h-3.5 w-28 bg-slate-700 rounded mb-1" />
-                    <div className="h-3 w-16 bg-slate-800 rounded" />
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="h-3.5 w-28 bg-slate-300 rounded mb-1" />
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
                   </div>
                 </div>
               </div>
 
               {/* Staff / Professional Mock */}
               <div className="space-y-3">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   2. Profesional
                 </div>
                 <div className="flex gap-2">
-                  <div className="flex items-center gap-2 p-2 rounded-xl border border-slate-800 bg-slate-900/40">
-                    <div className="w-7 h-7 rounded-full bg-slate-700" />
-                    <div className="h-3 w-16 bg-slate-700 rounded" />
+                  <div className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="w-7 h-7 rounded-full bg-slate-200" />
+                    <div className="h-3 w-16 bg-slate-300 rounded" />
                   </div>
-                  <div className="flex items-center gap-2 p-2 rounded-xl border border-slate-800 bg-slate-900/40">
-                    <div className="w-7 h-7 rounded-full bg-slate-700" />
-                    <div className="h-3 w-16 bg-slate-700 rounded" />
+                  <div className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="w-7 h-7 rounded-full bg-slate-200" />
+                    <div className="h-3 w-16 bg-slate-300 rounded" />
                   </div>
                 </div>
               </div>
 
               {/* Calendar & Time Slots Mock */}
               <div className="space-y-3">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   3. Fecha y Hora
                 </div>
                 <div className="grid grid-cols-4 gap-2">
-                  <div className="h-8 rounded-lg bg-indigo-600/40 border border-indigo-500/40 flex items-center justify-center text-[10px] text-indigo-200 font-mono">
+                  <div className="h-8 rounded-lg bg-orange-100 border border-orange-200 flex items-center justify-center text-[10px] text-[#FF4F2B] font-mono font-bold">
                     09:00
                   </div>
-                  <div className="h-8 rounded-lg bg-slate-800/60 flex items-center justify-center text-[10px] text-slate-400 font-mono">
+                  <div className="h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] text-slate-600 font-mono">
                     10:00
                   </div>
-                  <div className="h-8 rounded-lg bg-slate-800/60 flex items-center justify-center text-[10px] text-slate-400 font-mono">
+                  <div className="h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] text-slate-600 font-mono">
                     11:00
                   </div>
-                  <div className="h-8 rounded-lg bg-slate-800/60 flex items-center justify-center text-[10px] text-slate-400 font-mono">
+                  <div className="h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] text-slate-600 font-mono">
                     14:00
                   </div>
                 </div>
               </div>
 
               {/* Confirmation Button Mock */}
-              <div className="pt-4 border-t border-slate-800">
-                <div className="w-full h-11 rounded-xl bg-indigo-600 border border-indigo-500 flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-indigo-600/30">
+              <div className="pt-4 border-t border-slate-200">
+                <div className="w-full h-11 rounded-xl bg-[#FF4F2B] flex items-center justify-center text-xs font-bold text-white shadow-md shadow-orange-500/20">
                   Confirmar Reserva
                 </div>
               </div>
@@ -502,14 +502,14 @@ export default function WebHeatmapAdminPage() {
             {mode === "scroll" && (
               <div className="absolute inset-0 pointer-events-none flex flex-col justify-between">
                 {/* 100% Scroll top band */}
-                <div className="h-1/4 bg-rose-500/30 border-b border-rose-500/50 flex items-center justify-between px-4 text-xs font-bold text-rose-200">
+                <div className="h-1/4 bg-rose-500/20 border-b border-rose-500/40 flex items-center justify-between px-4 text-xs font-bold text-rose-700">
                   <span>100% Visitantes alcanzaron esta sección</span>
-                  <span className="font-mono bg-rose-950/80 px-2 py-0.5 rounded border border-rose-500/40">
+                  <span className="font-mono bg-rose-100 px-2 py-0.5 rounded border border-rose-300">
                     0 - 25% Scroll
                   </span>
                 </div>
                 {/* 75% Scroll band */}
-                <div className="h-1/4 bg-amber-500/25 border-b border-amber-500/40 flex items-center justify-between px-4 text-xs font-bold text-amber-200">
+                <div className="h-1/4 bg-amber-500/20 border-b border-amber-500/30 flex items-center justify-between px-4 text-xs font-bold text-amber-700">
                   <span>
                     {data?.stats?.scrollDistribution
                       ? Math.round(
@@ -522,12 +522,12 @@ export default function WebHeatmapAdminPage() {
                       : 85}
                     % continuaron bajando
                   </span>
-                  <span className="font-mono bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/40">
+                  <span className="font-mono bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
                     25 - 50%
                   </span>
                 </div>
                 {/* 50% Scroll band */}
-                <div className="h-1/4 bg-emerald-500/20 border-b border-emerald-500/40 flex items-center justify-between px-4 text-xs font-bold text-emerald-200">
+                <div className="h-1/4 bg-emerald-500/15 border-b border-emerald-500/30 flex items-center justify-between px-4 text-xs font-bold text-emerald-700">
                   <span>
                     {data?.stats?.scrollDistribution
                       ? Math.round(
@@ -539,12 +539,12 @@ export default function WebHeatmapAdminPage() {
                       : 60}
                     % llegaron al selector de horario
                   </span>
-                  <span className="font-mono bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">
+                  <span className="font-mono bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
                     50 - 75%
                   </span>
                 </div>
                 {/* 25% Scroll bottom band */}
-                <div className="h-1/4 bg-blue-500/20 flex items-center justify-between px-4 text-xs font-bold text-blue-200">
+                <div className="h-1/4 bg-blue-500/15 flex items-center justify-between px-4 text-xs font-bold text-blue-700">
                   <span>
                     {data?.stats?.scrollDistribution
                       ? Math.round(
@@ -555,7 +555,7 @@ export default function WebHeatmapAdminPage() {
                       : 35}
                     % llegaron al botón de confirmación
                   </span>
-                  <span className="font-mono bg-blue-950/80 px-2 py-0.5 rounded border border-blue-500/40">
+                  <span className="font-mono bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
                     75 - 100%
                   </span>
                 </div>
@@ -574,9 +574,9 @@ export default function WebHeatmapAdminPage() {
           </div>
 
           {/* Canvas Subtitle Status */}
-          <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
+          <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
               Rastreo activo de eventos normalizados
             </span>
             <span>•</span>
@@ -587,17 +587,17 @@ export default function WebHeatmapAdminPage() {
         {/* Right Sidebar: Top Clicked Elements & Scroll Distribution */}
         <div className="space-y-4">
           {/* Top Clicked Elements */}
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <MousePointer className="w-4 h-4 text-slate-400" />
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <MousePointer className="w-4 h-4 text-[#FF4F2B]" />
                 Elementos Más Clickeados
               </h2>
-              <span className="text-[11px] font-mono text-slate-500">Top 10</span>
+              <span className="text-[11px] font-mono text-slate-400">Top 10</span>
             </div>
 
             {loading ? (
-              <div className="py-8 text-center text-xs text-slate-500">Cargando elementos...</div>
+              <div className="py-8 text-center text-xs text-slate-400">Cargando elementos...</div>
             ) : data?.topElements && data.topElements.length > 0 ? (
               <div className="space-y-2">
                 {data.topElements.map((el, idx) => {
@@ -607,43 +607,43 @@ export default function WebHeatmapAdminPage() {
                   return (
                     <div
                       key={idx}
-                      className="p-2 rounded-lg bg-slate-900/80 border border-slate-800/60 flex items-center justify-between gap-3 text-xs"
+                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between gap-3 text-xs hover:border-orange-200 transition"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700/60">
+                          <span className="px-1.5 py-0.5 rounded bg-white text-slate-700 font-mono text-[10px] border border-slate-200 shadow-2xs font-semibold">
                             &lt;{el.tag}&gt;
                           </span>
-                          <span className="font-medium text-slate-200 truncate">
+                          <span className="font-semibold text-slate-800 truncate">
                             {el.text || el.selector || "Elemento sin texto"}
                           </span>
                         </div>
                         {el.selector && (
-                          <div className="text-[10px] font-mono text-slate-500 truncate mt-0.5">
+                          <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
                             {el.selector}
                           </div>
                         )}
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="font-semibold text-white tabular-nums">{el.count} clics</div>
-                        <div className="text-[10px] font-mono text-slate-400">{pct}%</div>
+                        <div className="font-bold text-slate-900 tabular-nums">{el.count} clics</div>
+                        <div className="text-[10px] font-mono text-[#FF4F2B] font-semibold">{pct}%</div>
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="py-8 text-center text-xs text-slate-500">
+              <div className="py-8 text-center text-xs text-slate-400">
                 No hay suficientes clics registrados en este período.
               </div>
             )}
           </div>
 
           {/* Scroll Distribution Card */}
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Scroll className="w-4 h-4 text-slate-400" />
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Scroll className="w-4 h-4 text-[#FF4F2B]" />
                 Retención por Nivel de Scroll
               </h2>
             </div>
@@ -660,11 +660,11 @@ export default function WebHeatmapAdminPage() {
                 const pct = Math.round((count / total) * 100);
                 return (
                   <div key={item.key} className="space-y-1">
-                    <div className="flex justify-between text-slate-400">
+                    <div className="flex justify-between text-slate-500">
                       <span>{item.range}</span>
-                      <span className="font-mono text-white font-bold">{pct}% ({count})</span>
+                      <span className="font-mono text-slate-900 font-bold">{pct}% ({count})</span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200/60">
                       <div
                         className={`h-full ${item.color} rounded-full transition-all duration-500`}
                         style={{ width: `${pct}%` }}

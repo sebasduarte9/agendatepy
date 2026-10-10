@@ -53,7 +53,7 @@ export default function ClientAppointmentManager({ appointment }: Props) {
   const [isPending, startTransition] = useTransition();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [copiedSipap, setCopiedSipap] = useState(false);
+  const [copiedTransfer, setCopiedTransfer] = useState(false);
 
   const tenant = appointment.tenant;
   const time = formatInTimeZone(appointment.startTime, tenant.timezone, "HH:mm");
@@ -234,13 +234,13 @@ export default function ClientAppointmentManager({ appointment }: Props) {
                 type="button"
                 onClick={async () => {
                   await navigator.clipboard.writeText("agendate.py");
-                  setCopiedSipap(true);
-                  setTimeout(() => setCopiedSipap(false), 2000);
+                  setCopiedTransfer(true);
+                  setTimeout(() => setCopiedTransfer(false), 2000);
                 }}
                 className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-emerald-700 transition"
               >
-                {copiedSipap ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                {copiedSipap ? "Copiado" : "Copiar Alias"}
+                {copiedTransfer ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copiedTransfer ? "Copiado" : "Copiar Alias"}
               </button>
             </div>
             <div className="text-[11px] text-emerald-800 space-y-0.5">

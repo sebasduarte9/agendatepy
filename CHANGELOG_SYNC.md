@@ -288,7 +288,7 @@ Cada entrada debe detallar:
      - Se sustituyeron todos los degradados residuales morados/índigo (`indigo-500`, `indigo-600`, `violet-500`, `purple`) por la paleta armónica del logo:
        - Gradientes de titulares y botones: `from-brand to-[#FF6B4A]` y `from-brand via-[#FF6B4A] to-amber-500`.
        - Halo ambiental del iPhone: luz cálida vermellón y esmeralda.
-       - Widgets flotantes (SIPAP y Recordatorios) y acentos de control adaptados a los tonos oficiales.
+       - Widgets flotantes (Transferencias Bancarias y Recordatorios) y acentos de control adaptados a los tonos oficiales.
        - Plantilla de correo electrónico OTP sincronizada con `#FF4F2B`.
 - **Verificación:**
   - `npx tsc --noEmit` completado exitosamente con **0 errores**.
@@ -328,9 +328,9 @@ Cada entrada debe detallar:
 - **Descripción de Cambios y Razonamiento:**
   1. **Rediseño Natural de las Notificaciones:**
      - Se ajustó el desplazamiento espacial (`-left-20 lg:-left-28` y `-right-20 lg:-right-28`) para evitar que las tarjetas colisionen o tapen la cabecera de WhatsApp (nombre del negocio y avatar) o los mensajes del chat. Ahora flotan de manera orgánica y balanceada al lado del teléfono.
-     - Se implementó diseño estilo *push notification* de iOS con micro-cabecera de origen (`WhatsApp Bot · Hace 2 min` y `SIPAP Bancario · Ahora`).
+     - Se implementó diseño estilo *push notification* de iOS con micro-cabecera de origen (`WhatsApp Bot · Hace 2 min` y `Transferencias Bancarias Bancario · Ahora`).
   2. **Actualización de Texto Solicitada:**
-     - Se cambió *"SIPAP Bancario"* por **"Transferencia recibida"** con monto destacado en Guaraníes (`+Gs. 120.000 ingresado`) y badge verificado.
+     - Se cambió *"Transferencias Bancarias Bancario"* por **"Transferencia recibida"** con monto destacado en Guaraníes (`+Gs. 120.000 ingresado`) y badge verificado.
   3. **Mayor Dinamismo:**
      - Animación continua de levitación 3D suave.
      - Indicador en vivo de estado con pulso animado (*live ping*).
@@ -351,10 +351,10 @@ Cada entrada debe detallar:
   - `CHANGELOG_SYNC.md`
 - **Descripción de Cambios y Razonamiento:**
   1. **Eliminación de Títulos Artificiales y "WhatsApp Bot":**
-     - Se removió por completo la cabecera/etiqueta `"WHATSAPP BOT"` y `"SIPAP BANCARIO · AHORA"`.
+     - Se removió por completo la cabecera/etiqueta `"WHATSAPP BOT"` y `"Transferencias Bancarias BANCARIO · AHORA"`.
      - La notificación superior ahora es una tarjeta limpia y natural: Icono de campana + `"Recordatorio 2h Antes"` con badge `[Confirmado]` + `"Sofía confirmó su turno"`.
-  2. **Reemplazo Directo de "SIPAP Bancario" por "Transferencia recibida":**
-     - Tal como lo solicitó el usuario, el texto *"Transferencia recibida"* sustituye directamente al texto *"SIPAP Bancario"* en el cuerpo principal de la tarjeta, sin agregarse como título externo ni barra adicional.
+  2. **Reemplazo Directo de "Transferencias Bancarias Bancario" por "Transferencia recibida":**
+     - Tal como lo solicitó el usuario, el texto *"Transferencia recibida"* sustituye directamente al texto *"Transferencias Bancarias Bancario"* en el cuerpo principal de la tarjeta, sin agregarse como título externo ni barra adicional.
      - Incluye el badge `[Verificado]` y monto `"Gs. 120.000 ingresado"` en verde esmeralda.
   3. **Visual Limpio sin Truncamiento:**
      - Se eliminó el truncamiento de texto (`truncate`), garantizando lectura fluida y completa con `whitespace-nowrap` y padding equilibrado.
@@ -473,9 +473,9 @@ Cada entrada debe detallar:
      - Se configuró `scroll-mt-20` en todas las secciones para que el navbar flotante nunca tape títulos.
   2. **Refactorización de Titular y Subtítulo en Características (`Features.tsx`):**
      - Titular principal actualizado con `UN SOLO LUGAR` en mayúsculas y texto degradado oficial.
-     - Subtítulo limpio sin mención a transferencias SIPAP ni recordatorios a clientes: *"Diseñado para la realidad comercial en Paraguay: turnos por WhatsApp y comisiones automáticas de tu equipo."*
-  3. **Reemplazo de SIPAP por Módulo de "Control de Caja y Arqueo":**
-     - Se retiró la tarjeta de transferencias SIPAP y se introdujo la tarjeta interactiva de **Control de Caja y Arqueo Diario**, con desglose visual de Efectivo en Caja, Transferencias bancarias y Total ingresado con indicador de balance cuadrado.
+     - Subtítulo limpio sin mención a transferencias Transferencias Bancarias ni recordatorios a clientes: *"Diseñado para la realidad comercial en Paraguay: turnos por WhatsApp y comisiones automáticas de tu equipo."*
+  3. **Reemplazo de Transferencias Bancarias por Módulo de "Control de Caja y Arqueo":**
+     - Se retiró la tarjeta de transferencias Transferencias Bancarias y se introdujo la tarjeta interactiva de **Control de Caja y Arqueo Diario**, con desglose visual de Efectivo en Caja, Transferencias bancarias y Total ingresado con indicador de balance cuadrado.
   4. **Tarjetas de Comisiones y Calendarios Oficiales:**
      - En Comisiones de Equipo, se eliminaron los nombres personales y se adoptó la nomenclatura **Colaborador 1 (50%)** y **Colaborador 2 (45%)**.
      - En Google & Apple Calendar, se crearon e integraron los **logotipos vectoriales SVG oficiales de Google Calendar** (icono 31 multicolor) y de **Apple**.
@@ -742,7 +742,7 @@ Cada entrada debe detallar:
      - `/api/services` y `/api/services/[id]`: CRUD persistente de servicios con transacción para vincularlos a los colaboradores activos del negocio.
      - `/api/staff` y `/api/staff/[id]`: CRUD persistente de colaboradores con generación automática de horarios semanales y asignación de catálogo.
      - `/api/clients` y `/api/clients/[id]`: CRUD de clientes con normalización de teléfono para evitar duplicados y protección de citas previas.
-     - `/api/cash` y `/api/cash/[id]`: Registro persistente de ingresos y egresos con métodos de pago reales (Efectivo, POS, SIPAP, Billetera) asociados al tenant.
+     - `/api/cash` y `/api/cash/[id]`: Registro persistente de ingresos y egresos con métodos de pago reales (Efectivo, POS, Transferencias Bancarias, Billetera) asociados al tenant.
      - `/api/appointments/[id]`: Reagendamiento con validación previa de colisiones y captura de exclusión GiST (`SLOT_TAKEN` HTTP 409). Cancelación de turnos mediante liberación del slot en PostgreSQL (`status: CANCELLED`).
      - `/api/schedule-blocks` y `/api/schedule-blocks/[id]`: Gestión de pausas operativas.
      - `/api/tenant/settings`: Lectura y actualización atómica de datos comerciales, dirección, horarios de atención y zona horaria en `Tenant.settings`.
@@ -1365,7 +1365,7 @@ Cada entrada debe detallar:
      - 0% comisión por turno cobrado, recordatorios de WhatsApp automáticos, 1 profesional y página web propia con logo.
      - Indicador dinámico de consumo de turnos en el Dashboard con llamada a la acción hacia el Plan Básico (Gs. 100k) o Pro (Gs. 250k) cuando el negocio supera el 70% de su capacidad mensual (15/20 turnos).
   2. **Retiro de Sistema Anti-Plantón / Señas:**
-     - A solicitud del usuario, se retiró el flujo de cobro forzoso de seña/anticipo bancario SIPAP en el proceso de reserva de clientes y en el panel de configuración, manteniendo la experiencia de agendamiento directa, rápida y sin fricción de pago previo.
+     - A solicitud del usuario, se retiró el flujo de cobro forzoso de seña/anticipo bancario Transferencias Bancarias en el proceso de reserva de clientes y en el panel de configuración, manteniendo la experiencia de agendamiento directa, rápida y sin fricción de pago previo.
 - **Validación y Compilación:**
   - `npm run build` -> **Compilación limpia Turbopack exitosa (20/20 páginas, 0 errores)**
   - `npx tsc --noEmit` -> **0 errores de TypeScript**

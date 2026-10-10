@@ -36,7 +36,7 @@ export type CommissionPayoutRecord = {
   grossCommission: number;
   advancesDeducted: number;
   amountPaid: number;
-  paymentMethod: "Efectivo" | "Transferencia" | "SIPAP" | "POS Bancard" | "Billetera" | string;
+  paymentMethod: "Efectivo" | "Transferencia" | "POS Bancard" | "Billetera" | string;
   status: "PAID" | "PENDING";
   paidAt: string;
   paidBy?: string;
@@ -154,7 +154,7 @@ export type Receipt = {
   status: "pending" | "approved" | "rejected";
   note: string;
   bankOrigin?: string; // Ej: "Banco Itaú", "Ueno Bank", "Banco Continental", "BNF", "Sudameris"
-  operationNumber?: string; // Ej: "SIPAP-894210", "SPI-991203"
+  operationNumber?: string; // Ej: "TRF-894210", "TRANSF-991203"
   ocrVerified?: boolean; // True si fue extraído automáticamente por OCR
   ocrConfidence?: number; // Porcentaje de confianza (ej: 99.4)
   qrCodeDetected?: boolean; // Si contenía código QR bancario válido
@@ -249,9 +249,10 @@ export type CashMovement = {
 export type WhatsAppTemplate = {
   id: string;
   name: string;
-  trigger: "confirmacion" | "recordatorio_24h" | "recordatorio_2h" | "cancelacion";
+  trigger: "confirmacion" | "recordatorio_24h" | "recordatorio_2h" | "recordatorio_personalizado" | "cancelacion" | string;
   body: string;
   enabled: boolean;
+  timingMinutesBefore?: number; // Minutos antes de la cita para disparar el recordatorio (ej. 1440 = 24h, 120 = 2h, 60 = 1h)
 };
 
 export type LoyaltyMode = "stamps" | "points";

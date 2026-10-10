@@ -491,7 +491,7 @@ export const initialClients: Client[] = [
 
 export const initialReceipts: Receipt[] = [
   {
-    id: "rec-sipap-1",
+    id: "rec-trf-1",
     appointmentId: "ap-demo-1",
     clientName: "Martín Benítez",
     clientPhone: "+595 981 765 432",
@@ -508,7 +508,7 @@ export const initialReceipts: Receipt[] = [
     receiptUrl: "/receipts/itau_demo.png",
   },
   {
-    id: "rec-sipap-2",
+    id: "rec-trf-2",
     appointmentId: "ap-demo-2",
     clientName: "Camila González",
     clientPhone: "+595 972 345 678",
@@ -517,14 +517,14 @@ export const initialReceipts: Receipt[] = [
     status: "approved",
     note: "Pago total Balayage Miel y Nutrición Capilar",
     bankOrigin: "Ueno Bank",
-    operationNumber: "SPI-204918",
+    operationNumber: "TRF-204918",
     ocrVerified: true,
     ocrConfidence: 98.8,
     qrCodeDetected: true,
     channel: "whatsapp",
   },
   {
-    id: "rec-sipap-3",
+    id: "rec-trf-3",
     appointmentId: "ap-demo-3",
     clientName: "Rodrigo Duarte",
     clientPhone: "+595 983 912 345",
@@ -540,7 +540,7 @@ export const initialReceipts: Receipt[] = [
     channel: "whatsapp",
   },
   {
-    id: "rec-sipap-4",
+    id: "rec-trf-4",
     appointmentId: "ap-demo-4",
     clientName: "María Ferreira",
     clientPhone: "+595 981 111 222",
@@ -605,7 +605,7 @@ export const initialCrmConversations: CrmConversation[] = [
         timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
         status: "delivered",
         receiptAttachment: {
-          receiptId: "rec-sipap-1",
+          receiptId: "rec-trf-1",
           bankOrigin: "Banco Itaú",
           amount: 130000,
           operationNumber: "TRF-849201",
@@ -988,6 +988,7 @@ const initialWhatsAppTemplates: WhatsAppTemplate[] = [
     id: "wt-recordatorio-24h",
     name: "Recordatorio 24 Horas Antes",
     trigger: "recordatorio_24h",
+    timingMinutesBefore: 1440,
     body: "¡Hola {cliente}! Te recordamos tu turno de mañana *{fecha} a las {hora} hs* para *{servicio}* en *{negocio}*.\n\n¿Nos confirmás tu asistencia? Si necesitás reprogramar o cancelar, podés hacerlo con un clic aquí:\n{link_autogestion}",
     enabled: true,
   },
@@ -995,6 +996,7 @@ const initialWhatsAppTemplates: WhatsAppTemplate[] = [
     id: "wt-recordatorio-2h",
     name: "Recordatorio 2 Horas Antes",
     trigger: "recordatorio_2h",
+    timingMinutesBefore: 120,
     body: "¡Hola {cliente}! Te recordamos que tu turno es en 2 horas ({hora} hs). Te estamos esperando en {negocio} ({direccion}). ¡Nos vemos pronto!",
     enabled: true,
   },
@@ -1037,6 +1039,7 @@ type DashboardState = {
   setSelectedStaffId: (id: string | "all") => void;
   updateBusiness: (patch: Partial<BusinessProfile>) => Promise<any> | void;
   addAppointment: (item: Appointment) => Promise<any> | void;
+  updateAppointment: (id: string, patch: Partial<Appointment>) => Promise<boolean>;
   cancelAppointment: (id: string) => Promise<any> | void;
   addBlock: (block: Omit<TimeBlock, "id">) => Promise<any> | void;
   removeBlock: (id: string) => Promise<any> | void;
@@ -1070,8 +1073,9 @@ type DashboardState = {
   userName: string;
   setUserName: (name: string) => void;
   setCurrentUserRole: (role: UserRole, staffId?: string) => void;
-  updateAppointment: (id: string, patch: Partial<Appointment>) => Promise<any> | void;
-  updateWhatsAppTemplate: (id: string, body: string) => void;
+  updateWhatsAppTemplate: (id: string, patch: string | Partial<WhatsAppTemplate>) => void;
+  createWhatsAppTemplate: (template: WhatsAppTemplate) => void;
+  deleteWhatsAppTemplate: (id: string) => void;
   toggleWhatsAppTemplate: (id: string) => void;
   pushToast: (type: "success" | "error", message: string) => void;
   dismissToast: (id: string) => void;
@@ -1347,7 +1351,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       set({ isInitialSyncDone: true });
     }
   },
-  updateAppointment: async (id, patch) => {
+  updateAppointment: async (id: string, patch: Partial<Appointment>) => {
     const prev = get().appointments;
     const existing = prev.find((a) => a.id === id);
     if (!existing) return false;
@@ -1727,7 +1731,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       id: "cm-" + Date.now(),
       type: "egreso",
       amount: newPayout.amountPaid,
-      method: (newPayout.paymentMethod.toLowerCase().includes("sipap") ? "transferencia" : "efectivo") as any,
+      method: (newPayout.paymentMethod.toLowerCase().includes("transfer") || newPayout.paymentMethod.toLowerCase().includes("sipap") ? "transferencia" : "efectivo") as any,
       concept: `Liquidación de comisiones: ${newPayout.staffName} (${receiptNumber})`,
       category: "Comisiones",
       date: paidAt,
@@ -2177,11 +2181,23 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  updateWhatsAppTemplate: (id, body) =>
+  updateWhatsAppTemplate: (id, patch) =>
     set({
       whatsappTemplates: get().whatsappTemplates.map((t) =>
-        t.id === id ? { ...t, body } : t,
+        t.id === id
+          ? typeof patch === "string"
+            ? { ...t, body: patch }
+            : { ...t, ...patch }
+          : t,
       ),
+    }),
+  createWhatsAppTemplate: (template) =>
+    set({
+      whatsappTemplates: [...get().whatsappTemplates, template],
+    }),
+  deleteWhatsAppTemplate: (id) =>
+    set({
+      whatsappTemplates: get().whatsappTemplates.filter((t) => t.id !== id),
     }),
   toggleWhatsAppTemplate: (id) =>
     set({

@@ -100,7 +100,7 @@ export default function ServiciosPage() {
     requirePrepayment: false,
     prepaymentType: "deposit" as "deposit" | "full",
     prepaymentAmount: 30000,
-    prepaymentMethod: "sipap" as "sipap" | "transferencia" | "qr" | "cualquiera",
+    prepaymentMethod: "transferencia" as "transferencia" | "sipap" | "qr" | "cualquiera",
     prepaymentInstructions: "Enviar comprobante por WhatsApp al agendar para congelar tu cupo flash.",
   });
 
@@ -318,7 +318,7 @@ export default function ServiciosPage() {
       requirePrepayment: Boolean(service.requirePrepayment),
       prepaymentType: service.prepaymentType || "deposit",
       prepaymentAmount: service.prepaymentAmount !== undefined ? service.prepaymentAmount : Math.round(promoPrice * 0.5),
-      prepaymentMethod: service.prepaymentMethod || "sipap",
+      prepaymentMethod: service.prepaymentMethod || "transferencia",
       prepaymentInstructions: service.prepaymentInstructions || "Enviar comprobante por WhatsApp al agendar para congelar tu cupo flash.",
     });
   }
@@ -1813,16 +1813,16 @@ export default function ServiciosPage() {
                           <button
                             type="button"
                             onClick={() =>
-                              setPromoForm({ ...promoForm, prepaymentMethod: "sipap" })
+                              setPromoForm({ ...promoForm, prepaymentMethod: "transferencia" })
                             }
                             className={`p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
-                              promoForm.prepaymentMethod === "sipap"
+                              promoForm.prepaymentMethod === "transferencia" || promoForm.prepaymentMethod === "sipap"
                                 ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
                                 : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
                             }`}
                           >
                             <Building2 className="h-3.5 w-3.5 mx-auto mb-0.5" />
-                            <span>Transferencia</span>
+                            <span>Transferencia bancaria</span>
                           </button>
 
                           <button
