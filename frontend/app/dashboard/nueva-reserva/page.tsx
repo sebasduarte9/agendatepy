@@ -390,7 +390,7 @@ function NuevaReservaContent() {
   const durationPct = Math.min(100, Math.round(((currentService?.durationMin || 45) / 90) * 100));
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl lg:max-w-6xl space-y-6">
       {/* ═══ NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="nueva-reserva-header"
@@ -528,7 +528,7 @@ function NuevaReservaContent() {
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block whitespace-nowrap">
                     Duración Estimada
                   </span>
                   <span className="text-[10px] text-slate-400 block truncate">
@@ -604,8 +604,8 @@ function NuevaReservaContent() {
             {/* WhatsApp Ready Status */}
             <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs">
               <MessageCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium truncate">
-                Recordatorio con link de Google Calendar listo para enviar tras agendar.
+              <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                Recordatorio y link de Google Calendar listos para enviar tras agendar.
               </span>
             </div>
           </div>
@@ -771,7 +771,7 @@ function NuevaReservaContent() {
 
                     {/* Autocomplete suggestions */}
                     {matchingClients.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1.5 space-y-0.5 max-h-44 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-1.5 space-y-0.5 max-h-44 overflow-y-auto">
                         <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-bold">
                           Clientes Registrados:
                         </span>
@@ -801,7 +801,7 @@ function NuevaReservaContent() {
                     </label>
                     <div className="flex items-center gap-1.5">
                       {/* Country Selector Dropdown */}
-                      <div className="relative">
+                      <div className={`relative ${countryDropdownOpen ? "z-40" : ""}`}>
                         <button
                           type="button"
                           onClick={() => {
@@ -823,7 +823,7 @@ function NuevaReservaContent() {
                         </button>
 
                         {countryDropdownOpen && (
-                          <div className="absolute top-full left-0 mt-1 z-40 w-64 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2">
+                          <div className="absolute top-full left-0 mt-1 z-50 w-64 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-2">
                             <div className="relative mb-1.5">
                               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                               <input
@@ -903,7 +903,7 @@ function NuevaReservaContent() {
               {/* SECTION 2: SERVICIO & ESPECIALISTA */}
               <div data-tour="nueva-reserva-service" className={`${stepHidden(1)} grid grid-cols-1 sm:grid-cols-2 gap-3`}>
                 {/* Custom Service Selector */}
-                <div className="relative">
+                <div className={`relative ${serviceDropdownOpen ? "z-40" : ""}`}>
                   <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                     Servicio *
                   </label>
@@ -932,7 +932,7 @@ function NuevaReservaContent() {
                   </button>
 
                   {serviceDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
+                    <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
                       {services.map((s) => (
                         <button
                           key={s.id}
@@ -958,7 +958,7 @@ function NuevaReservaContent() {
                 </div>
 
                 {/* Custom Staff Selector */}
-                <div className="relative">
+                <div className={`relative ${staffDropdownOpen ? "z-40" : ""}`}>
                   <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                     Profesional Asignado *
                   </label>
@@ -991,7 +991,7 @@ function NuevaReservaContent() {
                   </button>
 
                   {staffDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
+                    <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
                       {staff.filter((s) => s.active).map((p) => (
                         <button
                           key={p.id}
@@ -1058,7 +1058,7 @@ function NuevaReservaContent() {
                   </div>
 
                   {/* Time Stepper & Popover */}
-                  <div className="flex items-center gap-1.5 relative">
+                  <div className={`flex items-center gap-1.5 relative ${timeDropdownOpen ? "z-40" : ""}`}>
                     <button
                       type="button"
                       onClick={() => setTime((t) => stepTime(t, -15))}
@@ -1095,7 +1095,7 @@ function NuevaReservaContent() {
 
                     {/* Time dropdown popover */}
                     {timeDropdownOpen && (
-                      <div className="absolute right-0 bottom-full mb-1.5 z-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
+                      <div className="absolute right-0 bottom-full mb-1.5 z-50 rounded-2xl border border-slate-200 dark:border-white/10 glass-dropdown shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
                         {APPOINTMENT_TIME_SLOTS.map((t) => (
                           <button
                             key={t}

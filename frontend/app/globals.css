@@ -1052,6 +1052,55 @@ dialog,
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 30px 80px rgba(0, 0, 0, 0.22) !important;
 }
 
+/* 2.1. Menús Desplegables, Selects & Popovers (Opacidad 100% sólida, cero mezcla con el fondo) */
+.glass-dropdown,
+div.glass-dropdown,
+div[class*="glass-dropdown"],
+.dropdown-menu,
+[data-dropdown],
+.dark .glass-dropdown,
+.dark div.glass-dropdown,
+.dark div[class*="glass-dropdown"],
+.dark .glass-dropdown[class*="dark:bg-slate-900"],
+.dark .dropdown-menu,
+.dark [data-dropdown],
+.dark div[class*="absolute"][class*="top-full"][class*="rounded"],
+.dark div[class*="absolute"][class*="bottom-full"][class*="rounded"] {
+  background: #18151b !important;
+  background-color: #18151b !important;
+  opacity: 1 !important;
+  backdrop-filter: blur(40px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 24px 70px -10px rgba(0, 0, 0, 0.95), 0 12px 30px -5px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.16) !important;
+  z-index: 50 !important;
+}
+
+[data-theme="light"] .glass-dropdown,
+:root.light .glass-dropdown,
+:root:not(.dark) .glass-dropdown,
+:root:not(.dark) div[class*="absolute"][class*="top-full"][class*="rounded"],
+:root:not(.dark) div[class*="absolute"][class*="bottom-full"][class*="rounded"] {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 20px 50px -8px rgba(0, 0, 0, 0.22), 0 8px 16px -4px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+}
+
+.dark .glass-dropdown button:not([class*="bg-primary"]):hover,
+.dark div[class*="absolute"][class*="top-full"][class*="rounded"] button:not([class*="bg-primary"]):hover,
+.dark div[class*="absolute"][class*="bottom-full"][class*="rounded"] button:not([class*="bg-primary"]):hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .glass-dropdown input,
+.dark div[class*="absolute"][class*="top-full"][class*="rounded"] input {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+}
+
+
 /* 3. Atmósfera Lumínica Dinámica en Movimiento (Pura Animación de Color, Cero Fotos) */
 .glass-room {
   position: fixed;
