@@ -1295,6 +1295,20 @@ export default function GuidedTour() {
   const handleClose = useCallback(() => {
     setShowExitConfirm(false);
     if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      document.querySelectorAll(".glass-app-shell, .glass-workspace, main, .main-content").forEach((el) => {
+        el.scrollTop = 0;
+      });
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        document.querySelectorAll(".glass-app-shell, .glass-workspace, main, .main-content").forEach((el) => {
+          el.scrollTop = 0;
+        });
+      });
       if (selectedSectionKey === "apariencia") {
         window.dispatchEvent(new CustomEvent("agendate-switch-tab", { detail: { tab: "estilos" } }));
       }
@@ -1309,6 +1323,18 @@ export default function GuidedTour() {
     }
     closeTour();
   }, [selectedSectionKey, closeTour]);
+
+  // Ensure scroll is restored when tour closes
+  useEffect(() => {
+    if (!isTourOpen && typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      document.querySelectorAll(".glass-app-shell, .glass-workspace, main, .main-content").forEach((el) => {
+        el.scrollTop = 0;
+      });
+    }
+  }, [isTourOpen]);
 
   // Ensure modal closes if component unmounts
   useEffect(() => {

@@ -35,6 +35,10 @@ export interface ExpandingSearchProps {
   onExpandedChange?: (expanded: boolean) => void;
   /** The widest the field grows. It never grows past its container. */
   expandedWidth?: number;
+  /** Mobile width limit when the search expands into a flexible header slot. */
+  expandedWidthMobile?: number;
+  /** Use the immediate flex slot as the mobile expansion limit. */
+  fitContainerOnMobile?: boolean;
   maxResults?: number;
   /** The edge the button sits on; the field grows away from it. */
   anchor?: "start" | "end";
@@ -175,7 +179,7 @@ function Listbox({ id, label, groups, query, activeIndex, optionId, reduced, key
   </div>;
 }
 
-export function ExpandingSearch({ label, items, suggestions = [], suggestionsLabel = "Sugerencias", placeholder, onSelect, onExpandedChange, expandedWidth = 320, maxResults = 6, anchor = "end", emptyHint = "Probá con otra palabra o verificá la ortografía.", className }: ExpandingSearchProps) {
+export function ExpandingSearch({ label, items, suggestions = [], suggestionsLabel = "Sugerencias", placeholder, onSelect, onExpandedChange, expandedWidth = 320, expandedWidthMobile, fitContainerOnMobile = false, maxResults = 6, anchor = "end", emptyHint = "Probá con otra palabra o verificá la ortografía.", className }: ExpandingSearchProps) {
   const id = useId();
   const reduced = useReducedMotion() ?? false;
   const rootRef = useRef<HTMLDivElement>(null);
@@ -203,7 +207,11 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
     const measure = () => {
       const collapsed = shell.offsetHeight || FALLBACK_SIZE;
       const margin = typeof window !== "undefined" && window.innerWidth < 640 ? 76 : 145;
-      const maxAvailable = typeof window !== "undefined" ? Math.min(expandedWidth, window.innerWidth - margin) : expandedWidth;
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+      const containerWidth = isMobile && fitContainerOnMobile ? root.parentElement?.clientWidth ?? 0 : 0;
+      const widthLimit = isMobile ? expandedWidthMobile ?? expandedWidth : expandedWidth;
+      const availableWidth = containerWidth || (typeof window !== "undefined" ? window.innerWidth - margin : widthLimit);
+      const maxAvailable = Math.min(widthLimit, availableWidth);
       const full = Math.max(collapsed, maxAvailable);
       size.current = { collapsed, expanded: full };
       root.style.setProperty("--es-width", `${full}px`);
@@ -219,12 +227,13 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
     }
     const observer = new ResizeObserver(measure);
     observer.observe(root);
+    if (fitContainerOnMobile && root.parentElement) observer.observe(root.parentElement);
     window.addEventListener("resize", measure);
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [expandedWidth, width, syncShape]);
+  }, [expandedWidth, expandedWidthMobile, fitContainerOnMobile, width, syncShape]);
 
   const morphTo = (goal: number) => {
     if (reduced) width.jump(goal);
@@ -315,7 +324,7 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
 
   const clearHidden = reduced ? { opacity: 0 } : { opacity: 0, scale: .6, filter: `blur(${motionTokens.blur.subtle}px)` };
 
-  return <div ref={rootRef} className={[styles.root, className].filter(Boolean).join(" ")} data-anchor={anchor}>
+  return <div ref={rootRef} className={[styles.root, className].filter(Boolean).join(" ")} data-anchor={anchor} data-fit-container={fitContainerOnMobile || undefined}>
     <motion.div ref={shellRef} className={styles.shell} data-expanded={expanded || undefined} style={{ width }}>
       <button ref={buttonRef} type="button" className={styles.trigger} aria-label={label} title={`${label} (⌘K)`} hidden={expanded} onClick={expand} />
       <Search className={styles.icon} width={16} height={16} strokeWidth={1.75} aria-hidden="true" />

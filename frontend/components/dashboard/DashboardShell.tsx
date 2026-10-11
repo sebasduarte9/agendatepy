@@ -105,7 +105,7 @@ export default function DashboardShell({
       {/* 3. Viewport Desktop: Workspace Flotante con Rail Glass Estático + Burbuja Header Estática + App Shell Envolvente */}
       <div className="relative z-10 hidden lg:flex glass-workspace w-full pl-[98px] pr-4.5 sm:pr-5 py-[18px] flex-col gap-3.5">
         <Sidebar variant="rail" />
-        <div className="glass-header-bubble w-full shrink-0">
+        <div className="glass-header-bubble w-full shrink-0 sticky top-[18px] z-[60]">
           <Header />
         </div>
         <div className="glass-app-shell flex-1 min-w-0 w-full">
@@ -117,7 +117,7 @@ export default function DashboardShell({
 
       {/* 4. Viewport Móvil (< lg): Shell Glassmorphic Adaptativo con Burbuja Header */}
       <div className="relative z-10 flex lg:hidden min-w-0 flex-1 flex-col p-2.5 pb-[calc(6.5rem+env(safe-area-inset-bottom,20px))] gap-2.5">
-        <div className="glass-header-bubble w-full shrink-0">
+        <div className="glass-header-bubble w-full shrink-0 sticky top-2.5 z-[60]">
           <Header />
         </div>
         <div className="glass-app-shell flex-1 min-w-0 rounded-[22px]">

@@ -408,7 +408,7 @@ export default function QuickBookingModal({
                 </div>
 
                 {matchingClients.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 space-y-0.5 max-h-40 overflow-y-auto">
+                  <div className="solid-popover absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 space-y-0.5 max-h-40 overflow-y-auto">
                     <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-medium">Sugerencias:</span>
                     {matchingClients.map((c) => (
                       <button
@@ -465,7 +465,7 @@ export default function QuickBookingModal({
                     </button>
 
                     {countryDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-1 z-40 w-64 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2">
+                      <div className="solid-popover absolute top-full left-0 mt-1 z-40 w-64 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2">
                         <div className="relative mb-1.5">
                           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                           <input
@@ -562,7 +562,7 @@ export default function QuickBookingModal({
                 </button>
 
                 {serviceDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
+                  <div className="solid-popover absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
                     {services.map((s) => (
                       <button
                         key={s.id}
@@ -617,7 +617,7 @@ export default function QuickBookingModal({
                 </button>
 
                 {staffDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
+                  <div className="solid-popover absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
                     {staff.filter((s) => s.active).map((p) => (
                       <button
                         key={p.id}
@@ -722,7 +722,7 @@ export default function QuickBookingModal({
 
                   {/* Time dropdown popover: opens UPWARD so it stays inside modal */}
                   {timeDropdownOpen && (
-                    <div className="absolute right-0 bottom-full mb-1.5 z-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
+                    <div className="solid-popover absolute right-0 bottom-full mb-1.5 z-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
                       {APPOINTMENT_TIME_SLOTS.map((t) => (
                         <button
                           key={t}

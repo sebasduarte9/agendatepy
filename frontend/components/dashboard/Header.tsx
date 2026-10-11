@@ -156,19 +156,20 @@ export default function Header() {
 
   return (
     <header className="w-full flex h-[58px] sm:h-[62px] items-center justify-between px-4 sm:px-6 select-none relative z-50">
-      <div className={`flex items-center gap-2.5 min-w-0 transition-opacity duration-200 ${isSearchExpanded ? "opacity-0 pointer-events-none sm:opacity-100 sm:pointer-events-auto" : "opacity-100"}`}>
+      <div className="flex items-center gap-2.5 min-w-0">
         {/* On mobile, show clean liquid brand lockup: [Liquid A Logo] + gendate.py */}
         <Link
           href="/dashboard"
-          className="flex lg:hidden items-center gap-2 select-none group"
+          className="flex shrink-0 lg:hidden items-center gap-2 select-none group"
         >
           <LiquidLogo
             size={28}
             primaryColor={business.primaryColor}
             href=""
+            className="shrink-0"
           />
           <span
-            className="font-coolvetica text-xl tracking-normal text-slate-900 dark:text-white flex items-center leading-none"
+            className={`shrink-0 max-w-[12rem] overflow-hidden whitespace-nowrap font-coolvetica text-xl tracking-normal text-slate-900 dark:text-white flex items-center leading-none transition-all duration-200 ${isSearchExpanded ? "max-sm:max-w-0 max-sm:opacity-0 max-sm:-mr-2" : "max-sm:opacity-100"}`}
             style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
           >
             gendate<span style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}>.py</span>
@@ -187,7 +188,7 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className={`flex items-center gap-2 sm:gap-3 ${isSearchExpanded ? "max-sm:ml-3 max-sm:min-w-0 max-sm:flex-1" : "shrink-0"}`}>
         {/* Public Booking Link (Desktop only) */}
         <Link
           data-tour="header-booking-link"
@@ -202,11 +203,13 @@ export default function Header() {
         </Link>
 
         {/* Morphing Expanding Search (Desktop & Mobile) */}
-        <div className="inline-flex items-center">
+        <div className={`inline-flex min-w-0 items-center ${isSearchExpanded ? "max-sm:flex max-sm:flex-1" : ""}`}>
           <ExpandingSearch
             label="Buscar en tu espacio..."
             placeholder="Buscar páginas, acciones, clientes…"
             expandedWidth={340}
+            expandedWidthMobile={520}
+            fitContainerOnMobile
             items={searchItems}
             suggestions={searchSuggestions}
             suggestionsLabel="Accesos Rápidos"
@@ -218,21 +221,23 @@ export default function Header() {
         </div>
 
         {/* Morphing User Menu Button & Dropdown */}
-        <UserMenu
-          user={{
-            name: userName || "Marcos Benítez",
-            email: business.email || "administrador@agendate.py",
-            plan: currentUserRole === "admin" ? "ADMINISTRADOR" : "COLABORADOR",
-            initials: (userName || "M").charAt(0).toUpperCase(),
-            avatarSrc: (business.logoUrl || business.logo) || undefined,
-          }}
-          theme={currentTheme}
-          onThemeChange={handleThemeChange}
-          showTheme={true}
-          items={userMenuItems}
-          onSignOut={handleLogout}
-          align="end"
-        />
+        <div className="shrink-0">
+          <UserMenu
+            user={{
+              name: userName || "Marcos Benítez",
+              email: business.email || "administrador@agendate.py",
+              plan: currentUserRole === "admin" ? "ADMINISTRADOR" : "COLABORADOR",
+              initials: (userName || "M").charAt(0).toUpperCase(),
+              avatarSrc: (business.logoUrl || business.logo) || undefined,
+            }}
+            theme={currentTheme}
+            onThemeChange={handleThemeChange}
+            showTheme={true}
+            items={userMenuItems}
+            onSignOut={handleLogout}
+            align="end"
+          />
+        </div>
       </div>
 
       <CommandPalette

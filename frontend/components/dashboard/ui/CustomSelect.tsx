@@ -20,6 +20,7 @@ export interface CustomSelectProps {
   className?: string;
   buttonClassName?: string;
   menuClassName?: string;
+  selectedOptionClassName?: string;
   disabled?: boolean;
   align?: "left" | "right";
   dataTour?: string;
@@ -34,6 +35,7 @@ export default function CustomSelect({
   className = "",
   buttonClassName = "",
   menuClassName = "",
+  selectedOptionClassName = "",
   disabled = false,
   align = "left",
   dataTour,
@@ -134,7 +136,7 @@ export default function CustomSelect({
       {isOpen && (
         <div
           role="listbox"
-          className={`absolute ${
+          className={`solid-popover absolute ${
             align === "right" ? "right-0" : "left-0"
           } mt-1.5 min-w-[200px] w-full max-h-64 overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-xl shadow-slate-900/10 dark:shadow-black/50 p-1.5 z-50 text-xs backdrop-blur-md animate-in fade-in-0 zoom-in-95 duration-100 ${menuClassName}`}
         >
@@ -149,7 +151,7 @@ export default function CustomSelect({
                 onClick={() => handleSelect(opt.value)}
                 className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-left transition cursor-pointer select-none mb-0.5 last:mb-0 ${
                   isSelected
-                    ? "bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-primary-foreground"
+                    ? selectedOptionClassName || "bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-primary-foreground"
                     : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium"
                 }`}
               >

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "frontend/app/globals.css"
+        ],
+        "createdAt": "2026-10-11T19:32:54.550Z",
+        "reason": "Agent: the navigation rail intentionally expands from 66px to 242px on hover to reveal labels; this interaction predates the calendar refinements."
+      }
+    ]
+  }
+}

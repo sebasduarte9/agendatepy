@@ -130,7 +130,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
       <>
         {/* Soft atmospheric focus scrim when rail expands (resolves background text bleed and lighting clash) */}
         <div
-          className={`fixed inset-0 bg-slate-950/20 dark:bg-black/55 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none z-40 ${
+          className={`fixed inset-0 bg-slate-950/20 dark:bg-black/55 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none z-[65] ${
             isHovered ? "opacity-100" : "opacity-0"
           }`}
           aria-hidden="true"
@@ -303,12 +303,12 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
     <>
       <button
         type="button"
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden cursor-pointer"
+        className="fixed inset-0 z-[65] bg-black/60 backdrop-blur-sm lg:hidden cursor-pointer"
         aria-label="Cerrar menú"
         onClick={() => setOpen(false)}
       />
 
-      <aside className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] glass-sidebar p-4 flex flex-col lg:hidden animate-in slide-in-from-left duration-250">
+      <aside className="fixed inset-y-0 left-0 z-[70] w-72 max-w-[85vw] glass-sidebar p-4 flex flex-col lg:hidden animate-in slide-in-from-left duration-250">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-2.5">
             <LiquidLogo

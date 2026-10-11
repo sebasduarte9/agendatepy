@@ -30,7 +30,7 @@ import {
   Smartphone,
   UserPlus,
 } from "lucide-react";
-import { format, parseISO, addMinutes, setHours, setMinutes } from "date-fns";
+import { format, parseISO, addMinutes, addMonths, setHours, setMinutes } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
@@ -40,7 +40,6 @@ import Modal from "./ui/Modal";
 import Card from "./ui/Card";
 import CustomSelect from "./ui/CustomSelect";
 import IosSegmentedControl from "./ui/IosSegmentedControl";
-import MorphingOrb from "./ui/MorphingOrb";
 import { triggerHaptic } from "@/lib/haptics";
 
 const START_HOUR = 8;
@@ -573,10 +572,44 @@ export default function CalendarBoard() {
   }, [appointments, calendarDate]);
 
   const confirmedDayCount = dayAppointments.filter((a) => a.status === "confirmed" || a.status === "completed").length;
-  const attendanceRate = dayAppointments.length > 0 ? Math.round((confirmedDayCount / dayAppointments.length) * 100) : 100;
   const dayBlocks = blocks.filter((b) => b.date === calendarDate);
   const totalSlotsEstimated = Math.max(1, staff.length * 12);
   const occupancyPct = Math.min(100, Math.round(((dayAppointments.length + dayBlocks.length) / totalSlotsEstimated) * 100));
+
+  function openAppointmentModal() {
+    setNewSlotData({
+      date: calendarDate,
+      time: "10:00",
+      staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
+    });
+    setNewClientId(null);
+    setNewClientName("");
+    setNewClientPhone("");
+    setSelectedCountryCode("PY");
+    setCountryDropdownOpen(false);
+    setCountrySearchQuery("");
+    setNewServiceId(services[0]?.id || "");
+    setNewModalMode("appointment");
+    setNewModalOpen(true);
+  }
+
+  function openBlockModal() {
+    setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : "all");
+    setBlockDate(calendarDate);
+    setBlockStart("13:00");
+    setBlockEnd("14:00");
+    setBlockReason("Almuerzo / Descanso");
+    setNewModalMode("block");
+    setNewModalOpen(true);
+  }
+
+  function shiftCalendarDate(direction: -1 | 1) {
+    if (calendarView === "mes") {
+      setCalendarDate(format(addMonths(parseISO(`${calendarDate}T12:00:00`), direction), "yyyy-MM-dd"));
+      return;
+    }
+    setCalendarDate(addDaysIso(calendarDate, direction * (calendarView === "semana" ? 7 : 1)));
+  }
 
   return (
     <div className="space-y-6">
@@ -595,84 +628,13 @@ export default function CalendarBoard() {
           </p>
         </div>
 
-        {/* Action Dock */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Date Navigator */}
-          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-xl p-1 shadow-xs">
-            <button
-              type="button"
-              className="rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer active:scale-95"
-              onClick={() => {
-                triggerHaptic("medium");
-                setCalendarDate(
-                  formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
-                );
-              }}
-            >
-              Hoy
-            </button>
-            <button
-              type="button"
-              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer active:scale-90"
-              onClick={() => {
-                triggerHaptic("light");
-                setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? -7 : -1));
-              }}
-              aria-label="Anterior"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer active:scale-90"
-              onClick={() => {
-                triggerHaptic("light");
-                setCalendarDate(addDaysIso(calendarDate, calendarView === "semana" ? 7 : 1));
-              }}
-              aria-label="Siguiente"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* View Switcher iOS Segmented Control */}
-          <div className="w-full sm:w-auto">
-            <IosSegmentedControl
-              options={[
-                { value: "dia", label: "Día" },
-                { value: "semana", label: "Semana" },
-                { value: "mes", label: "Mes" },
-              ]}
-              value={calendarView}
-              onChange={(val) => {
-                setCalendarView(val as any);
-                triggerHaptic("selection");
-              }}
-              layoutId="calendarViewSegment"
-              className="w-full sm:w-auto"
-            />
-          </div>
-
+        {/* Action Dock: Quick Action Buttons */}
+        <div className="hidden items-center gap-2 md:flex">
           {/* "+ Crear Cita" Pill Button */}
           <button
             type="button"
             data-tour="calendar-create-btn"
-            onClick={() => {
-              setNewSlotData({
-                date: calendarDate,
-                time: "10:00",
-                staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
-              });
-              setNewClientId(null);
-              setNewClientName("");
-              setNewClientPhone("");
-              setSelectedCountryCode("PY");
-              setCountryDropdownOpen(false);
-              setCountrySearchQuery("");
-              setNewServiceId(services[0]?.id || "");
-              setNewModalMode("appointment");
-              setNewModalOpen(true);
-            }}
+            onClick={openAppointmentModal}
             className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer hover:brightness-110"
             style={{
               backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
@@ -686,15 +648,7 @@ export default function CalendarBoard() {
           <button
             type="button"
             data-tour="calendar-block-btn"
-            onClick={() => {
-              setBlockStaffId(selectedStaffId !== "all" ? selectedStaffId : "all");
-              setBlockDate(calendarDate);
-              setBlockStart("13:00");
-              setBlockEnd("14:00");
-              setBlockReason("Almuerzo / Descanso");
-              setNewModalMode("block");
-              setNewModalOpen(true);
-            }}
+            onClick={openBlockModal}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 px-3.5 py-2 text-xs font-bold transition cursor-pointer shadow-xs"
           >
             <Ban className="h-3.5 w-3.5 text-amber-500" />
@@ -703,67 +657,59 @@ export default function CalendarBoard() {
         </div>
       </div>
 
-      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Agenda del Día
+      {/* Mobile agenda summary */}
+      <section className="md:hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-slate-900">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Resumen de agenda</h2>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-3xl font-semibold tracking-tight tabular-nums text-slate-900 dark:text-white">
+              {dayAppointments.length}
             </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-                {dayAppointments.length}
+            <span className="text-sm text-slate-600 dark:text-slate-300">turnos programados</span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-200 pt-3 dark:border-white/10">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Confirmados</span>
+              <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">
+                {confirmedDayCount}/{dayAppointments.length}
               </span>
-              <span className="text-xs font-semibold text-slate-400">turnos programados</span>
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">turnos del día</p>
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Ocupación</span>
+              <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">
+                {occupancyPct}%
+              </span>
+            </div>
+            <div
+              className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10"
+              role="progressbar"
+              aria-label="Ocupación de turnos"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={occupancyPct}
+            >
+              <div
+                className="h-full rounded-full transition-[width] duration-500"
+                style={{
+                  width: `${occupancyPct}%`,
+                  backgroundColor: business.primaryColor || "#FF4F2B",
+                }}
+              />
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setNewSlotData({
-                date: calendarDate,
-                time: "10:00",
-                staffId: selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "",
-              });
-              setNewClientId(null);
-              setNewClientName("");
-              setNewClientPhone("");
-              setSelectedCountryCode("PY");
-              setCountryDropdownOpen(false);
-              setCountrySearchQuery("");
-              setNewServiceId(services[0]?.id || "");
-              setNewModalMode("appointment");
-              setNewModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
-            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Cita</span>
-          </button>
         </div>
-
-        <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Confirmados</span>
-            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono text-xs">{confirmedDayCount}</span>
-          </div>
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Ocupación</span>
-            <span className="font-extrabold text-primary font-mono text-xs">{occupancyPct}%</span>
-          </div>
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Asistencia</span>
-            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs">{attendanceRate}%</span>
-          </div>
-        </div>
-      </div>
+      </section>
 
       {/* ═══ GLASSY TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
       <div className="hidden md:block rounded-[28px] glass-panel p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card 1: Ocupación & Confirmación con MorphingOrb de Interfas Glassy */}
+        <div className="grid grid-cols-1 gap-4">
           <div className="rounded-2xl glass-panel-subtle border border-slate-200/60 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200/50 dark:border-white/10">
               <div className="flex items-center gap-2.5">
@@ -777,65 +723,40 @@ export default function CalendarBoard() {
                   <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
                     Ocupación de Turnos & Citas
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Balance operativo del día seleccionado</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Resumen de la jornada seleccionada</p>
                 </div>
               </div>
-
-              <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
-                {calendarDate}
-              </span>
             </div>
 
-            {/* Glassy Occupancy Hero: Morphing Orb & Operational Telemetry */}
-            <div className="py-4 flex items-center justify-between gap-4">
-              {/* Left: Morphing Orb from Interfas Glassy */}
-              <div className="flex items-center gap-4">
-                <MorphingOrb
-                  size="sm"
-                  label="OCUPACIÓN"
-                  value={`${occupancyPct}%`}
-                  sublabel={`${attendanceRate}% Asist.`}
-                />
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-black text-slate-900 dark:text-white">
-                      {occupancyPct > 0 ? "Jornada en Curso" : "Disponibilidad Total"}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {dayAppointments.length} turnos agendados hoy
-                  </p>
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                      ✓ {confirmedDayCount} confirmados
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                      ({attendanceRate}%)
-                    </span>
-                  </div>
-                </div>
+            <div className="py-5 flex flex-col sm:flex-row sm:items-center gap-5">
+              <div className="flex items-baseline gap-3 shrink-0">
+                <span className="text-4xl font-semibold tracking-tight tabular-nums text-slate-900 dark:text-white">
+                  {occupancyPct}%
+                </span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  de ocupación
+                </span>
               </div>
 
-              {/* Right: Glassy Telemetry Capsule with Real-time Progress Bar */}
-              <div className="hidden sm:flex flex-col gap-2 p-3.5 rounded-2xl glass-panel border border-slate-200/60 dark:border-white/10 min-w-[170px]">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Capacidad</span>
-                  <span className="font-mono font-black text-primary">{occupancyPct}%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-200/80 dark:bg-white/10 overflow-hidden">
+              <div className="flex-1 min-w-0 space-y-2">
+                <div
+                  className="h-2 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10"
+                  role="progressbar"
+                  aria-label="Ocupación de turnos"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={occupancyPct}
+                >
                   <div
-                    className="h-full rounded-full transition-all duration-700"
+                    className="h-full rounded-full transition-[width] duration-500"
                     style={{
-                      width: `${Math.min(100, Math.max(4, occupancyPct))}%`,
+                      width: `${occupancyPct}%`,
                       backgroundColor: business.primaryColor || "#FF4F2B",
                     }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                  <span>0%</span>
-                  <span>Meta: 85%</span>
-                  <span>100%</span>
+                <div className="flex flex-wrap items-center gap-x-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <span>{confirmedDayCount} de {dayAppointments.length} confirmados</span>
                 </div>
               </div>
             </div>
@@ -843,60 +764,109 @@ export default function CalendarBoard() {
             {/* Operational Telemetry Rows */}
             <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-200/50 dark:border-white/10 text-xs">
               <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Total Turnos</span>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Turnos agendados</span>
                 <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
                   {dayAppointments.length} citas
                 </span>
               </div>
               <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Bloqueos Pausa</span>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Horarios bloqueados</span>
                 <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono">
-                  {dayBlocks.length} pausas
+                  {dayBlocks.length} {dayBlocks.length === 1 ? "horario" : "horarios"}
                 </span>
               </div>
               <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Especialistas</span>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Equipo de trabajo</span>
                 <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
-                  {staff.length} activos
+                  {staff.length} {staff.length === 1 ? "profesional" : "profesionales"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Card 2: Filtros de Especialistas & Vistas */}
-          <div className="rounded-2xl glass-panel-subtle border border-slate-200/60 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200/50 dark:border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold shadow-xs">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Filtro por Especialista
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Seleccioná un profesional o vista general</p>
-                </div>
-              </div>
+        </div>
+      </div>
 
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                {selectedStaffId === "all" ? "Todo el Salón" : staff.find((s) => s.id === selectedStaffId)?.name}
-              </span>
-            </div>
+      {/* ═══ CALENDAR CONTROL BAR (FECHA, VISTA Y FILTRO UNIFICADO ARRIBA DEL CALENDARIO) ═══ */}
+      <div className="relative z-40 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-2xs">
+        {/* Left: Date Navigator + Formatted Label + View Switcher */}
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+          {/* Date Navigator */}
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200/60 bg-slate-100/90 p-1 shadow-2xs dark:border-white/5 dark:bg-slate-800/90">
+            <CalendarDatePicker date={calendarDate} timezone={business.timezone} onChange={setCalendarDate} />
+            <button
+              type="button"
+              className="rounded-lg px-2.5 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-95"
+              onClick={() => {
+                triggerHaptic("medium");
+                setCalendarDate(
+                  formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd")
+                );
+              }}
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-90"
+              onClick={() => {
+                triggerHaptic("light");
+                shiftCalendarDate(-1);
+              }}
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-90"
+              onClick={() => {
+                triggerHaptic("light");
+                shiftCalendarDate(1);
+              }}
+              aria-label="Siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
 
-            {/* Staff Filter Bar */}
-            <div className="py-3">
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          {/* Formatted Date Badge */}
+          <span className="text-xs font-black text-slate-800 dark:text-slate-100 capitalize font-mono px-1">
+            {shortLabel}
+          </span>
+
+          {/* View Switcher iOS Segmented Control (Día, Semana, Mes) */}
+          <IosSegmentedControl
+            options={[
+              { value: "dia", label: "Día" },
+              { value: "semana", label: "Semana" },
+              { value: "mes", label: "Mes" },
+            ]}
+            value={calendarView}
+            onChange={(val) => {
+              setCalendarView(val as any);
+              triggerHaptic("selection");
+            }}
+            layoutId="calendarViewSegment"
+            size="sm"
+          />
+        </div>
+
+        <div className="flex w-full items-center gap-2 lg:w-auto lg:justify-end">
+          {currentUserRole === "admin" || currentUserRole === "cajero" ? (
+            <div data-tour="calendar-staff-filter" className="min-w-0 flex-1 lg:flex-none">
+              <div className="hidden items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 [scrollbar-width:none] md:flex">
                 <button
                   type="button"
                   onClick={() => setSelectedStaffId("all")}
                   style={selectedStaffId === "all" ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
                   className={`rounded-xl px-3 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
                     selectedStaffId === "all"
-                      ? "shadow-xs"
+                      ? "shadow-2xs"
                       : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
-                  Todos ({staff.length})
+                  Todo el equipo ({staff.length})
                 </button>
                 {staff.map((person) => {
                   const isSelected = selectedStaffId === person.id;
@@ -906,14 +876,14 @@ export default function CalendarBoard() {
                       type="button"
                       onClick={() => setSelectedStaffId(person.id)}
                       style={isSelected ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
-                      className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs transition shrink-0 cursor-pointer ${
+                      className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs transition shrink-0 cursor-pointer ${
                         isSelected
-                          ? "shadow-xs font-bold"
+                          ? "shadow-2xs font-bold"
                           : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
                       <span
-                        className="flex h-4 w-4 items-center justify-center rounded-full text-[8.5px] font-bold text-white shadow-xs"
+                        className="flex h-4 w-4 items-center justify-center rounded-full text-[8.5px] font-bold text-white shadow-2xs"
                         style={{ background: person.color }}
                       >
                         {person.avatar}
@@ -923,63 +893,71 @@ export default function CalendarBoard() {
                   );
                 })}
               </div>
-            </div>
 
-            {/* Quick Tips */}
-            <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-              <span>Hacé clic en cualquier celda libre para crear un turno rápido.</span>
-              <span className="font-bold text-primary font-mono">{business.timezone}</span>
+              <div className="flex items-center gap-2 md:hidden">
+                <span className="shrink-0 text-xs font-medium text-slate-600 dark:text-slate-300">Personal</span>
+                <CustomSelect
+                  id="calendar-staff-filter-mobile"
+                  value={selectedStaffId}
+                  onChange={setSelectedStaffId}
+                  options={[
+                    { value: "all", label: "Todo el equipo", badge: String(staff.length) },
+                    ...staff.map((person) => ({
+                      value: person.id,
+                      label: person.name,
+                      subtitle: person.role,
+                      color: person.color,
+                    })),
+                  ]}
+                  className="min-w-0 flex-1"
+                  buttonClassName="min-h-11 rounded-xl bg-white text-sm dark:bg-slate-900"
+                  menuClassName="!max-h-80 !bg-white !backdrop-blur-none shadow-2xl dark:!bg-[#19191e]"
+                  selectedOptionClassName="bg-sky-50 text-sky-800 font-bold dark:bg-sky-500/15 dark:text-sky-200"
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="min-w-0 flex-1 lg:flex-none">
+              <span className="inline-flex min-h-11 items-center rounded-xl bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                Mi agenda · {staff.find((s) => s.id === currentStaffId)?.name || "Personal"}
+              </span>
+            </div>
+          )}
+
+          <details className="group relative z-50 ml-auto shrink-0 md:hidden">
+            <summary className="inline-flex min-h-11 list-none cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-semibold text-slate-700 transition active:scale-[0.98] dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 [&::-webkit-details-marker]:hidden">
+              Acciones
+              <ChevronDown className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="solid-popover absolute right-0 top-full z-[80] mt-2 w-52 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl dark:border-white/10 dark:bg-[#19191e]">
+              <button
+                type="button"
+                onClick={(event) => {
+                  const menu = event.currentTarget.closest("details");
+                  if (menu) menu.open = false;
+                  openAppointmentModal();
+                }}
+                className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <CalendarPlus className="h-4 w-4 text-primary" />
+                Nueva cita
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  const menu = event.currentTarget.closest("details");
+                  if (menu) menu.open = false;
+                  openBlockModal();
+                }}
+                className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <Ban className="h-4 w-4 text-amber-500" />
+                Bloquear horario
+              </button>
+            </div>
+          </details>
         </div>
       </div>
-
-
-      {/* Staff Filter Bar with Avatars */}
-      {currentUserRole === "admin" || currentUserRole === "cajero" ? (
-        <div
-          data-tour="calendar-staff-filter"
-          className="flex items-center gap-2 overflow-x-auto pb-1"
-        >
-          <button
-            type="button"
-            onClick={() => setSelectedStaffId("all")}
-            className={`rounded-2xl border px-3 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
-              selectedStaffId === "all"
-                ? "border-primary bg-primary/10 text-primary shadow-xs"
-                : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-          >
-            Todo el equipo ({staff.length})
-          </button>
-          {staff.map((person) => (
-            <button
-              key={person.id}
-              type="button"
-              onClick={() => setSelectedStaffId(person.id)}
-              className={`flex items-center gap-2 rounded-2xl border px-3 py-1.5 text-xs transition shrink-0 cursor-pointer ${
-                selectedStaffId === person.id
-                  ? "border-primary bg-primary/10 font-bold text-primary shadow-xs"
-                  : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-              }`}
-            >
-              <span
-                className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs"
-                style={{ background: person.color }}
-              >
-                {person.avatar}
-              </span>
-              <span>{person.name.split(" ")[0]}</span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span className="rounded-xl bg-primary/10 text-primary font-bold px-3 py-1 text-xs">
-            Vista individual: {staff.find((s) => s.id === currentStaffId)?.name || "Mi Agenda"}
-          </span>
-        </div>
-      )}
 
       {/* ═══ MOBILE AGENDA SWITCHER & DAY STREAM ═══ */}
       {calendarView === "dia" && (
@@ -1266,6 +1244,7 @@ export default function CalendarBoard() {
             date={calendarDate}
             timezone={business.timezone}
             appointments={filtered}
+            onSelectDate={setCalendarDate}
             onSelectAppointment={setSelectedApp}
             onEmptySlotClick={handleEmptySlotClick}
           />
@@ -1278,6 +1257,11 @@ export default function CalendarBoard() {
             appointments={filtered}
             onSelectAppointment={setSelectedApp}
             onEmptySlotClick={handleEmptySlotClick}
+            onSelectDate={(selectedDate) => {
+              setCalendarDate(selectedDate);
+              setCalendarView("dia");
+              setMobileAgendaMode("stream");
+            }}
           />
         )}
       </div>
@@ -1331,18 +1315,18 @@ export default function CalendarBoard() {
       {/* Quick Booking & Schedule Block Custom Modal */}
       <Modal
         id="quickBookingModal"
-        maxWidth="max-w-lg"
+        maxWidth="max-w-2xl"
         open={newModalOpen}
         title={newModalMode === "appointment" ? "Agendar Turno" : "Bloquear Horario"}
         onClose={() => setNewModalOpen(false)}
       >
-        <div className="space-y-4 text-xs flex flex-col justify-between">
+        <div className="space-y-5 text-sm flex flex-col justify-between">
           {/* Segmented Switch: Agendar Cita vs Bloquear Horario */}
-          <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+          <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1.5">
             <button
               type="button"
               onClick={() => setNewModalMode("appointment")}
-              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 min-h-11 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
                 newModalMode === "appointment"
                   ? "bg-white dark:bg-slate-900 text-primary shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -1354,7 +1338,7 @@ export default function CalendarBoard() {
             <button
               type="button"
               onClick={() => setNewModalMode("block")}
-              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 min-h-11 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
                 newModalMode === "block"
                   ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -1366,12 +1350,12 @@ export default function CalendarBoard() {
           </div>
 
           {newModalMode === "appointment" ? (
-            <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between gap-4">
-              <div className="space-y-3.5">
+            <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between gap-6">
+              <div className="space-y-5">
                 {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="relative">
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                     Cliente *
                   </label>
                   <div className="relative">
@@ -1385,13 +1369,13 @@ export default function CalendarBoard() {
                         setNewClientName(e.target.value);
                         setNewClientId(null);
                       }}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                      className="w-full min-h-11 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
                     />
                   </div>
 
                   {/* Autocomplete suggestions popover ONLY if matches found and typing */}
                   {matchingClients.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 space-y-0.5 max-h-40 overflow-y-auto">
+                    <div className="solid-popover absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 space-y-0.5 max-h-40 overflow-y-auto">
                       <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-medium">Sugerencias:</span>
                       {matchingClients.map((c) => (
                         <button
@@ -1413,7 +1397,7 @@ export default function CalendarBoard() {
                 </div>
 
                 <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                     WhatsApp
                   </label>
                   <div className="flex items-center gap-1.5">
@@ -1436,7 +1420,7 @@ export default function CalendarBoard() {
                       </button>
 
                       {countryDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1 z-40 w-64 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2">
+                        <div className="solid-popover absolute top-full left-0 mt-1 z-40 w-64 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2">
                           <div className="relative mb-1.5">
                             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                             <input
@@ -1484,7 +1468,7 @@ export default function CalendarBoard() {
                         placeholder={activeCountry.placeholder}
                         value={newClientPhone}
                         onChange={(e) => setNewClientPhone(formatPhoneInput(e.target.value, activeCountry))}
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                        className="w-full min-h-11 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
                       />
                     </div>
                   </div>
@@ -1509,10 +1493,10 @@ export default function CalendarBoard() {
               </div>
 
               {/* ROW 2: SERVICIO & PROFESIONAL */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Custom Service Selector */}
                 <div className="relative">
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                     Servicio
                   </label>
                   <button
@@ -1522,17 +1506,19 @@ export default function CalendarBoard() {
                       setStaffDropdownOpen(false);
                       setTimeDropdownOpen(false);
                     }}
-                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                    className="w-full min-h-14 flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
                   >
-                    <div className="min-w-0 flex-1 truncate pr-2">
-                      <span className="font-bold text-slate-900 dark:text-white">{currentService?.name}</span>
-                      <span className="text-slate-400 ml-1.5 font-medium">({currentService?.durationMin}m · {formatGs(currentService?.price || 0)})</span>
+                    <div className="min-w-0 flex-1 pr-2">
+                      <span className="block truncate font-semibold text-slate-900 dark:text-white">{currentService?.name}</span>
+                      <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+                        {currentService?.durationMin} min · {formatGs(currentService?.price || 0)}
+                      </span>
                     </div>
                     <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${serviceDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
 
                   {serviceDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
+                    <div className="solid-popover absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
                       {services.map((s) => (
                         <button
                           key={s.id}
@@ -1555,7 +1541,7 @@ export default function CalendarBoard() {
 
                 {/* Custom Staff Selector */}
                 <div className="relative">
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                     Profesional
                   </label>
                   <button
@@ -1565,7 +1551,7 @@ export default function CalendarBoard() {
                       setServiceDropdownOpen(false);
                       setTimeDropdownOpen(false);
                     }}
-                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                    className="w-full min-h-11 flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
                   >
                     {(() => {
                       const assigned = staff.find((s) => s.id === newSlotData.staffId) || staff[0];
@@ -1586,7 +1572,7 @@ export default function CalendarBoard() {
                   </button>
 
                   {staffDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
+                    <div className="solid-popover absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-1 max-h-48 overflow-y-auto space-y-0.5">
                       {staff.filter((s) => s.active).map((p) => (
                         <button
                           key={p.id}
@@ -1616,27 +1602,27 @@ export default function CalendarBoard() {
 
               {/* ROW 3: FECHA Y HORA (COMPACT BAR) */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Fecha y Horario
                 </label>
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3.5">
                   {/* Date Navigator */}
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => stepSlotDate(-1)}
-                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
                       title="Día anterior"
                     >
                       <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                     </button>
-                    <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                    <span className="font-semibold text-slate-900 dark:text-white capitalize text-sm px-1">
                       {formattedSlotDate}
                     </span>
                     <button
                       type="button"
                       onClick={() => stepSlotDate(1)}
-                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
                       title="Día siguiente"
                     >
                       <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
@@ -1649,18 +1635,18 @@ export default function CalendarBoard() {
                           date: formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"),
                         }))
                       }
-                      className="text-[10.5px] font-bold text-primary hover:underline px-1.5 py-0.5 rounded hover:bg-primary/10 transition cursor-pointer"
+                      className="min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition cursor-pointer"
                     >
                       Hoy
                     </button>
                   </div>
 
                   {/* Time display & Stepper */}
-                  <div className="flex items-center gap-1.5 relative">
+                  <div className="flex items-center gap-2 relative">
                     <button
                       type="button"
                       onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, -15) }))}
-                      className="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                      className="min-h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
                     >
                       -15m
                     </button>
@@ -1672,7 +1658,7 @@ export default function CalendarBoard() {
                         setServiceDropdownOpen(false);
                         setStaffDropdownOpen(false);
                       }}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-black text-xs text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
+                      className="flex min-h-9 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 font-mono font-semibold text-sm text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
                     >
                       <Clock className="h-3 w-3 text-primary" />
                       <span>{newSlotData.time} hs</span>
@@ -1682,7 +1668,7 @@ export default function CalendarBoard() {
                     <button
                       type="button"
                       onClick={() => setNewSlotData((prev) => ({ ...prev, time: stepTime(prev.time, 15) }))}
-                      className="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                      className="min-h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
                     >
                       +15m
                     </button>
@@ -1693,7 +1679,7 @@ export default function CalendarBoard() {
 
                     {/* Time dropdown popover: opens upward within the modal */}
                     {timeDropdownOpen && (
-                      <div className="absolute right-0 bottom-full mb-1.5 z-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
+                      <div className="solid-popover absolute right-0 bottom-full mb-1.5 z-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
                         {APPOINTMENT_TIME_SLOTS.map((t) => (
                           <button
                             key={t}
@@ -1719,10 +1705,10 @@ export default function CalendarBoard() {
 
               {/* ROW 4: MÉTODO DE PAGO */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Método de Pago
                 </label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 gap-2.5">
                   {[
                     { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
                     { id: "sipap" as const, label: "Transferencia bancaria", icon: Landmark },
@@ -1735,7 +1721,7 @@ export default function CalendarBoard() {
                         key={id}
                         type="button"
                         onClick={() => setNewPaymentMethod(id)}
-                        className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 px-2 text-xs font-bold transition cursor-pointer ${
+                        className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border py-2.5 px-3 text-xs font-semibold transition cursor-pointer ${
                           isSelected
                             ? "border-primary bg-primary text-white shadow-xs"
                             : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
@@ -1751,7 +1737,7 @@ export default function CalendarBoard() {
             </div>
 
             {/* FOOTER ACTIONS & TOTAL */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/10 mt-auto">
                 <div>
                   <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
                   <span className="text-sm font-black text-primary">
@@ -1763,14 +1749,14 @@ export default function CalendarBoard() {
                   <button
                     type="button"
                     onClick={() => setNewModalOpen(false)}
-                    className="rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    className="min-h-11 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmittingQuick || !newClientName.trim()}
-                    className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
+                    className="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmittingQuick ? "Guardando..." : "Confirmar Turno"}
                   </button>
@@ -1778,23 +1764,23 @@ export default function CalendarBoard() {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between gap-4">
-              <div className="space-y-3.5">
-                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+            <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between gap-6">
+              <div className="space-y-5">
+                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-800 dark:text-amber-300 flex items-center gap-3">
                   <Ban className="h-4 w-4 shrink-0 text-amber-600" />
                   <span>Impide que se agenden turnos en este intervalo de tiempo.</span>
                 </div>
 
               {/* Profesional Afectado */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Profesional Afectado
                 </label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setBlockStaffId("all")}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                    className={`min-h-10 px-4 py-2 rounded-xl border text-sm font-semibold transition cursor-pointer ${
                       blockStaffId === "all"
                         ? "border-amber-500 bg-amber-500 text-white shadow-xs"
                         : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -1807,7 +1793,7 @@ export default function CalendarBoard() {
                       key={p.id}
                       type="button"
                       onClick={() => setBlockStaffId(p.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs transition cursor-pointer ${
+                      className={`flex min-h-10 items-center gap-2 px-4 py-2 rounded-xl border text-sm transition cursor-pointer ${
                         blockStaffId === p.id
                           ? "border-amber-500 bg-amber-500 text-white font-bold shadow-xs"
                           : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -1826,23 +1812,23 @@ export default function CalendarBoard() {
               </div>
 
               {/* Fecha y Rango Horario */}
-              <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-2.5 space-y-2">
+              <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => stepBlockDate(-1)}
-                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
                     >
                       <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                     </button>
-                    <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                    <span className="font-semibold text-slate-900 dark:text-white capitalize text-sm px-1">
                       {formattedBlockDate}
                     </span>
                     <button
                       type="button"
                       onClick={() => stepBlockDate(1)}
-                      className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
                     >
                       <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                     </button>
@@ -1852,50 +1838,50 @@ export default function CalendarBoard() {
                     onClick={() =>
                       setBlockDate(formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"))
                     }
-                    className="text-[10.5px] font-bold text-amber-600 hover:underline px-1.5 py-0.5 rounded hover:bg-amber-500/10 transition cursor-pointer"
+                    className="min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold text-amber-600 hover:bg-amber-500/10 transition cursor-pointer"
                   >
                     Hoy
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-slate-200/60 dark:border-white/5 pt-2">
+                <div className="flex items-center justify-between gap-3 border-t border-slate-200/60 dark:border-white/5 pt-3">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 text-[11px]">Desde:</span>
+                    <span className="text-slate-500 text-xs font-medium">Desde:</span>
                     <button
                       type="button"
                       onClick={() => setBlockStart((prev) => stepTime(prev, -15))}
-                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                      className="h-8 w-8 rounded-lg border border-slate-200 dark:border-white/10 text-sm font-semibold cursor-pointer"
                     >
                       -
                     </button>
-                    <span className="font-mono font-black text-xs px-2 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-white/10">
+                    <span className="font-mono font-semibold text-sm px-3 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10">
                       {blockStart}
                     </span>
                     <button
                       type="button"
                       onClick={() => setBlockStart((prev) => stepTime(prev, 15))}
-                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                      className="h-8 w-8 rounded-lg border border-slate-200 dark:border-white/10 text-sm font-semibold cursor-pointer"
                     >
                       +
                     </button>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 text-[11px]">Hasta:</span>
+                    <span className="text-slate-500 text-xs font-medium">Hasta:</span>
                     <button
                       type="button"
                       onClick={() => setBlockEnd((prev) => stepTime(prev, -15))}
-                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                      className="h-8 w-8 rounded-lg border border-slate-200 dark:border-white/10 text-sm font-semibold cursor-pointer"
                     >
                       -
                     </button>
-                    <span className="font-mono font-black text-xs px-2 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-white/10">
+                    <span className="font-mono font-semibold text-sm px-3 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10">
                       {blockEnd}
                     </span>
                     <button
                       type="button"
                       onClick={() => setBlockEnd((prev) => stepTime(prev, 15))}
-                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 text-[10px] font-bold cursor-pointer"
+                      className="h-8 w-8 rounded-lg border border-slate-200 dark:border-white/10 text-sm font-semibold cursor-pointer"
                     >
                       +
                     </button>
@@ -1905,16 +1891,16 @@ export default function CalendarBoard() {
 
               {/* Motivo */}
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Motivo
                 </label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {["Almuerzo", "Reunión", "Trámite", "Cierre"].map((chip) => (
                     <button
                       key={chip}
                       type="button"
                       onClick={() => setBlockReason(chip)}
-                      className={`text-[11px] rounded-lg px-2.5 py-1 border transition cursor-pointer ${
+                      className={`min-h-9 rounded-xl px-3 py-1.5 border text-xs font-medium transition cursor-pointer ${
                         blockReason === chip
                           ? "bg-amber-500 text-white border-amber-600 font-bold"
                           : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
@@ -1930,24 +1916,24 @@ export default function CalendarBoard() {
                   placeholder="Ej: Almuerzo o capacitación"
                   value={blockReason}
                   onChange={(e) => setBlockReason(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                  className="w-full min-h-11 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-white/10 mt-auto">
               <button
                 type="button"
                 onClick={() => setNewModalOpen(false)}
-                className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                className="min-h-11 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmittingQuick}
-                className="rounded-xl bg-amber-500 hover:bg-amber-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-500/20 hover:opacity-95 disabled:opacity-50 cursor-pointer transition-all"
+                className="min-h-11 rounded-xl bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-500/20 hover:opacity-95 disabled:opacity-50 cursor-pointer transition-all"
               >
                 {isSubmittingQuick ? "Guardando..." : "Confirmar Bloqueo"}
               </button>
@@ -1956,6 +1942,151 @@ export default function CalendarBoard() {
         )}
       </div>
     </Modal>
+    </div>
+  );
+}
+
+function CalendarDatePicker({
+  date,
+  timezone,
+  onChange,
+}: {
+  date: string;
+  timezone: string;
+  onChange: (date: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(date.slice(0, 7));
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) setVisibleMonth(date.slice(0, 7));
+  }, [date, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) setIsOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const monthDate = parseISO(`${visibleMonth}-01T12:00:00`);
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [
+    ...Array.from({ length: firstWeekday }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+  ];
+  const today = formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
+
+  function changeMonth(direction: -1 | 1) {
+    setVisibleMonth(format(addMonths(monthDate, direction), "yyyy-MM"));
+  }
+
+  function selectDate(nextDate: string) {
+    onChange(nextDate);
+    setIsOpen(false);
+  }
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-white active:scale-95 dark:text-slate-200 dark:hover:bg-slate-700"
+        aria-label="Elegir fecha"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        Fecha
+      </button>
+
+      {isOpen && (
+        <div
+          role="dialog"
+          aria-label="Elegir fecha del calendario"
+          className="solid-popover absolute left-0 top-full z-[80] mt-2 w-[min(20rem,calc(100vw-3rem))] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-white/10 dark:bg-[#19191e]"
+        >
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold capitalize text-slate-900 dark:text-white">
+              {format(monthDate, "MMMM yyyy", { locale: es })}
+            </h2>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => changeMonth(-1)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                aria-label="Mes anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => changeMonth(1)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                aria-label="Mes siguiente"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            {["D", "L", "M", "X", "J", "V", "S"].map((weekday, index) => (
+              <span key={`${weekday}-${index}`} className="pb-1" aria-label={["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][index]}>
+                {weekday}
+              </span>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {cells.map((day, index) => {
+              if (!day) return <span key={`empty-${index}`} className="h-10" aria-hidden="true" />;
+              const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const isSelected = iso === date;
+              const isToday = iso === today;
+              return (
+                <button
+                  key={iso}
+                  type="button"
+                  onClick={() => selectDate(iso)}
+                  aria-label={format(parseISO(`${iso}T12:00:00`), "EEEE d 'de' MMMM", { locale: es })}
+                  aria-pressed={isSelected}
+                  className={`h-10 rounded-lg text-xs font-medium tabular-nums transition active:scale-95 ${
+                    isSelected
+                      ? "bg-sky-600 text-white"
+                      : isToday
+                      ? "border border-sky-500/50 bg-sky-500/5 text-sky-700 dark:text-sky-300"
+                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex justify-end border-t border-slate-200 pt-2 dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => selectDate(today)}
+              className="min-h-9 rounded-lg px-3 text-xs font-semibold text-sky-700 hover:bg-sky-500/10 dark:text-sky-300"
+            >
+              Ir a hoy
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2051,14 +2182,14 @@ function GoogleCalendarDayView({
         <div className="relative min-w-[650px] sm:min-w-[700px]">
           {/* Staff Columns Header */}
           <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-950/60 sticky top-0 z-20">
-            <div className="w-16 shrink-0 border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[10px] font-bold text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-950 z-30">
+            <div className="w-16 shrink-0 rounded-tl-3xl border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[10px] font-bold text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-950 z-30">
               HORA
             </div>
             <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${staffList.length}, minmax(180px, 1fr))` }}>
               {staffList.map((person) => (
                 <div
                   key={person.id}
-                  className="flex items-center gap-2 p-3 border-r border-slate-200/80 dark:border-white/10 last:border-r-0"
+                  className="flex items-center gap-2 p-3 border-r border-slate-200/80 dark:border-white/10 last:border-r-0 last:rounded-tr-3xl"
                 >
                   <span
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs"
@@ -2099,7 +2230,7 @@ function GoogleCalendarDayView({
               style={{ height: HOUR_PX }}
             >
               {/* Sticky Hour Label */}
-              <div className="w-16 shrink-0 border-r border-slate-100 dark:border-white/10 px-2 pt-1 font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 text-right sticky left-0 bg-white/95 dark:bg-slate-900/95 z-10">
+              <div className={`w-16 shrink-0 border-r border-slate-100 dark:border-white/10 px-2 pt-1 font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 text-right sticky left-0 bg-white/95 dark:bg-slate-900/95 z-10 ${hour === hours[hours.length - 1] ? "rounded-bl-3xl" : ""}`}>
                 {String(hour).padStart(2, "0")}:00
               </div>
 
@@ -2281,23 +2412,120 @@ function GoogleCalendarWeekView({
   date,
   timezone,
   appointments,
+  onSelectDate,
   onSelectAppointment,
   onEmptySlotClick,
 }: {
   date: string;
   timezone: string;
   appointments: Appointment[];
+  onSelectDate: (date: string) => void;
   onSelectAppointment: (app: Appointment) => void;
   onEmptySlotClick: (dateStr: string, hour: number, staffId: string) => void;
 }) {
   const staff = useDashboardStore((s) => s.staff);
   const blocks = useDashboardStore((s) => s.blocks);
+  const services = useDashboardStore((s) => s.services);
+  const selectedStaffId = useDashboardStore((s) => s.selectedStaffId);
   const start = parseISO(`${date}T12:00:00`);
   const days = Array.from({ length: 7 }, (_, i) => addDaysIso(date, i - start.getDay()));
   const today = formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
 
   return (
-    <div className="overflow-x-auto pb-2">
+    <>
+      <div className="space-y-2 p-2 md:hidden">
+        {days.map((day) => {
+          const isSelectedDay = day === date;
+          const items = appointments
+            .filter((item) => formatInTimeZone(item.start, timezone, "yyyy-MM-dd") === day)
+            .sort((a, b) => a.start.localeCompare(b.start));
+          const dayBlocks = blocks.filter((block) => block.date === day);
+
+          return (
+            <section
+              key={day}
+              className={`rounded-2xl border p-3 shadow-xs transition-colors ${
+                isSelectedDay
+                  ? "border-slate-300 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/55"
+                  : "border-slate-200/80 bg-white/80 dark:border-white/10 dark:bg-slate-900/60"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => onSelectDate(day)} className="min-h-11 min-w-0 flex-1 text-left">
+                  <span className="block text-sm font-semibold capitalize text-slate-900 dark:text-white">
+                    {format(parseISO(`${day}T12:00:00`), "EEEE d 'de' MMMM", { locale: es })}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+                    {items.length} {items.length === 1 ? "turno" : "turnos"}{dayBlocks.length > 0 ? ` · ${dayBlocks.length} ${dayBlocks.length === 1 ? "horario bloqueado" : "horarios bloqueados"}` : ""}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onEmptySlotClick(day, 10, selectedStaffId !== "all" ? selectedStaffId : staff[0]?.id || "")}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition active:scale-95 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200"
+                  aria-label={`Nueva cita para ${format(parseISO(`${day}T12:00:00`), "EEEE d 'de' MMMM", { locale: es })}`}
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+
+              {(items.length > 0 || dayBlocks.length > 0) ? (
+                <div className="mt-2 space-y-2 border-t border-slate-200/80 pt-2 dark:border-white/10">
+                  {dayBlocks.map((block) => (
+                    <div key={block.id} className="flex items-center justify-between gap-3 rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+                      <span className="flex min-w-0 items-center gap-2 font-medium">
+                        <Ban className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                        <span className="truncate">{block.reason || "Horario bloqueado"}</span>
+                      </span>
+                      <span className="shrink-0 font-medium tabular-nums">{block.start}–{block.end}</span>
+                    </div>
+                  ))}
+
+                  {items.map((item) => {
+                    const person = staff.find((member) => member.id === item.staffId);
+                    const service = services.find((entry) => entry.id === item.serviceId);
+                    const statusLabel = item.status === "confirmed" ? "Confirmado" : item.status === "completed" ? "Completado" : item.status === "cancelled" ? "Cancelado" : item.status === "no_show" ? "No asistió" : "Pendiente";
+                    const statusClass = item.status === "confirmed" ? "text-emerald-700 dark:text-emerald-300" : item.status === "completed" ? "text-blue-700 dark:text-blue-300" : item.status === "cancelled" || item.status === "no_show" ? "text-slate-500 dark:text-slate-400" : "text-amber-700 dark:text-amber-300";
+                    const details = [service?.name, person?.name ? `Con ${person.name}` : null].filter(Boolean).join(" · ") || "Cita";
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => onSelectAppointment(item)}
+                        className="flex min-h-16 w-full items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5 text-left transition active:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04] dark:active:bg-white/[0.07]"
+                      >
+                        <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: person?.color || "#6366f1" }} aria-hidden="true" />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-300">
+                              {formatInTimeZone(item.start, timezone, "HH:mm")}
+                            </span>
+                            <span className={`text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
+                          </span>
+                          <span className="mt-1 block truncate text-sm font-semibold text-slate-900 dark:text-white">
+                            {item.clientName}
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">
+                            {details}
+                          </span>
+                        </span>
+                        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="mt-2 border-t border-slate-200/80 pt-3 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+                  Sin turnos ni horarios bloqueados.
+                </p>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto pb-2 md:block">
       <div className="grid min-w-[850px] grid-cols-7 gap-3">
         {days.map((day) => {
           const isToday = day === today;
@@ -2400,7 +2628,8 @@ function GoogleCalendarWeekView({
           );
         })}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -2413,12 +2642,14 @@ function GoogleCalendarMonthView({
   appointments,
   onSelectAppointment,
   onEmptySlotClick,
+  onSelectDate,
 }: {
   date: string;
   timezone: string;
   appointments: Appointment[];
   onSelectAppointment: (app: Appointment) => void;
   onEmptySlotClick?: (dateStr: string, hour: number, staffId: string) => void;
+  onSelectDate: (date: string) => void;
 }) {
   const parsed = parseISO(`${date}T12:00:00`);
   const year = parsed.getFullYear();
@@ -2429,9 +2660,62 @@ function GoogleCalendarMonthView({
     ...Array.from({ length: first }, () => null),
     ...Array.from({ length: days }, (_, i) => i + 1),
   ];
+  const today = formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
 
   return (
-    <Card className="p-3 border border-slate-200/80 dark:border-white/10 rounded-3xl bg-white dark:bg-slate-900/90 shadow-sm overflow-x-auto [scrollbar-width:thin]">
+    <>
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-white/10 dark:bg-slate-900 md:hidden">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <h2 className="text-base font-semibold capitalize text-slate-900 dark:text-white">
+            {format(parsed, "MMMM yyyy", { locale: es })}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Toca un día para ver sus turnos</p>
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+          {["D", "L", "M", "X", "J", "V", "S"].map((weekday, index) => (
+            <span key={`${weekday}-${index}`} className="pb-1" aria-label={["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][index]}>
+              {weekday}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {cells.map((day, index) => {
+            if (!day) return <span key={`empty-${index}`} className="min-h-11" aria-hidden="true" />;
+            const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const itemCount = appointments.filter((item) => formatInTimeZone(item.start, timezone, "yyyy-MM-dd") === iso).length;
+            const isSelected = iso === date;
+            const isToday = iso === today;
+
+            return (
+              <button
+                key={iso}
+                type="button"
+                onClick={() => onSelectDate(iso)}
+                aria-label={`${format(parseISO(`${iso}T12:00:00`), "EEEE d 'de' MMMM", { locale: es })}, ${itemCount} ${itemCount === 1 ? "turno" : "turnos"}`}
+                aria-pressed={isSelected}
+                className={`flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl text-xs font-semibold tabular-nums transition active:scale-95 ${
+                  isSelected
+                    ? "bg-primary text-white"
+                    : isToday
+                    ? "border border-primary/40 bg-primary/5 text-primary dark:bg-primary/10"
+                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span>{day}</span>
+                {itemCount > 0 ? (
+                  <span className={`text-[9px] leading-none ${isSelected ? "text-white/80" : "text-primary"}`}>
+                    {itemCount}
+                  </span>
+                ) : (
+                  <span className="h-[9px]" aria-hidden="true" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+    <Card className="hidden border border-slate-200/80 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/90 md:block">
       <div className="grid min-w-[700px] grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 pb-2 border-b border-slate-100 dark:border-white/10">
         {["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map((d) => (
           <span key={d}>
@@ -2491,6 +2775,7 @@ function GoogleCalendarMonthView({
         })}
       </div>
     </Card>
+    </>
   );
 }
 
