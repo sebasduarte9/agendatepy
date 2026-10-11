@@ -1,0 +1,308 @@
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  position: relative;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgb(71 85 105);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:global(.dark) .toggle {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgb(203 213 225);
+}
+
+.toggle[aria-pressed="true"] {
+  border-color: var(--series, var(--primary, #FF4F2B));
+  background: rgba(255, 79, 43, 0.08);
+  color: rgb(15 23 42);
+}
+
+:global(.dark) .toggle[aria-pressed="true"] {
+  background: rgba(255, 79, 43, 0.15);
+  color: #ffffff;
+}
+
+.toggle[aria-pressed="false"] {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--series, var(--primary, #FF4F2B));
+  box-shadow: 0 0 8px var(--series, var(--primary, #FF4F2B));
+}
+
+.swatch[data-dashed] {
+  border-radius: 2px;
+  height: 3px;
+  width: 10px;
+}
+
+.toggleLabel {
+  line-height: 1;
+}
+
+.chart {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.5rem;
+  user-select: none;
+}
+
+.plot {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  cursor: crosshair;
+  overflow: visible;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+.grid {
+  stroke: rgba(0, 0, 0, 0.06);
+  stroke-dasharray: 4 4;
+}
+
+:global(.dark) .grid {
+  stroke: rgba(255, 255, 255, 0.06);
+}
+
+.baseline {
+  stroke: rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .baseline {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.crosshair {
+  stroke: var(--primary, #FF4F2B);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 2;
+  opacity: 0.7;
+}
+
+.area {
+  fill: var(--series, var(--primary, #FF4F2B));
+  fill-opacity: 0.12;
+  transition: fill-opacity 0.2s ease;
+}
+
+:global(.dark) .area {
+  fill-opacity: 0.2;
+}
+
+.line {
+  fill: none;
+  stroke: var(--series, var(--primary, #FF4F2B));
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.line[data-dashed] {
+  stroke-dasharray: 5 4;
+  stroke-width: 2;
+}
+
+.dot {
+  fill: #ffffff;
+  stroke: var(--series, var(--primary, #FF4F2B));
+  stroke-width: 3;
+  box-shadow: 0 0 10px var(--series, var(--primary, #FF4F2B));
+}
+
+.dot[data-hidden] {
+  opacity: 0;
+}
+
+/* Glassy Tooltip */
+.tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 30;
+  padding: 0.65rem 0.85rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  min-width: 140px;
+}
+
+:global(.dark) .tooltip {
+  background: rgba(24, 21, 28, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.5);
+}
+
+.tipTitle {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(100 116 139);
+}
+
+:global(.dark) .tipTitle {
+  color: rgb(148 163 184);
+}
+
+.tipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.2rem 0;
+  font-size: 0.75rem;
+}
+
+.tipSwatch {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--series, var(--primary, #FF4F2B));
+}
+
+.tipName {
+  flex: 1;
+  color: rgb(71 85 105);
+  font-weight: 500;
+}
+
+:global(.dark) .tipName {
+  color: rgb(203 213 225);
+}
+
+.tipValue {
+  font-family: ui-monospace, monospace;
+  font-weight: 800;
+  color: rgb(15 23 42);
+}
+
+:global(.dark) .tipValue {
+  color: #ffffff;
+}
+
+/* Gutter & Ticks */
+.gutter {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  width: 44px;
+}
+
+.tick {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tickText {
+  font-size: 0.6875rem;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  color: rgb(148 163 184);
+}
+
+:global(.dark) .tickText {
+  color: rgb(100 116 139);
+}
+
+/* Bottom Axis */
+.axis {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  height: 20px;
+}
+
+.axisLabel {
+  position: absolute;
+  top: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgb(148 163 184);
+  white-space: nowrap;
+}
+
+:global(.dark) .axisLabel {
+  color: rgb(100 116 139);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgb(148 163 184);
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.04);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}

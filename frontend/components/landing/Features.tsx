@@ -20,6 +20,7 @@ import {
   Building2,
   Smartphone,
 } from "lucide-react";
+import NumberTicker from "@/components/ui/NumberTicker";
 
 export default function Features() {
   const [activeTab, setActiveTab] = useState(0);
@@ -194,10 +195,18 @@ export default function Features() {
                 }}
                 className={`relative flex min-h-14 sm:min-h-10 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-1 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap overflow-hidden active:scale-95 ${
                   isActive
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                    ? "text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-tab-indicator"
+                    className="absolute inset-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200/50 dark:border-white/10"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <div className="relative z-10 flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
                 <Icon
                   className="h-4.5 w-4.5 sm:h-4 sm:w-4 shrink-0"
                   style={{ color: isActive ? pillar.accentColor : "currentColor" }}
@@ -212,9 +221,10 @@ export default function Features() {
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
                     transition={{ duration: 5, ease: "linear" }}
-                    className="absolute bottom-0 left-0 h-0.5 bg-[#FF4F2B]"
+                    className="absolute bottom-0 left-0 h-0.5 bg-[#FF4F2B] z-10"
                   />
                 )}
+                </div>
               </button>
             );
           })}
@@ -223,8 +233,12 @@ export default function Features() {
       </div>
 
       {/* Contenedor Principal: Valor Conciso (Izquierda) + Widget Hero Real (Derecha) */}
-      <div
-        className="max-w-4xl mx-auto"
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0 }}
+        transition={{ duration: 0.6, type: "spring", stiffness: 200, damping: 20 }}
+        className="max-w-4xl mx-auto relative"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -234,8 +248,8 @@ export default function Features() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl p-4 sm:p-7 text-left"
+            transition={{ duration: 0.4, type: "spring", stiffness: 350, damping: 30 }}
+            className="rounded-2xl sm:rounded-3xl glass-card dark:bg-[#171310]/60 p-4 sm:p-7 text-left sv-card"
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-stretch">
               
@@ -374,41 +388,44 @@ export default function Features() {
                     </div>
 
                     {/* 3 Métodos de cobro del sistema en Paraguay */}
-                    <div className="grid grid-cols-3 gap-2 items-stretch">
-                      <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 text-left flex flex-col justify-between h-full">
-                        <div className="flex items-center gap-1 text-slate-400 mb-1">
+                    <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 items-stretch">
+                      <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 text-left flex xs:flex-col justify-between items-center xs:items-start h-full">
+                        <div className="flex items-center gap-1 text-slate-400 xs:mb-1">
                           <Banknote className="h-3.5 w-3.5 text-emerald-500" />
-                          <span className="text-[10px] font-medium">Efectivo</span>
+                          <span className="text-[10px] font-medium hidden xs:inline">Efectivo</span>
+                          <span className="text-[10px] font-medium xs:hidden">Efect.</span>
                         </div>
                         <div>
                           <span className="font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-white block">
-                            780.000
+                            <NumberTicker value={780000} />
                           </span>
                           <span className="text-[9px] text-slate-400">Gs.</span>
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 text-left flex flex-col justify-between h-full">
-                        <div className="flex items-center gap-1 text-slate-400 mb-1">
+                      <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 text-left flex xs:flex-col justify-between items-center xs:items-start h-full">
+                        <div className="flex items-center gap-1 text-slate-400 xs:mb-1">
                           <CreditCard className="h-3.5 w-3.5 text-blue-500" />
-                          <span className="text-[10px] font-medium">POS Tarjetas</span>
+                          <span className="text-[10px] font-medium hidden xs:inline">POS Tarjetas</span>
+                          <span className="text-[10px] font-medium xs:hidden">Tarjetas</span>
                         </div>
                         <div>
                           <span className="font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-white block">
-                            950.000
+                            <NumberTicker value={950000} delay={0.1} />
                           </span>
                           <span className="text-[9px] text-slate-400">Gs.</span>
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 text-left flex flex-col justify-between h-full">
-                        <div className="flex items-center gap-1 text-slate-400 mb-1">
+                      <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 text-left flex xs:flex-col justify-between items-center xs:items-start h-full">
+                        <div className="flex items-center gap-1 text-slate-400 xs:mb-1">
                           <Building2 className="h-3.5 w-3.5 text-purple-500" />
-                          <span className="text-[10px] font-medium">Transferencia / QR</span>
+                          <span className="text-[10px] font-medium hidden xs:inline">Transferencia / QR</span>
+                          <span className="text-[10px] font-medium xs:hidden">Transf / QR</span>
                         </div>
                         <div>
                           <span className="font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-white block">
-                            500.000
+                            <NumberTicker value={500000} delay={0.2} />
                           </span>
                           <span className="text-[9px] text-slate-400">Gs.</span>
                         </div>
@@ -631,7 +648,7 @@ export default function Features() {
             </div>
           </motion.div>
         </AnimatePresence>
-      </div>
+      </motion.div>
     </section>
   );
 }

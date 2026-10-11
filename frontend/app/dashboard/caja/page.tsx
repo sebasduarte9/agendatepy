@@ -361,8 +361,8 @@ export default function CajaPage() {
           </button>
         </div>
 
-        {/* Hero Cash Balance - Clean Light & Dark Native Style */}
-        <div className="rounded-2xl p-4 bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white shadow-xs relative overflow-hidden">
+        {/* Hero Cash Balance - Glassy 2.0 Style */}
+        <div className="rounded-2xl p-4 glass-panel text-slate-900 dark:text-white relative overflow-hidden">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
             <span className="flex items-center gap-1.5 font-semibold">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -513,7 +513,7 @@ export default function CajaPage() {
             </div>
           </div>
         ) : selectedDate === todayStr ? (
-          <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-2 shadow-xs">
+          <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/25 px-3.5 py-2.5 backdrop-blur-md shadow-xs">
             <div className="flex items-center gap-2">
               <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
               <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
@@ -526,11 +526,11 @@ export default function CajaPage() {
         {/* Dual-Card Inset Telemetry */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card: Operational Gauges & Summary */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
             {/* Top section: Mini status box + 2 circular gauges */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
               {/* Mini status box */}
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+              <div className="rounded-xl glass-panel p-3.5 flex flex-col justify-between h-full min-h-[120px]">
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
                     Gaveta Físico
@@ -646,7 +646,7 @@ export default function CajaPage() {
           </div>
 
           {/* Right Card: Methods Breakdown Cards */}
-          <div data-tour="caja-methods" className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+          <div data-tour="caja-methods" className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between space-y-3">
             <div>
               <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
                 Desglose por Canal de Cobro
@@ -654,7 +654,7 @@ export default function CajaPage() {
 
               <div className="space-y-2">
                 {/* Method 1: Efectivo */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
                   <div className="flex items-center gap-2.5">
                     <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                       <Banknote className="h-4 w-4" />
@@ -670,7 +670,7 @@ export default function CajaPage() {
                 </div>
 
                 {/* Method 2: POS Bancard */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
                   <div className="flex items-center gap-2.5">
                     <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                       <CreditCard className="h-4 w-4" />
@@ -686,7 +686,7 @@ export default function CajaPage() {
                 </div>
 
                 {/* Method 3: Transferencias Bancarias */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
                   <div className="flex items-center gap-2.5">
                     <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                       <Building2 className="h-4 w-4" />
@@ -1033,9 +1033,8 @@ export default function CajaPage() {
         open={modalOpen}
         title="Registrar Movimiento de Caja"
         onClose={() => setModalOpen(false)}
-        minHeight="min-h-[580px] sm:min-h-[640px]"
       >
-        <div className="space-y-4 text-xs min-h-[500px] sm:min-h-[560px] flex flex-col justify-between">
+        <div className="space-y-4 text-xs flex flex-col justify-between">
           {/* Movement Type Selection */}
           <div className="grid grid-cols-2 gap-2">
             <button

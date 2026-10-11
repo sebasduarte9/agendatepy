@@ -158,7 +158,7 @@ async function handleCronReminders(request: NextRequest) {
           const businessLink = `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "agendatepy.com"}/${tenant.subdomain || tenant.slug}`;
 
           // Reemplazo dinámico de etiquetas en la plantilla
-          let renderedBody = tpl.body
+          const renderedBody = tpl.body
             .replace(/{cliente}/g, app.clientName)
             .replace(/{servicio}/g, app.service?.name || "Servicio")
             .replace(/{profesional}/g, app.staff?.name || "Profesional asignado")

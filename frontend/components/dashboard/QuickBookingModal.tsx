@@ -348,12 +348,11 @@ export default function QuickBookingModal({
     <Modal
       id="quickBookingModal"
       maxWidth="max-w-lg"
-      minHeight="min-h-[580px] sm:min-h-[600px]"
       open={open}
       title={modalMode === "appointment" ? "Agendar Turno" : "Bloquear Horario"}
       onClose={onClose}
     >
-      <div className="space-y-4 text-xs min-h-[500px] sm:min-h-[520px] flex flex-col justify-between">
+      <div className="space-y-4 text-xs flex flex-col justify-between">
         {/* Mode switcher (Turno vs Bloqueo) */}
         {allowBlock && (
           <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
@@ -385,7 +384,7 @@ export default function QuickBookingModal({
         )}
 
         {modalMode === "appointment" ? (
-          <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+          <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between gap-4">
             <div className="space-y-3.5">
               {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -808,7 +807,7 @@ export default function QuickBookingModal({
           </div>
         </form>
       ) : (
-        <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+        <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between gap-4">
           <div className="space-y-3.5">
             <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
               <Ban className="h-4 w-4 shrink-0 text-amber-600" />

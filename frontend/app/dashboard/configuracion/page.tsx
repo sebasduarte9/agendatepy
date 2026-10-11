@@ -117,10 +117,14 @@ export default function ConfiguracionPage() {
   const handleThemeChange = (theme: "light" | "dark") => {
     setCurrentTheme(theme);
     if (theme === "dark") {
+      document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
       localStorage.setItem("agendate_theme_mode", "dark");
     } else {
       document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+      document.documentElement.setAttribute("data-theme", "light");
       localStorage.setItem("agendate_theme_mode", "light");
     }
     pushToast("success", `Tema cambiado a Modo ${theme === "dark" ? "Oscuro" : "Claro"}`);

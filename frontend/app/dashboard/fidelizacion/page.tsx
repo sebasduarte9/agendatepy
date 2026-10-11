@@ -968,26 +968,22 @@ export default function FidelizacionPage() {
 
                   {/* Stamps Row & Actions */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
-                    {/* Digital Stamps Progress */}
+                    {/* Digital Stamps Progress (Glassy Stamp Card System) */}
                     <div className="w-full sm:w-auto overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
-                      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/60 dark:border-white/5 w-max">
+                      <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-white/[0.03] p-1.5 rounded-2xl border border-slate-200/60 dark:border-white/10 w-max backdrop-blur-md">
                         {Array.from({ length: Math.min(maxThreshold, 10) }).map((_, i) => {
                           const filled = i < points;
                           return (
                             <span
                               key={i}
-                              className={`flex h-6.5 w-6.5 sm:h-7 sm:w-7 items-center justify-center rounded-xl text-xs font-bold transition shrink-0 ${
-                                filled
-                                  ? "bg-emerald-500 text-white shadow-2xs scale-105"
-                                  : "bg-white dark:bg-slate-900 text-slate-300 dark:text-slate-600"
-                              }`}
+                              className={`stamp ${filled ? "filled" : ""} !h-7 !w-7 shrink-0 text-[10px]`}
                               title={`Sello ${i + 1} de ${maxThreshold}`}
                             >
-                              <Award
-                                className={`h-3.5 w-3.5 ${
-                                  filled ? "text-white" : "text-slate-300 dark:text-slate-600"
-                                }`}
-                              />
+                              {filled ? (
+                                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                              ) : (
+                                String(i + 1).padStart(2, "0")
+                              )}
                             </span>
                           );
                         })}

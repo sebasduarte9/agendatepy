@@ -529,7 +529,7 @@ export default function CrmOmnichannelPage() {
       {mainSection === "mensajes" && (
         crmConversations.length === 0 ? (
           /* ═══ EMPTY STATE ═══ */
-          <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-8 sm:p-12 text-center shadow-xs">
+          <div className="rounded-3xl glass-panel p-8 sm:p-12 text-center shadow-xs">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200 dark:border-emerald-800/40 mb-4 shadow-xs">
               <QrCode className="h-8 w-8" />
             </div>
@@ -550,7 +550,7 @@ export default function CrmOmnichannelPage() {
         ) : (
           /* ═══ 3-PANE NATIVE MESSENGER WORKSPACE ═══ */
           <div
-            className={`w-full rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs overflow-hidden flex flex-col lg:flex-row ${
+            className={`w-full rounded-3xl glass-panel shadow-xs overflow-hidden flex flex-col lg:flex-row ${
               mobileActiveView !== "list"
                 ? "h-[calc(100dvh-11.8rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-7.8rem)] min-h-0 sm:min-h-[560px]"
                 : "h-[calc(100dvh-14.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-7.8rem)] min-h-0 sm:min-h-[560px]"
@@ -559,12 +559,12 @@ export default function CrmOmnichannelPage() {
             {/* ── LEFT PANE: CONVERSATION LIST ── */}
             <div
               data-tour="crm-channels"
-              className={`w-full lg:w-[320px] xl:w-[350px] shrink-0 border-r border-slate-200/80 dark:border-white/10 flex-col bg-slate-50/70 dark:bg-[#141418] ${
+              className={`w-full lg:w-[320px] xl:w-[350px] shrink-0 border-r border-slate-200/80 dark:border-white/10 flex-col bg-slate-50/70 dark:bg-black/20 backdrop-blur-md ${
                 mobileActiveView !== "list" ? "hidden lg:flex" : "flex h-full"
               }`}
             >
               {/* Left Top Search & Filter Bar */}
-              <div className="p-3 border-b border-slate-200/70 dark:border-white/10 space-y-2.5 shrink-0 bg-white/60 dark:bg-[#141418]">
+              <div className="p-3 border-b border-slate-200/70 dark:border-white/10 space-y-2.5 shrink-0 bg-white/60 dark:bg-white/[0.02] backdrop-blur-md">
                 {/* Search Input */}
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
@@ -685,7 +685,7 @@ export default function CrmOmnichannelPage() {
                           >
                             {ini}
                           </div>
-                          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-[#121215] shadow-xs border border-slate-200/60 dark:border-white/10">
+                          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-[#1f1c21] shadow-xs border border-slate-200/60 dark:border-white/10">
                             <ChannelIcon channel={c.channel} size="sm" />
                           </span>
                         </div>
@@ -734,14 +734,14 @@ export default function CrmOmnichannelPage() {
             {/* ── CENTER PANE: ACTIVE CHAT SCREEN ── */}
             <div
               data-tour="crm-chat-box"
-              className={`flex-1 flex flex-col min-w-0 bg-[#f8fafc] dark:bg-[#0c0c0e] relative ${
+              className={`flex-1 flex flex-col min-w-0 bg-[#f8fafc]/40 dark:bg-black/10 backdrop-blur-md relative ${
                 mobileActiveView !== "chat" ? "hidden lg:flex" : "flex h-full"
               }`}
             >
               {activeConversation ? (
                 <>
                   {/* Chat Top Header */}
-                  <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#121215]/95 backdrop-blur-md flex items-center justify-between shrink-0">
+                  <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <button
                         type="button"
@@ -848,7 +848,7 @@ export default function CrmOmnichannelPage() {
                   {/* Messages Canvas */}
                   <div
                     ref={messagesContainerRef}
-                    className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3 bg-[#f8fafc] dark:bg-[#09090b]"
+                    className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3 bg-transparent"
                   >
                     {/* Security Notice */}
                     <div className="text-center">
@@ -867,7 +867,7 @@ export default function CrmOmnichannelPage() {
                             className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-2xs leading-relaxed ${
                               isAgent
                                 ? "text-white rounded-tr-xs"
-                                : "bg-white dark:bg-[#1a1a22] text-slate-900 dark:text-white border border-slate-200/70 dark:border-white/5 rounded-tl-xs"
+                                : "bg-white/80 dark:bg-white/[0.08] backdrop-blur-md text-slate-900 dark:text-white border border-slate-200/70 dark:border-white/10 rounded-tl-xs"
                             }`}
                             style={isAgent ? { backgroundColor: business.primaryColor || "#0f172a" } : undefined}
                           >
@@ -958,7 +958,7 @@ export default function CrmOmnichannelPage() {
                     {/* Typing Bouncing Dots */}
                     {isTyping && (
                       <div className="flex flex-col items-start gap-1">
-                        <div className="flex items-center gap-2.5 rounded-2xl bg-white dark:bg-[#1a1a22] text-slate-800 dark:text-slate-200 border border-slate-200/70 dark:border-white/5 px-4 py-2.5 text-xs shadow-2xs rounded-tl-xs">
+                        <div className="flex items-center gap-2.5 rounded-2xl bg-white/80 dark:bg-white/[0.08] backdrop-blur-md text-slate-800 dark:text-slate-200 border border-slate-200/70 dark:border-white/10 px-4 py-2.5 text-xs shadow-2xs rounded-tl-xs">
                           <div className="flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse [animation-delay:200ms]" />
@@ -974,7 +974,7 @@ export default function CrmOmnichannelPage() {
                   </div>
 
                   {/* Quick Replies Carousel */}
-                  <div className="px-3.5 py-1.5 border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-[#121215] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                  <div className="px-3.5 py-1.5 border-t border-slate-200/70 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1 mr-1">
                       <Zap className="h-3 w-3 text-amber-500" />
                       <span>Rápidas:</span>
@@ -995,7 +995,7 @@ export default function CrmOmnichannelPage() {
                   </div>
 
                   {/* Message Input Dock */}
-                  <div className="p-2.5 sm:p-3 border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] flex items-center gap-2 shrink-0">
+                  <div className="p-2.5 sm:p-3 border-t border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md flex items-center gap-2 shrink-0">
                     <input
                       ref={inputRef}
                       type="text"
@@ -1008,7 +1008,7 @@ export default function CrmOmnichannelPage() {
                           handleSend();
                         }
                       }}
-                      className="flex-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-white/10 px-4 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      className="flex-1 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/70 dark:border-white/10 px-4 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 backdrop-blur-md"
                     />
                     <button
                       type="button"
@@ -1037,7 +1037,7 @@ export default function CrmOmnichannelPage() {
             {/* ── RIGHT PANE: CLIENT INTELLIGENCE & ACTIONS DRAWER ── */}
             <div
               data-tour="crm-client-profile"
-              className={`w-full lg:w-[290px] xl:w-[330px] shrink-0 border-l border-slate-200/80 dark:border-white/10 flex-col bg-white dark:bg-[#15151a] ${
+              className={`w-full lg:w-[290px] xl:w-[330px] shrink-0 border-l border-slate-200/80 dark:border-white/10 flex-col bg-white/70 dark:bg-black/20 backdrop-blur-md ${
                 mobileActiveView === "profile"
                   ? "flex h-full"
                   : desktopProfileOpen
@@ -1048,7 +1048,7 @@ export default function CrmOmnichannelPage() {
               {activeConversation ? (
                 <>
                   {/* Right Header */}
-                  <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-[#15151a]">
+                  <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-white/[0.03] backdrop-blur-md">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -1226,7 +1226,7 @@ export default function CrmOmnichannelPage() {
         <div className="space-y-4 animate-in fade-in-50 duration-150">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Card 1: Eficiencia de Respuesta & Canales */}
-            <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
+            <div className="rounded-3xl glass-panel p-5 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
                 <div className="flex items-center gap-2.5">
                   <div
@@ -1356,7 +1356,7 @@ export default function CrmOmnichannelPage() {
             </div>
 
             {/* Card 2: Seguridad, Conexión & Pedidos */}
-            <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
+            <div className="rounded-3xl glass-panel p-5 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold">

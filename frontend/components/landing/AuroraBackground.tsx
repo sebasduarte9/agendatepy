@@ -6,7 +6,7 @@ export default function AuroraBackground() {
   return (
     <div
       aria-hidden="true"
-      className="fixed inset-0 pointer-events-none overflow-hidden select-none -z-10 w-full h-full bg-[#FFFFFF] dark:bg-[#09090b]"
+      className="fixed inset-0 pointer-events-none overflow-hidden select-none -z-10 w-full h-full bg-[#fcf9f5] dark:bg-[#09090b]"
     >
       {/* Fondo predominantemente blanco con ondas animadas en el tono naranja oficial (#FF4F2B) */}
       <div className="absolute inset-0 w-full h-full">
@@ -16,7 +16,8 @@ export default function AuroraBackground() {
             background:
               "conic-gradient(from 0deg, rgba(255,79,43,0) 0deg, rgba(255,79,43,0.6) 70deg, rgba(255,176,32,0.5) 150deg, rgba(244,63,94,0.35) 230deg, rgba(255,79,43,0) 320deg)",
             filter: "blur(64px)",
-            willChange: "transform",
+            willChange: "transform, filter",
+            transform: "translate3d(0, 0, 0)",
           }}
         />
 

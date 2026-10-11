@@ -1,0 +1,30 @@
+{
+  "name": "agendatepy-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Copia independiente y 100% funcional de la Landing Page de AgendatePY",
+  "scripts": {
+    "dev": "next dev -p 3005",
+    "build": "next build",
+    "start": "next start -p 3005"
+  },
+  "dependencies": {
+    "framer-motion": "^13.4.0",
+    "lenis": "^1.3.26",
+    "lucide-react": "^1.47.0",
+    "motion": "^13.4.6",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.186.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

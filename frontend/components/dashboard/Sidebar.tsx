@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -13,7 +13,6 @@ import {
   BarChart3,
   Scissors,
   Receipt,
-  QrCode,
   Settings,
   Crown,
   ShoppingBag,
@@ -21,16 +20,15 @@ import {
   Palette,
   MessagesSquare,
   Bot,
-  Pin,
-  PinOff,
   ExternalLink,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/lib/dashboard-types";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import BrandLogo from "@/components/ui/BrandLogo";
 import { triggerHaptic } from "@/lib/haptics";
 import { tenantHost } from "@/lib/tenant/public-url";
+import LiquidLogo from "@/components/ui/LiquidLogo";
 
 type SidebarLink = {
   href: string;
@@ -39,37 +37,51 @@ type SidebarLink = {
   roles?: UserRole[];
 };
 
+function hexToRgb(hex: string): string {
+  const clean = hex.replace("#", "");
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    return `${r}, ${g}, ${b}`;
+  }
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return `${r}, ${g}, ${b}`;
+  }
+  return "255, 79, 43";
+}
+
 const PRIMARY_LINKS: SidebarLink[] = [
   { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { href: "/dashboard/calendario", label: "Agenda", icon: CalendarDays },
+  { href: "/dashboard/nueva-reserva", label: "Nueva Cita", icon: CalendarPlus, roles: ["admin", "cajero"] },
   { href: "/dashboard/clientes", label: "Clientes", icon: Users },
   { href: "/dashboard/servicios", label: "Servicios", icon: Scissors, roles: ["admin"] },
   { href: "/dashboard/caja", label: "Caja & Cobros", icon: Banknote, roles: ["admin", "cajero"] },
-];
-
-const OPERATIONS_LINKS: SidebarLink[] = [
-  { href: "/dashboard/nueva-reserva", label: "Nueva Cita", icon: CalendarPlus, roles: ["admin", "cajero"] },
+  { href: "/dashboard/whatsapp", label: "WhatsApp IA", icon: Bot, roles: ["admin"] },
+  { href: "/dashboard/crm", label: "Mensajes CRM", icon: MessagesSquare, roles: ["admin", "cajero"] },
   { href: "/dashboard/equipo", label: "Equipo", icon: Users, roles: ["admin"] },
+  { href: "/dashboard/estadisticas", label: "Métricas", icon: BarChart3, roles: ["admin"] },
   { href: "/dashboard/productos", label: "Productos", icon: ShoppingBag, roles: ["admin", "cajero"] },
   { href: "/dashboard/comisiones", label: "Comisiones", icon: Coins, roles: ["admin", "barbero", "estilista"] },
   { href: "/dashboard/transferencias", label: "Transferencias", icon: Receipt, roles: ["admin", "cajero"] },
-  { href: "/dashboard/crm", label: "Mensajes & CRM", icon: MessagesSquare, roles: ["admin", "cajero"] },
   { href: "/dashboard/fidelizacion", label: "Fidelización", icon: Award, roles: ["admin", "cajero"] },
-  { href: "/dashboard/whatsapp", label: "Asistente WhatsApp", icon: Bot, roles: ["admin"] },
-  { href: "/dashboard/estadisticas", label: "Métricas y Análisis", icon: BarChart3, roles: ["admin"] },
 ];
 
-const CONFIG_LINKS: SidebarLink[] = [
-  { href: "/dashboard/configuracion", label: "Configuración", icon: Settings, roles: ["admin"] },
+const BOTTOM_LINKS: SidebarLink[] = [
   { href: "/dashboard/apariencia", label: "Diseño Web", icon: Palette, roles: ["admin"] },
-  { href: "/dashboard/extras", label: "Material & QR", icon: QrCode, roles: ["admin"] },
   { href: "/dashboard/suscripcion", label: "Suscripción", icon: Crown, roles: ["admin"] },
+  { href: "/dashboard/configuracion", label: "Ajustes", icon: Settings, roles: ["admin"] },
 ];
 
-const COLLAPSED_WIDTH = 68;
-const EXPANDED_WIDTH = 250;
+interface SidebarProps {
+  variant?: "rail" | "drawer";
+}
 
-export default function Sidebar() {
+export default function Sidebar({ variant = "rail" }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
@@ -79,298 +91,298 @@ export default function Sidebar() {
   }, [pathname]);
 
   const currentPath = optimisticPath || pathname;
-
   const open = useDashboardStore((s) => s.sidebarOpen);
   const setOpen = useDashboardStore((s) => s.setSidebarOpen);
   const business = useDashboardStore((s) => s.business);
   const currentUserRole = useDashboardStore((s) => s.currentUserRole);
 
   const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
-  const hoverEnterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hoverLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("agendate_sidebar_pinned");
-    if (saved === "true") setIsPinned(true);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (hoverEnterTimeoutRef.current) clearTimeout(hoverEnterTimeoutRef.current);
-      if (hoverLeaveTimeoutRef.current) clearTimeout(hoverLeaveTimeoutRef.current);
-    };
-  }, []);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   function handleMouseEnter() {
-    if (hoverLeaveTimeoutRef.current) {
-      clearTimeout(hoverLeaveTimeoutRef.current);
-      hoverLeaveTimeoutRef.current = null;
-    }
-    if (!isHovered && !hoverEnterTimeoutRef.current) {
-      hoverEnterTimeoutRef.current = setTimeout(() => {
-        setIsHovered(true);
-        hoverEnterTimeoutRef.current = null;
-      }, 240);
-    }
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(true);
+    }, 40);
   }
 
   function handleMouseLeave() {
-    if (hoverEnterTimeoutRef.current) {
-      clearTimeout(hoverEnterTimeoutRef.current);
-      hoverEnterTimeoutRef.current = null;
-    }
-    if (hoverLeaveTimeoutRef.current) clearTimeout(hoverLeaveTimeoutRef.current);
-    hoverLeaveTimeoutRef.current = setTimeout(() => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-      hoverLeaveTimeoutRef.current = null;
-    }, 140);
+    }, 100);
   }
 
-  function togglePinned() {
-    setIsPinned((prev) => {
-      const next = !prev;
-      localStorage.setItem("agendate_sidebar_pinned", String(next));
-      return next;
-    });
-  }
-
-  const expanded = isPinned || isHovered || open;
-
-  const visiblePrimary = PRIMARY_LINKS.filter(
-    (item) => !item.roles || item.roles.includes(currentUserRole)
-  );
-  const visibleOperations = OPERATIONS_LINKS.filter(
-    (item) => !item.roles || item.roles.includes(currentUserRole)
-  );
-  const visibleConfig = CONFIG_LINKS.filter(
+  const visibleLinks = PRIMARY_LINKS.filter(
     (item) => !item.roles || item.roles.includes(currentUserRole)
   );
 
-  const roleLabel =
-    currentUserRole === "admin"
-      ? "Admin"
-      : currentUserRole === "cajero"
-      ? "Caja"
-      : currentUserRole === "barbero"
-      ? "Barbero"
-      : "Estilista";
+  const visibleBottom = BOTTOM_LINKS.filter(
+    (item) => !item.roles || item.roles.includes(currentUserRole)
+  );
 
-  const currentWidth = open ? 280 : expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
-
-  const renderLink = ({ href, label, icon: Icon }: SidebarLink) => {
-    const active =
-      href === "/dashboard"
-        ? currentPath === "/dashboard"
-        : currentPath.startsWith(href);
-
+  // =========================================================================
+  // 1. DESKTOP FLOATING FIXED GLASS RAIL
+  // Anclado en viewport estático con scroll independiente y altura estrictamente bloqueada
+  // =========================================================================
+  if (variant === "rail") {
     return (
-      <Link
-        key={href}
-        href={href}
-        prefetch={true}
-        onPointerDown={() => router.prefetch(href)}
-        onClick={() => {
-          triggerHaptic("selection");
-          setOptimisticPath(href);
-          setOpen(false);
-        }}
-        title={!expanded ? label : undefined}
-        className={`group relative flex h-9 w-full items-center rounded-xl px-2.5 transition-all duration-150 ${
-          active
-            ? "bg-slate-100 dark:bg-white/[0.08] text-slate-950 dark:text-white font-bold shadow-2xs"
-            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200"
-        }`}
-      >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center">
-          <Icon
-            className="h-4 w-4 transition-colors duration-150"
-            style={active ? { color: "var(--primary, #FF4F2B)" } : undefined}
-          />
-        </div>
-
+      <>
+        {/* Soft atmospheric focus scrim when rail expands (resolves background text bleed and lighting clash) */}
         <div
-          className="flex items-center justify-between min-w-0 flex-1 overflow-hidden transition-all duration-200 ease-out"
-          style={{
-            opacity: expanded ? 1 : 0,
-            maxWidth: expanded ? 180 : 0,
-            marginLeft: expanded ? 6 : 0,
-            transform: expanded ? "translateX(0)" : "translateX(-4px)",
-          }}
-        >
-          <span className="truncate text-xs font-medium">
-            {label}
-          </span>
-          {active && (
-            <span
-              className="h-1.5 w-1.5 rounded-full shrink-0 ml-1"
-              style={{ backgroundColor: "var(--primary, #FF4F2B)" }}
-            />
-          )}
-        </div>
-      </Link>
-    );
-  };
-
-  return (
-    <>
-      {/* Mobile Backdrop */}
-      {open && (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm lg:hidden"
-          aria-label="Cerrar menú"
-          onClick={() => setOpen(false)}
+          className={`fixed inset-0 bg-slate-950/20 dark:bg-black/55 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none z-40 ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+          aria-hidden="true"
         />
-      )}
 
-      {/* Desktop spacer to preserve layout flow when unpinned/hovering */}
-      <div
-        className="hidden lg:block shrink-0 transition-[width] duration-300 ease-in-out pointer-events-none"
-        style={{ width: expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH }}
-      />
-
-      {/* Main Sidebar Element */}
-      <aside
-        data-tour="sidebar-nav"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        style={{ width: currentWidth }}
-        className={`sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-950 backdrop-blur-2xl transition-[width,box-shadow] duration-300 ease-in-out overflow-hidden ${
-          open
-            ? "translate-x-0 shadow-2xl"
-            : "-translate-x-full lg:translate-x-0"
-        } ${
-          expanded
-            ? "shadow-xl shadow-slate-900/10 dark:shadow-black/50"
-            : ""
-        }`}
-      >
-        {/* Workspace selector matching console reference */}
-        <div className="flex flex-col justify-center border-b border-slate-100 dark:border-white/5 p-3 overflow-hidden">
-          {expanded ? (
-            <div className="space-y-1.5 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                  Workspace
-                </span>
-                <span className="rounded px-1.5 py-0.2 text-[9px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800">
-                  {roleLabel}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/60 p-2 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition group cursor-pointer">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-white font-black text-[11px] shadow-xs"
-                    style={{ backgroundColor: "var(--primary, #FF4F2B)" }}
-                  >
-                    {business.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                    {business.name}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 shrink-0 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200">
-                  <ExternalLink className="h-3 w-3" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-1">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-white font-black text-xs shadow-xs"
-                style={{ backgroundColor: "var(--primary, #FF4F2B)" }}
-                title={business.name}
-              >
-                {business.name.charAt(0).toUpperCase()}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Navigation links */}
-        <nav className="flex-1 space-y-4 overflow-y-auto px-2.5 py-3.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {/* Section 1: Operaciones */}
-          <div>
-            <div className="h-5 flex items-center px-2 mb-1 overflow-hidden">
-              {expanded ? (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap truncate">
-                  Operaciones
-                </span>
-              ) : (
-                <div className="w-full h-px bg-slate-200/60 dark:bg-white/5" />
-              )}
+        <aside
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          className={`glass-rail-fixed select-none ${isHovered ? "is-hovered" : ""}`}
+          style={{
+            height: "calc(100vh - 36px)",
+            maxHeight: "calc(100vh - 36px)",
+            minHeight: "calc(100vh - 36px)",
+          }}
+          aria-label="Navegación principal"
+        >
+          {/* Cabecera del Rail: Marca estilo Liquid Glass sin cuadro contenedor */}
+          <div className="w-full h-[52px] min-h-[52px] max-h-[52px] flex items-center gap-3 pb-2.5 mb-1.5 border-b border-black/5 dark:border-white/10 shrink-0">
+            <div className="h-[38px] w-[38px] shrink-0 flex items-center justify-center">
+              <LiquidLogo
+                size={36}
+                primaryColor={business.primaryColor}
+                title={business.name || "Agendatepy"}
+                href="/dashboard"
+              />
             </div>
 
-            <div className="space-y-0.5">
-              {visiblePrimary.map(renderLink)}
+            <div
+              className={`min-w-0 flex-1 transition-all duration-200 overflow-hidden ${
+                isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3 pointer-events-none"
+              }`}
+            >
+              <p className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">
+                {business.name || "Agendatepy"}
+              </p>
+              <span className="text-[8px] font-mono uppercase tracking-[0.22em] text-slate-400 dark:text-zinc-400 block mt-0.5">
+                STUDIO
+              </span>
             </div>
           </div>
 
-          {/* Section 2: Gestión */}
-          {visibleOperations.length > 0 && (
-            <div>
-              <div className="h-5 flex items-center px-2 mb-1 overflow-hidden">
-                {expanded ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap truncate">
-                    Gestión
+          {/* Lista de enlaces: Altura optimizada h-[37px] para que los 14 enlaces entren perfectamente */}
+          <nav className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1 space-y-0.5">
+            {visibleLinks.map(({ href, label, icon: Icon }) => {
+              const active =
+                href === "/dashboard"
+                  ? currentPath === "/dashboard"
+                  : currentPath.startsWith(href);
+
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  prefetch={true}
+                  data-label={!isHovered ? label : undefined}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setOptimisticPath(href);
+                  }}
+                  className={`group flex items-center gap-2.5 w-full h-[37px] min-h-[37px] max-h-[37px] px-1 rounded-[14px] transition-all duration-150 ${
+                    active
+                      ? "glass-nav-active font-bold"
+                      : "text-slate-700 dark:text-zinc-300 font-semibold hover:text-slate-950 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.09]"
+                  }`}
+                  title={label}
+                >
+                  <div className="h-[34px] w-[34px] shrink-0 flex items-center justify-center">
+                    <Icon
+                      className={`h-[18px] w-[18px] transition-transform duration-150 group-hover:scale-110 ${
+                        active ? "text-white" : ""
+                      }`}
+                    />
+                  </div>
+
+                  <span
+                    className={`text-xs whitespace-nowrap truncate transition-all duration-200 ${
+                      isHovered
+                        ? "opacity-100 translate-x-0 max-w-[155px]"
+                        : "opacity-0 -translate-x-2 pointer-events-none max-w-0"
+                    }`}
+                  >
+                    {label}
                   </span>
-                ) : (
-                  <div className="w-full h-px bg-slate-200/60 dark:bg-white/5" />
-                )}
-              </div>
 
-              <div className="space-y-0.5">
-                {visibleOperations.map(renderLink)}
-              </div>
-            </div>
-          )}
+                  {active && isHovered && (
+                    <span className="ml-auto mr-1 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_white] shrink-0" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-          {/* Section 3: Ajustes */}
-          {visibleConfig.length > 0 && (
-            <div>
-              <div className="h-5 flex items-center px-2 mb-1 overflow-hidden">
-                {expanded ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap truncate">
-                    Ajustes
-                  </span>
-                ) : (
-                  <div className="w-full h-px bg-slate-200/60 dark:bg-white/5" />
-                )}
-              </div>
-
-              <div className="space-y-0.5">
-                {visibleConfig.map(renderLink)}
-              </div>
-            </div>
-          )}
-        </nav>
-
-        {/* Footer info in sidebar */}
-        <div className="shrink-0 border-t border-slate-100 dark:border-white/5 p-2.5 overflow-hidden">
-          {expanded ? (
-            <div className="rounded-xl border border-slate-200/80 dark:border-white/5 bg-slate-50/60 dark:bg-slate-900/40 p-2.5 text-xs animate-in fade-in duration-200">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Página de reservas:</p>
-              <Link
-                href={`/${business.slug || "barberia"}/reservar`}
-                target="_blank"
-                className="mt-0.5 flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white group"
-              >
-                <span className="truncate">{tenantHost(business.slug || "barberia")}</span>
-                <ExternalLink className="h-3 w-3 shrink-0 ml-1 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
-              </Link>
-            </div>
-          ) : (
+          {/* Sección inferior fija con altura garantizada */}
+          <div className="w-full pt-2 mt-1.5 border-t border-black/5 dark:border-white/10 shrink-0 space-y-0.5 overflow-hidden">
+            {/* Link público de reservas */}
             <Link
               href={`/${business.slug || "barberia"}/reservar`}
               target="_blank"
-              title={`Ver web: ${tenantHost(business.slug || "barberia")}`}
-              className="flex h-9 w-full items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition"
+              data-label={!isHovered ? "Portal Web" : undefined}
+              className="group flex items-center gap-2.5 w-full h-[36px] min-h-[36px] max-h-[36px] px-1 rounded-[14px] text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition"
+              title="Abrir portal público de reservas"
             >
-              <ExternalLink className="h-4 w-4" />
+              <div className="h-[34px] w-[34px] shrink-0 flex items-center justify-center">
+                <ExternalLink className="h-[17px] w-[17px] group-hover:scale-110 transition-transform" />
+              </div>
+              <span
+                className={`text-xs font-bold whitespace-nowrap truncate text-emerald-600 dark:text-emerald-400 transition-all duration-200 ${
+                  isHovered
+                    ? "opacity-100 translate-x-0 max-w-[155px]"
+                    : "opacity-0 -translate-x-2 pointer-events-none max-w-0"
+                }`}
+              >
+                Portal Público
+              </span>
+              {isHovered && (
+                <span className="ml-auto mr-1 h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#34d399] animate-pulse shrink-0" />
+              )}
             </Link>
-          )}
+
+            {visibleBottom.map(({ href, label, icon: Icon }) => {
+              const active = currentPath.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  prefetch={true}
+                  data-label={!isHovered ? label : undefined}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setOptimisticPath(href);
+                  }}
+                  className={`group flex items-center gap-2.5 w-full h-[36px] min-h-[36px] max-h-[36px] px-1 rounded-[14px] transition-all duration-150 ${
+                    active
+                      ? "glass-nav-active font-bold"
+                      : "text-slate-700 dark:text-zinc-300 font-semibold hover:text-slate-950 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.09]"
+                  }`}
+                  title={label}
+                >
+                  <div className="h-[34px] w-[34px] shrink-0 flex items-center justify-center">
+                    <Icon
+                      className={`h-[17px] w-[17px] transition-transform duration-150 group-hover:scale-110 ${
+                        active ? "text-white" : ""
+                      }`}
+                    />
+                  </div>
+                  <span
+                    className={`text-xs whitespace-nowrap truncate transition-all duration-200 ${
+                      isHovered
+                        ? "opacity-100 translate-x-0 max-w-[155px]"
+                        : "opacity-0 -translate-x-2 pointer-events-none max-w-0"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </aside>
+      </>
+    );
+  }
+
+  // =========================================================================
+  // 2. MOBILE DRAWER (< lg)
+  // =========================================================================
+  if (!open) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden cursor-pointer"
+        aria-label="Cerrar menú"
+        onClick={() => setOpen(false)}
+      />
+
+      <aside className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] glass-sidebar p-4 flex flex-col lg:hidden animate-in slide-in-from-left duration-250">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-2.5">
+            <LiquidLogo
+              size={32}
+              primaryColor={business.primaryColor}
+              title={business.name || "Agendatepy"}
+              href="/dashboard"
+            />
+            <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
+              {business.name || "Agendatepy"}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
+
+        <nav className="flex-1 overflow-y-auto py-3 space-y-1">
+          {visibleLinks.map(({ href, label, icon: Icon }) => {
+            const active =
+              href === "/dashboard"
+                ? currentPath === "/dashboard"
+                : currentPath.startsWith(href);
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setOptimisticPath(href);
+                  setOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
+                  active
+                    ? "glass-nav-active font-bold text-white"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-white/5"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+
+          <div className="pt-2 border-t border-slate-200 dark:border-white/10 mt-2">
+            {visibleBottom.map(({ href, label, icon: Icon }) => {
+              const active = currentPath.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setOptimisticPath(href);
+                    setOpen(false);
+                  }}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
+                    active
+                      ? "glass-nav-active font-bold text-white"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </aside>
     </>
   );

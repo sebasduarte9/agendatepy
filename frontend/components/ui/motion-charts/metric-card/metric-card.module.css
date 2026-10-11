@@ -1,0 +1,124 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
+}
+
+:global(.dark) .card {
+  background: rgba(30, 27, 34, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 36px -12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 79, 43, 0.3);
+  box-shadow: 0 16px 36px -12px rgba(255, 79, 43, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:global(.dark) .card:hover {
+  border-color: rgba(255, 79, 43, 0.4);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(100 116 139);
+}
+
+:global(.dark) .top {
+  color: rgb(148 163 184);
+}
+
+.top small {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+}
+
+.top small[data-trend="up"] {
+  background: rgba(16, 185, 129, 0.14);
+  color: rgb(5, 150, 105);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+:global(.dark) .top small[data-trend="up"] {
+  background: rgba(16, 185, 129, 0.2);
+  color: rgb(52, 211, 153);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.top small[data-trend="down"] {
+  background: rgba(244, 63, 94, 0.14);
+  color: rgb(225, 29, 72);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+
+:global(.dark) .top small[data-trend="down"] {
+  background: rgba(244, 63, 94, 0.2);
+  color: rgb(251, 113, 133);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+.card p {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(148 163 184);
+  line-height: 1.4;
+}
+
+:global(.dark) .card p {
+  color: rgb(100 116 139);
+}
+
+.card :global([class*="counter"]) {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.swap {
+  display: inline-flex;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.swapBlock {
+  display: block;
+  position: relative;
+}
+
+.sizer {
+  visibility: hidden;
+  user-select: none;
+  opacity: 0;
+  pointer-events: none;
+  display: inline-block;
+}
+
+.text {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}

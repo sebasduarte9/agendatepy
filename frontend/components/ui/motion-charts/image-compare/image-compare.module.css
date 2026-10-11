@@ -1,0 +1,134 @@
+.root {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  user-select: none;
+  touch-action: pan-y;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:global(.dark) .root {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.layer > * {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.chip {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 10;
+  padding: 0.35rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.chip[data-place="end"] {
+  left: auto;
+  right: 0.85rem;
+}
+
+.chip[data-place="bottom"] {
+  top: auto;
+  bottom: 0.85rem;
+  right: auto;
+  left: 0.85rem;
+}
+
+.pivot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.rotor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+}
+
+.line {
+  position: absolute;
+  top: -1000px;
+  bottom: -1000px;
+  left: -1px;
+  width: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.35), 0 0 4px rgba(255, 79, 43, 0.8);
+}
+
+.handleSlot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+}
+
+.handle {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid var(--primary, #FF4F2B);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35), 0 0 16px rgba(255, 79, 43, 0.4);
+  cursor: grab;
+  outline: none;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.handle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 79, 43, 0.6);
+}
+
+.root[data-dragging] .handle {
+  cursor: grabbing;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.5), 0 0 24px rgba(255, 79, 43, 0.7);
+}
+
+.chevrons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary, #FF4F2B);
+}
+
+.chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

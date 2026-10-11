@@ -49,11 +49,6 @@ export default function LiquidGlass({
 }: LiquidGlassProps) {
   const filterId = useId().replace(/:/g, "_");
   const glassRef = useRef<HTMLDivElement>(null);
-  const mounted = React.useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
   const [isHovered, setIsHovered] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [elasticOffset, setElasticOffset] = useState({ x: 0, y: 0 });
@@ -98,23 +93,6 @@ export default function LiquidGlass({
   const isFirefox =
     typeof navigator !== "undefined" &&
     navigator.userAgent.toLowerCase().includes("firefox");
-
-  // Fallback SSR / Primer render sin destellos
-  if (!mounted) {
-    return (
-      <div
-        className={`relative inline-flex items-center justify-center rounded-full border border-slate-200/80 dark:border-white/10 bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl shadow-xs ${className}`}
-        style={{
-          borderRadius: `${cornerRadius}px`,
-          padding,
-          ...style,
-        }}
-        onClick={onClick}
-      >
-        {children}
-      </div>
-    );
-  }
 
   const transformStyle = interactive
     ? `translate(${elasticOffset.x}px, ${elasticOffset.y}px) scale(${

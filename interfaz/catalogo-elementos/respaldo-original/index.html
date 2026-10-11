@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendatepy — Catálogo Maestro de Elementos y Sistema de Diseño</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 1. Fondo Atmosférico de Color en Movimiento (Cero Fotos) -->
+  <div class="glass-room" aria-hidden="true"></div>
+  <div class="ambient-scene" aria-hidden="true">
+    <div class="ambient-orb ambient-orb-1"></div>
+    <div class="ambient-orb ambient-orb-2"></div>
+    <div class="ambient-orb ambient-orb-3"></div>
+  </div>
+
+  <!-- 2. Menú Lateral Flotante Estático con Expansión en Hover (Altura Fija Bloqueada) -->
+  <aside class="glass-rail-fixed" aria-label="Navegación principal">
+    <a href="#inicio" class="rail-logo-lockup" title="Agendatepy">
+      <div class="rail-mark">A</div>
+      <div class="rail-brand-text">
+        <strong>Agendatepy</strong>
+        <small>PERSONAL SPACE</small>
+      </div>
+    </a>
+
+    <nav class="rail-nav">
+      <a href="#tokens" class="rail-link active" data-tooltip="Tokens de Diseño">
+        <div class="rail-icon">✦</div>
+        <span class="rail-label">Tokens & Colores</span>
+        <span class="rail-dot"></span>
+      </a>
+      <a href="#botones" class="rail-link" data-tooltip="Botones & Acciones">
+        <div class="rail-icon">🔘</div>
+        <span class="rail-label">Botones</span>
+      </a>
+      <a href="#badges" class="rail-link" data-tooltip="Badges & Estados">
+        <div class="rail-icon">🏷️</div>
+        <span class="rail-label">Pastillas & Estados</span>
+      </a>
+      <a href="#tarjetas" class="rail-link" data-tooltip="Tarjetas Métricas">
+        <div class="rail-icon">📊</div>
+        <span class="rail-label">Tarjetas & KPIs</span>
+      </a>
+      <a href="#widgets-ia" class="rail-link" data-tooltip="Widgets de IA">
+        <div class="rail-icon">🤖</div>
+        <span class="rail-label">WhatsApp IA & Orbe</span>
+      </a>
+      <a href="#agenda" class="rail-link" data-tooltip="Agenda & Citas">
+        <div class="rail-icon">📅</div>
+        <span class="rail-label">Agenda & Turnos</span>
+      </a>
+      <a href="#caja" class="rail-link" data-tooltip="Caja & Finanzas">
+        <div class="rail-icon">💵</div>
+        <span class="rail-label">Caja & Cobros</span>
+      </a>
+      <a href="#crm" class="rail-link" data-tooltip="Directorio CRM">
+        <div class="rail-icon">👥</div>
+        <span class="rail-label">Clientes CRM</span>
+      </a>
+      <a href="#formularios" class="rail-link" data-tooltip="Inputs & Forms">
+        <div class="rail-icon">📝</div>
+        <span class="rail-label">Inputs & Forms</span>
+      </a>
+      <a href="#tablas" class="rail-link" data-tooltip="Tablas de Datos">
+        <div class="rail-icon">📑</div>
+        <span class="rail-label">Tablas & Listas</span>
+      </a>
+      <a href="#feedback" class="rail-link" data-tooltip="Modales & Toasts">
+        <div class="rail-icon">🔔</div>
+        <span class="rail-label">Modales & Toasts</span>
+      </a>
+    </nav>
+
+    <div class="rail-bottom">
+      <a href="#agenda" class="rail-link" data-tooltip="Portal Web Público" style="color: var(--green);">
+        <div class="rail-icon">↗</div>
+        <span class="rail-label">Portal Público</span>
+        <span class="pulse-dot" style="margin-left: auto; margin-right: 6px;"></span>
+      </a>
+      <button type="button" class="rail-link" id="theme-toggle" style="background: none; border: 0; cursor: pointer; text-align: left; width: 100%;">
+        <div class="rail-icon">☼</div>
+        <span class="rail-label">Cambiar Tema</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- 3. Contenedor Principal (Workspace & App Shell) -->
+  <div class="workspace" id="inicio">
+    <div class="app-shell">
+      <!-- Encabezado Sticky -->
+      <header class="app-header">
+        <div class="header-title-box">
+          <p class="eyebrow">DESIGN SYSTEM SPECIFICATION · AGENDATEPY</p>
+          <h1>Catálogo Maestro de Elementos <span style="color: var(--primary);">▰</span></h1>
+        </div>
+
+        <div class="header-controls">
+          <!-- Paleta de Color Rápida -->
+          <div class="color-swatches" title="Seleccionar Color de Marca">
+            <button class="swatch-btn active" style="background: #FF4F2B;" data-color="#FF4F2B" data-rgb="255, 79, 43" data-name="Naranja Neón" aria-label="Naranja"></button>
+            <button class="swatch-btn" style="background: #10b981;" data-color="#10b981" data-rgb="16, 185, 129" data-name="Verde Esmeralda" aria-label="Verde"></button>
+            <button class="swatch-btn" style="background: #8b5cf6;" data-color="#8b5cf6" data-rgb="139, 92, 246" data-name="Púrpura Neón" aria-label="Púrpura"></button>
+            <button class="swatch-btn" style="background: #3b82f6;" data-color="#3b82f6" data-rgb="59, 130, 246" data-name="Azul Cyber" aria-label="Azul"></button>
+            <button class="swatch-btn" style="background: #f59e0b;" data-color="#f59e0b" data-rgb="245, 158, 11" data-name="Ámbar Gold" aria-label="Ámbar"></button>
+          </div>
+
+          <a href="ELEMENTOS_SISTEMA.md" target="_blank" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">
+            📄 Ver Documento .MD
+          </a>
+        </div>
+      </header>
+
+      <!-- Contenido del Catálogo -->
+      <main class="main-content">
+
+        <!-- ========================================================
+             SECCIÓN 1: TOKENS DE DISEÑO Y PALETA VISUAL
+             ======================================================== -->
+        <section class="catalog-section" id="tokens">
+          <div class="section-head">
+            <div>
+              <h2>✦ 1. Tokens de Diseño y Colores Semánticos</h2>
+              <p>Haz clic en cualquier muestra para copiar su código HEX/RGB al portapapeles.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-auto">
+            <div class="glass-panel" data-copy="#FF4F2B" title="Clic para copiar">
+              <div style="height: 48px; border-radius: 10px; background: var(--primary); margin-bottom: 10px; box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.35);"></div>
+              <strong>Primary Brand</strong>
+              <p class="muted" style="font-size: 10px; margin-top: 4px;">#FF4F2B · var(--primary)</p>
+            </div>
+
+            <div class="glass-panel" data-copy="#10b981" title="Clic para copiar">
+              <div style="height: 48px; border-radius: 10px; background: var(--green); margin-bottom: 10px; box-shadow: 0 4px 16px rgba(var(--green-rgb), 0.3);"></div>
+              <strong>Éxito / Confirmado</strong>
+              <p class="muted" style="font-size: 10px; margin-top: 4px;">#10b981 · var(--green)</p>
+            </div>
+
+            <div class="glass-panel" data-copy="#a855f7" title="Clic para copiar">
+              <div style="height: 48px; border-radius: 10px; background: var(--purple); margin-bottom: 10px; box-shadow: 0 4px 16px rgba(var(--purple-rgb), 0.3);"></div>
+              <strong>WhatsApp IA & VIP</strong>
+              <p class="muted" style="font-size: 10px; margin-top: 4px;">#a855f7 · var(--purple)</p>
+            </div>
+
+            <div class="glass-panel" data-copy="#f59e0b" title="Clic para copiar">
+              <div style="height: 48px; border-radius: 10px; background: var(--amber); margin-bottom: 10px; box-shadow: 0 4px 16px rgba(var(--amber-rgb), 0.3);"></div>
+              <strong>Pendiente / Alerta</strong>
+              <p class="muted" style="font-size: 10px; margin-top: 4px;">#f59e0b · var(--amber)</p>
+            </div>
+
+            <div class="glass-panel" data-copy="#ef4444" title="Clic para copiar">
+              <div style="height: 48px; border-radius: 10px; background: var(--red); margin-bottom: 10px; box-shadow: 0 4px 16px rgba(var(--red-rgb), 0.3);"></div>
+              <strong>Cancelado / No-Show</strong>
+              <p class="muted" style="font-size: 10px; margin-top: 4px;">#ef4444 · var(--red)</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 2: BOTONES Y CONTROLES DE ACCIÓN
+             ======================================================== -->
+        <section class="catalog-section" id="botones">
+          <div class="section-head">
+            <div>
+              <h2>🔘 2. Botones y Controles de Acción</h2>
+              <p>Variantes de botones principales, secundarios, píldoras y selectores segmentados.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel">
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px;">
+              <button class="btn btn-primary">Primary Glow</button>
+              <button class="btn btn-secondary">Secondary Glass</button>
+              <button class="btn btn-white">White Accent</button>
+              <button class="btn btn-primary btn-icon" title="Acción rápida">＋</button>
+              <button class="btn btn-secondary btn-icon" title="Buscar">🔍</button>
+              <button class="btn btn-primary" style="background: var(--green); border-color: var(--green);">Cobrar Turno</button>
+              <button class="btn btn-secondary" style="color: var(--red);">Cancelar Cita</button>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; border-top: 1px solid var(--line); padding-top: 16px;">
+              <div>
+                <p class="muted" style="font-size: 10px; margin-bottom: 6px;">CONTROL SEGMENTADO (FILTRO DE TIEMPO)</p>
+                <div class="segmented-control">
+                  <button class="segment-btn active">Hoy</button>
+                  <button class="segment-btn">Esta Semana</button>
+                  <button class="segment-btn">Este Mes</button>
+                  <button class="segment-btn">Año</button>
+                </div>
+              </div>
+
+              <div>
+                <p class="muted" style="font-size: 10px; margin-bottom: 6px;">INTERRUPTOR TOGGLE (WHATSAPP ACTIVO)</p>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" class="switch" checked>
+                  <span style="font-size: 11px; font-weight: 600;">Respuestas Automáticas</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 3: BADGES Y PASTILLAS DE ESTADO
+             ======================================================== -->
+        <section class="catalog-section" id="badges">
+          <div class="section-head">
+            <div>
+              <h2>🏷️ 3. Badges e Indicadores de Estado</h2>
+              <p>Pastillas semánticas para citas, caja, clientes y automatización de IA.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+              <span class="badge badge-emerald"><i class="pulse-dot"></i> Turno Confirmado</span>
+              <span class="badge badge-amber">● Pendiente de Pago</span>
+              <span class="badge badge-purple">✦ WhatsApp IA Activo</span>
+              <span class="badge badge-red">✕ Turno Cancelado</span>
+              <span class="badge badge-primary">★ Cliente VIP Frecuente</span>
+              <span class="badge badge-emerald">Caja Abierta (Gs. 250.000)</span>
+              <span class="badge badge-purple" style="font-family: monospace;">⌘ K Búsqueda</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 4: TARJETAS MÉTRICAS Y 3D TILT
+             ======================================================== -->
+        <section class="catalog-section" id="tarjetas">
+          <div class="section-head">
+            <div>
+              <h2>📊 4. Tarjetas Métricas, KPIs y Perspectiva 3D Tilt</h2>
+              <p>Mueve el cursor sobre las tarjetas de la primera fila para interactuar con el efecto 3D.</p>
+            </div>
+          </div>
+
+          <!-- Tarjetas Tilt 3D -->
+          <div class="grid grid-3">
+            <div class="glass-tilt-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <span class="eyebrow">FACTURACIÓN DE HOY</span>
+                <span class="badge badge-emerald">+18.4%</span>
+              </div>
+              <strong style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em;">Gs. 1.840.000</strong>
+              <p class="muted" style="font-size: 11px; margin-top: 6px;">14 servicios cobrados · 3 pendientes</p>
+            </div>
+
+            <div class="glass-tilt-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <span class="eyebrow">CITAS AGENDADAS</span>
+                <span class="badge badge-primary">18 Turnos</span>
+              </div>
+              <strong style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em;">92% Ocupación</strong>
+              <p class="muted" style="font-size: 11px; margin-top: 6px;">Próxima cita en 15 minutos</p>
+            </div>
+
+            <div class="glass-tilt-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <span class="eyebrow">WHATSAPP IA BOT</span>
+                <span class="badge badge-purple"><i class="pulse-dot"></i> En línea</span>
+              </div>
+              <strong style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em;">46 Mensajes</strong>
+              <p class="muted" style="font-size: 11px; margin-top: 6px;">7 reservas creadas automáticamente</p>
+            </div>
+          </div>
+
+          <!-- Banda de Resumen Strip -->
+          <div class="glass-panel" style="padding: 14px 20px;">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center;">
+              <div style="border-right: 1px solid var(--line);">
+                <p class="eyebrow">TOTAL INGRESOS MES</p>
+                <strong style="font-size: 16px; font-weight: 700;">Gs. 34.850.000</strong>
+              </div>
+              <div style="border-right: 1px solid var(--line);">
+                <p class="eyebrow">COMISIONES EQUIPO</p>
+                <strong style="font-size: 16px; font-weight: 700; color: var(--amber);">Gs. 13.940.000</strong>
+              </div>
+              <div style="border-right: 1px solid var(--line);">
+                <p class="eyebrow">TASA NO-SHOW</p>
+                <strong style="font-size: 16px; font-weight: 700; color: var(--green);">1.8% (Mínimo)</strong>
+              </div>
+              <div>
+                <p class="eyebrow">CLIENTES NUEVOS</p>
+                <strong style="font-size: 16px; font-weight: 700; color: var(--primary);">+38 Clientes</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 5: WIDGETS ESPECIALES DE IA
+             ======================================================== -->
+        <section class="catalog-section" id="widgets-ia">
+          <div class="section-head">
+            <div>
+              <h2>🤖 5. Widgets Especiales de IA (Orbe Conic 3D & WhatsApp)</h2>
+              <p>Muestra viva del orbe con animación rotativa en código y simulador de conversación.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <!-- Orbe Giratorio de Tasa de Ocupación -->
+            <div class="glass-panel" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+              <p class="eyebrow">ORBE DE INTELIGENCIA OPERATIVA</p>
+              <div class="morph-orb-wrap">
+                <div class="morph-orb">
+                  <div class="morph-orb-center">
+                    <small>OCUPACIÓN</small>
+                    <strong>92%</strong>
+                  </div>
+                </div>
+              </div>
+              <p class="muted" style="font-size: 11px; margin-top: 8px;">Capacidad máxima estimada alcanzada para el turno tarde.</p>
+              <button class="btn btn-secondary" style="margin-top: 12px; font-size: 11px;">Bloquear Horas Extras</button>
+            </div>
+
+            <!-- Simulador de Conversación WhatsApp IA -->
+            <div class="glass-panel">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 18px;">💬</span>
+                  <div>
+                    <strong style="font-size: 12px;">WhatsApp IA Asistente</strong>
+                    <p class="muted" style="font-size: 9px;">Evolution API · Sesión Conectada</p>
+                  </div>
+                </div>
+                <span class="badge badge-purple"><i class="pulse-dot"></i> Activo</span>
+              </div>
+
+              <div class="chat-preview">
+                <div class="chat-bubble client">
+                  Hola, quiero agendar corte de pelo y barba para hoy a las 16:00 con Lucas.
+                  <small>14:32</small>
+                </div>
+                <div class="chat-bubble bot">
+                  ¡Hola Juan! 👋 Con gusto. Lucas tiene disponible hoy a las <strong>16:00 hs</strong> para <em>Corte + Barba (Gs. 80.000)</em>. ¿Confirmo tu turno?
+                  <div style="margin-top: 8px; display: flex; gap: 6px;">
+                    <button class="btn btn-primary" style="padding: 4px 10px; font-size: 10px;">Confirmar Turno</button>
+                    <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 10px;">Ver Otros Horarios</button>
+                  </div>
+                  <small>14:32 · IA Bot</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 6: AGENDA Y CITAS
+             ======================================================== -->
+        <section class="catalog-section" id="agenda">
+          <div class="section-head">
+            <div>
+              <h2>📅 6. Agenda & Tarjetas de Turnos</h2>
+              <p>Formato de bloques de turnos diarios con estado, cliente y acciones rápidas.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-3">
+            <!-- Turno 1 -->
+            <div class="glass-panel" style="border-left: 4px solid var(--green);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span class="badge badge-emerald">15:00 - 15:45</span>
+                <span class="badge badge-emerald">Confirmado</span>
+              </div>
+              <strong style="font-size: 14px; display: block;">Rodrigo Bareiro</strong>
+              <p class="muted" style="font-size: 11px; margin-top: 4px;">Corte Degradé + Barboterapia</p>
+              <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 700; color: var(--primary);">Gs. 90.000</span>
+                <button class="btn btn-primary" style="padding: 5px 10px; font-size: 10px;">Cobrar</button>
+              </div>
+            </div>
+
+            <!-- Turno 2 -->
+            <div class="glass-panel" style="border-left: 4px solid var(--amber);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span class="badge badge-amber">16:00 - 16:30</span>
+                <span class="badge badge-amber">Pendiente</span>
+              </div>
+              <strong style="font-size: 14px; display: block;">Marcos Villalba</strong>
+              <p class="muted" style="font-size: 11px; margin-top: 4px;">Perfilado de Barba</p>
+              <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 700; color: var(--primary);">Gs. 40.000</span>
+                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 10px;">WhatsApp</button>
+              </div>
+            </div>
+
+            <!-- Turno 3 -->
+            <div class="glass-panel" style="border-left: 4px solid var(--purple);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span class="badge badge-purple">17:00 - 18:00</span>
+                <span class="badge badge-purple">★ Cliente VIP</span>
+              </div>
+              <strong style="font-size: 14px; display: block;">Dr. Fernando Lugo</strong>
+              <p class="muted" style="font-size: 11px; margin-top: 4px;">Tratamiento Capilar Completo</p>
+              <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 700; color: var(--primary);">Gs. 160.000</span>
+                <button class="btn btn-primary" style="padding: 5px 10px; font-size: 10px;">Ver Ficha</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 7: CAJA CHICA Y COBROS
+             ======================================================== -->
+        <section class="catalog-section" id="caja">
+          <div class="section-head">
+            <div>
+              <h2>💵 7. Caja Chica, Arqueos y Métodos de Pago</h2>
+              <p>Métricas de flujo de caja dividido por Efectivo, POS y Transferencias bancarias.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-3">
+            <div class="glass-panel">
+              <span class="eyebrow">EFECTIVO EN CAJA</span>
+              <strong style="font-size: 22px; display: block; margin: 8px 0;">Gs. 950.000</strong>
+              <p class="muted" style="font-size: 10px;">Base inicial: Gs. 200.000 · Cobros: Gs. 750.000</p>
+            </div>
+
+            <div class="glass-panel">
+              <span class="eyebrow">TARJETA & POS</span>
+              <strong style="font-size: 22px; display: block; margin: 8px 0;">Gs. 640.000</strong>
+              <p class="muted" style="font-size: 10px;">8 transacciones procesadas</p>
+            </div>
+
+            <div class="glass-panel">
+              <span class="eyebrow">TRANSFERENCIAS SIPAP</span>
+              <strong style="font-size: 22px; display: block; margin: 8px 0; color: var(--green);">Gs. 450.000</strong>
+              <p class="muted" style="font-size: 10px;">Comprobantes validados en el día</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 8: DIRECTORIO DE CLIENTES Y CRM
+             ======================================================== -->
+        <section class="catalog-section" id="crm">
+          <div class="section-head">
+            <div>
+              <h2>👥 8. Directorio de Clientes y Ficha CRM</h2>
+              <p>Perfiles de clientes con número de visitas, gasto acumulado y notas.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="glass-panel" style="display: flex; gap: 14px; align-items: center;">
+              <div style="width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--purple)); display: grid; place-items: center; font-weight: 700; font-size: 16px; color: #fff;">
+                CM
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13px;">Carlos Mendoza</strong>
+                  <span class="badge badge-primary">★ VIP</span>
+                </div>
+                <p class="muted" style="font-size: 10px; margin: 2px 0;">+595 981 123456 · 14 visitas</p>
+                <p style="font-size: 10px; color: var(--muted);">Nota: Prefiere corte con tijera arriba y fade 0.5 abajo.</p>
+              </div>
+            </div>
+
+            <div class="glass-panel" style="display: flex; gap: 14px; align-items: center;">
+              <div style="width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #4b5563, #1f2937); display: grid; place-items: center; font-weight: 700; font-size: 16px; color: #fff;">
+                AG
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13px;">Alejandro Gómez</strong>
+                  <span class="badge badge-emerald">Frecuente</span>
+                </div>
+                <p class="muted" style="font-size: 10px; margin: 2px 0;">+595 972 654321 · 6 visitas</p>
+                <p style="font-size: 10px; color: var(--muted);">Nota: Alérgico a lociones con alcohol fuerte.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 9: FORMULARIOS, INPUTS Y SELECTS
+             ======================================================== -->
+        <section class="catalog-section" id="formularios">
+          <div class="section-head">
+            <div>
+              <h2>📝 9. Controles de Formulario e Inputs Vidriados</h2>
+              <p>Campos translúcidos con micro-etiquetas e interacción fluida.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel">
+            <div class="grid grid-3">
+              <div class="field">
+                <label>NOMBRE COMPLETO</label>
+                <input type="text" class="input-glass" placeholder="Ej: Santiago Acosta" value="Santiago Acosta">
+              </div>
+
+              <div class="field">
+                <label>WHATSAPP (PARAGUAY +595)</label>
+                <input type="tel" class="input-glass" placeholder="+595 981 000 000" value="+595 981 450 780">
+              </div>
+
+              <div class="field">
+                <label>PROFESIONAL ASIGNADO</label>
+                <select class="input-glass">
+                  <option>Lucas Giménez (Barbero Senior)</option>
+                  <option>Martín Benítez (Estilista)</option>
+                  <option>Cualquiera disponible</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px;">
+                <span class="muted">COMISIÓN POR SERVICIO</span>
+                <strong id="commission-val" style="color: var(--primary);">45%</strong>
+              </div>
+              <input type="range" class="range-slider" min="10" max="70" value="45" data-display="commission-val" data-unit="%">
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 10: TABLAS DE DATOS
+             ======================================================== -->
+        <section class="catalog-section" id="tablas">
+          <div class="section-head">
+            <div>
+              <h2>📑 10. Tablas de Movimientos y Liquidaciones</h2>
+              <p>Estructura de filas flotantes translúcidas con badges semánticos.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel" style="padding: 12px;">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>HORA</th>
+                    <th>CLIENTE</th>
+                    <th>SERVICIO</th>
+                    <th>PROFESIONAL</th>
+                    <th>MONTO</th>
+                    <th>MÉTODO</th>
+                    <th>ESTADO</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>14:30</td>
+                    <td><strong>Carlos Mendoza</strong></td>
+                    <td>Corte + Barba</td>
+                    <td>Lucas G.</td>
+                    <td><strong>Gs. 85.000</strong></td>
+                    <td><span class="badge badge-emerald">Efectivo</span></td>
+                    <td><span class="badge badge-emerald">Cobrado</span></td>
+                  </tr>
+                  <tr>
+                    <td>15:15</td>
+                    <td><strong>Rodrigo Bareiro</strong></td>
+                    <td>Corte Clásico</td>
+                    <td>Martín B.</td>
+                    <td><strong>Gs. 50.000</strong></td>
+                    <td><span class="badge badge-purple">Transferencia</span></td>
+                    <td><span class="badge badge-emerald">Validado</span></td>
+                  </tr>
+                  <tr>
+                    <td>16:00</td>
+                    <td><strong>Gonzalo Vera</strong></td>
+                    <td>Colorimetría</td>
+                    <td>Martín B.</td>
+                    <td><strong>Gs. 180.000</strong></td>
+                    <td><span class="badge badge-amber">POS / Tarjeta</span></td>
+                    <td><span class="badge badge-amber">Pendiente</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================
+             SECCIÓN 11: FEEDBACK, MODALES Y TOASTS
+             ======================================================== -->
+        <section class="catalog-section" id="feedback">
+          <div class="section-head">
+            <div>
+              <h2>🔔 11. Feedback Interactivo, Modales y Notificaciones</h2>
+              <p>Prueba en vivo los disparadores de notificaciones y modales vidriados.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel" style="display: flex; gap: 14px; align-items: center;">
+            <button class="btn btn-primary" id="launch-toast-demo">
+              Lanzar Notificación Toast de Prueba
+            </button>
+            <button class="btn btn-secondary" id="open-modal-demo">
+              Abrir Modal Vidriado Demo
+            </button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal Vidriado Demo -->
+  <dialog id="demo-modal" style="background: rgba(23, 19, 25, 0.92); border: 1px solid var(--line); border-radius: 24px; padding: 28px; color: var(--text); backdrop-filter: blur(32px); box-shadow: 0 40px 100px rgba(0,0,0,0.7); max-width: 440px; margin: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 16px; font-weight: 750;">Nueva Cita en Mostrador</h3>
+      <button class="close-modal btn btn-secondary btn-icon" style="width: 28px; height: 28px; font-size: 14px;">✕</button>
+    </div>
+    <p class="muted" style="font-size: 11px; margin-bottom: 16px;">Agendamiento directo con confirmación instantánea por WhatsApp.</p>
+    <div class="field" style="margin-bottom: 12px;">
+      <label>CLIENTE</label>
+      <input type="text" class="input-glass" value="Fernando Benítez">
+    </div>
+    <div class="field" style="margin-bottom: 16px;">
+      <label>SERVICIO</label>
+      <select class="input-glass">
+        <option>Corte y Perfilado (Gs. 60.000)</option>
+        <option>Barba Completa (Gs. 40.000)</option>
+      </select>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+      <button class="close-modal btn btn-secondary">Cancelar</button>
+      <button class="close-modal btn btn-primary">Agendar Turno</button>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

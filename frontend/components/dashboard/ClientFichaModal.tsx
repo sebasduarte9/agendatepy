@@ -275,12 +275,11 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
         title=""
         onClose={onClose}
         maxWidth="max-w-4xl"
-        variant="side"
-        minHeight="min-h-[580px] sm:min-h-[620px]"
+        variant="center"
       >
         <div className="space-y-5 -mt-2">
           {/* Header Profile Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl bg-slate-50/80 dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl glass-panel shadow-xs">
             <div className="flex items-center gap-3.5">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-white font-black text-lg shadow-md shadow-primary/20">
                 {client.name
@@ -359,7 +358,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
           {/* Resumen Operacional: Visitas (COMPLETED), Última Visita, Total Gastado */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-2xs">
+            <div className="p-3.5 rounded-2xl glass-panel-subtle">
               <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
                 Visitas Realizadas
               </span>
@@ -369,7 +368,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               <span className="text-[10px] text-slate-500 font-medium">Turnos completados</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-2xs">
+            <div className="p-3.5 rounded-2xl glass-panel-subtle">
               <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
                 Última Visita
               </span>
@@ -381,7 +380,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               <span className="text-[10px] text-slate-500 font-medium">Histórico</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-2xs">
+            <div className="p-3.5 rounded-2xl glass-panel-subtle">
               <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
                 Total Gastado
               </span>
@@ -430,7 +429,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               </Link>
             </div>
           ) : (
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#121215]/40 border border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs text-slate-500">
+            <div className="p-3 rounded-2xl glass-panel-subtle flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-slate-400" />
                 <span>Sin próximas citas agendadas</span>
@@ -459,7 +458,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           )}
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-[#121215] rounded-2xl border border-slate-200/70 dark:border-white/5 text-xs font-bold">
+          <div className="flex items-center gap-1 p-1 glass-panel-subtle rounded-2xl text-xs font-bold">
             <button
               type="button"
               onClick={() => setActiveTab("visitas")}
@@ -518,7 +517,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
             <div className="space-y-4">
               {/* Visit Stats Metric Deck */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#121215]/60 border border-slate-200/60 dark:border-white/5">
+                <div className="p-3.5 rounded-2xl glass-panel-subtle">
                   <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
                     Profesional Frecuente
                   </span>
@@ -527,7 +526,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#121215]/60 border border-slate-200/60 dark:border-white/5">
+                <div className="p-3.5 rounded-2xl glass-panel-subtle">
                   <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
                     Servicio Más Solicitado
                   </span>
@@ -536,7 +535,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#121215]/60 border border-slate-200/60 dark:border-white/5">
+                <div className="p-3.5 rounded-2xl glass-panel-subtle">
                   <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
                     Ticket Promedio por Visita
                   </span>
@@ -585,7 +584,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                     return (
                       <div
                         key={visit.id}
-                        className="p-4 rounded-2xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 hover:border-primary/40 transition shadow-2xs space-y-2.5"
+                        className="p-4 rounded-2xl glass-panel hover:border-primary/40 transition space-y-2.5"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-100 dark:border-white/5">
                           <div className="flex items-center gap-2">
@@ -811,7 +810,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       </div>
 
                       {/* Info & delete bar */}
-                      <div className="p-2.5 bg-white dark:bg-[#121215] flex items-center justify-between gap-1">
+                      <div className="p-2.5 glass-panel-subtle flex items-center justify-between gap-1">
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                             {item.title}
@@ -1254,7 +1253,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               )}
             </div>
 
-            <div className="flex items-center justify-between text-xs p-3 rounded-2xl bg-slate-50 dark:bg-[#121215] border border-slate-200/60 dark:border-white/10">
+            <div className="flex items-center justify-between text-xs p-3 rounded-2xl glass-panel-subtle">
               <div>
                 <span className="font-bold text-slate-900 dark:text-white block">
                   {viewingMedia.title}

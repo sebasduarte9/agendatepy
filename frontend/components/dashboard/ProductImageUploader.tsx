@@ -10,7 +10,9 @@ import {
   Download,
   Loader2,
   Trash2,
+  SlidersHorizontal,
 } from "lucide-react";
+import { ImageCompare } from "@/components/ui/motion-charts";
 
 interface ProductImageUploaderProps {
   value: string;
@@ -101,6 +103,7 @@ export default function ProductImageUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasTransparentBg, setHasTransparentBg] = useState(false);
+  const [showCompare, setShowCompare] = useState(true);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -184,6 +187,7 @@ export default function ProductImageUploader({
 
       onChange(data.url);
       setHasTransparentBg(true);
+      setShowCompare(true);
       setStatusMessage({ type: "success", text: "Fondo recortado y guardado en servidor." });
     } catch (err: unknown) {
       console.error(err);
@@ -306,41 +310,112 @@ export default function ProductImageUploader({
       {/* PREVIEW CANVAS & ACTIONS */}
       {value && (
         <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/60 p-3.5 space-y-3">
-          {/* Main Visualizer with Checkered Transparency Grid & Scanner Animation */}
-          <div className="relative h-48 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center bg-white dark:bg-slate-900">
-            {/* Checkered Grid */}
-            <div
-              className="absolute inset-0 z-0 opacity-40 dark:opacity-20"
-              style={{
-                backgroundImage: `
-                  linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
-                  linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
-                  linear-gradient(-45deg, transparent 75%, #cbd5e1 75%)
-                `,
-                backgroundSize: "16px 16px",
-                backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
-              }}
-            />
+          {/* Header if comparison available */}
+          {originalImage && originalImage !== value && (
+            <div className="flex items-center justify-between px-1 text-xs">
+              <span className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
+                Comparativa Antes / Después
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowCompare((prev) => !prev)}
+                className="text-[11px] font-bold text-primary hover:underline px-2 py-0.5 rounded-md hover:bg-primary/10 transition cursor-pointer"
+              >
+                {showCompare ? "Ver solo recorte" : "Comparar con original"}
+              </button>
+            </div>
+          )}
 
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={value}
-              alt="Vista previa producto"
-              className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md transition-all duration-200"
-            />
+          {/* Main Visualizer: ImageCompare or Single Preview */}
+          {showCompare && originalImage && originalImage !== value ? (
+            <div className="relative h-56 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-inner bg-slate-100 dark:bg-slate-900">
+              <ImageCompare
+                before={
+                  <div className="w-full h-full flex items-center justify-center p-3 bg-slate-100 dark:bg-slate-850">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={originalImage}
+                      alt="Foto original con fondo"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                }
+                after={
+                  <div className="relative w-full h-full flex items-center justify-center p-3 bg-white dark:bg-slate-900">
+                    <div
+                      className="absolute inset-0 z-0 opacity-40 dark:opacity-20"
+                      style={{
+                        backgroundImage: `
+                          linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+                          linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+                          linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+                          linear-gradient(-45deg, transparent 75%, #cbd5e1 75%)
+                        `,
+                        backgroundSize: "16px 16px",
+                        backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                      }}
+                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={value}
+                      alt="Recorte sin fondo"
+                      className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md"
+                    />
+                  </div>
+                }
+                labels={["Con fondo", "Sin fondo"]}
+                aspectRatio="16 / 10"
+                className="w-full h-full rounded-xl"
+              />
 
-            {/* Animated Laser Scanner effect during AI processing */}
-            {isLoading && (
-              <div className="absolute inset-0 z-20 bg-slate-950/75 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center text-white gap-2">
-                <div className="relative">
-                  <Loader2 className="h-7 w-7 animate-spin text-white" />
-                  <span className="absolute -inset-2 rounded-full border border-white/30 animate-ping" />
+              {/* Animated Laser Scanner effect during AI processing */}
+              {isLoading && (
+                <div className="absolute inset-0 z-30 bg-slate-950/75 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center text-white gap-2">
+                  <div className="relative">
+                    <Loader2 className="h-7 w-7 animate-spin text-white" />
+                    <span className="absolute -inset-2 rounded-full border border-white/30 animate-ping" />
+                  </div>
+                  <p className="text-xs font-bold tracking-wide">Procesando recorte con IA...</p>
                 </div>
-                <p className="text-xs font-bold tracking-wide">Cargando...</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div className="relative h-48 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center bg-white dark:bg-slate-900">
+              {/* Checkered Grid */}
+              <div
+                className="absolute inset-0 z-0 opacity-40 dark:opacity-20"
+                style={{
+                  backgroundImage: `
+                    linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+                    linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+                    linear-gradient(-45deg, transparent 75%, #cbd5e1 75%)
+                  `,
+                  backgroundSize: "16px 16px",
+                  backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                }}
+              />
+
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={value}
+                alt="Vista previa producto"
+                className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md transition-all duration-200"
+              />
+
+              {/* Animated Laser Scanner effect during AI processing */}
+              {isLoading && (
+                <div className="absolute inset-0 z-20 bg-slate-950/75 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center text-white gap-2">
+                  <div className="relative">
+                    <Loader2 className="h-7 w-7 animate-spin text-white" />
+                    <span className="absolute -inset-2 rounded-full border border-white/30 animate-ping" />
+                  </div>
+                  <p className="text-xs font-bold tracking-wide">Cargando...</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="space-y-2">

@@ -127,7 +127,7 @@ export default function ActivationChecklist() {
       )}
 
       {/* 2. Tarjeta de Activación */}
-      <Card className="border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5">
+      <Card className="p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${

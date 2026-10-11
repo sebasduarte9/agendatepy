@@ -1,0 +1,237 @@
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.figure[data-legend] {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2rem;
+}
+
+@media (max-width: 640px) {
+  .figure[data-legend] {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+}
+
+.ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.track {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .track {
+  stroke: rgba(255, 255, 255, 0.05);
+}
+
+.segment {
+  fill: var(--slice, var(--primary, #FF4F2B));
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, d;
+}
+
+.segment[data-dim] {
+  opacity: 0.35;
+  filter: grayscale(0.5);
+}
+
+.segment[data-active] {
+  filter: drop-shadow(0 0 12px var(--slice, var(--primary, #FF4F2B)));
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.readout {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.centerLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgb(100 116 139);
+}
+
+:global(.dark) .centerLabel {
+  color: rgb(148 163 184);
+}
+
+.centerValue {
+  font-family: ui-monospace, monospace;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: rgb(15 23 42);
+  line-height: 1.1;
+}
+
+:global(.dark) .centerValue {
+  color: #ffffff;
+}
+
+.centerMeta {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgb(148 163 184);
+}
+
+:global(.dark) .centerMeta {
+  color: rgb(100 116 139);
+}
+
+/* Legend */
+.legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.item {
+  overflow: hidden;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.875rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.75rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.row:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+:global(.dark) .row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.row[data-active] {
+  background: rgba(255, 79, 43, 0.06);
+  border-color: rgba(255, 79, 43, 0.2);
+}
+
+:global(.dark) .row[data-active] {
+  background: rgba(255, 79, 43, 0.12);
+  border-color: rgba(255, 79, 43, 0.3);
+}
+
+.row[data-hidden] {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--slice, var(--primary, #FF4F2B));
+  box-shadow: 0 0 8px var(--slice, var(--primary, #FF4F2B));
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-weight: 600;
+  color: rgb(51 65 85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.dark) .rowLabel {
+  color: rgb(226 232 240);
+}
+
+.rowMembers {
+  font-size: 0.625rem;
+  color: rgb(148 163 184);
+}
+
+.rowValue {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: rgb(15 23 42);
+}
+
+:global(.dark) .rowValue {
+  color: #ffffff;
+}
+
+.rowShare {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgb(100 116 139);
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .rowShare {
+  color: rgb(148 163 184);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

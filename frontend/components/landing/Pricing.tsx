@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Check, Shield, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import TiltCard from "@/components/ui/TiltCard";
 const FREE_FEATURES = [
   "1 profesional / agenda personal",
   "Hasta 20 turnos por mes",
@@ -123,8 +124,12 @@ export default function Pricing() {
   return (
     <section
       id="precios"
-      className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 lg:pt-10 lg:pb-20 scroll-mt-20"
+      className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 lg:pt-10 lg:pb-20 scroll-mt-20 overflow-hidden z-10"
     >
+      {/* Luz ambiental fuerte para que el cristal destaque */}
+      <div className="absolute top-[20%] left-[10%] w-[400px] h-[400px] bg-orange-500/15 dark:bg-orange-500/10 rounded-full blur-[100px] pointer-events-none -z-10" />
+      <div className="absolute bottom-[10%] right-[10%] w-[500px] h-[500px] bg-brand/20 dark:bg-brand/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+
       <div className="relative mx-auto max-w-7xl px-3 sm:px-6">
         {/* Encabezado Principal */}
         <motion.div
@@ -293,7 +298,7 @@ export default function Pricing() {
               key={plan.id}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
+              viewport={{ once: true, amount: 0 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="flex flex-col h-full min-w-0"
             >
@@ -364,15 +369,19 @@ function PriceCard({
   highlighted?: boolean;
 }) {
   return (
-    <motion.article
-      whileHover={{ y: -6, scale: 1.015 }}
-      transition={{ type: "spring", stiffness: 280, damping: 20 }}
-      className={`relative rounded-3xl p-4 sm:p-5 lg:p-4.5 xl:p-5.5 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
-        highlighted
-          ? "border-2 border-brand bg-white/95 dark:bg-slate-900/95 shadow-[0_20px_45px_-12px_rgba(255,79,43,0.25)] ring-4 ring-brand/10 dark:ring-brand/20 hover:shadow-[0_25px_50px_-12px_rgba(255,79,43,0.3)]"
-          : "border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 shadow-[0_12px_25px_-10px_rgba(0,0,0,0.04)] hover:border-brand/40 hover:shadow-lg"
-      }`}
-    >
+    <TiltCard className="h-full">
+      <motion.article
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0 }}
+        whileHover={{ y: -4 }}
+        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+        className={`relative rounded-3xl p-4 sm:p-5 lg:p-4.5 xl:p-5.5 flex flex-col justify-between transition-colors duration-300 h-full ${
+          highlighted
+            ? "border border-brand glass-floating shadow-[0_20px_45px_-12px_rgba(255,79,43,0.35)] ring-2 ring-brand/20 dark:ring-brand/30 hover:shadow-[0_25px_50px_-12px_rgba(255,79,43,0.5)] overflow-hidden"
+            : "glass-card shadow-[0_12px_25px_-10px_rgba(0,0,0,0.08)] hover:border-brand/50 hover:shadow-xl"
+        }`}
+      >
       {highlighted && (
         <div className="pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-brand via-orange-500 to-amber-500 opacity-20 blur-xl" />
       )}
@@ -486,6 +495,7 @@ function PriceCard({
           </Link>
         )}
       </div>
-    </motion.article>
+      </motion.article>
+    </TiltCard>
   );
 }

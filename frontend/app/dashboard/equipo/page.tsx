@@ -375,14 +375,14 @@ export default function EquipoRolesPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div data-tour="equipo-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+      <div data-tour="equipo-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl glass-panel shadow-xs">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
               Equipo Activo
             </span>
-            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-              {activeStaffCount} <span className="text-xs font-normal text-slate-400">de {staff.length} miembros</span>
+            <span className="text-2xl font-black font-mono text-white">
+              {activeStaffCount} <span className="text-xs font-normal text-zinc-400">de {staff.length} miembros</span>
             </span>
           </div>
           <button
@@ -394,39 +394,39 @@ export default function EquipoRolesPage() {
             + Invitar
           </button>
         </div>
-        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>Especialistas: <strong className="text-slate-800 dark:text-slate-200">{prosCount}</strong></span>
-          <span>Admins: <strong className="text-slate-800 dark:text-slate-200">{adminCount}</strong></span>
-          <span>Caja: <strong className="text-slate-800 dark:text-slate-200">{cashierCount}</strong></span>
+        <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-zinc-400">
+          <span>Especialistas: <strong className="text-white">{prosCount}</strong></span>
+          <span>Admins: <strong className="text-white">{adminCount}</strong></span>
+          <span>Caja: <strong className="text-white">{cashierCount}</strong></span>
         </div>
       </div>
 
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div data-tour="equipo-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="equipo-kpis" className="kpi-rise hidden md:block rounded-[28px] glass-panel p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
         <div className="flex items-center justify-between gap-2 px-1">
-          <div className="font-semibold text-sm text-slate-900 dark:text-white">
-            Dotación & Roles
+          <div className="font-semibold text-sm text-white flex items-center gap-2">
+            Dotación & Roles <span className="text-primary text-xs">▰</span>
           </div>
         </div>
 
         {/* Dual-Card Inset Telemetry */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card: Operational Gauges & Summary */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
             {/* Top section: Mini status box + 2 circular gauges */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
               {/* Mini status box */}
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+              <div className="rounded-xl glass-panel p-3.5 flex flex-col justify-between h-full min-h-[120px]">
                 <div>
-                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                  <div className="text-xs font-semibold text-white">
                     Equipo Activo
                   </div>
                 </div>
                 <div className="mt-3">
-                  <span className="inline-block rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 text-[11px] font-semibold">
+                  <span className="inline-block rounded-full bg-primary/20 text-primary border border-primary/30 px-3 py-1 text-[11px] font-semibold">
                     {prosCount} especialistas
                   </span>
                 </div>
@@ -535,53 +535,53 @@ export default function EquipoRolesPage() {
           </div>
 
           {/* Right Card: Roles & Asignación de servicios */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between space-y-3">
             <div>
-              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
+              <div className="text-xs font-semibold text-white mb-2">
                 Distribución de Niveles de Acceso
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
                       <Crown className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Dueño / Admin</span>
+                    <span className="text-xs font-bold text-white">Dueño / Admin</span>
                   </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{adminCount} cuentas</span>
+                  <span className="text-xs font-bold text-zinc-300">{adminCount} cuentas</span>
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                       <Banknote className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Cajero / Mostrador</span>
+                    <span className="text-xs font-bold text-white">Cajero / Mostrador</span>
                   </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{cashierCount} cuentas</span>
+                  <span className="text-xs font-bold text-zinc-300">{cashierCount} cuentas</span>
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <div className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
                       <Scissors className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Especialistas en Salón</span>
+                    <span className="text-xs font-bold text-white">Especialistas en Salón</span>
                   </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{prosCount} profesionales</span>
+                  <span className="text-xs font-bold text-zinc-300">{prosCount} profesionales</span>
                 </div>
               </div>
             </div>
 
             {/* Bottom notification */}
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="border-t border-white/10 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-[11px] text-zinc-400">
                 Asigná los servicios que realiza cada profesional en el Catálogo:
               </span>
               <Link
                 href="/dashboard/servicios"
-                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0"
+                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1 text-xs font-bold text-white glass-panel hover:bg-white/10 transition shrink-0"
               >
                 <span>Servicios</span>
                 <ArrowRight className="h-3 w-3" />
@@ -638,7 +638,7 @@ export default function EquipoRolesPage() {
       {/* Team Members List */}
       <Card
         data-tour="equipo-list"
-        className="p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4"
+        className="p-5 glass-panel shadow-xs space-y-4"
       >
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
           <div>

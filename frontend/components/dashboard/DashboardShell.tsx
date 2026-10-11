@@ -16,6 +16,23 @@ interface DashboardShellProps {
   userName?: string;
 }
 
+function hexToRgb(hex: string): string {
+  const clean = hex.replace("#", "");
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    return `${r}, ${g}, ${b}`;
+  }
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return `${r}, ${g}, ${b}`;
+  }
+  return "255, 79, 43";
+}
+
 export default function DashboardShell({
   children,
   initialTenantSlug,
@@ -62,25 +79,56 @@ export default function DashboardShell({
     if (typeof document !== "undefined" && color) {
       document.documentElement.style.setProperty("--primary", color);
       document.documentElement.style.setProperty("--color-primary", color);
+      document.documentElement.style.setProperty("--primary-rgb", hexToRgb(color));
     }
   }, [color]);
 
   return (
     <div
-      className="flex min-h-dvh bg-[var(--background)] font-sans antialiased text-slate-900 dark:text-slate-100"
+      className="relative min-h-dvh font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-[var(--primary)]/20 overflow-x-hidden"
       style={{
         ["--primary" as string]: color || "#FF4F2B",
         ["--color-primary" as string]: color || "#FF4F2B",
+        ["--primary-rgb" as string]: hexToRgb(color || "#FF4F2B"),
       }}
     >
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
-        <Header />
-        <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-clip p-3.5 sm:p-6 pb-[calc(7rem+env(safe-area-inset-bottom,20px))] sm:pb-32 lg:pb-8">
-          {children}
-        </main>
+      {/* 1. Fondo Atmosférico de Color con Animación Continua de Movimiento (Cero Fotos) */}
+      <div className="glass-room" aria-hidden="true" />
+
+      {/* 2. Luces Ambientales Orgánicas Flotantes en Movimiento Continuo (GPU Accelerated) */}
+      <div className="ambient-scene" aria-hidden="true">
+        <div className="ambient-orb ambient-orb-1" />
+        <div className="ambient-orb ambient-orb-2" />
+        <div className="ambient-orb ambient-orb-3" />
       </div>
-      <MobileTabBar />
+
+      {/* 3. Viewport Desktop: Workspace Flotante con Rail Glass Estático + Burbuja Header Estática + App Shell Envolvente */}
+      <div className="relative z-10 hidden lg:flex glass-workspace pl-[94px] pr-5 py-[18px] flex-col gap-3.5">
+        <Sidebar variant="rail" />
+        <div className="glass-header-bubble w-full shrink-0">
+          <Header />
+        </div>
+        <div className="glass-app-shell flex-1 min-w-0">
+          <main className="main-content flex-1 w-full max-w-full min-w-0 p-5 lg:p-7 overflow-x-clip">
+            {children}
+          </main>
+        </div>
+      </div>
+
+      {/* 4. Viewport Móvil (< lg): Shell Glassmorphic Adaptativo con Burbuja Header */}
+      <div className="relative z-10 flex lg:hidden min-w-0 flex-1 flex-col p-2.5 pb-[calc(6.5rem+env(safe-area-inset-bottom,20px))] gap-2.5">
+        <div className="glass-header-bubble w-full shrink-0">
+          <Header />
+        </div>
+        <div className="glass-app-shell flex-1 min-w-0 rounded-[22px]">
+          <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-clip p-3.5 sm:p-5">
+            {children}
+          </main>
+        </div>
+        <MobileTabBar />
+        <Sidebar variant="drawer" />
+      </div>
+
       <Suspense fallback={null}>
         <GuidedTour />
       </Suspense>

@@ -505,17 +505,17 @@ export default function ServiciosPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div data-tour="servicios-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+      <div data-tour="servicios-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl glass-panel shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
               Catálogo de Servicios
             </span>
             <div className="flex items-baseline gap-2 mt-0.5">
               <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
                 {visibleServicesCount}
               </span>
-              <span className="text-xs font-semibold text-slate-400">visibles de {services.length}</span>
+              <span className="text-xs font-semibold text-zinc-400">visibles de {services.length}</span>
             </div>
           </div>
 
@@ -530,17 +530,17 @@ export default function ServiciosPage() {
           </button>
         </div>
 
-        <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Categorías</span>
+        <div className="pt-2.5 border-t border-white/10 dark:border-white/10 grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="p-2 rounded-xl glass-panel-subtle">
+            <span className="text-[10px] text-zinc-400 block font-medium">Categorías</span>
             <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs">{allCategories.length}</span>
           </div>
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Promos Flash</span>
-            <span className="font-extrabold text-amber-600 dark:text-amber-400 font-mono text-xs">{services.filter((s) => s.hasPromo).length}</span>
+          <div className="p-2 rounded-xl glass-panel-subtle">
+            <span className="text-[10px] text-zinc-400 block font-medium">Promos Flash</span>
+            <span className="font-extrabold text-amber-500 font-mono text-xs">{services.filter((s) => s.hasPromo).length}</span>
           </div>
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-[10px] text-slate-400 block font-medium">Precio Medio</span>
+          <div className="p-2 rounded-xl glass-panel-subtle">
+            <span className="text-[10px] text-zinc-400 block font-medium">Precio Medio</span>
             <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs truncate block">{formatGs(avgPrice)}</span>
           </div>
         </div>
@@ -549,29 +549,29 @@ export default function ServiciosPage() {
       {/* ========================================================= */}
       {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
       {/* ========================================================= */}
-      <div data-tour="servicios-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="servicios-kpis" className="kpi-rise hidden md:block rounded-[28px] glass-panel p-4 sm:p-5 shadow-xs space-y-4">
         {/* Inset Subheader */}
         <div className="flex items-center justify-between gap-2 px-1">
-          <div className="font-semibold text-sm text-slate-900 dark:text-white">
-            Catálogo & Visibilidad
+          <div className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+            Catálogo & Visibilidad <span className="text-primary text-xs">▰</span>
           </div>
         </div>
 
         {/* Dual-Card Inset Telemetry */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card: Operational Gauges & Summary */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between">
+          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
             {/* Top section: Mini status box + 2 circular gauges */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
               {/* Mini status box */}
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3.5 border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-full min-h-[120px]">
+              <div className="rounded-xl glass-panel p-3.5 flex flex-col justify-between h-full min-h-[120px]">
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
                     Promos Flash
                   </div>
                 </div>
                 <div className="mt-3">
-                  <span className="inline-block rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 text-[11px] font-semibold">
+                  <span className="inline-block rounded-full bg-primary/20 text-primary border border-primary/30 px-3 py-1 text-[11px] font-semibold">
                     {services.filter((s) => s.hasPromo).length} activas
                   </span>
                 </div>
@@ -680,7 +680,7 @@ export default function ServiciosPage() {
           </div>
 
           {/* Right Card: Categorías & Acceso rápido a Equipo */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-xs flex flex-col justify-between space-y-3">
+          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between space-y-3">
             <div>
               <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
                 Categorías Registradas ({allCategories.length})
@@ -691,10 +691,10 @@ export default function ServiciosPage() {
                   return (
                     <span
                       key={cat}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-300"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl glass-panel text-[11px] font-medium text-slate-700 dark:text-zinc-300"
                     >
                       <span>{cat}</span>
-                      <span className="font-bold text-slate-400 dark:text-slate-500">· {count}</span>
+                      <span className="font-bold text-slate-500 dark:text-zinc-500">· {count}</span>
                     </span>
                   );
                 })}
@@ -702,13 +702,13 @@ export default function ServiciosPage() {
             </div>
 
             {/* Bottom Team notice */}
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="border-t border-slate-100 dark:border-white/10 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="text-[11px] text-slate-600 dark:text-zinc-400">
                 ¿Querés ajustar horarios y comisiones individuales?
               </div>
               <Link
                 href="/dashboard/equipo"
-                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0"
+                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white glass-panel hover:bg-black/5 dark:hover:bg-white/10 transition shrink-0"
               >
                 <span>Equipo</span>
                 <ArrowRight className="h-3 w-3" />
@@ -847,7 +847,7 @@ export default function ServiciosPage() {
         <>
           {/* Mobile Apple Inset Grouped Services List */}
           <div className="block sm:hidden space-y-3">
-            <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
+            <div className="rounded-3xl glass-panel divide-y divide-white/10 overflow-hidden shadow-xs">
               {filteredServices.map((item, index) => {
                 const isVisible = item.active !== false;
                 const hasActivePromo = item.hasPromo && item.promoPrice;
@@ -984,16 +984,16 @@ export default function ServiciosPage() {
               <Card
                 key={item.id}
                 data-tour={index === 0 ? "servicios-card" : undefined}
-                className={`group flex flex-col justify-between rounded-3xl border p-5 shadow-xs transition-all duration-300 ${
+                className={`group flex flex-col justify-between rounded-3xl p-5 shadow-xs transition-all duration-300 ${
                   isVisible
-                    ? "border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-900/90 hover:shadow-md hover:border-primary/40"
-                    : "border-slate-200/50 dark:border-white/5 bg-slate-100/50 dark:bg-slate-900/40 opacity-75"
+                    ? "glass-panel hover:shadow-md hover:border-primary/40"
+                    : "glass-panel-subtle opacity-70"
                 }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
+                      <span className="rounded-full glass-panel-subtle px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-300 border border-white/5">
                         {item.category || "General"}
                       </span>
 

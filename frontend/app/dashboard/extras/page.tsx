@@ -124,7 +124,7 @@ export default function ExtrasPage() {
       </div>
 
       {/* Link hero */}
-      <div className="kpi-rise rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs">
+      <div className="kpi-rise rounded-3xl glass-panel p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">

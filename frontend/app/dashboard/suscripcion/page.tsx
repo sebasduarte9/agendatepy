@@ -144,7 +144,7 @@ export default function SuscripcionPage() {
         </div>
 
         {/* Current Plan Badge Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs self-start sm:self-auto">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl glass-panel-subtle self-start sm:self-auto">
           <div
             className="flex h-6 w-6 items-center justify-center rounded-lg text-white"
             style={{ backgroundColor: brandColor }}
@@ -160,7 +160,7 @@ export default function SuscripcionPage() {
 
       {/* ═══ ACTIVE SUBSCRIPTION PASS ═══ */}
       <div className="kpi-rise grid gap-3.5 lg:grid-cols-5">
-        <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs lg:col-span-3">
+        <div className="rounded-3xl glass-panel p-5 sm:p-6 shadow-xs lg:col-span-3">
 
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -191,7 +191,7 @@ export default function SuscripcionPage() {
         </div>
 
         {/* Usage ring */}
-        <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs lg:col-span-2 flex items-center gap-5">
+        <div className="rounded-3xl glass-panel p-5 sm:p-6 shadow-xs lg:col-span-2 flex items-center gap-5">
           <div className="relative h-28 w-28 shrink-0">
             <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
               <circle cx="50" cy="50" r="42" fill="none" strokeWidth="10" className="stroke-slate-100 dark:stroke-white/10" />
@@ -256,12 +256,12 @@ export default function SuscripcionPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative flex w-[78vw] max-w-[300px] shrink-0 snap-center flex-col justify-between rounded-3xl p-5 transition-all duration-300 bg-white dark:bg-[#121215] border shadow-xs hover:-translate-y-1 hover:shadow-lg sm:w-auto sm:max-w-none ${
+                className={`relative flex w-[78vw] max-w-[300px] shrink-0 snap-center flex-col justify-between rounded-3xl p-5 transition-all duration-300 glass-panel shadow-xs hover:-translate-y-1 hover:shadow-lg sm:w-auto sm:max-w-none ${
                   isActive
                     ? "border-primary/40 ring-2 ring-primary/20 dark:border-primary/50"
                     : plan.popular
                       ? "border-slate-300 dark:border-white/20 lg:scale-[1.02]"
-                      : "border-slate-200/80 dark:border-white/10"
+                      : "border-white/10"
                 }`}
               >
                 {plan.popular && (
@@ -327,7 +327,7 @@ export default function SuscripcionPage() {
       </div>
 
       {/* ═══ APPLE GUARANTEES & SUPPORT (INSET GROUPED) ═══ */}
-      <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="rounded-3xl glass-panel p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">

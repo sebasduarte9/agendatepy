@@ -16,10 +16,6 @@ import WhatsAppFloatingButton from "./WhatsAppFloatingButton";
 import StickyMobileCta from "./StickyMobileCta";
 
 export default function LandingPage() {
-  useEffect(() => {
-    document.documentElement.classList.remove("dark");
-  }, []);
-
   return (
     <HorizontalScroll>
       <CategoryProvider>

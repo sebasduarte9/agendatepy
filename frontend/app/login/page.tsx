@@ -120,11 +120,12 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#fbfbfd] px-4 py-12 selection:bg-brand selection:text-white">
-      {/* Luces de fondo Apple-style */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 h-[500px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-indigo-100/60 via-purple-50/40 to-transparent blur-3xl" />
-        <div className="absolute -bottom-40 right-10 h-[400px] w-[400px] rounded-full bg-emerald-50/50 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center bg-transparent px-4 py-12 selection:bg-primary selection:text-white overflow-hidden">
+      {/* Luces de fondo Glassy 2.0 Ambient Glowing Orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none -z-10">
+        <div className="absolute -top-40 left-1/2 h-[550px] w-[650px] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+        <div className="absolute -bottom-40 right-10 h-[450px] w-[450px] rounded-full bg-violet-600/15 blur-3xl" />
+        <div className="absolute top-1/3 -left-20 h-[380px] w-[380px] rounded-full bg-emerald-500/10 blur-3xl" />
       </div>
 
       <motion.div
@@ -137,26 +138,26 @@ function LoginForm() {
         <div className="mb-8 text-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-2xl bg-white px-3.5 py-1.5 shadow-[0_2px_10px_rgb(0,0,0,0.04)] border border-slate-200/80 transition hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 rounded-2xl glass-panel-subtle px-3.5 py-1.5 border border-white/10 shadow-xs transition hover:scale-[1.02]"
           >
             <BrandLogo variant="horizontal" iconClassName="h-6.5 w-6.5" />
           </Link>
-          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             Bienvenido a tu panel
           </h1>
-          <p className="mt-1.5 text-xs text-slate-500">
+          <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400">
             Gestiona citas, cobros y clientes con la plataforma líder en Paraguay
           </p>
         </div>
 
         {/* Tarjeta Glassmorphic */}
-        <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-7 shadow-[0_12px_40px_rgb(0,0,0,0.06)] backdrop-blur-xl sm:p-9">
+        <div className="rounded-[28px] glass-modal p-7 shadow-2xl backdrop-blur-3xl sm:p-9 border border-slate-200/80 dark:border-white/10">
           {/* Botón Google OAuth 2.0 Real */}
           {/* OAuth necesita navegación completa del navegador, no client-side. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/auth/google"
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.99]"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-white/[0.04] px-4 py-3.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 shadow-xs transition hover:bg-slate-50 dark:hover:bg-white/10 active:scale-[0.99] backdrop-blur-md"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
@@ -181,9 +182,9 @@ function LoginForm() {
 
           <div className="relative my-6 text-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200/80" />
+              <div className="w-full border-t border-slate-200/80 dark:border-white/10" />
             </div>
-            <span className="relative bg-white px-3 text-[11px] font-medium uppercase tracking-wider text-slate-600">
+            <span className="relative bg-white dark:bg-[#1a171d] px-3 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400">
               o con código OTP
             </span>
           </div>
@@ -199,11 +200,11 @@ function LoginForm() {
                 className="space-y-4"
               >
                 <div>
-                  <label htmlFor="login-email-input" className="block text-xs font-semibold text-slate-700">
+                  <label htmlFor="login-email-input" className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
                     Correo electrónico
                   </label>
                   <div className="relative mt-1.5">
-                    <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
+                    <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-400" />
                     <input
                       id="login-email-input"
                       type="email"
@@ -211,7 +212,7 @@ function LoginForm() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="tu-negocio@gmail.com"
                       required
-                      className="w-full rounded-2xl border border-slate-200/90 bg-white py-3 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition"
+                      className="w-full rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-white/[0.04] py-3 pl-10 pr-4 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition backdrop-blur-md"
                     />
                   </div>
                 </div>
@@ -223,17 +224,17 @@ function LoginForm() {
                     id="optInMarketing"
                     checked={optInMarketing}
                     onChange={(e) => setOptInMarketing(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-brand focus:ring-brand"
+                    className="mt-0.5 h-4 w-4 rounded-md border-slate-300 dark:border-white/20 text-primary focus:ring-primary bg-transparent"
                   />
-                  <label htmlFor="optInMarketing" className="text-[11px] leading-tight text-slate-700 cursor-pointer">
-                    Deseo recibir ofertas exclusivas, actualizaciones del sistema y novedades de <span className="font-semibold text-slate-700">AgendatePY</span>.
+                  <label htmlFor="optInMarketing" className="text-[11px] leading-tight text-slate-600 dark:text-zinc-400 cursor-pointer">
+                    Deseo recibir ofertas exclusivas, actualizaciones del sistema y novedades de <span className="font-semibold text-slate-900 dark:text-white">AgendatePY</span>.
                   </label>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-xs font-bold text-white shadow-md shadow-brand/20 transition hover:bg-brand-dark active:scale-[0.99] disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-xs font-bold text-white shadow-md shadow-primary/20 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
                 >
                   {isPending ? "Enviando código..." : "Enviar código de acceso"}
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -250,20 +251,20 @@ function LoginForm() {
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <label htmlFor="login-otp-code-input" className="block text-xs font-semibold text-slate-700">
+                    <label htmlFor="login-otp-code-input" className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
                       Código de 6 dígitos
                     </label>
                     <button
                       type="button"
                       onClick={() => setStep("EMAIL")}
-                      className="text-[11px] text-brand hover:underline font-medium"
+                      className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
                     >
                       Cambiar correo
                     </button>
                   </div>
 
                   <div className="relative mt-1.5">
-                    <KeyRound className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
+                    <KeyRound className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-400" />
                     <input
                       id="login-otp-code-input"
                       type="text"
@@ -272,16 +273,16 @@ function LoginForm() {
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                       placeholder="123456"
                       required
-                      className="w-full rounded-2xl border border-slate-200/90 bg-white py-3 pl-10 pr-4 text-center text-lg font-bold tracking-[0.35em] text-slate-900 placeholder:text-slate-600 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition"
+                      className="w-full rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-white/[0.04] py-3 pl-10 pr-4 text-center text-lg font-bold tracking-[0.35em] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition backdrop-blur-md"
                     />
                   </div>
-                  <p className="mt-1.5 text-[11px] text-slate-600">
-                    Enviado a <span className="font-semibold text-slate-700">{email}</span>
+                  <p className="mt-1.5 text-[11px] text-slate-500 dark:text-zinc-400">
+                    Enviado a <span className="font-semibold text-slate-900 dark:text-white">{email}</span>
                   </p>
                 </div>
 
                 {devDemoCode && (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5 text-center text-xs font-semibold text-emerald-800">
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5 text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                     Código de acceso rápido (dev): <span className="underline tracking-widest">{devDemoCode}</span>
                   </div>
                 )}
@@ -289,7 +290,7 @@ function LoginForm() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-xs font-bold text-white shadow-md shadow-brand/20 transition hover:bg-brand-dark active:scale-[0.99] disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-xs font-bold text-white shadow-md shadow-primary/20 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
                 >
                   {isPending ? "Verificando..." : "Ingresar a mi negocio"}
                   <ShieldCheck className="h-4 w-4" />
@@ -300,7 +301,7 @@ function LoginForm() {
                     type="button"
                     onClick={handleRequestOtp}
                     disabled={isPending}
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-brand transition"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-zinc-400 hover:text-primary transition cursor-pointer"
                   >
                     <RotateCcw className="h-3 w-3" />
                     Reenviar código
@@ -312,46 +313,46 @@ function LoginForm() {
 
           {/* Alertas */}
           {error && (
-            <p className="mt-4 rounded-xl bg-red-50 p-2.5 text-center text-xs font-medium text-red-700">
+            <p className="mt-4 rounded-xl bg-red-500/10 border border-red-500/20 p-2.5 text-center text-xs font-medium text-red-600 dark:text-red-400">
               {error}
             </p>
           )}
           {message && !error && (
-            <p className="mt-4 rounded-xl bg-indigo-50 p-2.5 text-center text-xs font-medium text-brand">
+            <p className="mt-4 rounded-xl bg-primary/10 border border-primary/20 p-2.5 text-center text-xs font-medium text-primary">
               {message}
             </p>
           )}
 
           {/* Acceso rápido de pruebas solo en entorno de desarrollo */}
           {process.env.NODE_ENV !== "production" && (
-            <div className="mt-8 border-t border-slate-100 pt-5">
-              <p className="text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+            <div className="mt-8 border-t border-slate-200/80 dark:border-white/10 pt-5">
+              <p className="text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-2.5">
                 Acceso Rápido por Rol (Solo Dev)
               </p>
               <div className="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleFastRoleLogin("SUPERADMIN")}
-                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-purple-300 hover:shadow-xs"
+                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-2 text-center transition hover:bg-white dark:hover:bg-white/[0.08] hover:border-purple-400 hover:shadow-xs cursor-pointer"
                 >
-                  <Crown className="h-3.5 w-3.5 text-purple-600 mb-0.5" />
-                  <span className="text-[10px] font-bold text-slate-800">Superadmin</span>
+                  <Crown className="h-3.5 w-3.5 text-purple-500 mb-0.5" />
+                  <span className="text-[10px] font-bold text-slate-800 dark:text-zinc-200">Superadmin</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleFastRoleLogin("OWNER")}
-                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-brand/40 hover:shadow-xs"
+                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-2 text-center transition hover:bg-white dark:hover:bg-white/[0.08] hover:border-primary/40 hover:shadow-xs cursor-pointer"
                 >
-                  <Store className="h-3.5 w-3.5 text-brand mb-0.5" />
-                  <span className="text-[10px] font-bold text-slate-800">Dueño Local</span>
+                  <Store className="h-3.5 w-3.5 text-primary mb-0.5" />
+                  <span className="text-[10px] font-bold text-slate-800 dark:text-zinc-200">Dueño Local</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleFastRoleLogin("STAFF")}
-                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/60 p-2 text-center transition hover:bg-white hover:border-pink-300 hover:shadow-xs"
+                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-2 text-center transition hover:bg-white dark:hover:bg-white/[0.08] hover:border-pink-400 hover:shadow-xs cursor-pointer"
                 >
-                  <UserCheck className="h-3.5 w-3.5 text-pink-600 mb-0.5" />
-                  <span className="text-[10px] font-bold text-slate-800">Colaborador</span>
+                  <UserCheck className="h-3.5 w-3.5 text-pink-500 mb-0.5" />
+                  <span className="text-[10px] font-bold text-slate-800 dark:text-zinc-200">Colaborador</span>
                 </button>
               </div>
             </div>
@@ -359,13 +360,13 @@ function LoginForm() {
         </div>
 
         {/* Footer legal */}
-        <p className="mt-6 text-center text-[11px] text-slate-600">
+        <p className="mt-6 text-center text-[11px] text-slate-500 dark:text-zinc-400">
           Al continuar aceptas nuestros{" "}
-          <Link href="/terminos" className="text-slate-600 underline hover:text-slate-800">
+          <Link href="/terminos" className="underline hover:text-slate-800 dark:hover:text-white">
             Términos y Condiciones
           </Link>{" "}
           y{" "}
-          <Link href="/privacidad" className="text-slate-600 underline hover:text-slate-800">
+          <Link href="/privacidad" className="underline hover:text-slate-800 dark:hover:text-white">
             Política de Privacidad
           </Link>
           .
@@ -377,7 +378,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#fbfbfd]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-transparent" />}>
       <LoginForm />
     </Suspense>
   );

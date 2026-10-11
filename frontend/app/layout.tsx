@@ -20,8 +20,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#ffffff",
-  colorScheme: "light",
+  themeColor: "#131115",
+  colorScheme: "dark",
 };
 
 export const metadata: Metadata = {
@@ -150,16 +150,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${jakarta.variable} ${coolvetica.variable} h-full scroll-smooth`} data-scroll-behavior="smooth">
+    <html lang="es" className={`${jakarta.variable} ${coolvetica.variable} light h-full scroll-smooth`} data-theme="light" data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var saved=localStorage.getItem("agendate_theme_mode")||localStorage.getItem("theme")||"dark";if(saved==="light"){document.documentElement.classList.remove("dark");document.documentElement.classList.add("light");document.documentElement.setAttribute("data-theme","light");}else{document.documentElement.classList.remove("light");document.documentElement.classList.add("dark");document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans antialiased">{children}</body>
+      <body className="min-h-full flex flex-col font-sans antialiased bg-slate-50 text-slate-900 dark:bg-[#131115] dark:text-[#f3f0ed] overflow-x-hidden transition-colors duration-300">{children}</body>
     </html>
   );
 }

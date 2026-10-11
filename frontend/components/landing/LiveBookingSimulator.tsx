@@ -144,7 +144,9 @@ function BookingWidget() {
     : "Sin fecha";
 
   return (
-    <div className="relative rounded-[28px] p-5 sm:p-7 border border-slate-200/90 dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.4)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl overflow-hidden text-left">
+    <div className="relative rounded-[28px] p-5 sm:p-7 glass-card dark:bg-[#171310]/60 overflow-hidden text-left sv-card">
+      <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#FF4F2B]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       
       {/* Cabecera del Widget estilo SaaS */}
       <div className="mb-5 flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/5">

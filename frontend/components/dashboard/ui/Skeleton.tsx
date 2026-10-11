@@ -21,7 +21,7 @@ export function CalendarSkeleton() {
   return (
     <div className="w-full space-y-4 animate-in fade-in-50 duration-150">
       {/* Barra de Controles: Fecha, Vista y Acción */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#121215]/80 backdrop-blur-md">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl glass-panel-subtle">
         <div className="flex items-center gap-2">
           <Skeleton className="h-9 w-9 rounded-xl" />
           <Skeleton className="h-9 w-40 rounded-xl" />
@@ -48,7 +48,7 @@ export function CalendarSkeleton() {
       </div>
 
       {/* Grid del Tablero de Turnos */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-[#121215]/60 overflow-hidden p-4 space-y-3 min-h-[500px]">
+      <div className="rounded-2xl glass-panel overflow-hidden p-4 space-y-3 min-h-[500px]">
         {[
           { time: "08:00", card: true, height: "h-20" },
           { time: "09:00", card: false, height: "" },
@@ -97,7 +97,7 @@ export function CajaSkeleton() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="p-4 sm:p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] space-y-2.5"
+            className="p-4 sm:p-5 rounded-3xl glass-panel space-y-2.5"
           >
             <div className="flex justify-between items-center">
               <Skeleton className="h-3 w-24 rounded-md" />
@@ -119,7 +119,7 @@ export function CajaSkeleton() {
       </div>
 
       {/* Lista de Movimientos */}
-      <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] overflow-hidden divide-y divide-slate-100 dark:divide-white/5">
+      <div className="rounded-3xl glass-panel overflow-hidden divide-y divide-white/5">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="p-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -159,7 +159,7 @@ export function ClientesSkeleton() {
       <Skeleton className="h-11 w-full rounded-2xl" />
 
       {/* Client List Rows */}
-      <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] overflow-hidden divide-y divide-slate-100 dark:divide-white/5">
+      <div className="rounded-3xl glass-panel overflow-hidden divide-y divide-white/5">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="p-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3.5 min-w-0">
@@ -207,7 +207,7 @@ export function ServiciosSkeleton() {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="p-4 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] space-y-3"
+            className="p-4 rounded-3xl glass-panel space-y-3"
           >
             <div className="flex justify-between items-start">
               <div className="space-y-1.5">

@@ -277,7 +277,7 @@ export default function ClientesPage() {
           <button
             type="button"
             onClick={exportCSV}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-zinc-300 px-3 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle hover:bg-white/10 text-slate-700 dark:text-zinc-300 px-3 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
             <span className="hidden sm:inline">Exportar CSV</span>
@@ -285,7 +285,7 @@ export default function ClientesPage() {
 
           <Link
             href="/dashboard/crm"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-zinc-300 px-3 py-2 text-xs font-semibold shadow-xs transition"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle hover:bg-white/10 text-slate-700 dark:text-zinc-300 px-3 py-2 text-xs font-semibold shadow-xs transition"
           >
             <MessagesSquare className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-400" />
             <span className="hidden sm:inline">CRM</span>
@@ -294,7 +294,7 @@ export default function ClientesPage() {
       </div>
 
       {/* ═══ APPLE GLANCEABLE SUMMARY CARD ═══ */}
-      <div className="rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="rounded-3xl glass-panel p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">
@@ -365,7 +365,7 @@ export default function ClientesPage() {
               placeholder="Buscar cliente, teléfono, notas..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] py-2.5 pl-10 pr-9 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs transition"
+              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.04] py-2.5 pl-10 pr-9 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs transition backdrop-blur-md"
             />
             {search && (
               <button
@@ -389,7 +389,7 @@ export default function ClientesPage() {
               className={`p-2 rounded-xl border transition ${
                 viewMode === "list"
                   ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-xs"
-                  : "bg-white dark:bg-[#121215] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5"
+                  : "bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 backdrop-blur-md"
               }`}
               title="Vista Lista iOS"
             >
@@ -404,7 +404,7 @@ export default function ClientesPage() {
               className={`p-2 rounded-xl border transition ${
                 viewMode === "grid"
                   ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-xs"
-                  : "bg-white dark:bg-[#121215] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5"
+                  : "bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 backdrop-blur-md"
               }`}
               title="Vista Tarjetas"
             >
@@ -436,7 +436,7 @@ export default function ClientesPage() {
 
       {/* ═══ VIEW MODE: APPLE INSET GROUPED LIST (DEFAULT) ═══ */}
       {viewMode === "list" && (
-        <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] divide-y divide-slate-100 dark:divide-white/5 shadow-xs overflow-hidden">
+        <div className="rounded-3xl glass-panel divide-y divide-white/5 overflow-hidden">
           {filteredClients.length === 0 ? (
             <div className="py-14 text-center text-slate-400 dark:text-zinc-500 text-xs space-y-2">
               <Users className="h-8 w-8 mx-auto text-slate-300 dark:text-zinc-600" />
@@ -579,7 +579,7 @@ export default function ClientesPage() {
             return (
               <div
                 key={client.id}
-                className="flex flex-col justify-between rounded-3xl p-4 sm:p-5 bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs hover:border-primary/40 transition space-y-3.5"
+                className="flex flex-col justify-between rounded-3xl p-4 sm:p-5 glass-panel hover:border-primary/40 transition space-y-3.5"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
@@ -798,7 +798,7 @@ export default function ClientesPage() {
                 </button>
 
                 {countryDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 z-50 w-72 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181b] shadow-2xl p-2 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute top-full left-0 mt-2 z-50 w-72 rounded-2xl glass-modal shadow-2xl p-2 animate-in fade-in zoom-in-95 duration-150">
                     <div className="relative mb-2">
                       <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
                       <input

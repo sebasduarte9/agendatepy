@@ -88,7 +88,7 @@ export default function WhatsAppToAgendaLive() {
   }, [flipped]);
 
   const faceBase =
-    "col-start-1 row-start-1 md:col-start-auto md:row-start-auto max-md:[backface-visibility:hidden] transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none";
+    "col-start-1 row-start-1 md:col-start-auto md:row-start-auto max-md:[backface-visibility:hidden] max-md:[-webkit-backface-visibility:hidden] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none";
 
   return (
     <motion.div
@@ -106,7 +106,7 @@ export default function WhatsAppToAgendaLive() {
         {/* ============================================================== */}
         <div
           className={`${faceBase} md:col-span-6 lg:col-span-7 ${
-            flipped ? "max-md:[transform:rotateY(180deg)] max-md:pointer-events-none" : ""
+            flipped ? "max-md:[transform:rotateY(180deg)] max-md:opacity-0 max-md:pointer-events-none" : "max-md:opacity-100"
           }`}
         >
         <motion.div
@@ -307,7 +307,7 @@ export default function WhatsAppToAgendaLive() {
         {/* ============================================================== */}
         <div
           className={`${faceBase} md:col-span-6 lg:col-span-5 ${
-            flipped ? "" : "max-md:[transform:rotateY(-180deg)] max-md:pointer-events-none"
+            flipped ? "max-md:opacity-100" : "max-md:[transform:rotateY(-180deg)] max-md:opacity-0 max-md:pointer-events-none"
           }`}
         >
         <motion.div
@@ -315,8 +315,9 @@ export default function WhatsAppToAgendaLive() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-          className="flex flex-col justify-between h-[440px] md:h-[520px] rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] overflow-hidden text-left"
+          className="flex flex-col justify-between h-[440px] md:h-[520px] rounded-[28px] glass-card dark:bg-[#171310]/60 overflow-hidden text-left sv-card relative"
         >
+          <div className="absolute -top-20 -right-20 w-60 h-60 bg-[#FF4F2B]/10 rounded-full blur-3xl pointer-events-none" />
           
           {/* Cabecera del Panel de Agenda */}
           <div className="px-5 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0">

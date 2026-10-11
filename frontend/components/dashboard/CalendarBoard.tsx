@@ -40,6 +40,7 @@ import Modal from "./ui/Modal";
 import Card from "./ui/Card";
 import CustomSelect from "./ui/CustomSelect";
 import IosSegmentedControl from "./ui/IosSegmentedControl";
+import MorphingOrb from "./ui/MorphingOrb";
 import { triggerHaptic } from "@/lib/haptics";
 
 const START_HOUR = 8;
@@ -678,7 +679,7 @@ export default function CalendarBoard() {
             }}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>+ Cita</span>
+            <span>Cita</span>
           </button>
 
           {/* "+ Bloquear Horario" Button */}
@@ -739,7 +740,7 @@ export default function CalendarBoard() {
             style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>+ Cita</span>
+            <span>Cita</span>
           </button>
         </div>
 
@@ -759,15 +760,15 @@ export default function CalendarBoard() {
         </div>
       </div>
 
-      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      {/* ═══ GLASSY TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
+      <div className="hidden md:block rounded-[28px] glass-panel p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card 1: Ocupación & Confirmación */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+          {/* Card 1: Ocupación & Confirmación con MorphingOrb de Interfas Glassy */}
+          <div className="rounded-2xl glass-panel-subtle border border-slate-200/60 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200/50 dark:border-white/10">
               <div className="flex items-center gap-2.5">
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold shadow-xs"
                   style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <CalendarDays className="h-5 w-5" />
@@ -776,112 +777,85 @@ export default function CalendarBoard() {
                   <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
                     Ocupación de Turnos & Citas
                   </h3>
-                  <p className="text-[11px] text-slate-400">Balance operativo del día seleccionado</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Balance operativo del día seleccionado</p>
                 </div>
               </div>
 
-              <span className="text-xs font-mono font-bold text-slate-400">
+              <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
                 {calendarDate}
               </span>
             </div>
 
-            {/* Circular Gauges */}
-            <div className="py-4 grid grid-cols-2 gap-4">
-              {/* Gauge 1: Occupancy */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, occupancyPct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
-                    {occupancyPct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Ocupación Día
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {dayAppointments.length} turnos agendados
-                  </span>
+            {/* Glassy Occupancy Hero: Morphing Orb & Operational Telemetry */}
+            <div className="py-4 flex items-center justify-between gap-4">
+              {/* Left: Morphing Orb from Interfas Glassy */}
+              <div className="flex items-center gap-4">
+                <MorphingOrb
+                  size="sm"
+                  label="OCUPACIÓN"
+                  value={`${occupancyPct}%`}
+                  sublabel={`${attendanceRate}% Asist.`}
+                />
+                <div className="space-y-1.5 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-black text-slate-900 dark:text-white">
+                      {occupancyPct > 0 ? "Jornada en Curso" : "Disponibilidad Total"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {dayAppointments.length} turnos agendados hoy
+                  </p>
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      ✓ {confirmedDayCount} confirmados
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                      ({attendanceRate}%)
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Gauge 2: Attendance / Confirmation Rate */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke="#10b981"
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, attendanceRate))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                    {attendanceRate}%
-                  </span>
+              {/* Right: Glassy Telemetry Capsule with Real-time Progress Bar */}
+              <div className="hidden sm:flex flex-col gap-2 p-3.5 rounded-2xl glass-panel border border-slate-200/60 dark:border-white/10 min-w-[170px]">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Capacidad</span>
+                  <span className="font-mono font-black text-primary">{occupancyPct}%</span>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Confirmados
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {confirmedDayCount} de {dayAppointments.length} listos
-                  </span>
+                <div className="h-2 w-full rounded-full bg-slate-200/80 dark:bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${Math.min(100, Math.max(4, occupancyPct))}%`,
+                      backgroundColor: business.primaryColor || "#FF4F2B",
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                  <span>0%</span>
+                  <span>Meta: 85%</span>
+                  <span>100%</span>
                 </div>
               </div>
             </div>
 
             {/* Operational Telemetry Rows */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Total Turnos</span>
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-200/50 dark:border-white/10 text-xs">
+              <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Total Turnos</span>
                 <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
                   {dayAppointments.length} citas
                 </span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Bloqueos Pausa</span>
+              <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Bloqueos Pausa</span>
                 <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono">
                   {dayBlocks.length} pausas
                 </span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Especialistas</span>
+              <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Especialistas</span>
                 <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
                   {staff.length} activos
                 </span>
@@ -890,21 +864,21 @@ export default function CalendarBoard() {
           </div>
 
           {/* Card 2: Filtros de Especialistas & Vistas */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+          <div className="rounded-2xl glass-panel-subtle border border-slate-200/60 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200/50 dark:border-white/10">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold shadow-xs">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
                     Filtro por Especialista
                   </h3>
-                  <p className="text-[11px] text-slate-400">Seleccioná un profesional o vista general</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Seleccioná un profesional o vista general</p>
                 </div>
               </div>
 
-              <span className="text-xs font-bold text-slate-500">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 {selectedStaffId === "all" ? "Todo el Salón" : staff.find((s) => s.id === selectedStaffId)?.name}
               </span>
             </div>
@@ -919,7 +893,7 @@ export default function CalendarBoard() {
                   className={`rounded-xl px-3 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
                     selectedStaffId === "all"
                       ? "shadow-xs"
-                      : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
                   Todos ({staff.length})
@@ -935,7 +909,7 @@ export default function CalendarBoard() {
                       className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs transition shrink-0 cursor-pointer ${
                         isSelected
                           ? "shadow-xs font-bold"
-                          : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
                       <span
@@ -952,7 +926,7 @@ export default function CalendarBoard() {
             </div>
 
             {/* Quick Tips */}
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
               <span>Hacé clic en cualquier celda libre para crear un turno rápido.</span>
               <span className="font-bold text-primary font-mono">{business.timezone}</span>
             </div>
@@ -1358,12 +1332,11 @@ export default function CalendarBoard() {
       <Modal
         id="quickBookingModal"
         maxWidth="max-w-lg"
-        minHeight="min-h-[580px] sm:min-h-[600px]"
         open={newModalOpen}
         title={newModalMode === "appointment" ? "Agendar Turno" : "Bloquear Horario"}
         onClose={() => setNewModalOpen(false)}
       >
-        <div className="space-y-4 text-xs min-h-[500px] sm:min-h-[520px] flex flex-col justify-between">
+        <div className="space-y-4 text-xs flex flex-col justify-between">
           {/* Segmented Switch: Agendar Cita vs Bloquear Horario */}
           <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
             <button
@@ -1393,7 +1366,7 @@ export default function CalendarBoard() {
           </div>
 
           {newModalMode === "appointment" ? (
-            <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+            <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between gap-4">
               <div className="space-y-3.5">
                 {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -1805,7 +1778,7 @@ export default function CalendarBoard() {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between min-h-[480px] sm:min-h-[500px]">
+            <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between gap-4">
               <div className="space-y-3.5">
                 <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
                   <Ban className="h-4 w-4 shrink-0 text-amber-600" />

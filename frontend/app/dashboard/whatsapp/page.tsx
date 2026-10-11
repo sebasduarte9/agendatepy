@@ -1966,7 +1966,7 @@ export default function BotWhatsAppPage() {
                   <span>Despacho Directo por tu WhatsApp</span>
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Los mensajes salen de tu número conectado mediante Evolution API, por lo que el cliente puede responder directamente para confirmar o consultar.
+                  Los mensajes salen de tu número oficial conectado a WhatsApp, por lo que el cliente puede responder directamente para confirmar o consultar.
                 </p>
               </div>
             </div>

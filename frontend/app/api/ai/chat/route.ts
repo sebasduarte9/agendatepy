@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         status: "success",
         replyText: platformResult.replyText,
         intent: "plataforma",
-        actionPerformed: platformResult.isRegisteredUser ? "USER_DETECTED" : null,
+        actionPerformed: platformResult.userProfile.isRegistered ? "USER_DETECTED" : null,
       });
     }
 

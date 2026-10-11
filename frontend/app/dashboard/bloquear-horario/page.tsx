@@ -243,7 +243,7 @@ export default function BloquearHorarioPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/dashboard/calendario"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs hover:bg-slate-50 dark:hover:bg-white/5 transition"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs hover:bg-white/10 transition"
           >
             <Calendar className="h-3.5 w-3.5 text-slate-400" />
             <span className="hidden sm:inline">Ver Agenda</span>
@@ -272,7 +272,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE HERO CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+      <div className="block md:hidden p-4 rounded-3xl glass-panel space-y-3">
         {/* Top bar with status and live badge */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -338,7 +338,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ DESKTOP APPLE INSET CONTAINER: TELEMETRY & PRESET DOCK ═══ */}
-      <div className="hidden md:block rounded-3xl bg-slate-100/90 dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="hidden md:block rounded-3xl glass-panel p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Card 1: Telemetry Gauges & Counter Cards */}
           <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-white/10 shadow-xs flex flex-col justify-between">
@@ -507,7 +507,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ FILTER DOCK & SEARCH ═══ */}
-      <div className="flex flex-col gap-3 bg-white dark:bg-[#121215] p-3.5 sm:p-4 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+      <div className="flex flex-col gap-3 glass-panel p-3.5 sm:p-4 rounded-3xl shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Timeframe Filter with IosSegmentedControl */}
           <div className="w-full sm:w-auto">
@@ -568,7 +568,7 @@ export default function BloquearHorarioPage() {
       {/* ═══ MOBILE APPLE INSET GROUPED LIST ═══ */}
       <div className="md:hidden">
         {filteredBlocks.length === 0 ? (
-          <div className="p-8 text-center rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+          <div className="p-8 text-center rounded-3xl glass-panel space-y-3">
             <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
               <CalendarOff className="h-6 w-6" />
             </div>
@@ -589,7 +589,7 @@ export default function BloquearHorarioPage() {
             </button>
           </div>
         ) : (
-          <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] divide-y divide-slate-100 dark:divide-white/5 shadow-xs overflow-hidden">
+          <div className="rounded-3xl glass-panel divide-y divide-white/5 overflow-hidden">
             {filteredBlocks.map((block) => {
               const isAllStaff = !block.staffId || block.staffId === "all";
               const st = !isAllStaff && block.staffId ? staffMap.get(block.staffId) : null;
@@ -673,7 +673,7 @@ export default function BloquearHorarioPage() {
       {/* ═══ DESKTOP GRID VIEW ═══ */}
       <div className="hidden md:block space-y-3">
         {filteredBlocks.length === 0 ? (
-          <div className="p-12 text-center rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+          <div className="p-12 text-center rounded-3xl glass-panel space-y-3">
             <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
               <CalendarOff className="h-6 w-6" />
             </div>
@@ -703,7 +703,7 @@ export default function BloquearHorarioPage() {
               return (
                 <div
                   key={block.id}
-                  className="p-4 rounded-3xl bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-white/10 hover:border-primary/40 transition shadow-xs flex flex-col justify-between"
+                  className="p-4 rounded-3xl glass-panel hover:border-primary/40 transition flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     {/* Top: Date & Today badge */}
@@ -782,7 +782,6 @@ export default function BloquearHorarioPage() {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         maxWidth="max-w-lg"
-        minHeight="min-h-[520px]"
         title="Crear Bloqueo de Horario"
       >
         <form onSubmit={handleCreateBlock} className="space-y-4 text-xs">

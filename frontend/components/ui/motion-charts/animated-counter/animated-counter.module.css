@@ -1,0 +1,81 @@
+.counter {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: baseline;
+}
+
+.label {
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(100 116 139);
+  margin-bottom: 0.25rem;
+}
+
+:global(.dark) .label {
+  color: rgb(148 163 184);
+}
+
+.labelSwap {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.labelText {
+  display: inline-block;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.value {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: rgb(15 23 42);
+  line-height: 1;
+}
+
+:global(.dark) .value {
+  color: #ffffff;
+}
+
+.symbol {
+  display: inline-block;
+  opacity: 0.85;
+}
+
+.column {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  height: 1em;
+  vertical-align: baseline;
+}
+
+.sizer {
+  visibility: hidden;
+  user-select: none;
+  opacity: 0;
+  display: block;
+}
+
+.glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, opacity, filter;
+}

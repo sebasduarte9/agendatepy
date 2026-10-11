@@ -251,10 +251,9 @@ export default function MobileTabBar() {
 
   return (
     <>
-      {/* ═══ APPLE FLOATING SQUIRCLE DOCK (ISLA FLOTANTE CUADRADA CON ESQUINAS REDONDEADAS) ═══ */}
       <nav
         aria-label="Navegación principal móvil"
-        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[22px] bg-white/85 dark:bg-[#09090b]/92 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/12 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none"
+        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[24px] bg-[rgba(27,25,30,0.85)] text-slate-800 dark:text-white border border-white/15 shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none"
       >
         <div className="flex items-center justify-between h-13 relative">
           {primaryTabs.map((tab) => {
@@ -367,82 +366,87 @@ export default function MobileTabBar() {
         </div>
       </nav>
 
-      {/* ═══ APPLE IOS BOTTOM ACTION SHEET ("MÁS") ═══ */}
+      {/* ═══ BOTTOM SHEET GLASSY ("MÁS / PANEL DE CONTROL") ═══ */}
       <AnimatePresence>
         {isMoreSheetOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
+          <div className="fixed inset-0 z-50 lg:hidden flex items-end justify-center">
             {/* Backdrop Blur Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMoreSheetOpen(false)}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-md"
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-md"
             />
 
-            {/* Sheet Container with Apple Spring Physics & Drag-to-Dismiss */}
+            {/* Bottom Sheet de Cristal */}
             <motion.div
-              key="more-action-sheet"
+              key="more-sheet"
+              initial={{ y: "100%", opacity: 0.8 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0.8 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
               drag="y"
               dragControls={dragControls}
               dragListener={false}
               dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0.05, bottom: 0.7 }}
-              onDragEnd={(_, info) => {
-                if (info.offset.y > 80 || info.velocity.y > 350) {
+              dragElastic={0.2}
+              onDragEnd={(_e, info) => {
+                if (info.offset.y > 100 || info.velocity.y > 500) {
                   triggerHaptic("light");
                   setIsMoreSheetOpen(false);
                 }
               }}
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="relative z-10 w-full max-h-[88dvh] rounded-t-[32px] bg-[#f8fafc] dark:bg-[#121215] text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))]"
+              className="relative z-10 w-full max-h-[90dvh] rounded-t-[32px] glass-modal text-slate-900 dark:text-white border-t border-x border-slate-200/80 dark:border-white/15 shadow-[0_-12px_45px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden pb-4"
             >
-              {/* Drag Handle & Header Area */}
-              <div
-                onPointerDown={(e) => {
-                  if ((e.target as HTMLElement)?.closest("button, a, input, select, textarea")) return;
-                  dragControls.start(e);
-                }}
-                style={{ touchAction: "none" }}
-                className="shrink-0 select-none cursor-grab active:cursor-grabbing group pt-3.5 pb-3 border-b border-slate-200/80 dark:border-white/10"
+              {/* Drag Handle */}
+              <div 
+                className="w-full flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => dragControls.start(e)}
               >
-                {/* iOS Top Drag Indicator Pill */}
-                <div className="pb-2.5 flex flex-col items-center">
-                  <span className="h-1.5 w-12 group-hover:w-16 group-active:w-20 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-slate-400 dark:group-hover:bg-slate-600 transition-all duration-200 mx-auto" />
-                </div>
+                <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-white/20" />
+              </div>
 
-                {/* Sheet Header Row */}
-                <div className="flex items-center justify-between px-5">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-xs"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {(business.name || "A").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight truncate">
-                        {business.name}
-                      </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                        Panel de control & herramientas
-                      </p>
-                    </div>
-                  </div>
-
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    type="button"
-                    onClick={() => setIsMoreSheetOpen(false)}
-                    className="p-2 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition cursor-pointer shrink-0"
-                    aria-label="Cerrar menú"
+              {/* Window Header */}
+              <div className="shrink-0 select-none pb-3 px-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl relative overflow-hidden border border-white/40 dark:border-white/20 shadow-xs"
+                    style={{
+                      background: `linear-gradient(145deg, ${brandColor}, color-mix(in srgb, ${brandColor} 75%, #000))`,
+                    }}
                   >
-                    <X className="h-4 w-4" />
-                  </motion.button>
+                    <svg
+                      viewBox="0 0 1200 1000"
+                      className="h-4 w-4 relative z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+                      fill="#FFFFFF"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M305.11 882.3c-42.76 0-79.63-23.6-97.32-58.99-16.22-30.96-14.75-64.88-1.48-97.32l224.14-529.36c20.64-48.66 66.35-79.63 119.44-79.63h100.27c53.08 0 98.79 30.97 119.44 79.63l224.13 529.36c13.27 32.44 14.74 66.36-1.48 97.32-17.69 35.39-54.55 58.99-97.32 58.99-48.66 0-88.47-29.5-106.17-72.26l-64.88-160.72h-247.72l-64.88 160.72c-17.7 42.76-57.51 72.26-106.17 72.26z M 448.62 466.32 L 523.56 466.32 L 600.02 301.32 L 676.48 466.32 L 749.43 466.32 A 91.5 91.5 0 0 1 749.43 649.32 L 448.62 649.32 A 91.5 91.5 0 0 1 448.62 466.32 Z M 448.62 484.32 L 749.43 484.32 A 73.575 73.575 0 0 1 749.43 631.47 L 448.62 631.47 A 73.575 73.575 0 0 1 448.62 484.32 Z M753.27 616.14c-32.01 0-57.88-25.87-57.88-57.88 0-32 25.87-57.88 57.88-57.88 32.01 0 57.88 25.88 57.88 57.88 0 32.01-25.87 57.88-57.88 57.88z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight truncate">
+                      {business.name || "Agendatepy"}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      Panel de control & herramientas
+                    </p>
+                  </div>
                 </div>
+
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  type="button"
+                  onClick={() => setIsMoreSheetOpen(false)}
+                  className="p-2 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition cursor-pointer shrink-0"
+                  aria-label="Cerrar ventana"
+                >
+                  <X className="h-4 w-4" />
+                </motion.button>
               </div>
 
               {/* Sheet Scrollable Grouped Content */}

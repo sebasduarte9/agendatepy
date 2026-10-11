@@ -91,71 +91,76 @@ export default function Modal({
       {open && (
         <motion.div
           id={id}
-          className={`fixed inset-0 z-[80] flex bg-black/60 dark:bg-black/75 backdrop-blur-md overflow-hidden ${isSide ? "items-stretch justify-end p-0" : "items-end sm:items-center justify-center p-0 sm:p-4"}`}
+          className={`fixed inset-0 z-[100] flex bg-slate-950/70 backdrop-blur-md ${
+            isMobile
+              ? "items-end justify-center p-0"
+              : isSide
+              ? "items-stretch justify-end p-0 overflow-hidden"
+              : "items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.14 }}
+          transition={{ duration: 0.18 }}
           onClick={onClose}
         >
           <motion.div
             key="modal-card"
-            drag={isMobile ? "y" : false}
-            dragControls={dragControls}
-            dragListener={false}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0.05, bottom: 0.7 }}
-            onDragEnd={(_, info) => {
-              if (isMobile && (info.offset.y > 80 || info.velocity.y > 350)) {
-                triggerHaptic("light");
-                onClose();
-              }
-            }}
             initial={
-              isSide
+              isMobile
+                ? { y: "100%", opacity: 0.9 }
+                : isSide
                 ? { x: "100%", opacity: 1 }
-                : isMobile
-                ? { y: "100%", opacity: 1 }
-                : { y: 24, opacity: 0, scale: 0.98 }
+                : { opacity: 0, scale: 0.94 }
             }
             animate={
-              isSide
-                ? { x: 0, opacity: 1 }
-                : isMobile
+              isMobile
                 ? { y: 0, opacity: 1 }
-                : { y: 0, opacity: 1, scale: 1 }
+                : isSide
+                ? { x: 0, opacity: 1 }
+                : { opacity: 1, scale: 1 }
             }
             exit={
-              isSide
+              isMobile
+                ? { y: "100%", opacity: 0.9 }
+                : isSide
                 ? { x: "100%", opacity: 1 }
-                : isMobile
-                ? { y: "100%", opacity: 1 }
-                : { y: 16, opacity: 0, scale: 0.98 }
+                : { opacity: 0, scale: 0.94 }
             }
             transition={
-              isMobile || isSide
+              isMobile
+                ? { type: "spring", stiffness: 400, damping: 30 }
+                : isSide
                 ? { type: "spring", stiffness: 360, damping: 34 }
                 : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
             }
             onClick={(event) => event.stopPropagation()}
-            className={`${isSide ? "h-full max-h-full max-w-2xl rounded-l-3xl" : `max-h-[92dvh] sm:max-h-[88dvh] ${maxWidth} ${minHeight} rounded-t-[32px] sm:rounded-3xl`} w-full ${className} flex flex-col border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#121215] text-slate-900 dark:text-white shadow-2xl overflow-hidden`}
+            className={`${
+              isMobile
+                ? "w-full max-h-[90dvh] rounded-t-[32px] pb-4"
+                : isSide
+                ? "h-full max-h-full max-w-2xl rounded-l-[32px] w-full"
+                : `max-h-[min(90vh,760px)] ${maxWidth} rounded-[28px] my-auto w-full`
+            } ${className} flex flex-col glass-modal text-slate-900 dark:text-white shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden relative`}
           >
-            {/* Drag Handle & Header Area */}
-            <div
-              onPointerDown={(e) => {
-                if (!isMobile) return;
-                if ((e.target as HTMLElement)?.closest("button, a, input, select, textarea")) return;
-                dragControls.start(e);
-              }}
-              style={{ touchAction: isMobile ? "none" : "auto" }}
-              className="shrink-0 select-none cursor-grab active:cursor-grabbing sm:cursor-default px-5 sm:px-6 pt-3.5 sm:pt-6 pb-3 border-b border-slate-100 dark:border-white/10 group"
-            >
-              {/* iOS Native Drag Handle Pill for Mobile */}
-              <div className="sm:hidden -mt-1 mb-2.5 flex justify-center py-0.5">
-                <span className="h-1.5 w-12 group-hover:w-16 group-active:w-20 rounded-full bg-slate-300 dark:bg-zinc-700 group-hover:bg-slate-400 dark:group-hover:bg-zinc-600 transition-all duration-200 mx-auto" />
+            {isMobile && (
+              <div 
+                className="w-full flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-white/20" />
               </div>
+            )}
 
-              {/* Modal Header */}
+            {/* Modal Header */}
+            <div 
+              className={`shrink-0 select-none px-5 sm:px-6 ${isMobile ? 'pt-1' : 'pt-5'} pb-3 border-b border-slate-200/80 dark:border-white/10`}
+              onTouchStart={isMobile ? handleTouchStart : undefined}
+              onTouchMove={isMobile ? handleTouchMove : undefined}
+              onTouchEnd={isMobile ? handleTouchEnd : undefined}
+            >
               <div className="flex items-center justify-between">
                 <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
                   {title}
@@ -164,7 +169,7 @@ export default function Modal({
                   type="button"
                   onClick={onClose}
                   aria-label="Cerrar"
-                  className="h-7 w-7 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white transition active:scale-90 cursor-pointer shrink-0"
+                  className="h-8 w-8 rounded-full bg-slate-200/60 dark:bg-white/10 hover:bg-slate-300/60 dark:hover:bg-white/20 flex items-center justify-center text-slate-600 dark:text-slate-300 transition active:scale-90 cursor-pointer shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -177,7 +182,7 @@ export default function Modal({
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className="overflow-y-auto overscroll-contain flex-1 min-h-0 px-5 sm:px-6 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))] sm:pb-6"
+              className="overflow-y-auto overscroll-contain flex-1 min-h-0 px-5 sm:px-6 py-4 pb-6"
             >
               {children}
             </div>

@@ -440,7 +440,7 @@ export default function ProductosPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div data-tour="productos-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
+      <div data-tour="productos-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl glass-panel shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -467,11 +467,11 @@ export default function ProductosPage() {
       </div>
 
       {/* Apple Inset Telemetry & Intelligence Container (Desktop) */}
-      <div data-tour="productos-kpis" className="kpi-rise hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="productos-kpis" className="kpi-rise hidden md:block rounded-[28px] glass-panel p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Card 1: Stock Health & Financial Overview */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
+          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
               <div className="flex items-center gap-2.5">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
@@ -498,7 +498,7 @@ export default function ProductosPage() {
             {/* Circular SVG Gauges */}
             <div className="py-4 grid grid-cols-2 gap-4">
               {/* Gauge 1: Stock Health */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+              <div className="flex items-center gap-3 p-3 rounded-xl glass-panel-subtle border border-white/10">
                 <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
                   <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
                     <circle
@@ -537,7 +537,7 @@ export default function ProductosPage() {
               </div>
 
               {/* Gauge 2: Average Margin */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
+              <div className="flex items-center gap-3 p-3 rounded-xl glass-panel-subtle border border-white/10">
                 <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
                   <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
                     <circle
@@ -577,20 +577,20 @@ export default function ProductosPage() {
             </div>
 
             {/* Financial Telemetry Rows */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-white/10 text-xs">
+              <div className="p-2 rounded-xl glass-panel-subtle border border-white/10">
                 <span className="text-[10px] font-medium text-slate-400 block">Total Unidades</span>
                 <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
                   {totalStock} u.
                 </span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+              <div className="p-2 rounded-xl glass-panel-subtle border border-white/10">
                 <span className="text-[10px] font-medium text-slate-400 block">Valor Venta (PVP)</span>
                 <span className="text-xs font-black text-slate-900 dark:text-white font-mono truncate block">
                   {formatGs(totalRetailValue)}
                 </span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
+              <div className="p-2 rounded-xl glass-panel-subtle border border-white/10">
                 <span className="text-[10px] font-medium text-slate-400 block">Margen Bruto Est.</span>
                 <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono truncate block">
                   {formatGs(estimatedProfit)}
@@ -600,7 +600,7 @@ export default function ProductosPage() {
           </div>
 
           {/* Card 2: Restock Alerts & Category Distribution */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
+          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
               <div className="flex items-center gap-2.5">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold ${
@@ -703,7 +703,7 @@ export default function ProductosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por producto, categoría o descripción..."
-            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs outline-none focus:border-primary"
+            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.04] pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 shadow-xs outline-none focus:border-primary backdrop-blur-md"
           />
         </div>
 
@@ -718,7 +718,7 @@ export default function ProductosPage() {
             className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
               selectedCategory === "Todas"
                 ? "shadow-xs font-bold"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                : "bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 backdrop-blur-md"
             }`}
           >
             Todas
@@ -755,7 +755,7 @@ export default function ProductosPage() {
                   className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                     isSelected
                       ? "shadow-xs font-bold"
-                      : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      : "bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 backdrop-blur-md"
                   }`}
                 >
                   <span>{cat}</span>
@@ -844,7 +844,7 @@ export default function ProductosPage() {
         <>
           {/* Mobile Apple Inset Grouped Inventory List */}
           <div data-tour="productos-grid" className="block sm:hidden space-y-3">
-            <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
+            <div className="rounded-3xl glass-panel divide-y divide-white/5 overflow-hidden shadow-xs">
               {filteredProducts.map((p, index) => {
                 const isLowStock = p.stock <= 5;
                 const marginPercent = Math.round(((p.price - p.cost) / p.price) * 100);
@@ -1010,11 +1010,11 @@ export default function ProductosPage() {
             const isBroken = brokenImages[p.id] || !p.imageUrl;
 
             return (
-              <Card key={p.id} className="flex flex-col justify-between overflow-hidden p-0 border border-slate-200/90 dark:border-white/10 shadow-xs hover:border-primary/40 transition">
+              <Card key={p.id} className="flex flex-col justify-between overflow-hidden p-0 border border-white/10 glass-panel shadow-xs hover:border-primary/40 transition">
                 {/* Image and badges */}
-                <div className="relative h-48 w-full bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200/80 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900/90 overflow-hidden flex items-center justify-center p-3">
+                <div className="relative h-48 w-full bg-gradient-to-b from-white/[0.03] to-black/30 overflow-hidden flex items-center justify-center p-3">
                   {/* Subtle soft studio lighting behind cutout products */}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/70 via-transparent to-transparent dark:from-white/5 pointer-events-none" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none" />
 
                   {isBroken ? (
                     <ProductImageFallback category={p.category} name={p.name} />

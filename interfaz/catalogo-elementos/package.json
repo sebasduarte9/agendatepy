@@ -1,0 +1,12 @@
+{
+  "name": "agendatepy-glassy-catalogo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Catálogo Glassy y prototipo funcional local de Agendatepy",
+  "scripts": {
+    "start": "node servidor.cjs",
+    "test": "node pruebas/verificar.cjs"
+  },
+  "devDependencies": {"jsdom": "30.1.2"},
+  "engines": {"node": ">=22"}
+}

@@ -26,6 +26,7 @@ import Marquee from "@/components/ui/Marquee";
 import LiquidGlass from "@/components/ui/LiquidGlass";
 import LiveBookingSimulator from "./LiveBookingSimulator";
 import { OFFICIAL_LOGO_PATH } from "@/components/ui/BrandLogo";
+import MagneticButton from "@/components/ui/MagneticButton";
 
 const TICKER_ICON_MAP: Record<TickerItem["iconKey"], typeof Scissors> = {
   scissors: Scissors,
@@ -213,37 +214,41 @@ export default function Hero() {
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.25 }}
+              transition={{ duration: 0.5, delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
               className="mt-6 sm:mt-7 flex flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-2xl mx-auto"
             >
-              <Link
-                href="/onboarding"
-                className="w-auto block group active:scale-98 transition-transform shrink-0"
-              >
-                <LiquidGlass
-                  cornerRadius={999}
-                  padding="15px 36px"
-                  overLight={false}
-                  showGlare={false}
-                  useDisplacement={false}
-                  className="bg-[#FF4F2B] hover:bg-[#F04420] text-white shadow-xl shadow-[#FF4F2B]/25 transition-all border border-white/20 flex items-center justify-center"
+              <MagneticButton>
+                <Link
+                  href="/onboarding"
+                  className="w-auto block group active:scale-98 transition-transform shrink-0"
                 >
-                  <div className="inline-flex items-center justify-center gap-2.5 text-base sm:text-lg font-bold text-white whitespace-nowrap">
-                    <span>Registrate gratis ahora</span>
-                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </LiquidGlass>
-              </Link>
+                  <LiquidGlass
+                    cornerRadius={999}
+                    padding="15px 36px"
+                    overLight={false}
+                    showGlare={false}
+                    useDisplacement={false}
+                    className="bg-[#FF4F2B] hover:bg-[#F04420] text-white shadow-xl shadow-[#FF4F2B]/25 transition-all border border-white/20 flex items-center justify-center"
+                  >
+                    <div className="inline-flex items-center justify-center gap-2.5 text-base sm:text-lg font-bold text-white whitespace-nowrap">
+                      <span>Registrate gratis ahora</span>
+                      <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </LiquidGlass>
+                </Link>
+              </MagneticButton>
 
-              <a
-                href={getCommercialWhatsAppUrl(whatsappMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-auto inline-flex items-center justify-center gap-2.5 px-8 py-[15px] text-base sm:text-lg font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-full shadow-xl shadow-[#25D366]/25 border border-white/20 transition-all active:scale-98 whitespace-nowrap shrink-0 group"
-              >
-                <MessageCircle className="h-5 w-5 fill-white stroke-none shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="whitespace-nowrap font-bold">Consultar por WhatsApp</span>
-              </a>
+              <MagneticButton>
+                <a
+                  href={getCommercialWhatsAppUrl(whatsappMessage)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-auto inline-flex items-center justify-center gap-2.5 px-8 py-[15px] text-base sm:text-lg font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-full shadow-xl shadow-[#25D366]/25 border border-white/20 transition-all active:scale-98 whitespace-nowrap shrink-0 group"
+                >
+                  <MessageCircle className="h-5 w-5 fill-white stroke-none shrink-0 group-hover:scale-110 transition-transform" />
+                  <span className="whitespace-nowrap font-bold">Consultar por WhatsApp</span>
+                </a>
+              </MagneticButton>
             </motion.div>
 
             {/* Micro-copy de confianza */}
