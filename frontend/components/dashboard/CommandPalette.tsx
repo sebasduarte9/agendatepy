@@ -74,6 +74,43 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
     []
   );
 
+  const defaultRecommendations = useMemo(
+    () => [
+      navRoutes[2], // Nueva Cita / Reserva Rápida
+      navRoutes[1], // Agenda & Calendario de Citas
+      navRoutes[3], // Clientes & Directorio CRM
+    ],
+    [navRoutes]
+  );
+
+  const [recentSearchHrefs, setRecentSearchHrefs] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("agendate_recent_searches");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setRecentSearchHrefs(parsed);
+          }
+        }
+      } catch {}
+    }
+  }, [open]);
+
+  const mobileRecommendedRoutes = useMemo(() => {
+    if (recentSearchHrefs.length > 0) {
+      const recents = recentSearchHrefs
+        .map((href) => navRoutes.find((r) => r.href === href))
+        .filter(Boolean) as typeof navRoutes;
+      if (recents.length > 0) {
+        return recents.slice(0, 3);
+      }
+    }
+    return defaultRecommendations;
+  }, [recentSearchHrefs, navRoutes, defaultRecommendations]);
+
   const filteredRoutes = useMemo(() => {
     if (!query.trim()) return navRoutes;
     const q = query.toLowerCase().trim();
@@ -100,6 +137,13 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
   function handleSelect(href: string) {
     triggerHaptic("selection");
+    if (typeof window !== "undefined") {
+      try {
+        const updated = [href, ...recentSearchHrefs.filter((h) => h !== href)].slice(0, 3);
+        setRecentSearchHrefs(updated);
+        localStorage.setItem("agendate_recent_searches", JSON.stringify(updated));
+      } catch {}
+    }
     onClose();
     router.push(href);
   }
@@ -145,35 +189,99 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
         {/* Lista de Resultados con Scroll Suave */}
         <div className="max-h-[60vh] overflow-y-auto p-2 space-y-4">
           {/* Secciones del Sistema */}
-          {filteredRoutes.length > 0 && (
-            <div>
-              <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
-                Secciones
-              </p>
-              <div className="space-y-0.5 mt-1">
-                {filteredRoutes.map((r) => {
-                  const Icon = r.icon;
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => handleSelect(r.href)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-white/10 transition group cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 flex items-center justify-center shrink-0 text-slate-500 dark:text-zinc-400 group-hover:text-[var(--primary)] group-hover:border-[var(--primary)]/40 transition">
-                          <Icon className="h-4 w-4" />
+          {!query.trim() ? (
+            <>
+              {/* En Mobile (< sm): Solo 3 recomendaciones o búsquedas recientes */}
+              <div className="sm:hidden">
+                <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+                  {recentSearchHrefs.length > 0 ? "Búsquedas recientes" : "Recomendaciones"}
+                </p>
+                <div className="space-y-0.5 mt-1">
+                  {mobileRecommendedRoutes.map((r) => {
+                    const Icon = r.icon;
+                    return (
+                      <button
+                        key={`mob-${r.id}`}
+                        type="button"
+                        onClick={() => handleSelect(r.href)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-white/10 transition group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 flex items-center justify-center shrink-0 text-slate-500 dark:text-zinc-400 group-hover:text-[var(--primary)] group-hover:border-[var(--primary)]/40 transition">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium truncate">{r.title}</span>
                         </div>
-                        <span className="font-medium truncate">{r.title}</span>
-                      </div>
-                      <span className="text-[11px] text-slate-400 dark:text-zinc-400 font-mono shrink-0">
-                        {r.category}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 font-mono shrink-0">
+                          {r.category}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+
+              {/* En Desktop (>= sm): Todas las secciones normales */}
+              <div className="hidden sm:block">
+                <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+                  Secciones
+                </p>
+                <div className="space-y-0.5 mt-1">
+                  {filteredRoutes.map((r) => {
+                    const Icon = r.icon;
+                    return (
+                      <button
+                        key={`desk-${r.id}`}
+                        type="button"
+                        onClick={() => handleSelect(r.href)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-white/10 transition group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 flex items-center justify-center shrink-0 text-slate-500 dark:text-zinc-400 group-hover:text-[var(--primary)] group-hover:border-[var(--primary)]/40 transition">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium truncate">{r.title}</span>
+                        </div>
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 font-mono shrink-0">
+                          {r.category}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          ) : (
+            filteredRoutes.length > 0 && (
+              <div>
+                <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+                  Secciones
+                </p>
+                <div className="space-y-0.5 mt-1">
+                  {filteredRoutes.map((r) => {
+                    const Icon = r.icon;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => handleSelect(r.href)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-white/10 transition group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 flex items-center justify-center shrink-0 text-slate-500 dark:text-zinc-400 group-hover:text-[var(--primary)] group-hover:border-[var(--primary)]/40 transition">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium truncate">{r.title}</span>
+                        </div>
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 font-mono shrink-0">
+                          {r.category}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )
           )}
 
           {/* Clientes Encontrados */}
@@ -245,8 +353,8 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
           )}
         </div>
 
-        {/* Pie de Atajos */}
-        <div className="px-4 py-2.5 bg-slate-50 dark:bg-black/30 border-t border-slate-200/80 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400 dark:text-zinc-400">
+        {/* Pie de Atajos (Oculto en Mobile, visible en Desktop) */}
+        <div className="hidden sm:flex px-4 py-2.5 bg-slate-50 dark:bg-black/30 border-t border-slate-200/80 dark:border-white/5 items-center justify-between text-[11px] text-slate-400 dark:text-zinc-400">
           <span>Presiona <kbd className="font-mono font-bold">↵</kbd> para navegar</span>
           <span className="font-mono text-[10px] uppercase">Agendatepy Glassy 2.0</span>
         </div>

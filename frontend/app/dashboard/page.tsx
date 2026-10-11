@@ -40,6 +40,7 @@ import {
   Bot,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
+import { es } from "date-fns/locale";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import GlassTiltCard from "@/components/dashboard/ui/GlassTiltCard";
@@ -77,6 +78,7 @@ export default function DashboardHomePage() {
   const [quickBookingOpen, setQuickBookingOpen] = useState(false);
   const [selectedClientForFicha, setSelectedClientForFicha] = useState<Client | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [selectedSnapshotDay, setSelectedSnapshotDay] = useState<number | null>(null);
 
   // Today's civil date in Asunción
   const todayStr = useMemo(() => {
@@ -93,7 +95,8 @@ export default function DashboardHomePage() {
       const formatted = formatInTimeZone(
         new Date(),
         business.timezone || "America/Asuncion",
-        "EEEE d 'de' MMMM"
+        "EEEE d 'de' MMMM",
+        { locale: es }
       );
       return formatted.charAt(0).toUpperCase() + formatted.slice(1);
     } catch {
@@ -457,142 +460,123 @@ export default function DashboardHomePage() {
             className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
             style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
           >
-            + Cita Rápida
+            Cita Rápida
           </button>
         </div>
 
-        {/* 7-Day Mobile Mini Sparkline Bar Chart */}
+        {/* 7-Day Mobile Mini Sparkline Bar Chart (Interactivo con selección por día) */}
         <div className="glass-panel-subtle p-3 rounded-2xl space-y-2">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-bold text-slate-600 dark:text-slate-400">Semana Activa</span>
-            <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
-              <AnimatedValue value={formatGs(weeklySnapshot.reduce((sum, d) => sum + d.amount, 0))} />
+            <span className="font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+              {selectedSnapshotDay !== null ? (
+                <>
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
+                  />
+                  <span>{weeklySnapshot[selectedSnapshotDay].day}</span>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    {weeklySnapshot[selectedSnapshotDay].isToday ? "(Hoy)" : ""}
+                  </span>
+                </>
+              ) : (
+                "Semana Activa"
+              )}
             </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                <AnimatedValue
+                  value={formatGs(
+                    selectedSnapshotDay !== null
+                      ? weeklySnapshot[selectedSnapshotDay].amount
+                      : weeklySnapshot.reduce((sum, d) => sum + d.amount, 0)
+                  )}
+                />
+              </span>
+              {selectedSnapshotDay !== null && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic("selection");
+                    setSelectedSnapshotDay(null);
+                  }}
+                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline cursor-pointer"
+                >
+                  Ver total
+                </button>
+              )}
+            </div>
           </div>
+
           <div className="grid grid-cols-7 gap-1.5 items-end h-16 pt-1">
             {weeklySnapshot.map((d, idx) => {
+              const isSelected = selectedSnapshotDay === idx;
               const heightPct = Math.max(15, Math.min(100, Math.round((d.amount / maxWeeklyAmount) * 100)));
               return (
-                <div key={d.day} className="flex flex-col items-center gap-1 h-full justify-end">
+                <button
+                  key={d.day}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setSelectedSnapshotDay(isSelected ? null : idx);
+                  }}
+                  className="flex flex-col items-center gap-1 h-full justify-end group cursor-pointer p-0 m-0 border-0 bg-transparent w-full"
+                >
                   <div
-                    className={`w-full rounded-md transition-all duration-500 ${
-                      d.isToday ? "shadow-xs" : "opacity-60 dark:opacity-40"
+                    className={`w-full rounded-md transition-all duration-200 ${
+                      isSelected
+                        ? "ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 shadow-sm scale-105"
+                        : d.isToday
+                        ? "shadow-xs"
+                        : "opacity-60 dark:opacity-40 hover:opacity-100"
                     }`}
                     style={{
                       height: `${heightPct}%`,
-                      backgroundColor: d.isToday
+                      backgroundColor: isSelected || d.isToday
                         ? (business.primaryColor || "#FF4F2B")
                         : "var(--primary, #94a3b8)",
                     }}
                     title={`${d.day}: ${formatGs(d.amount)}`}
                   />
                   <span
-                    className={`text-[9px] font-bold ${
-                      d.isToday
+                    className={`text-[9px] font-bold transition-colors ${
+                      isSelected
+                        ? "text-[var(--primary)] font-black"
+                        : d.isToday
                         ? "text-slate-900 dark:text-white"
                         : "text-slate-400 dark:text-slate-500"
                     }`}
                   >
                     {d.day}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
 
-        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>Cobrado: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{formatGs(revenueToday)}</strong></span>
-          <span>Confirmados: <strong className="text-slate-800 dark:text-slate-200 font-mono">{confirmedToday.length}</strong></span>
-          <span>Ocupación: <strong className="text-slate-800 dark:text-slate-200 font-mono">{occupancyRate}%</strong></span>
+        {/* Métricas del día protegidas contra desbordamiento */}
+        <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-1 text-center text-xs text-slate-500 dark:text-slate-400">
+          <div className="min-w-0 px-0.5">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">Cobrado</span>
+            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 truncate block text-xs">
+              {formatGs(revenueToday)}
+            </span>
+          </div>
+          <div className="min-w-0 px-0.5 border-x border-slate-100 dark:border-white/5">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">Confirmados</span>
+            <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block text-xs">
+              {confirmedToday.length}
+            </span>
+          </div>
+          <div className="min-w-0 px-0.5">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">Ocupación</span>
+            <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block text-xs">
+              {occupancyRate}%
+            </span>
+          </div>
         </div>
-      </div>
-
-      {/* Mobile Apple Quick Actions: Compact 3x2 Grid (only for small touch screens) */}
-      <div className="grid sm:hidden grid-cols-3 gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic("selection");
-            setQuickBookingOpen(true);
-          }}
-          className="glass-panel flex flex-col items-center justify-center p-3 rounded-2xl active:scale-95 transition text-center cursor-pointer"
-        >
-          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5">
-            <Key className="h-4 w-4" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
-            + Cita
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic("selection");
-            setQuickBookingOpen(true);
-          }}
-          className="glass-panel flex flex-col items-center justify-center p-3 rounded-2xl active:scale-95 transition text-center cursor-pointer"
-        >
-          <div className="h-9 w-9 rounded-xl bg-white/10 dark:bg-white/10 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
-            <Ban className="h-4 w-4" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
-            Bloquear
-          </span>
-        </button>
-
-        <Link
-          href="/dashboard/equipo"
-          onClick={() => triggerHaptic("selection")}
-          className="glass-panel flex flex-col items-center justify-center p-3 rounded-2xl active:scale-95 transition text-center"
-        >
-          <div className="h-9 w-9 rounded-xl bg-white/10 dark:bg-white/10 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
-            <User className="h-4 w-4" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
-            Equipo
-          </span>
-        </Link>
-
-        <Link
-          href="/dashboard/caja"
-          onClick={() => triggerHaptic("selection")}
-          className="glass-panel flex flex-col items-center justify-center p-3 rounded-2xl active:scale-95 transition text-center"
-        >
-          <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-1.5">
-            <Banknote className="h-4 w-4" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
-            Caja
-          </span>
-        </Link>
-
-        <Link
-          href="/dashboard/estadisticas"
-          onClick={() => triggerHaptic("selection")}
-          className="glass-panel flex flex-col items-center justify-center p-3 rounded-2xl active:scale-95 transition text-center"
-        >
-          <div className="h-9 w-9 rounded-xl bg-white/10 dark:bg-white/10 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
-            <TrendingUp className="h-4 w-4" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
-            Métricas
-          </span>
-        </Link>
-
-        <Link
-          href="/dashboard/apariencia"
-          onClick={() => triggerHaptic("selection")}
-          className="glass-panel flex flex-col items-center justify-center p-3 rounded-2xl active:scale-95 transition text-center"
-        >
-          <div className="h-9 w-9 rounded-xl bg-white/10 dark:bg-white/10 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-1.5">
-            <Palette className="h-4 w-4" />
-          </div>
-          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
-            Perfil Web
-          </span>
-        </Link>
       </div>
 
       {/* ═══ DESKTOP EXECUTIVE KPI STRIP (4 BALANCED COMMAND CARDS EN GLASS TILT 3D) ═══ */}
@@ -1162,8 +1146,8 @@ export default function DashboardHomePage() {
             ) : null}
           </AnimatePresence>
 
-          {/* Asistente IA WhatsApp Live Glass Card con Morphing Orb */}
-          <GlassTiltCard className="p-4 w-full max-w-full min-w-0 overflow-hidden shadow-2xs border-emerald-500/25 dark:border-emerald-500/20">
+          {/* Asistente IA WhatsApp Live Glass Card con Morphing Orb (Oculto en Mobile, visible en Desktop) */}
+          <GlassTiltCard className="hidden md:block p-4 w-full max-w-full min-w-0 overflow-hidden shadow-2xs border-emerald-500/25 dark:border-emerald-500/20">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2 min-w-0">
                 <Bot className="h-4 w-4 text-emerald-500 shrink-0" />

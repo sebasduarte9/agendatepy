@@ -253,7 +253,7 @@ export default function MobileTabBar() {
     <>
       <nav
         aria-label="Navegación principal móvil"
-        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[24px] bg-[rgba(27,25,30,0.85)] text-slate-800 dark:text-white border border-white/15 shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none"
+        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[24px] bg-white/90 dark:bg-[rgba(27,25,30,0.85)] text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none"
       >
         <div className="flex items-center justify-between h-13 relative">
           {primaryTabs.map((tab) => {
@@ -294,7 +294,7 @@ export default function MobileTabBar() {
                       className={`h-5 w-5 transition-colors duration-150 ${
                         active
                           ? ""
-                          : "text-slate-400 dark:text-white/60 group-hover:text-slate-700 dark:group-hover:text-white"
+                          : "text-slate-500 dark:text-white/60 group-hover:text-slate-700 dark:group-hover:text-white"
                       }`}
                       style={active ? { color: brandColor } : {}}
                     />
@@ -347,7 +347,7 @@ export default function MobileTabBar() {
                   className={`h-5 w-5 transition-colors duration-150 ${
                     isMoreSheetOpen
                       ? ""
-                      : "text-slate-400 dark:text-white/60 group-hover:text-slate-700 dark:group-hover:text-white"
+                      : "text-slate-500 dark:text-white/60 group-hover:text-slate-700 dark:group-hover:text-white"
                   }`}
                   style={isMoreSheetOpen ? { color: brandColor } : {}}
                 />

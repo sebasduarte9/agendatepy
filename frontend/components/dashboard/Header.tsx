@@ -172,7 +172,7 @@ export default function Header() {
         {/* Glassy 2.0 Appearance Quick Launcher (Interfas Glassy color-launch) */}
         <Link
           href="/dashboard/configuracion"
-          className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs text-zinc-300 transition shrink-0"
+          className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs text-zinc-300 transition shrink-0"
           title="Personalizar Apariencia & Colores"
         >
           <span
@@ -187,7 +187,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center relative overflow-hidden border border-white/60 dark:border-white/30 backdrop-blur-xl shadow-xs shrink-0 select-none cursor-pointer hover:opacity-90 hover:scale-105 active:scale-95 transition ml-0.5"
+            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full sm:rounded-xl flex items-center justify-center relative overflow-hidden border border-white/60 dark:border-white/30 backdrop-blur-xl shadow-xs shrink-0 select-none cursor-pointer hover:opacity-90 hover:scale-105 active:scale-95 transition ml-0.5"
             style={{
               background: `linear-gradient(135deg, var(--primary, #FF4F2B), color-mix(in srgb, var(--primary, #FF4F2B) 80%, #fff))`,
               boxShadow: `0 4px 12px rgba(var(--primary-rgb, 255, 79, 43), 0.35), inset 0 1px 1.5px rgba(255, 255, 255, 0.7)`
@@ -195,10 +195,18 @@ export default function Header() {
             title={`${userName || "Usuario"} (${currentUserRole})`}
             aria-label="Menú de usuario"
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/35 via-white/10 to-transparent pointer-events-none rounded-xl" />
-            <span className="text-white font-extrabold text-xs relative z-10">
-              {(userName || "A").charAt(0).toUpperCase()}
-            </span>
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/35 via-white/10 to-transparent pointer-events-none rounded-full sm:rounded-xl" />
+            {(business.logoUrl || business.logo) ? (
+              <img
+                src={business.logoUrl || business.logo}
+                alt={userName || "Usuario"}
+                className="w-full h-full object-cover rounded-full sm:rounded-xl relative z-10"
+              />
+            ) : (
+              <span className="text-white font-extrabold text-xs relative z-10">
+                {(userName || "A").charAt(0).toUpperCase()}
+              </span>
+            )}
           </button>
 
           {/* Sleek Popover Menu */}
@@ -211,15 +219,23 @@ export default function Header() {
               <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 shadow-2xl backdrop-blur-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center gap-2.5 p-2.5 border-b border-slate-100 dark:border-white/5">
                   <div
-                    className="h-9 w-9 rounded-xl flex items-center justify-center relative overflow-hidden border border-white/60 dark:border-white/30 backdrop-blur-xl shadow-xs shrink-0"
+                    className="h-9 w-9 rounded-full sm:rounded-xl flex items-center justify-center relative overflow-hidden border border-white/60 dark:border-white/30 backdrop-blur-xl shadow-xs shrink-0"
                     style={{
                       background: `linear-gradient(135deg, var(--primary, #FF4F2B), color-mix(in srgb, var(--primary, #FF4F2B) 80%, #fff))`,
                       boxShadow: `0 4px 12px rgba(var(--primary-rgb, 255, 79, 43), 0.35), inset 0 1px 1.5px rgba(255, 255, 255, 0.7)`
                     }}
                   >
-                    <span className="text-white font-extrabold text-xs relative z-10">
-                      {(userName || "A").charAt(0).toUpperCase()}
-                    </span>
+                    {(business.logoUrl || business.logo) ? (
+                      <img
+                        src={business.logoUrl || business.logo}
+                        alt={userName || "Usuario"}
+                        className="w-full h-full object-cover rounded-full sm:rounded-xl relative z-10"
+                      />
+                    ) : (
+                      <span className="text-white font-extrabold text-xs relative z-10">
+                        {(userName || "A").charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
