@@ -267,6 +267,7 @@ export default function DashboardHomePage() {
   // 7-day weekly snapshot data for the console bar chart
   const weeklySnapshot = useMemo(() => {
     const days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    const fullDays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
     const now = new Date();
     const currentDayOfWeek = (now.getDay() + 6) % 7; // 0 = Lun, 6 = Dom
     return days.map((dayName, index) => {
@@ -280,6 +281,7 @@ export default function DashboardHomePage() {
       }
       return {
         day: dayName,
+        fullDay: fullDays[index],
         amount,
         isToday,
       };
@@ -442,26 +444,13 @@ export default function DashboardHomePage() {
 
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD WITH 7-DAY MINI SPARKLINE ═══ */}
       <div data-tour="kpi-cards" className="glass-panel kpi-rise block md:hidden p-4 rounded-3xl space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Citas para Hoy · {todayFormattedDisplay}
-            </span>
-            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-              {appointmentsToday.length} <span className="text-xs font-normal text-slate-400">turnos</span>
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic("selection");
-              setQuickBookingOpen(true);
-            }}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
-            style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
-          >
-            Cita Rápida
-          </button>
+        <div>
+          <span className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block whitespace-nowrap truncate">
+            Citas para hoy — {todayFormattedDisplay}
+          </span>
+          <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+            {appointmentsToday.length} <span className="text-xs font-normal text-slate-400">turnos</span>
+          </span>
         </div>
 
         {/* 7-Day Mobile Mini Sparkline Bar Chart (Interactivo con selección por día) */}
@@ -474,7 +463,7 @@ export default function DashboardHomePage() {
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
                   />
-                  <span>{weeklySnapshot[selectedSnapshotDay].day}</span>
+                  <span>{weeklySnapshot[selectedSnapshotDay].fullDay}</span>
                   <span className="text-[10px] text-slate-400 font-normal">
                     {weeklySnapshot[selectedSnapshotDay].isToday ? "(Hoy)" : ""}
                   </span>
@@ -501,7 +490,8 @@ export default function DashboardHomePage() {
                     triggerHaptic("selection");
                     setSelectedSnapshotDay(null);
                   }}
-                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline cursor-pointer"
+                  className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs active:scale-95 transition-all cursor-pointer"
+                  style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
                 >
                   Ver total
                 </button>
@@ -761,6 +751,7 @@ export default function DashboardHomePage() {
                 <span className="text-[11px] font-bold text-slate-400 shrink-0">Filtrar:</span>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setSelectedStaffFilter("all")}
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer active:scale-95 ${
                     selectedStaffFilter === "all"
@@ -779,6 +770,7 @@ export default function DashboardHomePage() {
                     <button
                       key={st.id}
                       type="button"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => setSelectedStaffFilter(st.id)}
                       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer active:scale-95 ${
                         isSelected
@@ -803,8 +795,9 @@ export default function DashboardHomePage() {
               </div>
             </div>
 
-            {/* Appointment List / Timeline Feed */}
-            {displayAppointments.length === 0 ? (
+            {/* Appointment List / Timeline Feed (Wrapped in min-height to prevent layout jump) */}
+            <div className="min-h-[320px]">
+              {displayAppointments.length === 0 ? (
               <div className="py-14 text-center space-y-3">
                 <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
                   <CalendarDays className="h-6 w-6" />
@@ -980,6 +973,7 @@ export default function DashboardHomePage() {
                 })}
               </ul>
             )}
+            </div>
 
             {/* Card Footer Link */}
             <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-2 flex items-center justify-between text-xs">

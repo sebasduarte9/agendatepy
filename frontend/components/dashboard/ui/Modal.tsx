@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { X } from "lucide-react";
 import { triggerHaptic } from "@/lib/haptics";
@@ -26,6 +27,7 @@ export default function Modal({
   className?: string;
   variant?: "center" | "side";
 }) {
+  const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const dragControls = useDragControls();
@@ -33,6 +35,7 @@ export default function Modal({
   const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
+    setMounted(true);
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640);
       setIsDesktop(window.innerWidth >= 1024);
@@ -41,6 +44,16 @@ export default function Modal({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [open]);
 
   // Close on Escape key press
   useEffect(() => {
@@ -86,12 +99,14 @@ export default function Modal({
 
   const isSide = variant === "side" && isDesktop;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
           id={id}
-          className={`fixed inset-0 z-[100] flex bg-slate-950/70 backdrop-blur-md ${
+          className={`fixed inset-0 z-[9999] flex bg-slate-950/75 backdrop-blur-md ${
             isMobile
               ? "items-end justify-center p-0"
               : isSide
@@ -189,6 +204,7 @@ export default function Modal({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

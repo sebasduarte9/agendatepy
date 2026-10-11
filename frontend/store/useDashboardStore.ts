@@ -1774,7 +1774,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }
 
         if (Array.isArray(data.cashMovements) && data.cashMovements.length > 0) {
-          nextState.cashMovements = data.cashMovements.map((cm: any) => ({
+          const mappedCash = data.cashMovements.map((cm: any) => ({
             id: cm.id,
             type: cm.type,
             amount: cm.amount,
@@ -1784,6 +1784,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             category: cm.category,
             appointmentId: cm.appointmentId,
           }));
+          const hasTodayCash = mappedCash.some((cm: any) => (cm.date || "").slice(0, 10) === defaultCivilDate);
+          nextState.cashMovements = hasTodayCash ? mappedCash : [...mappedCash, ...initialCashMovements];
         }
 
         if (Array.isArray(data.scheduleBlocks) && data.scheduleBlocks.length > 0) {
@@ -1804,7 +1806,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }
 
         if (Array.isArray(data.appointments) && data.appointments.length > 0) {
-          nextState.appointments = data.appointments;
+          const hasTodayApp = data.appointments.some((a: any) => {
+            const d = (a.start || a.startTime || "").slice(0, 10);
+            return d === defaultCivilDate;
+          });
+          nextState.appointments = hasTodayApp ? data.appointments : [...data.appointments, ...initialAppointments];
         }
 
         if (Array.isArray(data.products) && data.products.length > 0) {
