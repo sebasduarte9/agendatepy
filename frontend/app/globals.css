@@ -64,6 +64,51 @@
   color-scheme: light;
 }
 
+/* Hide Next.js dev indicator dot / badges / overlays */
+nextjs-portal,
+[data-nextjs-toast],
+[data-next-badge],
+#nextjs-dev-indicator,
+div[data-nextjs-dev-indicator],
+[data-nextjs-dev-tools-button],
+[data-nextjs-indicator],
+div[data-nextjs-route-announcer],
+aside[aria-label="Next.js Dev Tools"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Custom Minimalist Frosted Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+:where(.dark, [data-theme="dark"]) .custom-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+:where(.dark, [data-theme="dark"]) .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+}
+:where(.dark, [data-theme="dark"]) .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
 @theme inline {
   --breakpoint-xs: 23.4375rem;
   --color-background: var(--background);

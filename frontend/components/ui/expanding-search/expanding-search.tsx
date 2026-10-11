@@ -201,7 +201,8 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
     if (!root || !shell) return;
     const measure = () => {
       const collapsed = shell.offsetHeight || FALLBACK_SIZE;
-      const full = expandedWidth;
+      const maxAvailable = typeof window !== "undefined" ? Math.min(expandedWidth, window.innerWidth - 145) : expandedWidth;
+      const full = Math.max(collapsed, maxAvailable);
       size.current = { collapsed, expanded: full };
       root.style.setProperty("--es-width", `${full}px`);
       const goal = open.current ? full : collapsed;
@@ -210,10 +211,17 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
       syncShape(width.get());
     };
     measure();
-    if (typeof ResizeObserver === "undefined") return;
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }
     const observer = new ResizeObserver(measure);
     observer.observe(root);
-    return () => observer.disconnect();
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [expandedWidth, width, syncShape]);
 
   const morphTo = (goal: number) => {
@@ -254,6 +262,22 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
     window.addEventListener("keydown", handleGlobalShortcut);
     return () => window.removeEventListener("keydown", handleGlobalShortcut);
   }, []);
+
+  // Click outside to collapse
+  useEffect(() => {
+    if (!expanded) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        collapse(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [expanded]);
 
   const trimmed = query.trim();
   const results = useMemo(() => trimmed ? rank(items, trimmed, maxResults) : [], [items, trimmed, maxResults]);

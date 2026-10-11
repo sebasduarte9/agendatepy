@@ -454,26 +454,31 @@ export default function DashboardHomePage() {
           </span>
         </div>
 
-        {/* 7-Day Mobile Mini Sparkline Bar Chart (Interactivo con selección por día) */}
+        {/* 7-Day Mobile Combined Interactive Chart */}
         <div className="glass-panel-subtle p-3 rounded-2xl space-y-2">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-              {selectedSnapshotDay !== null ? (
-                <>
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
-                  />
-                  <span>{weeklySnapshot[selectedSnapshotDay].fullDay}</span>
-                  <span className="text-[10px] text-slate-400 font-normal">
-                    {weeklySnapshot[selectedSnapshotDay].isToday ? "(Hoy)" : ""}
-                  </span>
-                </>
-              ) : (
-                "Semana Activa"
-              )}
-            </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 truncate">
+                {selectedSnapshotDay !== null ? (
+                  <>
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
+                    />
+                    <span className="truncate">{weeklySnapshot[selectedSnapshotDay].fullDay}</span>
+                    <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                      {weeklySnapshot[selectedSnapshotDay].isToday ? "(Hoy)" : ""}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span>Semana en Curso</span>
+                  </>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
               <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
                 <AnimatedValue
                   value={formatGs(
@@ -483,7 +488,7 @@ export default function DashboardHomePage() {
                   )}
                 />
               </span>
-              {selectedSnapshotDay !== null && (
+              {selectedSnapshotDay !== null ? (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -491,11 +496,19 @@ export default function DashboardHomePage() {
                     triggerHaptic("selection");
                     setSelectedSnapshotDay(null);
                   }}
-                  className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs active:scale-95 transition-all cursor-pointer"
                   style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
                 >
                   Ver total
                 </button>
+              ) : (
+                <Link
+                  href="/dashboard/estadisticas"
+                  className="text-[10px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-0.5 ml-1 transition"
+                >
+                  <span>Reportes</span>
+                  <ArrowRight className="h-2.5 w-2.5" />
+                </Link>
               )}
             </div>
           </div>
@@ -544,6 +557,11 @@ export default function DashboardHomePage() {
                 </button>
               );
             })}
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 px-0.5 pt-0.5">
+            <span>Promedio diario: {formatGs(averageWeeklyAmount)}</span>
+            <span className="font-mono">7 días</span>
           </div>
         </div>
 
@@ -710,7 +728,7 @@ export default function DashboardHomePage() {
                     <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-base">
                       Agenda Operativa
                     </h2>
-                    <span className="rounded-full px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                    <span className="hidden sm:inline-flex rounded-full px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
                       {displayAppointments.length} turnos
                     </span>
                   </div>
@@ -718,19 +736,21 @@ export default function DashboardHomePage() {
 
                 {/* View Mode & Filter tabs */}
                 <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto max-w-full">
-                  <IosSegmentedControl
-                    value={viewMode}
-                    onChange={(val) => {
-                      triggerHaptic("selection");
-                      setViewMode(val as "cards" | "timeline");
-                    }}
-                    layoutId="dashboardViewModePill"
-                    size="sm"
-                    options={[
-                      { value: "cards", label: "Tarjetas" },
-                      { value: "timeline", label: "Timeline" },
-                    ]}
-                  />
+                  <div className="hidden sm:block">
+                    <IosSegmentedControl
+                      value={viewMode}
+                      onChange={(val) => {
+                        triggerHaptic("selection");
+                        setViewMode(val as "cards" | "timeline");
+                      }}
+                      layoutId="dashboardViewModePill"
+                      size="sm"
+                      options={[
+                        { value: "cards", label: "Tarjetas" },
+                        { value: "timeline", label: "Timeline" },
+                      ]}
+                    />
+                  </div>
 
                   <IosSegmentedControl
                     value={filterTab}
@@ -758,7 +778,7 @@ export default function DashboardHomePage() {
             </div>
 
             {/* Appointment List / Timeline Feed (Wrapped in rock-solid stable container to eliminate layout shift) */}
-            <div className="min-h-[460px] max-h-[580px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+            <div className="overflow-y-auto overscroll-contain pr-1 custom-scrollbar max-h-[620px]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${filterTab}-${selectedStaffFilter}-${viewMode}`}
@@ -893,20 +913,20 @@ export default function DashboardHomePage() {
                           </div>
                         </div>
 
-                        {/* Right: Quick Action Buttons */}
+                        {/* Right: Quick Action Buttons (Balanced distribution on mobile) */}
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-slate-100 dark:border-slate-800 sm:border-t-0 w-full sm:w-auto"
+                          className="flex items-center gap-2 shrink-0 pt-2.5 sm:pt-0 border-t border-slate-100 dark:border-slate-800/80 sm:border-t-0 w-full sm:w-auto mt-0.5 sm:mt-0"
                         >
                           {/* Direct WhatsApp launcher */}
                           <a
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 text-xs font-medium transition shrink-0"
+                            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-8.5 px-3 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 text-xs font-semibold backdrop-blur-xs transition shadow-2xs shrink-0"
                             title="Enviar recordatorio por WhatsApp"
                           >
-                            <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                            <MessageSquare className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                             <span>WhatsApp</span>
                           </a>
 
@@ -914,7 +934,7 @@ export default function DashboardHomePage() {
                           <button
                             type="button"
                             onClick={() => handleOpenClientFicha(item.clientName, item.clientPhone)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition shrink-0 cursor-pointer"
+                            className="h-8.5 w-8.5 flex items-center justify-center rounded-xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-slate-800/60 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition shrink-0 cursor-pointer shadow-2xs"
                             title="Ver Ficha Técnica del Cliente"
                           >
                             <User className="h-3.5 w-3.5" />
@@ -925,15 +945,15 @@ export default function DashboardHomePage() {
                             <button
                               type="button"
                               onClick={() => handleCompleteAndPay(item)}
-                              className="inline-flex items-center gap-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 px-3 py-1.5 text-xs font-semibold transition shadow-xs shrink-0 cursor-pointer"
+                              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-95 text-xs font-bold transition shadow-xs shrink-0 cursor-pointer active:scale-98"
                               title="Marcar como atendido y registrar ingreso en caja"
                             >
-                              <Banknote className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                              <Banknote className="h-3.5 w-3.5 text-emerald-400 dark:text-emerald-600 shrink-0" />
                               <span>Cobrar</span>
                             </button>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-slate-400">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                            <span className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-8.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
                               <span>Pagado</span>
                             </span>
                           )}
@@ -1159,7 +1179,7 @@ export default function DashboardHomePage() {
           </GlassTiltCard>
 
           {/* Trayectoria Semanal Mini Bar Chart */}
-          <Card className="p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+          <Card className="hidden md:block p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2 min-w-0">
                 <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />

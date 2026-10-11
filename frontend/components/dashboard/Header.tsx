@@ -155,7 +155,7 @@ export default function Header() {
   ], [router, business.slug]);
 
   return (
-    <header className="w-full flex h-[58px] sm:h-[62px] items-center justify-between px-4 sm:px-6 select-none">
+    <header className="w-full flex h-[58px] sm:h-[62px] items-center justify-between px-4 sm:px-6 select-none relative z-50">
       <div className="flex items-center gap-2.5 min-w-0">
         {/* On mobile, show clean liquid brand lockup: [Liquid A Logo] + gendate.py */}
         <Link

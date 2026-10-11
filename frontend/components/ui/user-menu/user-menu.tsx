@@ -342,70 +342,206 @@ export function UserMenu({ user, status: statusProp, defaultStatus = "available"
   const row = reduced ? undefined : rowMotion;
   const menuProps = { id: menuId, role: "menu", "aria-labelledby": triggerId, tabIndex: -1, onKeyDown };
 
-  const content = <>
-    <motion.div className={styles.header} variants={row}>
-      <Face user={user} status={showStatus ? status : undefined} size="md" />
-      <div className={styles.identity}>
-        <div className={styles.nameRow}><span className={styles.name}>{user.name}</span>{user.plan && <span className={styles.plan}>{user.plan}</span>}</div>
-        <span className={styles.email} title={user.email}>{user.email}</span>
+  const content = (
+    <>
+      <motion.div className={styles.header} variants={row}>
+        <Face user={user} status={showStatus && !sheet ? status : undefined} size="md" />
+        <div className={styles.identity}>
+          <div className={styles.nameRow}>
+            <span className={styles.name}>{user.name}</span>
+            {user.plan && <span className={styles.plan}>{user.plan}</span>}
+          </div>
+          <span className={styles.email} title={user.email}>
+            {user.email}
+          </span>
+        </div>
+      </motion.div>
+      <div
+        ref={listRef}
+        className={styles.list}
+        onFocus={onListFocus}
+        onPointerMove={onListPointerMove}
+        onPointerLeave={onListPointerLeave}
+      >
+        <motion.span
+          className={styles.highlight}
+          data-tone={highlight?.tone}
+          aria-hidden="true"
+          initial={false}
+          animate={highlight ? { y: highlight.top, height: highlight.height, opacity: 1 } : { opacity: 0 }}
+          transition={{ default: glide, opacity: { duration: reduced ? 0 : motionTokens.duration.instant } }}
+        />
+        {items.length > 0 && (
+          <>
+            <div className={styles.separator} role="separator" />
+            {items.map((item) => (
+              <motion.button
+                key={item.label}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                className={styles.item}
+                data-stop="item"
+                data-label={item.label}
+                variants={row}
+                onPointerMove={onItemPointerMove}
+                onClick={() => {
+                  close(true);
+                  item.onSelect?.();
+                }}
+              >
+                <span className={styles.icon} aria-hidden="true">
+                  {item.icon}
+                </span>
+                <span className={styles.itemLabel}>{item.label}</span>
+                {!sheet && item.keys && <Keys keys={item.keys} />}
+              </motion.button>
+            ))}
+          </>
+        )}
+        {((showTheme) || (showStatus && !sheet)) && (
+          <>
+            <div className={styles.separator} role="separator" />
+            {showStatus && !sheet && (
+              <Segmented
+                label="Estado"
+                icon={<PresenceDot status={status} />}
+                value={status}
+                onChange={changeStatus}
+                options={userStatuses.map((option) => ({ ...option, icon: <PresenceDot status={option.value} /> }))}
+                variants={row}
+              />
+            )}
+            {showTheme && (
+              <Segmented
+                label="Tema"
+                icon={<SunMoon size={16} strokeWidth={1.75} />}
+                value={theme}
+                onChange={changeTheme}
+                options={sheet ? themes.filter((t) => t.value !== "system") : themes}
+                variants={row}
+              />
+            )}
+          </>
+        )}
+        <div className={styles.separator} role="separator" />
+        <motion.button
+          type="button"
+          role="menuitem"
+          tabIndex={-1}
+          className={styles.item}
+          data-stop="item"
+          data-tone="danger"
+          data-label="Cerrar sesión"
+          variants={row}
+          aria-busy={signingOut || undefined}
+          onPointerMove={onItemPointerMove}
+          onClick={signOut}
+        >
+          <span className={styles.icon} aria-hidden="true">
+            {signingOut ? <LoaderCircle className={styles.spinner} size={16} strokeWidth={1.75} /> : <LogOut size={16} strokeWidth={1.75} />}
+          </span>
+          <span className={styles.itemLabel}>
+            <Rise text={signingOut ? "Cerrando sesión…" : "Cerrar sesión"} reduced={reduced} />
+          </span>
+          {signOutKeys && <Keys keys={signOutKeys} />}
+        </motion.button>
       </div>
-    </motion.div>
-    <div ref={listRef} className={styles.list} onFocus={onListFocus} onPointerMove={onListPointerMove} onPointerLeave={onListPointerLeave}>
-      <motion.span className={styles.highlight} data-tone={highlight?.tone} aria-hidden="true" initial={false}
-        animate={highlight ? { y: highlight.top, height: highlight.height, opacity: 1 } : { opacity: 0 }}
-        transition={{ default: glide, opacity: { duration: reduced ? 0 : motionTokens.duration.instant } }} />
-      {items.length > 0 && <>
-        <div className={styles.separator} role="separator" />
-        {items.map(item => <motion.button key={item.label} type="button" role="menuitem" tabIndex={-1} className={styles.item} data-stop="item" data-label={item.label} variants={row}
-          onPointerMove={onItemPointerMove} onClick={() => { close(true); item.onSelect?.(); }}>
-          <span className={styles.icon} aria-hidden="true">{item.icon}</span>
-          <span className={styles.itemLabel}>{item.label}</span>
-          {item.keys && <Keys keys={item.keys} />}
-        </motion.button>)}
-      </>}
-      {(showTheme || showStatus) && <>
-        <div className={styles.separator} role="separator" />
-        {showStatus && <Segmented label="Estado" icon={<PresenceDot status={status} />} value={status} onChange={changeStatus}
-          options={userStatuses.map(option => ({ ...option, icon: <PresenceDot status={option.value} /> }))} variants={row} />}
-        {showTheme && <Segmented label="Tema" icon={<SunMoon size={16} strokeWidth={1.75} />} value={theme} onChange={changeTheme} options={themes} variants={row} />}
-      </>}
-      <div className={styles.separator} role="separator" />
-      <motion.button type="button" role="menuitem" tabIndex={-1} className={styles.item} data-stop="item" data-tone="danger" data-label="Cerrar Sesión" variants={row}
-        aria-busy={signingOut || undefined} onPointerMove={onItemPointerMove} onClick={signOut}>
-        <span className={styles.icon} aria-hidden="true">{signingOut ? <LoaderCircle className={styles.spinner} size={16} strokeWidth={1.75} /> : <LogOut size={16} strokeWidth={1.75} />}</span>
-        <span className={styles.itemLabel}><Rise text={signingOut ? "Cerrando sesión..." : "Cerrar Sesión"} reduced={reduced} /></span>
-        {signOutKeys && <Keys keys={signOutKeys} />}
-      </motion.button>
-    </div>
-  </>;
+    </>
+  );
 
-  const panel = <AnimatePresence>
-    {open && !sheet && <motion.div key="panel" ref={surfaceRef} {...menuProps} className={styles.panel} data-inline={inline || undefined} data-align={align}
-      variants={reduced ? stillMotion : panelMotion} initial="closed" animate="open" exit="exit">
-      {content}
-    </motion.div>}
-  </AnimatePresence>;
+  const panel = (
+    <AnimatePresence>
+      {open && !sheet && (
+        <motion.div
+          key="panel"
+          ref={surfaceRef}
+          {...menuProps}
+          className={styles.panel}
+          data-inline={inline || undefined}
+          data-align={align}
+          variants={reduced ? stillMotion : panelMotion}
+          initial="closed"
+          animate="open"
+          exit="exit"
+        >
+          {content}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
-  const bottomSheet = <AnimatePresence>
-    {open && sheet && <motion.div key="scrim" className={styles.scrim} aria-hidden="true" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      transition={{ duration: reduced ? .1 : .2, ease: standard }} onClick={() => close(true)} />}
-    {open && sheet && <motion.div key="sheet" ref={surfaceRef} {...menuProps} className={`${styles.panel} ${styles.sheet}`} aria-modal="true"
-      variants={reduced ? stillMotion : sheetMotion} initial="closed" animate="open" exit="exit"
-      drag={reduced ? false : "y"} dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: .04, bottom: .9 }} dragMomentum={false} onDragEnd={onDragEnd}>
-      <span className={styles.handle} aria-hidden="true" />
-      {content}
-    </motion.div>}
-  </AnimatePresence>;
+  const bottomSheet = (
+    <AnimatePresence>
+      {open && sheet && (
+        <motion.div
+          key="scrim"
+          className={styles.scrim}
+          aria-hidden="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduced ? 0.1 : 0.2, ease: standard }}
+          onClick={() => close(true)}
+        />
+      )}
+      {open && sheet && (
+        <motion.div
+          key="sheet"
+          ref={surfaceRef}
+          {...menuProps}
+          className={`${styles.panel} ${styles.sheet}`}
+          aria-modal="true"
+          variants={reduced ? stillMotion : sheetMotion}
+          initial="closed"
+          animate="open"
+          exit="exit"
+          drag={reduced ? false : "y"}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0.04, bottom: 0.9 }}
+          dragMomentum={false}
+          onDragEnd={onDragEnd}
+        >
+          <span className={styles.handle} aria-hidden="true" />
+          {content}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
-  return <span ref={rootRef} className={styles.root}>
-    <button ref={setTriggerRef} id={triggerId} type="button" className={[styles.trigger, className].filter(Boolean).join(" ")} data-state={open ? "open" : "closed"} data-name={showName || undefined}
-      aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} aria-label={`Account menu, ${user.name}${showStatus ? `, ${statusLabel(status)}` : ""}`}
-      onClick={onTriggerClick} onKeyDown={onTriggerKeyDown}>
-      <Face user={user} status={showStatus ? status : undefined} size="sm" />
-      {showName && <><span className={styles.triggerName}>{user.name}</span><ChevronDown className={styles.chevron} size={16} strokeWidth={1.75} aria-hidden="true" /></>}
-    </button>
-    {sheet && typeof document !== "undefined" ? createPortal(bottomSheet, document.body) : inline ? panel : hydrated && typeof document !== "undefined" ? createPortal(panel, document.body) : null}
-  </span>;
+  return (
+    <span ref={rootRef} className={styles.root}>
+      <button
+        ref={setTriggerRef}
+        id={triggerId}
+        type="button"
+        className={[styles.trigger, className].filter(Boolean).join(" ")}
+        data-state={open ? "open" : "closed"}
+        data-name={showName || undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        aria-label={`Menú de cuenta, ${user.name}${showStatus ? `, ${statusLabel(status)}` : ""}`}
+        onClick={onTriggerClick}
+        onKeyDown={onTriggerKeyDown}
+      >
+        <Face user={user} status={showStatus && !sheet ? status : undefined} size="sm" />
+        {showName && (
+          <>
+            <span className={styles.triggerName}>{user.name}</span>
+            <ChevronDown className={styles.chevron} size={16} strokeWidth={1.75} aria-hidden="true" />
+          </>
+        )}
+      </button>
+      {sheet
+        ? createPortal(bottomSheet, document.body)
+        : inline
+        ? panel
+        : hydrated
+        ? createPortal(panel, document.body)
+        : null}
+    </span>
+  );
 }
 
 export default UserMenu;
