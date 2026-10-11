@@ -75,6 +75,7 @@
   --color-whatsapp: #128c7e;
   --font-sans: var(--font-plus-jakarta);
   --font-coolvetica: var(--font-coolvetica);
+  --font-mono: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
 @font-face {
@@ -1105,9 +1106,10 @@ dialog,
 
 .glass-workspace {
   width: 100%;
-  max-width: 1680px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   min-height: calc(100vh - 36px);
+  box-sizing: border-box;
 }
 
 .glass-app-shell {

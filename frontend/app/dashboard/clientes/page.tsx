@@ -250,7 +250,7 @@ export default function ClientesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6 pb-24 px-1 sm:px-0">
+    <div className="w-full space-y-4 sm:space-y-6 pb-24 px-1 sm:px-0">
       {/* ═══ APPLE APP HEADER ═══ */}
       <div data-tour="clientes-header" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <div>

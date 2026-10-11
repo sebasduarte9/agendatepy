@@ -232,7 +232,7 @@ export default function BloquearHorarioPage() {
   }, [staff]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 sm:space-y-5 pb-20 px-1 sm:px-0">
+    <div className="w-full space-y-4 sm:space-y-5 pb-20 px-1 sm:px-0">
       {/* ═══ APPLE APP HEADER ═══ */}
       <div className="flex items-center justify-between py-1">
         <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">

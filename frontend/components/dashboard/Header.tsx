@@ -1,82 +1,85 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  LogOut,
-  Settings,
   ExternalLink,
   HelpCircle,
-  BookOpen,
-  Compass,
   Search,
-  CalendarDays,
-  Wallet,
+  Settings,
+  Calendar,
+  CalendarPlus,
   Users,
+  Banknote,
+  Bot,
   Scissors,
+  ShoppingBag,
+  BarChart3,
+  Palette,
+  LayoutDashboard,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import BrandLogo from "@/components/ui/BrandLogo";
 import LiquidLogo from "@/components/ui/LiquidLogo";
 import { tenantHost } from "@/lib/tenant/public-url";
 import CommandPalette from "./CommandPalette";
-import UserMenu, { type ThemePreference } from "@/components/ui/user-menu/user-menu";
-import ExpandingSearch, { type ExpandingSearchItem } from "@/components/ui/expanding-search/expanding-search";
+import { UserMenu, type UserMenuItem, type ThemePreference, type UserStatus } from "@/components/ui/user-menu";
+import { ExpandingSearch, type ExpandingSearchItem } from "@/components/ui/expanding-search";
 
 export default function Header() {
   const router = useRouter();
   const business = useDashboardStore((s) => s.business);
   const currentUserRole = useDashboardStore((s) => s.currentUserRole);
   const userName = useDashboardStore((s) => s.userName);
-  const openTour = useDashboardStore((s) => s.openTour);
+  const clients = useDashboardStore((s) => s.clients);
+  const services = useDashboardStore((s) => s.services);
+
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<ThemePreference>("dark");
+  const [currentTheme, setCurrentTheme] = useState<ThemePreference>("dark");
+  const [userStatus, setUserStatus] = useState<UserStatus>("available");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("agendate_theme_mode") as ThemePreference | null;
     if (saved === "light") {
-      setThemeMode("light");
+      setCurrentTheme("light");
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
       document.documentElement.setAttribute("data-theme", "light");
-    } else if (saved === "dark") {
-      setThemeMode("dark");
+    } else if (saved === "system") {
+      setCurrentTheme("system");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", prefersDark);
+      document.documentElement.classList.toggle("light", !prefersDark);
+      document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+    } else {
+      setCurrentTheme("dark");
       document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
       document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      setThemeMode("system");
     }
   }, []);
 
-  const handleThemeChange = (nextTheme: ThemePreference) => {
-    setThemeMode(nextTheme);
-    if (nextTheme === "light") {
-      localStorage.setItem("agendate_theme_mode", "light");
+  function handleThemeChange(newTheme: ThemePreference) {
+    setCurrentTheme(newTheme);
+    if (newTheme === "light") {
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
       document.documentElement.setAttribute("data-theme", "light");
-    } else if (nextTheme === "dark") {
-      localStorage.setItem("agendate_theme_mode", "dark");
+      localStorage.setItem("agendate_theme_mode", "light");
+    } else if (newTheme === "dark") {
       document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
       document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("agendate_theme_mode", "dark");
     } else {
-      localStorage.removeItem("agendate_theme_mode");
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        document.documentElement.classList.add("dark");
-        document.documentElement.classList.remove("light");
-        document.documentElement.setAttribute("data-theme", "dark");
-      } else {
-        document.documentElement.classList.add("light");
-        document.documentElement.classList.remove("dark");
-        document.documentElement.setAttribute("data-theme", "light");
-      }
+      document.documentElement.classList.toggle("dark", prefersDark);
+      document.documentElement.classList.toggle("light", !prefersDark);
+      document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+      localStorage.setItem("agendate_theme_mode", "system");
     }
-  };
+  }
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -86,124 +89,70 @@ export default function Header() {
     window.location.href = "/login";
   }
 
-  // Quick navigation items for mobile ExpandingSearch
-  const searchItems: ExpandingSearchItem[] = useMemo(
-    () => [
-      {
-        id: "nav-agenda",
-        title: "Agenda Operativa",
-        meta: "Turnos y agenda en vivo",
-        group: "Accesos Rápidos",
-        icon: <CalendarDays size={14} />,
-        keywords: ["turnos", "hoy", "agenda", "citas"],
-      },
-      {
-        id: "nav-calendario",
-        title: "Calendario",
-        meta: "Vista semanal y mensual",
-        group: "Accesos Rápidos",
-        icon: <CalendarDays size={14} />,
-        keywords: ["calendario", "mes", "semana"],
-      },
-      {
-        id: "nav-caja",
-        title: "Caja & Finanzas",
-        meta: "Ingresos, cobros y balance",
-        group: "Finanzas",
-        icon: <Wallet size={14} />,
-        keywords: ["caja", "plata", "cobros", "arqueo"],
-      },
-      {
-        id: "nav-clientes",
-        title: "Clientes & CRM",
-        meta: "Directorio de clientes y WhatsApp",
-        group: "Clientes",
-        icon: <Users size={14} />,
-        keywords: ["clientes", "crm", "telefonos"],
-      },
-      {
-        id: "nav-servicios",
-        title: "Servicios & Precios",
-        meta: "Catálogo de servicios",
-        group: "Configuración",
-        icon: <Scissors size={14} />,
-        keywords: ["servicios", "precios", "cortes"],
-      },
-      {
-        id: "nav-equipo",
-        title: "Equipo & Staff",
-        meta: "Profesionales y comisiones",
-        group: "Equipo",
-        icon: <Users size={14} />,
-        keywords: ["staff", "equipo", "profesionales"],
-      },
-      {
-        id: "nav-configuracion",
-        title: "Configuración",
-        meta: "Horarios, logo y colores",
-        group: "Ajustes",
-        icon: <Settings size={14} />,
-        keywords: ["ajustes", "horarios", "perfil"],
-      },
-    ],
-    []
-  );
+  // Pre-configured searchable navigation and actions
+  const searchItems = useMemo<ExpandingSearchItem[]>(() => {
+    const baseItems: ExpandingSearchItem[] = [
+      { id: "nav-inicio", title: "Inicio / Dashboard", meta: "Resumen general de tu negocio", group: "Navegación", icon: <LayoutDashboard size={16} strokeWidth={1.75} />, href: "/dashboard" },
+      { id: "nav-agenda", title: "Agenda & Calendario", meta: "Turnos y citas programadas", group: "Operaciones", icon: <Calendar size={16} strokeWidth={1.75} />, href: "/dashboard/calendario" },
+      { id: "nav-nueva-reserva", title: "Nueva Reserva Rápida", meta: "Agendar nuevo turno para un cliente", group: "Operaciones", icon: <CalendarPlus size={16} strokeWidth={1.75} />, href: "/dashboard/nueva-reserva" },
+      { id: "nav-clientes", title: "Clientes & CRM", meta: "Directorio y fichas de clientes", group: "Relaciones", icon: <Users size={16} strokeWidth={1.75} />, href: "/dashboard/clientes" },
+      { id: "nav-caja", title: "Caja & Movimientos", meta: "Cobros, ingresos y gastos diarios", group: "Finanzas", icon: <Banknote size={16} strokeWidth={1.75} />, href: "/dashboard/caja" },
+      { id: "nav-whatsapp", title: "WhatsApp IA Asistente", meta: "Automatización y confirmación de citas", group: "Automatización", icon: <Bot size={16} strokeWidth={1.75} />, href: "/dashboard/whatsapp" },
+      { id: "nav-servicios", title: "Servicios & Precios", meta: "Catálogo de servicios ofrecidos", group: "Catálogo", icon: <Scissors size={16} strokeWidth={1.75} />, href: "/dashboard/servicios" },
+      { id: "nav-productos", title: "Productos & Stock", meta: "Inventario de productos físicos", group: "Catálogo", icon: <ShoppingBag size={16} strokeWidth={1.75} />, href: "/dashboard/productos" },
+      { id: "nav-equipo", title: "Equipo & Especialistas", meta: "Gestión de profesionales y horarios", group: "Personas", icon: <Users size={16} strokeWidth={1.75} />, href: "/dashboard/equipo" },
+      { id: "nav-estadisticas", title: "Métricas & Reportes", meta: "Ocupación, facturación y balance", group: "Finanzas", icon: <BarChart3 size={16} strokeWidth={1.75} />, href: "/dashboard/estadisticas" },
+      { id: "nav-apariencia", title: "Personalizar Apariencia", meta: "Colores de marca y temas visuales", group: "Diseño", icon: <Palette size={16} strokeWidth={1.75} />, href: "/dashboard/apariencia" },
+      { id: "nav-configuracion", title: "Configuración General", meta: "Horarios, datos del local y ajustes", group: "Ajustes", icon: <Settings size={16} strokeWidth={1.75} />, href: "/dashboard/configuracion" },
+    ];
 
-  const searchSuggestions: ExpandingSearchItem[] = useMemo(
-    () => [
-      {
-        id: "nav-agenda",
-        title: "Agenda de Hoy",
-        meta: "Ver citas de hoy",
-        group: "Sugeridos",
-        icon: <CalendarDays size={14} />,
-      },
-      {
-        id: "nav-caja",
-        title: "Caja en Vivo",
-        meta: "Cobros del día",
-        group: "Sugeridos",
-        icon: <Wallet size={14} />,
-      },
-      {
-        id: "nav-clientes",
-        title: "Directorio de Clientes",
-        meta: "Buscar clientes",
-        group: "Sugeridos",
-        icon: <Users size={14} />,
-      },
-    ],
-    []
-  );
+    const clientItems: ExpandingSearchItem[] = (clients || []).slice(0, 8).map((c: any) => ({
+      id: `client-${c.id}`,
+      title: c.name || "Cliente",
+      meta: c.phone || "Ficha de cliente",
+      group: "Clientes",
+      icon: <Users size={16} strokeWidth={1.75} />,
+      href: `/dashboard/clientes`,
+    }));
 
-  const handleSearchSelect = (item: ExpandingSearchItem) => {
-    switch (item.id) {
-      case "nav-agenda":
-        router.push("/dashboard");
-        break;
-      case "nav-calendario":
-        router.push("/dashboard/calendario");
-        break;
-      case "nav-caja":
-        router.push("/dashboard/caja");
-        break;
-      case "nav-clientes":
-        router.push("/dashboard/clientes");
-        break;
-      case "nav-servicios":
-        router.push("/dashboard/servicios");
-        break;
-      case "nav-equipo":
-        router.push("/dashboard/equipo");
-        break;
-      case "nav-configuracion":
-        router.push("/dashboard/configuracion");
-        break;
-      default:
-        router.push("/dashboard");
-        break;
-    }
-  };
+    const serviceItems: ExpandingSearchItem[] = (services || []).slice(0, 8).map((s: any) => ({
+      id: `svc-${s.id}`,
+      title: s.name || "Servicio",
+      meta: s.price ? `Gs. ${Number(s.price).toLocaleString("es-PY")}` : "Servicio",
+      group: "Servicios",
+      icon: <Scissors size={16} strokeWidth={1.75} />,
+      href: `/dashboard/servicios`,
+    }));
+
+    return [...baseItems, ...clientItems, ...serviceItems];
+  }, [clients, services]);
+
+  const searchSuggestions = useMemo<ExpandingSearchItem[]>(() => {
+    return [
+      searchItems[1], // Agenda & Calendario
+      searchItems[2], // Nueva Reserva Rápida
+      searchItems[3], // Clientes & CRM
+      searchItems[4], // Caja & Movimientos
+    ].filter(Boolean);
+  }, [searchItems]);
+
+  const userMenuItems = useMemo<UserMenuItem[]>(() => [
+    {
+      label: "Ajustes & Cuenta",
+      icon: <Settings size={16} strokeWidth={1.75} />,
+      onSelect: () => router.push("/dashboard/configuracion"),
+    },
+    {
+      label: "Ver Web Pública",
+      icon: <ExternalLink size={16} strokeWidth={1.75} />,
+      onSelect: () => window.open(`/${business.slug || "barberia"}/reservar`, "_blank"),
+    },
+    {
+      label: "Ayuda WhatsApp",
+      icon: <HelpCircle size={16} strokeWidth={1.75} />,
+      onSelect: () => window.open("https://wa.me/595981700800?text=Hola%20Soporte%20AgendatePY", "_blank"),
+    },
+  ], [router, business.slug]);
 
   return (
     <header className="w-full flex h-[58px] sm:h-[62px] items-center justify-between px-4 sm:px-6 select-none">
@@ -226,7 +175,7 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* On desktop, executive workspace eyebrow lockup */}
+        {/* On desktop, executive workspace eyebrow lockup from Glassy */}
         <div className="hidden lg:flex items-center gap-2.5">
           <span className="text-[10px] font-extrabold tracking-widest uppercase text-slate-500 dark:text-zinc-400 font-mono">
             {business.name || "AGENDATEPY"}
@@ -238,7 +187,7 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Public Booking Link (Desktop only) */}
         <Link
           data-tour="header-booking-link"
@@ -252,102 +201,62 @@ export default function Header() {
           <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
         </Link>
 
-        {/* Guided Tour Trigger (Desktop only) */}
-        <button
-          type="button"
-          onClick={() => openTour()}
-          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
-          aria-label="Guía interactiva"
-          title="Guía interactiva del sistema"
-        >
-          <Compass className="h-4 w-4" />
-        </button>
-
-        {/* Documentation / Manual Icon (Desktop only) */}
-        <Link
-          href="/dashboard/extras"
-          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          aria-label="Material y ayuda"
-          title="Material & Documentación"
-        >
-          <BookOpen className="h-4 w-4" />
-        </Link>
-
-        {/* Support Help Icon (Desktop only) */}
-        <a
-          href="https://wa.me/595981700800?text=Hola%20Soporte%20AgendatePY"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden sm:inline-flex rounded-full p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          aria-label="Soporte técnico"
-          title="Ayuda y Soporte"
-        >
-          <HelpCircle className="h-4 w-4" />
-        </a>
-
-        {/* Desktop Universal Search Button (⌘K) */}
-        <button
-          type="button"
-          onClick={() => setCommandPaletteOpen(true)}
-          className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-white/[0.05] hover:bg-white/80 dark:hover:bg-white/[0.1] px-2.5 sm:px-3 py-1.5 text-xs text-slate-500 dark:text-zinc-400 backdrop-blur-md transition cursor-pointer"
-          title="Búsqueda universal (⌘K)"
-        >
-          <Search className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-400" />
-          <span className="hidden md:inline">Buscar en tu espacio…</span>
-          <span className="md:hidden">Buscar…</span>
-          <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-white/10 text-slate-600 dark:text-zinc-300 ml-1">
-            ⌘K
-          </kbd>
-        </button>
-
-        {/* Mobile Expanding Search */}
-        <div className="inline-flex sm:hidden">
+        {/* Morphing Expanding Search (Desktop) */}
+        <div className="hidden sm:inline-flex items-center">
           <ExpandingSearch
-            label="Buscar…"
+            label="Buscar en tu espacio..."
+            placeholder="Buscar páginas, acciones, clientes…"
+            expandedWidth={340}
             items={searchItems}
             suggestions={searchSuggestions}
-            suggestionsLabel="Sugeridos"
-            onSelect={handleSearchSelect}
-            expandedWidth={220}
-            anchor="end"
+            suggestionsLabel="Accesos Rápidos"
+            onSelect={(item) => {
+              if (item.href) router.push(item.href);
+            }}
           />
         </div>
 
-        {/* User Menu (Bottom sheet on mobile < 640px, spring popover on desktop) */}
+        {/* Mobile search icon button */}
+        <button
+          type="button"
+          onClick={() => setCommandPaletteOpen(true)}
+          className="inline-flex sm:hidden p-2 rounded-full text-slate-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10 transition cursor-pointer"
+          aria-label="Buscar"
+          title="Búsqueda rápida"
+        >
+          <Search className="h-4 w-4" />
+        </button>
+
+        {/* Glassy Appearance Quick Launcher */}
+        <Link
+          href="/dashboard/apariencia"
+          className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs text-zinc-300 transition shrink-0"
+          title="Personalizar Apariencia & Colores"
+        >
+          <span
+            className="h-2 w-2 rounded-full shrink-0 shadow-[0_0_8px_var(--primary)]"
+            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+          />
+          <span className="hidden sm:inline text-[11px] font-medium text-zinc-300">Apariencia</span>
+        </Link>
+
+        {/* Morphing User Menu Button & Dropdown */}
         <UserMenu
           user={{
-            name: userName || "Usuario",
-            email: business.email || `${business.slug || "admin"}@agendate.py`,
-            plan: currentUserRole === "admin" ? "Admin" : "Staff",
-            avatarSrc: business.logoUrl || business.logo || undefined,
+            name: userName || "Marcos Benítez",
+            email: business.email || "administrador@agendate.py",
+            plan: currentUserRole === "admin" ? "ADMINISTRADOR" : "COLABORADOR",
+            initials: (userName || "M").charAt(0).toUpperCase(),
+            avatarSrc: (business.logoUrl || business.logo) || undefined,
           }}
-          status="available"
-          theme={themeMode}
+          status={userStatus}
+          onStatusChange={setUserStatus}
+          theme={currentTheme}
           onThemeChange={handleThemeChange}
-          items={[
-            {
-              label: "Configuración",
-              icon: <Settings size={15} strokeWidth={1.75} />,
-              keys: ["⌘", "S"],
-              onSelect: () => router.push("/dashboard/configuracion"),
-            },
-            {
-              label: "Portal Público",
-              icon: <ExternalLink size={15} strokeWidth={1.75} />,
-              onSelect: () => window.open(`/${business.slug || "barberia"}/reservar`, "_blank"),
-            },
-            {
-              label: "Guía Interactiva",
-              icon: <Compass size={15} strokeWidth={1.75} />,
-              onSelect: () => openTour(),
-            },
-            {
-              label: "Ayuda WhatsApp",
-              icon: <HelpCircle size={15} strokeWidth={1.75} />,
-              onSelect: () => window.open("https://wa.me/595981700800?text=Hola%20Soporte%20AgendatePY", "_blank"),
-            },
-          ]}
+          showTheme={true}
+          items={userMenuItems}
           onSignOut={handleLogout}
+          align="end"
         />
       </div>
 

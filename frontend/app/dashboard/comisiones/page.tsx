@@ -485,7 +485,7 @@ export default function ComisionesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-20">
+    <div className="w-full space-y-6 pb-20">
       {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="comisiones-header"

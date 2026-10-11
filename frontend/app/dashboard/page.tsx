@@ -583,7 +583,7 @@ export default function DashboardHomePage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               <AnimatedValue value={formatGs(revenueToday)} />
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -612,7 +612,7 @@ export default function DashboardHomePage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               {appointmentsToday.length} <span className="text-sm font-semibold text-slate-400">turnos</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -627,19 +627,18 @@ export default function DashboardHomePage() {
           </div>
         </GlassTiltCard>
 
-        {/* KPI 3: Ocupación de Sillas con Morphing Orb */}
+        {/* KPI 3: Ocupación de Sillas */}
         <GlassTiltCard className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Ocupación de Sillas
             </span>
-            <MorphingOrb
-              size="sm"
-              value={`${occupancyRate}%`}
-            />
+            <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center shadow-2xs">
+              <Activity className="h-4 w-4" />
+            </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               {occupancyRate}%
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -682,7 +681,7 @@ export default function DashboardHomePage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               {attendanceRate}%
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -878,7 +877,7 @@ export default function DashboardHomePage() {
                                 {service?.name || "Servicio"}
                               </span>
                               <span>•</span>
-                              <span className="font-mono font-semibold text-slate-900 dark:text-slate-100 shrink-0">
+                              <span className="font-semibold text-slate-900 dark:text-slate-100 shrink-0 tabular-nums">
                                 {formatGs(service?.price ?? 80000)}
                               </span>
                               {assignedStaff && (
@@ -1016,7 +1015,7 @@ export default function DashboardHomePage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Monto:</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         {formatGs(services.find((s) => s.id === selectedAppointment.serviceId)?.price ?? 80000)}
                       </span>
                     </div>
@@ -1064,7 +1063,7 @@ export default function DashboardHomePage() {
                         Próximo Turno
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 tabular-nums">
                       {formatInTimeZone(nextUpcomingAppointment.start, business.timezone || "America/Asuncion", "HH:mm 'hs'")}
                     </span>
                   </div>
@@ -1079,7 +1078,7 @@ export default function DashboardHomePage() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-mono font-bold text-slate-900 dark:text-white">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
                         {formatGs(services.find((s) => s.id === nextUpcomingAppointment.serviceId)?.price ?? 80000)}
                       </p>
                       {staff.find((st) => st.id === nextUpcomingAppointment.staffId) && (
@@ -1157,22 +1156,6 @@ export default function DashboardHomePage() {
                 </div>
               </div>
             </div>
-
-            {/* Glassy Orb-Stats (Catalogo Elements) */}
-            <div className="orb-stats mt-3.5 pt-3 border-t border-slate-100 dark:border-white/10 flex justify-around text-center">
-              <div>
-                <b className="text-xs font-bold text-slate-900 dark:text-white">{appointmentsToday.length}</b>
-                <small className="text-[9px] text-slate-400 block">Reservas</small>
-              </div>
-              <div>
-                <b className="text-xs font-bold text-slate-900 dark:text-white">{activeStaffList.length}</b>
-                <small className="text-[9px] text-slate-400 block">Equipo</small>
-              </div>
-              <div>
-                <b className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">{confirmedToday.length}</b>
-                <small className="text-[9px] text-slate-400 block">Atendidos</small>
-              </div>
-            </div>
           </GlassTiltCard>
 
           {/* Trayectoria Semanal Mini Bar Chart */}
@@ -1196,14 +1179,14 @@ export default function DashboardHomePage() {
             <div className="mt-3">
               <div className="flex items-baseline justify-between">
                 <div>
-                  <span className="text-xl font-black font-mono text-slate-900 dark:text-white tracking-tight">
+                  <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
                     {formatGs(weeklySnapshot.reduce((sum, d) => sum + d.amount, 0))}
                   </span>
                   <span className="text-[11px] text-slate-400 block mt-0.5">
                     Promedio diario: {formatGs(averageWeeklyAmount)}
                   </span>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-mono">
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full tabular-nums">
                   7 días
                 </span>
               </div>
@@ -1215,7 +1198,7 @@ export default function DashboardHomePage() {
                   return (
                     <div key={d.day} className="flex flex-col items-center gap-1.5 h-full justify-end group/bar relative">
                       {/* Tooltip on hover */}
-                      <div className="absolute -top-7 opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] font-mono px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-10">
+                      <div className="absolute -top-7 opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] tabular-nums px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-10">
                         {formatGs(d.amount)}
                       </div>
                       <div

@@ -103,12 +103,12 @@ export default function DashboardShell({
       </div>
 
       {/* 3. Viewport Desktop: Workspace Flotante con Rail Glass Estático + Burbuja Header Estática + App Shell Envolvente */}
-      <div className="relative z-10 hidden lg:flex glass-workspace pl-[94px] pr-5 py-[18px] flex-col gap-3.5">
+      <div className="relative z-10 hidden lg:flex glass-workspace w-full pl-[98px] pr-4.5 sm:pr-5 py-[18px] flex-col gap-3.5">
         <Sidebar variant="rail" />
         <div className="glass-header-bubble w-full shrink-0">
           <Header />
         </div>
-        <div className="glass-app-shell flex-1 min-w-0">
+        <div className="glass-app-shell flex-1 min-w-0 w-full">
           <main className="main-content flex-1 w-full max-w-full min-w-0 p-5 lg:p-7 overflow-x-clip">
             {children}
           </main>

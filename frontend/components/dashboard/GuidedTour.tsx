@@ -1627,11 +1627,11 @@ export default function GuidedTour() {
             setCurrentStepIndex(0);
             openTour(detectedSectionKey);
           }}
-          className="hidden sm:flex fixed bottom-5 right-5 z-40 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-300 shadow-lg backdrop-blur hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
-          title="Abrir guía paso a paso y tutoriales de esta sección"
+          className="hidden sm:flex fixed bottom-5 right-5 z-40 h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 shadow-lg backdrop-blur hover:scale-105 active:scale-95 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+          title="Guía interactiva del sistema"
+          aria-label="Guía interactiva del sistema"
         >
-          <Compass className="h-3.5 w-3.5 text-slate-400" />
-          <span>Guía del sistema</span>
+          <Compass className="h-4 w-4 text-slate-500 dark:text-slate-400" />
         </button>
       ) : (
         <button

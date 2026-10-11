@@ -150,7 +150,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${jakarta.variable} ${coolvetica.variable} light h-full scroll-smooth`} data-theme="light" data-scroll-behavior="smooth">
+    <html lang="es" suppressHydrationWarning className={`${jakarta.variable} ${coolvetica.variable} dark h-full scroll-smooth`} data-theme="dark" data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -164,7 +164,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans antialiased bg-slate-50 text-slate-900 dark:bg-[#131115] dark:text-[#f3f0ed] overflow-x-hidden transition-colors duration-300">{children}</body>
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans antialiased bg-slate-50 text-slate-900 dark:bg-[#131115] dark:text-[#f3f0ed] overflow-x-hidden transition-colors duration-300">{children}</body>
     </html>
   );
 }

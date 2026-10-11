@@ -582,7 +582,7 @@ export default function BotWhatsAppPage() {
   const activeConnectedPhone = evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-20">
+    <div className="w-full space-y-6 pb-20">
       {/* ═══ CABECERA PRINCIPAL ═══ */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <div>

@@ -22,46 +22,37 @@ export const userStatuses: { value: UserStatus; label: string }[] = [
 const themes: { value: ThemePreference; label: string; icon: ReactNode }[] = [
   { value: "light", label: "Claro", icon: <Sun size={14} strokeWidth={1.75} aria-hidden="true" /> },
   { value: "dark", label: "Oscuro", icon: <Moon size={14} strokeWidth={1.75} aria-hidden="true" /> },
-  { value: "system", label: "Auto", icon: <Monitor size={14} strokeWidth={1.75} aria-hidden="true" /> },
+  { value: "system", label: "Sistema", icon: <Monitor size={14} strokeWidth={1.75} aria-hidden="true" /> },
 ];
 
-export interface UserMenuUser {
-  name: string;
-  email: string;
-  plan?: string;
-  avatarSrc?: string;
-  avatarSrcSet?: string;
-}
+export interface UserMenuUser { name: string; email: string; plan?: string; avatarSrc?: string; avatarSrcSet?: string; initials?: string }
+export interface UserMenuItem { label: string; icon?: ReactNode; keys?: string[]; onSelect?: () => void }
 
-export interface UserMenuItem {
-  label: string;
-  icon?: ReactNode;
-  keys?: string[];
-  onSelect?: () => void;
-}
-
-/**
- * The account menu behind a person's photo in an app's top bar. It holds a compact identity header, a short group of account
- * destinations, an inline theme switch, and sign out. On screens narrower than 640px it opens as a bottom sheet instead.
- */
 export interface UserMenuProps {
   user: UserMenuUser;
+  /** Presence status. Passing `status` or `onStatusChange` shows the presence dot and an inline status switch. */
   status?: UserStatus;
   defaultStatus?: UserStatus;
   onStatusChange?: (status: UserStatus) => void;
   theme?: ThemePreference;
   defaultTheme?: ThemePreference;
+  /** Reports the choice. Applying it to the page is up to the app. */
   onThemeChange?: (theme: ThemePreference) => void;
+  /** Shows the inline light, dark, and system switch. */
   showTheme?: boolean;
+  /** Account destinations with optional shortcut hints, such as ["⌘", ","]. Keep it to three or four. */
   items?: UserMenuItem[];
   onSignOut?: () => void | Promise<unknown>;
   signOutKeys?: string[];
   align?: "start" | "center" | "end";
+  /** Shows the name and a chevron beside the avatar from 640px up. */
   showName?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Renders the desktop panel in a portal on the body. Pass false to keep it inside the trigger's wrapper. */
   portal?: boolean;
+  /** The trigger button, for returning focus after the menu is swapped out. */
   ref?: Ref<HTMLButtonElement>;
   className?: string;
 }
@@ -71,51 +62,32 @@ type OpenReason = "first" | "last" | "pointer" | null;
 
 const compactQuery = "(max-width: 639px)";
 const subscribeCompact = (change: () => void) => {
+  if (typeof window === "undefined") return () => {};
   const query = window.matchMedia(compactQuery);
   query.addEventListener("change", change);
   return () => query.removeEventListener("change", change);
 };
 const subscribeNothing = () => () => {};
-const statusLabel = (status: UserStatus) => userStatuses.find((option) => option.value === status)?.label ?? status;
+const statusLabel = (status: UserStatus) => userStatuses.find(option => option.value === status)?.label ?? status;
 const enter = [...motionTokens.ease.enter] as [number, number, number, number];
 const standard = [...motionTokens.ease.standard] as [number, number, number, number];
 const exitEase = [0.4, 0, 1, 1] as [number, number, number, number];
 
 /** The panel grows out of the trigger on a critically damped spring; rows follow a beat later. Closing is a short fade. */
 const panelMotion: Variants = {
-  closed: { opacity: 0, scale: 0.94 },
-  open: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      type: "spring",
-      visualDuration: 0.3,
-      bounce: 0,
-      opacity: { duration: motionTokens.duration.fast, ease: enter },
-      delayChildren: 0.03,
-      staggerChildren: 0.016,
-    },
-  },
-  exit: { opacity: 0, scale: 0.97, transition: { duration: motionTokens.duration.instant, ease: exitEase } },
+  closed: { opacity: 0, scale: .94 },
+  open: { opacity: 1, scale: 1, transition: { type: "spring", visualDuration: .3, bounce: 0, opacity: { duration: motionTokens.duration.fast, ease: enter }, delayChildren: .03, staggerChildren: .016 } },
+  exit: { opacity: 0, scale: .97, transition: { duration: motionTokens.duration.instant, ease: exitEase } },
 };
-
 const sheetMotion: Variants = {
   closed: { y: "100%" },
-  open: { y: 0, transition: { ...motionTokens.spring.smooth, visualDuration: 0.36, delayChildren: 0.06, staggerChildren: 0.02 } },
-  exit: { y: "100%", transition: { duration: 0.22, ease: exitEase } },
+  open: { y: 0, transition: { ...motionTokens.spring.smooth, visualDuration: .36, delayChildren: .06, staggerChildren: .02 } },
+  exit: { y: "100%", transition: { duration: .22, ease: exitEase } },
 };
+const stillMotion: Variants = { closed: { opacity: 0 }, open: { opacity: 1, transition: { duration: motionTokens.duration.instant } }, exit: { opacity: 0, transition: { duration: motionTokens.duration.instant } } };
+const rowMotion: Variants = { closed: { opacity: 0, y: 3 }, open: { opacity: 1, y: 0, transition: { duration: .2, ease: enter } } };
 
-const stillMotion: Variants = {
-  closed: { opacity: 0 },
-  open: { opacity: 1, transition: { duration: motionTokens.duration.instant } },
-  exit: { opacity: 0, transition: { duration: motionTokens.duration.instant } },
-};
-
-const rowMotion: Variants = {
-  closed: { opacity: 0, y: 3 },
-  open: { opacity: 1, y: 0, transition: { duration: 0.2, ease: enter } },
-};
-
+/** A presence mark that morphs between statuses: the color crossfades while a hole opens for away and a bar slides in for busy. */
 export function PresenceDot({ status, className }: { status: UserStatus | "offline"; className?: string }) {
   return <span className={[styles.dot, className].filter(Boolean).join(" ")} data-status={status} aria-hidden="true" />;
 }
@@ -123,142 +95,66 @@ export function PresenceDot({ status, className }: { status: UserStatus | "offli
 function Portrait({ user }: { user: UserMenuUser }) {
   const [failed, setFailed] = useState<string>();
   if (!user.avatarSrc || failed === user.avatarSrc) {
-    const initials = user.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
+    const initials = user.initials || user.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("");
     return <span className={`${styles.portrait} ${styles.initials}`}>{initials}</span>;
   }
   return <img className={styles.portrait} src={user.avatarSrc} srcSet={user.avatarSrcSet} alt="" decoding="async" draggable={false} onError={() => setFailed(user.avatarSrc)} />;
 }
 
 function Face({ user, status, size }: { user: UserMenuUser; status?: UserStatus; size: "sm" | "md" }) {
-  return (
-    <span className={styles.face} data-size={size}>
-      <Portrait user={user} />
-      {status && <PresenceDot status={status} />}
-    </span>
-  );
+  return <span className={styles.face} data-size={size}><Portrait user={user} />{status && <PresenceDot status={status} />}</span>;
 }
 
+/** Changing text rises out of a small blur while the old text lifts away. */
 function Rise({ text, reduced }: { text: string; reduced: boolean }) {
-  return (
-    <AnimatePresence mode="popLayout" initial={false}>
-      <motion.span
-        key={text}
-        className={styles.rise}
-        initial={reduced ? { opacity: 0 } : { opacity: 0, y: "0.35em", filter: `blur(${motionTokens.blur.subtle}px)` }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        exit={
-          reduced
-            ? { opacity: 0, transition: { duration: 0 } }
-            : { opacity: 0, y: "-0.35em", filter: `blur(${motionTokens.blur.subtle}px)`, transition: { duration: motionTokens.duration.fast, ease: standard } }
-        }
-        transition={reduced ? { duration: 0 } : { duration: motionTokens.duration.standard, ease: enter }}
-      >
-        {text}
-      </motion.span>
-    </AnimatePresence>
-  );
+  return <AnimatePresence mode="popLayout" initial={false}>
+    <motion.span key={text} className={styles.rise} initial={reduced ? { opacity: 0 } : { opacity: 0, y: "0.35em", filter: `blur(${motionTokens.blur.subtle}px)` }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={reduced ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: "-0.35em", filter: `blur(${motionTokens.blur.subtle}px)`, transition: { duration: motionTokens.duration.fast, ease: standard } }}
+      transition={reduced ? { duration: 0 } : { duration: motionTokens.duration.standard, ease: enter }}>{text}</motion.span>
+  </AnimatePresence>;
 }
 
 function Keys({ keys }: { keys: string[] }) {
-  return (
-    <kbd className={styles.keys} aria-hidden="true">
-      {keys.map((key, index) => (
-        <kbd key={`${key}-${index}`} className={styles.key}>
-          {key}
-        </kbd>
-      ))}
-    </kbd>
-  );
+  return <kbd className={styles.keys} aria-hidden="true">{keys.map((key, index) => <kbd key={`${key}-${index}`} className={styles.key}>{key}</kbd>)}</kbd>;
 }
 
-function Segmented<T extends string>({
-  label,
-  icon,
-  value,
-  options,
-  onChange,
-  variants,
-}: {
-  label: string;
-  icon: ReactNode;
-  value: T;
-  options: { value: T; label: string; icon: ReactNode }[];
-  onChange: (value: T) => void;
-  variants?: Variants;
-}) {
-  const index = Math.max(0, options.findIndex((option) => option.value === value));
-  return (
-    <motion.div className={styles.row} data-stop="group" data-label={label} variants={variants}>
-      <span className={styles.icon} aria-hidden="true">{icon}</span>
-      <span className={styles.rowLabel} aria-hidden="true">{label}</span>
-      <div className={styles.segments} role="group" aria-label={label} style={{ "--index": index, "--count": options.length } as CSSProperties}>
-        <span className={styles.thumb} aria-hidden="true" />
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="menuitemradio"
-            tabIndex={-1}
-            aria-checked={option.value === value}
-            aria-label={option.label}
-            title={option.label}
-            className={styles.segment}
-            onClick={() => onChange(option.value)}
-          >
-            {option.icon}
-          </button>
-        ))}
-      </div>
-    </motion.div>
-  );
+/** A compact inline switch. It is one stop in the menu: up and down pass over it, left and right choose within it. */
+function Segmented<T extends string>({ label, icon, value, options, onChange, variants }: { label: string; icon: ReactNode; value: T; options: { value: T; label: string; icon: ReactNode }[]; onChange: (value: T) => void; variants?: Variants }) {
+  const index = Math.max(0, options.findIndex(option => option.value === value));
+  return <motion.div className={styles.row} data-stop="group" data-label={label} variants={variants}>
+    <span className={styles.icon} aria-hidden="true">{icon}</span>
+    <span className={styles.rowLabel} aria-hidden="true">{label}</span>
+    <div className={styles.segments} role="group" aria-label={label} style={{ "--index": index, "--count": options.length } as CSSProperties}>
+      <span className={styles.thumb} aria-hidden="true" />
+      {options.map(option => <button key={option.value} type="button" role="menuitemradio" tabIndex={-1} aria-checked={option.value === value} aria-label={option.label} title={option.label}
+        className={styles.segment} onClick={() => onChange(option.value)}>{option.icon}</button>)}
+    </div>
+  </motion.div>;
 }
 
 const getStops = (root: HTMLElement | null) => Array.from(root?.querySelectorAll<HTMLElement>("[data-stop]") ?? []);
-
 function focusStop(stop: HTMLElement | undefined) {
   if (!stop) return;
   const target = stop.dataset.stop === "group" ? stop.querySelector<HTMLElement>('[aria-checked="true"]') ?? stop.querySelector<HTMLElement>("button") : stop;
   target?.focus({ preventScroll: true });
 }
 
-export function UserMenu({
-  user,
-  status: statusProp,
-  defaultStatus = "available",
-  onStatusChange,
-  theme: themeProp,
-  defaultTheme = "system",
-  onThemeChange,
-  showTheme = true,
-  items = [],
-  onSignOut,
-  signOutKeys,
-  align = "end",
-  showName = false,
-  open: openProp,
-  defaultOpen = false,
-  onOpenChange,
-  portal = true,
-  ref,
-  className,
-}: UserMenuProps) {
+export function UserMenu({ user, status: statusProp, defaultStatus = "available", onStatusChange, theme: themeProp, defaultTheme = "system", onThemeChange, showTheme = true, items = [], onSignOut, signOutKeys, align = "end", showName = false, open: openProp, defaultOpen = false, onOpenChange, portal = true, ref, className }: UserMenuProps) {
   const id = useId();
   const menuId = `${id}-menu`;
   const triggerId = `${id}-trigger`;
   const reduced = !!useReducedMotion();
   const hydrated = useSyncExternalStore(subscribeNothing, () => true, () => false);
-  const compact = useSyncExternalStore(subscribeCompact, () => window.matchMedia(compactQuery).matches, () => false);
+  const compact = useSyncExternalStore(subscribeCompact, () => typeof window !== "undefined" && window.matchMedia(compactQuery).matches, () => false);
   const [innerOpen, setInnerOpen] = useState(defaultOpen);
   const [innerStatus, setInnerStatus] = useState(defaultStatus);
   const [innerTheme, setInnerTheme] = useState(defaultTheme);
   const [signingOut, setSigningOut] = useState(false);
   const [highlight, setHighlight] = useState<Highlight | null>(null);
-
   const open = openProp ?? innerOpen;
   const showStatus = statusProp !== undefined || onStatusChange !== undefined;
   const status = statusProp ?? innerStatus;
   const theme = themeProp ?? innerTheme;
-
   const rootRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -270,14 +166,7 @@ export function UserMenu({
   const sheet = hydrated && compact;
   const inline = !portal && !sheet;
 
-  useEffect(() => {
-    mounted.current = true;
-    const current = typed.current;
-    return () => {
-      mounted.current = false;
-      window.clearTimeout(current.timer);
-    };
-  }, []);
+  useEffect(() => { mounted.current = true; const current = typed.current; return () => { mounted.current = false; window.clearTimeout(current.timer); }; }, []);
 
   function setTriggerRef(node: HTMLButtonElement | null) {
     triggerRef.current = node;
@@ -292,7 +181,6 @@ export function UserMenu({
     setInnerOpen(next);
     onOpenChange?.(next);
   }
-
   function close(returnFocus: boolean) {
     setOpen(false);
     if (returnFocus) triggerRef.current?.focus({ preventScroll: true });
@@ -315,14 +203,11 @@ export function UserMenu({
   useLayoutEffect(() => {
     if (!open || sheet) return;
     const place = () => {
-      const panel = surfaceRef.current;
-      const trigger = triggerRef.current;
+      const panel = surfaceRef.current, trigger = triggerRef.current;
       if (!panel || !trigger) return;
       const rect = trigger.getBoundingClientRect();
-      const width = panel.offsetWidth;
-      const height = panel.offsetHeight;
-      let left: number;
-      let top: number;
+      const width = panel.offsetWidth, height = panel.offsetHeight;
+      let left: number, top: number;
       if (inline) {
         const root = rootRef.current?.getBoundingClientRect();
         left = (root?.left ?? 0) + panel.offsetLeft;
@@ -344,10 +229,7 @@ export function UserMenu({
     if (inline) return;
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
-    return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
-    };
+    return () => { window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true); };
   }, [open, sheet, inline, align]);
 
   useEffect(() => {
@@ -369,51 +251,32 @@ export function UserMenu({
     const root = document.documentElement;
     const previous = root.style.overflow;
     root.style.overflow = "hidden";
-    return () => {
-      root.style.overflow = previous;
-    };
+    return () => { root.style.overflow = previous; };
   }, [open, sheet]);
 
-  function changeStatus(value: UserStatus) {
-    setInnerStatus(value);
-    onStatusChange?.(value);
-  }
-
-  function changeTheme(value: ThemePreference) {
-    setInnerTheme(value);
-    onThemeChange?.(value);
-  }
+  function changeStatus(value: UserStatus) { setInnerStatus(value); onStatusChange?.(value); }
+  function changeTheme(value: ThemePreference) { setInnerTheme(value); onThemeChange?.(value); }
 
   function signOut() {
     if (pending.current) return;
     const result = onSignOut?.();
-    if (!result || typeof result.then !== "function") {
-      close(true);
-      return;
-    }
+    if (!result || typeof result.then !== "function") { close(true); return; }
     pending.current = true;
     setSigningOut(true);
-    const done = () => {
-      pending.current = false;
-      if (mounted.current) close(false);
-    };
+    const done = () => { pending.current = false; if (mounted.current) close(false); };
     result.then(done, done);
   }
 
   function onListFocus(event: FocusEvent<HTMLDivElement>) {
     const stop = event.target instanceof HTMLElement ? event.target.closest<HTMLElement>("[data-stop]") : null;
-    if (!stop) {
-      setHighlight(null);
-      return;
-    }
-    setHighlight((current) => ({ top: stop.offsetTop, height: stop.offsetHeight, tone: stop.dataset.tone, glide: current !== null }));
+    if (!stop) { setHighlight(null); return; }
+    setHighlight(current => ({ top: stop.offsetTop, height: stop.offsetHeight, tone: stop.dataset.tone, glide: current !== null }));
   }
 
   function onItemPointerMove(event: PointerEvent<HTMLElement>) {
     if (event.pointerType === "touch") return;
     if (document.activeElement !== event.currentTarget) event.currentTarget.focus({ preventScroll: true });
   }
-
   function onListPointerMove(event: PointerEvent<HTMLElement>) {
     if (event.pointerType === "touch" || !highlight) return;
     const group = event.target instanceof HTMLElement ? event.target.closest<HTMLElement>('[data-stop="group"]') : null;
@@ -421,7 +284,6 @@ export function UserMenu({
     setHighlight(null);
     surfaceRef.current?.focus({ preventScroll: true });
   }
-
   function onListPointerLeave(event: PointerEvent<HTMLElement>) {
     if (event.pointerType === "touch") return;
     setHighlight(null);
@@ -433,58 +295,39 @@ export function UserMenu({
     const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const current = active?.closest<HTMLElement>("[data-stop]") ?? null;
     const index = current ? stops.indexOf(current) : -1;
-    const step = (to: HTMLElement | undefined) => {
-      event.preventDefault();
-      focusStop(to);
-    };
-
+    const step = (to: HTMLElement | undefined) => { event.preventDefault(); focusStop(to); };
     switch (event.key) {
-      case "ArrowDown":
-        return step(stops[(index + 1) % stops.length]);
-      case "ArrowUp":
-        return step(stops[index <= 0 ? stops.length - 1 : index - 1]);
-      case "Home":
-        return step(stops[0]);
-      case "End":
-        return step(stops.at(-1));
-      case "Escape":
-      case "Tab":
-        event.preventDefault();
-        return close(true);
-      case "ArrowLeft":
-      case "ArrowRight": {
+      case "ArrowDown": return step(stops[(index + 1) % stops.length]);
+      case "ArrowUp": return step(stops[index <= 0 ? stops.length - 1 : index - 1]);
+      case "Home": return step(stops[0]);
+      case "End": return step(stops.at(-1));
+      case "Escape": case "Tab": event.preventDefault(); return close(true);
+      case "ArrowLeft": case "ArrowRight": {
         if (current?.dataset.stop !== "group") return;
         event.preventDefault();
         const segments = Array.from(current.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'));
-        const at = Math.max(0, segments.findIndex((segment) => segment.getAttribute("aria-checked") === "true"));
+        const at = Math.max(0, segments.findIndex(segment => segment.getAttribute("aria-checked") === "true"));
         const next = segments[(at + (event.key === "ArrowRight" ? 1 : -1) + segments.length) % segments.length];
         next?.focus({ preventScroll: true });
         next?.click();
         return;
       }
     }
-
     if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey || event.key === " ") return;
     const memory = typed.current;
     window.clearTimeout(memory.timer);
     memory.text += event.key.toLowerCase();
-    memory.timer = window.setTimeout(() => {
-      memory.text = "";
-    }, 500);
+    memory.timer = window.setTimeout(() => { memory.text = ""; }, 500);
     const ordered = [...stops.slice(index + 1), ...stops.slice(0, index + 1)];
     const search = memory.text.length > 1 && current?.dataset.label?.toLowerCase().startsWith(memory.text) ? [current] : ordered;
-    const match = search.find((stop) => stop.dataset.label?.toLowerCase().startsWith(memory.text));
+    const match = search.find(stop => stop.dataset.label?.toLowerCase().startsWith(memory.text));
     if (match) step(match);
   }
 
   function onTriggerClick(event: MouseEvent<HTMLButtonElement>) {
-    if (open) {
-      close(false);
-      return;
-    }
+    if (open) { close(false); return; }
     setOpen(true, event.detail === 0 ? "first" : "pointer");
   }
-
   function onTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
@@ -499,206 +342,70 @@ export function UserMenu({
   const row = reduced ? undefined : rowMotion;
   const menuProps = { id: menuId, role: "menu", "aria-labelledby": triggerId, tabIndex: -1, onKeyDown };
 
-  const content = (
-    <>
-      <motion.div className={styles.header} variants={row}>
-        <Face user={user} status={showStatus ? status : undefined} size="md" />
-        <div className={styles.identity}>
-          <div className={styles.nameRow}>
-            <span className={styles.name}>{user.name}</span>
-            {user.plan && <span className={styles.plan}>{user.plan}</span>}
-          </div>
-          <span className={styles.email} title={user.email}>
-            {user.email}
-          </span>
-        </div>
-      </motion.div>
-      <div
-        ref={listRef}
-        className={styles.list}
-        onFocus={onListFocus}
-        onPointerMove={onListPointerMove}
-        onPointerLeave={onListPointerLeave}
-      >
-        <motion.span
-          className={styles.highlight}
-          data-tone={highlight?.tone}
-          aria-hidden="true"
-          initial={false}
-          animate={highlight ? { y: highlight.top, height: highlight.height, opacity: 1 } : { opacity: 0 }}
-          transition={{ default: glide, opacity: { duration: reduced ? 0 : motionTokens.duration.instant } }}
-        />
-        {items.length > 0 && (
-          <>
-            <div className={styles.separator} role="separator" />
-            {items.map((item) => (
-              <motion.button
-                key={item.label}
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className={styles.item}
-                data-stop="item"
-                data-label={item.label}
-                variants={row}
-                onPointerMove={onItemPointerMove}
-                onClick={() => {
-                  close(true);
-                  item.onSelect?.();
-                }}
-              >
-                <span className={styles.icon} aria-hidden="true">
-                  {item.icon}
-                </span>
-                <span className={styles.itemLabel}>{item.label}</span>
-                {item.keys && <Keys keys={item.keys} />}
-              </motion.button>
-            ))}
-          </>
-        )}
-        {(showTheme || showStatus) && (
-          <>
-            <div className={styles.separator} role="separator" />
-            {showStatus && (
-              <Segmented
-                label="Estado"
-                icon={<PresenceDot status={status} />}
-                value={status}
-                onChange={changeStatus}
-                options={userStatuses.map((option) => ({ ...option, icon: <PresenceDot status={option.value} /> }))}
-                variants={row}
-              />
-            )}
-            {showTheme && (
-              <Segmented
-                label="Tema"
-                icon={<SunMoon size={16} strokeWidth={1.75} />}
-                value={theme}
-                onChange={changeTheme}
-                options={themes}
-                variants={row}
-              />
-            )}
-          </>
-        )}
-        <div className={styles.separator} role="separator" />
-        <motion.button
-          type="button"
-          role="menuitem"
-          tabIndex={-1}
-          className={styles.item}
-          data-stop="item"
-          data-tone="danger"
-          data-label="Cerrar sesión"
-          variants={row}
-          aria-busy={signingOut || undefined}
-          onPointerMove={onItemPointerMove}
-          onClick={signOut}
-        >
-          <span className={styles.icon} aria-hidden="true">
-            {signingOut ? <LoaderCircle className={styles.spinner} size={16} strokeWidth={1.75} /> : <LogOut size={16} strokeWidth={1.75} />}
-          </span>
-          <span className={styles.itemLabel}>
-            <Rise text={signingOut ? "Cerrando sesión…" : "Cerrar sesión"} reduced={reduced} />
-          </span>
-          {signOutKeys && <Keys keys={signOutKeys} />}
-        </motion.button>
+  const content = <>
+    <motion.div className={styles.header} variants={row}>
+      <Face user={user} status={showStatus ? status : undefined} size="md" />
+      <div className={styles.identity}>
+        <div className={styles.nameRow}><span className={styles.name}>{user.name}</span>{user.plan && <span className={styles.plan}>{user.plan}</span>}</div>
+        <span className={styles.email} title={user.email}>{user.email}</span>
       </div>
-    </>
-  );
+    </motion.div>
+    <div ref={listRef} className={styles.list} onFocus={onListFocus} onPointerMove={onListPointerMove} onPointerLeave={onListPointerLeave}>
+      <motion.span className={styles.highlight} data-tone={highlight?.tone} aria-hidden="true" initial={false}
+        animate={highlight ? { y: highlight.top, height: highlight.height, opacity: 1 } : { opacity: 0 }}
+        transition={{ default: glide, opacity: { duration: reduced ? 0 : motionTokens.duration.instant } }} />
+      {items.length > 0 && <>
+        <div className={styles.separator} role="separator" />
+        {items.map(item => <motion.button key={item.label} type="button" role="menuitem" tabIndex={-1} className={styles.item} data-stop="item" data-label={item.label} variants={row}
+          onPointerMove={onItemPointerMove} onClick={() => { close(true); item.onSelect?.(); }}>
+          <span className={styles.icon} aria-hidden="true">{item.icon}</span>
+          <span className={styles.itemLabel}>{item.label}</span>
+          {item.keys && <Keys keys={item.keys} />}
+        </motion.button>)}
+      </>}
+      {(showTheme || showStatus) && <>
+        <div className={styles.separator} role="separator" />
+        {showStatus && <Segmented label="Estado" icon={<PresenceDot status={status} />} value={status} onChange={changeStatus}
+          options={userStatuses.map(option => ({ ...option, icon: <PresenceDot status={option.value} /> }))} variants={row} />}
+        {showTheme && <Segmented label="Tema" icon={<SunMoon size={16} strokeWidth={1.75} />} value={theme} onChange={changeTheme} options={themes} variants={row} />}
+      </>}
+      <div className={styles.separator} role="separator" />
+      <motion.button type="button" role="menuitem" tabIndex={-1} className={styles.item} data-stop="item" data-tone="danger" data-label="Cerrar Sesión" variants={row}
+        aria-busy={signingOut || undefined} onPointerMove={onItemPointerMove} onClick={signOut}>
+        <span className={styles.icon} aria-hidden="true">{signingOut ? <LoaderCircle className={styles.spinner} size={16} strokeWidth={1.75} /> : <LogOut size={16} strokeWidth={1.75} />}</span>
+        <span className={styles.itemLabel}><Rise text={signingOut ? "Cerrando sesión..." : "Cerrar Sesión"} reduced={reduced} /></span>
+        {signOutKeys && <Keys keys={signOutKeys} />}
+      </motion.button>
+    </div>
+  </>;
 
-  const panel = (
-    <AnimatePresence>
-      {open && !sheet && (
-        <motion.div
-          key="panel"
-          ref={surfaceRef}
-          {...menuProps}
-          className={styles.panel}
-          data-inline={inline || undefined}
-          data-align={align}
-          variants={reduced ? stillMotion : panelMotion}
-          initial="closed"
-          animate="open"
-          exit="exit"
-        >
-          {content}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+  const panel = <AnimatePresence>
+    {open && !sheet && <motion.div key="panel" ref={surfaceRef} {...menuProps} className={styles.panel} data-inline={inline || undefined} data-align={align}
+      variants={reduced ? stillMotion : panelMotion} initial="closed" animate="open" exit="exit">
+      {content}
+    </motion.div>}
+  </AnimatePresence>;
 
-  const bottomSheet = (
-    <AnimatePresence>
-      {open && sheet && (
-        <motion.div
-          key="scrim"
-          className={styles.scrim}
-          aria-hidden="true"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0.1 : 0.2, ease: standard }}
-          onClick={() => close(true)}
-        />
-      )}
-      {open && sheet && (
-        <motion.div
-          key="sheet"
-          ref={surfaceRef}
-          {...menuProps}
-          className={`${styles.panel} ${styles.sheet}`}
-          aria-modal="true"
-          variants={reduced ? stillMotion : sheetMotion}
-          initial="closed"
-          animate="open"
-          exit="exit"
-          drag={reduced ? false : "y"}
-          dragConstraints={{ top: 0, bottom: 0 }}
-          dragElastic={{ top: 0.04, bottom: 0.9 }}
-          dragMomentum={false}
-          onDragEnd={onDragEnd}
-        >
-          <span className={styles.handle} aria-hidden="true" />
-          {content}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+  const bottomSheet = <AnimatePresence>
+    {open && sheet && <motion.div key="scrim" className={styles.scrim} aria-hidden="true" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: reduced ? .1 : .2, ease: standard }} onClick={() => close(true)} />}
+    {open && sheet && <motion.div key="sheet" ref={surfaceRef} {...menuProps} className={`${styles.panel} ${styles.sheet}`} aria-modal="true"
+      variants={reduced ? stillMotion : sheetMotion} initial="closed" animate="open" exit="exit"
+      drag={reduced ? false : "y"} dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: .04, bottom: .9 }} dragMomentum={false} onDragEnd={onDragEnd}>
+      <span className={styles.handle} aria-hidden="true" />
+      {content}
+    </motion.div>}
+  </AnimatePresence>;
 
-  return (
-    <span ref={rootRef} className={styles.root}>
-      <button
-        ref={setTriggerRef}
-        id={triggerId}
-        type="button"
-        className={[styles.trigger, className].filter(Boolean).join(" ")}
-        data-state={open ? "open" : "closed"}
-        data-name={showName || undefined}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        aria-label={`Menú de cuenta, ${user.name}${showStatus ? `, ${statusLabel(status)}` : ""}`}
-        onClick={onTriggerClick}
-        onKeyDown={onTriggerKeyDown}
-      >
-        <Face user={user} status={showStatus ? status : undefined} size="sm" />
-        {showName && (
-          <>
-            <span className={styles.triggerName}>{user.name}</span>
-            <ChevronDown className={styles.chevron} size={16} strokeWidth={1.75} aria-hidden="true" />
-          </>
-        )}
-      </button>
-      {sheet
-        ? createPortal(bottomSheet, document.body)
-        : inline
-        ? panel
-        : hydrated
-        ? createPortal(panel, document.body)
-        : null}
-    </span>
-  );
+  return <span ref={rootRef} className={styles.root}>
+    <button ref={setTriggerRef} id={triggerId} type="button" className={[styles.trigger, className].filter(Boolean).join(" ")} data-state={open ? "open" : "closed"} data-name={showName || undefined}
+      aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} aria-label={`Account menu, ${user.name}${showStatus ? `, ${statusLabel(status)}` : ""}`}
+      onClick={onTriggerClick} onKeyDown={onTriggerKeyDown}>
+      <Face user={user} status={showStatus ? status : undefined} size="sm" />
+      {showName && <><span className={styles.triggerName}>{user.name}</span><ChevronDown className={styles.chevron} size={16} strokeWidth={1.75} aria-hidden="true" /></>}
+    </button>
+    {sheet && typeof document !== "undefined" ? createPortal(bottomSheet, document.body) : inline ? panel : hydrated && typeof document !== "undefined" ? createPortal(panel, document.body) : null}
+  </span>;
 }
 
 export default UserMenu;
