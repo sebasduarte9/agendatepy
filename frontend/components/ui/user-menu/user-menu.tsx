@@ -5,7 +5,7 @@ import type { CSSProperties, FocusEvent, KeyboardEvent, MouseEvent, PointerEvent
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { PanInfo, Transition, Variants } from "motion/react";
-import { ChevronDown, LoaderCircle, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react";
+import { ChevronDown, LoaderCircle, LogOut, Moon, Sun, SunMoon } from "lucide-react";
 import { motionTokens } from "@/lib/motion-tokens";
 import styles from "./user-menu.module.css";
 
@@ -22,7 +22,6 @@ export const userStatuses: { value: UserStatus; label: string }[] = [
 const themes: { value: ThemePreference; label: string; icon: ReactNode }[] = [
   { value: "light", label: "Claro", icon: <Sun size={14} strokeWidth={1.75} aria-hidden="true" /> },
   { value: "dark", label: "Oscuro", icon: <Moon size={14} strokeWidth={1.75} aria-hidden="true" /> },
-  { value: "system", label: "Sistema", icon: <Monitor size={14} strokeWidth={1.75} aria-hidden="true" /> },
 ];
 
 export interface UserMenuUser { name: string; email: string; plan?: string; avatarSrc?: string; avatarSrcSet?: string; initials?: string }
@@ -139,7 +138,7 @@ function focusStop(stop: HTMLElement | undefined) {
   target?.focus({ preventScroll: true });
 }
 
-export function UserMenu({ user, status: statusProp, defaultStatus = "available", onStatusChange, theme: themeProp, defaultTheme = "system", onThemeChange, showTheme = true, items = [], onSignOut, signOutKeys, align = "end", showName = false, open: openProp, defaultOpen = false, onOpenChange, portal = true, ref, className }: UserMenuProps) {
+export function UserMenu({ user, status: statusProp, defaultStatus = "available", onStatusChange, theme: themeProp, defaultTheme = "dark", onThemeChange, showTheme = true, items = [], onSignOut, signOutKeys, align = "end", showName = false, open: openProp, defaultOpen = false, onOpenChange, portal = true, ref, className }: UserMenuProps) {
   const id = useId();
   const menuId = `${id}-menu`;
   const triggerId = `${id}-trigger`;
@@ -399,29 +398,17 @@ export function UserMenu({ user, status: statusProp, defaultStatus = "available"
             ))}
           </>
         )}
-        {((showTheme) || (showStatus && !sheet)) && (
+        {showTheme && (
           <>
             <div className={styles.separator} role="separator" />
-            {showStatus && !sheet && (
-              <Segmented
-                label="Estado"
-                icon={<PresenceDot status={status} />}
-                value={status}
-                onChange={changeStatus}
-                options={userStatuses.map((option) => ({ ...option, icon: <PresenceDot status={option.value} /> }))}
-                variants={row}
-              />
-            )}
-            {showTheme && (
-              <Segmented
-                label="Tema"
-                icon={<SunMoon size={16} strokeWidth={1.75} />}
-                value={theme}
-                onChange={changeTheme}
-                options={sheet ? themes.filter((t) => t.value !== "system") : themes}
-                variants={row}
-              />
-            )}
+            <Segmented
+              label="Tema"
+              icon={<SunMoon size={16} strokeWidth={1.75} />}
+              value={theme}
+              onChange={changeTheme}
+              options={themes}
+              variants={row}
+            />
           </>
         )}
         <div className={styles.separator} role="separator" />

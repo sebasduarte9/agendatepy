@@ -23,7 +23,7 @@ import { useDashboardStore } from "@/store/useDashboardStore";
 import LiquidLogo from "@/components/ui/LiquidLogo";
 import { tenantHost } from "@/lib/tenant/public-url";
 import CommandPalette from "./CommandPalette";
-import { UserMenu, type UserMenuItem, type ThemePreference, type UserStatus } from "@/components/ui/user-menu";
+import { UserMenu, type UserMenuItem, type ThemePreference } from "@/components/ui/user-menu";
 import { ExpandingSearch, type ExpandingSearchItem } from "@/components/ui/expanding-search";
 
 export default function Header() {
@@ -35,8 +35,8 @@ export default function Header() {
   const services = useDashboardStore((s) => s.services);
 
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<ThemePreference>("dark");
-  const [userStatus, setUserStatus] = useState<UserStatus>("available");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
@@ -156,7 +156,7 @@ export default function Header() {
 
   return (
     <header className="w-full flex h-[58px] sm:h-[62px] items-center justify-between px-4 sm:px-6 select-none relative z-50">
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className={`flex items-center gap-2.5 min-w-0 transition-opacity duration-200 ${isSearchExpanded ? "opacity-0 pointer-events-none sm:opacity-100 sm:pointer-events-auto" : "opacity-100"}`}>
         {/* On mobile, show clean liquid brand lockup: [Liquid A Logo] + gendate.py */}
         <Link
           href="/dashboard"
@@ -201,8 +201,8 @@ export default function Header() {
           <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
         </Link>
 
-        {/* Morphing Expanding Search (Desktop) */}
-        <div className="hidden sm:inline-flex items-center">
+        {/* Morphing Expanding Search (Desktop & Mobile) */}
+        <div className="inline-flex items-center">
           <ExpandingSearch
             label="Buscar en tu espacio..."
             placeholder="Buscar páginas, acciones, clientes…"
@@ -210,35 +210,12 @@ export default function Header() {
             items={searchItems}
             suggestions={searchSuggestions}
             suggestionsLabel="Accesos Rápidos"
+            onExpandedChange={setIsSearchExpanded}
             onSelect={(item) => {
               if (item.href) router.push(item.href);
             }}
           />
         </div>
-
-        {/* Mobile search icon button */}
-        <button
-          type="button"
-          onClick={() => setCommandPaletteOpen(true)}
-          className="inline-flex sm:hidden p-2 rounded-full text-slate-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10 transition cursor-pointer"
-          aria-label="Buscar"
-          title="Búsqueda rápida"
-        >
-          <Search className="h-4 w-4" />
-        </button>
-
-        {/* Glassy Appearance Quick Launcher */}
-        <Link
-          href="/dashboard/apariencia"
-          className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs text-zinc-300 transition shrink-0"
-          title="Personalizar Apariencia & Colores"
-        >
-          <span
-            className="h-2 w-2 rounded-full shrink-0 shadow-[0_0_8px_var(--primary)]"
-            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-          />
-          <span className="hidden sm:inline text-[11px] font-medium text-zinc-300">Apariencia</span>
-        </Link>
 
         {/* Morphing User Menu Button & Dropdown */}
         <UserMenu
@@ -249,8 +226,6 @@ export default function Header() {
             initials: (userName || "M").charAt(0).toUpperCase(),
             avatarSrc: (business.logoUrl || business.logo) || undefined,
           }}
-          status={userStatus}
-          onStatusChange={setUserStatus}
           theme={currentTheme}
           onThemeChange={handleThemeChange}
           showTheme={true}

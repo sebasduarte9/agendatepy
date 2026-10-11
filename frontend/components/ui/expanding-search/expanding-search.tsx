@@ -157,6 +157,7 @@ function Listbox({ id, label, groups, query, activeIndex, optionId, reduced, key
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: .08 } }}
                 transition={{ opacity: { duration: motionTokens.duration.fast, ease: enter }, layout: motionTokens.spring.smooth }}
                 onPointerMove={() => { if (!active) { keyboard.current = false; onHover(position); } }}
+                onPointerDown={event => event.preventDefault()}
                 onMouseDown={event => event.preventDefault()}
                 onClick={() => onChoose(item)}>
                 {active && <motion.span className={styles.highlight} style={{ y: travel, opacity: fade }} aria-hidden="true" />}
@@ -201,7 +202,8 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
     if (!root || !shell) return;
     const measure = () => {
       const collapsed = shell.offsetHeight || FALLBACK_SIZE;
-      const maxAvailable = typeof window !== "undefined" ? Math.min(expandedWidth, window.innerWidth - 145) : expandedWidth;
+      const margin = typeof window !== "undefined" && window.innerWidth < 640 ? 76 : 145;
+      const maxAvailable = typeof window !== "undefined" ? Math.min(expandedWidth, window.innerWidth - margin) : expandedWidth;
       const full = Math.max(collapsed, maxAvailable);
       size.current = { collapsed, expanded: full };
       root.style.setProperty("--es-width", `${full}px`);
@@ -288,7 +290,7 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
   const activeItem = flat[activeIndex];
   const optionId = (item: ExpandingSearchItem) => `${id}-${mode}-${item.id}`;
   const listboxId = `${id}-${mode}-listbox`;
-  const panelOpen = expanded && focused && mode !== null;
+  const panelOpen = expanded && (focused || !query.trim() || mode !== null) && mode !== null;
   const announcement = !panelOpen ? "" : mode === "empty" ? `Sin resultados para “${trimmed}”` : mode === "results" ? `${flat.length} ${flat.length === 1 ? "resultado" : "resultados"}` : `${flat.length} ${suggestionsLabel.toLocaleLowerCase()}`;
 
   function choose(item: ExpandingSearchItem) {
@@ -325,15 +327,24 @@ export function ExpandingSearch({ label, items, suggestions = [], suggestionsLab
         transition={expanded ? { duration: reduced ? .15 : .2, ease: enter, delay: reduced ? 0 : .08 } : { duration: reduced ? .1 : .08, ease: standard }}
         onChange={event => { const next = event.target.value; setQuery(next); setActive(next.trim() ? 0 : -1); keyboard.current = false; }}
         onFocus={() => setFocused(true)}
-        onBlur={() => {
+        onBlur={(e) => {
           if (typeof document !== "undefined" && !document.hasFocus()) return;
+          const related = e.relatedTarget as HTMLElement | null;
+          if (related && rootRef.current?.contains(related)) return;
           setFocused(false);
-          if (open.current && !inputRef.current?.value.trim()) collapse(false);
+          if (open.current && !inputRef.current?.value.trim()) {
+            setTimeout(() => {
+              if (open.current && !inputRef.current?.value.trim() && !rootRef.current?.contains(document.activeElement)) {
+                collapse(false);
+              }
+            }, 150);
+          }
         }}
         onKeyDown={handleKeyDown} />
       <AnimatePresence initial={false}>
         {expanded && query && <motion.button key="clear" type="button" tabIndex={-1} className={styles.clear} aria-label="Limpiar búsqueda"
           onMouseDown={event => event.preventDefault()}
+          onPointerDown={event => event.preventDefault()}
           onClick={() => { setQuery(""); setActive(-1); inputRef.current?.focus({ preventScroll: true }); }}
           initial={clearHidden} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           exit={{ ...clearHidden, transition: { duration: reduced ? .1 : motionTokens.duration.instant, ease: standard } }}

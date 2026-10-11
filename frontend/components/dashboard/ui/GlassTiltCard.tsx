@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useRef, type MouseEvent, type ReactNode } from "react";
+import { useState, useRef, type MouseEvent, type ReactNode, type HTMLAttributes } from "react";
 
-interface GlassTiltCardProps {
+interface GlassTiltCardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   className?: string;
   glowColor?: string;
   maxTilt?: number;
-  onClick?: () => void;
 }
 
 export default function GlassTiltCard({
@@ -16,6 +15,8 @@ export default function GlassTiltCard({
   glowColor,
   maxTilt = 7,
   onClick,
+  style,
+  ...props
 }: GlassTiltCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState("perspective(850px) rotateX(0deg) rotateY(0deg)");
@@ -51,12 +52,14 @@ export default function GlassTiltCard({
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
       style={{
+        ...style,
         transform,
         transition: "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.2s ease",
       }}
       className={`glass-panel glass-tilt-card relative overflow-hidden rounded-2xl p-5 ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
+      {...props}
     >
       {/* Reflejo interactivo especular de luz que sigue al cursor */}
       <div

@@ -42,9 +42,7 @@ import {
 import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Card from "@/components/dashboard/ui/Card";
 import GlassTiltCard from "@/components/dashboard/ui/GlassTiltCard";
-import MorphingOrb from "@/components/dashboard/ui/MorphingOrb";
 import ActivationChecklist from "@/components/dashboard/ActivationChecklist";
 import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
@@ -589,7 +587,7 @@ export default function DashboardHomePage() {
       </div>
 
       {/* ═══ DESKTOP EXECUTIVE KPI STRIP (4 BALANCED COMMAND CARDS EN GLASS TILT 3D) ═══ */}
-      <div data-tour="kpi-cards" className="kpi-stagger rise-in rise-delay-1 hidden md:grid md:grid-cols-2 xl:grid-cols-4 gap-3.5">
+      <div data-tour="kpi-cards" className="kpi-stagger rise-in rise-delay-1 hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* KPI 1: Recaudación del Día */}
         <GlassTiltCard className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
@@ -719,7 +717,7 @@ export default function DashboardHomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
         {/* Left Column (2/3 width): Today's Agenda Feed */}
         <div data-tour="agenda-operativa" className="lg:col-span-2 space-y-4 w-full max-w-full min-w-0">
-          <Card className="w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+          <GlassTiltCard maxTilt={2} className="w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
             {/* Header with Title and Filtering Controls */}
             <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -981,7 +979,7 @@ export default function DashboardHomePage() {
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-          </Card>
+          </GlassTiltCard>
         </div>
 
         {/* Right Column (1/3 width): Live Spotlight, CRM Inbox, Weekly Trajectory & Quick Tools */}
@@ -996,7 +994,7 @@ export default function DashboardHomePage() {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.18 }}
               >
-                <Card className="border-emerald-500/40 dark:border-emerald-500/30 bg-gradient-to-b from-emerald-50/40 to-transparent dark:from-emerald-950/20 dark:to-transparent p-4 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+                <GlassTiltCard maxTilt={3.5} className="border-emerald-500/40 dark:border-emerald-500/30 bg-gradient-to-b from-emerald-50/40 to-transparent dark:from-emerald-950/20 dark:to-transparent p-4 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
                   <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2.5">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -1062,7 +1060,7 @@ export default function DashboardHomePage() {
                       <span>Ver Ficha Técnica y Fórmulas</span>
                     </button>
                   </div>
-                </Card>
+                </GlassTiltCard>
               </motion.div>
             ) : nextUpcomingAppointment ? (
               <motion.div
@@ -1072,7 +1070,7 @@ export default function DashboardHomePage() {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.18 }}
               >
-                <Card className="p-4 w-full max-w-full min-w-0 overflow-hidden shadow-2xs relative">
+                <GlassTiltCard maxTilt={3.5} className="p-4 w-full max-w-full min-w-0 overflow-hidden shadow-2xs relative">
                   <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-1.5">
                       <span className="relative flex h-2 w-2">
@@ -1128,58 +1126,13 @@ export default function DashboardHomePage() {
                       <ArrowRight className="h-3 w-3" />
                     </button>
                   </div>
-                </Card>
+                </GlassTiltCard>
               </motion.div>
             ) : null}
           </AnimatePresence>
 
-          {/* Asistente IA WhatsApp Live Glass Card con Morphing Orb (Oculto en Mobile, visible en Desktop) */}
-          <GlassTiltCard className="hidden md:block p-4 w-full max-w-full min-w-0 overflow-hidden shadow-2xs border-emerald-500/25 dark:border-emerald-500/20">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <Bot className="h-4 w-4 text-emerald-500 shrink-0" />
-                <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-                  Asistente IA WhatsApp
-                </h3>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              </div>
-              <Link
-                href="/dashboard/whatsapp"
-                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline shrink-0"
-              >
-                Panel Bot →
-              </Link>
-            </div>
-
-            <div className="mt-3.5 flex items-center gap-4">
-              <MorphingOrb
-                size="md"
-                label="ESTADO"
-                value="ONLINE"
-                sublabel="24/7 ACTIVO"
-              />
-              <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-xs font-bold text-slate-900 dark:text-white">
-                  Atención y Recordatorios
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Confirma citas, envía recordatorios automáticos y atiende preguntas de clientes al instante.
-                </p>
-                <div className="flex items-center gap-1.5 pt-1">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 inline-flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Atención Inteligente
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold border border-purple-500/20">
-                    Respuestas 24/7
-                  </span>
-                </div>
-              </div>
-            </div>
-          </GlassTiltCard>
-
           {/* Trayectoria Semanal Mini Bar Chart */}
-          <Card className="hidden md:block p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+          <GlassTiltCard maxTilt={3.5} className="hidden md:block p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2 min-w-0">
                 <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -1248,10 +1201,10 @@ export default function DashboardHomePage() {
                 })}
               </div>
             </div>
-          </Card>
+          </GlassTiltCard>
 
           {/* CRM Quick Inbox Card */}
-          <Card className="w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+          <GlassTiltCard maxTilt={3.5} className="w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2 min-w-0">
                 <MessagesSquare className="h-4 w-4 text-slate-500 shrink-0" />
@@ -1313,10 +1266,10 @@ export default function DashboardHomePage() {
                 })
               )}
             </div>
-          </Card>
+          </GlassTiltCard>
 
           {/* Quick Operations Deck (2x2 Grid for desktop ergonomics) */}
-          <Card className="p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+          <GlassTiltCard maxTilt={3.5} className="p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
                 Accesos Rápidos
@@ -1369,7 +1322,7 @@ export default function DashboardHomePage() {
                 <span className="text-[10px] text-slate-400 mt-0.5">Página pública</span>
               </Link>
             </div>
-          </Card>
+          </GlassTiltCard>
         </div>
       </div>
 
