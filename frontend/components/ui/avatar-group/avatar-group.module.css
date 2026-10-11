@@ -1,0 +1,110 @@
+.group {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  isolation: isolate;
+}
+
+.sm {
+  --avatar-size: 28px;
+  --avatar-overlap: -8px;
+}
+
+.md {
+  --avatar-size: 36px;
+  --avatar-overlap: -10px;
+}
+
+.lg {
+  --avatar-size: 44px;
+  --avatar-overlap: -12px;
+}
+
+.slot {
+  display: inline-flex;
+  position: relative;
+  margin-left: var(--avatar-overlap);
+  transition: transform 0.2s ease;
+  z-index: calc(10 - var(--index, 0));
+}
+
+.slot:first-child {
+  margin-left: 0;
+}
+
+.lift {
+  display: inline-flex;
+  position: relative;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  background-color: #ffffff;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, z-index 0s;
+  cursor: pointer;
+}
+
+:global(.dark) .lift {
+  border-color: #1e1b22;
+  background-color: #1e1b22;
+}
+
+.lift:hover {
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.16);
+  z-index: 50;
+}
+
+.avatar {
+  border-radius: 9999px;
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background-color: rgba(15, 23, 42, 0.9);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 60;
+}
+
+:global(.dark) .tip {
+  background-color: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+}
+
+.lift:hover .tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+:global(.dark) .overflow {
+  background: #27272a;
+  color: #cbd5e1;
+}
+
+.count {
+  display: inline-block;
+}

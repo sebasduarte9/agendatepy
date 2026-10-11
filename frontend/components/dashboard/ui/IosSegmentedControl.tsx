@@ -87,6 +87,8 @@ export default function IosSegmentedControl<T extends string = string>({
             aria-selected={isActive}
             data-active={isActive ? "true" : "false"}
             type="button"
+            tabIndex={-1}
+            onPointerDown={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
               e.preventDefault();

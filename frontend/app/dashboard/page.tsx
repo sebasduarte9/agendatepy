@@ -49,6 +49,7 @@ import ActivationChecklist from "@/components/dashboard/ActivationChecklist";
 import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
 import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
+import StaffAvatarSelector from "@/components/dashboard/StaffAvatarSelector";
 import { triggerHaptic } from "@/lib/haptics";
 import { formatGs, phoneWa } from "@/lib/dashboard-dates";
 import type { Appointment, Client } from "@/lib/dashboard-types";
@@ -746,58 +747,29 @@ export default function DashboardHomePage() {
                 </div>
               </div>
 
-              {/* Staff Filter Bar (Industry standard tactile chips) */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1">
-                <span className="text-[11px] font-bold text-slate-400 shrink-0">Filtrar:</span>
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setSelectedStaffFilter("all")}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer active:scale-95 ${
-                    selectedStaffFilter === "all"
-                      ? "text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                  style={selectedStaffFilter === "all" ? { backgroundColor: business.primaryColor || "#FF4F2B" } : undefined}
-                >
-                  <span>Todos</span>
-                  <span className="text-[10px] font-mono opacity-80">({appointmentsToday.length})</span>
-                </button>
-                {activeStaffList.map((st) => {
-                  const staffCount = appointmentsToday.filter((a) => a.staffId === st.id).length;
-                  const isSelected = selectedStaffFilter === st.id;
-                  return (
-                    <button
-                      key={st.id}
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => setSelectedStaffFilter(st.id)}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer active:scale-95 ${
-                        isSelected
-                          ? "text-white shadow-xs"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                      }`}
-                      style={isSelected ? { backgroundColor: business.primaryColor || "#FF4F2B" } : undefined}
-                    >
-                      <span
-                        className="h-4 w-4 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-2xs"
-                        style={{ backgroundColor: st.color || "#6366f1" }}
-                      >
-                        {st.name.slice(0, 1).toUpperCase()}
-                      </span>
-                      <span>{st.name}</span>
-                      {staffCount > 0 && (
-                        <span className="text-[10px] font-mono opacity-80">({staffCount})</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Staff Filter Bar with Adapted AvatarGroup */}
+              <StaffAvatarSelector
+                staffList={activeStaffList}
+                appointmentsToday={appointmentsToday}
+                selectedStaffFilter={selectedStaffFilter}
+                onSelectStaff={setSelectedStaffFilter}
+                primaryColor={business.primaryColor || "#FF4F2B"}
+                className="pt-2 border-t border-slate-100 dark:border-slate-800/80"
+              />
             </div>
 
-            {/* Appointment List / Timeline Feed (Wrapped in min-height to prevent layout jump) */}
-            <div className="min-h-[320px]">
-              {displayAppointments.length === 0 ? (
+            {/* Appointment List / Timeline Feed (Wrapped in rock-solid stable container to eliminate layout shift) */}
+            <div className="min-h-[460px] max-h-[580px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${filterTab}-${selectedStaffFilter}-${viewMode}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="h-full"
+                >
+                  {displayAppointments.length === 0 ? (
               <div className="py-14 text-center space-y-3">
                 <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
                   <CalendarDays className="h-6 w-6" />
@@ -973,7 +945,9 @@ export default function DashboardHomePage() {
                 })}
               </ul>
             )}
-            </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
             {/* Card Footer Link */}
             <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-2 flex items-center justify-between text-xs">
