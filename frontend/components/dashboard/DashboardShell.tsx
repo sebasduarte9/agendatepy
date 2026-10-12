@@ -121,7 +121,13 @@ export default function DashboardShell({
           <Header />
         </div>
         <div className="glass-app-shell min-h-0 flex-1 min-w-0 rounded-[22px]">
-          <main className="main-content min-h-0 flex-1 w-full max-w-full min-w-0 overflow-x-clip overflow-y-auto overscroll-contain p-3.5 sm:p-5">
+          <main
+            className={`main-content min-h-0 flex-1 w-full max-w-full min-w-0 overflow-x-clip overflow-y-auto overscroll-contain p-3.5 sm:p-5 ${
+              pathname?.startsWith("/dashboard/caja")
+                ? "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                : ""
+            }`}
+          >
             {children}
           </main>
         </div>

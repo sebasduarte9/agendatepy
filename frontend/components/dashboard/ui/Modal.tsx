@@ -11,20 +11,24 @@ export default function Modal({
   title,
   onClose,
   children,
+  footer,
   id,
   maxWidth = "max-w-lg",
   minHeight = "",
   className = "",
+  footerClassName = "",
   variant = "center",
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
+  footer?: ReactNode;
   id?: string;
   maxWidth?: string;
   minHeight?: string;
   className?: string;
+  footerClassName?: string;
   variant?: "center" | "side";
 }) {
   const [mounted, setMounted] = useState(false);
@@ -177,6 +181,14 @@ export default function Modal({
             <div className="overflow-y-auto overscroll-contain flex-1 min-h-0 px-5 sm:px-6 py-4 pb-6">
               {children}
             </div>
+
+            {footer && (
+              <div
+                className={`z-10 shrink-0 border-t border-slate-200/80 bg-white/95 px-5 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/95 sm:px-6 ${footerClassName}`}
+              >
+                {footer}
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

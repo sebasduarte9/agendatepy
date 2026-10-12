@@ -500,9 +500,17 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                                   : itemBgClass
                               }`}
                             >
-                              <div className="space-y-1.5 flex-1 min-w-0 pr-3">
+                              <div className="flex min-w-0 flex-1 items-center gap-3 pr-3">
+                                {item.imageUrl && (
+                                  <img
+                                    src={item.imageUrl}
+                                    alt=""
+                                    className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200/70 dark:ring-white/10"
+                                  />
+                                )}
+                                <div className="min-w-0 space-y-1.5">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="block font-bold text-sm sm:text-base text-slate-900 dark:text-white">{item.name}</span>
+                                  <span className="block max-w-full truncate font-bold text-sm sm:text-base text-slate-900 dark:text-white">{item.name}</span>
                                   {hasPromo && (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs">
                                       <Flame className="h-3 w-3" />
@@ -529,6 +537,12 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                                       <ShieldCheck className="h-3 w-3 text-emerald-500" /> Seña requerida
                                     </span>
                                   )}
+                                </div>
+                                {item.description && (
+                                  <p className={`line-clamp-2 text-[11px] leading-relaxed ${secondaryTextClass}`}>
+                                    {item.description}
+                                  </p>
+                                )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-3 shrink-0">

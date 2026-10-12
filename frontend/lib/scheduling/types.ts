@@ -30,6 +30,8 @@ export type PublicService = {
   durationMinutes: number;
   price: number;
   category?: string;
+  description?: string;
+  imageUrl?: string;
   hasPromo?: boolean;
   promoPrice?: number;
   promoBadge?: string;

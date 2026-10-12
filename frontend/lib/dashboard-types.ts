@@ -53,6 +53,7 @@ export type ServiceItem = {
   price: number;
   description: string;
   image: string;
+  imageUrl?: string;
   active?: boolean;
   staffIds?: string[]; // IDs de colaboradores que realizan este servicio
   // Promociones y Ofertas limitadas

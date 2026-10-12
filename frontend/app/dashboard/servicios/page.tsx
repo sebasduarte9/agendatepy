@@ -1,8 +1,6 @@
 "use client";
 
-import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
-
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Scissors,
@@ -18,7 +16,6 @@ import {
   Trash2,
   BadgePercent,
   Flame,
-  Layers,
   Eye,
   EyeOff,
   X,
@@ -27,15 +24,17 @@ import {
   Hourglass,
   Timer,
   ShieldCheck,
-  ExternalLink,
+  ImagePlus,
+  Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import StatCard from "@/components/dashboard/ui/StatCard";
 import GlassTiltCard from "@/components/dashboard/ui/GlassTiltCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { ServiceItem } from "@/lib/dashboard-types";
+import { compressClientImage } from "@/lib/media-compression";
 
 const INITIAL_CATEGORIES = [
   "Peluquería",
@@ -62,6 +61,7 @@ export default function ServiciosPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("Todos");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showCatalogCharts, setShowCatalogCharts] = useState(false);
 
   // Custom Categories State (persisted to PostgreSQL SQL via /api/services/categories)
   const [customCategories, setCustomCategories] = useState<string[]>(INITIAL_CATEGORIES);
@@ -75,12 +75,16 @@ export default function ServiciosPage() {
   // Service Modal state (Create / Edit general info)
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
+  const serviceCoverInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingServiceCover, setIsUploadingServiceCover] = useState(false);
+  const [isSavingService, setIsSavingService] = useState(false);
   const [serviceForm, setServiceForm] = useState({
     name: "",
     category: "Peluquería",
     durationMin: 45,
     price: 80000,
     description: "",
+    imageUrl: "",
     active: true,
     staffIds: [] as string[],
   });
@@ -150,6 +154,10 @@ export default function ServiciosPage() {
   // KPIs
   const activeStaffCount = activeStaff.length;
   const visibleServicesCount = services.filter((s) => s.active !== false).length;
+  const pausedServicesCount = services.length - visibleServicesCount;
+  const visibleServicesPercent = services.length
+    ? Math.round((visibleServicesCount / services.length) * 100)
+    : 0;
   const avgPrice =
     services.length > 0
       ? Math.round(services.reduce((sum, s) => sum + s.price, 0) / services.length)
@@ -158,6 +166,20 @@ export default function ServiciosPage() {
     services.length > 0
       ? Math.round(services.reduce((sum, s) => sum + s.durationMin, 0) / services.length)
       : 0;
+  const categoryStats = useMemo(
+    () =>
+      allCategories
+        .map((category) => ({
+          category,
+          count: services.filter(
+            (service) => service.category?.toLowerCase() === category.toLowerCase()
+          ).length,
+        }))
+        .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category))
+        .slice(0, 6),
+    [allCategories, services]
+  );
+  const maxCategoryCount = Math.max(1, ...categoryStats.map(({ count }) => count));
 
   // Handlers for Categories (Saved in PostgreSQL SQL)
   async function handleCreateCategory() {
@@ -234,6 +256,7 @@ export default function ServiciosPage() {
       durationMin: 40,
       price: 80000,
       description: "",
+      imageUrl: "",
       active: true,
       staffIds: defaultStaffIds,
     });
@@ -253,6 +276,7 @@ export default function ServiciosPage() {
       durationMin: s.durationMin,
       price: s.price,
       description: s.description,
+      imageUrl: s.imageUrl || "",
       active: s.active !== false,
       staffIds: initialStaffIds,
     });
@@ -261,6 +285,7 @@ export default function ServiciosPage() {
 
   async function handleSaveService(e: React.FormEvent) {
     e.preventDefault();
+    if (isSavingService) return;
     if (!serviceForm.name.trim()) {
       pushToast("error", "Ingresá el nombre del servicio.");
       return;
@@ -273,20 +298,62 @@ export default function ServiciosPage() {
       price: Number(serviceForm.price) || 0,
       description: serviceForm.description.trim(),
       image: editingService?.image || "scissors",
+      imageUrl: serviceForm.imageUrl,
       active: serviceForm.active,
       staffIds: serviceForm.staffIds,
     };
 
-    const saved = editingService
-      ? await updateService(editingService.id, payload)
-      : await addService(payload);
-    if (!saved) return;
+    setIsSavingService(true);
+    try {
+      const saved = editingService
+        ? await updateService(editingService.id, payload)
+        : await addService(payload);
+      if (!saved) return;
 
-    pushToast(
-      "success",
-      `Servicio "${serviceForm.name}" ${editingService ? "actualizado" : "creado"}`
-    );
-    setServiceModalOpen(false);
+      pushToast(
+        "success",
+        `Servicio "${serviceForm.name}" ${editingService ? "actualizado" : "creado"}`
+      );
+      setServiceModalOpen(false);
+    } catch (error) {
+      console.error("Error guardando servicio:", error);
+      pushToast("error", "No se pudo guardar el servicio. Revisá la conexión e intentá de nuevo.");
+    } finally {
+      setIsSavingService(false);
+    }
+  }
+
+  async function handleUploadServiceCover(file: File | null) {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      pushToast("error", "Elegí una imagen JPG, PNG o WEBP.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      pushToast("error", "La imagen debe pesar menos de 15 MB.");
+      return;
+    }
+
+    setIsUploadingServiceCover(true);
+    try {
+      const compressed = await compressClientImage(file, 1400, 900, 0.82);
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl: compressed.dataUrl, filename: file.name }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok || typeof result.url !== "string") {
+        throw new Error(result.error || "No se pudo subir la portada.");
+      }
+      setServiceForm((current) => ({ ...current, imageUrl: result.url }));
+      pushToast("success", "Portada optimizada y lista para el catálogo.");
+    } catch (error) {
+      console.error("Error subiendo portada del servicio:", error);
+      pushToast("error", error instanceof Error ? error.message : "No se pudo subir la portada.");
+    } finally {
+      setIsUploadingServiceCover(false);
+    }
   }
 
   // Toggle staff assignment
@@ -499,16 +566,6 @@ export default function ServiciosPage() {
           </button>
 
           <Link
-            href={`/${business.slug || "barberia"}/reservar`}
-            target="_blank"
-            className="inline-flex min-h-11 sm:min-h-0 items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
-            title="Ver cómo ven los clientes tus servicios"
-          >
-            <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-            <span>Ver Web</span>
-          </Link>
-
-          <Link
             href="/dashboard/equipo"
             className="inline-flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
             title="Administrar comisiones y colaboradores"
@@ -519,234 +576,147 @@ export default function ServiciosPage() {
         </div>
       </div>
 
-      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div data-tour="servicios-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl glass-panel shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-              Catálogo de Servicios
-            </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-                {visibleServicesCount}
+      {/* Catálogo: métricas y gráficos con los mismos datos en móvil y escritorio */}
+      <section
+        data-tour="servicios-kpis"
+        aria-labelledby="servicios-summary-title"
+        className="kpi-rise rounded-3xl glass-panel p-3.5 sm:p-5 lg:p-6 shadow-xs space-y-3.5 sm:space-y-5"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="servicios-summary-title" className="text-base font-semibold text-slate-900 dark:text-white">
+              Resumen del catálogo
+            </h2>
+            <p className="mt-1 hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
+              Visibilidad, duración y distribución de tus servicios.
+            </p>
+          </div>
+          <span className="shrink-0 text-right text-[11px] text-slate-500 dark:text-slate-400">
+            {services.length} servicios · {activeStaffCount} profesionales
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+          {[
+            { label: "Servicios", value: services.length.toLocaleString("es-PY"), note: "en el catálogo" },
+            { label: "Visibles online", value: `${visibleServicesCount} / ${services.length}`, note: `${visibleServicesPercent}% del catálogo` },
+            { label: "Duración promedio", value: `${avgDuration} min`, note: "por turno" },
+            { label: "Precio promedio", value: formatGs(avgPrice), note: "por servicio" },
+          ].map((metric) => (
+            <div key={metric.label} className="min-w-0 rounded-2xl glass-panel-subtle px-3.5 py-3 sm:px-4">
+              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{metric.label}</div>
+              <div className="mt-1 truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white tabular-nums sm:text-xl">
+                {metric.value}
+              </div>
+              <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">{metric.note}</div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          aria-expanded={showCatalogCharts}
+          onClick={() => setShowCatalogCharts((visible) => !visible)}
+          className="flex min-h-10 w-full items-center justify-between border-t border-slate-200/70 pt-3 text-left text-xs font-semibold text-slate-700 transition hover:text-primary dark:border-white/10 dark:text-slate-200"
+        >
+          <span>{showCatalogCharts ? "Ocultar gráficos" : "Ver gráficos y distribución"}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${showCatalogCharts ? "rotate-180" : ""}`} aria-hidden="true" />
+        </button>
+
+        {showCatalogCharts && (
+        <div className="grid gap-4 border-t border-slate-200/70 pt-4 dark:border-white/10 lg:grid-cols-2 lg:gap-6">
+          <section className="min-w-0" aria-labelledby="servicios-visibility-title">
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 id="servicios-visibility-title" className="text-sm font-semibold text-slate-900 dark:text-white">
+                Visibilidad del catálogo
+              </h3>
+              <span className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-300">
+                {visibleServicesPercent}% visible
               </span>
-              <span className="text-xs font-semibold text-zinc-400">visibles de {services.length}</span>
             </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleOpenCreateService}
-            className="inline-flex min-h-11 sm:min-h-0 items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer"
-            style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Servicio</span>
-          </button>
-        </div>
-
-        <div className="pt-2.5 border-t border-white/10 dark:border-white/10 grid grid-cols-2 sm:grid-cols-3 gap-2 text-center text-xs">
-          <div className="min-w-0 p-2 rounded-xl glass-panel-subtle">
-            <span className="text-[10px] text-zinc-400 block font-medium">Categorías</span>
-            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs">{allCategories.length}</span>
-          </div>
-          <div className="min-w-0 p-2 rounded-xl glass-panel-subtle">
-            <span className="text-[10px] text-zinc-400 block font-medium">Promos Flash</span>
-            <span className="font-extrabold text-amber-500 font-mono text-xs">{services.filter((s) => s.hasPromo).length}</span>
-          </div>
-          <div className="col-span-2 min-w-0 p-2 rounded-xl glass-panel-subtle sm:col-span-1">
-            <span className="text-[10px] text-zinc-400 block font-medium">Precio Medio</span>
-            <span className="block whitespace-nowrap font-extrabold text-slate-900 dark:text-white font-mono text-xs">{formatGs(avgPrice)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================= */}
-      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
-      {/* ========================================================= */}
-      <div data-tour="servicios-kpis" className="kpi-rise hidden md:block rounded-[28px] glass-panel p-4 sm:p-5 shadow-xs space-y-4">
-        {/* Inset Subheader */}
-        <div className="flex items-center justify-between gap-2 px-1">
-          <div className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-            Catálogo & Visibilidad <span className="text-primary text-xs">▰</span>
-          </div>
-        </div>
-
-        {/* Dual-Card Inset Telemetry */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left Card: Operational Gauges & Summary */}
-          <GlassTiltCard
-            variant="subtle"
-            maxTilt={3.5}
-            className="rounded-2xl p-5 shadow-xs flex flex-col justify-between"
-          >
-            {/* Top section: Mini status box + 2 circular gauges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
-              {/* Mini status box */}
-              <div className="rounded-xl glass-panel p-3.5 flex flex-col justify-between h-full min-h-[120px]">
-                <div>
-                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                    Promos Flash
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <span className="inline-block rounded-full bg-primary/20 text-primary border border-primary/30 px-3 py-1 text-[11px] font-semibold">
-                    {services.filter((s) => s.hasPromo).length} activas
-                  </span>
-                </div>
+            <div
+              className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10"
+              role="img"
+              aria-label={`${visibleServicesCount} servicios visibles y ${pausedServicesCount} pausados`}
+            >
+              <span
+                className="h-full rounded-full transition-[width] duration-500"
+                style={{
+                  width: `${visibleServicesPercent}%`,
+                  backgroundColor: business.primaryColor || "#FF4F2B",
+                }}
+              />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: business.primaryColor || "#FF4F2B" }} />
+                <span>Visibles</span>
+                <strong className="ml-auto tabular-nums text-slate-900 dark:text-white">{visibleServicesCount}</strong>
               </div>
-
-              {/* Circular Gauge 1: Visibilidad % */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * (services.length > 0 ? Math.round((visibleServicesCount / services.length) * 100) : 100)) / 100}
-                      strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #FF4F2B)" }}
-                      className="transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {services.length > 0 ? Math.round((visibleServicesCount / services.length) * 100) : 100}%
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Visibles
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {visibleServicesCount} activos
-                </div>
-              </div>
-
-              {/* Circular Gauge 2: Duración Promedio */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray="4 2"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.round((avgDuration / 90) * 100))) / 100}
-                      strokeLinecap="round"
-                      className="text-emerald-500 transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {avgDuration}m
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Duración
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  por turno
-                </div>
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-500" />
+                <span>Pausados</span>
+                <strong className="ml-auto tabular-nums text-slate-900 dark:text-white">{pausedServicesCount}</strong>
               </div>
             </div>
+          </section>
 
-            {/* Bottom Data Rows */}
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Total de servicios registrados</span>
-                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {services.length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Especialistas asignados</span>
-                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {activeStaffCount} profesionales
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                <span>Precio promedio por servicio</span>
-                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                  <AnimatedValue value={formatGs(avgPrice)} />
-                </span>
-              </div>
+          <section className="min-w-0" aria-labelledby="servicios-categories-title">
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 id="servicios-categories-title" className="text-sm font-semibold text-slate-900 dark:text-white">
+                Servicios por categoría
+              </h3>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                {allCategories.length} categorías
+              </span>
             </div>
-          </GlassTiltCard>
-
-          {/* Right Card: Categorías & Acceso rápido a Equipo */}
-          <GlassTiltCard
-            variant="subtle"
-            maxTilt={3.5}
-            className="rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-3"
-          >
-            <div>
-              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
-                Categorías Registradas ({allCategories.length})
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {allCategories.slice(0, 8).map((cat) => {
-                  const count = services.filter((s) => s.category?.toLowerCase() === cat.toLowerCase()).length;
-                  return (
-                    <span
-                      key={cat}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl glass-panel text-[11px] font-medium text-slate-700 dark:text-zinc-300"
-                    >
-                      <span>{cat}</span>
-                      <span className="font-bold text-slate-500 dark:text-zinc-500">· {count}</span>
+            {categoryStats.length > 0 ? (
+              <div className="mt-3 grid gap-x-5 gap-y-2.5 sm:grid-cols-2">
+                {categoryStats.map(({ category, count }) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setCategoryFilter(category)}
+                    aria-label={`Filtrar por ${category}: ${count} ${count === 1 ? "servicio" : "servicios"}`}
+                    className={`min-w-0 rounded-lg text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${
+                      categoryFilter === category ? "text-primary" : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 text-[11px]">
+                      <span className="min-w-0 flex-1 truncate">{category}</span>
+                      <span className="tabular-nums text-slate-500 dark:text-slate-400">{count}</span>
                     </span>
-                  );
-                })}
+                    <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
+                      <span
+                        className="block h-full rounded-full transition-[width] duration-500"
+                        style={{
+                          width: `${(count / maxCategoryCount) * 100}%`,
+                          backgroundColor: business.primaryColor || "#FF4F2B",
+                        }}
+                      />
+                    </span>
+                  </button>
+                ))}
               </div>
-            </div>
-
-            {/* Bottom Team notice */}
-            <div className="border-t border-slate-100 dark:border-white/10 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div className="text-[11px] text-slate-600 dark:text-zinc-400">
-                ¿Querés ajustar horarios y comisiones individuales?
-              </div>
-              <Link
-                href="/dashboard/equipo"
-                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white glass-panel hover:bg-black/5 dark:hover:bg-white/10 transition shrink-0"
-              >
-                <span>Equipo</span>
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </GlassTiltCard>
+            ) : (
+              <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Las categorías aparecerán al crear servicios.</p>
+            )}
+            {allCategories.length > categoryStats.length && (
+              <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+                Mostrando las 6 categorías con más servicios.
+              </p>
+            )}
+          </section>
         </div>
-      </div>
+        )}
+      </section>
 
       {/* Search Bar & Category Filters + Add Category Action */}
       <div
         data-tour="servicios-filters"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
       >
-        <div className="flex items-center gap-2 overflow-x-auto overscroll-x-contain touch-pan-x scroll-smooth pb-1 max-w-full scrollbar-none">
+        <div className="flex min-w-0 max-w-full items-center gap-1.5 overflow-x-auto overscroll-x-contain touch-pan-x scroll-smooth pb-1 scrollbar-none lg:flex-1">
           {filterCategoryList.map((cat) => {
             const isSelected = categoryFilter === cat;
             const isRemovable = cat !== "Todos";
@@ -831,7 +801,7 @@ export default function ServiciosPage() {
           )}
         </div>
 
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full shrink-0 lg:w-44">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
@@ -946,9 +916,13 @@ export default function ServiciosPage() {
                           handleOpenPromoModal(item);
                         }}
                         data-tour={index === 0 ? "servicios-promo-btn" : undefined}
-                        className="inline-flex min-h-10 items-center gap-1 rounded-xl px-2 text-[11px] font-bold text-amber-600 transition-all duration-150 ease-out active:scale-[0.98] dark:text-amber-400 cursor-pointer"
+                        className={`inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-[11px] font-bold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer ${
+                          item.hasPromo
+                            ? "border-amber-500/40 bg-amber-500/15 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300"
+                            : "border-amber-500/30 bg-amber-500/10 text-amber-700 hover:border-amber-500/50 hover:bg-amber-500/15 dark:text-amber-300"
+                        }`}
                       >
-                        <Flame className="h-3 w-3" />
+                        {item.hasPromo ? <Flame className="h-3.5 w-3.5 fill-current" /> : <BadgePercent className="h-3.5 w-3.5" />}
                         <span>{item.hasPromo ? "Editar Promo" : "+ Promo Flash"}</span>
                       </button>
 
@@ -1201,10 +1175,45 @@ export default function ServiciosPage() {
       <Modal
         open={serviceModalOpen}
         onClose={() => setServiceModalOpen(false)}
-        title={editingService ? `Editar: ${editingService.name}` : "Nuevo Servicio en Catálogo"}
+        title={editingService ? "Editar Servicio" : "Nuevo Servicio en Catálogo"}
+        maxWidth="max-w-2xl"
         className="service-mobile-sheet"
+        footerClassName="service-modal-footer"
+        footer={
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setServiceModalOpen(false)}
+              className="min-h-11 rounded-2xl border border-slate-200/80 px-4 py-2.5 font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="service-catalog-form"
+              disabled={isSavingService || isUploadingServiceCover}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-2.5 font-bold text-white shadow-md transition hover:opacity-95 disabled:cursor-wait disabled:opacity-60"
+            >
+              {isSavingService ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {isSavingService ? "Guardando…" : editingService ? "Guardar Cambios" : "Crear Servicio"}
+            </button>
+          </div>
+        }
       >
-        <form onSubmit={handleSaveService} className="service-mobile-form space-y-4 text-xs">
+        <form id="service-catalog-form" onSubmit={handleSaveService} className="service-mobile-form space-y-4 text-xs">
+          <input
+            ref={serviceCoverInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            aria-label="Elegir imagen de portada"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0] || null;
+              void handleUploadServiceCover(file);
+              event.currentTarget.value = "";
+            }}
+          />
+
           {/* Service Name & Visibility Switch */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex-1">
@@ -1306,7 +1315,7 @@ export default function ServiciosPage() {
                   onClick={handleCreateCategory}
                   className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:opacity-95 cursor-pointer"
                 >
-                  Guardar en SQL
+                  Agregar categoría
                 </button>
               </div>
             )}
@@ -1399,6 +1408,47 @@ export default function ServiciosPage() {
             </div>
           </div>
 
+          {/* Optional public service cover */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-bold text-slate-800 dark:text-slate-100">Portada del servicio <span className="font-medium text-slate-400">(opcional)</span></p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Se muestra al elegir el servicio en tu página de reservas.</p>
+              </div>
+              {serviceForm.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setServiceForm((current) => ({ ...current, imageUrl: "" }))}
+                  className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-500 hover:bg-slate-100 hover:text-rose-600 dark:hover:bg-white/10"
+                >
+                  Quitar
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              {serviceForm.imageUrl ? (
+                <img
+                  src={serviceForm.imageUrl}
+                  alt={serviceForm.name ? `Portada de ${serviceForm.name}` : "Portada del servicio"}
+                  className="h-20 w-28 shrink-0 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-white/10"
+                />
+              ) : (
+                <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-100/70 text-slate-400 dark:border-white/15 dark:bg-white/[0.04]">
+                  <ImagePlus className="h-6 w-6" aria-hidden="true" />
+                </div>
+              )}
+              <button
+                type="button"
+                disabled={isUploadingServiceCover}
+                onClick={() => serviceCoverInputRef.current?.click()}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-primary/40 hover:text-primary disabled:cursor-wait disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
+              >
+                {isUploadingServiceCover ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                {isUploadingServiceCover ? "Optimizando…" : serviceForm.imageUrl ? "Cambiar imagen" : "Subir imagen"}
+              </button>
+            </div>
+          </div>
+
           {/* Description */}
           <div>
             <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
@@ -1458,22 +1508,6 @@ export default function ServiciosPage() {
             </div>
           </div>
 
-          {/* Modal Footer Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
-            <button
-              type="button"
-              onClick={() => setServiceModalOpen(false)}
-              className="min-h-11 sm:min-h-0 rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="min-h-11 sm:min-h-0 rounded-2xl bg-primary px-5 py-2.5 font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
-            >
-              {editingService ? "Guardar Cambios" : "Crear Servicio"}
-            </button>
-          </div>
         </form>
       </Modal>
 
@@ -1482,10 +1516,41 @@ export default function ServiciosPage() {
         <Modal
           open={!!promoModalService}
           onClose={() => setPromoModalService(null)}
-          title={`Promoción Flash: ${promoModalService.name}`}
+          title="Promoción Flash"
+          maxWidth="max-w-2xl"
           className="service-mobile-sheet"
+          footerClassName="service-modal-footer"
+          footer={
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              {promoModalService.hasPromo && (
+                <button
+                  type="button"
+                  onClick={handleRemovePromo}
+                  className="min-h-10 rounded-xl px-3 text-xs font-bold text-rose-600 transition hover:bg-rose-500/10 dark:text-rose-300"
+                >
+                  Quitar Promoción
+                </button>
+              )}
+              <div className="grid w-full grid-cols-2 gap-2 sm:ml-auto sm:w-auto sm:flex sm:items-center">
+                <button
+                  type="button"
+                  onClick={() => setPromoModalService(null)}
+                  className="min-h-11 rounded-2xl border border-slate-200/80 px-4 py-2 font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  form="service-promo-form"
+                  className="min-h-11 rounded-2xl bg-amber-500 px-3 py-2 font-bold text-white shadow-md transition hover:bg-amber-600 sm:px-5"
+                >
+                  Guardar Promoción
+                </button>
+              </div>
+            </div>
+          }
         >
-          <form onSubmit={handleSavePromo} className="service-mobile-form space-y-4 text-xs">
+          <form id="service-promo-form" onSubmit={handleSavePromo} className="service-mobile-form space-y-4 text-xs">
             {/* Promo Header & Switch */}
             <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
               <div className="flex items-center gap-2.5">
@@ -1494,7 +1559,7 @@ export default function ServiciosPage() {
                 </div>
                 <div>
                   <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
-                    Activar Precio Promocional
+                    {promoModalService.name}
                   </span>
                   <span className="text-[11px] text-slate-500">
                     Precio estándar: <strong className="text-slate-700 dark:text-slate-300 font-mono">{formatGs(promoModalService.price)}</strong>
@@ -1986,36 +2051,6 @@ export default function ServiciosPage() {
               </div>
             )}
 
-            {/* Modal Actions */}
-            <div className="flex flex-col gap-2 pt-3 border-t border-slate-100 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-              {promoModalService.hasPromo ? (
-                <button
-                  type="button"
-                  onClick={handleRemovePromo}
-                  className="min-h-11 w-full rounded-2xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3.5 py-2 font-bold transition cursor-pointer sm:min-h-0 sm:w-auto"
-                >
-                  Quitar Promoción
-                </button>
-              ) : (
-                <div className="hidden sm:block" />
-              )}
-
-              <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:items-center">
-                <button
-                  type="button"
-                  onClick={() => setPromoModalService(null)}
-                  className="min-h-11 rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer sm:min-h-0"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="min-h-11 rounded-2xl bg-amber-500 hover:bg-amber-600 px-3 py-2 font-bold text-white shadow-md transition cursor-pointer sm:min-h-0 sm:px-5"
-                >
-                  Guardar Promoción
-                </button>
-              </div>
-            </div>
           </form>
         </Modal>
       )}

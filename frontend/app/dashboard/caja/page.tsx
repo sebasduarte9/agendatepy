@@ -15,20 +15,13 @@ import {
   CheckCircle2,
   Info,
   AlertTriangle,
-  Download,
-  Calendar,
+  FileSpreadsheet,
   Building2,
-  ShoppingBag,
-  History,
-  X,
-  Filter,
-  Plus,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
-import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import DataTable from "@/components/dashboard/ui/DataTable";
 import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
@@ -59,6 +52,7 @@ export default function CajaPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [arqueoOpen, setArqueoOpen] = useState(false);
   const [filterMethod, setFilterMethod] = useState<string>("todos");
+  const [isExportingMovements, setIsExportingMovements] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
 
   // Closures state
@@ -111,29 +105,50 @@ export default function CajaPage() {
     });
   }, [dateFilteredMovements, filterMethod]);
 
+  const filteredMovementTotals = useMemo(() => {
+    return filteredMovements.reduce(
+      (totals, movement) => {
+        if (movement.type === "ingreso") totals.income += movement.amount;
+        else totals.expenses += movement.amount;
+        return totals;
+      },
+      { income: 0, expenses: 0 },
+    );
+  }, [filteredMovements]);
+
   // Stats computed strictly for the active selected day / range
   const stats = useMemo(() => {
     const isToday = selectedDate === todayStr;
     const isAll = selectedDate === "all";
-    const opening = isToday ? (business.openingCash || 300000) : 0;
+    const isOpeningMovement = (movement: (typeof dateFilteredMovements)[number]) =>
+      movement.type === "ingreso" &&
+      movement.method === "efectivo" &&
+      /^(apertura|fondo inicial)/i.test(movement.concept.trim());
+    const openingMovement = dateFilteredMovements.find(isOpeningMovement);
+    const opening = isAll
+      ? 0
+      : openingMovement?.amount ?? (isToday ? (business.openingCash ?? 300000) : 0);
 
     let efectivoIngresos = 0;
     let posIngresos = 0;
     let transferenciaIngresos = 0;
     let egresos = 0;
+    let efectivoEgresos = 0;
 
     dateFilteredMovements.forEach((m) => {
+      if (isOpeningMovement(m)) return;
       if (m.type === "ingreso") {
         if (m.method === "efectivo") efectivoIngresos += m.amount;
         if (m.method === "pos") posIngresos += m.amount;
         if (m.method === "transferencia") transferenciaIngresos += m.amount;
       } else {
         egresos += m.amount;
+        if (m.method === "efectivo") efectivoEgresos += m.amount;
       }
     });
 
     const totalIngresos = efectivoIngresos + posIngresos + transferenciaIngresos;
-    const efectivoEnCajaEsperado = opening + efectivoIngresos - egresos;
+    const efectivoEnCajaEsperado = opening + efectivoIngresos - efectivoEgresos;
     const balanceNeto = totalIngresos - egresos;
 
     return {
@@ -142,6 +157,7 @@ export default function CajaPage() {
       posIngresos,
       transferenciaIngresos,
       egresos,
+      efectivoEgresos,
       totalIngresos,
       efectivoEnCajaEsperado,
       balanceNeto,
@@ -161,6 +177,62 @@ export default function CajaPage() {
 
   const countedVal = Number(physicalCash.replace(/\D/g, "")) || 0;
   const diferenciaArqueo = countedVal - stats.efectivoEnCajaEsperado;
+
+  async function handleExportMovements() {
+    if (filteredMovements.length === 0 || isExportingMovements) return;
+
+    setIsExportingMovements(true);
+    try {
+      const XLSX = await import("xlsx");
+      const movementRows = filteredMovements.map((movement) => ({
+        "Fecha / hora": formatInTimeZone(movement.date, tz, "dd/MM/yyyy HH:mm"),
+        Tipo: movement.type === "ingreso" ? "Ingreso" : "Egreso",
+        Concepto: movement.concept,
+        "Medio de pago":
+          movement.method === "pos"
+            ? "POS Bancard"
+            : movement.method === "transferencia"
+              ? "Transferencia"
+              : "Efectivo",
+        "Comprobante / referencia": movement.voucherNumber || "",
+        "Monto (Gs.)": movement.type === "ingreso" ? movement.amount : -movement.amount,
+      }));
+
+      const movementsSheet = XLSX.utils.json_to_sheet(movementRows);
+      movementsSheet["!cols"] = [
+        { wch: 20 },
+        { wch: 14 },
+        { wch: 48 },
+        { wch: 22 },
+        { wch: 28 },
+        { wch: 18 },
+      ];
+      movementsSheet["!autofilter"] = { ref: `A1:F${movementRows.length + 1}` };
+
+      const summarySheet = XLSX.utils.aoa_to_sheet([
+        ["Resumen de caja", formattedDayTitle],
+        ["Movimientos", filteredMovements.length],
+        ["Entradas registradas (Gs.)", filteredMovementTotals.income],
+        ["Egresos registrados (Gs.)", filteredMovementTotals.expenses],
+        ["Flujo neto de movimientos (Gs.)", filteredMovementTotals.income - filteredMovementTotals.expenses],
+      ]);
+      summarySheet["!cols"] = [{ wch: 24 }, { wch: 34 }];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumen");
+      XLSX.utils.book_append_sheet(workbook, movementsSheet, "Movimientos");
+      XLSX.writeFileXLSX(
+        workbook,
+        `caja-movimientos-${selectedDate === "all" ? "historial" : selectedDate}.xlsx`,
+      );
+      pushToast("success", "Reporte de caja descargado en Excel.");
+    } catch (error) {
+      console.error("Error exporting cash movements:", error);
+      pushToast("error", "No se pudo exportar el reporte de caja.");
+    } finally {
+      setIsExportingMovements(false);
+    }
+  }
 
   async function handleFinalizeClose() {
     setIsClosingCash(true);
@@ -237,20 +309,6 @@ export default function CajaPage() {
     setModalOpen(false);
   }
 
-  // Quick amount increment buttons for easy entry
-  function handleKeypad(key: string) {
-    triggerHaptic("selection");
-    const digits = form.amount.replace(/\D/g, "");
-    const next = key === "del" ? digits.slice(0, -1) : (digits + key).replace(/^0+/, "").slice(0, 10);
-    setForm({ ...form, amount: next ? Number(next).toLocaleString("es-PY") : "" });
-  }
-
-  function handleAddAmount(increment: number) {
-    const current = Number(form.amount.replace(/\D/g, "")) || 0;
-    const next = current + increment;
-    setForm({ ...form, amount: next.toLocaleString("es-PY") });
-  }
-
   // Format label for current date view
   const formattedDayTitle = useMemo(() => {
     if (selectedDate === "all") return "Todo el Historial de Movimientos";
@@ -265,8 +323,15 @@ export default function CajaPage() {
     return formatInTimeZone(new Date(`${selectedDate}T12:00:00`), tz, "EEEE d 'de' MMMM, yyyy", { locale: es });
   }, [selectedDate, todayStr, yesterdayStr, tz]);
 
+  const incomeChannels = [
+    { label: "Efectivo", value: stats.efectivoIngresos, color: "bg-emerald-500", dot: "bg-emerald-500" },
+    { label: "POS", value: stats.posIngresos, color: "bg-blue-500", dot: "bg-blue-500" },
+    { label: "Transferencias", value: stats.transferenciaIngresos, color: "bg-violet-500", dot: "bg-violet-500" },
+  ];
+  const flowScale = Math.max(stats.totalIngresos, stats.egresos, 1);
+
   return (
-    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 pb-[calc(112px+env(safe-area-inset-bottom,0px))] sm:pb-8 w-full max-w-full overflow-hidden">
       {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
       <div
         data-tour="caja-header"
@@ -277,7 +342,7 @@ export default function CajaPage() {
         </h1>
 
         {/* Quick Action Dock */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="hidden md:flex flex-wrap items-center gap-2">
           <button
             type="button"
             data-tour="caja-new-btn"
@@ -301,15 +366,6 @@ export default function CajaPage() {
             <span>Cierre de Caja</span>
           </button>
 
-          <a
-            href="/api/reports/cash?type=movements&format=csv"
-            download
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-medium shadow-xs transition"
-            title="Exportar movimientos en formato CSV"
-          >
-            <Download className="h-3.5 w-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Exportar</span>
-          </a>
         </div>
       </div>
 
@@ -523,193 +579,108 @@ export default function CajaPage() {
           </div>
         ) : null}
 
-        {/* Dual-Card Inset Telemetry */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left Card: Operational Gauges & Summary */}
-          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
-            {/* Top section: Mini status box + 2 circular gauges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
-              {/* Mini status box */}
-              <div className="rounded-xl glass-panel p-3.5 flex flex-col justify-between h-full min-h-[120px]">
-                <div>
-                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                    Gaveta Físico
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <span className="text-xs font-extrabold text-slate-900 dark:text-white font-mono">
-                    <AnimatedValue value={formatGs(stats.efectivoEnCajaEsperado)} />
-                  </span>
-                </div>
-              </div>
-
-              {/* Circular Gauge 1: Efectivo % */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * (stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0)) / 100}
-                      strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #FF4F2B)" }}
-                      className="transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0}%
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Efectivo
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  <AnimatedValue value={formatGs(stats.efectivoIngresos)} />
-                </div>
-              </div>
-
-              {/* Circular Gauge 2: Digital % (Transferencias + POS) */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray="4 2"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * (stats.totalIngresos > 0 ? Math.round(((stats.posIngresos + stats.transferenciaIngresos) / stats.totalIngresos) * 100) : 0)) / 100}
-                      strokeLinecap="round"
-                      className="text-emerald-500 transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {stats.totalIngresos > 0 ? Math.round(((stats.posIngresos + stats.transferenciaIngresos) / stats.totalIngresos) * 100) : 0}%
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Digital (POS/Transferencia)
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  <AnimatedValue value={formatGs(stats.posIngresos + stats.transferenciaIngresos)} />
-                </div>
-              </div>
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="rounded-2xl glass-panel-subtle p-4">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Wallet className="h-4 w-4" /></span>
+              Efectivo esperado
             </div>
-
-            {/* Bottom Data Rows */}
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Total Ingresos Brutos</span>
-                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  <AnimatedValue value={formatGs(stats.totalIngresos)} />
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Egresos y Gastos Operativos</span>
-                <span className="font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
-                  -{formatGs(stats.egresos)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                <span>Balance Neto del Período</span>
-                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                  <AnimatedValue value={formatGs(stats.balanceNeto)} />
-                </span>
-              </div>
-            </div>
+            <div className="mt-3 text-lg font-bold tabular-nums text-slate-900 dark:text-white"><AnimatedValue value={formatGs(stats.efectivoEnCajaEsperado)} /></div>
+            <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">En la gaveta al cierre</div>
           </div>
+          <div className="rounded-2xl glass-panel-subtle p-4">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><ArrowDownLeft className="h-4 w-4" /></span>
+              Ingresos
+            </div>
+            <div className="mt-3 text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-300"><AnimatedValue value={formatGs(stats.totalIngresos)} /></div>
+            <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Todos los medios de cobro</div>
+          </div>
+          <div className="rounded-2xl glass-panel-subtle p-4">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400"><ArrowUpRight className="h-4 w-4" /></span>
+              Egresos
+            </div>
+            <div className="mt-3 text-lg font-bold tabular-nums text-rose-700 dark:text-rose-300">-{formatGs(stats.egresos)}</div>
+            <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Gastos registrados</div>
+          </div>
+          <div className="rounded-2xl glass-panel-subtle p-4">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary"><TrendingUp className="h-4 w-4" /></span>
+              Balance neto
+            </div>
+            <div className={`mt-3 text-lg font-bold tabular-nums ${stats.balanceNeto < 0 ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-white"}`}><AnimatedValue value={formatGs(stats.balanceNeto)} /></div>
+            <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Ingresos menos egresos</div>
+          </div>
+        </div>
 
-          {/* Right Card: Methods Breakdown Cards */}
-          <div data-tour="caja-methods" className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between space-y-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <section data-tour="caja-methods" className="rounded-2xl glass-panel-subtle p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Distribución de ingresos</h3>
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Participación por medio de cobro</p>
+              </div>
+              <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{formatGs(stats.totalIngresos)}</span>
+            </div>
+
+            <div
+              className="mt-5 flex h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+              role="img"
+              aria-label={`Ingresos: efectivo ${formatGs(stats.efectivoIngresos)}, POS ${formatGs(stats.posIngresos)}, transferencias ${formatGs(stats.transferenciaIngresos)}`}
+            >
+              {incomeChannels.map((channel) => (
+                <div
+                  key={channel.label}
+                  className={`${channel.color} transition-[width] duration-500`}
+                  style={{ width: `${stats.totalIngresos > 0 ? (channel.value / stats.totalIngresos) * 100 : 0}%` }}
+                />
+              ))}
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {incomeChannels.map((channel) => (
+                <div key={channel.label} className="min-w-0 rounded-xl border border-slate-200/70 bg-white/40 p-3 dark:border-white/5 dark:bg-slate-950/20">
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${channel.dot}`} />{channel.label}</span>
+                    <span>{stats.totalIngresos > 0 ? Math.round((channel.value / stats.totalIngresos) * 100) : 0}%</span>
+                  </div>
+                  <div className="mt-2 truncate text-sm font-semibold tabular-nums text-slate-900 dark:text-white">{formatGs(channel.value)}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl glass-panel-subtle p-5">
             <div>
-              <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
-                Desglose por Canal de Cobro
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Ingresos y egresos</h3>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Comparación de movimientos del período</p>
+            </div>
+            <div className="mt-5 space-y-5">
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                  <span className="font-medium text-slate-700 dark:text-slate-200">Ingresos</span>
+                  <span className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatGs(stats.totalIngresos)}</span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                  <div className="h-full rounded-full bg-emerald-500 transition-[width] duration-500" style={{ width: `${(stats.totalIngresos / flowScale) * 100}%` }} />
+                </div>
               </div>
-
-              <div className="space-y-2">
-                {/* Method 1: Efectivo */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                      <Banknote className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">Efectivo en Gaveta</div>
-                      <div className="text-[10px] text-slate-400">Fondo inicial + ventas directas</div>
-                    </div>
-                  </div>
-                  <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
-                    <AnimatedValue value={formatGs(stats.efectivoIngresos)} />
-                  </span>
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                  <span className="font-medium text-slate-700 dark:text-slate-200">Egresos</span>
+                  <span className="font-semibold tabular-nums text-rose-700 dark:text-rose-300">{formatGs(stats.egresos)}</span>
                 </div>
-
-                {/* Method 2: POS Bancard */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                      <CreditCard className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">POS / Tarjetas Bancard</div>
-                      <div className="text-[10px] text-slate-400">Terminal comercial débito/crédito</div>
-                    </div>
-                  </div>
-                  <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
-                    <AnimatedValue value={formatGs(stats.posIngresos)} />
-                  </span>
-                </div>
-
-                {/* Method 3: Transferencias Bancarias */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                      <Building2 className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">Transferencias Bancarias</div>
-                      <div className="text-[10px] text-slate-400">Acreditaciones bancarias directas</div>
-                    </div>
-                  </div>
-                  <span className="text-xs font-black text-slate-900 dark:text-white tabular-nums">
-                    <AnimatedValue value={formatGs(stats.transferenciaIngresos)} />
-                  </span>
+                <div className="h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                  <div className="h-full rounded-full bg-rose-500 transition-[width] duration-500" style={{ width: `${(stats.egresos / flowScale) * 100}%` }} />
                 </div>
               </div>
             </div>
-
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-              <span>Total en canales digitales (POS + Transferencias):</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                <AnimatedValue value={formatGs(stats.posIngresos + stats.transferenciaIngresos)} />
-              </span>
+            <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/40 px-3.5 py-3 text-xs dark:border-white/5 dark:bg-slate-950/20">
+              <span className="text-slate-500 dark:text-slate-400">Resultado del período</span>
+              <span className={`font-bold tabular-nums ${stats.balanceNeto < 0 ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-white"}`}>{formatGs(stats.balanceNeto)}</span>
             </div>
-          </div>
+          </section>
         </div>
       </div>
 
@@ -720,16 +691,24 @@ export default function CajaPage() {
             <h2 className="text-base font-black text-slate-900 dark:text-white">
               Movimientos
             </h2>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              {formattedDayTitle} · {filteredMovements.length} {filteredMovements.length === 1 ? "registro" : "registros"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold">
+              <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">Entradas {formatGs(filteredMovementTotals.income)}</span>
+              <span className="rounded-full bg-rose-500/10 px-2.5 py-1 text-rose-700 dark:text-rose-300">Egresos {formatGs(filteredMovementTotals.expenses)}</span>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <a
-              href="/api/reports/cash?type=movements&format=csv"
-              download
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs transition hover:bg-slate-50 dark:hover:bg-slate-800"
+            <button
+              type="button"
+              onClick={handleExportMovements}
+              disabled={filteredMovements.length === 0 || isExportingMovements}
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-600/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700 shadow-xs transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400/20 dark:text-emerald-300"
             >
-              <Download className="h-3.5 w-3.5 text-slate-500" />
-              Exportar CSV
-            </a>
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              {isExportingMovements ? "Preparando..." : "Exportar Excel"}
+            </button>
             <div className="w-full sm:w-auto">
               <IosSegmentedControl
                 value={filterMethod}
@@ -771,6 +750,7 @@ export default function CajaPage() {
             {/* Desktop Table View */}
             <div className="hidden md:block">
               <DataTable
+                key={`${selectedDate}-${filterMethod}`}
                 rows={filteredMovements}
                 columns={[
                   {
@@ -842,7 +822,7 @@ export default function CajaPage() {
                           item.type === "ingreso"
                             ? "text-emerald-600 dark:text-emerald-400"
                             : "text-rose-600 dark:text-rose-400"
-                        }`}
+                        } tabular-nums whitespace-nowrap`}
                       >
                         {item.type === "ingreso" ? "+" : "-"}
                         {formatGs(item.amount)}
@@ -919,14 +899,6 @@ export default function CajaPage() {
               Registro histórico inmutable de cierres diarios persistidos en PostgreSQL.
             </p>
           </div>
-          <a
-            href="/api/reports/cash?type=closures&format=csv"
-            download
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs transition hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            <Download className="h-3.5 w-3.5 text-slate-500" />
-            Exportar Cierres CSV
-          </a>
         </div>
 
         {closures.length === 0 ? (
@@ -1013,190 +985,131 @@ export default function CajaPage() {
         )}
       </Card>
 
-      {/* Mobile quick charge button */}
-      {!modalOpen && !arqueoOpen && (
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic("medium");
-            setForm((f) => ({ ...f, type: "ingreso" }));
-            setModalOpen(true);
-          }}
-          className="lg:hidden fixed right-4 bottom-[calc(96px+env(safe-area-inset-bottom,0px))] z-30 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-primary/30 transition active:scale-95 cursor-pointer"
-        >
-          <Plus className="h-4 w-4" /> Cobrar
-        </button>
-      )}
-
       {/* Modal 1: Custom Web Modal for New Cash Movement */}
       <Modal
         open={modalOpen}
-        title="Registrar Movimiento de Caja"
+        title="Nuevo movimiento"
         onClose={() => setModalOpen(false)}
+        className="min-h-[78dvh] sm:min-h-0"
       >
-        <div className="space-y-4 text-xs flex flex-col justify-between">
-          {/* Movement Type Selection */}
-          <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-5 text-sm">
+          <div className="rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] p-1 grid grid-cols-2 gap-1">
             <button
               type="button"
+              aria-pressed={form.type === "ingreso"}
               onClick={() => setForm({ ...form, type: "ingreso" })}
-              className={`rounded-2xl py-2.5 text-xs font-bold transition cursor-pointer ${
+              className={`rounded-xl py-2.5 text-sm font-semibold transition cursor-pointer ${
                 form.type === "ingreso"
-                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                  : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400"
               }`}
             >
-              + Cobro / Ingreso
+              Cobro
             </button>
             <button
               type="button"
-              onClick={() => setForm({ ...form, type: "egreso" })}
-              className={`rounded-2xl py-2.5 text-xs font-bold transition cursor-pointer ${
+              aria-pressed={form.type === "egreso"}
+              onClick={() => {
+                setSelectedProductId("");
+                setForm({
+                  ...form,
+                  type: "egreso",
+                  concept: form.concept.startsWith("Venta de Producto:") ? "" : form.concept,
+                });
+              }}
+              className={`rounded-xl py-2.5 text-sm font-semibold transition cursor-pointer ${
                 form.type === "egreso"
-                  ? "bg-rose-600 text-white shadow-md shadow-rose-600/20"
-                  : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400"
               }`}
             >
-              - Gasto / Egreso
+              Gasto
             </button>
           </div>
 
-          {/* Quick Counter Products Picker (Custom UI, No basic select) */}
           {form.type === "ingreso" && products.length > 0 && (
-            <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
-                  <ShoppingBag className="h-3.5 w-3.5 text-primary" />
-                  <span>Venta rápida de mostrador (opcional)</span>
-                </span>
-                {selectedProductId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedProductId("");
-                      setForm({ ...form, concept: "", amount: "" });
-                    }}
-                    className="text-[11px] text-slate-400 hover:text-rose-500 font-semibold cursor-pointer"
-                  >
-                    Limpiar selección
-                  </button>
-                )}
+            <details className="group rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-slate-700 dark:text-slate-200">
+                <span>Venta de producto <span className="font-normal text-slate-400">· opcional</span></span>
+                <span className="text-xs text-slate-400 group-open:hidden">Agregar</span>
+                <span className="hidden text-xs text-slate-400 group-open:inline">Cerrar</span>
+              </summary>
+              <div className="mt-3 space-y-2">
+                <select
+                  value={selectedProductId}
+                  onChange={(event) => {
+                    const product = products.find((item) => item.id === event.target.value);
+                    setSelectedProductId(product?.id ?? "");
+                    if (product) {
+                      setForm({
+                        ...form,
+                        amount: product.price.toLocaleString("es-PY"),
+                        concept: `Venta de Producto: ${product.name}`,
+                      });
+                    } else if (form.concept.startsWith("Venta de Producto:")) {
+                      setForm({ ...form, amount: "", concept: "" });
+                    }
+                  }}
+                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-3 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                >
+                  <option value="">Elegir producto</option>
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name} · {formatGs(product.price)} · stock {product.stock}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {products.map((p) => {
-                  const isSel = selectedProductId === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedProductId(p.id);
-                        setForm({
-                          ...form,
-                          amount: p.price.toLocaleString("es-PY"),
-                          concept: `Venta de Producto: ${p.name}`,
-                        });
-                      }}
-                      className={`shrink-0 flex items-center gap-2 rounded-2xl border px-3 py-2 text-left transition cursor-pointer ${
-                        isSel
-                          ? "border-primary bg-primary/10 text-primary ring-1 ring-primary shadow-xs"
-                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div>
-                        <p className="text-xs font-bold leading-tight">{p.name}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] font-black text-primary">
-                            {formatGs(p.price)}
-                          </span>
-                          <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1 rounded">
-                            Stock: {p.stock} u.
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            </details>
           )}
 
-          {/* Amount Input with Currency Badge and Quick Increment Buttons */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Monto en Guaraníes (Gs) *
+            <label htmlFor="cash-movement-amount" className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Monto
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-xs text-slate-400">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
                 Gs.
               </span>
               <input
+                id="cash-movement-amount"
                 type="text"
-                placeholder="Ej. 120.000"
+                placeholder="0"
                 value={form.amount}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "");
+                onChange={(event) => {
+                  const digits = event.target.value.replace(/\D/g, "");
                   setForm({ ...form, amount: digits ? Number(digits).toLocaleString("es-PY") : "" });
                 }}
                 inputMode="numeric"
-                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 pl-11 pr-3 text-base max-lg:py-4 max-lg:text-3xl max-lg:text-center font-black font-mono text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                aria-required="true"
+                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-4 pl-14 pr-4 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:border-primary focus:outline-none"
               />
-            </div>
-            <div className="lg:hidden mt-2 grid grid-cols-3 gap-1.5">
-              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "000", "0", "del"].map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => handleKeypad(k)}
-                  aria-label={k === "del" ? "Borrar" : k}
-                  className="h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-lg font-black text-slate-900 dark:text-white transition active:scale-95 active:bg-slate-200 cursor-pointer"
-                >
-                  {k === "del" ? "⌫" : k}
-                </button>
-              ))}
-            </div>
-            {/* Quick Add Chips */}
-            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto">
-              {[20000, 50000, 100000, 200000].map((inc) => (
-                <button
-                  key={inc}
-                  type="button"
-                  onClick={() => handleAddAmount(inc)}
-                  className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-2 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition cursor-pointer shrink-0"
-                >
-                  +{formatGs(inc)}
-                </button>
-              ))}
             </div>
           </div>
 
-          {/* Custom Payment Method Segmented Cards (No basic select) */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Medio de Pago *
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Medio de pago
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
                 {
                   id: "efectivo",
                   label: "Efectivo",
-                  sub: "En Gaveta",
                   icon: Banknote,
-                  color: "border-emerald-500 bg-emerald-50/70 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+                  color: "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
                 },
                 {
                   id: "pos",
-                  label: "POS Bancard",
-                  sub: "Tarjeta / Débito",
+                  label: "POS",
                   icon: CreditCard,
-                  color: "border-blue-500 bg-blue-50/70 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+                  color: "border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300",
                 },
                 {
                   id: "transferencia",
-                  label: "Transferencia",
-                  sub: "Bancaria",
+                  label: "Transferir",
                   icon: Building2,
-                  color: "border-purple-500 bg-purple-50/70 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300",
+                  color: "border-violet-500/50 bg-violet-500/10 text-violet-700 dark:text-violet-300",
                 },
               ].map((opt) => {
                 const Icon = opt.icon;
@@ -1205,65 +1118,64 @@ export default function CajaPage() {
                   <button
                     key={opt.id}
                     type="button"
+                    aria-pressed={isSelected}
                     onClick={() => setForm({ ...form, method: opt.id as any })}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition cursor-pointer ${
+                    className={`flex min-h-14 items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center transition cursor-pointer ${
                       isSelected
-                        ? `${opt.color} ring-2 ring-primary/40 font-bold shadow-xs`
-                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        ? `${opt.color} font-semibold shadow-xs`
+                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-600 dark:text-slate-400"
                     }`}
                   >
-                    <Icon className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-bold">{opt.label}</span>
-                    <span className="text-[10px] text-slate-400">{opt.sub}</span>
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="text-xs">{opt.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Concept Input */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Concepto (opcional)
+            <label htmlFor="cash-movement-concept" className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Nota <span className="font-normal text-slate-400">· opcional</span>
             </label>
             <input
+              id="cash-movement-concept"
               type="text"
-              placeholder="Ej. Corte degradado + barba / Compra de café y hielo"
+              placeholder={form.type === "ingreso" ? "Ej. Cobro de servicio" : "Ej. Compra de insumos"}
               value={form.concept}
               onChange={(e) => setForm({ ...form, concept: e.target.value })}
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+              className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-3 px-3 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
             />
           </div>
 
-          {/* Voucher / Comprobante */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              N° Comprobante / Voucher (opcional)
-            </label>
+          <details className="group rounded-xl border border-slate-200/80 dark:border-white/10 px-3.5 py-3">
+            <summary className="cursor-pointer list-none text-sm font-medium text-slate-600 dark:text-slate-300">
+              Agregar comprobante <span className="font-normal text-slate-400">· opcional</span>
+            </summary>
             <input
               type="text"
-              placeholder="Ej. FAC-001-002-1234 o POS #4812"
+              placeholder="N.º de factura o voucher"
               value={form.voucherNumber}
               onChange={(e) => setForm({ ...form, voucherNumber: e.target.value })}
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+              className="mt-3 w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-3 px-3 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
             />
-          </div>
+          </details>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10 mt-auto">
+          <div className="grid grid-cols-[0.8fr_1.2fr] gap-2 border-t border-slate-200/70 dark:border-white/10 pt-4">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={handleSaveMovement}
-              className="rounded-xl bg-primary hover:opacity-95 px-5 py-2 font-bold text-white shadow-md shadow-primary/25 transition cursor-pointer"
+              disabled={!form.amount}
+              className="rounded-xl bg-primary hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45 px-5 py-3 text-sm font-semibold text-white shadow-sm transition cursor-pointer"
             >
-              Guardar Movimiento
+              Registrar {form.type === "ingreso" ? "cobro" : "gasto"}
             </button>
           </div>
         </div>
@@ -1274,155 +1186,181 @@ export default function CajaPage() {
         open={arqueoOpen}
         title="Arqueo & Cierre de Caja del Día"
         onClose={() => setArqueoOpen(false)}
+        maxWidth="max-w-xl"
       >
-        <div className="space-y-4 text-xs">
+        <div className="space-y-3 text-sm">
           {activeClosure && (
-            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2.5 text-xs leading-5 text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <span>
-                Ya se registró un arqueo en esta fecha a las {formatInTimeZone(new Date(activeClosure.closedAt), tz, "HH:mm")} hs. Este nuevo cierre se guardará como suplementario.
+                Ya hay un arqueo registrado a las {formatInTimeZone(new Date(activeClosure.closedAt), tz, "HH:mm")} hs. Este se guardará como cierre suplementario.
               </span>
             </div>
           )}
 
-          <p className="text-slate-500 dark:text-slate-400">
-            Comprobá el dinero físico en el cajón de efectivo con el saldo registrado por el sistema.
+          <p className="text-sm leading-5 text-slate-500 dark:text-slate-400">
+            Contá el dinero disponible y compará el total con el esperado.
           </p>
 
-          <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-slate-400">Fondo Inicial Apertura:</span>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">{formatGs(stats.opening)}</span>
+          <section
+            aria-label="Resumen del efectivo esperado"
+            className="rounded-2xl border border-slate-200/70 bg-slate-50 p-3.5 dark:border-white/10 dark:bg-white/[0.035]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Efectivo esperado</p>
+                <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums text-primary">
+                  {formatGs(stats.efectivoEnCajaEsperado)}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Banknote className="h-5 w-5" aria-hidden="true" />
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-slate-400">Cobros Efectivo Hoy:</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">+{formatGs(stats.efectivoIngresos)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-slate-400">Egresos / Gastos Menores:</span>
-              <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatGs(stats.egresos)}</span>
-            </div>
-            <div className="border-t border-slate-200/80 dark:border-white/10 pt-2 flex justify-between text-sm font-black">
-              <span className="text-slate-900 dark:text-white">Efectivo Físico Esperado:</span>
-              <span className="text-primary">{formatGs(stats.efectivoEnCajaEsperado)}</span>
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Efectivo Contado en Caja (Gs) *
-            </label>
+            <div className="mt-3 grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-200 pt-3 dark:divide-white/10 dark:border-white/10">
+              <div className="min-w-0 pr-2">
+                <p className="text-[11px] leading-4 text-slate-500 dark:text-slate-400">Fondo inicial</p>
+                <p className="mt-1 truncate text-xs font-semibold tabular-nums text-slate-800 dark:text-slate-200">
+                  {formatGs(stats.opening)}
+                </p>
+              </div>
+              <div className="min-w-0 px-2">
+                <p className="text-[11px] leading-4 text-slate-500 dark:text-slate-400">Cobros en efectivo</p>
+                <p className="mt-1 truncate text-xs font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                  +{formatGs(stats.efectivoIngresos)}
+                </p>
+              </div>
+              <div className="min-w-0 pl-2">
+                <p className="text-[11px] leading-4 text-slate-500 dark:text-slate-400">Egresos en efectivo</p>
+                <p className="mt-1 truncate text-xs font-semibold tabular-nums text-rose-700 dark:text-rose-400">
+                  -{formatGs(stats.efectivoEgresos)}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="physical-cash-count" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                Efectivo contado <span className="text-primary">*</span>
+              </label>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Guaraníes</span>
+            </div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-xs text-slate-400">
+              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400">
                 Gs.
               </span>
               <input
+                id="physical-cash-count"
                 type="text"
-                placeholder="Ingresá cuánto dinero hay físicamente en el cajón..."
+                inputMode="numeric"
+                autoComplete="off"
+                aria-describedby="physical-cash-hint"
+                placeholder="0"
                 value={physicalCash}
                 onChange={(e) => setPhysicalCash(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 pl-11 pr-3 text-base font-black text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                className="h-14 w-full rounded-xl border border-slate-200 bg-white pl-14 pr-4 text-xl font-semibold tabular-nums text-slate-900 shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
               />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span id="physical-cash-hint" className="text-xs text-slate-500 dark:text-slate-400">
+                Ingresá el total contado en el cajón.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setPhysicalCash(stats.efectivoEnCajaEsperado.toLocaleString("es-PY"));
+                }}
+                className="inline-flex min-h-9 items-center rounded-lg border border-primary/20 bg-primary/8 px-2.5 text-xs font-semibold text-primary transition hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                Usar saldo esperado
+              </button>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic("selection");
-              setPhysicalCash(stats.efectivoEnCajaEsperado.toLocaleString("es-PY"));
-            }}
-            className="-mt-2 text-[11px] font-bold text-primary hover:underline cursor-pointer"
-          >
-            Cuadra exacto ({formatGs(stats.efectivoEnCajaEsperado)})
-          </button>
-
-          {physicalCash && (
-            <div className="space-y-2 rounded-2xl border border-slate-200/80 dark:border-white/10 p-3">
-              {[
-                { label: "Esperado", value: stats.efectivoEnCajaEsperado, color: "bg-slate-400" },
-                {
-                  label: "Contado",
-                  value: countedVal,
-                  color: diferenciaArqueo === 0 ? "bg-emerald-500" : diferenciaArqueo > 0 ? "bg-indigo-500" : "bg-rose-500",
-                },
-              ].map((row) => {
-                const max = Math.max(stats.efectivoEnCajaEsperado, countedVal, 1);
-                return (
-                  <div key={row.label} className="space-y-1">
-                    <div className="flex justify-between text-[11px]">
-                      <span className="font-semibold text-slate-500">{row.label}</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">{formatGs(row.value)}</span>
-                    </div>
-                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${row.color}`}
-                        style={{ width: `${(row.value / max) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
           {physicalCash && (
             <div
-              className={`rounded-2xl p-3 text-xs font-bold flex items-center gap-2 ${
+              role="status"
+              aria-live="polite"
+              className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 ${
                 diferenciaArqueo === 0
-                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                  ? "border-emerald-500/25 bg-emerald-500/10"
                   : diferenciaArqueo > 0
-                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
-                  : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                    ? "border-amber-500/25 bg-amber-500/10"
+                    : "border-rose-500/25 bg-rose-500/10"
               }`}
             >
-              {diferenciaArqueo === 0 ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                  <span>¡Caja exacta! El efectivo contado coincide al 100%.</span>
-                </>
-              ) : diferenciaArqueo > 0 ? (
-                <>
-                  <Info className="h-4 w-4 shrink-0 text-indigo-600" />
-                  <span>{`Sobrante de caja: +${formatGs(diferenciaArqueo)}`}</span>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
-                  <span>{`Faltante de caja: -${formatGs(Math.abs(diferenciaArqueo))}`}</span>
-                </>
-              )}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  {diferenciaArqueo === 0 ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                  ) : diferenciaArqueo > 0 ? (
+                    <Info className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden="true" />
+                  )}
+                  <p className={`text-sm font-semibold ${
+                    diferenciaArqueo === 0
+                      ? "text-emerald-800 dark:text-emerald-300"
+                      : diferenciaArqueo > 0
+                        ? "text-amber-800 dark:text-amber-300"
+                        : "text-rose-800 dark:text-rose-300"
+                  }`}>
+                    {diferenciaArqueo === 0 ? "Caja exacta" : diferenciaArqueo > 0 ? "Sobrante de caja" : "Faltante de caja"}
+                  </p>
+                </div>
+                <p className="mt-1 truncate text-xs text-slate-600 dark:text-slate-400">
+                  Contado {formatGs(countedVal)} <span aria-hidden="true">·</span> esperado {formatGs(stats.efectivoEnCajaEsperado)}
+                </p>
+              </div>
+              <span className={`shrink-0 text-sm font-bold tabular-nums ${
+                diferenciaArqueo === 0
+                  ? "text-emerald-800 dark:text-emerald-300"
+                  : diferenciaArqueo > 0
+                    ? "text-amber-800 dark:text-amber-300"
+                    : "text-rose-800 dark:text-rose-300"
+              }`}>
+                {diferenciaArqueo === 0
+                  ? "Sin diferencia"
+                  : diferenciaArqueo > 0
+                    ? `+${formatGs(diferenciaArqueo)}`
+                    : `-${formatGs(Math.abs(diferenciaArqueo))}`}
+              </span>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Observaciones / Justificación de Arqueo (opcional)
+            <label htmlFor="cash-closure-notes" className="mb-1.5 block text-sm font-semibold text-slate-800 dark:text-slate-200">
+              Observaciones <span className="font-normal text-slate-500 dark:text-slate-400">· opcional</span>
             </label>
             <input
+              id="cash-closure-notes"
               type="text"
-              placeholder="Ej. Arqueo turno mañana / Justificación de faltante o sobrante"
+              placeholder="Agregá un detalle si hace falta"
               value={arqueoNotes}
               onChange={(e) => setArqueoNotes(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+          <div className="sticky bottom-0 z-10 -mx-5 mt-1 grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)] gap-2 border-t border-slate-200/80 bg-white/95 px-5 pb-3 pt-3 shadow-[0_-10px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-[#18151b]/95 sm:-mx-6 sm:px-6">
             <button
               type="button"
               onClick={() => setArqueoOpen(false)}
-              className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="min-h-12 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
             >
               Cancelar
             </button>
             <button
               type="button"
-              disabled={isClosingCash}
+              disabled={isClosingCash || !physicalCash.trim()}
+              aria-busy={isClosingCash}
               onClick={handleFinalizeClose}
-              className="rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-5 py-2 font-bold shadow-md hover:opacity-90 disabled:opacity-50 transition cursor-pointer"
+              className="min-h-12 rounded-xl bg-primary px-4 text-sm font-bold text-white shadow-[0_6px_18px_rgba(var(--primary-rgb),0.2)] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-600 disabled:shadow-none dark:focus-visible:ring-offset-[#18151b] dark:disabled:bg-white/10 dark:disabled:text-slate-300"
             >
-              {isClosingCash ? "Guardando cierre..." : "Finalizar Cierre"}
+              {isClosingCash ? "Guardando…" : "Finalizar cierre"}
             </button>
           </div>
         </div>

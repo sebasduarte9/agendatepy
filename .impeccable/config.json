@@ -10,7 +10,7 @@
           "frontend/app/globals.css"
         ],
         "createdAt": "2026-10-11T19:32:54.550Z",
-        "reason": "Agent: the navigation rail intentionally expands from 66px to 242px on hover to reveal labels; this interaction predates the calendar refinements."
+        "reason": "Agent: .glass-rail-fixed is a fixed overlay rail that intentionally animates width to reveal labels without reflowing dashboard content; preserving the desktop navigation behavior."
       }
     ]
   }

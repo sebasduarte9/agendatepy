@@ -182,6 +182,8 @@ export async function GET(request: NextRequest) {
           price: s.price,
           active: s.active,
           category: extra.category || "Peluquería",
+          description: extra.description || "",
+          imageUrl: extra.imageUrl || "",
           staffIds: extra.staffIds || s.staff?.map((st: any) => st.staffId) || [],
           hasPromo: Boolean(extra.hasPromo),
           promoPrice: extra.promoPrice !== undefined ? extra.promoPrice : undefined,

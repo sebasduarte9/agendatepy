@@ -181,12 +181,6 @@ export default function ClientesPage() {
     { label: "Nuevos", value: nuevosCount },
     { label: "Con ficha", value: formulaCount },
   ];
-  const clientVisitChart = [
-    { label: "Sin visitas", value: clients.filter((client) => client.totalVisits === 0).length },
-    { label: "1–2 visitas", value: clients.filter((client) => client.totalVisits >= 1 && client.totalVisits <= 2).length },
-    { label: "3–5 visitas", value: clients.filter((client) => client.totalVisits >= 3 && client.totalVisits <= 5).length },
-    { label: "6 o más", value: clients.filter((client) => client.totalVisits >= 6).length },
-  ];
 
   function openCreateModal() {
     triggerHaptic("selection");
@@ -357,19 +351,19 @@ export default function ClientesPage() {
           ))}
         </div>
 
-        <div className="mt-5 hidden grid-cols-1 gap-5 border-t border-white/10 pt-4 sm:grid sm:grid-cols-2 sm:gap-6">
-          <CustomerBarChart title="Clientes por segmento" rows={clientSegmentChart} color={brandColor} />
-          <CustomerBarChart title="Historial de visitas" rows={clientVisitChart} color={brandColor} />
+        <div className="mt-5 hidden grid-cols-1 border-t border-white/10 pt-4 sm:grid">
+          <div className="max-w-3xl">
+            <CustomerBarChart title="Clientes por segmento" rows={clientSegmentChart} color={brandColor} />
+          </div>
         </div>
 
         <details className="group mt-4 border-t border-white/10 pt-3 sm:hidden">
           <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-slate-700 marker:hidden dark:text-zinc-200 [&::-webkit-details-marker]:hidden">
-            <span>Ver gráficos de clientes</span>
+            <span>Ver segmentos de clientes</span>
             <ChevronDown aria-hidden="true" className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180 dark:text-zinc-400" />
           </summary>
           <div className="grid grid-cols-1 gap-5 pt-3">
             <CustomerBarChart title="Clientes por segmento" rows={clientSegmentChart} color={brandColor} />
-            <CustomerBarChart title="Historial de visitas" rows={clientVisitChart} color={brandColor} />
           </div>
         </details>
       </div>

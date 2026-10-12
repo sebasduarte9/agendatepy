@@ -220,6 +220,8 @@ export default async function ReservarPage({ params }: PageProps) {
     return {
       ...s,
       category: extra.category || s.category,
+      description: extra.description || "",
+      imageUrl: extra.imageUrl || "",
       hasPromo: Boolean(extra.hasPromo),
       promoPrice: extra.promoPrice !== undefined ? Number(extra.promoPrice) : undefined,
       promoBadge: extra.promoBadge || undefined,
