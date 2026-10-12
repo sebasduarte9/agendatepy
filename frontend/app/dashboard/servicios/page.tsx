@@ -30,8 +30,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Card from "@/components/dashboard/ui/Card";
 import StatCard from "@/components/dashboard/ui/StatCard";
+import GlassTiltCard from "@/components/dashboard/ui/GlassTiltCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
@@ -168,14 +168,6 @@ export default function ServiciosPage() {
       return;
     }
 
-    // Optimistic update
-    setCustomCategories((prev) => [...prev, trimmed]);
-    setServiceForm((prev) => ({ ...prev, category: trimmed }));
-    setNewCategoryInput("");
-    setIsAddingCategory(false);
-    pushToast("success", `Categoría "${trimmed}" guardada`);
-
-    // Persist to PostgreSQL tenant settings via SQL API
     try {
       const res = await fetch("/api/services/categories", {
         method: "POST",
@@ -183,35 +175,52 @@ export default function ServiciosPage() {
         body: JSON.stringify({ name: trimmed }),
       });
       const data = await res.json();
-      if (data.ok && Array.isArray(data.categories)) {
-        setCustomCategories(data.categories);
+      if (!res.ok || !data.ok) {
+        pushToast("error", data.message || "No se pudo guardar la categoría.");
+        return;
       }
+
+      if (Array.isArray(data.categories)) {
+        setCustomCategories(data.categories);
+      } else {
+        setCustomCategories((prev) => [...prev, trimmed]);
+      }
+      setServiceForm((prev) => ({ ...prev, category: trimmed }));
+      setNewCategoryInput("");
+      setIsAddingCategory(false);
+      pushToast("success", `Categoría "${trimmed}" guardada`);
     } catch (err) {
       console.error("Error guardando categoría en SQL:", err);
+      pushToast("error", "No se pudo guardar la categoría. Revisá tu conexión e intentá de nuevo.");
     }
   }
 
   async function handleConfirmDeleteCategory() {
     if (!categoryToDelete) return;
     const cat = categoryToDelete;
-    // Optimistic update
-    setCustomCategories((prev) => prev.filter((c) => c.toLowerCase() !== cat.toLowerCase()));
-    if (categoryFilter.toLowerCase() === cat.toLowerCase()) {
-      setCategoryFilter("Todos");
-    }
-    setCategoryToDelete(null);
-    pushToast("success", `Categoría "${cat}" eliminada del catálogo.`);
-
     try {
       const res = await fetch(`/api/services/categories?name=${encodeURIComponent(cat)}`, {
         method: "DELETE",
       });
       const data = await res.json();
-      if (data.ok && Array.isArray(data.categories)) {
-        setCustomCategories(data.categories);
+      if (!res.ok || !data.ok) {
+        pushToast("error", data.message || "No se pudo eliminar la categoría.");
+        return;
       }
+
+      if (Array.isArray(data.categories)) {
+        setCustomCategories(data.categories);
+      } else {
+        setCustomCategories((prev) => prev.filter((c) => c.toLowerCase() !== cat.toLowerCase()));
+      }
+      if (categoryFilter.toLowerCase() === cat.toLowerCase()) {
+        setCategoryFilter("Todos");
+      }
+      setCategoryToDelete(null);
+      pushToast("success", `Categoría "${cat}" eliminada del catálogo.`);
     } catch (err) {
       console.error("Error eliminando categoría en SQL:", err);
+      pushToast("error", "No se pudo eliminar la categoría. Revisá tu conexión e intentá de nuevo.");
     }
   }
 
@@ -250,7 +259,7 @@ export default function ServiciosPage() {
     setServiceModalOpen(true);
   }
 
-  function handleSaveService(e: React.FormEvent) {
+  async function handleSaveService(e: React.FormEvent) {
     e.preventDefault();
     if (!serviceForm.name.trim()) {
       pushToast("error", "Ingresá el nombre del servicio.");
@@ -268,13 +277,15 @@ export default function ServiciosPage() {
       staffIds: serviceForm.staffIds,
     };
 
-    if (editingService) {
-      updateService(editingService.id, payload);
-      pushToast("success", `Servicio "${serviceForm.name}" actualizado`);
-    } else {
-      addService(payload);
-      pushToast("success", `Servicio "${serviceForm.name}" creado`);
-    }
+    const saved = editingService
+      ? await updateService(editingService.id, payload)
+      : await addService(payload);
+    if (!saved) return;
+
+    pushToast(
+      "success",
+      `Servicio "${serviceForm.name}" ${editingService ? "actualizado" : "creado"}`
+    );
     setServiceModalOpen(false);
   }
 
@@ -378,11 +389,11 @@ export default function ServiciosPage() {
     }));
   }
 
-  function handleSavePromo(e: React.FormEvent) {
+  async function handleSavePromo(e: React.FormEvent) {
     e.preventDefault();
     if (!promoModalService) return;
 
-    updateService(promoModalService.id, {
+    const saved = await updateService(promoModalService.id, {
       hasPromo: promoForm.hasPromo,
       promoPrice: promoForm.hasPromo ? Number(promoForm.promoPrice) || 0 : undefined,
       promoBadge: promoForm.hasPromo ? promoForm.promoBadge : undefined,
@@ -396,6 +407,7 @@ export default function ServiciosPage() {
       prepaymentMethod: promoForm.hasPromo && promoForm.requirePrepayment ? promoForm.prepaymentMethod : undefined,
       prepaymentInstructions: promoForm.hasPromo && promoForm.requirePrepayment ? promoForm.prepaymentInstructions : undefined,
     });
+    if (!saved) return;
 
     pushToast(
       "success",
@@ -406,9 +418,9 @@ export default function ServiciosPage() {
     setPromoModalService(null);
   }
 
-  function handleRemovePromo() {
+  async function handleRemovePromo() {
     if (!promoModalService) return;
-    updateService(promoModalService.id, {
+    const saved = await updateService(promoModalService.id, {
       hasPromo: false,
       promoPrice: undefined,
       promoBadge: undefined,
@@ -422,22 +434,25 @@ export default function ServiciosPage() {
       prepaymentMethod: undefined,
       prepaymentInstructions: undefined,
     });
+    if (!saved) return;
     pushToast("success", `Promoción quitada de "${promoModalService.name}"`);
     setPromoModalService(null);
   }
 
-  function handleToggleVisibility(service: ServiceItem) {
+  async function handleToggleVisibility(service: ServiceItem) {
     const nextActive = service.active === false ? true : false;
-    updateService(service.id, { active: nextActive });
+    const saved = await updateService(service.id, { active: nextActive });
+    if (!saved) return;
     pushToast(
       "success",
       `Servicio "${service.name}" ${nextActive ? "ahora está visible online" : "ahora está oculto"}`
     );
   }
 
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     if (!deleteTarget) return;
-    removeService(deleteTarget.id);
+    const deleted = await removeService(deleteTarget.id);
+    if (!deleted) return;
     pushToast("success", `Servicio "${deleteTarget.name}" eliminado`);
     setDeleteTarget(null);
   }
@@ -456,7 +471,7 @@ export default function ServiciosPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
+    <div className="servicios-mobile-ui space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
       {/* ========================================================= */}
       {/* 1. DARK CONSOLE HERO BANNER                                */}
       {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
@@ -474,7 +489,7 @@ export default function ServiciosPage() {
             type="button"
             data-tour="servicios-new-btn"
             onClick={handleOpenCreateService}
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            className="inline-flex min-h-11 sm:min-h-0 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition-all duration-150 ease-out hover:brightness-110 active:scale-[0.98] cursor-pointer"
             style={{
               backgroundColor: business.primaryColor || "#FF4F2B",
             }}
@@ -486,7 +501,7 @@ export default function ServiciosPage() {
           <Link
             href={`/${business.slug || "barberia"}/reservar`}
             target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
+            className="inline-flex min-h-11 sm:min-h-0 items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
             title="Ver cómo ven los clientes tus servicios"
           >
             <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
@@ -495,7 +510,7 @@ export default function ServiciosPage() {
 
           <Link
             href="/dashboard/equipo"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
+            className="inline-flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition"
             title="Administrar comisiones y colaboradores"
           >
             <Users className="h-3.5 w-3.5 text-slate-400" />
@@ -522,26 +537,26 @@ export default function ServiciosPage() {
           <button
             type="button"
             onClick={handleOpenCreateService}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            className="inline-flex min-h-11 sm:min-h-0 items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer"
             style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>+ Servicio</span>
+            <span>Servicio</span>
           </button>
         </div>
 
-        <div className="pt-2.5 border-t border-white/10 dark:border-white/10 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="p-2 rounded-xl glass-panel-subtle">
+        <div className="pt-2.5 border-t border-white/10 dark:border-white/10 grid grid-cols-2 sm:grid-cols-3 gap-2 text-center text-xs">
+          <div className="min-w-0 p-2 rounded-xl glass-panel-subtle">
             <span className="text-[10px] text-zinc-400 block font-medium">Categorías</span>
             <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs">{allCategories.length}</span>
           </div>
-          <div className="p-2 rounded-xl glass-panel-subtle">
+          <div className="min-w-0 p-2 rounded-xl glass-panel-subtle">
             <span className="text-[10px] text-zinc-400 block font-medium">Promos Flash</span>
             <span className="font-extrabold text-amber-500 font-mono text-xs">{services.filter((s) => s.hasPromo).length}</span>
           </div>
-          <div className="p-2 rounded-xl glass-panel-subtle">
+          <div className="col-span-2 min-w-0 p-2 rounded-xl glass-panel-subtle sm:col-span-1">
             <span className="text-[10px] text-zinc-400 block font-medium">Precio Medio</span>
-            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-xs truncate block">{formatGs(avgPrice)}</span>
+            <span className="block whitespace-nowrap font-extrabold text-slate-900 dark:text-white font-mono text-xs">{formatGs(avgPrice)}</span>
           </div>
         </div>
       </div>
@@ -560,7 +575,11 @@ export default function ServiciosPage() {
         {/* Dual-Card Inset Telemetry */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card: Operational Gauges & Summary */}
-          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
+          <GlassTiltCard
+            variant="subtle"
+            maxTilt={3.5}
+            className="rounded-2xl p-5 shadow-xs flex flex-col justify-between"
+          >
             {/* Top section: Mini status box + 2 circular gauges */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
               {/* Mini status box */}
@@ -677,10 +696,14 @@ export default function ServiciosPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </GlassTiltCard>
 
           {/* Right Card: Categorías & Acceso rápido a Equipo */}
-          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between space-y-3">
+          <GlassTiltCard
+            variant="subtle"
+            maxTilt={3.5}
+            className="rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-3"
+          >
             <div>
               <div className="text-xs font-semibold text-slate-900 dark:text-white mb-2">
                 Categorías Registradas ({allCategories.length})
@@ -714,7 +737,7 @@ export default function ServiciosPage() {
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
-          </div>
+          </GlassTiltCard>
         </div>
       </div>
 
@@ -723,14 +746,14 @@ export default function ServiciosPage() {
         data-tour="servicios-filters"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto overscroll-x-contain touch-pan-x scroll-smooth pb-1 max-w-full scrollbar-none">
           {filterCategoryList.map((cat) => {
             const isSelected = categoryFilter === cat;
             const isRemovable = cat !== "Todos";
             return (
               <div
                 key={cat}
-                className={`group inline-flex items-center gap-1.5 rounded-2xl border px-3 py-1.5 text-xs font-bold transition shrink-0 ${
+                className={`group inline-flex min-h-10 sm:min-h-8 items-center gap-1 rounded-2xl border px-2.5 text-xs font-bold transition shrink-0 ${
                   isSelected
                     ? "border-primary bg-primary/10 text-primary shadow-xs"
                     : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -739,7 +762,7 @@ export default function ServiciosPage() {
                 <button
                   type="button"
                   onClick={() => setCategoryFilter(cat)}
-                  className="cursor-pointer"
+                  className="inline-flex min-h-10 min-w-[44px] sm:min-h-8 sm:min-w-0 items-center justify-center cursor-pointer"
                 >
                   {cat}
                 </button>
@@ -751,7 +774,7 @@ export default function ServiciosPage() {
                       setCategoryToDelete(cat);
                     }}
                     title={`Eliminar categoría "${cat}"`}
-                    className="opacity-40 hover:opacity-100 p-0.5 rounded-md hover:bg-rose-500/10 hover:text-rose-500 transition cursor-pointer"
+                    className="inline-flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-lg opacity-60 hover:opacity-100 hover:bg-rose-500/10 hover:text-rose-500 transition cursor-pointer"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -777,12 +800,12 @@ export default function ServiciosPage() {
                     setIsAddingCategory(false);
                   }
                 }}
-                className="w-32 px-2 py-0.5 text-xs text-slate-900 dark:text-white focus:outline-none"
+                className="h-10 sm:h-8 w-32 px-2 text-sm text-slate-900 dark:text-white focus:outline-none sm:text-xs"
               />
               <button
                 type="button"
                 onClick={handleCreateCategory}
-                className="rounded-xl bg-primary text-white p-1 hover:opacity-90 transition cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-white hover:opacity-90 transition cursor-pointer"
                 title="Guardar categoría en base de datos"
               >
                 <Check className="h-3.5 w-3.5" />
@@ -790,7 +813,7 @@ export default function ServiciosPage() {
               <button
                 type="button"
                 onClick={() => setIsAddingCategory(false)}
-                className="rounded-xl p-1 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 transition cursor-pointer"
                 title="Cancelar"
               >
                 <X className="h-3.5 w-3.5" />
@@ -800,7 +823,7 @@ export default function ServiciosPage() {
             <button
               type="button"
               onClick={() => setIsAddingCategory(true)}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-800/50 px-3.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition shrink-0 cursor-pointer"
+              className="inline-flex min-h-10 sm:min-h-8 items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-800/50 px-3.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition shrink-0 cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Nueva Categoría</span>
@@ -815,7 +838,7 @@ export default function ServiciosPage() {
             placeholder="Buscar servicio..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+            className="min-h-11 sm:min-h-0 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2 pl-9 pr-3 text-base text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none sm:text-xs"
           />
         </div>
       </div>
@@ -837,7 +860,7 @@ export default function ServiciosPage() {
           <button
             type="button"
             onClick={handleOpenCreateService}
-            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
+            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Crear primer servicio</span>
@@ -887,24 +910,29 @@ export default function ServiciosPage() {
                         </div>
                       </div>
 
-                      {/* Apple Toggle Switch for Online Visibility */}
+                      {/* Compact visibility control */}
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
+                          role="switch"
+                          aria-checked={isVisible}
+                          aria-label={isVisible ? "Ocultar servicio en la web" : "Mostrar servicio en la web"}
                           onClick={() => {
                             triggerHaptic("selection");
                             handleToggleVisibility(item);
                           }}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                            isVisible ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
+                            isVisible
+                              ? "border-emerald-500/25 bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 dark:text-emerald-400"
+                              : "border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                           }`}
                           title={isVisible ? "Servicio visible" : "Servicio pausado"}
                         >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              isVisible ? "translate-x-6" : "translate-x-1"
-                            }`}
-                          />
+                          {isVisible ? (
+                            <Eye className="h-4 w-4" aria-hidden="true" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -918,7 +946,7 @@ export default function ServiciosPage() {
                           handleOpenPromoModal(item);
                         }}
                         data-tour={index === 0 ? "servicios-promo-btn" : undefined}
-                        className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 cursor-pointer"
+                        className="inline-flex min-h-10 items-center gap-1 rounded-xl px-2 text-[11px] font-bold text-amber-600 transition-all duration-150 ease-out active:scale-[0.98] dark:text-amber-400 cursor-pointer"
                       >
                         <Flame className="h-3 w-3" />
                         <span>{item.hasPromo ? "Editar Promo" : "+ Promo Flash"}</span>
@@ -932,7 +960,8 @@ export default function ServiciosPage() {
                             handleCopyServiceLink(item.id, item.name);
                           }}
                           data-tour={index === 0 ? "servicios-share-btn" : undefined}
-                          className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                          aria-label="Copiar enlace del servicio"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
                           title="Copiar link"
                         >
                           <Copy className="h-3.5 w-3.5" />
@@ -943,7 +972,8 @@ export default function ServiciosPage() {
                             triggerHaptic("selection");
                             handleOpenEditService(item);
                           }}
-                          className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
+                          aria-label="Editar servicio"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
                           title="Editar servicio"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -954,7 +984,8 @@ export default function ServiciosPage() {
                             triggerHaptic("light");
                             setDeleteTarget({ id: item.id, name: item.name });
                           }}
-                          className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                          aria-label="Eliminar servicio"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
                           title="Eliminar servicio"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -981,13 +1012,15 @@ export default function ServiciosPage() {
             );
 
             return (
-              <Card
+              <GlassTiltCard
                 key={item.id}
                 data-tour={index === 0 ? "servicios-card" : undefined}
+                variant={isVisible ? "glass" : "subtle"}
+                maxTilt={3.5}
                 className={`group flex flex-col justify-between rounded-3xl p-5 shadow-xs transition-all duration-300 ${
                   isVisible
-                    ? "glass-panel hover:shadow-md hover:border-primary/40"
-                    : "glass-panel-subtle opacity-70"
+                    ? "hover:shadow-md hover:border-primary/40"
+                    : "opacity-70"
                 }`}
               >
                 <div>
@@ -997,23 +1030,25 @@ export default function ServiciosPage() {
                         {item.category || "General"}
                       </span>
 
-                      {/* Interactive Visibility Button with Live Status Dot */}
+                      {/* Compact visibility control */}
                       <button
                         type="button"
+                        role="switch"
+                        aria-checked={isVisible}
+                        aria-label="Visibilidad del servicio"
                         onClick={() => handleToggleVisibility(item)}
-                        title={isVisible ? "Servicio publicado en tu web. Clic para ocultar." : "Servicio oculto. Clic para hacerlo visible online."}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold border transition-all cursor-pointer ${
+                        title={isVisible ? "Servicio visible" : "Servicio pausado"}
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
                           isVisible
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-700 hover:bg-slate-200"
+                            ? "border-emerald-500/25 bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 dark:text-emerald-400"
+                            : "border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                         }`}
                       >
-                        <span
-                          className={`h-2 w-2 rounded-full transition-colors ${
-                            isVisible ? "bg-emerald-500" : "bg-slate-400"
-                          }`}
-                        />
-                        <span>{isVisible ? "Visible online" : "Pausado"}</span>
+                        {isVisible ? (
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" aria-hidden="true" />
+                        )}
                       </button>
                     </div>
 
@@ -1155,7 +1190,7 @@ export default function ServiciosPage() {
                     </button>
                   </div>
                 </div>
-              </Card>
+              </GlassTiltCard>
             );
           })}
           </div>
@@ -1167,8 +1202,9 @@ export default function ServiciosPage() {
         open={serviceModalOpen}
         onClose={() => setServiceModalOpen(false)}
         title={editingService ? `Editar: ${editingService.name}` : "Nuevo Servicio en Catálogo"}
+        className="service-mobile-sheet"
       >
-        <form onSubmit={handleSaveService} className="space-y-4 text-xs">
+        <form onSubmit={handleSaveService} className="service-mobile-form space-y-4 text-xs">
           {/* Service Name & Visibility Switch */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex-1">
@@ -1181,26 +1217,30 @@ export default function ServiciosPage() {
                 placeholder="Ej: Corte Fade Clásico + Barba"
                 value={serviceForm.name}
                 onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
-                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                className="min-h-11 sm:min-h-0 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-base text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none sm:text-xs"
               />
             </div>
 
-            {/* Custom Visibility Switch */}
+            {/* Compact visibility control */}
             <div className="flex items-center gap-2 pt-1 sm:pt-4">
               <button
                 type="button"
                 role="switch"
                 aria-checked={serviceForm.active}
+                aria-label="Visibilidad del servicio"
                 onClick={() => setServiceForm({ ...serviceForm, active: !serviceForm.active })}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  serviceForm.active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
+                  serviceForm.active
+                    ? "border-emerald-500/25 bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 dark:text-emerald-400"
+                    : "border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                 }`}
+                title={serviceForm.active ? "Visible online" : "Oculto"}
               >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    serviceForm.active ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
+                {serviceForm.active ? (
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                )}
               </button>
               <span className="font-bold text-[11px] text-slate-700 dark:text-slate-300">
                 {serviceForm.active ? "Visible Online" : "Oculto"}
@@ -1233,7 +1273,7 @@ export default function ServiciosPage() {
                     key={cat}
                     type="button"
                     onClick={() => setServiceForm({ ...serviceForm, category: cat })}
-                    className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                    className={`inline-flex min-h-10 sm:min-h-0 items-center rounded-xl border px-3 py-2 text-xs font-bold transition cursor-pointer ${
                       isSelected
                         ? "border-primary bg-primary text-white shadow-xs"
                         : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-400"
@@ -1285,7 +1325,7 @@ export default function ServiciosPage() {
                     key={dur}
                     type="button"
                     onClick={() => setServiceForm({ ...serviceForm, durationMin: dur })}
-                    className={`py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                    className={`min-h-10 sm:min-h-0 rounded-xl border px-1 py-1.5 text-xs font-bold transition cursor-pointer ${
                       serviceForm.durationMin === dur
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
@@ -1304,7 +1344,8 @@ export default function ServiciosPage() {
                       durationMin: Math.max(5, serviceForm.durationMin - 5),
                     })
                   }
-                  className="h-8 w-8 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 cursor-pointer"
+                  aria-label="Reducir duración 5 minutos"
+                  className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 transition active:scale-[0.98] cursor-pointer"
                 >
                   -5
                 </button>
@@ -1319,7 +1360,8 @@ export default function ServiciosPage() {
                       durationMin: serviceForm.durationMin + 5,
                     })
                   }
-                  className="h-8 w-8 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 cursor-pointer"
+                  aria-label="Aumentar duración 5 minutos"
+                  className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 transition active:scale-[0.98] cursor-pointer"
                 >
                   +5
                 </button>
@@ -1348,7 +1390,7 @@ export default function ServiciosPage() {
                     key={quick}
                     type="button"
                     onClick={() => setServiceForm({ ...serviceForm, price: quick })}
-                    className="flex-1 rounded-xl border border-slate-200/60 dark:border-white/10 py-1 text-[10px] font-bold text-slate-500 hover:text-primary hover:border-primary transition cursor-pointer"
+                    className="min-h-10 sm:min-h-0 flex-1 rounded-xl border border-slate-200/60 dark:border-white/10 py-1 text-[10px] font-bold text-slate-500 hover:text-primary hover:border-primary transition cursor-pointer"
                   >
                     {quick / 1000}k
                   </button>
@@ -1367,7 +1409,7 @@ export default function ServiciosPage() {
               placeholder="Detallá qué incluye el servicio para tus clientes..."
               value={serviceForm.description}
               onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+              className="min-h-[88px] sm:min-h-0 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-base text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none sm:text-xs"
             />
           </div>
 
@@ -1394,7 +1436,7 @@ export default function ServiciosPage() {
                     key={st.id}
                     type="button"
                     onClick={() => handleToggleStaff(st.id)}
-                    className={`flex items-center gap-2 p-2 rounded-2xl border text-left transition cursor-pointer ${
+                    className={`min-h-11 sm:min-h-0 flex items-center gap-2 p-2 rounded-2xl border text-left transition cursor-pointer ${
                       isAssigned
                         ? "border-primary bg-primary/10 text-primary font-bold shadow-xs"
                         : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 opacity-60"
@@ -1421,13 +1463,13 @@ export default function ServiciosPage() {
             <button
               type="button"
               onClick={() => setServiceModalOpen(false)}
-              className="rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="min-h-11 sm:min-h-0 rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="rounded-2xl bg-primary px-5 py-2.5 font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
+              className="min-h-11 sm:min-h-0 rounded-2xl bg-primary px-5 py-2.5 font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
             >
               {editingService ? "Guardar Cambios" : "Crear Servicio"}
             </button>
@@ -1441,8 +1483,9 @@ export default function ServiciosPage() {
           open={!!promoModalService}
           onClose={() => setPromoModalService(null)}
           title={`Promoción Flash: ${promoModalService.name}`}
+          className="service-mobile-sheet"
         >
-          <form onSubmit={handleSavePromo} className="space-y-4 text-xs">
+          <form onSubmit={handleSavePromo} className="service-mobile-form space-y-4 text-xs">
             {/* Promo Header & Switch */}
             <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
               <div className="flex items-center gap-2.5">
@@ -1944,30 +1987,30 @@ export default function ServiciosPage() {
             )}
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
+            <div className="flex flex-col gap-2 pt-3 border-t border-slate-100 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
               {promoModalService.hasPromo ? (
                 <button
                   type="button"
                   onClick={handleRemovePromo}
-                  className="rounded-2xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3.5 py-2 font-bold transition cursor-pointer"
+                  className="min-h-11 w-full rounded-2xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3.5 py-2 font-bold transition cursor-pointer sm:min-h-0 sm:w-auto"
                 >
                   Quitar Promoción
                 </button>
               ) : (
-                <div />
+                <div className="hidden sm:block" />
               )}
 
-              <div className="flex items-center gap-2">
+              <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:items-center">
                 <button
                   type="button"
                   onClick={() => setPromoModalService(null)}
-                  className="rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="min-h-11 rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer sm:min-h-0"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="rounded-2xl bg-amber-500 hover:bg-amber-600 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+                  className="min-h-11 rounded-2xl bg-amber-500 hover:bg-amber-600 px-3 py-2 font-bold text-white shadow-md transition cursor-pointer sm:min-h-0 sm:px-5"
                 >
                   Guardar Promoción
                 </button>
@@ -1982,6 +2025,7 @@ export default function ServiciosPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         title="¿Eliminar servicio del catálogo?"
+        className="service-mobile-sheet"
       >
         <div className="space-y-4 text-xs">
           <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
@@ -2022,6 +2066,7 @@ export default function ServiciosPage() {
         open={!!categoryToDelete}
         onClose={() => setCategoryToDelete(null)}
         title="¿Eliminar categoría de servicios?"
+        className="service-mobile-sheet"
       >
         <div className="space-y-4 text-xs">
           <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">

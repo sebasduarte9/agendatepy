@@ -1428,7 +1428,7 @@ div[class*="glass-dropdown"],
   will-change: transform;
 }
 
-@media (hover: hover) and (min-width: 1024px) {
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
   .glass-tilt-card:hover {
     transform: perspective(850px) rotateY(-4deg) rotateX(3deg) translateY(-3px);
     box-shadow: 
@@ -2229,6 +2229,64 @@ div[class*="glass-dropdown"],
 .legend span:nth-child(3):before {
   background: #a855f7;
   box-shadow: 0 0 6px #a855f7;
+}
+
+@media (max-width: 639px) {
+  .servicios-mobile-ui button,
+  .servicios-mobile-ui a,
+  .service-mobile-sheet button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .servicios-mobile-ui button:active:not(:disabled),
+  .servicios-mobile-ui a:active,
+  .service-mobile-sheet button:active:not(:disabled) {
+    transform: scale(0.985);
+  }
+
+  .servicios-mobile-ui input,
+  .service-mobile-form input,
+  .service-mobile-form textarea,
+  .service-mobile-form select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .service-mobile-form button:not([role="switch"]) {
+    min-height: 40px;
+  }
+
+  .service-mobile-form textarea {
+    min-height: 88px;
+    line-height: 1.5;
+  }
+
+  .servicios-mobile-ui input:focus-visible,
+  .service-mobile-form input:focus-visible,
+  .service-mobile-form textarea:focus-visible,
+  .service-mobile-form select:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 48%, transparent);
+    outline-offset: 2px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .servicios-mobile-ui button,
+  .servicios-mobile-ui a,
+  .service-mobile-sheet button {
+    transition-duration: 1ms !important;
+  }
+
+  .servicios-mobile-ui button:active:not(:disabled),
+  .servicios-mobile-ui a:active,
+  .service-mobile-sheet button:active:not(:disabled) {
+    transform: none;
+  }
+
 }
 
 .eyebrow {
