@@ -7,6 +7,7 @@ interface GlassTiltCardProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
   glowColor?: string;
   maxTilt?: number;
+  variant?: "glass" | "subtle";
 }
 
 export default function GlassTiltCard({
@@ -14,6 +15,7 @@ export default function GlassTiltCard({
   className = "",
   glowColor,
   maxTilt = 7,
+  variant = "glass",
   onClick,
   style,
   ...props
@@ -23,6 +25,14 @@ export default function GlassTiltCard({
   const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50, opacity: 0 });
 
   function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (
+      !window.matchMedia(
+        "(hover: hover) and (pointer: fine) and (min-width: 1024px) and (prefers-reduced-motion: no-preference)"
+      ).matches
+    ) {
+      return;
+    }
+
     const card = cardRef.current;
     if (!card) return;
 
@@ -56,7 +66,7 @@ export default function GlassTiltCard({
         transform,
         transition: "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.2s ease",
       }}
-      className={`glass-panel glass-tilt-card relative overflow-hidden rounded-2xl p-5 ${
+      className={`${variant === "subtle" ? "glass-panel-subtle" : "glass-panel"} glass-tilt-card relative overflow-hidden rounded-2xl p-5 ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
       {...props}

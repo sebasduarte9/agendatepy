@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef, type ReactNode } from "react";
+import React, { useState, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useDragControls } from "framer-motion";
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 import { triggerHaptic } from "@/lib/haptics";
 
@@ -31,7 +31,7 @@ export default function Modal({
   const [isMobile, setIsMobile] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const dragControls = useDragControls();
-  const bodyRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     setMounted(true);
@@ -57,10 +57,8 @@ export default function Modal({
   // Close on Escape key press
   useEffect(() => {
     if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -75,17 +73,17 @@ export default function Modal({
       {open && (
         <motion.div
           id={id}
-          className={`fixed inset-0 z-[9999] flex bg-slate-950/75 backdrop-blur-md ${
+          className={`fixed inset-0 z-[9999] flex bg-slate-950/75 backdrop-blur-sm sm:backdrop-blur-md ${
             isMobile
               ? "items-end justify-center p-0"
               : isSide
-              ? "items-stretch justify-end p-0 overflow-hidden"
-              : "items-center justify-center p-3 sm:p-6 overflow-y-auto"
+                ? "items-stretch justify-end p-0 overflow-hidden"
+                : "items-center justify-center p-3 sm:p-6 overflow-y-auto"
           }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.22, ease: "easeOut" }}
           onClick={onClose}
         >
           <motion.div
@@ -94,8 +92,9 @@ export default function Modal({
             dragListener={false}
             dragControls={dragControls}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.7 }}
+            dragElastic={isMobile ? { top: 0, bottom: 0.62 } : false}
             dragMomentum={false}
+            dragTransition={{ bounceStiffness: 360, bounceDamping: 34 }}
             onDragEnd={(_, info) => {
               if (isMobile && (info.offset.y > 72 || info.velocity.y > 550)) {
                 triggerHaptic("light");
@@ -106,44 +105,46 @@ export default function Modal({
               isMobile
                 ? { y: "100%", opacity: 0.9 }
                 : isSide
-                ? { x: "100%", opacity: 1 }
-                : { opacity: 0, scale: 0.94 }
+                  ? { x: "100%", opacity: 1 }
+                  : { opacity: 0, scale: 0.94 }
             }
             animate={
               isMobile
                 ? { y: 0, opacity: 1 }
                 : isSide
-                ? { x: 0, opacity: 1 }
-                : { opacity: 1, scale: 1 }
+                  ? { x: 0, opacity: 1 }
+                  : { opacity: 1, scale: 1 }
             }
             exit={
               isMobile
                 ? { y: "100%", opacity: 0.9 }
                 : isSide
-                ? { x: "100%", opacity: 1 }
-                : { opacity: 0, scale: 0.94 }
+                  ? { x: "100%", opacity: 1 }
+                  : { opacity: 0, scale: 0.94 }
             }
             transition={
-              isMobile
-                ? { type: "spring", stiffness: 400, damping: 30 }
-                : isSide
-                ? { type: "spring", stiffness: 360, damping: 34 }
-                : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
+              prefersReducedMotion
+                ? { duration: 0.01 }
+                : isMobile
+                  ? { type: "spring", stiffness: 340, damping: 34, mass: 0.9 }
+                  : isSide
+                    ? { type: "spring", stiffness: 360, damping: 34 }
+                    : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
             }
             onClick={(event) => event.stopPropagation()}
             className={`${
               isMobile
-                ? "w-full max-h-[90dvh] rounded-t-[32px] pb-4"
+                ? "w-full max-h-[90dvh] rounded-t-[32px] pb-[max(1rem,env(safe-area-inset-bottom))]"
                 : isSide
-                ? "h-full max-h-full max-w-2xl rounded-l-[32px] w-full"
-                : `max-h-[min(90vh,760px)] ${maxWidth} rounded-[28px] my-auto w-full`
-            } ${className} flex flex-col glass-modal text-slate-900 dark:text-white shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden relative`}
+                  ? "h-full max-h-full max-w-2xl rounded-l-[32px] w-full"
+                  : `max-h-[min(90vh,760px)] ${maxWidth} rounded-[28px] my-auto w-full`
+            } ${minHeight} ${className} flex flex-col glass-modal text-slate-900 dark:text-white shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden relative`}
           >
             {isMobile && (
               <div
                 className="flex min-h-10 w-full shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
                 onPointerDown={(event) => dragControls.start(event)}
-                aria-hidden="true"
+                aria-label="Desliza hacia abajo para cerrar"
               >
                 <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-white/20" />
                 <span className="sr-only">Desliza hacia abajo para cerrar</span>
@@ -173,10 +174,7 @@ export default function Modal({
             </div>
 
             {/* Modal Body with smooth internal scroll */}
-            <div
-              ref={bodyRef}
-              className="overflow-y-auto overscroll-contain flex-1 min-h-0 px-5 sm:px-6 py-4 pb-6"
-            >
+            <div className="overflow-y-auto overscroll-contain flex-1 min-h-0 px-5 sm:px-6 py-4 pb-6">
               {children}
             </div>
           </motion.div>
