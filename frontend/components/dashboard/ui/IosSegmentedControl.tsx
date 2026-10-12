@@ -18,6 +18,8 @@ interface IosSegmentedControlProps<T extends string = string> {
   layoutId?: string;
   className?: string;
   size?: "sm" | "md" | "lg";
+  fitContent?: boolean;
+  accentColor?: string;
 }
 
 export default function IosSegmentedControl<T extends string = string>({
@@ -26,6 +28,8 @@ export default function IosSegmentedControl<T extends string = string>({
   onChange,
   className = "",
   size = "md",
+  fitContent = false,
+  accentColor,
 }: IosSegmentedControlProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number; ready: boolean }>({
@@ -62,16 +66,22 @@ export default function IosSegmentedControl<T extends string = string>({
     <div
       ref={containerRef}
       role="tablist"
-      className={`relative inline-flex w-full sm:w-auto items-center p-1 rounded-2xl bg-slate-200/75 dark:bg-zinc-800/80 border border-slate-300/40 dark:border-white/5 select-none transition-colors ${className}`}
+      className={`relative inline-flex ${fitContent ? "w-max sm:w-auto" : "w-full sm:w-auto"} items-center p-1 rounded-2xl bg-slate-200/75 dark:bg-zinc-800/80 border border-slate-300/40 dark:border-white/5 select-none transition-colors ${className}`}
     >
       {/* Sliding Pill Indicator - pure hardware-accelerated CSS transition */}
       {indicatorStyle.ready && (
         <div
           aria-hidden="true"
-          className="absolute top-1 bottom-1 rounded-[12px] bg-white dark:bg-zinc-900 shadow-sm border border-slate-200/60 dark:border-white/10 pointer-events-none transition-all duration-200 ease-out"
+          className={`absolute top-1 bottom-1 rounded-[12px] shadow-sm pointer-events-none transition-all duration-200 ease-out ${accentColor ? "border" : "bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/10"}`}
           style={{
             left: `${indicatorStyle.left}px`,
             width: `${indicatorStyle.width}px`,
+            ...(accentColor
+              ? {
+                  backgroundColor: `color-mix(in srgb, ${accentColor} 16%, transparent)`,
+                  borderColor: `color-mix(in srgb, ${accentColor} 38%, transparent)`,
+                }
+              : {}),
           }}
         />
       )}
@@ -97,11 +107,12 @@ export default function IosSegmentedControl<T extends string = string>({
                 onChange(opt.value);
               }
             }}
-            className={`relative z-10 flex flex-1 sm:flex-initial items-center justify-center gap-1.5 font-bold transition-colors duration-150 cursor-pointer rounded-xl select-none outline-none ${sizeClasses[size]} ${
+            className={`relative z-10 flex ${fitContent ? "flex-initial whitespace-nowrap" : "flex-1 sm:flex-initial"} items-center justify-center gap-1.5 font-bold transition-colors duration-150 cursor-pointer rounded-xl select-none outline-none ${sizeClasses[size]} ${
               isActive
-                ? "text-slate-900 dark:text-white"
+                ? accentColor ? "text-[var(--segment-accent)]" : "text-slate-900 dark:text-white"
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
+            style={isActive && accentColor ? ({ "--segment-accent": accentColor } as React.CSSProperties) : undefined}
           >
             <span className="relative z-10 flex items-center gap-1.5 truncate">
               {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}

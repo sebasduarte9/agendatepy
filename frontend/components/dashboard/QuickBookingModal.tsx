@@ -352,16 +352,17 @@ export default function QuickBookingModal({
       title={modalMode === "appointment" ? "Agendar Turno" : "Bloquear Horario"}
       onClose={onClose}
     >
-      <div className="space-y-4 text-xs flex flex-col justify-between">
+      <div className="flex flex-col justify-between gap-3 text-sm">
         {/* Mode switcher (Turno vs Bloqueo) */}
         {allowBlock && (
-          <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+          <div className="flex rounded-2xl border border-slate-200/70 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.04]">
             <button
               type="button"
               onClick={() => setModalMode("appointment")}
-              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              aria-pressed={modalMode === "appointment"}
+              className={`flex min-h-11 flex-1 rounded-xl px-2 py-2 font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 modalMode === "appointment"
-                  ? "bg-white dark:bg-slate-900 text-primary shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
+                  ? "bg-white text-primary shadow-sm ring-1 ring-slate-200/70 dark:bg-[#252328] dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -371,9 +372,10 @@ export default function QuickBookingModal({
             <button
               type="button"
               onClick={() => setModalMode("block")}
-              className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              aria-pressed={modalMode === "block"}
+              className={`flex min-h-11 flex-1 rounded-xl px-2 py-2 font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 modalMode === "block"
-                  ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
+                  ? "bg-white text-amber-600 shadow-sm ring-1 ring-amber-500/20 dark:bg-[#252328] dark:ring-amber-500/25"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -384,12 +386,12 @@ export default function QuickBookingModal({
         )}
 
         {modalMode === "appointment" ? (
-          <form onSubmit={handleCreateAppointment} className="flex-1 flex flex-col justify-between gap-4">
-            <div className="space-y-3.5">
+          <form onSubmit={handleCreateAppointment} className="flex flex-1 flex-col justify-between gap-3">
+            <div className="space-y-3">
               {/* ROW 1: CLIENTE (NOMBRE Y WHATSAPP) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="relative">
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Cliente *
                 </label>
                 <div className="relative">
@@ -403,7 +405,7 @@ export default function QuickBookingModal({
                       setClientName(e.target.value);
                       setClientId(null);
                     }}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                    className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] pl-9 pr-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   />
                 </div>
 
@@ -442,7 +444,7 @@ export default function QuickBookingModal({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   WhatsApp
                 </label>
                 <div className="flex items-center gap-1.5">
@@ -456,7 +458,7 @@ export default function QuickBookingModal({
                         setStaffDropdownOpen(false);
                         setTimeDropdownOpen(false);
                       }}
-                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                      className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.05] px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
                       title="Seleccionar país"
                     >
                       <span className="text-sm leading-none">{activeCountry.flag}</span>
@@ -513,7 +515,7 @@ export default function QuickBookingModal({
                       placeholder={activeCountry.placeholder}
                       value={clientPhone}
                       onChange={(e) => setClientPhone(formatPhoneInput(e.target.value, activeCountry))}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                      className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 font-mono"
                     />
                   </div>
                 </div>
@@ -541,7 +543,7 @@ export default function QuickBookingModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* Custom Service Selector */}
               <div className={`relative ${serviceDropdownOpen ? "z-40" : ""}`}>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Servicio
                 </label>
                 <button
@@ -552,7 +554,7 @@ export default function QuickBookingModal({
                     setTimeDropdownOpen(false);
                     setCountryDropdownOpen(false);
                   }}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                  className="min-h-11 w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2.5 text-sm text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   <div className="min-w-0 flex-1 truncate pr-2">
                     <span className="font-bold text-slate-900 dark:text-white">{currentService?.name}</span>
@@ -585,7 +587,7 @@ export default function QuickBookingModal({
 
               {/* Custom Staff Selector */}
               <div className={`relative ${staffDropdownOpen ? "z-40" : ""}`}>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Profesional
                 </label>
                 <button
@@ -596,7 +598,7 @@ export default function QuickBookingModal({
                     setTimeDropdownOpen(false);
                     setCountryDropdownOpen(false);
                   }}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
+                  className="min-h-11 w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2.5 text-sm text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   {(() => {
                     const assigned = staff.find((s) => s.id === slotStaffId) || staff[0];
@@ -645,52 +647,58 @@ export default function QuickBookingModal({
               </div>
             </div>
 
-            {/* ROW 3: FECHA Y HORA (COMPACT BAR) */}
+            {/* Fecha y horario */}
             <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Fecha y Horario
-              </label>
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-2.5">
-                {/* Date Navigator */}
-                <div className="flex items-center gap-1.5">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Fecha y Horario
+                </label>
+                <span className="shrink-0 text-[11px] text-slate-500 dark:text-slate-400">
+                  Termina {appointmentEndTime} hs
+                </span>
+              </div>
+              <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-white/10 dark:bg-white/[0.035] sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] sm:items-center sm:gap-3">
+                <div className="flex min-w-0 items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => stepSlotDate(-1)}
-                    className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/10"
                     title="Día anterior"
+                    aria-label="Día anterior"
                   >
-                    <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                  <span className="min-w-0 flex-1 truncate px-1 text-center text-xs font-bold capitalize text-slate-900 dark:text-white">
                     {formattedSlotDate}
                   </span>
                   <button
                     type="button"
                     onClick={() => stepSlotDate(1)}
-                    className="p-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/10"
                     title="Día siguiente"
+                    aria-label="Día siguiente"
                   >
-                    <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                    <ChevronRight className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() =>
                       setSlotDate(formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"))
                     }
-                    className="text-[10.5px] font-bold text-primary hover:underline px-1.5 py-0.5 rounded hover:bg-primary/10 transition cursor-pointer"
+                    className="flex h-10 shrink-0 items-center rounded-xl px-2 text-xs font-bold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     Hoy
                   </button>
                 </div>
 
-                {/* Time display & Stepper */}
-                <div className="flex items-center gap-1.5 relative">
+                <div className="relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-t border-slate-200/80 pt-2 dark:border-white/10 sm:border-t-0 sm:pt-0">
                   <button
                     type="button"
                     onClick={() => setSlotTime((prev) => stepTime(prev, -15))}
-                    className="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                    className="flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-700 transition hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300"
+                    aria-label="Quince minutos antes"
                   >
-                    -15m
+                    −15 min
                   </button>
 
                   <button
@@ -701,28 +709,26 @@ export default function QuickBookingModal({
                       setStaffDropdownOpen(false);
                       setCountryDropdownOpen(false);
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-black text-xs text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
+                    className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 font-mono text-xs font-bold text-slate-900 shadow-xs transition hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+                    aria-label={`Elegir horario, ${slotTime}`}
+                    aria-expanded={timeDropdownOpen}
                   >
-                    <Clock className="h-3 w-3 text-primary" />
-                    <span>{slotTime} hs</span>
-                    <ChevronDown className="h-3 w-3 text-slate-400 ml-0.5" />
+                    <Clock className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span>{slotTime}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${timeDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSlotTime((prev) => stepTime(prev, 15))}
-                    className="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                    className="flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-700 transition hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300"
+                    aria-label="Quince minutos después"
                   >
-                    +15m
+                    +15 min
                   </button>
 
-                  <span className="text-[11px] text-slate-400 hidden sm:inline">
-                    hasta <strong>{appointmentEndTime} hs</strong>
-                  </span>
-
-                  {/* Time dropdown popover: opens UPWARD so it stays inside modal */}
                   {timeDropdownOpen && (
-                    <div className="solid-popover glass-dropdown absolute right-0 bottom-full mb-1.5 z-50 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
+                    <div className="solid-popover glass-dropdown absolute bottom-full right-0 z-50 mb-2 grid max-h-56 w-56 grid-cols-2 gap-1.5 overflow-y-auto rounded-2xl border border-slate-200 p-2 shadow-2xl dark:border-white/10">
                       {APPOINTMENT_TIME_SLOTS.map((t) => (
                         <button
                           key={t}
@@ -731,10 +737,10 @@ export default function QuickBookingModal({
                             setSlotTime(t);
                             setTimeDropdownOpen(false);
                           }}
-                          className={`py-1.5 px-2 rounded-lg text-center font-mono text-[11px] font-bold transition cursor-pointer ${
+                          className={`min-h-10 rounded-lg px-2 text-center font-mono text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                             slotTime === t
                               ? "bg-primary text-white shadow-xs"
-                              : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                              : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
                           }`}
                         >
                           {t}
@@ -743,15 +749,16 @@ export default function QuickBookingModal({
                     </div>
                   )}
                 </div>
+
               </div>
             </div>
 
-            {/* ROW 4: MÉTODO DE PAGO */}
+            {/* Método de pago */}
             <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Método de Pago
               </label>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
                   { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
                   { id: "sipap" as const, label: "Transferencia bancaria", icon: Landmark },
@@ -764,7 +771,8 @@ export default function QuickBookingModal({
                       key={id}
                       type="button"
                       onClick={() => setPaymentMethod(id)}
-                      className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 px-2 text-xs font-bold transition cursor-pointer ${
+                      aria-pressed={isSelected}
+                      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-2.5 py-2 text-center text-xs font-semibold leading-tight transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                         isSelected
                           ? "border-primary bg-primary text-white shadow-xs"
                           : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
@@ -780,7 +788,7 @@ export default function QuickBookingModal({
           </div>
 
           {/* FOOTER ACTIONS & TOTAL */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
+          <div className="sticky bottom-[-24px] z-20 -mx-5 mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white/95 px-5 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#151416]/95 sm:static sm:mx-0 sm:gap-4 sm:bg-transparent sm:px-0 sm:pb-0 sm:shadow-none sm:backdrop-blur-none">
             <div>
               <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
               <span className="text-sm font-black text-primary">
@@ -792,14 +800,14 @@ export default function QuickBookingModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                className="min-h-11 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !clientName.trim()}
-                className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95 disabled:opacity-50 cursor-pointer"
+                className="min-h-11 whitespace-nowrap rounded-xl bg-primary px-4 sm:px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 transition hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#151416]"
               >
                 {isSubmitting ? "Guardando..." : "Confirmar Turno"}
               </button>
@@ -807,8 +815,8 @@ export default function QuickBookingModal({
           </div>
         </form>
       ) : (
-        <form onSubmit={handleCreateBlock} className="flex-1 flex flex-col justify-between gap-4">
-          <div className="space-y-3.5">
+        <form onSubmit={handleCreateBlock} className="flex flex-1 flex-col justify-between gap-5">
+          <div className="space-y-3">
             <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
               <Ban className="h-4 w-4 shrink-0 text-amber-600" />
               <span>Impide que se agenden turnos en este intervalo de tiempo.</span>
@@ -818,11 +826,11 @@ export default function QuickBookingModal({
               <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                 Profesional Afectado
               </label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setBlockStaffId("all")}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                  className={`min-h-11 px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
                     blockStaffId === "all"
                       ? "border-amber-500 bg-amber-500 text-white shadow-xs"
                       : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -835,7 +843,7 @@ export default function QuickBookingModal({
                     key={p.id}
                     type="button"
                     onClick={() => setBlockStaffId(p.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                    className={`min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
                       blockStaffId === p.id
                         ? "border-amber-500 bg-amber-500 text-white shadow-xs"
                         : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -864,7 +872,7 @@ export default function QuickBookingModal({
                     type="time"
                     value={blockStart}
                     onChange={(e) => setBlockStart(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                    className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] pl-9 pr-3 py-2.5 text-sm font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30"
                   />
                 </div>
               </div>
@@ -878,7 +886,7 @@ export default function QuickBookingModal({
                     type="time"
                     value={blockEnd}
                     onChange={(e) => setBlockEnd(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                    className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] pl-9 pr-3 py-2.5 text-sm font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30"
                   />
                 </div>
               </div>
@@ -893,23 +901,23 @@ export default function QuickBookingModal({
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
                 placeholder="Ej. Almuerzo, Trámite bancario, Feriado..."
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10 mt-auto">
+          <div className="sticky bottom-[-24px] z-20 -mx-5 mt-auto flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white/95 px-5 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#151416]/95 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:shadow-none sm:backdrop-blur-none">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="min-h-11 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-amber-500 hover:bg-amber-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-500/25 hover:opacity-95 disabled:opacity-50 cursor-pointer transition-all"
+              className="min-h-11 whitespace-nowrap rounded-xl bg-amber-500 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-500/25 transition hover:bg-amber-600 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#151416]"
             >
               {isSubmitting ? "Guardando..." : "Confirmar Bloqueo"}
             </button>

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   MessageSquare,
   Search,
@@ -69,6 +70,55 @@ function ChannelIcon({ channel, size = "md" }: { channel: CrmChannel; size?: "sm
   );
 }
 
+function ContactAvatar({
+  name,
+  phone,
+  channel,
+  tenantSlug,
+  color,
+  className,
+  initialsClassName = "",
+}: {
+  name: string;
+  phone: string;
+  channel: CrmChannel;
+  tenantSlug: string;
+  color: string;
+  className: string;
+  initialsClassName?: string;
+}) {
+  const initials = name.split(" ").filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  const digits = phone.replace(/\D/g, "");
+  const avatarUrl = channel === "whatsapp" && digits.length >= 8
+    ? `/api/crm/whatsapp-avatar?phone=${encodeURIComponent(digits)}&workspace=${encodeURIComponent(tenantSlug)}`
+    : null;
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden text-white ${className}`}
+      style={{ backgroundColor: color || "#0f172a" }}
+    >
+      <span className={initialsClassName}>{initials}</span>
+      {avatarUrl && (
+        <Image
+          src={avatarUrl}
+          alt=""
+          fill
+          sizes="64px"
+          unoptimized
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full rounded-[inherit] object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 function channelBadgeStyles(channel: CrmChannel) {
   switch (channel) {
     case "whatsapp":
@@ -85,6 +135,7 @@ export default function CrmOmnichannelPage() {
     crmConversations, clients, products, business,
     evolutionConfig, updateEvolutionConfig,
     loadDemoConversation, clearCrmConversations, createOrderFromCrm,
+    ensureClientCrmConversation,
     sendCrmMessage, resolveCrmConversation, reopenCrmConversation,
     pushToast, productOrders, updateProductOrderStatus,
     receipts, setReceiptStatus,
@@ -98,6 +149,7 @@ export default function CrmOmnichannelPage() {
   const [channelFilter, setChannelFilter] = useState<"todos" | CrmChannel>("todos");
   const [statusFilter, setStatusFilter] = useState<"open" | "resolved" | "all">("open");
   const [search, setSearch] = useState("");
+  const [deepLinkPhone, setDeepLinkPhone] = useState("");
   const [selectedId, setSelectedId] = useState<string>("conv-demo-1");
   const [replyText, setReplyText] = useState("");
   const [mobileActiveView, setMobileActiveView] = useState<"list" | "chat" | "profile">("list");
@@ -130,6 +182,13 @@ export default function CrmOmnichannelPage() {
       const p = new URLSearchParams(window.location.search);
       if (p.get("tab") === "pedidos") setMainSection("pedidos");
       if (p.get("tab") === "metricas") setMainSection("metricas");
+      const phone = p.get("phone") || "";
+      if (phone) {
+        setDeepLinkPhone(phone);
+        setSearch(phone);
+        setChannelFilter("todos");
+        setStatusFilter("all");
+      }
     }
   }, []);
 
@@ -143,9 +202,32 @@ export default function CrmOmnichannelPage() {
   }, []);
 
   useEffect(() => {
+    if (deepLinkPhone) return;
     if (crmConversations.length > 0 && (!selectedId || !crmConversations.some((c) => c.id === selectedId)))
       setSelectedId(crmConversations[0].id);
-  }, [crmConversations, selectedId]);
+  }, [crmConversations, deepLinkPhone, selectedId]);
+
+  useEffect(() => {
+    const phoneSuffix = deepLinkPhone.replace(/\D/g, "").slice(-8);
+    if (phoneSuffix.length < 6) return;
+
+    const matchingConversation = crmConversations.find(
+      (conversation) =>
+        conversation.channel === "whatsapp" &&
+        conversation.channelIdentifier.replace(/\D/g, "").endsWith(phoneSuffix)
+    );
+    const matchingClient = clients.find(
+      (client) => client.phone.replace(/\D/g, "").endsWith(phoneSuffix)
+    );
+    const conversationId = matchingClient
+      ? ensureClientCrmConversation(matchingClient)
+      : matchingConversation?.id || null;
+    if (!conversationId) return;
+
+    setSelectedId(conversationId);
+    setMobileActiveView("chat");
+    setDeepLinkPhone("");
+  }, [clients, crmConversations, deepLinkPhone, ensureClientCrmConversation]);
 
   // Generate QR code once when modal opens, and only regenerate when the 45s cycle completes
   const generateQrCode = useCallback(() => {
@@ -206,11 +288,24 @@ export default function CrmOmnichannelPage() {
   const filteredConversations = useMemo(() => crmConversations.filter((c) => {
     const chMatch = channelFilter === "todos" || c.channel === channelFilter;
     const stMatch = statusFilter === "all" || (statusFilter === "open" && (c.status === "open" || c.status === "pending")) || (statusFilter === "resolved" && c.status === "resolved");
-    const seMatch = c.clientName.toLowerCase().includes(search.toLowerCase()) || c.channelIdentifier.toLowerCase().includes(search.toLowerCase()) || c.lastMessage.toLowerCase().includes(search.toLowerCase());
+    const normalizedSearch = search.trim().toLowerCase();
+    const searchDigits = search.replace(/\D/g, "");
+    const phoneMatch = searchDigits.length >= 4 && c.channelIdentifier.replace(/\D/g, "").endsWith(searchDigits.slice(-8));
+    const seMatch = !normalizedSearch || c.clientName.toLowerCase().includes(normalizedSearch) || c.channelIdentifier.toLowerCase().includes(normalizedSearch) || c.lastMessage.toLowerCase().includes(normalizedSearch) || phoneMatch;
     return chMatch && stMatch && seMatch;
   }), [crmConversations, channelFilter, statusFilter, search]);
 
-  const activeConversation = useMemo(() => crmConversations.find((c) => c.id === selectedId) || filteredConversations[0] || null, [crmConversations, selectedId, filteredConversations]);
+  const activeConversation = useMemo(() => {
+    if (deepLinkPhone) {
+      const phoneSuffix = deepLinkPhone.replace(/\D/g, "").slice(-8);
+      return crmConversations.find(
+        (conversation) =>
+          conversation.channel === "whatsapp" &&
+          conversation.channelIdentifier.replace(/\D/g, "").endsWith(phoneSuffix)
+      ) || null;
+    }
+    return crmConversations.find((c) => c.id === selectedId) || filteredConversations[0] || null;
+  }, [crmConversations, deepLinkPhone, selectedId, filteredConversations]);
 
   const linkedClient = useMemo(() => {
     if (!activeConversation?.clientId) return null;
@@ -552,8 +647,8 @@ export default function CrmOmnichannelPage() {
           <div
             className={`w-full rounded-3xl glass-panel shadow-xs overflow-hidden flex flex-col lg:flex-row ${
               mobileActiveView !== "list"
-                ? "h-[calc(100dvh-11.8rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-7.8rem)] min-h-0 sm:min-h-[560px]"
-                : "h-[calc(100dvh-14.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-7.8rem)] min-h-0 sm:min-h-[560px]"
+              ? "h-[calc(100dvh-11.8rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
+              : "h-[calc(100dvh-14.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
             }`}
           >
             {/* ── LEFT PANE: CONVERSATION LIST ── */}
@@ -572,13 +667,19 @@ export default function CrmOmnichannelPage() {
                     type="text"
                     placeholder="Buscar cliente o chat..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => {
+                      setDeepLinkPhone("");
+                      setSearch(e.target.value);
+                    }}
                     className="w-full rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-white/10 pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
                   {search && (
                     <button
                       type="button"
-                      onClick={() => setSearch("")}
+                      onClick={() => {
+                        setDeepLinkPhone("");
+                        setSearch("");
+                      }}
                       className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600"
                     >
                       <X className="h-3 w-3" />
@@ -658,8 +759,6 @@ export default function CrmOmnichannelPage() {
                 ) : (
                   filteredConversations.map((c) => {
                     const sel = activeConversation?.id === c.id;
-                    const ini = c.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-
                     return (
                       <button
                         key={c.id}
@@ -679,12 +778,14 @@ export default function CrmOmnichannelPage() {
                       >
                         {/* Avatar */}
                         <div className="relative shrink-0">
-                          <div
-                            className="flex h-11 w-11 items-center justify-center rounded-2xl text-white font-black text-xs shadow-2xs"
-                            style={{ backgroundColor: business.primaryColor || "#0f172a" }}
-                          >
-                            {ini}
-                          </div>
+                          <ContactAvatar
+                            name={c.clientName}
+                            phone={c.channelIdentifier}
+                            channel={c.channel}
+                            tenantSlug={business.slug || "workspace"}
+                            color={business.primaryColor || "#0f172a"}
+                            className="h-11 w-11 rounded-2xl font-black text-xs shadow-2xs"
+                          />
                           <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-[#1f1c21] shadow-xs border border-slate-200/60 dark:border-white/10">
                             <ChannelIcon channel={c.channel} size="sm" />
                           </span>
@@ -734,7 +835,7 @@ export default function CrmOmnichannelPage() {
             {/* ── CENTER PANE: ACTIVE CHAT SCREEN ── */}
             <div
               data-tour="crm-chat-box"
-              className={`flex-1 flex flex-col min-w-0 bg-[#f8fafc]/40 dark:bg-black/10 backdrop-blur-md relative ${
+              className={`flex-1 flex flex-col min-w-0 min-h-0 bg-[#f8fafc]/40 dark:bg-black/10 backdrop-blur-md relative ${
                 mobileActiveView !== "chat" ? "hidden lg:flex" : "flex h-full"
               }`}
             >
@@ -758,12 +859,14 @@ export default function CrmOmnichannelPage() {
                       </button>
 
                       <div className="relative shrink-0">
-                        <div
-                          className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold text-xs shadow-xs"
-                          style={{ backgroundColor: business.primaryColor || "#0f172a" }}
-                        >
-                          {activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                        </div>
+                        <ContactAvatar
+                          name={activeConversation.clientName}
+                          phone={activeConversation.channelIdentifier}
+                          channel={activeConversation.channel}
+                          tenantSlug={business.slug || "workspace"}
+                          color={business.primaryColor || "#0f172a"}
+                          className="h-9 w-9 rounded-xl font-bold text-xs shadow-xs"
+                        />
                         <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs">
                           <ChannelIcon channel={activeConversation.channel} size="sm" />
                         </span>
@@ -848,7 +951,7 @@ export default function CrmOmnichannelPage() {
                   {/* Messages Canvas */}
                   <div
                     ref={messagesContainerRef}
-                    className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3 bg-transparent"
+                    className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3 bg-transparent"
                   >
                     {/* Security Notice */}
                     <div className="text-center">
@@ -859,7 +962,58 @@ export default function CrmOmnichannelPage() {
                     </div>
 
                     {/* Messages stream */}
-                    {activeConversation.messages.map((m) => {
+                    {activeConversation.messages.length === 0 ? (
+                      <section className="mx-auto my-4 w-full max-w-md rounded-2xl border border-slate-200/70 bg-white/60 p-5 text-left dark:border-white/10 dark:bg-white/[0.03]">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <MessageSquare className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Aún no hay mensajes</h4>
+                            <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                              Esta conversación está lista para {activeConversation.clientName}. Cuando haya mensajes, aparecerán aquí.
+                            </p>
+                          </div>
+                        </div>
+
+                        <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-200/70 pt-4 dark:border-white/10">
+                          <div className="min-w-0">
+                            <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Cliente</dt>
+                            <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-200">{activeConversation.clientName}</dd>
+                          </div>
+                          <div className="min-w-0">
+                            <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">WhatsApp</dt>
+                            <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-200">{activeConversation.channelIdentifier}</dd>
+                          </div>
+                          {linkedClient && (
+                            <>
+                              <div>
+                                <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Visitas</dt>
+                                <dd className="mt-0.5 text-xs font-semibold text-slate-800 dark:text-slate-200">{linkedClient.totalVisits}</dd>
+                              </div>
+                              <div>
+                                <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Consumo total</dt>
+                                <dd className="mt-0.5 text-xs font-semibold text-slate-800 dark:text-slate-200">{formatGs(linkedClient.totalSpent)}</dd>
+                              </div>
+                            </>
+                          )}
+                          {linkedClient?.notes && (
+                            <div className="col-span-2">
+                              <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Notas del cliente</dt>
+                              <dd className="mt-0.5 text-xs leading-relaxed text-slate-700 dark:text-slate-300">{linkedClient.notes}</dd>
+                            </div>
+                          )}
+                        </dl>
+
+                        <button
+                          type="button"
+                          onClick={() => setClientProfileModalOpen(true)}
+                          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200/80 px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                        >
+                          Ver ficha completa
+                        </button>
+                      </section>
+                    ) : activeConversation.messages.map((m) => {
                       const isAgent = m.sender === "agent";
                       return (
                         <div key={m.id} className={`flex flex-col ${isAgent ? "items-end" : "items-start"}`}>
@@ -1075,12 +1229,14 @@ export default function CrmOmnichannelPage() {
                   <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
                     {/* Contact Card */}
                     <div className="text-center pb-3 border-b border-slate-100 dark:border-white/10">
-                      <div
-                        className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl text-white font-black text-lg shadow-xs mb-2"
-                        style={{ backgroundColor: business.primaryColor || "#0f172a" }}
-                      >
-                        {activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                      </div>
+                      <ContactAvatar
+                        name={activeConversation.clientName}
+                        phone={activeConversation.channelIdentifier}
+                        channel={activeConversation.channel}
+                        tenantSlug={business.slug || "workspace"}
+                        color={business.primaryColor || "#0f172a"}
+                        className="mx-auto mb-2 h-14 w-14 rounded-3xl font-black text-lg shadow-xs"
+                      />
                       <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
                         {activeConversation.clientName}
                       </h3>
@@ -1825,12 +1981,14 @@ export default function CrmOmnichannelPage() {
           {activeConversation && (
             <>
               <div className="text-center pb-4 border-b border-slate-100 dark:border-white/10">
-                <div
-                  className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl text-white font-black text-xl shadow-md mb-3"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                >
-                  {activeConversation.clientName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                </div>
+                <ContactAvatar
+                  name={activeConversation.clientName}
+                  phone={activeConversation.channelIdentifier}
+                  channel={activeConversation.channel}
+                  tenantSlug={business.slug || "workspace"}
+                  color={business.primaryColor || "var(--primary, #FF4F2B)"}
+                  className="mx-auto mb-3 h-16 w-16 rounded-3xl font-black text-xl shadow-md"
+                />
                 <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">{activeConversation.clientName}</h3>
                 <p className="text-sm text-slate-500 font-mono">{activeConversation.channelIdentifier}</p>
                 {linkedClient && (

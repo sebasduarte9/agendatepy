@@ -1196,8 +1196,27 @@ div[class*="glass-dropdown"],
 
 @media (max-width: 1023px) {
   .glass-header-bubble {
-    top: 10px;
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: calc(env(safe-area-inset-left, 0px) + 10px);
+    right: calc(env(safe-area-inset-right, 0px) + 10px);
+    width: auto;
     border-radius: 20px;
+    background: linear-gradient(115deg, rgba(24, 21, 25, 0.97), rgba(35, 25, 29, 0.95));
+    backdrop-filter: blur(30px) saturate(155%);
+    -webkit-backdrop-filter: blur(30px) saturate(155%);
+  }
+
+  .glass-header-bubble::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    top: calc(100% - 1px);
+    left: 0;
+    right: 0;
+    height: 28px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(24, 21, 25, 0.92), rgba(24, 21, 25, 0.58) 42%, rgba(24, 21, 25, 0));
   }
 }
 
@@ -1205,6 +1224,16 @@ div[class*="glass-dropdown"],
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.84) 100%);
   border: 1px solid rgba(255, 255, 255, 0.96);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 1), 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 1023px) {
+  :root:not(.dark) .glass-header-bubble {
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.97), rgba(245, 242, 247, 0.95));
+  }
+
+  :root:not(.dark) .glass-header-bubble::after {
+    background: linear-gradient(to bottom, rgba(245, 242, 247, 0.92), rgba(245, 242, 247, 0.56) 42%, rgba(245, 242, 247, 0));
+  }
 }
 
 .glass-workspace {
@@ -1229,6 +1258,12 @@ div[class*="glass-dropdown"],
   min-height: calc(100vh - 36px);
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 1023px) {
+  .glass-app-shell {
+    min-height: 0;
+  }
 }
 
 .glass-app-shell::before {

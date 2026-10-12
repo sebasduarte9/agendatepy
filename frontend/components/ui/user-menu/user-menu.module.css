@@ -61,20 +61,20 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 50%;
   overflow: visible;
 }
 
 .face[data-size="sm"] {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: 50%;
 }
 
 .face[data-size="md"] {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 50%;
 }
 
 .portrait {

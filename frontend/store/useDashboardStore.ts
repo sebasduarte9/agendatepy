@@ -1555,6 +1555,7 @@ type DashboardState = {
   updateEvolutionConfig: (config: Partial<EvolutionApiConfig>) => void;
   loadDemoConversation: () => void;
   clearCrmConversations: () => void;
+  ensureClientCrmConversation: (client: Client) => string;
   createOrderFromCrm: (data: {
     clientName: string;
     clientPhone: string;
@@ -2704,6 +2705,51 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   clearCrmConversations: () => {
     set({ crmConversations: [] });
     get().pushToast("success", "Bandeja limpia de fábrica (0 conversaciones).");
+  },
+  ensureClientCrmConversation: (client) => {
+    const phoneDigits = client.phone.replace(/\D/g, "");
+    const phoneSuffix = phoneDigits.slice(-8);
+    const existing = phoneSuffix.length >= 6
+      ? get().crmConversations.find(
+          (conversation) =>
+            conversation.channel === "whatsapp" &&
+            conversation.channelIdentifier.replace(/\D/g, "").endsWith(phoneSuffix),
+        )
+      : undefined;
+
+    if (existing) {
+      set({
+        crmConversations: get().crmConversations.map((conversation) =>
+          conversation.id === existing.id
+            ? {
+                ...conversation,
+                clientId: client.id,
+                clientName: client.name,
+                channelIdentifier: client.phone,
+              }
+            : conversation,
+        ),
+      });
+      return existing.id;
+    }
+
+    const id = `conv-client-${client.id}-${Date.now()}`;
+    const now = new Date().toISOString();
+    const conversation: CrmConversation = {
+      id,
+      clientId: client.id,
+      clientName: client.name,
+      channel: "whatsapp",
+      channelIdentifier: client.phone,
+      lastMessage: "Sin mensajes previos",
+      lastMessageTime: now,
+      unreadCount: 0,
+      status: "open",
+      messages: [],
+    };
+
+    set({ crmConversations: [conversation, ...get().crmConversations] });
+    return id;
   },
   createOrderFromCrm: (data) => {
     const total = data.items.reduce((s, it) => s + it.unitPrice * it.qty, 0);

@@ -32,7 +32,6 @@ export default function Modal({
   const [isDesktop, setIsDesktop] = useState(false);
   const dragControls = useDragControls();
   const bodyRef = useRef<HTMLDivElement>(null);
-  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -67,36 +66,6 @@ export default function Modal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
-  // Touch pull-to-dismiss gesture on scrollable body when at the top
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile) return;
-    if (bodyRef.current && bodyRef.current.scrollTop <= 0) {
-      touchStartY.current = e.touches[0].clientY;
-    } else {
-      touchStartY.current = null;
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isMobile || touchStartY.current === null) return;
-    const currentY = e.touches[0].clientY;
-    const deltaY = currentY - touchStartY.current;
-    if (deltaY < 0) {
-      touchStartY.current = null;
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isMobile || touchStartY.current === null) return;
-    const currentY = e.changedTouches[0].clientY;
-    const deltaY = currentY - touchStartY.current;
-    if (deltaY > 80 && bodyRef.current && bodyRef.current.scrollTop <= 0) {
-      triggerHaptic("light");
-      onClose();
-    }
-    touchStartY.current = null;
-  };
-
   const isSide = variant === "side" && isDesktop;
 
   if (!mounted) return null;
@@ -121,6 +90,18 @@ export default function Modal({
         >
           <motion.div
             key="modal-card"
+            drag={isMobile ? "y" : false}
+            dragListener={false}
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.7 }}
+            dragMomentum={false}
+            onDragEnd={(_, info) => {
+              if (isMobile && (info.offset.y > 72 || info.velocity.y > 550)) {
+                triggerHaptic("light");
+                onClose();
+              }
+            }}
             initial={
               isMobile
                 ? { y: "100%", opacity: 0.9 }
@@ -159,44 +140,41 @@ export default function Modal({
             } ${className} flex flex-col glass-modal text-slate-900 dark:text-white shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden relative`}
           >
             {isMobile && (
-              <div 
-                className="w-full flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
+              <div
+                className="flex min-h-10 w-full shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+                onPointerDown={(event) => dragControls.start(event)}
+                aria-hidden="true"
               >
-                <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-white/20" />
+                <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-white/20" />
+                <span className="sr-only">Desliza hacia abajo para cerrar</span>
               </div>
             )}
 
             {/* Modal Header */}
-            <div 
-              className={`shrink-0 select-none px-5 sm:px-6 ${isMobile ? 'pt-1' : 'pt-5'} pb-3 border-b border-slate-200/80 dark:border-white/10`}
-              onTouchStart={isMobile ? handleTouchStart : undefined}
-              onTouchMove={isMobile ? handleTouchMove : undefined}
-              onTouchEnd={isMobile ? handleTouchEnd : undefined}
+            <div
+              className={`shrink-0 select-none px-5 sm:px-6 ${isMobile ? "touch-none pt-0" : "pt-5"} pb-3 border-b border-slate-200/80 dark:border-white/10`}
+              onPointerDown={isMobile ? (event) => dragControls.start(event) : undefined}
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
                   {title}
                 </h3>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Cerrar"
-                  className="h-8 w-8 rounded-full bg-slate-200/60 dark:bg-white/10 hover:bg-slate-300/60 dark:hover:bg-white/20 flex items-center justify-center text-slate-600 dark:text-slate-300 transition active:scale-90 cursor-pointer shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                {!isMobile && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Cerrar"
+                    className="h-8 w-8 rounded-full bg-slate-200/60 dark:bg-white/10 hover:bg-slate-300/60 dark:hover:bg-white/20 flex items-center justify-center text-slate-600 dark:text-slate-300 transition active:scale-90 cursor-pointer shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Modal Body with smooth internal scroll */}
             <div
               ref={bodyRef}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
               className="overflow-y-auto overscroll-contain flex-1 min-h-0 px-5 sm:px-6 py-4 pb-6"
             >
               {children}

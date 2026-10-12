@@ -116,12 +116,12 @@ export default function DashboardShell({
       </div>
 
       {/* 4. Viewport Móvil (< lg): Shell Glassmorphic Adaptativo con Burbuja Header */}
-      <div className="relative z-10 flex lg:hidden min-w-0 flex-1 flex-col p-2.5 pb-[calc(6.5rem+env(safe-area-inset-bottom,20px))] gap-2.5">
-        <div className="glass-header-bubble w-full shrink-0 sticky top-2.5 z-[60]">
+      <div className="relative z-10 flex lg:hidden h-dvh min-h-0 min-w-0 flex-col gap-2.5 overflow-hidden pl-[calc(env(safe-area-inset-left,0px)+0.625rem)] pr-[calc(env(safe-area-inset-right,0px)+0.625rem)] pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+        <div className="glass-header-bubble w-full shrink-0 z-[60]">
           <Header />
         </div>
-        <div className="glass-app-shell flex-1 min-w-0 rounded-[22px]">
-          <main className="main-content flex-1 w-full max-w-full min-w-0 overflow-x-clip p-3.5 sm:p-5">
+        <div className="glass-app-shell min-h-0 flex-1 min-w-0 rounded-[22px]">
+          <main className="main-content min-h-0 flex-1 w-full max-w-full min-w-0 overflow-x-clip overflow-y-auto overscroll-contain p-3.5 sm:p-5">
             {children}
           </main>
         </div>

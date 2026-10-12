@@ -13,29 +13,23 @@ import {
   FileText,
   Edit2,
   Trash2,
-  UserCheck,
-  Crown,
-  MessagesSquare,
   ChevronRight,
-  Ticket,
   X,
   LayoutList,
   LayoutGrid,
   CalendarPlus,
   User,
   ChevronDown,
-  Check,
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Modal from "@/components/dashboard/ui/Modal";
-import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
 import ClientFichaModal from "@/components/dashboard/ClientFichaModal";
 import QuickBookingModal from "@/components/dashboard/QuickBookingModal";
 import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
-import { COUNTRY_LIST, findCountryByPhone, type CountryOption } from "@/lib/countries";
+import { COUNTRY_LIST, findCountryByPhone } from "@/lib/countries";
 import type { Client } from "@/lib/dashboard-types";
 
 const INACTIVE_DAYS = 30;
@@ -45,8 +39,50 @@ function isInactive(c: Client) {
   return Date.now() - new Date(c.lastVisit).getTime() > INACTIVE_DAYS * 24 * 60 * 60 * 1000;
 }
 
+type CustomerChartRow = { label: string; value: number };
+
+function CustomerBarChart({
+  title,
+  rows,
+  color,
+  formatValue = (value) => String(value),
+}: {
+  title: string;
+  rows: CustomerChartRow[];
+  color: string;
+  formatValue?: (value: number) => string;
+}) {
+  const maxValue = Math.max(1, ...rows.map((row) => row.value));
+
+  return (
+    <section aria-label={title} className="min-w-0">
+      <h3 className="text-xs font-semibold text-slate-800 dark:text-zinc-200">{title}</h3>
+      {rows.length > 0 ? (
+        <ul className="mt-3 space-y-2.5">
+          {rows.map((row) => (
+            <li key={row.label} className="grid grid-cols-[minmax(4.5rem,7rem)_1fr_auto] items-center gap-2.5">
+              <span className="truncate text-[11px] text-slate-500 dark:text-zinc-400">{row.label}</span>
+              <span className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10" aria-hidden="true">
+                <span
+                  className="block h-full rounded-full"
+                  style={{ width: `${row.value > 0 ? Math.max(7, (row.value / maxValue) * 100) : 0}%`, backgroundColor: color }}
+                />
+              </span>
+              <span className="min-w-8 text-right text-[11px] font-semibold tabular-nums text-slate-700 dark:text-zinc-300">
+                {formatValue(row.value)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-[11px] text-slate-500 dark:text-zinc-400">Agregá clientes para ver esta información.</p>
+      )}
+    </section>
+  );
+}
+
 export default function ClientesPage() {
-  const { clients, appointments, services, business, addClient, updateClient, deleteClient, pushToast } =
+  const { clients, appointments, business, addClient, updateClient, deleteClient, pushToast } =
     useDashboardStore();
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("todos");
@@ -139,6 +175,18 @@ export default function ClientesPage() {
   const nuevosCount = clients.filter((c) => c.tags.includes("Nuevo")).length;
   const inactivosCount = clients.filter(isInactive).length;
   const formulaCount = clients.filter((c) => c.formula && c.formula.trim().length > 0).length;
+  const clientSegmentChart = [
+    { label: "VIP", value: vipCount },
+    { label: "Frecuentes", value: frecuentesCount },
+    { label: "Nuevos", value: nuevosCount },
+    { label: "Con ficha", value: formulaCount },
+  ];
+  const clientVisitChart = [
+    { label: "Sin visitas", value: clients.filter((client) => client.totalVisits === 0).length },
+    { label: "1–2 visitas", value: clients.filter((client) => client.totalVisits >= 1 && client.totalVisits <= 2).length },
+    { label: "3–5 visitas", value: clients.filter((client) => client.totalVisits >= 3 && client.totalVisits <= 5).length },
+    { label: "6 o más", value: clients.filter((client) => client.totalVisits >= 6).length },
+  ];
 
   function openCreateModal() {
     triggerHaptic("selection");
@@ -258,7 +306,7 @@ export default function ClientesPage() {
             Clientes
           </h1>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            {clients.length} fichas en tu libreta de contactos
+            {clients.length} {clients.length === 1 ? "cliente registrado" : "clientes registrados"}
           </p>
         </div>
 
@@ -283,86 +331,59 @@ export default function ClientesPage() {
             <span className="hidden sm:inline">Exportar CSV</span>
           </button>
 
-          <Link
-            href="/dashboard/crm"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle hover:bg-white/10 text-slate-700 dark:text-zinc-300 px-3 py-2 text-xs font-semibold shadow-xs transition"
-          >
-            <MessagesSquare className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-400" />
-            <span className="hidden sm:inline">CRM</span>
-          </Link>
         </div>
       </div>
 
-      {/* ═══ APPLE GLANCEABLE SUMMARY CARD ═══ */}
-      <div className="rounded-3xl glass-panel p-5 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">
-              Directorio de Clientes
-            </span>
-            <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white mt-1">
-              {clients.length}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold font-mono">
-              <Crown className="h-3 w-3" />
-              <span>{vipCount} VIPs</span>
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-zinc-300 text-xs font-bold font-mono">
-              <Ticket className="h-3.5 w-3.5 text-primary" />
-              <span>Ticket: {formatGs(avgSpent)}</span>
-            </div>
-          </div>
+      {/* Resumen breve de clientes */}
+      <div className="rounded-3xl glass-panel p-4 sm:p-5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Resumen de clientes</h2>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
+            Promedio gastado por cliente <span className="ml-1 font-semibold tabular-nums text-slate-800 dark:text-zinc-200">{formatGs(avgSpent)}</span>
+          </p>
         </div>
 
-        {/* 4-Pod Apple Inset Grid */}
-        <div data-tour="clientes-kpis" className="kpi-stagger grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">VIP</span>
-              <Crown className="h-3.5 w-3.5 text-amber-500" />
+        <div data-tour="clientes-kpis" className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-white/10 pt-4 sm:grid-cols-4 sm:gap-y-0">
+          {[
+            { label: "Clientes VIP", value: vipCount },
+            { label: "Clientes frecuentes", value: frecuentesCount },
+            { label: "Clientes nuevos", value: nuevosCount },
+            { label: "Con ficha técnica", value: formulaCount },
+          ].map((metric) => (
+            <div key={metric.label} className="min-w-0">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">{metric.label}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-900 dark:text-white">{metric.value}</p>
             </div>
-            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{vipCount}</span>
-          </div>
-
-          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">Frecuentes</span>
-              <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
-            </div>
-            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{frecuentesCount}</span>
-          </div>
-
-          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">Nuevos</span>
-              <Users className="h-3.5 w-3.5 text-emerald-500" />
-            </div>
-            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{nuevosCount}</span>
-          </div>
-
-          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold">Fórmulas</span>
-              <FileText className="h-3.5 w-3.5 text-purple-500" />
-            </div>
-            <span className="text-xl font-black font-mono text-slate-900 dark:text-white">{formulaCount}</span>
-          </div>
+          ))}
         </div>
+
+        <div className="mt-5 hidden grid-cols-1 gap-5 border-t border-white/10 pt-4 sm:grid sm:grid-cols-2 sm:gap-6">
+          <CustomerBarChart title="Clientes por segmento" rows={clientSegmentChart} color={brandColor} />
+          <CustomerBarChart title="Historial de visitas" rows={clientVisitChart} color={brandColor} />
+        </div>
+
+        <details className="group mt-4 border-t border-white/10 pt-3 sm:hidden">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-slate-700 marker:hidden dark:text-zinc-200 [&::-webkit-details-marker]:hidden">
+            <span>Ver gráficos de clientes</span>
+            <ChevronDown aria-hidden="true" className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180 dark:text-zinc-400" />
+          </summary>
+          <div className="grid grid-cols-1 gap-5 pt-3">
+            <CustomerBarChart title="Clientes por segmento" rows={clientSegmentChart} color={brandColor} />
+            <CustomerBarChart title="Historial de visitas" rows={clientVisitChart} color={brandColor} />
+          </div>
+        </details>
       </div>
 
       {/* ═══ SEARCH & SEGMENTED CONTROLS DOCK ═══ */}
       <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* iOS Search Input */}
-          <div data-tour="clientes-search" className="relative flex-1">
+          <div data-tour="clientes-search" className="relative min-w-0 flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500" />
             <input
               type="text"
-              placeholder="Buscar cliente, teléfono, notas..."
+              placeholder="Buscar cliente..."
+              aria-label="Buscar por nombre, teléfono o notas"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.04] py-2.5 pl-10 pr-9 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs transition backdrop-blur-md"
@@ -379,21 +400,29 @@ export default function ClientesPage() {
           </div>
 
           {/* View Mode Toggle Button */}
-          <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+          <div className="flex shrink-0 items-center gap-1 rounded-2xl border border-slate-300/50 bg-white/60 p-1 dark:border-white/10 dark:bg-white/[0.04]">
             <button
               type="button"
               onClick={() => {
                 triggerHaptic("selection");
                 setViewMode("list");
               }}
-              className={`p-2 rounded-xl border transition ${
+              className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-xl border px-2 sm:px-2.5 text-[11px] font-semibold transition ${
                 viewMode === "list"
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-xs"
-                  : "bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 backdrop-blur-md"
+                  ? "shadow-xs"
+                  : "border-transparent text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-white/10"
               }`}
-              title="Vista Lista iOS"
+              style={viewMode === "list" ? {
+                color: brandColor,
+                backgroundColor: `color-mix(in srgb, ${brandColor} 16%, transparent)`,
+                borderColor: `color-mix(in srgb, ${brandColor} 35%, transparent)`,
+              } : undefined}
+              title="Vista de lista"
+              aria-label="Vista de lista"
+              aria-pressed={viewMode === "list"}
             >
               <LayoutList className="h-4 w-4" />
+              <span className="hidden min-[420px]:inline">Lista</span>
             </button>
             <button
               type="button"
@@ -401,20 +430,28 @@ export default function ClientesPage() {
                 triggerHaptic("selection");
                 setViewMode("grid");
               }}
-              className={`p-2 rounded-xl border transition ${
+              className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-xl border px-2 sm:px-2.5 text-[11px] font-semibold transition ${
                 viewMode === "grid"
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-xs"
-                  : "bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 backdrop-blur-md"
+                  ? "shadow-xs"
+                  : "border-transparent text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-white/10"
               }`}
-              title="Vista Tarjetas"
+              style={viewMode === "grid" ? {
+                color: brandColor,
+                backgroundColor: `color-mix(in srgb, ${brandColor} 16%, transparent)`,
+                borderColor: `color-mix(in srgb, ${brandColor} 35%, transparent)`,
+              } : undefined}
+              title="Vista de tarjetas"
+              aria-label="Vista de tarjetas"
+              aria-pressed={viewMode === "grid"}
             >
               <LayoutGrid className="h-4 w-4" />
+              <span className="hidden min-[420px]:inline">Tarjetas</span>
             </button>
           </div>
         </div>
 
         {/* Filter Segmented Control */}
-        <div className="w-full overflow-x-auto pb-1">
+        <div className="w-full overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <IosSegmentedControl
             value={selectedTag}
             onChange={(val) => {
@@ -423,6 +460,8 @@ export default function ClientesPage() {
             }}
             layoutId="clientesTagFilter"
             size="sm"
+            fitContent
+            accentColor={brandColor}
             options={[
               { value: "todos", label: "Todos", badge: clients.length },
               { value: "VIP", label: "VIP", badge: vipCount },
@@ -451,9 +490,7 @@ export default function ClientesPage() {
                 .join("")
                 .toUpperCase();
               const cleanPhone = client.phone.replace(/\D/g, "");
-              const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                `¡Hola ${client.name}! Te escribimos desde ${business.name}. ¿Cómo estás?`
-              )}`;
+              const crmUrl = `/dashboard/crm?phone=${encodeURIComponent(client.phone)}`;
 
               const isVip = client.tags.includes("VIP");
 
@@ -522,23 +559,23 @@ export default function ClientesPage() {
                       <a
                         href={`tel:${cleanPhone}`}
                         onClick={() => triggerHaptic("medium")}
-                        className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-500/20 active:scale-95 transition"
+                        className="flex sm:hidden h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 items-center justify-center hover:bg-blue-500/20 active:scale-95 transition"
                         title="Llamar al cliente"
+                        aria-label={`Llamar a ${client.name}`}
                       >
                         <Phone className="h-3.5 w-3.5" />
                       </a>
                     )}
 
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <Link
+                      href={crmUrl}
                       onClick={() => triggerHaptic("medium")}
                       className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 active:scale-95 transition"
-                      title="Enviar WhatsApp"
+                      title="Abrir conversación en CRM"
+                      aria-label={`Abrir conversación de ${client.name} en el CRM`}
                     >
                       <MessageCircle className="h-4 w-4" />
-                    </a>
+                    </Link>
 
                     <button
                       type="button"
@@ -562,7 +599,20 @@ export default function ClientesPage() {
 
       {/* ═══ VIEW MODE: RESPONSIVE APPLE CARDS ═══ */}
       {viewMode === "grid" && (
-        <div className="grid gap-3.5 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className="grid gap-3.5 sm:gap-4"
+          style={{
+            gridTemplateColumns: filteredClients.length === 1
+              ? "minmax(0, 1fr)"
+              : "repeat(auto-fit, minmax(min(100%, 20rem), 1fr))",
+          }}
+        >
+          {filteredClients.length === 0 && (
+            <div className="col-span-full rounded-3xl glass-panel py-14 text-center text-xs text-slate-500 dark:text-zinc-400">
+              <Users aria-hidden="true" className="mx-auto mb-2 h-8 w-8 text-slate-300 dark:text-zinc-600" />
+              <p>No se encontraron clientes con esos filtros.</p>
+            </div>
+          )}
           {filteredClients.map((client) => {
             const initials = client.name
               .split(" ")
@@ -570,18 +620,17 @@ export default function ClientesPage() {
               .slice(0, 2)
               .join("")
               .toUpperCase();
-            const cleanPhone = client.phone.replace(/\D/g, "");
-            const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-              `¡Hola ${client.name}! Te escribimos desde ${business.name}. ¿Cómo estás?`
-            )}`;
+            const crmUrl = `/dashboard/crm?phone=${encodeURIComponent(client.phone)}`;
             const isVip = client.tags.includes("VIP");
 
             return (
               <div
                 key={client.id}
-                className="flex flex-col justify-between rounded-3xl p-4 sm:p-5 glass-panel hover:border-primary/40 transition space-y-3.5"
+                className={`flex flex-col justify-between gap-4 rounded-3xl p-4 sm:p-5 glass-panel hover:border-primary/40 transition ${
+                  filteredClients.length === 1 ? "md:flex-row md:items-center" : ""
+                }`}
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
@@ -603,7 +652,7 @@ export default function ClientesPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex flex-wrap items-center gap-1 shrink-0">
                       {client.tags.map((t) => (
                         <span
                           key={t}
@@ -655,7 +704,7 @@ export default function ClientesPage() {
 
                     if (nextApp) {
                       return (
-                        <div className="mt-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-2 text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center justify-between">
+                        <div className="mt-3 max-w-xl rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center justify-between">
                           <span className="truncate">
                             Próximo: <strong>{formatInTimeZone(nextApp.start, business.timezone || "America/Asuncion", "dd/MM HH:mm")} hs</strong>
                           </span>
@@ -670,8 +719,10 @@ export default function ClientesPage() {
                 </div>
 
                 {/* Bottom stats and action bar */}
-                <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2.5">
-                  <div className="flex items-center justify-between text-[11px] font-mono">
+                <div className={`shrink-0 border-t border-slate-100 pt-3 dark:border-white/10 ${
+                  filteredClients.length === 1 ? "md:w-64 md:border-l md:border-t-0 md:pl-4 md:pt-0" : ""
+                }`}>
+                  <div className="mb-2.5 flex items-center justify-between text-[11px] font-mono">
                     <span className="text-slate-500 dark:text-zinc-400">{client.totalVisits} visitas</span>
                     <span className="font-bold text-slate-900 dark:text-white">{formatGs(client.totalSpent)}</span>
                   </div>
@@ -683,7 +734,8 @@ export default function ClientesPage() {
                         triggerHaptic("selection");
                         setSelectedClient(client);
                       }}
-                      className="flex-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2 text-xs font-bold transition hover:opacity-90 active:scale-95 cursor-pointer text-center"
+                      className="flex-1 rounded-xl border border-white/15 py-2 text-xs font-bold text-white transition hover:brightness-110 active:scale-95 cursor-pointer text-center"
+                      style={{ backgroundColor: brandColor }}
                     >
                       Ver Ficha
                     </button>
@@ -698,15 +750,14 @@ export default function ClientesPage() {
                       <Calendar className="h-3.5 w-3.5" />
                     </button>
 
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <Link
+                      href={crmUrl}
                       className="p-2 rounded-xl border border-slate-200/80 dark:border-white/10 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition active:scale-95"
-                      title="Escribir por WhatsApp"
+                      title="Abrir conversación en CRM"
+                      aria-label={`Abrir conversación de ${client.name} en el CRM`}
                     >
                       <MessageCircle className="h-3.5 w-3.5" />
-                    </a>
+                    </Link>
 
                     <button
                       type="button"
@@ -751,11 +802,11 @@ export default function ClientesPage() {
             e.preventDefault();
             handleSave();
           }}
-          className="space-y-3.5 text-xs pt-1"
+          className="space-y-4 text-sm pt-1 pb-1"
         >
           {/* Nombre y Apellido */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+            <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-2">
               Nombre y Apellido *
             </label>
             <div className="relative">
@@ -768,7 +819,7 @@ export default function ClientesPage() {
                 placeholder="Ej: Marcos Benítez"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition font-medium"
+                className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] pl-10 pr-3.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition font-medium"
               />
             </div>
           </div>
@@ -776,7 +827,7 @@ export default function ClientesPage() {
           {/* Teléfono / WhatsApp con Selector de País y Prefijo */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200">
+              <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200">
                 WhatsApp / Teléfono *
               </label>
               <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
@@ -789,7 +840,7 @@ export default function ClientesPage() {
                 <button
                   type="button"
                   onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
-                  className="flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 shrink-0 transition active:scale-95 cursor-pointer"
+                  className="flex h-12 items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-3 text-sm font-semibold text-slate-800 dark:text-zinc-200 shrink-0 transition active:scale-95 cursor-pointer"
                   title="Seleccionar país y prefijo"
                 >
                   <span className="text-base leading-none">{activeCountry.flag}</span>
@@ -856,7 +907,7 @@ export default function ClientesPage() {
                     const clean = e.target.value.replace(/\D/g, "").slice(0, activeCountry.maxDigits);
                     setPhoneDigits(clean);
                   }}
-                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition tracking-wider"
+                  className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 text-sm font-mono font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition tracking-wide"
                 />
               </div>
             </div>
@@ -864,7 +915,7 @@ export default function ClientesPage() {
 
           {/* Categoría del Cliente */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+            <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-2">
               Categoría del Cliente
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -882,7 +933,7 @@ export default function ClientesPage() {
                       triggerHaptic("selection");
                       setForm({ ...form, tags: cat.id });
                     }}
-                    className={`py-2 px-2.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                    className={`h-11 px-2.5 rounded-2xl text-sm font-semibold border transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       isSelected
                         ? `${cat.activeClass} shadow-xs font-black`
                         : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-white/20"
@@ -898,7 +949,7 @@ export default function ClientesPage() {
           {/* Redes Sociales / Contacto Digital */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-2">
                 Instagram <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
               </label>
               <div className="relative">
@@ -910,13 +961,13 @@ export default function ClientesPage() {
                   placeholder="usuario_py"
                   value={form.instagram.replace(/^@/, "")}
                   onChange={(e) => setForm({ ...form, instagram: e.target.value ? `@${e.target.value.replace(/^@/, "")}` : "" })}
-                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] pl-8 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
+                  className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] pl-8 pr-3.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-2">
                 Email <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
               </label>
               <input
@@ -924,7 +975,7 @@ export default function ClientesPage() {
                 placeholder="cliente@ejemplo.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
+                className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
               />
             </div>
           </div>
@@ -932,7 +983,7 @@ export default function ClientesPage() {
           {/* Ficha Técnica & Preferencias */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200">
+              <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200">
                 Ficha Técnica & Preferencias <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
               </label>
               <span className="text-[10px] text-slate-400 dark:text-zinc-500">
@@ -944,13 +995,13 @@ export default function ClientesPage() {
               placeholder="Ej: Degradé navaja al 0 / Tinte 7.1 con 20 vol / Alergia a lociones..."
               value={form.formula}
               onChange={(e) => setForm({ ...form, formula: e.target.value })}
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition leading-relaxed resize-none"
+              className="min-h-24 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition leading-relaxed resize-y"
             />
           </div>
 
           {/* Notas de Atención */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mb-1.5">
+            <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-2">
               Notas de Atención <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
             </label>
             <input
@@ -958,12 +1009,12 @@ export default function ClientesPage() {
               placeholder="Ej: Prefiere turnos por la tarde, café sin azúcar..."
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
+              className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-3 border-t border-slate-200/70 pt-4 dark:border-white/10">
             {editingClient && (
               <button
                 type="button"
@@ -979,7 +1030,7 @@ export default function ClientesPage() {
             )}
             <button
               type="submit"
-              className="flex-1 h-11 rounded-2xl text-xs font-bold text-white shadow-md transition hover:brightness-110 active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
               <span>{editingClient ? "Guardar Cambios" : "Crear Cliente"}</span>

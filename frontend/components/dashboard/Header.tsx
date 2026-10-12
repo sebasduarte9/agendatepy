@@ -169,7 +169,7 @@ export default function Header() {
             className="shrink-0"
           />
           <span
-            className={`shrink-0 max-w-[12rem] overflow-hidden whitespace-nowrap font-coolvetica text-xl tracking-normal text-slate-900 dark:text-white flex items-center leading-none transition-all duration-200 ${isSearchExpanded ? "max-sm:max-w-0 max-sm:opacity-0 max-sm:-mr-2" : "max-sm:opacity-100"}`}
+            className={`shrink-0 max-w-[12rem] whitespace-nowrap font-coolvetica text-xl tracking-normal text-slate-900 dark:text-white flex items-center leading-[1.15] transition-all duration-200 ${isSearchExpanded ? "max-sm:max-w-0 max-sm:overflow-hidden max-sm:opacity-0 max-sm:-mr-2" : "overflow-visible max-sm:opacity-100"}`}
             style={{ fontFamily: "var(--font-coolvetica), Coolvetica, sans-serif" }}
           >
             gendate<span style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}>.py</span>
