@@ -45,7 +45,7 @@ import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import CustomSelect, { CustomSelectOption } from "@/components/dashboard/ui/CustomSelect";
 import { formatGs } from "@/lib/dashboard-dates";
-import type { CrmChannel, ProductOrderStatus } from "@/lib/dashboard-types";
+import type { CrmChannel, CrmConversation, ProductOrderStatus } from "@/lib/dashboard-types";
 import { tenantPublicUrl } from "@/lib/tenant/public-url";
 
 /* ── Channel SVG Icons ── */
@@ -119,22 +119,11 @@ function ContactAvatar({
   );
 }
 
-function channelBadgeStyles(channel: CrmChannel) {
-  switch (channel) {
-    case "whatsapp":
-      return "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50";
-    case "instagram":
-      return "bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-400 border-pink-200 dark:border-pink-800/50";
-    case "messenger":
-      return "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/50";
-  }
-}
-
 export default function CrmOmnichannelPage() {
   const {
     crmConversations, clients, products, business,
     evolutionConfig, updateEvolutionConfig,
-    loadDemoConversation, clearCrmConversations, createOrderFromCrm,
+    loadDemoConversation, clearCrmConversations, restoreCrmConversations, createOrderFromCrm,
     ensureClientCrmConversation,
     sendCrmMessage, resolveCrmConversation, reopenCrmConversation,
     pushToast, productOrders, updateProductOrderStatus,
@@ -152,7 +141,13 @@ export default function CrmOmnichannelPage() {
   const [deepLinkPhone, setDeepLinkPhone] = useState("");
   const [selectedId, setSelectedId] = useState<string>("conv-demo-1");
   const [replyText, setReplyText] = useState("");
+  const [replyInputFocused, setReplyInputFocused] = useState(false);
   const [mobileActiveView, setMobileActiveView] = useState<"list" | "chat" | "profile">("list");
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [clearedConversations, setClearedConversations] = useState<{
+    conversations: CrmConversation[];
+    selectedId: string;
+  } | null>(null);
 
   // Modals
   const [channelsModalOpen, setChannelsModalOpen] = useState(false);
@@ -200,12 +195,6 @@ export default function CrmOmnichannelPage() {
     window.addEventListener("agendate-crm-view", onTourView);
     return () => window.removeEventListener("agendate-crm-view", onTourView);
   }, []);
-
-  useEffect(() => {
-    if (deepLinkPhone) return;
-    if (crmConversations.length > 0 && (!selectedId || !crmConversations.some((c) => c.id === selectedId)))
-      setSelectedId(crmConversations[0].id);
-  }, [crmConversations, deepLinkPhone, selectedId]);
 
   useEffect(() => {
     const phoneSuffix = deepLinkPhone.replace(/\D/g, "").slice(-8);
@@ -304,8 +293,17 @@ export default function CrmOmnichannelPage() {
           conversation.channelIdentifier.replace(/\D/g, "").endsWith(phoneSuffix)
       ) || null;
     }
-    return crmConversations.find((c) => c.id === selectedId) || filteredConversations[0] || null;
+    return filteredConversations.find((c) => c.id === selectedId) || filteredConversations[0] || null;
   }, [crmConversations, deepLinkPhone, selectedId, filteredConversations]);
+
+  useEffect(() => {
+    if (deepLinkPhone) return;
+    const nextSelectedId = filteredConversations.some((conversation) => conversation.id === selectedId)
+      ? selectedId
+      : filteredConversations[0]?.id || "";
+    if (nextSelectedId !== selectedId) setSelectedId(nextSelectedId);
+    if (!activeConversation && mobileActiveView === "chat") setMobileActiveView("list");
+  }, [activeConversation, deepLinkPhone, filteredConversations, mobileActiveView, selectedId]);
 
   const linkedClient = useMemo(() => {
     if (!activeConversation?.clientId) return null;
@@ -343,6 +341,43 @@ export default function CrmOmnichannelPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const conversationListRef = useRef<HTMLDivElement>(null);
+  const conversationListScrollTopRef = useRef(0);
+  const clearUndoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const syncVisualViewport = () => {
+      const height = viewport?.height ?? window.innerHeight;
+      workspaceRef.current?.style.setProperty("--crm-visual-viewport-height", `${height}px`);
+      window.dispatchEvent(new CustomEvent("agendate-crm-keyboard-state", {
+        detail: { open: window.innerWidth < 1024 && replyInputFocused },
+      }));
+    };
+
+    syncVisualViewport();
+    viewport?.addEventListener("resize", syncVisualViewport);
+    viewport?.addEventListener("scroll", syncVisualViewport);
+    window.addEventListener("resize", syncVisualViewport);
+
+    return () => {
+      viewport?.removeEventListener("resize", syncVisualViewport);
+      viewport?.removeEventListener("scroll", syncVisualViewport);
+      window.removeEventListener("resize", syncVisualViewport);
+      window.dispatchEvent(new CustomEvent("agendate-crm-keyboard-state", { detail: { open: false } }));
+    };
+  }, [replyInputFocused]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("agendate-crm-mobile-view-state", {
+      detail: { view: mobileActiveView },
+    }));
+  }, [mobileActiveView]);
+
+  useEffect(() => () => {
+    if (clearUndoTimerRef.current) clearTimeout(clearUndoTimerRef.current);
+  }, []);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
     if (messagesContainerRef.current) {
@@ -356,21 +391,19 @@ export default function CrmOmnichannelPage() {
     }
   }, []);
 
-  // When a chat is opened or conversation changes, automatically position viewport and scroll to bottom
+  // Keep the mobile app shell at the top when entering chat, without resetting the hidden list's scroll.
   useEffect(() => {
-    if (activeConversation) {
-      if (typeof window !== "undefined") {
-        window.scrollTo({ top: 0, behavior: "instant" });
-      }
+    if (!activeConversation) return;
+    const isMobile = window.innerWidth < 1024;
+    if (isMobile && mobileActiveView !== "chat") return;
+    if (isMobile) window.scrollTo({ top: 0, behavior: "instant" });
+
+    scrollToBottom("instant");
+    const timer = setTimeout(() => {
+      if (isMobile) window.scrollTo({ top: 0, behavior: "instant" });
       scrollToBottom("instant");
-      const timer = setTimeout(() => {
-        if (typeof window !== "undefined") {
-          window.scrollTo({ top: 0, behavior: "instant" });
-        }
-        scrollToBottom("instant");
-      }, 40);
-      return () => clearTimeout(timer);
-    }
+    }, 40);
+    return () => clearTimeout(timer);
   }, [activeConversation?.id, mobileActiveView, scrollToBottom]);
 
   // When new messages arrive or are sent, scroll down smoothly
@@ -447,6 +480,41 @@ export default function CrmOmnichannelPage() {
         }));
       }
     }, 1000);
+  }
+
+  function returnToConversationList() {
+    setReplyInputFocused(false);
+    setMobileActiveView("list");
+    window.scrollTo({ top: 0, behavior: "instant" });
+    window.requestAnimationFrame(() => {
+      if (conversationListRef.current) {
+        conversationListRef.current.scrollTop = conversationListScrollTopRef.current;
+      }
+    });
+  }
+
+  function confirmClearConversations() {
+    const snapshot = crmConversations.map((conversation) => ({
+      ...conversation,
+      messages: [...conversation.messages],
+    }));
+    setClearedConversations({ conversations: snapshot, selectedId });
+    clearCrmConversations();
+    setClearConfirmOpen(false);
+    setMobileActiveView("list");
+    if (clearUndoTimerRef.current) clearTimeout(clearUndoTimerRef.current);
+    clearUndoTimerRef.current = setTimeout(() => setClearedConversations(null), 10000);
+  }
+
+  function undoClearConversations() {
+    if (!clearedConversations) return;
+    restoreCrmConversations(clearedConversations.conversations);
+    setSelectedId(clearedConversations.selectedId);
+    setMobileActiveView("list");
+    setClearedConversations(null);
+    if (clearUndoTimerRef.current) clearTimeout(clearUndoTimerRef.current);
+    clearUndoTimerRef.current = null;
+    pushToast("success", "Conversaciones restauradas.");
   }
 
   function handleCreateOrderSubmit() {
@@ -588,35 +656,40 @@ export default function CrmOmnichannelPage() {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setChannelsModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition cursor-pointer"
-          >
-            <QrCode className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Conectar QR</span>
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setChannelsModalOpen(true)}
+              aria-label="Conectar canales por QR"
+              title="Conectar canales por QR"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-500 sm:min-h-10 sm:min-w-0 cursor-pointer"
+            >
+              <QrCode aria-hidden="true" className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Conectar QR</span>
+            </button>
 
-          {crmConversations.length > 0 ? (
-            <button
-              type="button"
-              onClick={clearCrmConversations}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
-              title="Limpiar bandeja de mensajes"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Limpiar</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={loadDemoConversation}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs transition cursor-pointer"
-            >
-              <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
-              <span>Demo</span>
-            </button>
-          )}
+            {crmConversations.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setClearConfirmOpen(true)}
+                aria-label="Limpiar bandeja de mensajes"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:text-rose-600 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-rose-400 sm:min-h-10 sm:min-w-0 cursor-pointer"
+                title="Limpiar bandeja de mensajes"
+              >
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Limpiar</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={loadDemoConversation}
+                className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:min-w-0 cursor-pointer"
+              >
+                <MessageSquare aria-hidden="true" className="h-3.5 w-3.5 text-emerald-500" />
+                <span>Demo</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -645,10 +718,11 @@ export default function CrmOmnichannelPage() {
         ) : (
           /* ═══ 3-PANE NATIVE MESSENGER WORKSPACE ═══ */
           <div
-            className={`w-full rounded-3xl glass-panel shadow-xs overflow-hidden flex flex-col lg:flex-row ${
+            ref={workspaceRef}
+            className={`w-full rounded-3xl glass-panel-subtle overflow-hidden flex flex-col lg:flex-row ${
               mobileActiveView !== "list"
-              ? "h-[calc(100dvh-11.8rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
-              : "h-[calc(100dvh-14.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
+              ? "h-[calc(var(--crm-visual-viewport-height,100dvh)-7.75rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(var(--crm-visual-viewport-height,100dvh)-7.75rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
+              : "h-[calc(var(--crm-visual-viewport-height,100dvh)-14.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(var(--crm-visual-viewport-height,100dvh)-11rem)] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
             }`}
           >
             {/* ── LEFT PANE: CONVERSATION LIST ── */}
@@ -665,6 +739,7 @@ export default function CrmOmnichannelPage() {
                   <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
+                    aria-label="Buscar cliente o conversación"
                     placeholder="Buscar cliente o chat..."
                     value={search}
                     onChange={(e) => {
@@ -676,6 +751,7 @@ export default function CrmOmnichannelPage() {
                   {search && (
                     <button
                       type="button"
+                      aria-label="Limpiar búsqueda"
                       onClick={() => {
                         setDeepLinkPhone("");
                         setSearch("");
@@ -697,7 +773,7 @@ export default function CrmOmnichannelPage() {
                       messenger: crmConversations.filter((c) => c.channel === "messenger").length,
                     };
                     const unreads: Record<string, number> = { todos: unreadTotal, whatsapp: waUnread, instagram: igUnread, messenger: msUnread };
-                    const labels: Record<string, string> = { todos: "Todos", whatsapp: "WA", instagram: "IG", messenger: "Msg" };
+                    const channelNames: Record<string, string> = { todos: "Todos los canales", whatsapp: "WhatsApp", instagram: "Instagram", messenger: "Messenger" };
                     const active = channelFilter === ch;
 
                     return (
@@ -705,14 +781,16 @@ export default function CrmOmnichannelPage() {
                         key={ch}
                         type="button"
                         onClick={() => setChannelFilter(ch)}
+                        aria-label={`${channelNames[ch]}${unreads[ch] > 0 ? `, ${unreads[ch]} sin leer` : ""}`}
+                        aria-pressed={active}
+                        title={channelNames[ch]}
                         className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold transition relative cursor-pointer ${
                           active
                             ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
                             : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
                         }`}
                       >
-                        {ch !== "todos" && <ChannelIcon channel={ch} size="sm" />}
-                        <span>{labels[ch]}</span>
+                        {ch === "todos" ? <span>Todos</span> : <ChannelIcon channel={ch} size="md" />}
                         {unreads[ch] > 0 && (
                           <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
                         )}
@@ -749,8 +827,12 @@ export default function CrmOmnichannelPage() {
 
               {/* Scrollable Conversation Items */}
               <div
+                ref={conversationListRef}
                 data-tour="crm-conversations-list"
                 className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100 dark:divide-white/5"
+                onScroll={(event) => {
+                  conversationListScrollTopRef.current = event.currentTarget.scrollTop;
+                }}
               >
                 {filteredConversations.length === 0 ? (
                   <div className="p-8 text-center text-xs text-slate-400">
@@ -764,11 +846,10 @@ export default function CrmOmnichannelPage() {
                         key={c.id}
                         type="button"
                         onClick={() => {
+                          conversationListScrollTopRef.current = conversationListRef.current?.scrollTop || 0;
                           setSelectedId(c.id);
                           setMobileActiveView("chat");
-                          if (typeof window !== "undefined") {
-                            window.scrollTo({ top: 0, behavior: "instant" });
-                          }
+                          window.scrollTo({ top: 0, behavior: "instant" });
                         }}
                         className={`w-full text-left p-3.5 flex items-start gap-3 transition cursor-pointer relative ${
                           sel
@@ -842,17 +923,12 @@ export default function CrmOmnichannelPage() {
               {activeConversation ? (
                 <>
                   {/* Chat Top Header */}
-                  <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="min-h-14 px-2 py-2 sm:px-4 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl flex flex-wrap items-center justify-between gap-x-2 gap-y-1 shrink-0">
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2.5 max-[380px]:w-full max-[380px]:flex-none">
                       <button
                         type="button"
-                        onClick={() => {
-                          setMobileActiveView("list");
-                          if (typeof window !== "undefined") {
-                            window.scrollTo({ top: 0, behavior: "instant" });
-                          }
-                        }}
-                        className="lg:hidden -ml-1.5 p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0 cursor-pointer"
+                        onClick={returnToConversationList}
+                        className="lg:hidden flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
                         aria-label="Volver a lista"
                       >
                         <ChevronLeft className="h-5 w-5" />
@@ -865,35 +941,29 @@ export default function CrmOmnichannelPage() {
                           channel={activeConversation.channel}
                           tenantSlug={business.slug || "workspace"}
                           color={business.primaryColor || "#0f172a"}
-                          className="h-9 w-9 rounded-xl font-bold text-xs shadow-xs"
+                          className="h-8 w-8 rounded-xl font-bold text-[11px] shadow-xs sm:h-9 sm:w-9 sm:text-xs"
                         />
                         <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs">
                           <ChannelIcon channel={activeConversation.channel} size="sm" />
                         </span>
                       </div>
 
-                      <div className="min-w-0">
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
-                          <span className="truncate">{activeConversation.clientName}</span>
-                          <span
-                            className={`rounded-full border px-1.5 py-0.2 text-[8.5px] font-extrabold capitalize shrink-0 ${channelBadgeStyles(
-                              activeConversation.channel
-                            )}`}
-                          >
-                            {activeConversation.channel}
-                          </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-[13px] font-bold leading-tight text-slate-900 dark:text-white sm:text-sm">
+                          {activeConversation.clientName}
                         </h3>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">En línea</span>
-                          <span>·</span>
-                          <span className="truncate">{activeConversation.channelIdentifier}</span>
+                        <div className="mt-1 flex min-w-0 items-center gap-1.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400 sm:text-[11px]">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                          <span className="sr-only">En línea</span>
+                          <span className="hidden shrink-0 font-bold text-emerald-600 dark:text-emerald-400 sm:inline" aria-hidden="true">En línea</span>
+                          <span className="hidden sm:inline" aria-hidden="true">·</span>
+                          <span className="min-w-0 truncate">{activeConversation.channelIdentifier}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Right Action Icons in Chat Header */}
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex shrink-0 items-center gap-1 max-[380px]:ml-auto sm:gap-1.5">
                       <a
                         href={
                           activeConversation.channel === "whatsapp"
@@ -902,8 +972,9 @@ export default function CrmOmnichannelPage() {
                         }
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-emerald-700 hover:bg-emerald-500/10 dark:hover:text-emerald-400 transition cursor-pointer"
-                        title="Contactar directamente por WhatsApp"
+                        aria-label={`Contactar directamente por ${activeConversation.channel}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-emerald-500/10 hover:text-emerald-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-emerald-400 cursor-pointer"
+                        title={`Contactar directamente por ${activeConversation.channel}`}
                       >
                         <Phone className="h-4 w-4" />
                       </a>
@@ -912,17 +983,23 @@ export default function CrmOmnichannelPage() {
                         <button
                           type="button"
                           onClick={() => reopenCrmConversation(activeConversation.id)}
-                          className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-white transition cursor-pointer"
+                          aria-label="Reabrir conversación"
+                          title="Reabrir conversación"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-white cursor-pointer sm:h-auto sm:w-auto sm:px-2.5 sm:py-1.5 sm:text-[11px] sm:font-bold"
                         >
-                          Reabrir
+                          <RefreshCw className="h-4 w-4 sm:hidden" />
+                          <span className="hidden sm:inline">Reabrir</span>
                         </button>
                       ) : (
                         <button
                           type="button"
                           onClick={() => resolveCrmConversation(activeConversation.id)}
-                          className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer"
+                          aria-label="Marcar conversación como resuelta"
+                          title="Marcar conversación como resuelta"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800/60 dark:bg-emerald-950/60 dark:text-emerald-300 cursor-pointer sm:h-auto sm:w-auto sm:px-2.5 sm:py-1.5 sm:text-[11px] sm:font-bold"
                         >
-                          Resuelto
+                          <CheckCircle2 className="h-4 w-4 sm:hidden" />
+                          <span className="hidden sm:inline">Resuelto</span>
                         </button>
                       )}
 
@@ -936,7 +1013,8 @@ export default function CrmOmnichannelPage() {
                             setDesktopProfileOpen(!desktopProfileOpen);
                           }
                         }}
-                        className={`p-2 rounded-xl transition cursor-pointer ${
+                        aria-label="Ver ficha y acciones del cliente"
+                        className={`flex h-8 w-8 items-center justify-center rounded-xl transition cursor-pointer ${
                           desktopProfileOpen
                             ? "bg-primary/10 text-primary"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
@@ -1155,6 +1233,8 @@ export default function CrmOmnichannelPage() {
                       type="text"
                       placeholder={`Escribe un mensaje a ${activeConversation.clientName}...`}
                       value={replyText}
+                      onFocus={() => setReplyInputFocused(true)}
+                      onBlur={() => setReplyInputFocused(false)}
                       onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
@@ -1379,36 +1459,37 @@ export default function CrmOmnichannelPage() {
 
       {/* ═══ VIEW 2: TELEMETRY & METRICS TAB ═══ */}
       {mainSection === "metricas" && (
-        <div className="space-y-4 animate-in fade-in-50 duration-150">
+        <div className="space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] animate-in fade-in-50 duration-150 lg:pb-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Card 1: Eficiencia de Respuesta & Canales */}
-            <div className="rounded-3xl glass-panel p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
-                <div className="flex items-center gap-2.5">
+            <div className="rounded-3xl glass-panel p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+              <div className="flex flex-col gap-3 pb-3 border-b border-slate-100 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <div
-                    className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white font-bold"
                     style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                   >
                     <MessageSquare className="h-5 w-5" />
                   </div>
-                  <div>
-                    <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Telemetría de Mensajería & Eficiencia
+                  <div className="min-w-0">
+                    <h3 className="text-[13px] sm:text-sm font-extrabold leading-snug text-slate-900 dark:text-white">
+                      Telemetría de mensajería y eficiencia
                     </h3>
-                    <p className="text-[11px] text-slate-400">Bandeja centralizada y tiempos de respuesta</p>
+                    <p className="mt-1 text-[10px] sm:text-[11px] leading-snug text-slate-400">Bandeja centralizada y tiempos de respuesta</p>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-[11px] font-bold text-slate-400 block">Total Chats</span>
-                  <span className="text-sm font-black text-slate-900 dark:text-white font-mono">
-                    {crmConversations.length} conversaciones
+                <div className="flex items-baseline justify-between gap-3 sm:shrink-0 sm:flex-col sm:items-end sm:gap-0">
+                  <span className="text-[11px] font-bold text-slate-400">Total Chats</span>
+                  <span className="inline-flex items-baseline gap-1 whitespace-nowrap text-slate-900 dark:text-white">
+                    <span className="text-sm font-black font-mono">{crmConversations.length}</span>
+                    <span className="text-[11px] font-semibold">conversaciones</span>
                   </span>
                 </div>
               </div>
 
               {/* Circular Gauges */}
-              <div className="py-4 grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 py-4 min-[440px]:grid-cols-2 sm:gap-4">
                 {/* Gauge 1: Resolution Rate */}
                 <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5">
                   <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
@@ -1439,11 +1520,11 @@ export default function CrmOmnichannelPage() {
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                      Tasa Resolución
+                    <span className="text-[11px] font-bold leading-tight text-slate-900 dark:text-white block">
+                      Resolución
                     </span>
-                    <span className="text-[10px] text-slate-400 block truncate">
-                      {resolvedCount} de {crmConversations.length} cerrados
+                    <span className="text-[10px] text-slate-400 block">
+                      {resolvedCount} de {crmConversations.length} cerradas
                     </span>
                   </div>
                 </div>
@@ -1478,18 +1559,18 @@ export default function CrmOmnichannelPage() {
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                    <span className="text-[11px] font-bold leading-tight text-slate-900 dark:text-white block">
                       Vía WhatsApp
                     </span>
-                    <span className="text-[10px] text-slate-400 block truncate">
-                      {waCount} mensajes vía WA
+                    <span className="text-[10px] text-slate-400 block">
+                      {waCount} {waCount === 1 ? "conversación" : "conversaciones"}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Telemetry Rows */}
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-white/10 text-xs">
+              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-white/10 text-xs min-[440px]:grid-cols-3">
                 <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
                   <span className="text-[10px] font-medium text-slate-400 block">En Espera</span>
                   <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
@@ -1502,7 +1583,7 @@ export default function CrmOmnichannelPage() {
                     {unreadTotal} mensajes
                   </span>
                 </div>
-                <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
+                <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 min-[440px]:col-span-1">
                   <span className="text-[10px] font-medium text-slate-400 block">Tiempo Medio</span>
                   <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono truncate block">
                     ~3 minutos
@@ -1512,22 +1593,22 @@ export default function CrmOmnichannelPage() {
             </div>
 
             {/* Card 2: Seguridad, Conexión & Pedidos */}
-            <div className="rounded-3xl glass-panel p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
-                <div className="flex items-center gap-2.5">
+            <div className="rounded-3xl glass-panel p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+              <div className="flex flex-col gap-2 pb-3 border-b border-slate-100 dark:border-white/10 min-[440px]:flex-row min-[440px]:items-center min-[440px]:justify-between">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold">
                     <ShieldCheck className="h-5 w-5" />
                   </div>
-                  <div>
-                    <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Protección Anti-Baneo & Seguridad
+                  <div className="min-w-0">
+                    <h3 className="text-[13px] sm:text-sm font-extrabold leading-snug text-slate-900 dark:text-white">
+                      Protección anti-baneo y seguridad
                     </h3>
-                    <p className="text-[11px] text-slate-400">Cadencia humana y protección de cuenta</p>
+                    <p className="mt-1 text-[10px] sm:text-[11px] leading-snug text-slate-400">Cadencia humana y protección de cuenta</p>
                   </div>
                 </div>
 
                 {pendingOrdersCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  <span className="inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     <ShoppingBag className="h-3 w-3" />
                     <span>{pendingOrdersCount} pedidos</span>
                   </span>
@@ -1542,7 +1623,7 @@ export default function CrmOmnichannelPage() {
                     <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 block truncate">
                       Cadencia Humana Anti-Baneo Activa (10s - 20s)
                     </span>
-                    <span className="text-[10px] text-emerald-600/90 dark:text-emerald-400/90 block">
+                    <span className="text-[10px] leading-relaxed text-emerald-600/90 dark:text-emerald-400/90 block">
                       Simulación de lectura y escritura automática para proteger tu línea de suspensiones.
                     </span>
                   </div>
@@ -1550,25 +1631,25 @@ export default function CrmOmnichannelPage() {
               </div>
 
               {/* Operational Status Rows */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-white/10 text-xs">
-                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 flex items-center justify-between">
-                  <div>
+              <div className="grid grid-cols-1 gap-2 pt-2 border-t border-slate-100 dark:border-white/10 text-xs min-[440px]:grid-cols-2">
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-white/5 dark:bg-slate-900/50">
+                  <div className="min-w-0">
                     <span className="text-[10px] font-medium text-slate-400 block">Bot Asistente</span>
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                      {evolutionConfig.autoBotEnabled ? "Activo (Respuesta IA)" : "Modo Manual"}
+                    <span className="text-xs font-bold leading-snug text-slate-800 dark:text-slate-200 break-words">
+                      {evolutionConfig.autoBotEnabled ? "Respuesta IA activa" : "Modo Manual"}
                     </span>
                   </div>
-                  <Bot className={`h-4 w-4 ${evolutionConfig.autoBotEnabled ? "text-emerald-500" : "text-slate-400"}`} />
+                  <Bot className={`h-4 w-4 shrink-0 ${evolutionConfig.autoBotEnabled ? "text-emerald-500" : "text-slate-400"}`} />
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-white/5 dark:bg-slate-900/50">
+                  <div className="min-w-0">
                     <span className="text-[10px] font-medium text-slate-400 block">Estado de Red</span>
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <span className="text-xs font-bold leading-snug text-slate-800 dark:text-slate-200 break-words">
                       {evolutionConfig.connected ? "En línea" : "Desconectado"}
                     </span>
                   </div>
-                  <ShieldCheck className={`h-4 w-4 ${evolutionConfig.connected ? "text-emerald-500" : "text-slate-400"}`} />
+                  <ShieldCheck className={`h-4 w-4 shrink-0 ${evolutionConfig.connected ? "text-emerald-500" : "text-slate-400"}`} />
                 </div>
               </div>
             </div>
@@ -1578,32 +1659,39 @@ export default function CrmOmnichannelPage() {
 
       {/* ═══ VIEW 3: ORDERS TAB ═══ */}
       {mainSection === "pedidos" && (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="p-4 flex items-center justify-between">
-              <div><p className="text-xs font-semibold text-slate-500">Total Pedidos</p><p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{productOrders.length}</p></div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary"><ShoppingBag className="h-5 w-5" /></div>
+        <div className="space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:space-y-6 lg:pb-0">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+            <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="min-w-0"><p className="truncate text-[10px] font-semibold text-slate-500 sm:text-xs">Pedidos</p><p className="mt-0.5 text-lg font-black text-slate-900 dark:text-white sm:mt-1 sm:text-2xl">{productOrders.length}</p></div>
+              <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:flex"><ShoppingBag className="h-5 w-5" /></div>
             </Card>
-            <Card className="p-4 flex items-center justify-between">
-              <div><p className="text-xs font-semibold text-slate-500">Pendientes</p><p className="text-2xl font-black text-amber-600 mt-1">{pendingOrdersCount}</p></div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600"><Clock className="h-5 w-5" /></div>
+            <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="min-w-0"><p className="truncate text-[10px] font-semibold text-slate-500 sm:text-xs">Pendientes</p><p className="mt-0.5 text-lg font-black text-amber-600 sm:mt-1 sm:text-2xl">{pendingOrdersCount}</p></div>
+              <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 sm:flex"><Clock className="h-5 w-5" /></div>
             </Card>
-            <Card className="p-4 flex items-center justify-between">
-              <div><p className="text-xs font-semibold text-slate-500">Facturado</p><p className="text-2xl font-black text-emerald-600 mt-1 font-mono">{formatGs(totalOrderRevenue)}</p></div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600"><CreditCard className="h-5 w-5" /></div>
+            <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="min-w-0"><p className="truncate text-[10px] font-semibold text-slate-500 sm:text-xs">Facturado</p><p className="mt-0.5 whitespace-nowrap text-[10px] font-black font-mono text-emerald-600 sm:mt-1 sm:text-2xl">{formatGs(totalOrderRevenue)}</p></div>
+              <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 sm:flex"><CreditCard className="h-5 w-5" /></div>
             </Card>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            <div role="group" aria-label="Filtros por estado de pedido" className="order-2 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:order-1">
               {([ { id: "all", label: "Todos", count: productOrders.length }, { id: "pending", label: "Pendientes", count: pendingOrdersCount }, { id: "confirmed", label: "Confirmados", count: productOrders.filter((o) => o.status === "confirmed").length }, { id: "delivered", label: "Entregados", count: productOrders.filter((o) => o.status === "delivered").length }, { id: "cancelled", label: "Cancelados", count: productOrders.filter((o) => o.status === "cancelled").length } ] as const).map((tab) => (
-                <button key={tab.id} type="button" onClick={() => setOrderStatusFilter(tab.id as any)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${orderStatusFilter === tab.id ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200/60 dark:border-white/5"}`}>
+                <button key={tab.id} type="button" aria-pressed={orderStatusFilter === tab.id} onClick={() => setOrderStatusFilter(tab.id as any)} className={`flex min-h-11 items-center gap-1.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${orderStatusFilter === tab.id ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200/60 dark:border-white/5"}`}>
                   <span>{tab.label}</span><span className="text-[10px] opacity-75">({tab.count})</span>
                 </button>
               ))}
             </div>
-            <div className="relative sm:w-72">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input type="text" placeholder="Buscar pedido..." value={orderSearch} onChange={(e) => setOrderSearch(e.target.value)} className="w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 pl-9 pr-3 py-2 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            <div className="relative order-1 w-full sm:order-2 sm:w-60 sm:shrink-0 lg:w-56">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                aria-label="Buscar pedido"
+                placeholder="Buscar pedido..."
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                className="h-10 w-full rounded-2xl border border-slate-200/80 bg-white/70 pl-9 pr-3 text-xs text-slate-800 shadow-inner transition placeholder:text-slate-400 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/25 dark:border-white/10 dark:bg-slate-800/70 dark:text-white"
+              />
             </div>
           </div>
           {filteredOrders.length === 0 ? (
@@ -1613,7 +1701,7 @@ export default function CrmOmnichannelPage() {
               {filteredOrders.map((ord) => {
                 const isPending = ord.status === "pending"; const isConfirmed = ord.status === "confirmed"; const isDelivered = ord.status === "delivered"; const isCancelled = ord.status === "cancelled";
                 return (
-                  <Card key={ord.id} className="p-4 flex flex-col justify-between space-y-4">
+                  <Card key={ord.id} className="flex flex-col justify-between space-y-3.5 p-3.5 sm:space-y-4 sm:p-4">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-xs font-black text-slate-900 dark:text-white">{ord.orderNumber}</span>
@@ -1626,21 +1714,21 @@ export default function CrmOmnichannelPage() {
                       </div>
                       <div className="mt-3 divide-y divide-slate-100 dark:divide-white/5 border-t border-slate-100 dark:border-white/5 pt-2 text-xs space-y-1.5">
                         {ord.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between pt-1">
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{item.qty}x {item.productName}</span>
-                            <span className="font-mono text-slate-600 dark:text-slate-400 font-semibold">{formatGs(item.unitPrice * item.qty)}</span>
+                          <div key={idx} className="flex items-start justify-between gap-3 pt-1">
+                            <span className="min-w-0 break-words font-bold text-slate-800 dark:text-slate-200">{item.qty}x {item.productName}</span>
+                            <span className="shrink-0 whitespace-nowrap font-mono font-semibold text-slate-600 dark:text-slate-400">{formatGs(item.unitPrice * item.qty)}</span>
                           </div>
                         ))}
                       </div>
                       {ord.notes && <p className="mt-2 text-[11px] text-slate-500 italic bg-amber-500/5 border border-amber-500/10 p-2 rounded-lg">{ord.notes}</p>}
                     </div>
                     <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-2.5">
-                      <div className="flex items-baseline justify-between"><span className="text-xs text-slate-500">Total:</span><span className="text-base font-black text-slate-900 dark:text-white font-mono">{formatGs(ord.totalAmount)}</span></div>
+                      <div className="flex items-baseline justify-between gap-3"><span className="text-xs text-slate-500">Total:</span><span className="shrink-0 whitespace-nowrap text-base font-black text-slate-900 dark:text-white font-mono">{formatGs(ord.totalAmount)}</span></div>
                       <div className="flex items-center gap-1.5">
-                        {isPending && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "confirmed"); pushToast("success", `${ord.orderNumber} confirmado`); }} className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 text-xs transition cursor-pointer">Confirmar</button>}
-                        {(isPending || isConfirmed) && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "delivered"); pushToast("success", `${ord.orderNumber} entregado y registrado en caja`); }} className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 text-xs transition cursor-pointer flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /><span>Entregado</span></button>}
-                        {!isCancelled && !isDelivered && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "cancelled"); pushToast("error", `${ord.orderNumber} cancelado`); }} className="rounded-xl border border-slate-200 dark:border-white/10 px-2.5 py-1.5 text-xs text-slate-500 hover:text-rose-500 transition cursor-pointer">Cancelar</button>}
-                        {isDelivered && <span className="w-full text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 py-1 bg-emerald-500/10 rounded-xl flex items-center justify-center gap-1"><CheckCircle2 className="h-4 w-4" /><span>Completado y en Caja</span></span>}
+                        {isPending && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "confirmed"); pushToast("success", `${ord.orderNumber} confirmado`); }} className="min-h-11 flex-1 rounded-xl bg-blue-600 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500 cursor-pointer">Confirmar</button>}
+                        {(isPending || isConfirmed) && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "delivered"); pushToast("success", `${ord.orderNumber} entregado y registrado en caja`); }} className="min-h-11 flex-1 rounded-xl bg-emerald-600 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-500 cursor-pointer flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /><span>Entregado</span></button>}
+                        {!isCancelled && !isDelivered && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "cancelled"); pushToast("error", `${ord.orderNumber} cancelado`); }} className="min-h-11 whitespace-nowrap rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-slate-500 transition hover:text-rose-500 dark:border-white/10 cursor-pointer">Cancelar</button>}
+                        {isDelivered && <span className="min-h-10 w-full rounded-xl bg-emerald-500/10 py-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1"><CheckCircle2 className="h-4 w-4" /><span>Completado y en Caja</span></span>}
                       </div>
                     </div>
                   </Card>
@@ -1650,6 +1738,71 @@ export default function CrmOmnichannelPage() {
           )}
         </div>
       )}
+
+      {clearedConversations && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed left-1/2 top-[calc(5.5rem+env(safe-area-inset-top,0px))] z-[100] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-slate-950/95 px-4 py-3 text-white shadow-xl backdrop-blur-xl lg:left-auto lg:right-6 lg:top-24 lg:translate-x-0"
+        >
+          <span className="min-w-0 text-xs font-semibold">
+            {clearedConversations.conversations.length} {clearedConversations.conversations.length === 1 ? "conversación quitada" : "conversaciones quitadas"}
+          </span>
+          <button
+            type="button"
+            onClick={undoClearConversations}
+            className="shrink-0 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          >
+            Deshacer
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setClearedConversations(null);
+              if (clearUndoTimerRef.current) clearTimeout(clearUndoTimerRef.current);
+              clearUndoTimerRef.current = null;
+            }}
+            aria-label="Cerrar aviso"
+            className="shrink-0 rounded-lg p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      <Modal
+        open={clearConfirmOpen}
+        onClose={() => setClearConfirmOpen(false)}
+        title="¿Limpiar la bandeja?"
+        maxWidth="max-w-md"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setClearConfirmOpen(false)}
+              className="rounded-xl border border-slate-200/80 px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmClearConversations}
+              className="rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+            >
+              Limpiar {crmConversations.length} {crmConversations.length === 1 ? "conversación" : "conversaciones"}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          <p>
+            {crmConversations.length === 1
+              ? "Se quitará de la bandeja 1 conversación."
+              : `Se quitarán de la bandeja las ${crmConversations.length} conversaciones actuales.`}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Durante 10 segundos podrás deshacer esta acción.</p>
+        </div>
+      </Modal>
 
       {/* ═══ CHANNELS CONNECTION MODAL (WhatsApp + Instagram + Facebook) ═══ */}
       <Modal open={channelsModalOpen} onClose={() => setChannelsModalOpen(false)} title="Conectar Canales de Mensajería" maxWidth="max-w-3xl">

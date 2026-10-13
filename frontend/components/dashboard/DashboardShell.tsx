@@ -40,6 +40,7 @@ export default function DashboardShell({
   userName,
 }: DashboardShellProps) {
   const pathname = usePathname();
+  const isCrmRoute = pathname?.startsWith("/dashboard/crm");
   const router = useRouter();
   const color = useDashboardStore((s) => s.business.primaryColor);
   const syncFromDatabase = useDashboardStore((s) => s.syncFromDatabase);
@@ -108,7 +109,7 @@ export default function DashboardShell({
         <div className="glass-header-bubble w-full shrink-0 sticky top-[18px] z-[60]">
           <Header />
         </div>
-        <div className="glass-app-shell flex-1 min-w-0 w-full">
+        <div className={`glass-app-shell ${isCrmRoute ? "crm-contained-shell" : ""} flex-1 min-w-0 w-full`}>
           <main className="main-content flex-1 w-full max-w-full min-w-0 p-5 lg:p-7 overflow-x-clip">
             {children}
           </main>
@@ -120,7 +121,7 @@ export default function DashboardShell({
         <div className="glass-header-bubble w-full shrink-0 z-[60]">
           <Header />
         </div>
-        <div className="glass-app-shell min-h-0 flex-1 min-w-0 rounded-[22px]">
+        <div className={`glass-app-shell ${isCrmRoute ? "crm-contained-shell" : ""} min-h-0 flex-1 min-w-0 rounded-[22px]`}>
           <main
             className={`main-content min-h-0 flex-1 w-full max-w-full min-w-0 overflow-x-clip overflow-y-auto overscroll-contain p-3.5 sm:p-5 ${
               pathname?.startsWith("/dashboard/caja")

@@ -1555,6 +1555,7 @@ type DashboardState = {
   updateEvolutionConfig: (config: Partial<EvolutionApiConfig>) => void;
   loadDemoConversation: () => void;
   clearCrmConversations: () => void;
+  restoreCrmConversations: (conversations: CrmConversation[]) => void;
   ensureClientCrmConversation: (client: Client) => string;
   createOrderFromCrm: (data: {
     clientName: string;
@@ -2707,7 +2708,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
   clearCrmConversations: () => {
     set({ crmConversations: [] });
-    get().pushToast("success", "Bandeja limpia de fábrica (0 conversaciones).");
+    get().pushToast("success", "Bandeja limpiada.");
+  },
+  restoreCrmConversations: (conversations) => {
+    set({ crmConversations: conversations });
   },
   ensureClientCrmConversation: (client) => {
     const phoneDigits = client.phone.replace(/\D/g, "");

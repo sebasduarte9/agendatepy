@@ -40,6 +40,8 @@ export default function MobileTabBar() {
   const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
 
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  const [crmKeyboardOpen, setCrmKeyboardOpen] = useState(false);
+  const [crmFullScreenView, setCrmFullScreenView] = useState(false);
   const dragControls = useDragControls();
   const sheetContentRef = React.useRef<HTMLDivElement>(null);
   const touchStartY = React.useRef<number | null>(null);
@@ -75,7 +77,25 @@ export default function MobileTabBar() {
   // Close sheet on route change
   useEffect(() => {
     setIsMoreSheetOpen(false);
+    setCrmFullScreenView(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const handleCrmKeyboardState = (event: Event) => {
+      const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+      setCrmKeyboardOpen(Boolean(detail?.open));
+    };
+    const handleCrmMobileViewState = (event: Event) => {
+      const detail = (event as CustomEvent<{ view?: string }>).detail;
+      setCrmFullScreenView(detail?.view === "chat" || detail?.view === "profile");
+    };
+    window.addEventListener("agendate-crm-keyboard-state", handleCrmKeyboardState);
+    window.addEventListener("agendate-crm-mobile-view-state", handleCrmMobileViewState);
+    return () => {
+      window.removeEventListener("agendate-crm-keyboard-state", handleCrmKeyboardState);
+      window.removeEventListener("agendate-crm-mobile-view-state", handleCrmMobileViewState);
+    };
+  }, []);
 
   // Optimistic tab active state for 0ms instantaneous visual feedback
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
@@ -85,6 +105,7 @@ export default function MobileTabBar() {
   }, [pathname]);
 
   const currentPath = optimisticPath || pathname;
+  const hideCrmMobileNavigation = pathname.startsWith("/dashboard/crm") && (crmKeyboardOpen || crmFullScreenView);
 
   // Prefetch core routes for 0ms instantaneous section switching
   useEffect(() => {
@@ -253,7 +274,11 @@ export default function MobileTabBar() {
     <>
       <nav
         aria-label="Navegación principal móvil"
-        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[24px] bg-white/90 dark:bg-[rgba(27,25,30,0.85)] text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none"
+        aria-hidden={hideCrmMobileNavigation}
+        inert={hideCrmMobileNavigation}
+        className={`fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[24px] bg-white/90 dark:bg-[rgba(27,25,30,0.85)] text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none transition-[transform,opacity] duration-200 ease-out ${
+          hideCrmMobileNavigation ? "translate-y-full opacity-0 pointer-events-none" : ""
+        }`}
       >
         <div className="flex items-center justify-between h-13 relative">
           {primaryTabs.map((tab) => {
