@@ -276,7 +276,7 @@ export default function MobileTabBar() {
         aria-label="Navegación principal móvil"
         aria-hidden={hideCrmMobileNavigation}
         inert={hideCrmMobileNavigation}
-        className={`fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[24px] bg-white/90 dark:bg-[rgba(27,25,30,0.85)] text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 py-1.5 select-none transition-[transform,opacity] duration-200 ease-out ${
+        className={`fixed bottom-0 inset-x-3.5 max-w-[430px] mx-auto z-40 lg:hidden rounded-[24px] bg-white/90 dark:bg-[rgba(27,25,30,0.85)] text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.55)] backdrop-blur-2xl px-2 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom,0px))] select-none transition-[transform,opacity] duration-200 ease-out ${
           hideCrmMobileNavigation ? "translate-y-full opacity-0 pointer-events-none" : ""
         }`}
       >
@@ -325,9 +325,9 @@ export default function MobileTabBar() {
                     />
                   </motion.div>
                   <span
-                    className={`text-[10px] tracking-tight mt-1 leading-none transition-colors duration-150 ${
+                    className={`text-[11px] tracking-tight mt-1 leading-none transition-colors duration-150 ${
                       active
-                        ? "font-bold text-slate-900 dark:text-white"
+                        ? "font-semibold text-slate-900 dark:text-white"
                         : "font-medium text-slate-500 dark:text-white/50 group-hover:text-slate-700 dark:group-hover:text-white/80"
                     }`}
                   >
@@ -378,9 +378,9 @@ export default function MobileTabBar() {
                 />
               </motion.div>
               <span
-                className={`text-[10px] tracking-tight mt-1 leading-none transition-colors duration-150 ${
+                className={`text-[11px] tracking-tight mt-1 leading-none transition-colors duration-150 ${
                   isMoreSheetOpen
-                    ? "font-bold text-slate-900 dark:text-white"
+                    ? "font-semibold text-slate-900 dark:text-white"
                     : "font-medium text-slate-500 dark:text-white/50 group-hover:text-slate-700 dark:group-hover:text-white/80"
                 }`}
               >
@@ -454,7 +454,7 @@ export default function MobileTabBar() {
                     </svg>
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight truncate">
+                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white leading-tight truncate">
                       {business.name || "Agendatepy"}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
@@ -500,11 +500,11 @@ export default function MobileTabBar() {
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        <span className="text-xs font-semibold text-slate-900 dark:text-white">
                           Guía Interactiva & Tutorial
                         </span>
                         <span
-                          className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border"
+                          className="px-1.5 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wider border"
                           style={{
                             color: brandColor,
                             backgroundColor: `${brandColor}15`,
@@ -514,7 +514,7 @@ export default function MobileTabBar() {
                           Paso a paso
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                         Aprende a usar todas las funciones del sistema
                       </p>
                     </div>
@@ -524,7 +524,7 @@ export default function MobileTabBar() {
 
                 {sheetSections.map((sec) => (
                   <div key={sec.title} className="space-y-1.5">
-                    <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2">
                       {sec.title}
                     </h4>
 
@@ -573,14 +573,14 @@ export default function MobileTabBar() {
                                 <span
                                   className={`text-xs block truncate ${
                                     isItemActive
-                                      ? "font-black"
-                                      : "font-bold text-slate-800 dark:text-slate-200"
+                                      ? "font-semibold"
+                                      : "font-semibold text-slate-800 dark:text-slate-200"
                                   }`}
                                   style={isItemActive ? { color: brandColor } : {}}
                                 >
                                   {item.label}
                                 </span>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
                                   {item.subtitle}
                                 </span>
                               </div>
@@ -606,10 +606,10 @@ export default function MobileTabBar() {
                         style={{ backgroundColor: brandColor }}
                       />
                       <div>
-                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                        <span className="text-xs font-semibold text-slate-900 dark:text-white block">
                           Ver Portal Público de Reservas
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[11px] text-slate-400 tabular-nums">
                           {tenantHost(business.slug || "barberia")}
                         </span>
                       </div>
@@ -628,7 +628,7 @@ export default function MobileTabBar() {
                       } catch {}
                       window.location.href = "/login";
                     }}
-                    className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200/70 dark:border-rose-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200/70 dark:border-rose-500/20 active:scale-[0.98] transition-all cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Cerrar Sesión</span>

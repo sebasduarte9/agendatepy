@@ -180,7 +180,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
               <X className="h-4 w-4" />
             </button>
           ) : (
-            <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-400 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md">
+            <kbd className="hidden sm:inline-block px-2 py-0.5 text-[11px] tabular-nums font-semibold text-slate-400 dark:text-zinc-400 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md">
               ESC
             </kbd>
           )}
@@ -193,7 +193,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
             <>
               {/* En Mobile (< sm): Solo 3 recomendaciones o búsquedas recientes */}
               <div className="sm:hidden">
-                <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+                <p className="px-3 py-1 text-[11px] tabular-nums font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
                   {recentSearchHrefs.length > 0 ? "Búsquedas recientes" : "Recomendaciones"}
                 </p>
                 <div className="space-y-0.5 mt-1">
@@ -212,7 +212,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
                           </div>
                           <span className="font-medium truncate">{r.title}</span>
                         </div>
-                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 font-mono shrink-0">
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 tabular-nums shrink-0">
                           {r.category}
                         </span>
                       </button>
@@ -223,7 +223,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
               {/* En Desktop (>= sm): Todas las secciones normales */}
               <div className="hidden sm:block">
-                <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+                <p className="px-3 py-1 text-[11px] tabular-nums font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
                   Secciones
                 </p>
                 <div className="space-y-0.5 mt-1">
@@ -242,7 +242,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
                           </div>
                           <span className="font-medium truncate">{r.title}</span>
                         </div>
-                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 font-mono shrink-0">
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 tabular-nums shrink-0">
                           {r.category}
                         </span>
                       </button>
@@ -254,7 +254,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
           ) : (
             filteredRoutes.length > 0 && (
               <div>
-                <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+                <p className="px-3 py-1 text-[11px] tabular-nums font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
                   Secciones
                 </p>
                 <div className="space-y-0.5 mt-1">
@@ -273,7 +273,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
                           </div>
                           <span className="font-medium truncate">{r.title}</span>
                         </div>
-                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 font-mono shrink-0">
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-400 tabular-nums shrink-0">
                           {r.category}
                         </span>
                       </button>
@@ -287,7 +287,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
           {/* Clientes Encontrados */}
           {filteredClients.length > 0 && (
             <div>
-              <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+              <p className="px-3 py-1 text-[11px] tabular-nums font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
                 Clientes
               </p>
               <div className="space-y-0.5 mt-1">
@@ -299,7 +299,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-white/10 transition group cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-7 w-7 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="h-7 w-7 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 flex items-center justify-center text-xs font-semibold shrink-0">
                         {c.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -317,7 +317,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
           {/* Servicios Encontrados */}
           {filteredServices.length > 0 && (
             <div>
-              <p className="px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
+              <p className="px-3 py-1 text-[11px] tabular-nums font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
                 Servicios
               </p>
               <div className="space-y-0.5 mt-1">
@@ -332,7 +332,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       <Scissors className="h-4 w-4 text-slate-400 group-hover:text-[var(--primary)] transition" />
                       <span className="font-medium truncate">{s.name}</span>
                     </div>
-                    <span className="text-xs font-bold text-slate-600 dark:text-zinc-300">
+                    <span className="text-xs font-semibold text-slate-600 dark:text-zinc-300">
                       Gs. {s.price.toLocaleString("es-PY")}
                     </span>
                   </button>
@@ -355,8 +355,8 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
         {/* Pie de Atajos (Oculto en Mobile, visible en Desktop) */}
         <div className="hidden sm:flex px-4 py-2.5 bg-slate-50 dark:bg-black/30 border-t border-slate-200/80 dark:border-white/5 items-center justify-between text-[11px] text-slate-400 dark:text-zinc-400">
-          <span>Presiona <kbd className="font-mono font-bold">↵</kbd> para navegar</span>
-          <span className="font-mono text-[10px] uppercase">Agendatepy Glassy 2.0</span>
+          <span>Presiona <kbd className="tabular-nums font-semibold">↵</kbd> para navegar</span>
+          <span className="tabular-nums text-[11px] uppercase">Agendatepy Glassy 2.0</span>
         </div>
       </div>
     </div>

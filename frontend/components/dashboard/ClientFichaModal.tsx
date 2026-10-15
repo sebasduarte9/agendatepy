@@ -281,7 +281,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           {/* Header Profile Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl glass-panel shadow-xs">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-white font-black text-lg shadow-md shadow-primary/20">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-white font-semibold text-lg shadow-md shadow-primary/20">
                 {client.name
                   .split(" ")
                   .map((n) => n[0])
@@ -292,20 +292,20 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {client.name}
                   </h2>
                   {client.tags.map((t) => (
                     <span
                       key={t}
-                      className="rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-extrabold px-2 py-0.5"
+                      className="rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-semibold px-2 py-0.5"
                     >
                       {t}
                     </span>
                   ))}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 tabular-nums">
                   <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
                     <Phone className="h-3 w-3 text-emerald-500" /> {client.phone}
                   </span>
@@ -327,7 +327,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                     onClose();
                     onOpenQuickBooking(client);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-bold shadow-md transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-semibold shadow-md transition cursor-pointer"
                 >
                   <Calendar className="h-3.5 w-3.5" />
                   <span>Agendar Turno</span>
@@ -336,7 +336,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 <Link
                   href={`/dashboard/calendario?newForClient=${client.id}`}
                   onClick={onClose}
-                  className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-bold shadow-md transition"
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-3.5 py-2 text-xs font-semibold shadow-md transition"
                 >
                   <Calendar className="h-3.5 w-3.5" />
                   <span>Nueva Cita</span>
@@ -359,35 +359,35 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           {/* Resumen Operacional: Visitas (COMPLETED), Última Visita, Total Gastado */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3.5 rounded-2xl glass-panel-subtle">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                 Visitas Realizadas
               </span>
-              <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
+              <p className="text-xl font-semibold text-slate-900 dark:text-white mt-0.5">
                 {completedVisits.length}
               </p>
-              <span className="text-[10px] text-slate-500 font-medium">Turnos completados</span>
+              <span className="text-[11px] text-slate-500 font-medium">Turnos completados</span>
             </div>
 
             <div className="p-3.5 rounded-2xl glass-panel-subtle">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                 Última Visita
               </span>
-              <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5 truncate">
                 {lastCompletedApp
                   ? formatInTimeZone(lastCompletedApp.start, business.timezone || "America/Asuncion", "dd MMM yyyy · HH:mm 'hs'")
                   : "Sin visitas"}
               </p>
-              <span className="text-[10px] text-slate-500 font-medium">Histórico</span>
+              <span className="text-[11px] text-slate-500 font-medium">Histórico</span>
             </div>
 
             <div className="p-3.5 rounded-2xl glass-panel-subtle">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                 Total Gastado
               </span>
-              <p className="text-xl font-black text-primary mt-0.5">
+              <p className="text-xl font-semibold text-primary mt-0.5">
                 {formatGs(clientTotalSpent)}
               </p>
-              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium font-mono">Cobrado en caja</span>
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium tabular-nums">Cobrado en caja</span>
             </div>
           </div>
 
@@ -395,19 +395,19 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           {nextApp ? (
             <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-semibold">
                   <Calendar className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                       Próxima Cita Programada
                     </span>
-                    <span className="rounded-full bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100 text-[10px] font-extrabold px-2 py-0.5">
+                    <span className="rounded-full bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100 text-[11px] font-semibold px-2 py-0.5">
                       {nextApp.status === "confirmed" ? "Confirmado" : nextApp.status}
                     </span>
                   </div>
-                  <p className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5">
                     {services.find((s) => s.id === nextApp.serviceId)?.name || "Servicio"} ·{" "}
                     <span className="font-semibold text-slate-600 dark:text-slate-300">
                       {staff.find((st) => st.id === nextApp.staffId)?.name || "Profesional"}
@@ -422,7 +422,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               <Link
                 href={`/dashboard/calendario?appointmentId=${nextApp.id}`}
                 onClick={onClose}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-semibold shadow-xs transition shrink-0"
               >
                 <span>Ver en agenda</span>
                 <span>→</span>
@@ -441,7 +441,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                     onClose();
                     onOpenQuickBooking(client);
                   }}
-                  className="font-bold text-primary hover:underline cursor-pointer"
+                  className="font-semibold text-primary hover:underline cursor-pointer"
                 >
                   + Agendar cita
                 </button>
@@ -449,7 +449,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 <Link
                   href={`/dashboard/calendario?newForClient=${client.id}`}
                   onClick={onClose}
-                  className="font-bold text-primary hover:underline"
+                  className="font-semibold text-primary hover:underline"
                 >
                   + Agendar cita
                 </Link>
@@ -458,7 +458,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           )}
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-1 p-1 glass-panel-subtle rounded-2xl text-xs font-bold">
+          <div className="flex items-center gap-1 p-1 glass-panel-subtle rounded-2xl text-xs font-semibold">
             <button
               type="button"
               onClick={() => setActiveTab("visitas")}
@@ -518,28 +518,28 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               {/* Visit Stats Metric Deck */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3.5 rounded-2xl glass-panel-subtle">
-                  <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                     Profesional Frecuente
                   </span>
-                  <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5">
                     {visitStats.preferredStaff}
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl glass-panel-subtle">
-                  <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                     Servicio Más Solicitado
                   </span>
-                  <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5">
                     {visitStats.topService}
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl glass-panel-subtle">
-                  <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                     Ticket Promedio por Visita
                   </span>
-                  <p className="text-sm font-extrabold text-primary mt-0.5">
+                  <p className="text-sm font-semibold text-primary mt-0.5">
                     {formatGs(visitStats.avgTicket)}
                   </p>
                 </div>
@@ -557,7 +557,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                           onClose();
                           onOpenQuickBooking(client);
                         }}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3.5 py-2 text-xs font-bold hover:opacity-95 transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3.5 py-2 text-xs font-semibold hover:opacity-95 transition cursor-pointer"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         <span>Agendar primera cita</span>
@@ -566,7 +566,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       <Link
                         href={`/dashboard/calendario?newForClient=1&clientName=${encodeURIComponent(client.name)}&clientPhone=${encodeURIComponent(client.phone)}`}
                         onClick={onClose}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3 py-1.5 text-xs font-bold"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-white px-3 py-1.5 text-xs font-semibold"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         <span>Agendar primera cita</span>
@@ -588,10 +588,10 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-100 dark:border-white/5">
                           <div className="flex items-center gap-2">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary font-black text-[11px]">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-[11px]">
                               #{clientAppointments.length - index}
                             </span>
-                            <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                            <h4 className="font-semibold text-sm text-slate-900 dark:text-white">
                               {service?.name || "Servicio"}
                             </h4>
                             <span className="text-xs text-slate-400">·</span>
@@ -602,16 +602,16 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
                           <div className="flex items-center gap-2 text-xs">
                             {payment ? (
-                              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                              <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
                                 Cobrado: {formatGs(payment.amount)}
                               </span>
                             ) : (
-                              <span className="font-mono font-medium text-slate-500">
+                              <span className="tabular-nums font-medium text-slate-500">
                                 {formatGs(service?.price || 0)}
                               </span>
                             )}
                             <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${
+                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${
                                 visit.status === "completed"
                                   ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400"
                                   : visit.status === "confirmed"
@@ -619,7 +619,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                                   : visit.status === "cancelled"
                                   ? "bg-red-100 text-red-700"
                                   : visit.status === "no_show"
-                                  ? "bg-rose-100 text-rose-800 font-extrabold"
+                                  ? "bg-rose-100 text-rose-800 font-semibold"
                                   : "bg-amber-100 text-amber-700"
                               }`}
                             >
@@ -662,7 +662,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                                   onClose();
                                   onOpenQuickBooking(client);
                                 }}
-                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary transition cursor-pointer"
+                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary transition cursor-pointer"
                                 title="Reagendar turno para este cliente"
                               >
                                 <CalendarPlus className="h-3 w-3" />
@@ -672,7 +672,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                             <Link
                               href={`/dashboard/calendario?appointmentId=${visit.id}`}
                               onClick={onClose}
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
                             >
                               <span>Ver en agenda</span>
                               <span>→</span>
@@ -706,7 +706,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       key={tag}
                       type="button"
                       onClick={() => setGalleryFilter(tag)}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition capitalize shrink-0 ${
+                      className={`px-3 py-1.5 rounded-xl font-semibold transition capitalize shrink-0 ${
                         galleryFilter === tag
                           ? "bg-primary text-white shadow-xs"
                           : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -720,7 +720,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 <button
                   type="button"
                   onClick={() => setUploadModalOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-4 py-2 text-xs font-bold shadow-md transition shrink-0"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-primary hover:opacity-95 text-white px-4 py-2 text-xs font-semibold shadow-md transition shrink-0"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Subir Foto o Video</span>
@@ -731,7 +731,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               {filteredGallery.length === 0 ? (
                 <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl p-6">
                   <Camera className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600 mb-2" />
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Aún no hay fotos o videos en esta categoría.
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1 max-w-sm mx-auto">
@@ -740,7 +740,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                   <button
                     type="button"
                     onClick={() => setUploadModalOpen(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary font-bold px-3 py-1.5 text-xs hover:bg-primary/20 transition"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary font-semibold px-3 py-1.5 text-xs hover:bg-primary/20 transition"
                   >
                     <Plus className="h-3.5 w-3.5" /> Agregar Primer Trabajo
                   </button>
@@ -775,7 +775,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                                 <Play className="h-4 w-4 fill-current ml-0.5" />
                               </span>
                             </div>
-                            <span className="absolute top-2 left-2 rounded-full bg-red-600 text-white text-[9px] font-black px-2 py-0.5 tracking-wider uppercase shadow-xs">
+                            <span className="absolute top-2 left-2 rounded-full bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 tracking-wider uppercase shadow-xs">
                               Video
                             </span>
                           </div>
@@ -789,7 +789,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
                         {/* Tag Pill */}
                         <span
-                          className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ${
+                          className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs ${
                             item.tag === "Antes"
                               ? "bg-amber-600/90"
                               : item.tag === "Después" || item.tag === "Resultado"
@@ -802,7 +802,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
                         {/* Space saved indicator pill */}
                         {item.sizeKb && (
-                          <span className="absolute bottom-2 left-2 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-mono px-1.5 py-0.5 inline-flex items-center gap-1">
+                          <span className="absolute bottom-2 left-2 rounded-md bg-black/70 backdrop-blur-xs text-white text-[11px] tabular-nums px-1.5 py-0.5 inline-flex items-center gap-1">
                             <Zap className="w-2.5 h-2.5 text-amber-400" />
                             {item.sizeKb} KB
                           </span>
@@ -812,10 +812,10 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       {/* Info & delete bar */}
                       <div className="p-2.5 glass-panel-subtle flex items-center justify-between gap-1">
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                             {item.title}
                           </p>
-                          <p className="text-[10px] text-slate-400 font-mono">
+                          <p className="text-[11px] text-slate-400 tabular-nums">
                             {new Date(item.createdAt).toLocaleDateString("es-PY")}
                           </p>
                         </div>
@@ -844,7 +844,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
             <div className="space-y-4">
               <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50 p-5 space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-white/5">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
                     <FileText className="h-4 w-4 text-primary" />
                     <span>Fórmula Técnica de Tinte / Corte / Barbería</span>
                   </h3>
@@ -853,7 +853,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                     <button
                       type="button"
                       onClick={startEditingFormula}
-                      className="rounded-xl bg-primary text-white text-xs font-bold px-3 py-1.5 hover:opacity-95 transition"
+                      className="rounded-xl bg-primary text-white text-xs font-semibold px-3 py-1.5 hover:opacity-95 transition"
                     >
                       Editar Ficha
                     </button>
@@ -869,7 +869,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       <button
                         type="button"
                         onClick={handleSaveFormula}
-                        className="rounded-xl bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 hover:bg-emerald-700 transition"
+                        className="rounded-xl bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 hover:bg-emerald-700 transition"
                       >
                         Guardar Cambios
                       </button>
@@ -880,7 +880,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 {isEditingFormula ? (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         Fórmula Técnica / Números de Máquina / Colorimetría:
                       </label>
                       <textarea
@@ -888,12 +888,12 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                         value={formulaText}
                         onChange={(e) => setFormulaText(e.target.value)}
                         placeholder="Ej: Tinte 8.3 con oxidante 20 vol + matizador plata / Fade medio navaja 0 a 1.5..."
-                        className="w-full rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono leading-relaxed"
+                        className="w-full rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/40 tabular-nums leading-relaxed"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         Notas Clínicas / Alergias / Preferencias de Servicio:
                       </label>
                       <textarea
@@ -908,16 +908,16 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 ) : (
                   <div className="space-y-3 text-xs">
                     <div>
-                      <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px] block mb-1">
+                      <span className="font-semibold text-slate-500 uppercase tracking-wider text-[11px] block mb-1">
                         Fórmula Registrada:
                       </span>
-                      <div className="p-3.5 rounded-2xl bg-white dark:bg-zinc-800/80 border border-slate-200/60 dark:border-white/5 font-mono text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                      <div className="p-3.5 rounded-2xl bg-white dark:bg-zinc-800/80 border border-slate-200/60 dark:border-white/5 tabular-nums text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
                         {client.formula || "Sin fórmula técnica registrada. Hace clic en 'Editar Ficha' para cargarla."}
                       </div>
                     </div>
 
                     <div>
-                      <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px] block mb-1">
+                      <span className="font-semibold text-slate-500 uppercase tracking-wider text-[11px] block mb-1">
                         Notas & Preferencias Personales:
                       </span>
                       <div className="p-3.5 rounded-2xl bg-white dark:bg-zinc-800/80 border border-slate-200/60 dark:border-white/5 text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -937,7 +937,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               <div className="rounded-2xl bg-amber-500/10 border border-amber-500/25 p-3.5 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
                 <div className="space-y-0.5">
-                  <p className="font-bold text-xs text-amber-950 dark:text-amber-100">
+                  <p className="font-semibold text-xs text-amber-950 dark:text-amber-100">
                     Regla de Fidelización VIP
                   </p>
                   <p className="text-[11px] text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
@@ -953,7 +953,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       <Award className="h-5 w-5" />
                     </span>
                     <div>
-                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                      <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                         Tarjeta de Fidelización VIP
                       </h3>
                       <p className="text-[11px] text-slate-500">
@@ -968,7 +968,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                     href={`/${business.slug || "barberia"}/tarjeta/${client.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-400 text-amber-950 px-3.5 py-2 text-xs font-black hover:bg-amber-300 transition shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-400 text-amber-950 px-3.5 py-2 text-xs font-semibold hover:bg-amber-300 transition shadow-xs cursor-pointer"
                   >
                     <Crown className="h-3.5 w-3.5" />
                     <span>Ver Tarjeta Digital</span>
@@ -980,10 +980,10 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 {loyalty?.mode === "points" ? (
                   <div className="p-4 bg-white dark:bg-zinc-800 rounded-2xl border border-amber-200/60 dark:border-white/5 space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
                         Progreso hacia la recompensa
                       </span>
-                      <span className="font-mono font-black text-amber-500">
+                      <span className="tabular-nums font-semibold text-amber-500">
                         {client.loyaltyPoints || 0} / {loyalty?.rewardThreshold || 100} pts
                       </span>
                     </div>
@@ -1011,7 +1011,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                       return (
                         <div key={s} className="flex flex-col items-center gap-1">
                           <div
-                            className={`flex h-11 w-11 items-center justify-center rounded-2xl font-black text-xs transition ${
+                            className={`flex h-11 w-11 items-center justify-center rounded-2xl font-semibold text-xs transition ${
                               isCompleted
                                 ? "bg-amber-500 text-white shadow-md shadow-amber-500/30 scale-105"
                                 : "border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-400"
@@ -1019,7 +1019,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                           >
                             {isCompleted ? <Award className="h-5 w-5 fill-current" /> : s}
                           </div>
-                          <span className="text-[10px] font-bold text-slate-500">Sello {s}</span>
+                          <span className="text-[11px] font-semibold text-slate-500">Sello {s}</span>
                         </div>
                       );
                     })}
@@ -1028,19 +1028,19 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
                 <div className="grid grid-cols-2 gap-3 text-xs pt-1">
                   <div className="p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-white/5">
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                    <span className="text-slate-400 block text-[11px] uppercase font-semibold">
                       Recompensas Canjeadas:
                     </span>
-                    <p className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
+                    <p className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
                       {client.loyaltyRedeemed} premios
                     </p>
                   </div>
 
                   <div className="p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-white/5">
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                    <span className="text-slate-400 block text-[11px] uppercase font-semibold">
                       Inversión Histórica:
                     </span>
-                    <p className="text-base font-extrabold text-primary mt-0.5">
+                    <p className="text-base font-semibold text-primary mt-0.5">
                       {formatGs(client.totalSpent)}
                     </p>
                   </div>
@@ -1075,7 +1075,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 setSelectedFilePreview(null);
                 setCompressionStats(null);
               }}
-              className={`flex items-center justify-center gap-2 p-2.5 rounded-xl font-bold border transition ${
+              className={`flex items-center justify-center gap-2 p-2.5 rounded-xl font-semibold border transition ${
                 uploadType === "image"
                   ? "bg-primary text-white border-primary shadow-xs"
                   : "bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10"
@@ -1092,7 +1092,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 setSelectedFilePreview(null);
                 setCompressionStats(null);
               }}
-              className={`flex items-center justify-center gap-2 p-2.5 rounded-xl font-bold border transition ${
+              className={`flex items-center justify-center gap-2 p-2.5 rounded-xl font-semibold border transition ${
                 uploadType === "video"
                   ? "bg-primary text-white border-primary shadow-xs"
                   : "bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10"
@@ -1105,7 +1105,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
           {/* Tag Selector */}
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Etiqueta de Trabajo:
             </label>
             <div className="grid grid-cols-5 gap-1.5">
@@ -1114,7 +1114,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                   key={tg}
                   type="button"
                   onClick={() => setUploadTag(tg)}
-                  className={`py-1.5 px-1 rounded-xl text-center font-bold text-[11px] transition border ${
+                  className={`py-1.5 px-1 rounded-xl text-center font-semibold text-[11px] transition border ${
                     uploadTag === tg
                       ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
                       : "bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10"
@@ -1128,7 +1128,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
           {/* Title */}
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Título / Descripción del Trabajo *
             </label>
             <input
@@ -1143,7 +1143,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           {/* File input / Video URL */}
           {uploadType === "image" ? (
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Seleccionar Imagen desde tu Dispositivo:
               </label>
               <input
@@ -1151,27 +1151,27 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
                 ref={fileInputRef}
                 accept="image/*"
                 onChange={handleImageFileChange}
-                className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-primary file:text-white hover:file:opacity-95 cursor-pointer"
+                className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:opacity-95 cursor-pointer"
               />
             </div>
           ) : (
             <div className="space-y-2">
-              <label className="block font-bold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-slate-300">
                 Seleccionar Archivo de Video (.mp4, .webm) o Enlace Externo:
               </label>
               <input
                 type="file"
                 accept="video/*"
                 onChange={handleImageFileChange}
-                className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-primary file:text-white hover:file:opacity-95 cursor-pointer"
+                className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:opacity-95 cursor-pointer"
               />
-              <p className="text-[10px] text-slate-400 font-semibold text-center">— o pegar enlace —</p>
+              <p className="text-[11px] text-slate-400 font-semibold text-center">— o pegar enlace —</p>
               <input
                 type="url"
                 value={videoUrlInput}
                 onChange={(e) => setVideoUrlInput(e.target.value)}
                 placeholder="https://... (Enlace directo a video MP4 o Reel)"
-                className="w-full rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
+                className="w-full rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/40 tabular-nums"
               />
             </div>
           )}
@@ -1179,19 +1179,19 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
           {/* Compression & Preview Stats Box */}
           {compressionStats && uploadType === "image" && (
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-zinc-800/80 border border-slate-200/80 dark:border-white/10 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-900 dark:text-white">
                 <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="h-4 w-4" /> Optimización Exitosa
                 </span>
-                <span className="font-mono text-emerald-700 dark:text-emerald-300">
+                <span className="tabular-nums text-emerald-700 dark:text-emerald-300">
                   -{compressionStats.savingsPercent}% de peso
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <div className="flex items-center justify-between text-[11px] text-slate-500 tabular-nums">
                 <span>Original: {compressionStats.originalSizeKb} KB</span>
                 <span className="text-slate-400">→</span>
-                <span className="font-bold text-primary">Comprimido: {compressionStats.compressedSizeKb} KB ({compressionStats.format.toUpperCase()})</span>
+                <span className="font-semibold text-primary">Comprimido: {compressionStats.compressedSizeKb} KB ({compressionStats.format.toUpperCase()})</span>
               </div>
 
               {selectedFilePreview && (
@@ -1219,7 +1219,7 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
               type="button"
               disabled={isProcessing}
               onClick={handleSaveMedia}
-              className="rounded-xl bg-primary text-white font-bold px-5 py-2 hover:opacity-95 transition disabled:opacity-40 shadow-sm"
+              className="rounded-xl bg-primary text-white font-semibold px-5 py-2 hover:opacity-95 transition disabled:opacity-40 shadow-sm"
             >
               {isProcessing ? "Optimizando..." : "Guardar en Ficha"}
             </button>
@@ -1255,16 +1255,16 @@ export default function ClientFichaModal({ client, onClose, onOpenEdit, onOpenQu
 
             <div className="flex items-center justify-between text-xs p-3 rounded-2xl glass-panel-subtle">
               <div>
-                <span className="font-bold text-slate-900 dark:text-white block">
+                <span className="font-semibold text-slate-900 dark:text-white block">
                   {viewingMedia.title}
                 </span>
-                <span className="text-[11px] text-slate-400 font-mono">
+                <span className="text-[11px] text-slate-400 tabular-nums">
                   Etiqueta: {viewingMedia.tag} · Fecha: {new Date(viewingMedia.createdAt).toLocaleDateString("es-PY")}
                 </span>
               </div>
 
               {viewingMedia.sizeKb && (
-                <span className="rounded-lg bg-primary/10 text-primary font-mono text-[11px] font-bold px-2 py-1">
+                <span className="rounded-lg bg-primary/10 text-primary tabular-nums text-[11px] font-semibold px-2 py-1">
                   Tamaño: {viewingMedia.sizeKb} KB
                 </span>
               )}

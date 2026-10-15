@@ -53,7 +53,7 @@ export default function BrandLogo({
       <div className={`relative shrink-0 flex items-center justify-center ${className}`}>
         {renderIsotype()}
         {badge && (
-          <span className="absolute -top-1 -right-1 rounded-full bg-[#FF4F2B] px-1 py-0.2 text-[8px] font-black text-white uppercase">
+          <span className="absolute -top-1 -right-1 rounded-full bg-[#FF4F2B] px-1 py-0.2 text-[11px] font-semibold text-white uppercase">
             {badge}
           </span>
         )}
@@ -106,7 +106,7 @@ export default function BrandLogo({
       <div className="relative flex items-center justify-center shrink-0">
         {renderIsotype()}
         {badge && (
-          <span className="absolute -top-1 -right-1 rounded-full bg-[#FF4F2B] px-1 py-0.2 text-[8px] font-black text-white uppercase">
+          <span className="absolute -top-1 -right-1 rounded-full bg-[#FF4F2B] px-1 py-0.2 text-[11px] font-semibold text-white uppercase">
             {badge}
           </span>
         )}

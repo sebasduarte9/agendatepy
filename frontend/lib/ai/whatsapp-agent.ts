@@ -18,6 +18,7 @@ export interface AgentContext {
   tenantSlug: string;
   clientPhone: string;
   clientName?: string;
+  simulation?: boolean;
   configOverrides?: {
     allowEmojis?: boolean;
     askStaffPreference?: boolean;
@@ -26,7 +27,54 @@ export interface AgentContext {
     aiInstructions?: string;
     notifyPersonalPhoneOnBooking?: boolean;
     personalPhone?: string;
+    minNoticeMinutes?: number;
+    serviceScheduleMode?: "always" | "business_hours";
   };
+}
+
+function renderConfiguredEventTemplate(
+  settings: unknown,
+  trigger: "confirmacion" | "cancelacion",
+  values: Record<string, string>,
+) {
+  const templates = (settings as Record<string, any> | null)?.whatsappTemplates;
+  if (!Array.isArray(templates)) return null;
+  const template = templates.find(
+    (item: any) => item?.trigger === trigger && item.enabled !== false && typeof item.body === "string",
+  );
+  return template
+    ? template.body.replace(/\{([^}]+)\}/g, (token: string, key: string) => values[key] ?? token)
+    : null;
+}
+
+function isWithinTenantBusinessHours(settings: Record<string, any>, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const weekday = values.weekday;
+  if (weekday === "Sun" && !settings.sundayOpen) return false;
+  const openingTime = String(settings.openingTime || "08:00");
+  const closingTime = String(
+    weekday === "Sat" || weekday === "Sun"
+      ? settings.weekendClosing || settings.closingTime || "20:00"
+      : settings.closingTime || "20:00",
+  );
+  const toMinutes = (time: string) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return Number.isFinite(hours) && Number.isFinite(minutes) ? hours * 60 + minutes : null;
+  };
+  const opensAt = toMinutes(openingTime);
+  const closesAt = toMinutes(closingTime);
+  const currentTime = Number(values.hour) * 60 + Number(values.minute);
+  if (opensAt === null || closesAt === null) return true;
+  return closesAt > opensAt
+    ? currentTime >= opensAt && currentTime < closesAt
+    : currentTime >= opensAt || currentTime < closesAt;
 }
 
 // Herramientas declaradas para Gemini Function Calling
@@ -220,11 +268,25 @@ export async function processCustomerMessageWithAI(
   };
   const customInstructions = evoConfig.aiInstructions || "";
   const tone = evoConfig.aiTone || "amigable";
+  const minNoticeMinutes = Math.max(0, Number(evoConfig.minNoticeMinutes ?? 60));
+  const whatsappInstance = typeof evoConfig.instance === "string" ? evoConfig.instance : undefined;
   const allowEmojis = Boolean(evoConfig.allowEmojis); // Por defecto: false (cero emojis)
   const askStaffPreference = evoConfig.askStaffPreference !== false; // Por defecto: true si hay más de 1
-  const notifyPersonalPhoneOnBooking = evoConfig.notifyPersonalPhoneOnBooking !== false;
+  const notifyPersonalPhoneOnBooking = evoConfig.notifyPersonalPhoneOnBooking === true;
   const handoffOnUnknownTopic = evoConfig.handoffOnUnknownTopic !== false; // Por defecto: true
-  const personalAlertPhone = evoConfig.personalPhone || evoConfig.humanHandoffPhone || (tenant.settings as any)?.whatsappPhone || "";
+  const bookingAlertPhone = evoConfig.personalPhone || "";
+  const personalAlertPhone = evoConfig.humanHandoffPhone || bookingAlertPhone || (tenant.settings as any)?.whatsappPhone || "";
+
+  if (
+    context.simulation &&
+    evoConfig.serviceScheduleMode === "business_hours" &&
+    !isWithinTenantBusinessHours(tenant.settings as Record<string, any>, tenant.timezone || "America/Asuncion")
+  ) {
+    return {
+      replyText: "Fuera del horario del local, el mensaje queda en la bandeja y no se envía una respuesta automática.",
+      intent: "general" as const,
+    };
+  }
 
   const toneGuide =
     tone === "formal"
@@ -278,6 +340,8 @@ ${servicesListText}
 - Productos disponibles en el local:
 ${productsListText}
 ${staffPreferenceRule}
+
+${context.simulation ? "MODO VISTA PREVIA: no reserves, canceles, reprogrames ni derives consultas a una persona. Aclara que las acciones solo se simulan y no se guardan ni notifican." : ""}
 
 REGLAS DE ATENCIÓN:
 1. Sé conciso y claro (es WhatsApp, no mandes parrafadas gigantes). Usa formato amigable con negritas (*negrita*).
@@ -339,6 +403,7 @@ REGLAS DE ATENCIÓN:
     const fnArgs = functionCallPart.functionCall.args || {};
     let toolResultData: any = {};
     let detectedIntent: "agenda" | "consulta" | "sipap_ocr" | "humano" | "general" = "consulta";
+    let configuredReply: string | null = null;
 
     console.log(`[WhatsApp Agent] Invocando tool: ${fnName}`, fnArgs);
 
@@ -370,8 +435,8 @@ REGLAS DE ATENCIÓN:
           });
 
           // Filtrar horarios futuros
-          const nowTs = Date.now();
-          const upcomingSlots = slots.filter((s) => new Date(s.start).getTime() > nowTs).slice(0, 8);
+          const earliestAllowed = Date.now() + minNoticeMinutes * 60_000;
+          const upcomingSlots = slots.filter((s) => new Date(s.start).getTime() >= earliestAllowed).slice(0, 8);
 
           toolResultData = {
             fecha: targetDate,
@@ -396,6 +461,13 @@ REGLAS DE ATENCIÓN:
         toolResultData = { error: "Servicio no encontrado" };
       }
       detectedIntent = "agenda";
+    } else if (fnName === "crear_reserva" && context.simulation) {
+      toolResultData = {
+        reservaConfirmada: false,
+        simulacion: true,
+        mensaje: "Vista previa: no se creó ni guardó ningún turno.",
+      };
+      detectedIntent = "agenda";
     } else if (fnName === "crear_reserva") {
       try {
         const service = tenant.services.find((s) => s.id === fnArgs.servicioId) || tenant.services[0];
@@ -417,6 +489,12 @@ REGLAS DE ATENCIÓN:
         }
 
         const startDate = new Date(fnArgs.horarioInicio);
+        if (!Number.isFinite(startDate.getTime())) {
+          throw new Error("El horario elegido no es válido. Consultá los horarios disponibles nuevamente.");
+        }
+        if (startDate.getTime() < Date.now() + minNoticeMinutes * 60_000) {
+          throw new Error(`Los turnos deben reservarse con al menos ${minNoticeMinutes} minutos de anticipación.`);
+        }
         const endDate = new Date(startDate.getTime() + (service?.durationMinutes || 45) * 60_000);
 
         const newAppointment = await prisma.appointment.create({
@@ -440,17 +518,28 @@ REGLAS DE ATENCIÓN:
         const gEnd = endDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
         const linkGoogleCalendar = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(tenant.name + " · " + service.name)}&dates=${gStart}/${gEnd}&details=${encodeURIComponent("Turno en " + tenant.name)}&location=${encodeURIComponent(address)}`;
         const linkComoLlegar = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+        configuredReply = renderConfiguredEventTemplate(tenant.settings, "confirmacion", {
+          cliente: fnArgs.nombreCliente || context.clientName || "Cliente WhatsApp",
+          servicio: service.name,
+          profesional: chosenStaff.name,
+          fecha: formatInTimeZone(startDate, tenant.timezone || "America/Asuncion", "EEEE d 'de' MMMM"),
+          hora: formatInTimeZone(startDate, tenant.timezone || "America/Asuncion", "HH:mm"),
+          negocio: tenant.name,
+          direccion: address,
+          link_autogestion: linkTurno,
+          link_negocio: `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "agendatepy.com"}/${tenant.slug}`,
+        });
 
         // 1. Notificar al número personal del dueño si está configurado
-        if (notifyPersonalPhoneOnBooking && personalAlertPhone) {
-          const cleanOwnerDigits = personalAlertPhone.replace(/\D/g, "");
+        if (notifyPersonalPhoneOnBooking && bookingAlertPhone) {
+          const cleanOwnerDigits = bookingAlertPhone.replace(/\D/g, "");
           if (cleanOwnerDigits.length >= 8) {
             const clientNameDisp = fnArgs.nombreCliente || context.clientName || "Cliente WhatsApp";
             const ownerMsg = allowEmojis
               ? ` *Nuevo turno agendado en ${tenant.name}*\n Cliente: ${clientNameDisp} (${context.clientPhone})\n Servicio: ${service.name}\n Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}\n Profesional: ${chosenStaff.name}`
               : `*Nuevo turno agendado en ${tenant.name}*\nCliente: ${clientNameDisp} (${context.clientPhone})\nServicio: ${service.name}\nHorario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}\nProfesional: ${chosenStaff.name}`;
 
-            sendWhatsAppMessage(cleanOwnerDigits, ownerMsg, false).catch((err) => {
+            sendWhatsAppMessage(cleanOwnerDigits, ownerMsg, false, whatsappInstance).catch((err) => {
               console.warn("[Notif Dueño] Error enviando alerta al celular personal:", err?.message);
             });
           }
@@ -462,12 +551,12 @@ REGLAS DE ATENCIÓN:
           include: { user: true },
         }).then((s) => {
           const staffPhone = s?.user?.phone?.replace(/\D/g, "");
-          if (staffPhone && staffPhone.length >= 8 && staffPhone !== personalAlertPhone.replace(/\D/g, "")) {
+          if (staffPhone && staffPhone.length >= 8 && staffPhone !== bookingAlertPhone.replace(/\D/g, "")) {
             const staffMsg = allowEmojis
               ? ` *Nuevo turno asignado en ${tenant.name}*\n Cliente: ${fnArgs.nombreCliente || context.clientName}\n Servicio: ${service.name}\n Horario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`
               : `*Nuevo turno asignado en ${tenant.name}*\nCliente: ${fnArgs.nombreCliente || context.clientName}\nServicio: ${service.name}\nHorario: ${startDate.toLocaleString("es-PY", { timeZone: tenant.timezone })}`;
 
-            sendWhatsAppMessage(staffPhone, staffMsg, false).catch(() => {});
+            sendWhatsAppMessage(staffPhone, staffMsg, false, whatsappInstance).catch(() => {});
           }
         }).catch(() => {});
 
@@ -485,6 +574,13 @@ REGLAS DE ATENCIÓN:
       } catch (err: any) {
         toolResultData = { reservaConfirmada: false, error: err?.message };
       }
+    } else if (fnName === "reprogramar_reserva" && context.simulation) {
+      toolResultData = {
+        reprogramado: false,
+        simulacion: true,
+        mensaje: "Vista previa: no se modificó ningún turno.",
+      };
+      detectedIntent = "agenda";
     } else if (fnName === "reprogramar_reserva") {
       try {
         const clientDigits = context.clientPhone.replace(/\D/g, "").slice(-8);
@@ -506,6 +602,12 @@ REGLAS DE ATENCIÓN:
           };
         } else {
           const newStart = new Date(fnArgs.nuevoHorarioInicio);
+          if (!Number.isFinite(newStart.getTime())) {
+            throw new Error("El nuevo horario no es válido. Consultá los horarios disponibles nuevamente.");
+          }
+          if (newStart.getTime() < Date.now() + minNoticeMinutes * 60_000) {
+            throw new Error(`Los cambios deben hacerse con al menos ${minNoticeMinutes} minutos de anticipación.`);
+          }
           const newEnd = new Date(newStart.getTime() + (activeAppt.service?.durationMinutes || 45) * 60_000);
 
           await prisma.appointment.update({
@@ -527,7 +629,8 @@ REGLAS DE ATENCIÓN:
             sendWhatsAppMessage(
               staffPhone,
               ` *Turno Reprogramado en ${tenant.name}*\n Cliente: ${activeAppt.clientName}\n Servicio: ${activeAppt.service.name}\n Nuevo Horario: ${newStart.toLocaleString("es-PY", { timeZone: tenant.timezone })}`,
-              false
+              false,
+              whatsappInstance,
             ).catch(() => {});
           }
 
@@ -545,6 +648,13 @@ REGLAS DE ATENCIÓN:
       } catch (err: any) {
         toolResultData = { reprogramado: false, error: err?.message };
       }
+    } else if (fnName === "cancelar_reserva" && context.simulation) {
+      toolResultData = {
+        cancelado: false,
+        simulacion: true,
+        mensaje: "Vista previa: no se canceló ningún turno.",
+      };
+      detectedIntent = "agenda";
     } else if (fnName === "cancelar_reserva") {
       try {
         const clientDigits = context.clientPhone.replace(/\D/g, "").slice(-8);
@@ -570,13 +680,27 @@ REGLAS DE ATENCIÓN:
             data: { status: "CANCELLED" },
           });
 
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://agendatepy.com";
+          configuredReply = renderConfiguredEventTemplate(tenant.settings, "cancelacion", {
+            cliente: activeAppt.clientName,
+            servicio: activeAppt.service.name,
+            profesional: activeAppt.staff.name,
+            fecha: formatInTimeZone(activeAppt.startTime, tenant.timezone || "America/Asuncion", "EEEE d 'de' MMMM"),
+            hora: formatInTimeZone(activeAppt.startTime, tenant.timezone || "America/Asuncion", "HH:mm"),
+            negocio: tenant.name,
+            direccion: (tenant.settings as any)?.address || `${tenant.name}, Paraguay`,
+            link_autogestion: `${appUrl}/${tenant.slug}/turno/${activeAppt.id}`,
+            link_negocio: `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "agendatepy.com"}/${tenant.slug}`,
+          });
+
           // Notificar al barbero que se liberó el horario
           const staffPhone = activeAppt.staff?.user?.phone?.replace(/\D/g, "");
           if (staffPhone && staffPhone.length >= 8) {
             sendWhatsAppMessage(
               staffPhone,
               ` *Turno Cancelado en ${tenant.name}*\nEl cliente ${activeAppt.clientName} canceló su turno para ${activeAppt.service.name} (${activeAppt.startTime.toLocaleString("es-PY", { timeZone: tenant.timezone })}). El horario quedó libre.`,
-              false
+              false,
+              whatsappInstance,
             ).catch(() => {});
           }
 
@@ -590,6 +714,14 @@ REGLAS DE ATENCIÓN:
       } catch (err: any) {
         toolResultData = { cancelado: false, error: err?.message };
       }
+    } else if (fnName === "consultar_puntos" && context.simulation) {
+      toolResultData = {
+        cliente: context.clientName || "Cliente de prueba",
+        puntosAcumulados: 0,
+        recompensas: [],
+        simulacion: true,
+      };
+      detectedIntent = "consulta";
     } else if (fnName === "consultar_puntos") {
       try {
         const clientDigits = context.clientPhone.replace(/\D/g, "").slice(-8);
@@ -620,6 +752,9 @@ REGLAS DE ATENCIÓN:
       } catch (err: any) {
         toolResultData = { error: err?.message };
       }
+    } else if (fnName === "consultar_mis_turnos" && context.simulation) {
+      toolResultData = { turnos: [], simulacion: true };
+      detectedIntent = "consulta";
     } else if (fnName === "consultar_mis_turnos") {
       const turnos = await prisma.appointment.findMany({
         where: {
@@ -642,6 +777,14 @@ REGLAS DE ATENCIÓN:
         })),
       };
       detectedIntent = "consulta";
+    } else if (fnName === "derivar_a_humano" && context.simulation) {
+      toolResultData = {
+        derivado: false,
+        notificadoAlLocal: false,
+        simulacion: true,
+        mensaje: "Vista previa: no se notificó al local ni se derivó la consulta.",
+      };
+      detectedIntent = "humano";
     } else if (fnName === "derivar_a_humano") {
       const motivoConsulta = fnArgs.motivo || userMessage;
       let avisoEnviado = false;
@@ -655,7 +798,7 @@ REGLAS DE ATENCIÓN:
             ? ` *Consulta de Cliente para Asesor Humano en ${tenant.name}*\n Cliente: ${clientNameDisp} (${context.clientPhone})\n Consulta: "${motivoConsulta}"\n Por favor comunícate con el cliente para responderle a la brevedad.`
             : `*Consulta de Cliente para Asesor Humano en ${tenant.name}*\nCliente: ${clientNameDisp} (${context.clientPhone})\nConsulta: "${motivoConsulta}"\nPor favor comunícate con el cliente para responderle a la brevedad.`;
 
-          sendWhatsAppMessage(cleanOwnerDigits, alertMsg, false).catch((err) => {
+          sendWhatsAppMessage(cleanOwnerDigits, alertMsg, false, whatsappInstance).catch((err) => {
             console.warn("[Notif Asesor] Error enviando alerta al celular del local:", err?.message);
           });
           avisoEnviado = true;
@@ -668,6 +811,16 @@ REGLAS DE ATENCIÓN:
         mensaje: "He registrado la consulta y ya le avisé a un encargado del local para que se comunique con el cliente a la brevedad.",
       };
       detectedIntent = "humano";
+    }
+
+    if (configuredReply) {
+      conversationState.addTurn(context.tenantId, context.clientPhone, "user", userMessage);
+      conversationState.addTurn(context.tenantId, context.clientPhone, "model", configuredReply);
+      return {
+        replyText: configuredReply,
+        intent: detectedIntent,
+        actionPerformed: fnName,
+      };
     }
 
     // 3. Enviar el resultado de la función de vuelta a Gemini para redactar la respuesta final

@@ -143,7 +143,7 @@ export default function ActivationChecklist() {
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {isFullyActivated ? "Negocio 100% Configurado" : "Puesta a Punto del Negocio"}
                 </h2>
-                <span className={`rounded px-2 py-0.5 text-[10px] font-mono ${
+                <span className={`rounded px-2 py-0.5 text-[11px] tabular-nums ${
                   isFullyActivated
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"

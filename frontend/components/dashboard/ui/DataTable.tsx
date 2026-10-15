@@ -32,9 +32,9 @@ export default function DataTable<T extends { id: string }>({
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[640px] text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-200/80 dark:border-white/10 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <tr className="border-b border-slate-200/80 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {columns.map((col) => (
-                <th key={col.key} className="px-4 py-3.5 font-bold">
+                <th key={col.key} className="px-4 py-3.5 font-semibold">
                   {col.header}
                 </th>
               ))}
@@ -82,7 +82,7 @@ export default function DataTable<T extends { id: string }>({
       {/* Pagination Bar */}
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-3.5 text-xs text-slate-500 dark:text-slate-400">
         <span>
-          Página <strong className="text-slate-800 dark:text-white font-bold">{page + 1}</strong> de {pages} ({rows.length} registros)
+          Página <strong className="text-slate-800 dark:text-white font-semibold">{page + 1}</strong> de {pages} ({rows.length} registros)
         </span>
         <div className="flex items-center gap-1.5">
           <button

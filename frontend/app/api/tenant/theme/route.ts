@@ -6,6 +6,9 @@ import { parseTheme, DEFAULT_THEME } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
+const THEME_HISTORY_LIMIT = 5;
+type ThemeHistoryEntry = { savedAt: string; theme: unknown };
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -87,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: targetTenantId },
-      select: { id: true, subdomain: true },
+      select: { id: true, subdomain: true, themeSettings: true, settings: true },
     });
 
     if (!tenant) {
@@ -97,10 +100,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Keep the previous design so the owner can roll back (last THEME_HISTORY_LIMIT versions)
+    const settings = (tenant.settings as Record<string, unknown> | null) ?? {};
+    const previousTheme = tenant.themeSettings ? parseTheme(tenant.themeSettings) : null;
+    const history = Array.isArray(settings.themeHistory) ? (settings.themeHistory as ThemeHistoryEntry[]) : [];
+    const nextHistory =
+      previousTheme && JSON.stringify(previousTheme) !== JSON.stringify(parsedTheme)
+        ? [{ savedAt: new Date().toISOString(), theme: previousTheme }, ...history].slice(0, THEME_HISTORY_LIMIT)
+        : history;
+
     const updated = await prisma.tenant.update({
       where: { id: tenant.id },
       data: {
         themeSettings: parsedTheme as unknown as object,
+        settings: { ...settings, themeHistory: nextHistory } as unknown as object,
       },
       select: { subdomain: true, themeSettings: true },
     });

@@ -588,6 +588,10 @@ export type ThemeSettings = {
   avatarShape: AvatarShape;
   avatarBorder: AvatarBorder;
   bannerPosY?: number;
+  // SEO and link preview when the booking page is shared (WhatsApp, Instagram, Google)
+  seoTitle: string;
+  seoDescription: string;
+  shareImageUrl: string;
 };
 
 export type ThemePresetItem = {
@@ -601,129 +605,138 @@ export type ThemePresetItem = {
   layoutStyle: LayoutStyle;
   themePreset: ThemePreset;
   buttonRadius: ButtonRadius;
+  buttonStyle?: ButtonStyleVariant;
+  buttonShadow?: ButtonShadowType;
+  backgroundEffect?: BackgroundEffectType;
   bannerUrl?: string;
   badge?: string;
 };
 
+const BARBER_PHOTO = "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&auto=format&fit=crop&q=80";
+const BARBER_URBAN_PHOTO = "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200&auto=format&fit=crop&q=80";
+const SALON_PHOTO = "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&auto=format&fit=crop&q=80";
+const SPA_PHOTO = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&auto=format&fit=crop&q=80";
+const STUDIO_PHOTO = "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1200&auto=format&fit=crop&q=80";
+
+/**
+ * Ready-made looks. Each one is complete (colors, font, layout, buttons and background)
+ * and every brand color keeps ≥ 3:1 contrast with white button text and with its background.
+ * `bannerUrl` is only a fallback photo: it is used when the business has no cover yet.
+ */
 export const THEME_PRESETS: Record<ThemePreset, ThemePresetItem> = {
   default: {
-    name: "Agendate Violet",
-    description: "Equilibrado, moderno y vibrante en violeta eléctrico",
+    name: "Violeta Agendate",
+    description: "Moderno y vibrante, funciona para cualquier rubro",
     category: "General",
     primaryColor: "#5b31e6",
-    backgroundColor: "#f4f2fb",
+    backgroundColor: "#f5f3ff",
     fontFamily: "plus-jakarta-sans",
     themeMode: "light",
     layoutStyle: "panoramic",
     themePreset: "default",
     buttonRadius: "full",
+    buttonStyle: "solid",
+    buttonShadow: "soft",
+    backgroundEffect: "ambient-mesh",
     badge: "Oficial",
   },
+  "modern-minimal": {
+    name: "Grafito Minimal",
+    description: "Blanco y negro, sobrio y atemporal",
+    category: "General",
+    primaryColor: "#18181b",
+    backgroundColor: "#fafafa",
+    fontFamily: "inter",
+    themeMode: "light",
+    layoutStyle: "minimal-editorial",
+    themePreset: "modern-minimal",
+    buttonRadius: "md",
+    buttonStyle: "solid",
+    buttonShadow: "none",
+    backgroundEffect: "none",
+  },
   "barber-dark": {
-    name: "Barber Dark Luxe",
-    description: "Negro obsidiana con acentos dorados y ámbar cálido",
+    name: "Barbería de Noche",
+    description: "Fondo oscuro con ámbar cálido y portada a pantalla completa",
     category: "Barberías",
     primaryColor: "#d97706",
-    backgroundColor: "#090d16",
+    backgroundColor: "#0b0f17",
     fontFamily: "outfit",
     themeMode: "dark",
-    layoutStyle: "split-gallery",
+    layoutStyle: "full-immersive",
     themePreset: "barber-dark",
-    buttonRadius: "lg",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&auto=format&fit=crop&q=80",
-    badge: "Más Elegido",
-  },
-  "bento-modern": {
-    name: "Bento Box Moderno",
-    description: "Estilo Apple & Stripe con tarjetas modulares, acento índigo y alto contraste",
-    category: "Modern Tech",
-    primaryColor: "#4f46e5",
-    backgroundColor: "#f8fafc",
-    fontFamily: "space-grotesk",
-    themeMode: "light",
-    layoutStyle: "split-gallery",
-    themePreset: "bento-modern",
-    buttonRadius: "lg",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1200&auto=format&fit=crop&q=80",
-    badge: "UI Pro Max",
-  },
-  "soft-evolution": {
-    name: "Soft UI Evolution",
-    description: "Blanco perla, acento lavanda y sombras difusas para salones de belleza y estética",
-    category: "Salones & Estética",
-    primaryColor: "#8b5cf6",
-    backgroundColor: "#faf5ff",
-    fontFamily: "playfair-display",
-    themeMode: "light",
-    layoutStyle: "floating-card",
-    themePreset: "soft-evolution",
     buttonRadius: "full",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&auto=format&fit=crop&q=80",
-    badge: "Tendencia",
+    buttonStyle: "solid",
+    buttonShadow: "medium",
+    backgroundEffect: "ambient-mesh",
+    bannerUrl: BARBER_PHOTO,
+    badge: "Más elegido",
   },
-  "organic-biophilic": {
-    name: "Organic Biophilic & Sage",
-    description: "Verde salvia botánico, arena suave y serenidad zen para spas y bienestar",
-    category: "Spas & Wellness",
-    primaryColor: "#059669",
-    backgroundColor: "#f7f5f0",
-    fontFamily: "cormorant-garamond",
-    themeMode: "light",
+  "sunset-bronze": {
+    name: "Bronce y Madera",
+    description: "Tonos cobre sobre fondo café, estilo barbería clásica",
+    category: "Barberías",
+    primaryColor: "#c2410c",
+    backgroundColor: "#17110d",
+    fontFamily: "montserrat",
+    themeMode: "dark",
     layoutStyle: "split-gallery",
-    themePreset: "organic-biophilic",
-    buttonRadius: "full",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&auto=format&fit=crop&q=80",
-    badge: "Eco Zen",
+    themePreset: "sunset-bronze",
+    buttonRadius: "lg",
+    buttonStyle: "solid",
+    buttonShadow: "medium",
+    backgroundEffect: "dots",
+    bannerUrl: BARBER_PHOTO,
   },
   "neubrutalism-urban": {
-    name: "Neubrutalism Urbano",
-    description: "Bordes negros de 2px, sombras sólidas y amarillo de alto impacto para estudios urbanos",
+    name: "Urbano Brutalista",
+    description: "Amarillo intenso, bordes negros y sombras duras",
     category: "Urbano & Trend",
-    primaryColor: "#facc15",
-    backgroundColor: "#fef9c3",
+    primaryColor: "#18181b",
+    backgroundColor: "#fde047",
     fontFamily: "syne",
     themeMode: "light",
     layoutStyle: "panoramic",
     themePreset: "neubrutalism-urban",
     buttonRadius: "md",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200&auto=format&fit=crop&q=80",
-    badge: "Vanguardia",
+    buttonStyle: "neubrutalism",
+    buttonShadow: "hard",
+    backgroundEffect: "none",
+    bannerUrl: BARBER_URBAN_PHOTO,
   },
-  "champagne-velvet": {
-    name: "Champagne & Velvet VIP",
-    description: "Fondo ónix nocturno con acentos oro rosado metálico para experiencias de lujo",
-    category: "Lujo & VIP",
-    primaryColor: "#f59e0b",
-    backgroundColor: "#0a0b10",
-    fontFamily: "cinzel",
+  "cyber-noir": {
+    name: "Neón Cian",
+    description: "Negro profundo con cian brillante y cuadrícula tech",
+    category: "Urbano & Trend",
+    primaryColor: "#0891b2",
+    backgroundColor: "#030712",
+    fontFamily: "syne",
     themeMode: "dark",
-    layoutStyle: "floating-card",
-    themePreset: "champagne-velvet",
-    buttonRadius: "lg",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&auto=format&fit=crop&q=80",
-    badge: "Exclusivo",
+    layoutStyle: "panoramic",
+    themePreset: "cyber-noir",
+    buttonRadius: "full",
+    buttonStyle: "glow",
+    buttonShadow: "glow",
+    backgroundEffect: "soft-grid",
   },
-  "obsidian-gold": {
-    name: "Obsidian Gold VIP",
-    description: "Fondo grafito puro con dorados metálicos de alto impacto",
-    category: "Lujo & VIP",
-    primaryColor: "#eab308",
-    backgroundColor: "#0a0a0c",
-    fontFamily: "cinzel",
+  "tokyo-cyber": {
+    name: "Tokio Magenta",
+    description: "Fucsia neón y destellos, para estudios con onda",
+    category: "Urbano & Trend",
+    primaryColor: "#c026d3",
+    backgroundColor: "#0b0614",
+    fontFamily: "space-grotesk",
     themeMode: "dark",
-    layoutStyle: "floating-card",
-    themePreset: "obsidian-gold",
+    layoutStyle: "bento-grid",
+    themePreset: "tokyo-cyber",
     buttonRadius: "md",
+    buttonStyle: "gradient",
+    buttonShadow: "glow",
+    backgroundEffect: "particle-stars",
   },
   "rose-aesthetic": {
-    name: "Salón Rose Aesthetic",
-    description: "Rosa palo y perla para estética, uñas y peluquerías",
+    name: "Rosa Estética",
+    description: "Rosa frambuesa y tipografía elegante",
     category: "Salones & Estética",
     primaryColor: "#e11d48",
     backgroundColor: "#fff1f2",
@@ -732,63 +745,139 @@ export const THEME_PRESETS: Record<ThemePreset, ThemePresetItem> = {
     layoutStyle: "floating-card",
     themePreset: "rose-aesthetic",
     buttonRadius: "full",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&auto=format&fit=crop&q=80",
+    buttonStyle: "solid",
+    buttonShadow: "soft",
+    backgroundEffect: "ambient-mesh",
+    bannerUrl: SALON_PHOTO,
+  },
+  "soft-evolution": {
+    name: "Durazno Suave",
+    description: "Naranja cálido con vidrio esmerilado",
+    category: "Salones & Estética",
+    primaryColor: "#c2410c",
+    backgroundColor: "#fff7ed",
+    fontFamily: "playfair-display",
+    themeMode: "light",
+    layoutStyle: "floating-card",
+    themePreset: "soft-evolution",
+    buttonRadius: "full",
+    buttonStyle: "soft-elevated",
+    buttonShadow: "soft",
+    backgroundEffect: "glass-morphism",
+    bannerUrl: SALON_PHOTO,
+  },
+  "lavender-dream": {
+    name: "Lavanda Pastel",
+    description: "Violeta suave en mosaico, ideal para uñas y pestañas",
+    category: "Salones & Estética",
+    primaryColor: "#9333ea",
+    backgroundColor: "#fdf4ff",
+    fontFamily: "quicksand",
+    themeMode: "light",
+    layoutStyle: "bento-grid",
+    themePreset: "lavender-dream",
+    buttonRadius: "full",
+    buttonStyle: "soft-elevated",
+    buttonShadow: "soft",
+    backgroundEffect: "aurora-wave",
+  },
+  "latte-minimal": {
+    name: "Café Latte",
+    description: "Marrón café sobre marfil, cálido y editorial",
+    category: "Salones & Estética",
+    primaryColor: "#78350f",
+    backgroundColor: "#faf5ef",
+    fontFamily: "dm-sans",
+    themeMode: "light",
+    layoutStyle: "minimal-editorial",
+    themePreset: "latte-minimal",
+    buttonRadius: "full",
+    buttonStyle: "outline",
+    buttonShadow: "none",
+    backgroundEffect: "dots",
   },
   "emerald-spa": {
-    name: "Spa Zen Emerald",
-    description: "Tonos salvia y esmeralda relajantes para bienestar y masaje",
+    name: "Spa Turquesa",
+    description: "Turquesa sereno con aurora suave",
     category: "Spas & Wellness",
-    primaryColor: "#059669",
-    backgroundColor: "#ecfdf5",
+    primaryColor: "#0f766e",
+    backgroundColor: "#f0fdfa",
     fontFamily: "cormorant-garamond",
     themeMode: "light",
     layoutStyle: "split-gallery",
     themePreset: "emerald-spa",
     buttonRadius: "full",
-    bannerUrl:
-      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&auto=format&fit=crop&q=80",
+    buttonStyle: "soft-elevated",
+    buttonShadow: "soft",
+    backgroundEffect: "aurora-wave",
+    bannerUrl: SPA_PHOTO,
   },
-  "modern-minimal": {
-    name: "Modern Minimalist",
-    description: "Monocromático editorial sobrio con líneas limpias",
-    category: "Modern Tech",
-    primaryColor: "#0f172a",
-    backgroundColor: "#f8fafc",
-    fontFamily: "inter",
+  "organic-biophilic": {
+    name: "Salvia Orgánica",
+    description: "Verde oliva sobre crema, natural y tranquilo",
+    category: "Spas & Wellness",
+    primaryColor: "#4d7c0f",
+    backgroundColor: "#f7f5ee",
+    fontFamily: "fraunces",
     themeMode: "light",
-    layoutStyle: "minimal-editorial",
-    themePreset: "modern-minimal",
-    buttonRadius: "md",
-  },
-  "cyber-noir": {
-    name: "Cyber Studio Noir",
-    description: "Neón cian y violeta sobre fondo negro profundo",
-    category: "Urbano & Trend",
-    primaryColor: "#06b6d4",
-    backgroundColor: "#030712",
-    fontFamily: "syne",
-    themeMode: "dark",
-    layoutStyle: "panoramic",
-    themePreset: "cyber-noir",
+    layoutStyle: "floating-card",
+    themePreset: "organic-biophilic",
     buttonRadius: "full",
+    buttonStyle: "solid",
+    buttonShadow: "none",
+    backgroundEffect: "floating-shapes",
+    bannerUrl: SPA_PHOTO,
   },
-  "tokyo-cyber": {
-    name: "Tokyo Cyberpunk",
-    description: "Neón cian eléctrico con fondo noche profundo para estudios modernos",
-    category: "Urbano & Trend",
-    primaryColor: "#06b6d4",
-    backgroundColor: "#080c14",
-    fontFamily: "space-grotesk",
-    themeMode: "dark",
+  "matcha-studio": {
+    name: "Matcha Zen",
+    description: "Verde intenso y formas suaves, fresco y moderno",
+    category: "Spas & Wellness",
+    primaryColor: "#15803d",
+    backgroundColor: "#f7fee7",
+    fontFamily: "figtree",
+    themeMode: "light",
     layoutStyle: "panoramic",
-    themePreset: "tokyo-cyber",
-    buttonRadius: "md",
-    badge: "Neón",
+    themePreset: "matcha-studio",
+    buttonRadius: "lg",
+    buttonStyle: "solid",
+    buttonShadow: "soft",
+    backgroundEffect: "floating-shapes",
+  },
+  "deep-forest": {
+    name: "Bosque Profundo",
+    description: "Esmeralda sobre verde noche, con portada inmersiva",
+    category: "Spas & Wellness",
+    primaryColor: "#059669",
+    backgroundColor: "#04140e",
+    fontFamily: "marcellus",
+    themeMode: "dark",
+    layoutStyle: "full-immersive",
+    themePreset: "deep-forest",
+    buttonRadius: "lg",
+    buttonStyle: "solid",
+    buttonShadow: "medium",
+    backgroundEffect: "aurora-wave",
+    bannerUrl: SPA_PHOTO,
+  },
+  "bento-modern": {
+    name: "Bento Moderno",
+    description: "Índigo en tarjetas modulares, estilo app",
+    category: "Modern Tech",
+    primaryColor: "#4f46e5",
+    backgroundColor: "#f8fafc",
+    fontFamily: "space-grotesk",
+    themeMode: "light",
+    layoutStyle: "bento-grid",
+    themePreset: "bento-modern",
+    buttonRadius: "lg",
+    buttonStyle: "soft-elevated",
+    buttonShadow: "medium",
+    backgroundEffect: "dots",
+    bannerUrl: STUDIO_PHOTO,
   },
   "nordic-slate": {
-    name: "Nordic Minimal Slate",
-    description: "Gris escandinavo pulcro y zafiro corporativo impecable",
+    name: "Nórdico Azul",
+    description: "Azul limpio y cuadrícula sutil, claro y profesional",
     category: "Modern Tech",
     primaryColor: "#2563eb",
     backgroundColor: "#f1f5f9",
@@ -797,85 +886,56 @@ export const THEME_PRESETS: Record<ThemePreset, ThemePresetItem> = {
     layoutStyle: "minimal-editorial",
     themePreset: "nordic-slate",
     buttonRadius: "lg",
-    badge: "Escandinavo",
+    buttonStyle: "solid",
+    buttonShadow: "soft",
+    backgroundEffect: "soft-grid",
   },
-  "matcha-studio": {
-    name: "Matcha Studio Zen",
-    category: "Spas & Wellness",
-    description: "Verde té matcha sereno y crema suave para espacios de armonía",
-    primaryColor: "#15803d",
-    backgroundColor: "#f7fee7",
-    fontFamily: "figtree",
-    themeMode: "light",
-    layoutStyle: "floating-card",
-    themePreset: "matcha-studio",
-    buttonRadius: "full",
-    badge: "Relajante",
-  },
-  "sunset-bronze": {
-    name: "Sunset Bronze & Wood",
-    category: "Barberías",
-    description: "Cobre ámbar cálido y café ébano para barberías tradicionales de autor",
-    primaryColor: "#b45309",
-    backgroundColor: "#181310",
-    fontFamily: "montserrat",
-    themeMode: "dark",
-    layoutStyle: "split-gallery",
-    themePreset: "sunset-bronze",
-    buttonRadius: "lg",
-    badge: "Madera & Cobre",
-  },
-  "latte-minimal": {
-    name: "Café Latte & Marfil",
-    category: "Salones & Estética",
-    description: "Café latte suave y fondo marfil artesanal para estilistas de autor",
-    primaryColor: "#78350f",
-    backgroundColor: "#faf5ef",
-    fontFamily: "dm-sans",
-    themeMode: "light",
-    layoutStyle: "minimal-editorial",
-    themePreset: "latte-minimal",
-    buttonRadius: "full",
-    badge: "Artesanal",
-  },
-  "deep-forest": {
-    name: "Deep Forest & Gold",
+  "obsidian-gold": {
+    name: "Obsidiana y Oro",
+    description: "Negro y dorado con destellos, exclusivo",
     category: "Lujo & VIP",
-    description: "Verde esmeralda selva nocturna con acentos de oro cepillado",
-    primaryColor: "#10b981",
-    backgroundColor: "#051610",
-    fontFamily: "marcellus",
+    primaryColor: "#a16207",
+    backgroundColor: "#0a0a0c",
+    fontFamily: "cinzel",
     themeMode: "dark",
-    layoutStyle: "panoramic",
-    themePreset: "deep-forest",
-    buttonRadius: "lg",
-    badge: "Esmeralda",
+    layoutStyle: "full-immersive",
+    themePreset: "obsidian-gold",
+    buttonRadius: "md",
+    buttonStyle: "double-border",
+    buttonShadow: "glow",
+    backgroundEffect: "particle-stars",
+    bannerUrl: BARBER_PHOTO,
+  },
+  "champagne-velvet": {
+    name: "Champagne y Ciruela",
+    description: "Dorado champagne sobre ciruela, para salones premium",
+    category: "Lujo & VIP",
+    primaryColor: "#b7791f",
+    backgroundColor: "#1a1014",
+    fontFamily: "bodoni-moda",
+    themeMode: "dark",
+    layoutStyle: "floating-card",
+    themePreset: "champagne-velvet",
+    buttonRadius: "full",
+    buttonStyle: "solid",
+    buttonShadow: "glow",
+    backgroundEffect: "glass-morphism",
+    bannerUrl: SALON_PHOTO,
   },
   "ruby-luxury": {
-    name: "Ruby Noir & Borgoña",
+    name: "Rubí Nocturno",
+    description: "Rojo rubí sobre negro borgoña, intenso y elegante",
     category: "Lujo & VIP",
-    description: "Rojo rubí sedoso sobre terciopelo negro para experiencias premium",
     primaryColor: "#e11d48",
-    backgroundColor: "#0d0407",
+    backgroundColor: "#12050a",
     fontFamily: "playfair-display",
     themeMode: "dark",
-    layoutStyle: "floating-card",
+    layoutStyle: "split-gallery",
     themePreset: "ruby-luxury",
     buttonRadius: "md",
-    badge: "Terciopelo",
-  },
-  "lavender-dream": {
-    name: "Lavender Dream Chic",
-    category: "Salones & Estética",
-    description: "Púrpura etéreo, lavanda suave y luz sutil para uñas y belleza",
-    primaryColor: "#a855f7",
-    backgroundColor: "#faf5ff",
-    fontFamily: "quicksand",
-    themeMode: "light",
-    layoutStyle: "floating-card",
-    themePreset: "lavender-dream",
-    buttonRadius: "full",
-    badge: "Pastel Chic",
+    buttonStyle: "double-border",
+    buttonShadow: "glow",
+    backgroundEffect: "ambient-mesh",
   },
 };
 
@@ -951,6 +1011,10 @@ export const DEFAULT_THEME: ThemeSettings = {
   sectionOrder: "booking-first",
   avatarShape: "circle",
   avatarBorder: "subtle",
+  bannerPosY: 50,
+  seoTitle: "",
+  seoDescription: "",
+  shareImageUrl: "",
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -998,8 +1062,9 @@ export function parseTheme(value: unknown): ThemeSettings {
       ? raw.layoutStyle
       : DEFAULT_THEME.layoutStyle;
 
+  // An explicitly empty gallery stays empty; only businesses that never set one get the samples
   const galleryUrls =
-    Array.isArray(raw.galleryUrls) && raw.galleryUrls.length > 0
+    Array.isArray(raw.galleryUrls)
       ? raw.galleryUrls.filter((u): u is string => typeof u === "string" && u.trim().length > 0)
       : DEFAULT_GALLERY_PHOTOS;
 
@@ -1052,7 +1117,10 @@ export function parseTheme(value: unknown): ThemeSettings {
     raw.backgroundEffect === "frosted-glass" ||
     raw.backgroundEffect === "aurora-wave" ||
     raw.backgroundEffect === "floating-shapes" ||
-    raw.backgroundEffect === "particle-stars"
+    raw.backgroundEffect === "particle-stars" ||
+    raw.backgroundEffect === "ambient-mesh" ||
+    raw.backgroundEffect === "soft-grid" ||
+    raw.backgroundEffect === "glass-morphism"
       ? raw.backgroundEffect
       : DEFAULT_THEME.backgroundEffect;
 
@@ -1137,7 +1205,8 @@ export function parseTheme(value: unknown): ThemeSettings {
     sectionOrder:
       raw.sectionOrder === "links-first" ||
       raw.sectionOrder === "booking-first" ||
-      raw.sectionOrder === "links-only"
+      raw.sectionOrder === "links-only" ||
+      raw.sectionOrder === "services-only"
         ? raw.sectionOrder
         : DEFAULT_THEME.sectionOrder,
     avatarShape:
@@ -1151,6 +1220,13 @@ export function parseTheme(value: unknown): ThemeSettings {
       raw.avatarBorder === "glow"
         ? raw.avatarBorder
         : DEFAULT_THEME.avatarBorder,
+    bannerPosY:
+      typeof raw.bannerPosY === "number" && Number.isFinite(raw.bannerPosY)
+        ? Math.min(100, Math.max(0, Math.round(raw.bannerPosY)))
+        : DEFAULT_THEME.bannerPosY,
+    seoTitle: typeof raw.seoTitle === "string" ? raw.seoTitle.slice(0, 70) : "",
+    seoDescription: typeof raw.seoDescription === "string" ? raw.seoDescription.slice(0, 200) : "",
+    shareImageUrl: typeof raw.shareImageUrl === "string" ? raw.shareImageUrl : "",
   };
 }
 

@@ -1,53 +1,29 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import QRCode from "qrcode";
 import {
-  Bot,
-  MessageSquare,
   QrCode,
   CheckCircle2,
   Clock,
   Send,
-  Lock,
-  Zap,
   Check,
-  RotateCcw,
   Phone,
-  Calendar,
-  MapPin,
   BadgeCheck,
   Wifi,
   ChevronLeft,
+  ChevronDown,
   Video,
-  Mic,
   PhoneCall,
-  Sparkles,
-  CreditCard,
-  Tag,
-  UserCheck,
   RefreshCw,
   X,
   CheckCheck,
   Plus,
   ArrowRight,
-  Smile,
-  Briefcase,
-  Layers,
-  HelpCircle,
-  Users,
-  Bell,
-  Smartphone,
-  Sun,
-  Moon,
-  ShieldAlert,
   Save,
   Trash2,
-  Timer,
-  Sliders,
   Eye,
-  Copy,
-  ArrowUpRight,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { tenantPublicUrl } from "@/lib/tenant/public-url";
@@ -64,7 +40,8 @@ const TIMING_PRESETS = [
 ];
 
 function formatTimingLabel(minutes?: number): string {
-  if (!minutes || minutes <= 0) return "Inmediato (sin espera)";
+  if (minutes === undefined) return "Sin horario definido";
+  if (minutes <= 0) return "Al inicio del turno";
   if (minutes % 1440 === 0) {
     const days = minutes / 1440;
     return `${days} ${days === 1 ? "día" : "días"} antes`;
@@ -74,6 +51,12 @@ function formatTimingLabel(minutes?: number): string {
     return `${hours} ${hours === 1 ? "hora" : "horas"} antes`;
   }
   return `${minutes} minutos antes`;
+}
+
+function eventTemplateLabel(trigger?: string) {
+  if (trigger === "confirmacion") return "Al confirmar turno";
+  if (trigger === "cancelacion") return "Al cancelar turno";
+  return null;
 }
 
 // Dynamic message tags for reminder templates
@@ -102,28 +85,28 @@ function renderWhatsAppFormatted(text: string) {
         {parts.map((part, partIdx) => {
           if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
             return (
-              <strong key={partIdx} className="font-bold text-slate-900">
+              <strong key={partIdx} className="font-semibold">
                 {part.slice(1, -1)}
               </strong>
             );
           }
           if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
             return (
-              <em key={partIdx} className="italic text-slate-800">
+              <em key={partIdx} className="italic">
                 {part.slice(1, -1)}
               </em>
             );
           }
           if (part.startsWith("~") && part.endsWith("~") && part.length > 2) {
             return (
-              <del key={partIdx} className="line-through text-slate-400">
+              <del key={partIdx} className="line-through">
                 {part.slice(1, -1)}
               </del>
             );
           }
           if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
             return (
-              <code key={partIdx} className="font-mono bg-black/10 px-1 py-0.5 rounded text-[11px]">
+              <code key={partIdx} className="tabular-nums bg-black/10 px-1 py-0.5 rounded text-[11px]">
                 {part.slice(1, -1)}
               </code>
             );
@@ -141,11 +124,13 @@ function CustomSwitch({
   onChange,
   disabled = false,
   label,
+  largeTarget = false,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   label?: string;
+  largeTarget?: boolean;
 }) {
   return (
     <button
@@ -154,20 +139,31 @@ function CustomSwitch({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${
+      className={`group relative inline-flex shrink-0 items-center justify-center rounded-full transition-transform duration-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 motion-reduce:transition-none ${
+        largeTarget ? "h-10 w-14" : "h-9 w-12"
+      } ${
         disabled
-          ? "opacity-40 cursor-not-allowed bg-slate-200 dark:bg-slate-800"
-          : checked
-          ? "bg-emerald-600 dark:bg-emerald-500"
-          : "bg-slate-200 dark:bg-slate-700"
+          ? "cursor-not-allowed"
+          : "cursor-pointer"
       }`}
     >
       {label && <span className="sr-only">{label}</span>}
       <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-          checked ? "translate-x-6" : "translate-x-1"
+        aria-hidden="true"
+        className={`pointer-events-none relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
+          disabled
+            ? "opacity-50"
+            : checked
+              ? "bg-emerald-600 dark:bg-emerald-500"
+              : "bg-slate-200 dark:bg-slate-700"
         }`}
-      />
+      >
+        <span
+          className={`pointer-events-none absolute left-1 inline-block h-4 w-4 rounded-full bg-[#ffffff] shadow-[0_1px_3px_rgba(0,0,0,0.28)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </span>
     </button>
   );
 }
@@ -182,14 +178,19 @@ export default function BotWhatsAppPage() {
     createWhatsAppTemplate,
     deleteWhatsAppTemplate,
     toggleWhatsAppTemplate,
-    updateBusiness,
     pushToast,
   } = useDashboardStore();
 
-  const isConnected = Boolean(evolutionConfig.connected);
+  type ConnectionStatus = "checking" | "connected" | "disconnected" | "error";
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("checking");
+  const [connectedPhone, setConnectedPhone] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState("");
+  const isConnected = connectionStatus === "connected";
 
   // Estados para Cron Job y Recordatorios configurables
   const [isSavingTemplates, setIsSavingTemplates] = useState(false);
+  const [hasUnsavedTemplateChanges, setHasUnsavedTemplateChanges] = useState(false);
   const [isSendingTestReminder, setIsSendingTestReminder] = useState(false);
   const [customMinutesInput, setCustomMinutesInput] = useState<string>("");
 
@@ -200,12 +201,9 @@ export default function BotWhatsAppPage() {
   const [autoBotEnabled, setAutoBotEnabled] = useState(evolutionConfig.autoBotEnabled !== false);
   const [allowEmojis, setAllowEmojis] = useState(Boolean(evolutionConfig.allowEmojis));
   const [askStaffPreference, setAskStaffPreference] = useState(evolutionConfig.askStaffPreference !== false);
-  const [notifyPersonalPhone, setNotifyPersonalPhone] = useState(evolutionConfig.notifyPersonalPhoneOnBooking !== false);
+  const [notifyPersonalPhone, setNotifyPersonalPhone] = useState(evolutionConfig.notifyPersonalPhoneOnBooking === true);
   const [handoffOnUnknownTopic, setHandoffOnUnknownTopic] = useState(evolutionConfig.handoffOnUnknownTopic !== false);
-  const [personalPhone, setPersonalPhone] = useState(
-    evolutionConfig.personalPhone || evolutionConfig.humanHandoffPhone || business.whatsappNumber || business.phone || ""
-  );
-  const [phoneType, setPhoneType] = useState<"business" | "personal">(evolutionConfig.phoneType || "business");
+  const [personalPhone, setPersonalPhone] = useState(evolutionConfig.personalPhone || "");
   const [minNoticeMinutes, setMinNoticeMinutes] = useState<number>(evolutionConfig.minNoticeMinutes ?? 60);
   const [serviceScheduleMode, setServiceScheduleMode] = useState<"always" | "business_hours">(
     evolutionConfig.serviceScheduleMode || "always"
@@ -216,45 +214,88 @@ export default function BotWhatsAppPage() {
     evolutionConfig.humanHandoffPhone || business.whatsappNumber || business.phone || ""
   );
   const [isSavingAiSettings, setIsSavingAiSettings] = useState(false);
+  const [isSavingBotToggle, setIsSavingBotToggle] = useState(false);
+  const [isSavingPersonalAlert, setIsSavingPersonalAlert] = useState(false);
+  const previousEvolutionConfig = useRef(evolutionConfig);
+  const prefersReducedMotion = useReducedMotion();
+  const selectionTransition = prefersReducedMotion
+    ? { duration: 0.01 }
+    : { type: "spring" as const, stiffness: 520, damping: 38, mass: 0.75 };
 
   useEffect(() => {
-    if (evolutionConfig.autoBotEnabled !== undefined) {
+    const previous = previousEvolutionConfig.current;
+    if (evolutionConfig.autoBotEnabled !== previous.autoBotEnabled && evolutionConfig.autoBotEnabled !== undefined) {
       setAutoBotEnabled(evolutionConfig.autoBotEnabled !== false);
     }
-    if (evolutionConfig.allowEmojis !== undefined) {
+    if (evolutionConfig.allowEmojis !== previous.allowEmojis && evolutionConfig.allowEmojis !== undefined) {
       setAllowEmojis(Boolean(evolutionConfig.allowEmojis));
     }
-    if (evolutionConfig.askStaffPreference !== undefined) {
+    if (evolutionConfig.askStaffPreference !== previous.askStaffPreference && evolutionConfig.askStaffPreference !== undefined) {
       setAskStaffPreference(evolutionConfig.askStaffPreference !== false);
     }
-    if (evolutionConfig.notifyPersonalPhoneOnBooking !== undefined) {
-      setNotifyPersonalPhone(evolutionConfig.notifyPersonalPhoneOnBooking !== false);
+    if (evolutionConfig.notifyPersonalPhoneOnBooking !== previous.notifyPersonalPhoneOnBooking && evolutionConfig.notifyPersonalPhoneOnBooking !== undefined) {
+      setNotifyPersonalPhone(evolutionConfig.notifyPersonalPhoneOnBooking === true);
     }
-    if (evolutionConfig.handoffOnUnknownTopic !== undefined) {
+    if (evolutionConfig.handoffOnUnknownTopic !== previous.handoffOnUnknownTopic && evolutionConfig.handoffOnUnknownTopic !== undefined) {
       setHandoffOnUnknownTopic(evolutionConfig.handoffOnUnknownTopic !== false);
     }
-    if (evolutionConfig.personalPhone !== undefined) {
+    if (evolutionConfig.personalPhone !== previous.personalPhone && evolutionConfig.personalPhone !== undefined) {
       setPersonalPhone(evolutionConfig.personalPhone);
     }
-    if (evolutionConfig.phoneType !== undefined) {
-      setPhoneType(evolutionConfig.phoneType);
-    }
-    if (evolutionConfig.minNoticeMinutes !== undefined) {
+    if (evolutionConfig.minNoticeMinutes !== previous.minNoticeMinutes && evolutionConfig.minNoticeMinutes !== undefined) {
       setMinNoticeMinutes(evolutionConfig.minNoticeMinutes);
     }
-    if (evolutionConfig.serviceScheduleMode !== undefined) {
+    if (evolutionConfig.serviceScheduleMode !== previous.serviceScheduleMode && evolutionConfig.serviceScheduleMode !== undefined) {
       setServiceScheduleMode(evolutionConfig.serviceScheduleMode);
     }
-    if (evolutionConfig.aiTone) {
+    if (evolutionConfig.aiTone !== previous.aiTone && evolutionConfig.aiTone) {
       setAiTone(evolutionConfig.aiTone);
     }
-    if (evolutionConfig.aiInstructions !== undefined) {
+    if (evolutionConfig.aiInstructions !== previous.aiInstructions && evolutionConfig.aiInstructions !== undefined) {
       setAiInstructions(evolutionConfig.aiInstructions);
     }
-    if (evolutionConfig.humanHandoffPhone !== undefined) {
+    if (evolutionConfig.humanHandoffPhone !== previous.humanHandoffPhone && evolutionConfig.humanHandoffPhone !== undefined) {
       setHumanHandoffPhone(evolutionConfig.humanHandoffPhone);
     }
+    previousEvolutionConfig.current = evolutionConfig;
   }, [evolutionConfig]);
+
+  const refreshConnectionStatus = useCallback(async () => {
+    try {
+      const response = await fetch("/api/tenant/whatsapp/instance", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "No se pudo verificar WhatsApp.");
+      setConnectionStatus(data.connected ? "connected" : "disconnected");
+      setConnectedPhone(data.phoneNumber || "");
+      setConnectionError("");
+      return data;
+    } catch (error) {
+      setConnectionStatus("error");
+      setConnectionError(error instanceof Error ? error.message : "No se pudo verificar WhatsApp.");
+      return null;
+    }
+  }, []);
+
+  const setQrFromConnection = useCallback(async (data: { qrImage?: string | null; qrPayload?: string | null }) => {
+    if (data.qrImage) {
+      setQrCodeDataUrl(
+        data.qrImage.startsWith("data:image/")
+          ? data.qrImage
+          : `data:image/png;base64,${data.qrImage}`,
+      );
+      return;
+    }
+    if (data.qrPayload) {
+      const qr = await QRCode.toDataURL(data.qrPayload, {
+        width: 260,
+        margin: 2,
+        color: { dark: "#111827", light: "#ffffff" },
+      });
+      setQrCodeDataUrl(qr);
+      return;
+    }
+    setQrCodeDataUrl("");
+  }, []);
 
   // Sincronización de pestaña con el Tour Guiado
   useEffect(() => {
@@ -273,35 +314,97 @@ export default function BotWhatsAppPage() {
     };
   }, []);
 
-  function handleSaveAiSettings() {
+  async function handleSaveAiSettings() {
+    const personalPhoneDigits = personalPhone.replace(/\D/g, "").length;
+    if (notifyPersonalPhone && (personalPhoneDigits < 8 || personalPhoneDigits > 15)) {
+      pushToast("error", "Ingresá un número de 8 a 15 dígitos para recibir avisos de nuevas reservas.");
+      return;
+    }
     setIsSavingAiSettings(true);
-    updateEvolutionConfig({
-      autoBotEnabled,
-      allowEmojis,
-      askStaffPreference,
-      notifyPersonalPhoneOnBooking: notifyPersonalPhone,
-      handoffOnUnknownTopic,
-      personalPhone: personalPhone.trim(),
-      phoneType,
-      minNoticeMinutes,
-      serviceScheduleMode,
-      aiTone,
-      aiInstructions,
-      humanHandoffPhone: personalPhone.trim() || humanHandoffPhone.trim(),
-    });
-    setTimeout(() => {
-      setIsSavingAiSettings(false);
+    try {
+      const saved = await updateEvolutionConfig({
+        autoBotEnabled,
+        allowEmojis,
+        askStaffPreference,
+        notifyPersonalPhoneOnBooking: notifyPersonalPhone,
+        handoffOnUnknownTopic,
+        personalPhone: personalPhone.trim(),
+        minNoticeMinutes,
+        serviceScheduleMode,
+        aiTone,
+        aiInstructions,
+        humanHandoffPhone: personalPhone.trim() || humanHandoffPhone.trim(),
+      });
+      if (!saved) throw new Error("No se pudieron guardar los ajustes en el servidor.");
       pushToast("success", "Configuración guardada correctamente.");
-    }, 350);
+    } catch (error) {
+      pushToast("error", error instanceof Error ? error.message : "No se pudieron guardar los ajustes.");
+    } finally {
+      setIsSavingAiSettings(false);
+    }
+  }
+
+  async function handleAssistantToggle(nextValue: boolean) {
+    if (isSavingBotToggle) return;
+    const previousValue = autoBotEnabled;
+    setAutoBotEnabled(nextValue);
+    setIsSavingBotToggle(true);
+    const saved = await updateEvolutionConfig({ autoBotEnabled: nextValue });
+    if (!saved) {
+      setAutoBotEnabled(previousValue);
+      pushToast("error", "No se pudo cambiar el estado del asistente. Revisá tu conexión e intentá otra vez.");
+    } else {
+      pushToast("success", nextValue ? "Asistente activado para responder a tus clientes." : "Asistente pausado temporalmente.");
+    }
+    setIsSavingBotToggle(false);
+  }
+
+  async function handlePersonalAlertToggle(nextValue: boolean) {
+    if (isSavingPersonalAlert || isSavingAiSettings) return;
+    if (nextValue) {
+      const digitCount = personalPhone.replace(/\D/g, "").length;
+      if (digitCount < 8 || digitCount > 15) {
+        pushToast("error", "Ingresá un número válido antes de activar los avisos personales.");
+        return;
+      }
+    }
+
+    const previousValue = notifyPersonalPhone;
+    setNotifyPersonalPhone(nextValue);
+
+    setIsSavingPersonalAlert(true);
+    try {
+      const saved = await updateEvolutionConfig({
+        notifyPersonalPhoneOnBooking: nextValue,
+        ...(nextValue ? { personalPhone: personalPhone.trim() } : {}),
+      });
+      if (!saved) throw new Error("No se pudo actualizar el aviso al celular personal.");
+      pushToast("success", nextValue ? "Avisos de nuevas reservas activados." : "Avisos de nuevas reservas pausados.");
+    } catch (error) {
+      setNotifyPersonalPhone(previousValue);
+      pushToast("error", error instanceof Error ? error.message : "No se pudo actualizar el aviso al celular personal.");
+    } finally {
+      setIsSavingPersonalAlert(false);
+    }
   }
 
   // Modales
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
-  const [modalPhoneNumber, setModalPhoneNumber] = useState(
-    evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800"
-  );
+  const templateBodyRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    void refreshConnectionStatus();
+  }, [refreshConnectionStatus]);
+
+  useEffect(() => {
+    if (!isConnectModalOpen || isConnected) return;
+    const timer = window.setInterval(() => {
+      void refreshConnectionStatus();
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [isConnectModalOpen, isConnected, refreshConnectionStatus]);
 
   // Simulador de WhatsApp en Vivo
   const [simChatMessages, setSimChatMessages] = useState<
@@ -324,25 +427,26 @@ export default function BotWhatsAppPage() {
       id: "welcome-init",
       sender: "bot",
       type: "text",
-      text: `¡Hola! Bienvenido/a a *${business.name}*. ¿En qué podemos ayudarte hoy?\n\nPodés preguntarme por *precios*, *horarios libres* o pedirme para *agendar tu turno*.`,
+      text: `¡Hola! Bienvenido/a a *${business.name}*. ¿Qué servicio estás buscando?`,
       time: "10:00",
     },
   ]);
   const [simInput, setSimInput] = useState("");
   const [isBotTypingSim, setIsBotTypingSim] = useState(false);
+  const [simulationPhone, setSimulationPhone] = useState(() => `+595${String(Math.floor(Math.random() * 100_000_000)).padStart(8, "0")}`);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Pestaña de Recordatorios Automáticos
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     whatsappTemplates[0]?.id || "wt-confirmacion"
   );
-  const [testPhone, setTestPhone] = useState(
-    business.whatsappNumber || business.phone || "+595 981 000 000"
-  );
+  const [testPhone, setTestPhone] = useState(business.whatsappNumber || business.phone || "");
 
   const currentTemplate =
     whatsappTemplates.find((t) => t.id === selectedTemplateId) ||
     whatsappTemplates[0];
+  const currentEventLabel = eventTemplateLabel(currentTemplate?.trigger);
+  const isImmediateReminder = currentTemplate?.timingMinutesBefore === 0;
 
   useEffect(() => {
     if (chatScrollRef.current) {
@@ -350,32 +454,70 @@ export default function BotWhatsAppPage() {
     }
   }, [simChatMessages, isBotTypingSim]);
 
-  // Generador de Código QR
-  const generateQrCode = useCallback(() => {
-    const sessionId = `AGPY_${(business.slug || "central").toUpperCase()}_${Date.now()}`;
-    const payload = `2@${Array.from({ length: 24 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join("")},${sessionId},${Date.now()}`;
-
-    QRCode.toDataURL(payload, {
-      width: 260,
-      margin: 2,
-      color: {
-        dark: "#111827",
-        light: "#ffffff",
-      },
-    })
-      .then((url) => setQrCodeDataUrl(url))
-      .catch((err) => console.error("Error generating QR:", err));
-  }, [business.slug]);
-
-  useEffect(() => {
-    if (isConnectModalOpen) {
-      generateQrCode();
+  async function startWhatsAppConnection() {
+    setIsConnecting(true);
+    setConnectionError("");
+    setQrCodeDataUrl("");
+    try {
+      const response = await fetch("/api/tenant/whatsapp/instance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "connect" }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "No se pudo iniciar la conexión.");
+      setConnectionStatus(data.connected ? "connected" : "disconnected");
+      setConnectedPhone(data.phoneNumber || "");
+      await setQrFromConnection(data);
+      if (data.connected) {
+        pushToast("success", "WhatsApp ya está conectado a este negocio.");
+      } else if (!data.qrImage && !data.qrPayload) {
+        setConnectionError("La pasarela no devolvió un código QR. Actualizá para intentar otra vez.");
+      }
+    } catch (error) {
+      setQrCodeDataUrl("");
+      setConnectionStatus("error");
+      setConnectionError(error instanceof Error ? error.message : "No se pudo iniciar la conexión.");
+    } finally {
+      setIsConnecting(false);
     }
-  }, [isConnectModalOpen, generateQrCode]);
+  }
+
+  async function openConnectModal() {
+    setIsConnectModalOpen(true);
+    setConnectionError("");
+    setQrCodeDataUrl("");
+    const status = await refreshConnectionStatus();
+    if (!status?.connected) await startWhatsAppConnection();
+  }
+
+  async function handleDisconnect() {
+    setIsConnecting(true);
+    setConnectionError("");
+    try {
+      const response = await fetch("/api/tenant/whatsapp/instance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "disconnect" }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || data.connected) {
+        throw new Error(data.error || "No se pudo desconectar WhatsApp.");
+      }
+      setConnectionStatus("disconnected");
+      setConnectedPhone("");
+      setQrCodeDataUrl("");
+      pushToast("success", "WhatsApp desconectado.");
+    } catch (error) {
+      setConnectionError(error instanceof Error ? error.message : "No se pudo desconectar WhatsApp.");
+      pushToast("error", error instanceof Error ? error.message : "No se pudo desconectar WhatsApp.");
+    } finally {
+      setIsConnecting(false);
+    }
+  }
 
   function triggerSimMessage(text: string) {
+    if (isBotTypingSim) return;
     setSimInput(text);
     setTimeout(() => {
       handleSimSendMessage(undefined, text);
@@ -408,42 +550,38 @@ export default function BotWhatsAppPage() {
       let replyText = "";
 
       if (autoBotEnabled) {
-        try {
-          const aiRes = await fetch("/api/ai/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              message: userMsg,
-              tenantSlug: business.slug,
-              clientPhone: business.whatsappNumber || business.phone || "+595 981 765 432",
-              clientName: "Cliente WhatsApp",
-              configOverrides: {
-                allowEmojis,
-                askStaffPreference,
-                handoffOnUnknownTopic,
-                aiTone,
-                aiInstructions,
-                notifyPersonalPhoneOnBooking: notifyPersonalPhone,
-                personalPhone: personalPhone.trim(),
-              },
-            }),
-          });
-          if (aiRes.ok) {
-            const aiData = await aiRes.json();
-            if (aiData.replyText) {
-              replyText = aiData.replyText;
-            }
-          }
-        } catch (err) {
-          console.error("Error consultando asistente:", err);
+        const aiRes = await fetch("/api/ai/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: userMsg,
+            tenantSlug: business.slug,
+            clientPhone: simulationPhone,
+            clientName: "Cliente de prueba",
+            simulation: true,
+            configOverrides: {
+              allowEmojis,
+              askStaffPreference,
+              handoffOnUnknownTopic,
+              aiTone,
+              aiInstructions,
+              notifyPersonalPhoneOnBooking: notifyPersonalPhone,
+              personalPhone: personalPhone.trim(),
+              minNoticeMinutes,
+              serviceScheduleMode,
+            },
+          }),
+        });
+        const aiData = await aiRes.json();
+        if (!aiRes.ok || !aiData.replyText) {
+          throw new Error(aiData.message || "No se pudo consultar al asistente.");
         }
+        replyText = aiData.replyText;
       }
 
       if (!replyText) {
         if (!autoBotEnabled) {
           replyText = "El asistente se encuentra pausado en este momento. Podés activarlo en el interruptor de la izquierda.";
-        } else {
-          replyText = `¡Hola! Gracias por comunicarte con *${business.name}*. Podés consultarme por precios, horarios libres o pedirme agendar tu turno.`;
         }
       }
 
@@ -457,34 +595,40 @@ export default function BotWhatsAppPage() {
           time: botTime,
         },
       ]);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error("Error consultando asistente:", error);
+      setSimChatMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-error-${Date.now()}`,
+          sender: "bot",
+          type: "text",
+          text: "No pude consultar al asistente. Revisá la conexión e intentá de nuevo.",
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
     } finally {
       setIsBotTypingSim(false);
     }
   }
 
-  function handleConnectSimulated() {
-    const phoneToSet = modalPhoneNumber.trim() || business.phone || "+595 981 700 800";
-    updateEvolutionConfig({
-      connected: true,
-      phoneNumber: phoneToSet,
-      lastSync: new Date().toISOString(),
-    });
-    updateBusiness({ whatsappNumber: phoneToSet });
-    setIsConnectModalOpen(false);
-    pushToast("success", `WhatsApp vinculado con éxito (${phoneToSet}).`);
-  }
-
-  function handleDisconnect() {
-    updateEvolutionConfig({ connected: false, phoneNumber: "" });
-    pushToast("error", "WhatsApp desconectado.");
-  }
-
   function insertTag(tag: string) {
     if (!currentTemplate) return;
-    const updated = (currentTemplate.body || "") + " " + tag;
+    const body = currentTemplate.body || "";
+    const textarea = templateBodyRef.current;
+    const start = textarea?.selectionStart ?? body.length;
+    const end = textarea?.selectionEnd ?? body.length;
+    const before = body.slice(0, start);
+    const after = body.slice(end);
+    const inserted = `${before && !/\s$/.test(before) ? " " : ""}${tag}${after && !/^\s/.test(after) ? " " : ""}`;
+    const updated = `${before}${inserted}${after}`;
+    const cursor = before.length + inserted.length;
     updateWhatsAppTemplate(currentTemplate.id, updated);
+    setHasUnsavedTemplateChanges(true);
+    window.requestAnimationFrame(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(cursor, cursor);
+    });
   }
 
   function getPreviewText(rawBody: string) {
@@ -493,7 +637,7 @@ export default function BotWhatsAppPage() {
       .replace(/{servicio}/g, "Corte Fade Clásico")
       .replace(/{profesional}/g, "Diego Franco")
       .replace(/{fecha}/g, "Jueves 24 de Octubre")
-      .replace(/{hora}/g, "15:30 hs")
+      .replace(/{hora}/g, "15:30")
       .replace(/{negocio}/g, business.name)
       .replace(/{direccion}/g, business.address || "Avda. Santa Teresa 1420")
       .replace(/{link_autogestion}/g, tenantPublicUrl(business.slug, "/turno/AG-9421"))
@@ -501,6 +645,28 @@ export default function BotWhatsAppPage() {
   }
 
   async function handleSaveTemplates() {
+    const invalidTemplate = whatsappTemplates.find(
+      (template) => template.enabled && (!template.name.trim() || !template.body.trim() || template.body.length > 4000),
+    );
+    if (!whatsappTemplates.length) {
+      pushToast("error", "Agregá al menos un recordatorio antes de guardar.");
+      return;
+    }
+    if (invalidTemplate) {
+      setSelectedTemplateId(invalidTemplate.id);
+      pushToast("error", "Completá el nombre y el mensaje de cada plantilla activa (máximo 4.000 caracteres).");
+      return;
+    }
+    const invalidScheduledTemplate = whatsappTemplates.find((template) => {
+      if (eventTemplateLabel(template.trigger)) return false;
+      if (template.timingMinutesBefore === undefined) return template.enabled;
+      return !Number.isInteger(template.timingMinutesBefore) || template.timingMinutesBefore < 0 || template.timingMinutesBefore > 10080;
+    });
+    if (invalidScheduledTemplate) {
+      setSelectedTemplateId(invalidScheduledTemplate.id);
+      pushToast("error", "Cada recordatorio activo necesita una antelación entre 0 y 10.080 minutos.");
+      return;
+    }
     setIsSavingTemplates(true);
     try {
       const res = await fetch("/api/tenant/settings", {
@@ -510,7 +676,9 @@ export default function BotWhatsAppPage() {
           whatsappTemplates,
         }),
       });
-      if (!res.ok) throw new Error("Error en el servidor");
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.message || "Error en el servidor");
+      setHasUnsavedTemplateChanges(false);
       pushToast("success", "Plantillas y tiempos de recordatorio guardados exitosamente.");
     } catch (e: any) {
       console.error(e);
@@ -523,8 +691,9 @@ export default function BotWhatsAppPage() {
   async function handleSendTestReminder() {
     if (!currentTemplate) return;
     const cleanNumber = testPhone.trim();
-    if (!cleanNumber) {
-      pushToast("error", "Ingresá un número de WhatsApp para probar el envío.");
+    const phoneDigits = cleanNumber.replace(/\D/g, "");
+    if (phoneDigits.length < 8 || phoneDigits.length > 15) {
+      pushToast("error", "Ingresá un número válido de 8 a 15 dígitos, con código de país.");
       return;
     }
     setIsSendingTestReminder(true);
@@ -563,7 +732,8 @@ export default function BotWhatsAppPage() {
     };
     createWhatsAppTemplate(newTemplate);
     setSelectedTemplateId(newId);
-    pushToast("success", "Nuevo recordatorio creado. Podés configurar el tiempo y el texto.");
+    setHasUnsavedTemplateChanges(true);
+    pushToast("success", "Recordatorio agregado al borrador. Guardá la configuración para activarlo.");
   }
 
   function handleDeleteCurrentTemplate(id: string) {
@@ -572,25 +742,31 @@ export default function BotWhatsAppPage() {
       return;
     }
     deleteWhatsAppTemplate(id);
+    setHasUnsavedTemplateChanges(true);
     const remaining = whatsappTemplates.filter((t) => t.id !== id);
     if (remaining.length > 0) {
       setSelectedTemplateId(remaining[0].id);
     }
-    pushToast("success", "Plantilla eliminada.");
+    pushToast("success", "Plantilla quitada del borrador. Guardá la configuración para aplicar el cambio.");
   }
 
-  const activeConnectedPhone = evolutionConfig.phoneNumber || business.whatsappNumber || business.phone || "+595 981 700 800";
+  const activeConnectedPhone = connectedPhone || evolutionConfig.phoneNumber || "WhatsApp conectado";
+  const personalPhoneDigitCount = personalPhone.replace(/\D/g, "").length;
+  const personalPhoneIsValid = personalPhoneDigitCount >= 8 && personalPhoneDigitCount <= 15;
+  const personalAlertIsSaved =
+    (evolutionConfig.notifyPersonalPhoneOnBooking === true) === notifyPersonalPhone &&
+    (evolutionConfig.personalPhone || "").trim() === personalPhone.trim();
 
   return (
-    <div className="w-full space-y-6 pb-20">
+    <div className="w-full space-y-4 pb-24 sm:space-y-5 sm:pb-20">
       {/* ═══ CABECERA PRINCIPAL ═══ */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+      <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
             <span>Asistente de WhatsApp</span>
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Atención automática de tus clientes y recordatorios de turnos por WhatsApp.
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Respuestas y recordatorios para tus clientes.
           </p>
         </div>
 
@@ -600,170 +776,111 @@ export default function BotWhatsAppPage() {
             type="button"
             data-tour="bot-support-action"
             onClick={() => setIsHelpModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <PhoneCall className="h-3.5 w-3.5 text-slate-400" />
-            <span>Ayuda / Soporte</span>
+            <span>Soporte</span>
           </button>
-
-          {/* Estado de conexión */}
-          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs">
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${
-                isConnected
-                  ? "bg-emerald-500 ring-4 ring-emerald-500/20 animate-pulse"
-                  : "bg-amber-500 ring-4 ring-amber-500/20"
-              }`}
-            />
-            <span>{isConnected ? "WhatsApp Conectado" : "WhatsApp Desconectado"}</span>
-          </div>
 
           {isConnected ? (
             <button
               type="button"
-              onClick={() => setIsConnectModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition hover:brightness-110 cursor-pointer bg-slate-800 hover:bg-slate-700"
+              onClick={() => void openConnectModal()}
+              className="inline-flex min-h-11 items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white shadow-md transition hover:brightness-110 cursor-pointer bg-slate-800 hover:bg-slate-700"
             >
               <QrCode className="h-3.5 w-3.5" />
-              <span>Cambiar QR</span>
+              <span>Administrar conexión</span>
             </button>
           ) : (
             <button
               type="button"
-              onClick={() => setIsConnectModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer bg-emerald-600 hover:bg-emerald-500"
+              onClick={() => void openConnectModal()}
+              disabled={connectionStatus === "checking" || isConnecting}
+              className="inline-flex min-h-11 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-white shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95 cursor-pointer bg-emerald-600 hover:bg-emerald-500"
             >
               <QrCode className="h-3.5 w-3.5" />
-              <span>Vincular con QR</span>
+              <span>{connectionStatus === "checking" ? "Verificando…" : "Vincular con QR"}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* ═══ RESUMEN RÁPIDO DEL SERVICIO ═══ */}
-      <div data-tour="bot-status-card" className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-              <Bot className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[11px] text-slate-400 font-semibold block">Respuestas Automáticas</span>
-              <span className="text-xs font-bold text-slate-900 dark:text-white">
-                {autoBotEnabled ? "Activo las 24 horas" : "Pausado"}
-              </span>
-            </div>
-          </div>
+      {/* ═══ ESTADO ═══ */}
+      <div data-tour="bot-status-card" className="glass-panel-subtle grid grid-cols-1 gap-px overflow-hidden rounded-2xl min-[430px]:grid-cols-2">
+        <div className="flex min-w-0 items-center gap-2 px-2.5 py-3 sm:gap-3 sm:px-4 sm:py-3.5">
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-9 sm:w-9 ${isConnected ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : connectionStatus === "error" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400" : "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"}`}>
+            <Phone aria-hidden="true" className="h-4 w-4" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">WhatsApp</span>
+            <span className={`block truncate text-sm font-semibold sm:text-sm ${connectionStatus === "error" ? "text-rose-700 dark:text-rose-300" : isConnected ? "text-emerald-700 dark:text-emerald-300" : "text-slate-900 dark:text-white"}`}>
+              {isConnected ? activeConnectedPhone : connectionStatus === "checking" ? "Verificando conexión…" : connectionStatus === "error" ? "No se pudo conectar" : "Sin vincular"}
+            </span>
+          </span>
+        </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[11px] text-slate-400 font-semibold block">Recordatorios a Clientes</span>
-              <span className="text-xs font-bold text-slate-900 dark:text-white">
-                Avisos 24h y 2h antes
-              </span>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600">
-              <Phone className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[11px] text-slate-400 font-semibold block">Línea del Local</span>
-              <span className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate block max-w-[170px]">
-                {isConnected ? activeConnectedPhone : "Pendiente de vincular"}
-              </span>
-            </div>
-          </div>
+        <div className="flex min-w-0 items-center gap-2 border-t border-slate-200/70 px-2.5 py-3 sm:gap-3 sm:px-4 sm:py-3.5 dark:border-white/10 min-[430px]:border-l min-[430px]:border-t-0">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-9 sm:w-9">
+            <Clock aria-hidden="true" className="h-4 w-4" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">Recordatorios activos</span>
+            <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">
+              {whatsappTemplates.filter((template) => template.enabled).length} de {whatsappTemplates.length}
+            </span>
+          </span>
         </div>
       </div>
 
-      {/* Alerta si WhatsApp no está vinculado */}
-      {!isConnected && (
-        <div className="rounded-2xl border border-amber-300/80 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/20 p-5 text-center space-y-3">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-            <Lock className="h-5 w-5" />
-          </div>
-          <div className="max-w-md mx-auto space-y-1">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-              Vinculá tu WhatsApp para activar las respuestas
-            </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-300">
-              Escaneá el código QR desde tu celular para que tu asistente pueda atender a tus clientes y enviar recordatorios de turnos.
-            </p>
-          </div>
-          <div>
-            <button
-              type="button"
-              onClick={() => setIsConnectModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 text-xs shadow-md transition cursor-pointer"
-            >
-              <QrCode className="h-4 w-4" />
-              <span>Vincular mi WhatsApp Ahora (QR)</span>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ═══ PESTAÑAS (SÓLO 2: ASISTENTE VIRTUAL O RECORDATORIOS) ═══ */}
-      <div className="p-1 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex gap-1">
+      <div role="group" aria-label="Sección de WhatsApp" className="relative flex gap-1 rounded-2xl glass-panel-subtle p-1">
         <button
           type="button"
+          aria-pressed={activeTab === "asistente"}
           onClick={() => setActiveTab("asistente")}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+          className={`relative flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors duration-200 motion-reduce:transition-none sm:px-4 sm:py-2.5 ${
             activeTab === "asistente"
-              ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              ? "text-white"
+              : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           }`}
         >
-          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-          <span>Asistente Virtual</span>
+          {activeTab === "asistente" && <motion.span layoutId="whatsapp-active-tab" transition={selectionTransition} aria-hidden="true" className="absolute inset-0 rounded-xl border border-primary bg-primary shadow-xs" />}
+          <span className="relative z-10">Asistente Virtual</span>
         </button>
 
         <button
           type="button"
+          aria-pressed={activeTab === "recordatorios"}
           onClick={() => setActiveTab("recordatorios")}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+          className={`relative flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors duration-200 motion-reduce:transition-none sm:px-4 sm:py-2.5 ${
             activeTab === "recordatorios"
-              ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/60 dark:border-white/10"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              ? "text-white"
+              : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           }`}
         >
-          <Layers className="h-3.5 w-3.5 text-indigo-600" />
-          <span>Recordatorios y Mensajes</span>
+          {activeTab === "recordatorios" && <motion.span layoutId="whatsapp-active-tab" transition={selectionTransition} aria-hidden="true" className="absolute inset-0 rounded-xl border border-primary bg-primary shadow-xs" />}
+          <span className="relative z-10">Recordatorios y Mensajes</span>
         </button>
       </div>
 
       {/* ═══ CONTENIDO DE PESTAÑAS ═══ */}
       {activeTab === "asistente" ? (
         /* PESTAÑA 1: ASISTENTE VIRTUAL + SIMULADOR LADO A LADO */
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5">
           <div className="grid gap-6 lg:grid-cols-12 items-start">
             {/* Columna Izquierda: Configuración Simple del Asistente */}
             <div className="lg:col-span-7 space-y-4">
               {/* 1. Interruptor Maestro */}
-              <div data-tour="bot-asistente-card" className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-3">
+              <div data-tour="bot-asistente-card" className="rounded-3xl glass-panel px-4 py-4 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                        Atención Automática por WhatsApp
-                      </h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Responde consultas, audios, fotos de pagos y agenda turnos las 24 horas.
-                      </p>
-                    </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">Respuestas automáticas</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Respondé consultas y turnos.</p>
                   </div>
 
                   <div className="flex items-center gap-2.5 shrink-0">
                     <span
-                      className={`text-xs font-bold ${
+                      className={`text-xs font-semibold ${
                         autoBotEnabled ? "text-emerald-600" : "text-slate-400"
                       }`}
                     >
@@ -771,167 +888,85 @@ export default function BotWhatsAppPage() {
                     </span>
                     <CustomSwitch
                       checked={autoBotEnabled}
-                      onChange={(nextVal) => {
-                        setAutoBotEnabled(nextVal);
-                        updateEvolutionConfig({ autoBotEnabled: nextVal });
-                        pushToast(
-                          "success",
-                          nextVal
-                            ? "Asistente activado para responder a tus clientes."
-                            : "Asistente pausado temporalmente."
-                        );
-                      }}
+                      onChange={(nextVal) => void handleAssistantToggle(nextVal)}
+                      disabled={isSavingBotToggle}
                       label="Activar o pausar asistente"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* 2. Lo que hace tu asistente (explicado simple, sin tecnicismos) */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-3.5 shadow-2xs">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-emerald-600" />
-                    <span>¿Qué hace tu Asistente Automático?</span>
-                  </h3>
-                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
-                    Todo incluido
-                  </span>
+              <details className="group/capabilities rounded-3xl glass-panel">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-4 transition hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/50 dark:hover:bg-white/[0.03] sm:p-5 [&::-webkit-details-marker]:hidden">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white sm:text-sm">Qué puede hacer el asistente</span>
+                  <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-open/capabilities:rotate-180" />
+                </summary>
+                <div className="grid grid-cols-1 gap-x-8 px-4 pb-4 sm:grid-cols-2 sm:px-5 sm:pb-5">
+                  {[
+                    "Agenda turnos y comparte precios",
+                    "Cambia o cancela citas",
+                    "Responde mensajes de audio",
+                    "Revisa comprobantes de pago",
+                    "Informa puntos y premios",
+                    "Deriva consultas a una persona",
+                    "Te avisa si no tiene una respuesta",
+                  ].map((capability) => (
+                    <p key={capability} className="border-b border-slate-200/70 py-2.5 text-xs text-slate-700 dark:border-white/10 dark:text-slate-300">
+                      {capability}
+                    </p>
+                  ))}
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-                      <Calendar className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                      <span>Agenda turnos y dice precios</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Sabe qué horarios y profesionales tenés libres y confirma la cita en tu agenda.
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-                      <RotateCcw className="h-3.5 w-3.5 text-sky-600 shrink-0" />
-                      <span>Cambia o cancela citas</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Si el cliente te avisa que no puede venir o quiere otra hora, el asistente lo cambia solo.
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-                      <Mic className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-                      <span>Escucha audios de WhatsApp</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Si el cliente manda un audio en vez de escribir, el asistente lo escucha y le responde.
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-                      <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                      <span>Revisa fotos de transferencias</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Si te mandan una foto de comprobante de transferencia, revisa el banco y el monto pagado.
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-                      <Tag className="h-3.5 w-3.5 text-rose-600 shrink-0" />
-                      <span>Informa sobre puntos y premios</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Le dice al cliente cuántos puntos tiene acumulados y qué descuentos puede usar.
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-                      <UserCheck className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-                      <span>Pausa si contestás vos</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Si vos contestás desde tu WhatsApp o el cliente pide una persona, se pausa 30 minutos.
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 space-y-1 sm:col-span-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-                      <ShieldAlert className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                      <span>Te avisa a tu celular si no sabe algo o consultan por un producto</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Si preguntan por un producto no cargado o una duda particular del local, la IA no inventa nada: le dice con amabilidad que no dispone de esa información y te manda un WhatsApp con la consulta para que lo contactes.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              </details>
 
               {/* 3. Personalización Funcional del Asistente */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-5 shadow-2xs">
+              <div className="rounded-3xl glass-panel p-4 sm:p-5 space-y-5">
                 <div className="pb-3 border-b border-slate-100 dark:border-white/5">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                    Personalización & Reglas de Atención
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
+                    Ajustes del asistente
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Ajustá cómo querés que hable tu asistente y qué reglas debe seguir con tus clientes.
-                  </p>
                 </div>
 
                 {/* 3.1 Tono de Conversación */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    ¿Cómo querés que hable tu asistente?:
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Tono de respuesta
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {[
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {([
                       {
                         id: "amigable",
-                        icon: Smile,
-                        title: "Amigable y Cercano",
-                        desc: "De 'vos', amable, cálido y con modismos paraguayos.",
+                        title: "Cercano",
+                        desc: "Usa voseo y un tono cálido.",
                       },
                       {
                         id: "formal",
-                        icon: Briefcase,
-                        title: "Formal y Respetuoso",
-                        desc: "De 'usted', cortés, corporativo y sobrio.",
+                        title: "Formal",
+                        desc: "Trato respetuoso y sobrio.",
                       },
                       {
                         id: "conciso",
-                        icon: Zap,
-                        title: "Rápido y Breve",
-                        desc: "Respuestas cortas, directas y al grano.",
+                        title: "Breve",
+                        desc: "Respuestas directas.",
                       },
-                    ].map((t) => {
-                      const IconComp = t.icon;
+                    ] as const).map((t) => {
                       return (
                         <button
                           key={t.id}
                           type="button"
-                          onClick={() => setAiTone(t.id as any)}
-                          className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                          aria-pressed={aiTone === t.id}
+                          onClick={() => setAiTone(t.id)}
+                          className={`relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 motion-reduce:transition-none ${
                             aiTone === t.id
-                              ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                              ? "border-transparent text-emerald-950 dark:text-emerald-100"
                               : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                           }`}
                         >
-                          <div>
+                          {aiTone === t.id && <motion.span layoutId="whatsapp-tone-selection" transition={selectionTransition} aria-hidden="true" className="absolute inset-0 rounded-xl border border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-600/20 dark:bg-emerald-950/40" />}
+                          <div className="relative z-10">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-bold flex items-center gap-1.5">
-                                <IconComp className="h-3.5 w-3.5 text-emerald-600" />
-                                {t.title}
-                              </span>
-                              {aiTone === t.id && (
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              )}
+                              <span className="text-xs font-semibold">{t.title}</span>
                             </div>
-                            <p className="text-[10px] opacity-80 leading-snug">{t.desc}</p>
+                            <p className="text-[11px] opacity-80 leading-snug">{t.desc}</p>
                           </div>
                         </button>
                       );
@@ -939,28 +974,24 @@ export default function BotWhatsAppPage() {
                   </div>
                 </div>
 
+                <details className="group/settings rounded-xl border border-slate-200/80 dark:border-white/10">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3.5 py-3 transition hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/50 dark:hover:bg-white/[0.03] [&::-webkit-details-marker]:hidden">
+                    <span>
+                      <span className="block text-xs font-semibold text-slate-900 dark:text-white">Más ajustes</span>
+                      <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                        {notifyPersonalPhone ? "Avisos personales activos · reservas y horarios" : "Reservas, horarios y avisos"}
+                      </span>
+                    </span>
+                    <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-open/settings:rotate-180" />
+                  </summary>
+                  <div className="space-y-5 border-t border-slate-200/70 px-3.5 py-4 dark:border-white/10">
+
                 {/* 3.2 Interruptor de Emojis */}
                 <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 flex items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        Permitir emojis en los mensajes
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                          allowEmojis
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60"
-                            : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                        }`}
-                      >
-                        {allowEmojis ? "Con emojis" : "Sin emojis (Recomendado)"}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {allowEmojis
-                        ? "Tu asistente usará emojis amigables para una atención cercana."
-                        : "Desactivado por defecto. Mensajes 100% sobrios, limpios y sin emoticones ni caritas."}
-                    </p>
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                      Permitir emojis en los mensajes
+                    </span>
                   </div>
                   <CustomSwitch
                     checked={allowEmojis}
@@ -969,18 +1000,15 @@ export default function BotWhatsAppPage() {
                   />
                 </div>
 
-                {/* 3.3 Preferencia de Profesional / Especialista */}
+                {/* Preferencia de profesional */}
                 <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 flex items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-indigo-600" />
-                      <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        Preguntar preferencia de profesional al cliente
+                    <div>
+                      <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                        Preguntar con quién quiere atenderse
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Si tenés más de un profesional o peluquero en tu equipo, la IA le preguntará al cliente con quién desea atenderse o si prefiere al primero libre.
-                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">El cliente elige profesional.</p>
                   </div>
                   <CustomSwitch
                     checked={askStaffPreference}
@@ -989,21 +1017,15 @@ export default function BotWhatsAppPage() {
                   />
                 </div>
 
-                {/* 3.4 Derivación Automática si la IA no sabe algo o consultan por un producto no cargado */}
+                {/* Aviso de consultas sin respuesta */}
                 <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 flex items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <ShieldAlert className="h-4 w-4 text-amber-600" />
-                      <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        Avisar al encargado si la IA no sabe algo o consultan por un producto no cargado
-                      </span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/60">
-                        Honestidad & Cero inventos
+                    <div>
+                      <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                        Avisarme si no sabe responder
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Si el cliente pregunta por un producto que no está en tu lista, una duda técnica del local o un tratamiento especial que la IA desconoce, le dirá con educación que no lo sabe en este momento, le ofrecerá ayuda humana y te enviará un aviso inmediato a tu WhatsApp para que lo asesores.
-                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Derivá al encargado lo que no pueda resolver.</p>
                   </div>
                   <CustomSwitch
                     checked={handoffOnUnknownTopic}
@@ -1015,12 +1037,11 @@ export default function BotWhatsAppPage() {
                 {/* 3.5 Anticipación Mínima para Reservar */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      <span>¿Con cuánta anticipación mínima pueden agendar?:</span>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Anticipación mínima
                     </label>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
                     {[
                       { minutes: 0, label: "En cualquier momento" },
                       { minutes: 30, label: "30 min antes" },
@@ -1031,186 +1052,125 @@ export default function BotWhatsAppPage() {
                       <button
                         key={item.minutes}
                         type="button"
+                        aria-pressed={minNoticeMinutes === item.minutes}
                         onClick={() => setMinNoticeMinutes(item.minutes)}
-                        className={`p-2 rounded-xl text-center border text-xs font-bold transition cursor-pointer ${
+                        className={`relative overflow-hidden rounded-xl border p-2 text-center text-xs font-semibold transition-colors duration-200 motion-reduce:transition-none ${
                           minNoticeMinutes === item.minutes
-                            ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 ring-2 ring-emerald-600/20"
+                            ? "border-transparent text-emerald-800 dark:text-emerald-200"
                             : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
                       >
-                        {item.label}
+                        {minNoticeMinutes === item.minutes && <motion.span layoutId="whatsapp-notice-selection" transition={selectionTransition} aria-hidden="true" className="absolute inset-0 rounded-xl border border-emerald-600 bg-emerald-50 ring-2 ring-emerald-600/20 dark:bg-emerald-950/40" />}
+                        <span className="relative z-10">{item.label}</span>
                       </button>
                     ))}
                   </div>
-                  <p className="text-[10px] text-slate-400">
-                    Evita que los clientes reserven para dentro de 10 minutos cuando ya estás ocupado.
-                  </p>
                 </div>
 
                 {/* 3.5 Horario de Atención del Asistente */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    ¿Cuándo debe responder tu Asistente?:
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Horario de respuesta
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <button
                       type="button"
+                      aria-pressed={serviceScheduleMode === "always"}
                       onClick={() => setServiceScheduleMode("always")}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                      className={`relative overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 motion-reduce:transition-none ${
                         serviceScheduleMode === "always"
-                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                          ? "border-transparent text-emerald-950 dark:text-emerald-100"
                           : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <Sun className="h-4 w-4 text-amber-500" />
-                        <span className="text-xs font-bold">Las 24 horas del día (Recomendado)</span>
+                      {serviceScheduleMode === "always" && <motion.span layoutId="whatsapp-schedule-selection" transition={selectionTransition} aria-hidden="true" className="absolute inset-0 rounded-xl border border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-600/20 dark:bg-emerald-950/40" />}
+                      <div className="relative z-10 mb-0.5">
+                        <span className="text-xs font-semibold">Todo el día</span>
                       </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        Responde y agenda a toda hora, incluso de madrugada o días feriados.
+                      <p className="relative z-10 text-[11px] text-slate-500 dark:text-slate-400">
+                        También fuera del horario del local.
                       </p>
                     </button>
 
                     <button
                       type="button"
+                      aria-pressed={serviceScheduleMode === "business_hours"}
                       onClick={() => setServiceScheduleMode("business_hours")}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                      className={`relative overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 motion-reduce:transition-none ${
                         serviceScheduleMode === "business_hours"
-                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                          ? "border-transparent text-emerald-950 dark:text-emerald-100"
                           : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <Moon className="h-4 w-4 text-indigo-500" />
-                        <span className="text-xs font-bold">Solo en horario comercial</span>
+                      {serviceScheduleMode === "business_hours" && <motion.span layoutId="whatsapp-schedule-selection" transition={selectionTransition} aria-hidden="true" className="absolute inset-0 rounded-xl border border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-600/20 dark:bg-emerald-950/40" />}
+                      <div className="relative z-10 mb-0.5">
+                        <span className="text-xs font-semibold">Horario del local</span>
                       </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        Fuera de hora envía un saludo informando cuándo abre el local.
-                      </p>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 3.6 Tipo de Línea de WhatsApp */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    ¿Qué tipo de número es esta línea de WhatsApp?:
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPhoneType("business")}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                        phoneType === "business"
-                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
-                          : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <Briefcase className="h-4 w-4 text-emerald-600" />
-                        <span className="text-xs font-bold">Línea del Negocio</span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        Chip o celular exclusivo para clientes y atención comercial.
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPhoneType("personal")}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                        phoneType === "personal"
-                          ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
-                          : "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <Smartphone className="h-4 w-4 text-sky-600" />
-                        <span className="text-xs font-bold">Mi Número Personal Compartido</span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        Atiendo clientes y recibo avisos desde mi propio WhatsApp.
+                      <p className="relative z-10 text-[11px] text-slate-500 dark:text-slate-400">
+                        Solo durante el horario del local.
                       </p>
                     </button>
                   </div>
                 </div>
 
                 {/* 3.7 Alerta a tu WhatsApp Personal cuando reserven */}
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/30 p-4 space-y-3">
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-white/10 dark:bg-slate-800/30">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-brand" />
-                      <div>
-                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                          Avisarme a mi WhatsApp personal cuando reserven
-                        </span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Recibí un mensaje cada vez que un cliente agende una cita o con qué profesional se reservó.
-                        </span>
-                      </div>
+                    <div className="min-w-0">
+                      <span className="block text-xs font-semibold text-slate-900 dark:text-white">
+                        Avisos de nuevas reservas
+                      </span>
+                      <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                        Recibí cada reserva en tu WhatsApp personal.
+                      </span>
                     </div>
                     <CustomSwitch
                       checked={notifyPersonalPhone}
-                      onChange={(val) => setNotifyPersonalPhone(val)}
+                      onChange={(val) => void handlePersonalAlertToggle(val)}
+                      disabled={isSavingPersonalAlert || isSavingAiSettings}
                       label="Avisarme al celular personal"
+                      largeTarget
                     />
                   </div>
 
-                  {notifyPersonalPhone && (
-                    <div className="pt-2 space-y-2.5 border-t border-slate-200/60 dark:border-white/5">
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Tu número de WhatsApp personal para recibir alertas:
-                        </label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                          <input
-                            type="tel"
-                            value={personalPhone}
-                            onChange={(e) => setPersonalPhone(e.target.value)}
-                            placeholder="+595 981 700 800"
-                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Vista previa de la alerta */}
-                      <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 p-3 space-y-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">
-                          Así te llegará el aviso a tu WhatsApp:
-                        </span>
-                        <p className="text-[11px] text-slate-700 dark:text-slate-300 font-mono leading-relaxed">
-                           *Nuevo turno agendado en {business.name}*<br />
-                           Cliente: Juan Pérez (+595 981 111 222)<br />
-                           Servicio: Corte Clásico / Fade<br />
-                           Horario: Mañana 15:30 hs<br />
-                           Profesional: Diego Franco
-                        </p>
-                      </div>
-
-                      {/* Vista previa 2: Alerta de consulta no resuelta / producto */}
-                      <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-1">
-                        <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase block tracking-wider">
-                          Así te llegará el aviso si preguntan por un producto no cargado o duda del local:
-                        </span>
-                        <p className="text-[11px] text-slate-800 dark:text-slate-200 font-mono leading-relaxed">
-                           *Consulta de Cliente para Asesor Humano en {business.name}*<br />
-                           Cliente: Carlos Giménez (+595 981 333 444)<br />
-                           Consulta: &ldquo;¿Tienen shampoo anticaída o minoxidil?&rdquo;<br />
-                           Por favor comunícate con el cliente para responderle a la brevedad.
-                        </p>
-                      </div>
+                  <div className="mt-3 space-y-2 border-t border-slate-200/60 pt-3 dark:border-white/5">
+                    <label htmlFor="personal-alert-phone" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Número de WhatsApp personal
+                    </label>
+                    <div className="relative">
+                      <Phone aria-hidden="true" className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="personal-alert-phone"
+                        type="tel"
+                        value={personalPhone}
+                        onChange={(e) => setPersonalPhone(e.target.value)}
+                        placeholder="+595 981 700 800"
+                        autoComplete="tel"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white py-2 pl-9 pr-3 text-xs font-semibold text-slate-900 transition placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                      />
                     </div>
-                  )}
+                  </div>
+
+                  <p aria-live="polite" className={`mt-2 min-h-4 truncate text-[11px] leading-4 ${notifyPersonalPhone && personalPhoneIsValid && personalAlertIsSaved ? "text-emerald-700 dark:text-emerald-300" : "text-slate-500 dark:text-slate-400"}`}>
+                    {isSavingPersonalAlert
+                      ? "Guardando preferencia…"
+                      : notifyPersonalPhone && personalPhoneIsValid && personalAlertIsSaved
+                        ? "Avisos activos."
+                        : notifyPersonalPhone && personalPhoneIsValid
+                          ? "Guardá para aplicar el cambio."
+                        : notifyPersonalPhone
+                          ? "Ingresá un número válido."
+                          : "Avisos pausados. El número queda listo para configurar."}
+                  </p>
                 </div>
 
                 {/* 3.8 Instrucciones Particulares del Local */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Datos importantes de tu local (opcional):
                     </label>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="text-[11px] text-slate-400 tabular-nums">
                       {aiInstructions.length} letras
                     </span>
                   </div>
@@ -1218,21 +1178,20 @@ export default function BotWhatsAppPage() {
                     rows={3}
                     value={aiInstructions}
                     onChange={(e) => setAiInstructions(e.target.value)}
-                    placeholder="Poné acá cualquier dato útil. Ejemplo: Tenemos estacionamiento propio gratuito. Los sábados de mañana atendemos por orden de llegada. Aceptamos tarjetas y transferencias."
+                    placeholder="Ej.: estacionamiento, medios de pago o indicaciones especiales."
                     className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition resize-none"
                   />
-                  <p className="text-[10px] text-slate-400">
-                    Tu asistente recordará esta información cada vez que hable con un cliente.
-                  </p>
                 </div>
+                  </div>
+                </details>
 
                 {/* Botón Guardar Cambios */}
                 <div className="pt-2 flex justify-end">
                   <button
                     type="button"
                     onClick={handleSaveAiSettings}
-                    disabled={isSavingAiSettings}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition active:scale-98 cursor-pointer disabled:opacity-50"
+                    disabled={isSavingAiSettings || isSavingPersonalAlert}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md transition active:scale-98 cursor-pointer disabled:opacity-50"
                   >
                     {isSavingAiSettings ? (
                       <>
@@ -1252,36 +1211,39 @@ export default function BotWhatsAppPage() {
 
             {/* Columna Derecha: Simulador iPhone en Vivo */}
             <div data-tour="bot-simulator-card" className="lg:col-span-5 space-y-4">
+              <div className="mx-auto flex w-full max-w-[360px] items-center justify-between px-2 pt-1">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Vista previa · no modifica turnos</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimInput("");
+                    setSimulationPhone(`+595${String(Math.floor(Math.random() * 100_000_000)).padStart(8, "0")}`);
+                    setSimChatMessages([{
+                      id: `welcome-${Date.now()}`,
+                      sender: "bot",
+                      type: "text",
+                      text: `¡Hola! Bienvenido/a a *${business.name}*. ¿Qué servicio estás buscando?`,
+                      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    }]);
+                    pushToast("success", "Conversación reiniciada.");
+                  }}
+                  disabled={isBotTypingSim}
+                  className="rounded-lg px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+                >
+                  Reiniciar
+                </button>
+              </div>
               <div className="relative mx-auto flex w-full items-center justify-center p-1 sm:p-2">
-                {/* Marco de iPhone */}
-                <div className="relative w-full max-w-[320px] sm:max-w-[350px] rounded-[44px] sm:rounded-[50px] p-[7px] sm:p-[9px] bg-gradient-to-b from-[#3a3b40] via-[#1e1f23] to-[#111215] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.18)]">
-                  {/* Botones laterales */}
-                  <div className="absolute -left-[3px] top-[100px] h-7 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
-                  <div className="absolute -left-[3px] top-[140px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
-                  <div className="absolute -left-[3px] top-[204px] h-12 w-[3.5px] rounded-l-[2px] bg-gradient-to-r from-[#2a2b30] to-[#45474e]" />
-                  <div className="absolute -right-[3px] top-[135px] h-16 w-[3.5px] rounded-r-[2px] bg-gradient-to-l from-[#2a2b30] to-[#45474e]" />
-
+                <div className="relative w-full max-w-[360px] rounded-[38px] border border-white/20 bg-[#111215] p-[5px] shadow-[0_24px_56px_-24px_rgba(0,0,0,0.72)]">
                   {/* Pantalla */}
-                  <div className="relative overflow-hidden rounded-[38px] sm:rounded-[42px] bg-black p-[2.5px] shadow-inner">
-                    <div className="relative flex h-[560px] sm:h-[600px] flex-col overflow-hidden rounded-[36px] sm:rounded-[40px] bg-[#efeae2]">
-                      {/* Fondo patrón WhatsApp */}
-                      <div
-                        className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-multiply"
-                        style={{
-                          backgroundImage: `radial-gradient(#000 1px, transparent 1px), radial-gradient(#000 1px, #efeae2 1px)`,
-                          backgroundSize: "20px 20px",
-                          backgroundPosition: "0 0, 10px 10px",
-                        }}
-                      />
+                  <div className="relative overflow-hidden rounded-[33px] bg-black p-[2px]">
+                    <div className="relative flex h-[560px] flex-col overflow-hidden rounded-[31px] bg-[#efeae2] sm:h-[600px]">
 
                       {/* Barra superior de iPhone */}
                       <div className="relative z-30 flex h-10 items-center justify-between px-7 pt-2 text-[#000000] font-semibold text-[13px] tracking-tight select-none">
                         <span>9:41</span>
                         {/* Dynamic Island */}
-                        <div className="absolute left-1/2 top-2.5 -translate-x-1/2 flex h-5 w-20 items-center justify-between rounded-full bg-black px-2 shadow-sm">
-                          <div className="h-2 w-2 rounded-full bg-[#1b2342]" />
-                          <div className="h-1.5 w-1.5 rounded-full bg-[#050508]" />
-                        </div>
+                        <div aria-hidden="true" className="absolute left-1/2 top-2.5 h-5 w-20 -translate-x-1/2 rounded-full bg-black" />
                         {/* Señal y batería */}
                         <div className="flex items-center gap-1 text-black">
                           <Wifi className="h-3 w-3 stroke-[2.4]" />
@@ -1292,8 +1254,8 @@ export default function BotWhatsAppPage() {
                       </div>
 
                       {/* Cabecera de WhatsApp */}
-                      <div className="relative z-20 flex items-center justify-between bg-[#008069] px-3 py-2 text-white shadow-sm">
-                        <div className="flex items-center gap-2 min-w-0">
+                      <div className="relative z-20 flex items-center gap-2 bg-[#008069] px-3 py-2 text-white shadow-sm">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
                           <ChevronLeft className="h-5 w-5 stroke-[2.5] -ml-1 text-white/90" />
                           <div className="relative shrink-0">
                             {business.logo ? (
@@ -1308,30 +1270,19 @@ export default function BotWhatsAppPage() {
                                 {business.name.slice(0, 2).toUpperCase()}
                               </div>
                             )}
-                            <BadgeCheck className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 text-white fill-[#10b981]" />
                           </div>
                           <div className="min-w-0">
                             <p className="truncate text-xs font-bold text-white leading-tight">
                               {business.name}
                             </p>
-                            <p className="text-[10px] text-white/80 leading-none mt-0.5">
-                              {isBotTypingSim ? "escribiendo..." : "en línea · Cuenta Comercial"}
+                            <p className="mt-0.5 text-[10px] leading-none text-white/80">
+                              {isBotTypingSim ? "escribiendo..." : "en línea"}
                             </p>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2 text-white/90">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSimChatMessages([]);
-                              pushToast("success", "Conversación reiniciada.");
-                            }}
-                            title="Reiniciar chat"
-                            className="p-1 rounded-full hover:bg-white/10 transition cursor-pointer"
-                          >
-                            <RotateCcw className="h-3.5 w-3.5" />
-                          </button>
+                        <div aria-hidden="true" className="flex shrink-0 items-center gap-3 pl-1 text-white/90">
+                          <Video className="h-4 w-4" />
+                          <PhoneCall className="h-4 w-4" />
                         </div>
                       </div>
 
@@ -1347,15 +1298,9 @@ export default function BotWhatsAppPage() {
                         </div>
 
                         {simChatMessages.length === 0 && (
-                          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                            <div className="h-10 w-10 rounded-full bg-white shadow-xs flex items-center justify-center text-emerald-600 mb-2">
-                              <MessageSquare className="h-5 w-5" />
-                            </div>
-                            <p className="text-xs font-bold text-[#111b21]">
-                              Conversación en blanco
-                            </p>
-                            <p className="text-[11px] text-[#667781] mt-1 max-w-[200px]">
-                              Escribí un mensaje o tocá una pregunta sugerida abajo para probar.
+                          <div className="flex items-center justify-center px-4 py-16 text-center">
+                            <p className="rounded-xl bg-white/85 px-3 py-2 text-[11px] text-[#54656f] shadow-[0_1px_2px_rgba(11,20,26,0.08)]">
+                              Escribí un mensaje para probar el asistente.
                             </p>
                           </div>
                         )}
@@ -1403,14 +1348,15 @@ export default function BotWhatsAppPage() {
                       {/* Barra de entrada de texto */}
                       <form
                         onSubmit={handleSimSendMessage}
-                        className="relative z-20 flex items-center gap-2 bg-[#f0f2f5] p-2 border-t border-slate-200"
+                        className="relative z-20 flex items-center gap-2 border-t border-[#e4e7e7] bg-[#f0f2f5] p-2.5"
                       >
                         <input
                           type="text"
                           value={simInput}
                           onChange={(e) => setSimInput(e.target.value)}
-                          placeholder="Escribí un mensaje..."
-                          className="flex-1 rounded-full bg-white px-3.5 py-1.5 text-xs text-slate-800 outline-none placeholder:text-slate-400"
+                          placeholder="Mensaje"
+                          aria-label="Escribí un mensaje para el asistente"
+                          className="min-w-0 flex-1 rounded-full bg-white px-4 py-2 text-xs text-slate-800 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-[#008069]/40"
                         />
                         <button
                           type="submit"
@@ -1425,51 +1371,31 @@ export default function BotWhatsAppPage() {
                 </div>
               </div>
 
-              {/* Preguntas de prueba a 1 toque */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-2xs">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Probá tu asistente con un toque
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Tocá cualquiera de estas preguntas comunes de clientes para ver la respuesta:
-                  </p>
+              <div className="rounded-3xl glass-panel p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white">Probar conversación</h3>
                 </div>
-
-                <div className="space-y-1.5">
+                <div className="grid grid-cols-2 gap-2">
                   {[
-                    "¿Cuáles son los precios de corte y barba?",
-                    "¿Tenés turno disponible para hoy a las 16:00 hs?",
-                    "Quiero agendar corte para mañana con Diego",
-                    "¿Cómo te puedo hacer una transferencia?",
-                    "¿Cuántos puntos acumulados tengo?",
-                    "Quiero hablar con una persona",
-                  ].map((example) => (
+                    { label: "Precios", message: "¿Cuáles son los precios de corte y barba?" },
+                    { label: "Turnos hoy", message: "¿Tenés turno disponible para hoy a las 16:00 hs?" },
+                    { label: "Agendar", message: "Quiero agendar corte para mañana con Diego" },
+                    { label: "Transferencia", message: "¿Cómo te puedo hacer una transferencia?" },
+                    { label: "Puntos", message: "¿Cuántos puntos acumulados tengo?" },
+                    { label: "Hablar con alguien", message: "Quiero hablar con una persona" },
+                  ].map(({ label, message }) => (
                     <button
-                      key={example}
+                      key={label}
                       type="button"
-                      onClick={() => triggerSimMessage(example)}
-                      className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition cursor-pointer flex items-center justify-between active:scale-98"
+                      aria-label={"Probar consulta: " + message}
+                      title={message}
+                      onClick={() => triggerSimMessage(message)}
+                      disabled={isBotTypingSim}
+                      className="min-h-10 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-200 dark:hover:bg-primary/10"
                     >
-                      <span className="truncate pr-2">&ldquo;{example}&rdquo;</span>
-                      <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      {label}
                     </button>
                   ))}
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSimChatMessages([]);
-                      pushToast("success", "Conversación reiniciada.");
-                    }}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    <span>Limpiar chat</span>
-                  </button>
-                  <span className="text-[10px] text-slate-400">Simulador en vivo</span>
                 </div>
               </div>
             </div>
@@ -1477,222 +1403,199 @@ export default function BotWhatsAppPage() {
         </div>
       ) : (
         /* PESTAÑA 2: RECORDATORIOS AUTOMÁTICOS Y CRON JOB CONFIGURABLE */
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5">
           {/* Barra superior de plantillas y botón de crear nuevo */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 shadow-xs">
+          <div className="flex flex-col gap-3 rounded-3xl glass-panel p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Timer className="h-4 w-4 text-[#FF4F2B]" />
-                <span>Plantillas de Mensajes y Cron Job de Recordatorios</span>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white sm:text-lg">
+                Mensajes y recordatorios
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Configurá con cuánta antelación querés que el servidor despache automáticamente los recordatorios por WhatsApp a cada cliente.
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Elegí qué recibe el cliente y cuándo.
               </p>
             </div>
 
             <button
               type="button"
               onClick={handleCreateNewReminder}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer bg-[#FF4F2B]"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:brightness-110 active:scale-95 sm:w-auto"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>Nuevo Recordatorio</span>
+              <span>Nuevo recordatorio</span>
             </button>
           </div>
 
-          {/* Selector de plantillas tipo Pills con tiempos */}
-          <div className="flex flex-wrap gap-2">
+          {/* Selector de mensajes */}
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 lg:grid-cols-4">
             {whatsappTemplates.map((template) => {
               const isSelected = selectedTemplateId === template.id;
-              const hasTiming = typeof template.timingMinutesBefore === "number" && template.timingMinutesBefore > 0;
+              const hasTiming = typeof template.timingMinutesBefore === "number";
+              const eventLabel = eventTemplateLabel(template.trigger);
               return (
                 <button
                   key={template.id}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => setSelectedTemplateId(template.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs transition cursor-pointer ${
+                  className={`flex min-h-[76px] min-w-0 flex-col gap-1.5 rounded-2xl border p-3 text-left text-xs transition cursor-pointer sm:gap-2 sm:p-3.5 ${
                     isSelected
-                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm font-bold border border-transparent ring-2 ring-[#FF4F2B]/40"
-                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      ? "border-primary bg-primary text-white shadow-sm"
+                      : "glass-panel-subtle text-slate-700 dark:text-slate-300 hover:border-primary/50"
                   }`}
                 >
-                  <Clock className={`h-3.5 w-3.5 ${isSelected ? "text-[#FF4F2B]" : "text-slate-400"}`} />
-                  <span>{template.name}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold ${
-                      isSelected
-                        ? "bg-white/20 dark:bg-black/15 text-white dark:text-slate-900"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                    }`}
-                  >
-                    {hasTiming ? formatTimingLabel(template.timingMinutesBefore) : "Inmediato"}
+                  <span className="flex w-full min-w-0 items-start justify-between gap-2">
+                    <span className="min-w-0 font-semibold leading-snug">{template.name}</span>
+                    <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${template.enabled ? "bg-emerald-500 ring-2 ring-emerald-500/25" : isSelected ? "bg-white/60" : "bg-slate-400"}`} title={template.enabled ? "Plantilla activada" : "Plantilla pausada"} />
                   </span>
-                  <span
-                    className={`h-2 w-2 rounded-full shrink-0 ${
-                      template.enabled ? "bg-emerald-500 ring-2 ring-emerald-500/20" : "bg-slate-300 dark:bg-slate-700"
-                    }`}
-                    title={template.enabled ? "Plantilla activada" : "Plantilla pausada"}
-                  />
+                  <span className={`flex items-center gap-1.5 text-[11px] ${isSelected ? "text-white/80" : "text-slate-500 dark:text-slate-400"}`}>
+                    <Clock aria-hidden="true" className="h-3.5 w-3.5" />
+                    {eventLabel || (hasTiming ? formatTimingLabel(template.timingMinutesBefore) : "Sin horario")}
+                  </span>
                 </button>
               );
             })}
           </div>
 
           {/* Grid principal: Editor a la izquierda, Preview y Test a la derecha */}
-          <div className="grid gap-6 lg:grid-cols-12 items-start">
+          <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-12">
             <div data-tour="bot-templates-card" className="lg:col-span-7 space-y-4">
-              {/* CARD 1: CONFIGURACIÓN DEL CRON JOB (TIEMPO DE ANTELACIÓN) */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF4F2B]/10 text-[#FF4F2B]">
-                      <Timer className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                        Tiempo de Envío (Cron Job Configurable)
-                      </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Elegí con cuánta antelación previa a la cita querés que el sistema mande este aviso.
-                      </p>
-                    </div>
+              {/* Programación */}
+              <div className="rounded-3xl glass-panel p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3 dark:border-white/10">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {currentEventLabel ? "Envío por evento" : "Cuándo se envía"}
+                    </h3>
+                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      {currentEventLabel ? "Se activa al cambiar el estado del turno." : "Elegí la anticipación del mensaje."}
+                    </p>
                   </div>
-
-                  <span className="text-[11px] font-mono font-bold text-[#FF4F2B] bg-[#FF4F2B]/10 px-2.5 py-1 rounded-full">
-                    {formatTimingLabel(currentTemplate?.timingMinutesBefore)}
-                  </span>
                 </div>
 
-                {/* Presets de tiempo rápido */}
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 block">
-                    Seleccionar tiempo predefinido:
-                  </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {TIMING_PRESETS.map((preset) => {
-                      const isActive = currentTemplate?.timingMinutesBefore === preset.minutes;
-                      return (
+                {currentEventLabel ? (
+                  <p className="rounded-2xl glass-panel-subtle p-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                    Este mensaje se envía automáticamente. No necesita una hora de anticipación.
+                  </p>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <span className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Anticipación
+                      </span>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {TIMING_PRESETS.map((preset) => {
+                          const isActive = currentTemplate?.timingMinutesBefore === preset.minutes;
+                          return (
+                            <button
+                              key={preset.minutes}
+                              type="button"
+                              aria-pressed={isActive}
+                              onClick={() => {
+                                if (currentTemplate) {
+                                  updateWhatsAppTemplate(currentTemplate.id, {
+                                    timingMinutesBefore: preset.minutes,
+                                  });
+                                  setHasUnsavedTemplateChanges(true);
+                                }
+                              }}
+                              className={`min-h-12 cursor-pointer rounded-xl border px-2.5 py-2 text-center text-xs font-semibold transition ${
+                                isActive
+                                  ? "border-primary bg-primary font-semibold text-white shadow-xs"
+                                  : "glass-panel-subtle text-slate-700 hover:border-primary/40 dark:text-slate-300"
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          );
+                        })}
+
                         <button
-                          key={preset.minutes}
                           type="button"
+                          aria-pressed={isImmediateReminder}
                           onClick={() => {
                             if (currentTemplate) {
                               updateWhatsAppTemplate(currentTemplate.id, {
-                                timingMinutesBefore: preset.minutes,
+                                timingMinutesBefore: 0,
                               });
+                              setHasUnsavedTemplateChanges(true);
                             }
                           }}
-                          className={`px-3 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center text-center transition cursor-pointer border ${
-                            isActive
-                              ? "bg-[#FF4F2B] text-white border-[#FF4F2B] shadow-xs font-bold"
-                              : "bg-slate-50 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          className={`min-h-12 cursor-pointer rounded-xl border px-2.5 py-2 text-center text-xs font-semibold transition ${
+                            isImmediateReminder
+                              ? "border-primary bg-primary font-semibold text-white shadow-xs"
+                              : "glass-panel-subtle text-slate-700 hover:border-primary/40 dark:text-slate-300"
                           }`}
                         >
-                          <span>{preset.label}</span>
-                          <span
-                            className={`text-[9px] mt-0.5 ${
-                              isActive ? "text-white/80" : "text-slate-400 dark:text-slate-500"
-                            }`}
-                          >
-                            {preset.desc}
-                          </span>
+                          Al inicio del turno
                         </button>
-                      );
-                    })}
+                      </div>
+                    </div>
 
-                    {/* Botón para tiempo inmediato (sin cron de antelación) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (currentTemplate) {
-                          updateWhatsAppTemplate(currentTemplate.id, {
-                            timingMinutesBefore: 0,
-                          });
-                        }
-                      }}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center text-center transition cursor-pointer border ${
-                        !currentTemplate?.timingMinutesBefore || currentTemplate?.timingMinutesBefore === 0
-                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-xs font-bold"
-                          : "bg-slate-50 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      <span>Inmediato</span>
-                      <span className="text-[9px] text-slate-400 mt-0.5">Al momento</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Personalizar minutos exactos */}
-                <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                    O personalizar en minutos exactos:
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={5}
-                      max={10080}
-                      step={5}
-                      value={customMinutesInput}
-                      onChange={(e) => setCustomMinutesInput(e.target.value)}
-                      placeholder={String(currentTemplate?.timingMinutesBefore || 60)}
-                      className="w-24 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-[#FF4F2B]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const parsed = parseInt(customMinutesInput, 10);
-                        if (!isNaN(parsed) && parsed > 0 && currentTemplate) {
-                          updateWhatsAppTemplate(currentTemplate.id, {
-                            timingMinutesBefore: parsed,
-                          });
-                          pushToast("success", `Tiempo configurado a ${formatTimingLabel(parsed)}.`);
-                          setCustomMinutesInput("");
-                        } else {
-                          pushToast("error", "Ingresá un número válido de minutos (ej: 45, 90, 180).");
-                        }
-                      }}
-                      className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-bold text-slate-800 dark:text-slate-200 transition cursor-pointer"
-                    >
-                      Fijar Minutos
-                    </button>
-                  </div>
-                </div>
-
-                {/* Banner de estado del Cron Job */}
-                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 flex items-start gap-2.5">
-                  <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-                    <strong className="font-bold">Ejecución del Cron Job:</strong> Nuestro servidor escanea periódicamente las citas y, cuando falten exactamente{" "}
-                    <span className="underline font-bold">
-                      {formatTimingLabel(currentTemplate?.timingMinutesBefore)}
-                    </span>{" "}
-                    para el turno de un cliente confirmado, le despachará este WhatsApp con sus datos personalizados.
-                  </div>
-                </div>
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-200/70 pt-3 dark:border-white/10">
+                      <label htmlFor="custom-reminder-minutes" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Otro intervalo
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="custom-reminder-minutes"
+                          type="number"
+                          min={5}
+                          max={10080}
+                          step={5}
+                          value={customMinutesInput}
+                          onChange={(e) => setCustomMinutesInput(e.target.value)}
+                          placeholder={String(currentTemplate?.timingMinutesBefore || 60)}
+                          className="w-24 rounded-xl border border-slate-200/80 bg-white/70 px-3 py-2 text-xs tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+                        />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">min</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const parsed = parseInt(customMinutesInput, 10);
+                            if (Number.isInteger(parsed) && parsed >= 5 && parsed <= 10080 && currentTemplate) {
+                              updateWhatsAppTemplate(currentTemplate.id, {
+                                timingMinutesBefore: parsed,
+                              });
+                              setHasUnsavedTemplateChanges(true);
+                              pushToast("success", `Tiempo configurado a ${formatTimingLabel(parsed)}.`);
+                              setCustomMinutesInput("");
+                            } else {
+                              pushToast("error", "Ingresá un número entero entre 5 y 10.080 minutos.");
+                            }
+                          }}
+                          className="min-h-9 rounded-xl border border-slate-200/80 px-3 text-xs font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-slate-200"
+                        >
+                          Aplicar
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* CARD 2: EDITOR DE PLANTILLA */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5 gap-3">
-                  <div className="flex-1">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      Nombre de la Plantilla
+              {/* Mensaje */}
+              <div className="rounded-3xl glass-panel p-4 sm:p-5 space-y-4">
+                <div className="flex flex-col gap-3 border-b border-slate-100 pb-3 min-[430px]:flex-row min-[430px]:items-end min-[430px]:justify-between dark:border-white/5">
+                  <div className="min-w-0 flex-1">
+                    <label htmlFor="template-name" className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                      Nombre del mensaje
                     </label>
                     <input
+                      id="template-name"
                       type="text"
                       value={currentTemplate?.name || ""}
                       onChange={(e) => {
                         if (currentTemplate) {
                           updateWhatsAppTemplate(currentTemplate.id, { name: e.target.value });
+                          setHasUnsavedTemplateChanges(true);
                         }
                       }}
-                      className="w-full text-sm font-bold text-slate-900 dark:text-white bg-transparent border-b border-slate-200 dark:border-white/10 pb-1 focus:outline-none focus:border-[#FF4F2B] transition"
+                      className="w-full rounded-xl border border-slate-200/80 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-900 transition placeholder:text-slate-400 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:bg-white/[0.07] dark:focus:ring-primary/25"
                       placeholder="Nombre de la plantilla..."
                     />
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex shrink-0 items-center justify-between gap-3 min-[430px]:justify-end">
                     <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
                       <span className="text-[11px] text-slate-400">
                         {currentTemplate?.enabled ? "Activado" : "Pausado"}
@@ -1702,9 +1605,10 @@ export default function BotWhatsAppPage() {
                         onChange={() => {
                           if (currentTemplate) {
                             toggleWhatsAppTemplate(currentTemplate.id);
+                            setHasUnsavedTemplateChanges(true);
                             pushToast(
                               "success",
-                              `Plantilla ${currentTemplate.enabled ? "pausada" : "activada"}.`
+                              `Plantilla ${currentTemplate.enabled ? "pausada" : "activada"} en el borrador. Guardá para aplicar el cambio.`
                             );
                           }
                         }}
@@ -1728,82 +1632,78 @@ export default function BotWhatsAppPage() {
                 {/* Área de texto */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Contenido del Mensaje de WhatsApp:
+                    <label htmlFor="template-body" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Mensaje para tus clientes
                     </label>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="text-[11px] text-slate-400 tabular-nums">
                       {currentTemplate?.body?.length || 0} caracteres
                     </span>
                   </div>
                   <textarea
+                    id="template-body"
+                    ref={templateBodyRef}
                     rows={6}
+                    maxLength={4000}
                     value={currentTemplate?.body || ""}
                     onChange={(e) => {
                       if (currentTemplate) {
                         updateWhatsAppTemplate(currentTemplate.id, e.target.value);
+                        setHasUnsavedTemplateChanges(true);
                       }
                     }}
                     placeholder="Escribí el texto que le llegará a tus clientes..."
-                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3.5 text-xs text-slate-900 dark:text-white font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#FF4F2B]/40 transition resize-y"
+                    className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 p-3.5 text-xs text-slate-900 dark:text-white tabular-nums leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#FF4F2B]/40 transition resize-y"
                   />
                 </div>
 
-                {/* Chips de variables dinámicas */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block">
-                      Variables Inteligentes (hacé clic para insertar):
-                    </span>
-                    <span className="text-[10px] text-slate-400">Se reemplazan automáticamente</span>
+                <details className="group/variables rounded-2xl glass-panel-subtle">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold text-slate-700 transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50 dark:text-slate-200 [&::-webkit-details-marker]:hidden">
+                    <span>Personalizar con datos del turno</span>
+                    <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-open/variables:rotate-180" />
+                  </summary>
+                  <div className="space-y-3 border-t border-slate-200/70 px-3.5 py-3 dark:border-white/10">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Elegí un dato para insertarlo en el mensaje.</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {AVAILABLE_TAGS.map((t) => (
+                        <button
+                          key={t.tag}
+                          type="button"
+                          onClick={() => insertTag(t.tag)}
+                          className="group inline-flex min-h-8 items-center gap-1 rounded-lg border border-primary/15 bg-primary/5 px-2.5 py-1 tabular-nums text-[11px] text-slate-700 transition hover:border-primary/40 hover:bg-primary/10 dark:text-slate-200 active:scale-95"
+                          title={`Ejemplo: ${t.sample}`}
+                        >
+                          <span className="font-semibold text-primary">{t.tag}</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">({t.label})</span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="border-t border-slate-200/70 pt-2 text-[11px] text-slate-500 dark:border-white/10 dark:text-slate-400">
+                      Formato: <span className="font-semibold">*negrita*</span>, _cursiva_, ~tachado~ o `código`.
+                    </p>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {AVAILABLE_TAGS.map((t) => (
-                      <button
-                        key={t.tag}
-                        type="button"
-                        onClick={() => insertTag(t.tag)}
-                        className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#FF4F2B]/10 hover:border-[#FF4F2B]/30 dark:hover:bg-slate-700 text-[11px] font-mono text-slate-700 dark:text-slate-300 transition cursor-pointer border border-slate-200/60 dark:border-white/5 active:scale-95"
-                        title={`Ejemplo: ${t.sample}`}
-                      >
-                        <span className="font-bold text-[#FF4F2B]">{t.tag}</span>
-                        <span className="text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
-                          ({t.label})
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Ayuda de formato WhatsApp */}
-                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">Formato:</span>
-                  <span>*negrita*</span>
-                  <span>_cursiva_</span>
-                  <span>~tachado~</span>
-                  <span className="font-mono bg-black/5 dark:bg-white/5 px-1 rounded">`código`</span>
-                </div>
+                </details>
               </div>
 
-              {/* CARD 3: BOTÓN DE GUARDADO EN BASE DE DATOS */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Recordá guardar tus cambios para que el Cron Job tome los nuevos tiempos y textos.
+              {/* Guardado */}
+              <div className="flex flex-col items-start justify-between gap-3 rounded-2xl glass-panel-subtle p-3.5 sm:flex-row sm:items-center sm:p-4">
+                <div className="text-xs text-slate-600 dark:text-slate-300" aria-live="polite">
+                  {hasUnsavedTemplateChanges ? "Hay cambios sin guardar." : "Todos los cambios están guardados."}
                 </div>
                 <button
                   type="button"
                   onClick={handleSaveTemplates}
                   disabled={isSavingTemplates}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer bg-[#FF4F2B] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {isSavingTemplates ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>Guardando en el Servidor...</span>
+                      <span>Guardando…</span>
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4" />
-                      <span>Guardar Configuración de Recordatorios</span>
+                      <span>Guardar cambios</span>
                     </>
                   )}
                 </button>
@@ -1813,7 +1713,7 @@ export default function BotWhatsAppPage() {
             {/* COLUMNA DERECHA: VISTA PREVIA VISUAL EN VIVO + PRUEBA EN TIEMPO REAL */}
             <div className="lg:col-span-5 space-y-4">
               {/* Simulador de WhatsApp Estilo Móvil */}
-              <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+              <div className="overflow-hidden rounded-3xl border border-[#e7ece8] bg-[#ffffff] shadow-xl">
                 {/* Cabecera estilo WhatsApp oficial */}
                 <div className="bg-[#008069] text-white px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -1841,25 +1741,17 @@ export default function BotWhatsAppPage() {
 
                 {/* Fondo de conversación de WhatsApp */}
                 <div
-                  className="p-4 min-h-[300px] flex flex-col justify-end bg-[#efeae2] dark:bg-[#0b141a]"
+                  className="flex min-h-[300px] flex-col justify-end bg-[#efeae2] p-4"
                   style={{
                     backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px)`,
                     backgroundSize: "16px 16px",
                   }}
                 >
-                  {/* Etiqueta de aviso de cifrado / antelación */}
-                  <div className="self-center mb-3 px-3 py-1 rounded-lg bg-white/80 dark:bg-slate-800/80 shadow-2xs text-[10px] text-slate-500 dark:text-slate-400 font-semibold text-center max-w-[260px]">
-                    ⏱️ Envío programado:{" "}
-                    <span className="text-[#FF4F2B] font-bold">
-                      {formatTimingLabel(currentTemplate?.timingMinutesBefore)}
-                    </span>
-                  </div>
-
                   {/* Globo de mensaje saliente de WhatsApp */}
-                  <div className="relative self-end max-w-[88%] rounded-2xl rounded-tr-xs bg-[#d9fdd3] dark:bg-[#005c4b] text-slate-900 dark:text-slate-100 p-3.5 shadow-sm text-xs leading-relaxed">
+                  <div className="relative max-w-[88%] self-end break-words rounded-2xl rounded-tr-xs border border-[#c9e7c4] bg-[#d9fdd3] p-3.5 text-xs leading-relaxed text-[#18221d] shadow-sm [overflow-wrap:anywhere]">
                     {renderWhatsAppFormatted(currentTemplate ? getPreviewText(currentTemplate.body) : "")}
 
-                    <div className="flex items-center justify-end gap-1 text-[9px] text-slate-500 dark:text-slate-300 mt-2 font-mono">
+                    <div className="mt-2 flex items-center justify-end gap-1 text-[9px] font-mono text-[#60736a]">
                       <span>14:30</span>
                       <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb]" />
                     </div>
@@ -1867,16 +1759,16 @@ export default function BotWhatsAppPage() {
                 </div>
 
                 {/* Barra inferior del simulador */}
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-500">
+                <div className="flex items-center justify-between border-t border-[#e7ece8] bg-[#ffffff] px-3 py-2.5 text-[11px] text-[#65706a]">
                   <span className="flex items-center gap-1.5 font-medium">
                     <Eye className="h-3.5 w-3.5 text-[#FF4F2B]" />
-                    <span>Vista previa en vivo con datos reales de muestra</span>
+                    <span>Vista previa con datos de ejemplo</span>
                   </span>
                 </div>
               </div>
 
               {/* CARD DE PRUEBA REAL EN VIVO A MI WHATSAPP */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-3.5 shadow-2xs">
+              <div className="rounded-3xl glass-panel p-4 sm:p-5 space-y-3.5">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
                     <Send className="h-4 w-4" />
@@ -1892,22 +1784,23 @@ export default function BotWhatsAppPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block">
+                  <label htmlFor="test-phone" className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block">
                     Número de teléfono receptor (con código de país ej: 595981...):
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 min-[430px]:flex-row">
                     <input
+                      id="test-phone"
                       type="tel"
                       value={testPhone}
                       onChange={(e) => setTestPhone(e.target.value)}
                       placeholder="+595 981 123 456"
-                      className="flex-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
+                      className="min-w-0 flex-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"
                     />
                     <button
                       type="button"
                       onClick={handleSendTestReminder}
                       disabled={isSendingTestReminder || !isConnected}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-[430px]:shrink-0"
                     >
                       {isSendingTestReminder ? (
                         <>
@@ -1932,45 +1825,15 @@ export default function BotWhatsAppPage() {
             </div>
           </div>
 
-          {/* BANNER INFORMATIVO INFERIOR: ARQUITECTURA DEL CRON JOB */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900/60 p-5 shadow-2xs space-y-3">
-            <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[#FF4F2B]" />
-              <span>¿Cómo funciona el Cron Job de Recordatorios de AgendatePY?</span>
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-white/5 space-y-1">
-                <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>Escaneo Continuo en Segundo Plano</span>
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  El servidor ejecuta un Cron Job continuo que monitorea la base de datos PostgreSQL y detecta turnos confirmados según el tiempo de antelación fijado.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-white/5 space-y-1">
-                <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Filtro Anti-Duplicados y Cero Spam</span>
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Cada aviso despachado genera un evento único en la base de datos. Ningún cliente recibirá jamás un recordatorio duplicado.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-white/5 space-y-1">
-                <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Bot className="h-3.5 w-3.5 text-[#FF4F2B]" />
-                  <span>Despacho Directo por tu WhatsApp</span>
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Los mensajes salen de tu número oficial conectado a WhatsApp, por lo que el cliente puede responder directamente para confirmar o consultar.
-                </p>
-              </div>
-            </div>
-          </div>
+          <details className="group/reminder-help rounded-2xl glass-panel-subtle">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-semibold text-slate-700 transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50 dark:text-slate-200 [&::-webkit-details-marker]:hidden">
+              <span>¿Cómo se envían estos mensajes?</span>
+              <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-open/reminder-help:rotate-180" />
+            </summary>
+            <p className="border-t border-slate-200/70 px-4 py-3 text-xs leading-relaxed text-slate-600 dark:border-white/10 dark:text-slate-300">
+              Las confirmaciones y cancelaciones salen cuando cambia el turno. Los recordatorios se envían según la anticipación elegida, desde tu número de WhatsApp conectado.
+            </p>
+          </details>
         </div>
       )}
 
@@ -1984,7 +1847,7 @@ export default function BotWhatsAppPage() {
                   <QrCode className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                     Vincular WhatsApp Oficial
                   </h3>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -2004,7 +1867,15 @@ export default function BotWhatsAppPage() {
 
             <div className="relative flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10">
               <div className="relative p-4 bg-white rounded-2xl shadow-xs border border-slate-100">
-                {qrCodeDataUrl ? (
+                {isConnected ? (
+                  <div className="flex h-48 w-48 flex-col items-center justify-center gap-3 text-center">
+                    <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">WhatsApp conectado</p>
+                      <p className="mt-1 text-xs text-slate-500">{activeConnectedPhone}</p>
+                    </div>
+                  </div>
+                ) : qrCodeDataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={qrCodeDataUrl}
@@ -2012,42 +1883,60 @@ export default function BotWhatsAppPage() {
                     className="h-48 w-48 object-contain rounded-lg"
                   />
                 ) : (
-                  <div className="h-48 w-48 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse flex items-center justify-center">
-                    <span className="text-xs text-slate-400 font-bold">Generando código...</span>
+                  <div className="flex h-48 w-48 flex-col items-center justify-center gap-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-center">
+                    {isConnecting || connectionStatus === "checking" ? (
+                      <RefreshCw className="h-5 w-5 animate-spin text-emerald-600" />
+                    ) : (
+                      <QrCode className="h-8 w-8 text-slate-400" />
+                    )}
+                    <span className="px-4 text-xs text-slate-500">
+                      {isConnecting || connectionStatus === "checking" ? "Conectando con WhatsApp…" : "No hay un código QR disponible."}
+                    </span>
                   </div>
                 )}
               </div>
 
-              <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-                <RefreshCw className="h-3 w-3 animate-spin text-emerald-600" />
-                <span>Actualiza automáticamente cada 30 segundos</span>
-              </div>
+              <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+                {isConnected ? "La cuenta ya está lista para recibir mensajes." : "El estado se actualiza automáticamente mientras vinculás el dispositivo."}
+              </p>
             </div>
 
-            <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-100 dark:border-white/5">
-              <p className="font-bold text-slate-900 dark:text-white">¿Cómo vincular tu WhatsApp?:</p>
-              <ol className="list-decimal pl-4 space-y-1 text-[11px]">
-                <li>Abrí WhatsApp en el teléfono de tu negocio.</li>
-                <li>Tocá en <strong>Ajustes</strong> o los 3 puntos y seleccioná <strong>Dispositivos vinculados</strong>.</li>
-                <li>Tocá <strong>Vincular dispositivo</strong> y apuntá la cámara a este código QR.</li>
-              </ol>
-            </div>
+            {connectionError && (
+              <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-xs text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
+                {connectionError}
+              </div>
+            )}
+
+            {!isConnected && (
+              <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-100 dark:border-white/5">
+                <p className="font-semibold text-slate-900 dark:text-white">Para vincular</p>
+                <ol className="list-decimal pl-4 space-y-1 text-[11px]">
+                  <li>Abrí WhatsApp y entrá a <strong>Dispositivos vinculados</strong>.</li>
+                  <li>Elegí <strong>Vincular dispositivo</strong> y escaneá el QR.</li>
+                </ol>
+              </div>
+            )}
 
             <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleConnectSimulated}
-                className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 text-xs shadow-md transition cursor-pointer"
-              >
-                Confirmar Vinculación
-              </button>
               {isConnected && (
                 <button
                   type="button"
-                  onClick={handleDisconnect}
-                  className="rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 text-rose-600 hover:bg-rose-100 py-2.5 px-3 text-xs font-bold transition cursor-pointer"
+                  onClick={() => void handleDisconnect()}
+                  disabled={isConnecting}
+                  className="rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 text-rose-600 hover:bg-rose-100 py-2.5 px-3 text-xs font-semibold transition cursor-pointer"
                 >
-                  Desconectar
+                  {isConnecting ? "Desconectando…" : "Desconectar cuenta"}
+                </button>
+              )}
+              {!isConnected && (
+                <button
+                  type="button"
+                  onClick={() => void startWhatsAppConnection()}
+                  disabled={isConnecting}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 text-xs shadow-md transition disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isConnecting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <QrCode className="h-3.5 w-3.5" />}
+                  {isConnecting ? "Generando QR…" : "Actualizar código QR"}
                 </button>
               )}
             </div>
@@ -2065,7 +1954,7 @@ export default function BotWhatsAppPage() {
                   <PhoneCall className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                     Soporte & Asistencia
                   </h3>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -2089,7 +1978,7 @@ export default function BotWhatsAppPage() {
               </p>
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 space-y-1">
                 <span className="text-[11px] text-slate-400 block font-semibold">WhatsApp de Soporte Directo:</span>
-                <span className="text-sm font-mono font-bold text-emerald-600">+595 981 700 800</span>
+                <span className="text-sm tabular-nums font-semibold text-emerald-600">+595 981 700 800</span>
               </div>
             </div>
 
@@ -2098,7 +1987,7 @@ export default function BotWhatsAppPage() {
                 href="https://wa.me/595981700800?text=Hola,%20necesito%20ayuda%20con%20mi%20asistente%20de%20WhatsApp%20en%20AgendatePY"
                 target="_blank"
                 rel="noreferrer"
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 text-xs shadow-md transition cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 text-xs shadow-md transition cursor-pointer"
               >
                 <span>Chatear con Soporte</span>
                 <ArrowRight className="h-3.5 w-3.5" />

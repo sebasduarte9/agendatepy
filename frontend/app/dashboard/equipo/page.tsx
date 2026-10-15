@@ -14,21 +14,17 @@ import {
   Clock,
   Percent,
   Mail,
-  Send,
   Trash2,
   Check,
   Search,
   X,
   Copy,
   CheckCheck,
-  Power,
   AlertTriangle,
   ArrowRight,
   Layers,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Card from "@/components/dashboard/ui/Card";
-import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
 import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
@@ -87,6 +83,20 @@ const PERMISSIONS_LIST = [
   { id: "services", label: "Modificar Precios & Catálogo" },
 ];
 
+const ROLE_ACCESS: Record<UserRole, string[]> = {
+  admin: PERMISSIONS_LIST.map((permission) => permission.id),
+  cajero: ["cashier", "transfer_receipts", "all_schedule", "fichas"],
+  barbero: ["own_schedule", "breaks", "fichas"],
+  estilista: ["own_schedule", "breaks", "fichas"],
+};
+
+const ACCESS_ROLE_COLUMNS: { role: UserRole; label: string; shortLabel: string }[] = [
+  { role: "admin", label: "Dueño", shortLabel: "Dueño" },
+  { role: "cajero", label: "Cajero", shortLabel: "Caja" },
+  { role: "barbero", label: "Barbero", shortLabel: "Barbero" },
+  { role: "estilista", label: "Estilista", shortLabel: "Estilista" },
+];
+
 const STAFF_COLORS = [
   "#FF4F2B", // Brand sunset primary
   "#4f46e5", // Indigo
@@ -114,7 +124,6 @@ export default function EquipoRolesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [invitingId, setInvitingId] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   // Filters & Search
@@ -270,9 +279,11 @@ export default function EquipoRolesPage() {
     setModalOpen(false);
   }
 
-  function handleToggleActive(member: StaffMember) {
-    const nextState = !member.active;
-    updateStaff(member.id, { active: nextState });
+  async function handleToggleActive(member: StaffMember) {
+    const nextState = member.active === false;
+    const saved = await updateStaff(member.id, { active: nextState });
+    if (saved === false) return;
+
     pushToast(
       "success",
       nextState
@@ -321,7 +332,7 @@ export default function EquipoRolesPage() {
   }, [staff, roleFilter, searchQuery]);
 
   const activeStaffCount = staff.filter((s) => s.active !== false).length;
-  const adminCount = staff.filter((s) => s.systemRole === "admin").length || 1;
+  const adminCount = staff.filter((s) => s.systemRole === "admin").length;
   const cashierCount = staff.filter((s) => s.systemRole === "cajero").length;
   const prosCount = staff.filter((s) => s.systemRole !== "admin" && s.systemRole !== "cajero").length;
 
@@ -337,727 +348,337 @@ export default function EquipoRolesPage() {
   }, [staff]);
 
   return (
-    <div className="space-y-6 pb-12 sm:pb-8 w-full max-w-full overflow-hidden">
-      {/* ========================================================= */}
-      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
-      <div
+    <div className="w-full max-w-full space-y-5 overflow-hidden pb-24 sm:space-y-6 sm:pb-10">
+      <header
         data-tour="equipo-header"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
       >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Equipo & Especialistas
-        </h1>
-
-        {/* Quick Action Dock */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Personas y accesos</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Equipo &amp; Especialistas
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
+            Administrá colaboradores, servicios y permisos desde un solo lugar.
+          </p>
+        </div>
+        <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
           <button
             type="button"
             data-tour="equipo-new-btn"
             onClick={openCreate}
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
-            style={{
-              backgroundColor: business.primaryColor || "#FF4F2B",
-            }}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-[0.98]"
+            style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Invitar Colaborador</span>
+            <Plus className="h-4 w-4" />
+            Invitar colaborador
           </button>
-
           <Link
             href="/dashboard/servicios"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold shadow-xs transition"
-            title="Ir al Catálogo de Servicios"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 glass-panel-subtle px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-white/10 dark:text-zinc-200"
+            title="Ir al catálogo de servicios"
           >
-            <Layers className="h-3.5 w-3.5 text-slate-400" />
-            <span>Servicios ({services.length})</span>
+            <Layers className="h-4 w-4 text-primary" />
+            Servicios <span className="tabular-nums">({services.length})</span>
           </Link>
         </div>
-      </div>
+      </header>
 
-      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div data-tour="equipo-kpis" className="kpi-rise block md:hidden p-4 rounded-3xl glass-panel shadow-xs">
-        <div className="flex items-center justify-between">
+      <section data-tour="equipo-kpis" className="rounded-3xl glass-panel p-4 sm:p-5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
           <div>
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-              Equipo Activo
-            </span>
-            <span className="text-2xl font-black font-mono text-white">
-              {activeStaffCount} <span className="text-xs font-normal text-zinc-400">de {staff.length} miembros</span>
-            </span>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Resumen del equipo</h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">Estado general y distribución de roles.</p>
           </div>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
-            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-          >
-            + Invitar
-          </button>
-        </div>
-        <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-zinc-400">
-          <span>Especialistas: <strong className="text-white">{prosCount}</strong></span>
-          <span>Admins: <strong className="text-white">{adminCount}</strong></span>
-          <span>Caja: <strong className="text-white">{cashierCount}</strong></span>
-        </div>
-      </div>
-
-      {/* ========================================================= */}
-      {/* 2. OPERATIONAL INSET CONTAINER (GAUGES & TELEMETRY)        */}
-      {/* ========================================================= */}
-      <div data-tour="equipo-kpis" className="kpi-rise hidden md:block rounded-[28px] glass-panel p-4 sm:p-5 shadow-xs space-y-4">
-        {/* Inset Subheader */}
-        <div className="flex items-center justify-between gap-2 px-1">
-          <div className="font-semibold text-sm text-white flex items-center gap-2">
-            Dotación & Roles <span className="text-primary text-xs">▰</span>
-          </div>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
+            Disponibilidad <span className="ml-1 font-semibold tabular-nums text-slate-800 dark:text-zinc-200">{staff.length ? activeRate + "%" : "—"}</span>
+          </p>
         </div>
 
-        {/* Dual-Card Inset Telemetry */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left Card: Operational Gauges & Summary */}
-          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between">
-            {/* Top section: Mini status box + 2 circular gauges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pb-4">
-              {/* Mini status box */}
-              <div className="rounded-xl glass-panel p-3.5 flex flex-col justify-between h-full min-h-[120px]">
-                <div>
-                  <div className="text-xs font-semibold text-white">
-                    Equipo Activo
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <span className="inline-block rounded-full bg-primary/20 text-primary border border-primary/30 px-3 py-1 text-[11px] font-semibold">
-                    {prosCount} especialistas
-                  </span>
-                </div>
-              </div>
-
-              {/* Circular Gauge 1: Activos % */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * activeRate) / 100}
-                      strokeLinecap="round"
-                      style={{ stroke: "var(--primary, #FF4F2B)" }}
-                      className="transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {activeRate}%
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Activos
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  en recepción y sillas
-                </div>
-              </div>
-
-              {/* Circular Gauge 2: Comisión Promedio */}
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="relative h-14 w-14 flex items-center justify-center">
-                  <svg className="h-14 w-14 -rotate-90 transform" viewBox="0 0 48 48">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray="4 2"
-                      className="text-slate-100 dark:text-slate-800"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, avgCommission)) / 100}
-                      strokeLinecap="round"
-                      className="text-emerald-500 transition-all duration-700"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-slate-900 dark:text-white">
-                    {avgCommission}%
-                  </span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
-                  Comisión
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  promedio salón
-                </div>
-              </div>
+        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-white/10 pt-4 sm:grid-cols-4 sm:gap-y-0">
+          {[
+            { label: "Colaboradores", value: staff.length, detail: "registrados" },
+            { label: "Activos", value: activeStaffCount, detail: "disponibles para reservas" },
+            { label: "Especialistas", value: prosCount, detail: "barberos y estilistas" },
+            { label: "Comisión promedio", value: staff.length ? avgCommission + "%" : "—", detail: "por servicio" },
+          ].map((metric) => (
+            <div key={metric.label} className="min-w-0">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">{metric.label}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-900 dark:text-white">{metric.value}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-zinc-500">{metric.detail}</p>
             </div>
+          ))}
+        </div>
 
-            {/* Bottom Data Rows */}
-            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Administradores con acceso total</span>
-                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {adminCount}
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-4 sm:grid-cols-4">
+          {ROLE_DEFINITIONS.map((roleDefinition) => {
+            const Icon = roleDefinition.icon;
+            const count = staff.filter((person) => person.systemRole === roleDefinition.role).length;
+            return (
+              <div key={roleDefinition.role} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.025] px-3 py-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-primary">
+                  <Icon className="h-4 w-4" />
                 </span>
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700 dark:text-zinc-300">{roleDefinition.shortTitle}</span>
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-white">{count}</span>
               </div>
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                <span>Personal de caja y recepción</span>
-                <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {cashierCount}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-900 dark:text-white font-medium pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                <span>Total de colaboradores registrados</span>
-                <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                  {staff.length} miembros
-                </span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
+        </div>
+      </section>
 
-          {/* Right Card: Roles & Asignación de servicios */}
-          <div className="rounded-2xl glass-panel-subtle p-5 shadow-xs flex flex-col justify-between space-y-3">
-            <div>
-              <div className="text-xs font-semibold text-white mb-2">
-                Distribución de Niveles de Acceso
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                      <Crown className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-white">Dueño / Admin</span>
-                  </div>
-                  <span className="text-xs font-bold text-zinc-300">{adminCount} cuentas</span>
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                      <Banknote className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-white">Cajero / Mostrador</span>
-                  </div>
-                  <span className="text-xs font-bold text-zinc-300">{cashierCount} cuentas</span>
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-xl glass-panel">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-                      <Scissors className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-white">Especialistas en Salón</span>
-                  </div>
-                  <span className="text-xs font-bold text-zinc-300">{prosCount} profesionales</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom notification */}
-            <div className="border-t border-white/10 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span className="text-[11px] text-zinc-400">
-                Asigná los servicios que realiza cada profesional en el Catálogo:
+      <section data-tour="equipo-list" className="rounded-3xl glass-panel p-4 sm:p-5">
+        <div className="flex flex-col gap-4 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">Directorio de colaboradores</h2>
+              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                {filteredStaff.length} visibles
               </span>
-              <Link
-                href="/dashboard/servicios"
-                className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-1 text-xs font-bold text-white glass-panel hover:bg-white/10 transition shrink-0"
-              >
-                <span>Servicios</span>
-                <ArrowRight className="h-3 w-3" />
-              </Link>
             </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+              Cada colaborador puede iniciar sesión con Google para consultar su agenda y comisiones.
+            </p>
+          </div>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              aria-label="Buscar colaboradores"
+              placeholder="Buscar por nombre, correo o rol"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="min-h-11 w-full rounded-2xl border border-white/10 bg-black/10 pl-10 pr-10 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary/50 focus:ring-2 focus:ring-primary/15 dark:text-white"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Borrar búsqueda"
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/10 hover:text-slate-700 dark:hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Search and Filter Navigation Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Role Segmented Control */}
-        <div className="w-full sm:w-auto overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-1 mt-4 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <IosSegmentedControl
             options={[
               { value: "all", label: "Todos", badge: staff.length },
               { value: "pro", label: "Especialistas", badge: prosCount },
               { value: "cajero", label: "Caja", badge: cashierCount },
               { value: "admin", label: "Dueños", badge: adminCount },
-              { value: "active", label: "Activos" },
+              { value: "active", label: "Activos", badge: activeStaffCount },
+              { value: "paused", label: "Pausados" },
             ]}
             value={roleFilter}
-            onChange={(val) => {
-              setRoleFilter(val);
-              triggerHaptic("selection");
-            }}
+            onChange={setRoleFilter}
             layoutId="equipoRoleSegment"
-            className="w-full sm:w-auto"
+            fitContent
+            size="sm"
+            className="min-w-max"
           />
-        </div>
-
-        {/* Search Input */}
-        <div className="relative min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, correo o rol..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-8.5 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Team Members List */}
-      <Card
-        data-tour="equipo-list"
-        className="p-5 glass-panel shadow-xs space-y-4"
-      >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>Directorio de Colaboradores</span>
-              <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-bold text-primary">
-                {filteredStaff.length} visibles
-              </span>
-            </h2>
-            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400">
-              Cada colaborador puede iniciar sesión con Google para ver su propia agenda y comisiones ganadas.
-            </p>
-          </div>
         </div>
 
         {filteredStaff.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/40">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3">
+          <div className="mt-4 flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/[0.02] px-5 py-12 text-center">
+            <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Users className="h-6 w-6" />
-            </div>
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">
-              {staff.length === 0 ? "No tenés colaboradores en tu equipo" : "Sin resultados para esta búsqueda"}
+            </span>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              {staff.length === 0 ? "Todavía no hay colaboradores" : "No encontramos resultados"}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+            <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-zinc-400">
               {staff.length === 0
-                ? "Invitá a tus barberos, estilistas o cajeros para que accedan al sistema con sus permisos personalizados."
-                : "Intentá cambiar los filtros o el texto de búsqueda para encontrar al colaborador."}
+                ? "Invitá a tu equipo para que pueda consultar su agenda y trabajar con sus propios permisos."
+                : "Probá con otro nombre o correo, o limpiá los filtros aplicados."}
             </p>
             {staff.length === 0 ? (
               <button
                 type="button"
                 onClick={openCreate}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
+                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold text-white transition hover:brightness-110"
+                style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
               >
-                <Plus className="h-4 w-4" />
-                <span>+ Invitar Colaborador</span>
+                <Plus className="h-4 w-4" /> Invitar colaborador
               </button>
             ) : (
               <button
                 type="button"
-                onClick={() => {
-                  setRoleFilter("all");
-                  setSearchQuery("");
-                }}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                onClick={() => { setRoleFilter("all"); setSearchQuery(""); }}
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 px-4 text-sm font-medium text-slate-700 transition hover:bg-white/10 dark:text-zinc-200"
               >
-                <span>Limpiar filtros</span>
+                Limpiar filtros
               </button>
             )}
           </div>
         ) : (
-          <>
-            {/* Mobile Apple Inset Grouped Staff List */}
-            <div className="block sm:hidden space-y-3">
-              <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs">
-                {filteredStaff.map((person) => {
-                  const memberEmail =
-                    (person as any).email ||
-                    `${person.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`;
-                  const roleDef =
-                    ROLE_DEFINITIONS.find((r) => r.role === person.systemRole) || ROLE_DEFINITIONS[2];
-                  const isMemberActive = person.active !== false;
-                  const assignedServicesCount = services.filter((s) =>
-                    s.staffIds?.includes(person.id)
-                  ).length;
-                  const commission = person.commissionPercentage ?? 50;
-
-                  return (
-                    <div key={person.id} className="p-3.5 space-y-2.5">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="relative">
-                            <div
-                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-sm"
-                              style={{ backgroundColor: person.color || "#FF4F2B" }}
-                            >
-                              {person.avatar || person.name.slice(0, 2).toUpperCase()}
-                            </div>
-                            <span
-                              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${
-                                isMemberActive ? "bg-emerald-500" : "bg-amber-400"
-                              }`}
-                            />
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">
-                                {person.name}
-                              </h4>
-                              <span
-                                className={`rounded-md px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider border ${roleDef.badgeColor}`}
-                              >
-                                {roleDef.shortTitle}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
-                              <span>{assignedServicesCount} servicios</span>
-                              <span>•</span>
-                              <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                {commission}% com.
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Apple Toggle Switch for Active / Paused Status */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic("selection");
-                              handleToggleActive(person);
-                            }}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                              isMemberActive ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                            }`}
-                            title={isMemberActive ? "Colaborador activo" : "Colaborador pausado"}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                isMemberActive ? "translate-x-6" : "translate-x-1"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Mobile Action Footer */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100/70 dark:border-slate-800/60 text-xs">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            triggerHaptic("light");
-                            handleCopyEmail(memberEmail);
-                          }}
-                          className="text-[11px] font-mono text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1 truncate max-w-[190px] cursor-pointer"
-                        >
-                          <Mail className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{memberEmail}</span>
-                        </button>
-
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic("selection");
-                              openEdit(person);
-                            }}
-                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer"
-                            title="Editar rol y permisos"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic("light");
-                              setMemberToDelete({ id: person.id, name: person.name });
-                            }}
-                            className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
-                            title="Eliminar colaborador"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Desktop Grid View */}
-            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filteredStaff.map((person) => {
-              const memberEmail =
-                (person as any).email ||
-                `${person.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`;
-              const roleDef =
-                ROLE_DEFINITIONS.find((r) => r.role === person.systemRole) || ROLE_DEFINITIONS[2];
+              const memberEmail = (person as any).email || (person.name.toLowerCase().replace(/\s+/g, ".") + "@gmail.com");
+              const roleDefinition = ROLE_DEFINITIONS.find((item) => item.role === person.systemRole) || ROLE_DEFINITIONS[2];
               const isMemberActive = person.active !== false;
-              const assignedServicesCount = services.filter((s) =>
-                s.staffIds?.includes(person.id)
-              ).length;
+              const assignedServicesCount = services.filter((service) => service.staffIds?.includes(person.id)).length;
               const commission = person.commissionPercentage ?? 50;
-
               return (
-                <div
+                <article
                   key={person.id}
-                  className={`flex flex-col justify-between rounded-2xl border transition-all p-4 space-y-3 relative group ${
-                    isMemberActive
-                      ? "border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-white/20 shadow-xs"
-                      : "border-slate-200/50 dark:border-white/5 bg-slate-100/50 dark:bg-slate-900/40 opacity-75"
-                  }`}
+                  className={"flex min-w-0 flex-col rounded-3xl border p-4 transition-colors sm:p-5 " + (isMemberActive ? "glass-panel hover:border-primary/30" : "border-white/5 bg-white/[0.015] opacity-80")}
                 >
-                  <div>
-                    {/* Top Row: Avatar + Name + Status Pill */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="relative">
-                          <div
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-sm ring-2 ring-white dark:ring-slate-900"
-                            style={{ backgroundColor: person.color || "#FF4F2B" }}
-                          >
-                            {person.avatar || person.name.slice(0, 2).toUpperCase()}
-                          </div>
-                          <span
-                            className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${
-                              isMemberActive ? "bg-emerald-500" : "bg-amber-400"
-                            }`}
-                            title={isMemberActive ? "Activo" : "Pausado"}
-                          />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate flex items-center gap-1.5">
-                            <span className="truncate">{person.name}</span>
-                          </h3>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                            {person.role || roleDef.title}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Role Badge */}
-                      <span
-                        className={`rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border shrink-0 ${roleDef.badgeColor}`}
-                      >
-                        {roleDef.shortTitle}
-                      </span>
-                    </div>
-
-                    {/* Member Details */}
-                    <div className="mt-3.5 space-y-2 text-xs text-slate-500 dark:text-slate-400">
-                      {/* Email + Copy button */}
-                      <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-white/5 text-[11px]">
-                        <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-300 truncate">
-                          <Mail className="h-3 w-3 text-slate-400 shrink-0" />
-                          <span className="truncate">{memberEmail}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyEmail(memberEmail)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 shrink-0"
-                          title="Copiar correo"
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="relative shrink-0">
+                        <span
+                          className="flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold text-white shadow-sm ring-1 ring-white/10"
+                          style={{ backgroundColor: person.color || "#FF4F2B" }}
                         >
-                          {copiedEmail === memberEmail ? (
-                            <CheckCheck className="h-3.5 w-3.5 text-emerald-500" />
-                          ) : (
-                            <Copy className="h-3.5 w-3.5" />
-                          )}
-                        </button>
+                          {person.avatar || person.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <span className={"absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-slate-950 " + (isMemberActive ? "bg-emerald-400" : "bg-amber-400")} />
                       </div>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-white">{person.name}</h3>
+                        <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-zinc-400">{person.role || roleDefinition.title}</p>
+                      </div>
+                    </div>
+                    <span className={"shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold " + roleDefinition.badgeColor}>{roleDefinition.shortTitle}</span>
+                  </div>
 
-                      {/* Schedule & Services count */}
-                      <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
-                        <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300 truncate">
-                          <Clock className="h-3 w-3 text-slate-400 shrink-0" />
-                          <span className="truncate">{person.hours || "09:00 – 19:00"}</span>
-                        </div>
-                        <div className="flex items-center justify-end gap-1 text-slate-600 dark:text-slate-300">
-                          <Layers className="h-3 w-3 text-slate-400 shrink-0" />
-                          <span>{assignedServicesCount} servicios</span>
-                        </div>
-                      </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isMemberActive}
+                    aria-label={(isMemberActive ? "Pausar a " : "Activar a ") + person.name}
+                    onClick={() => { triggerHaptic("selection"); void handleToggleActive(person); }}
+                    className="mt-4 flex min-h-11 w-full items-center justify-between rounded-2xl border border-white/5 bg-white/[0.025] px-3 text-xs font-medium text-slate-600 transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 dark:text-zinc-300"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className={"h-2 w-2 rounded-full " + (isMemberActive ? "bg-emerald-400" : "bg-amber-400")} />
+                      {isMemberActive ? "Activo para reservas" : "Pausado"}
+                    </span>
+                    <span className="relative h-6 w-14 shrink-0 rounded-full">
+                      <span className={"absolute inset-x-1 top-1/2 h-6 -translate-y-1/2 rounded-full transition-colors " + (isMemberActive ? "bg-emerald-500/80" : "bg-white/15")} />
+                      <span className={"absolute left-[10px] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white shadow-sm ring-1 ring-black/10 transition-transform " + (isMemberActive ? "translate-x-5" : "translate-x-0")} />
+                    </span>
+                  </button>
 
-                      {/* Commission Split Bar */}
-                      <div className="pt-1">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-500">Comisión por servicio:</span>
-                          <strong className="text-slate-900 dark:text-white font-bold">
-                            {commission}%
-                          </strong>
-                        </div>
-                        <div className="mt-1 h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(100, Math.max(0, commission))}%`,
-                              backgroundColor: person.color || "#FF4F2B",
-                            }}
-                          />
-                        </div>
-                      </div>
+                  <button
+                    type="button"
+                    onClick={() => { triggerHaptic("light"); handleCopyEmail(memberEmail); }}
+                    className="mt-3 flex min-h-11 min-w-0 items-center gap-2 rounded-2xl border border-white/5 bg-black/10 px-3 text-left text-xs text-slate-600 transition hover:bg-white/[0.05] dark:text-zinc-300"
+                    title="Copiar correo"
+                  >
+                    <Mail className="h-4 w-4 shrink-0 text-slate-400" />
+                    <span className="min-w-0 flex-1 truncate">{memberEmail}</span>
+                    {copiedEmail === memberEmail ? <CheckCheck className="h-4 w-4 shrink-0 text-emerald-400" /> : <Copy className="h-4 w-4 shrink-0 text-slate-400" />}
+                  </button>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="min-w-0 rounded-2xl border border-white/5 bg-white/[0.025] px-3 py-2.5">
+                      <p className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-400"><Clock className="h-3.5 w-3.5 shrink-0" />Horario</p>
+                      <p className="mt-1 truncate text-xs font-medium tabular-nums text-slate-800 dark:text-zinc-200">{person.hours || "09:00 – 19:00"}</p>
+                    </div>
+                    <div className="min-w-0 rounded-2xl border border-white/5 bg-white/[0.025] px-3 py-2.5">
+                      <p className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-400"><Layers className="h-3.5 w-3.5 shrink-0" />Servicios</p>
+                      <p className="mt-1 truncate text-xs font-medium text-slate-800 dark:text-zinc-200">{assignedServicesCount} asignados</p>
                     </div>
                   </div>
 
-                  {/* Actions Row */}
-                  <div className="pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between gap-2">
-                    {/* Send Invite Button */}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setInvitingId(person.id);
-                        await handleSendInvite(memberEmail, person.name, person.role);
-                        setInvitingId(null);
-                      }}
-                      disabled={invitingId === person.id}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline disabled:opacity-50 cursor-pointer"
-                    >
-                      <Send className="h-3 w-3" />
-                      <span>
-                        {invitingId === person.id ? "Enviando..." : "Invitar Google"}
-                      </span>
-                    </button>
+                  <div className="mt-3 rounded-2xl border border-white/5 bg-white/[0.025] px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <span className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400"><Percent className="h-3.5 w-3.5" />Comisión por servicio</span>
+                      <strong className="tabular-nums text-slate-900 dark:text-white">{commission}%</strong>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full transition-all" style={{ width: Math.min(100, Math.max(0, commission)) + "%", backgroundColor: person.color || "#FF4F2B" }} />
+                    </div>
+                  </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {/* Quick Pause / Activate Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActive(person)}
-                        className={`rounded-lg p-1.5 transition cursor-pointer border ${
-                          isMemberActive
-                            ? "border-emerald-200 dark:border-emerald-800/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                            : "border-amber-200 dark:border-amber-800/40 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                        }`}
-                        title={isMemberActive ? "Pausar colaborador" : "Activar colaborador"}
-                      >
-                        <Power className="h-3.5 w-3.5" />
+                  <div className="mt-4 flex items-center justify-end gap-2 border-t border-white/10 pt-3">
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button type="button" onClick={() => { triggerHaptic("selection"); openEdit(person); }} className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 text-slate-500 transition hover:bg-white/10 hover:text-slate-900 dark:text-zinc-300 dark:hover:text-white" aria-label={"Editar " + person.name} title="Editar colaborador">
+                        <Pencil className="h-4 w-4" />
                       </button>
-
-                      {/* Edit Button */}
-                      <button
-                        type="button"
-                        onClick={() => openEdit(person)}
-                        className="rounded-lg border border-slate-200 dark:border-white/10 p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
-                        title="Editar rol y permisos"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-
-                      {/* Delete Button */}
-                      <button
-                        type="button"
-                        onClick={() => setMemberToDelete({ id: person.id, name: person.name })}
-                        className="rounded-lg border border-slate-200 dark:border-white/10 p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
-                        title="Eliminar colaborador"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <button type="button" onClick={() => { triggerHaptic("light"); setMemberToDelete({ id: person.id, name: person.name }); }} className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 text-rose-400 transition hover:bg-rose-500/10" aria-label={"Eliminar " + person.name} title="Eliminar colaborador">
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-                </div>
+                </article>
               );
             })}
-            </div>
-          </>
+          </div>
         )}
-      </Card>
+      </section>
 
-      {/* Permissions Matrix */}
-      <Card
-        data-tour="equipo-roles"
-        className="p-5 border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4"
-      >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
+      <section data-tour="equipo-roles" className="rounded-3xl glass-panel p-4 sm:p-5">
+        <div className="flex items-start gap-3 border-b border-white/10 pb-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <ShieldCheck className="h-5 w-5" />
+          </span>
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              <span>Matriz de Permisos por Rol en el Local</span>
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Control de accesos para proteger los ingresos de la empresa y asegurar orden en mostrador.
-            </p>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Permisos por rol</h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">Una guía rápida de las secciones disponibles para cada perfil.</p>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[550px]">
+        <div className="mt-4 hidden overflow-x-auto lg:block">
+          <table className="w-full min-w-[700px] text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400">
-                <th className="py-2.5 font-bold">Módulo o Acción</th>
-                <th className="py-2.5 font-bold text-center">Dueño</th>
-                <th className="py-2.5 font-bold text-center">Cajero</th>
-                <th className="py-2.5 font-bold text-center">Barbero</th>
-                <th className="py-2.5 font-bold text-center">Estilista</th>
+              <tr className="border-b border-white/10 text-slate-500 dark:text-zinc-400">
+                <th scope="col" className="py-3 pr-4 font-semibold">Módulo o acción</th>
+                {ACCESS_ROLE_COLUMNS.map((column) => <th key={column.role} scope="col" className="px-3 py-3 text-center font-semibold">{column.label}</th>)}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-              {PERMISSIONS_LIST.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                  <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200">
-                    {row.label}
-                  </td>
-                  <td className="py-2.5 text-center">
-                    <Check className="h-4 w-4 text-emerald-500 mx-auto" />
-                  </td>
-                  <td className="py-2.5 text-center">
-                    {row.id === "cashier" ||
-                    row.id === "transfer_receipts" ||
-                    row.id === "sipap" ||
-                    row.id === "all_schedule" ||
-                    row.id === "fichas" ? (
-                      <Check className="h-4 w-4 text-emerald-500 mx-auto" />
-                    ) : (
-                      <span className="text-slate-300 dark:text-slate-600">—</span>
-                    )}
-                  </td>
-                  <td className="py-2.5 text-center">
-                    {row.id === "own_schedule" || row.id === "breaks" || row.id === "fichas" ? (
-                      <Check className="h-4 w-4 text-emerald-500 mx-auto" />
-                    ) : (
-                      <span className="text-slate-300 dark:text-slate-600">—</span>
-                    )}
-                  </td>
-                  <td className="py-2.5 text-center">
-                    {row.id === "own_schedule" || row.id === "breaks" || row.id === "fichas" ? (
-                      <Check className="h-4 w-4 text-emerald-500 mx-auto" />
-                    ) : (
-                      <span className="text-slate-300 dark:text-slate-600">—</span>
-                    )}
-                  </td>
+            <tbody className="divide-y divide-white/5">
+              {PERMISSIONS_LIST.map((permission) => (
+                <tr key={permission.id} className="transition hover:bg-white/[0.025]">
+                  <th scope="row" className="py-3 pr-4 font-medium text-slate-700 dark:text-zinc-300">{permission.label}</th>
+                  {ACCESS_ROLE_COLUMNS.map((column) => {
+                    const allowed = ROLE_ACCESS[column.role].includes(permission.id);
+                    return <td key={column.role} className="px-3 py-3 text-center">{allowed ? <Check className="mx-auto h-4 w-4 text-emerald-400" /> : <span className="text-slate-400/50" aria-label="Sin acceso">—</span>}</td>;
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Card>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:hidden">
+          {ROLE_DEFINITIONS.map((roleDefinition) => {
+            const Icon = roleDefinition.icon;
+            const allowedPermissions = ROLE_ACCESS[roleDefinition.role];
+            return (
+              <details key={roleDefinition.role} className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025]">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-3.5 py-3 [&::-webkit-details-marker]:hidden">
+                  <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border " + roleDefinition.badgeColor}><Icon className="h-4 w-4" /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-semibold text-slate-900 dark:text-white">{roleDefinition.shortTitle}</span>
+                    <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-zinc-400">{allowedPermissions.length} permisos disponibles</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 shrink-0 rotate-90 text-slate-400 transition-transform group-open:rotate-[270deg]" />
+                </summary>
+                <div className="border-t border-white/10 px-3.5 py-3">
+                  <p className="mb-3 text-xs leading-relaxed text-slate-500 dark:text-zinc-400">{roleDefinition.desc}</p>
+                  <ul className="space-y-2">
+                    {PERMISSIONS_LIST.map((permission) => {
+                      const allowed = allowedPermissions.includes(permission.id);
+                      return (
+                        <li key={permission.id} className="flex items-start gap-2 text-xs">
+                          {allowed ? <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" /> : <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center text-slate-400/50">—</span>}
+                          <span className={allowed ? "text-slate-700 dark:text-zinc-300" : "text-slate-400 dark:text-zinc-500"}>{permission.label}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Edit / Create Staff Modal */}
       <Modal
@@ -1135,12 +756,12 @@ export default function EquipoRolesPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                        <span className="font-semibold text-xs text-slate-900 dark:text-white truncate">
                           {r.title}
                         </span>
                         {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
                       </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                         {r.desc}
                       </p>
                     </div>
@@ -1187,7 +808,7 @@ export default function EquipoRolesPage() {
                     key={pct}
                     type="button"
                     onClick={() => setFormData({ ...formData, commissionPercentage: pct })}
-                    className={`px-2 py-0.5 text-[10px] font-bold rounded-md border transition cursor-pointer ${
+                    className={`px-2 py-0.5 text-[11px] font-semibold rounded-md border transition cursor-pointer ${
                       formData.commissionPercentage === pct
                         ? "bg-primary text-white border-primary shadow-xs"
                         : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -1207,9 +828,9 @@ export default function EquipoRolesPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, commissionPercentage: Number(e.target.value) })
                 }
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-slate-900 dark:text-white font-bold text-sm focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-slate-900 dark:text-white font-semibold text-sm focus:border-primary focus:outline-none"
               />
-              <span className="absolute right-3.5 top-2.5 text-slate-400 font-bold text-xs">
+              <span className="absolute right-3.5 top-2.5 text-slate-400 font-semibold text-xs">
                 % de comisión
               </span>
             </div>
@@ -1286,7 +907,7 @@ export default function EquipoRolesPage() {
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-5 py-2 font-bold text-white shadow-md shadow-primary/20 hover:opacity-95 transition cursor-pointer"
+              className="rounded-xl bg-primary px-5 py-2 font-semibold text-white shadow-md shadow-primary/20 hover:opacity-95 transition cursor-pointer"
             >
               {editingStaff ? "Guardar Cambios" : "Guardar & Invitar"}
             </button>
@@ -1304,7 +925,7 @@ export default function EquipoRolesPage() {
           <div className="flex items-start gap-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 p-3.5 text-rose-700 dark:text-rose-400">
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
-              <p className="font-bold">
+              <p className="font-semibold">
                 ¿Estás seguro de que deseas eliminar a &ldquo;{memberToDelete?.name}&rdquo;?
               </p>
               <p className="text-rose-600/90 dark:text-rose-400/90">
@@ -1325,7 +946,7 @@ export default function EquipoRolesPage() {
             <button
               type="button"
               onClick={handleConfirmDeleteMember}
-              className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-xs font-bold shadow-md shadow-rose-950/20 transition cursor-pointer"
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-xs font-semibold shadow-md shadow-rose-950/20 transition cursor-pointer"
             >
               Eliminar Colaborador
             </button>

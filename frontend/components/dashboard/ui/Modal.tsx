@@ -18,6 +18,7 @@ export default function Modal({
   className = "",
   footerClassName = "",
   variant = "center",
+  animateContentSize = false,
 }: {
   open: boolean;
   title: string;
@@ -30,6 +31,7 @@ export default function Modal({
   className?: string;
   footerClassName?: string;
   variant?: "center" | "side";
+  animateContentSize?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -92,6 +94,7 @@ export default function Modal({
         >
           <motion.div
             key="modal-card"
+            layout={animateContentSize ? "size" : undefined}
             drag={isMobile ? "y" : false}
             dragListener={false}
             dragControls={dragControls}
@@ -128,12 +131,36 @@ export default function Modal({
             }
             transition={
               prefersReducedMotion
-                ? { duration: 0.01 }
+                ? {
+                    duration: 0.01,
+                    ...(animateContentSize ? { layout: { duration: 0.01 } } : {}),
+                  }
                 : isMobile
-                  ? { type: "spring", stiffness: 340, damping: 34, mass: 0.9 }
+                  ? {
+                      type: "spring",
+                      stiffness: 340,
+                      damping: 34,
+                      mass: 0.9,
+                      ...(animateContentSize
+                        ? { layout: { type: "spring", stiffness: 300, damping: 34, mass: 0.9 } }
+                        : {}),
+                    }
                   : isSide
-                    ? { type: "spring", stiffness: 360, damping: 34 }
-                    : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
+                    ? {
+                        type: "spring",
+                        stiffness: 360,
+                        damping: 34,
+                        ...(animateContentSize
+                          ? { layout: { type: "spring", stiffness: 300, damping: 34, mass: 0.9 } }
+                          : {}),
+                      }
+                    : {
+                        duration: 0.18,
+                        ease: [0.16, 1, 0.3, 1],
+                        ...(animateContentSize
+                          ? { layout: { type: "spring", stiffness: 300, damping: 34, mass: 0.9 } }
+                          : {}),
+                      }
             }
             onClick={(event) => event.stopPropagation()}
             className={`${
@@ -161,7 +188,7 @@ export default function Modal({
               onPointerDown={isMobile ? (event) => dragControls.start(event) : undefined}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                <h3 className="text-base sm:text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
                   {title}
                 </h3>
                 {!isMobile && (

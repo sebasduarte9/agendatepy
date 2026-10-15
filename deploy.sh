@@ -14,6 +14,30 @@ if [ ! -f .env ]; then
     fi
 fi
 
+# 0.1 Crear secretos si el archivo base los dejó vacíos
+if ! command -v openssl &> /dev/null; then
+    apt-get update -y
+    apt-get install -y openssl
+fi
+
+ensure_secret() {
+    local key="$1"
+    local current_value
+    current_value="$(sed -n "s/^${key}=//p" .env | tail -n 1 | tr -d '\"' | tr -d "'")"
+    if [ -z "$current_value" ] || [ "$current_value" = "tu_clave_evolution" ]; then
+        local generated_value
+        generated_value="$(openssl rand -hex 32)"
+        if grep -q "^${key}=" .env; then
+            sed -i "s#^${key}=.*#${key}=${generated_value}#" .env
+        else
+            printf '\n%s=%s\n' "$key" "$generated_value" >> .env
+        fi
+    fi
+}
+
+ensure_secret "EVOLUTION_API_KEY"
+ensure_secret "CRON_SECRET"
+
 # 1. Verificar si Docker está instalado
 if ! command -v docker &> /dev/null; then
     echo "📦 Instalando Docker y Docker Compose..."
@@ -31,8 +55,11 @@ if command -v ufw &> /dev/null; then
     ufw --force enable || true
 fi
 
-# 3. Levantar contenedores (PostgreSQL + Next.js App + Nginx)
-echo "🏗️ Construyendo e iniciando contenedores de AgendatePY..."
+# 3. Levantar Evolution y luego la aplicación
+echo "📲 Iniciando la pasarela de WhatsApp..."
+docker compose -f docker-compose.evolution.yml up -d
+
+echo "🏗️ Construyendo e iniciando la aplicación y el programador de recordatorios..."
 docker compose -f docker-compose.prod.yml up -d --build
 
 # 4. Esperar 8 segundos para inicialización de la base de datos

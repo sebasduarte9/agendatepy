@@ -250,11 +250,11 @@ export default function ProductImageUploader({
   };
 
   return (
-    <div className="space-y-3" data-tour="product-image-uploader">
+    <div className="space-y-1.5" data-tour="product-image-uploader">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-          Foto del Producto
-        </label>
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Foto del producto
+        </span>
       </div>
 
       {/* Hidden file input */}
@@ -277,29 +277,37 @@ export default function ProductImageUploader({
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2.5 group relative overflow-hidden ${
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
+          className={`group relative flex min-h-[76px] cursor-pointer items-center gap-3.5 overflow-hidden rounded-2xl border-2 border-dashed px-4 py-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
             isDragging
-              ? "border-primary bg-primary/10 scale-[1.01]"
-              : "border-slate-200 dark:border-white/15 bg-slate-50/60 dark:bg-slate-800/40 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/80"
+              ? "border-primary bg-primary/10"
+              : "border-slate-200 dark:border-white/15 bg-slate-50/60 dark:bg-white/[0.02] hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/[0.05]"
           }`}
         >
           {isLoading ? (
-            <div className="flex flex-col items-center gap-2 py-4 text-slate-600 dark:text-slate-300">
-              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
               <p className="text-xs font-semibold">Cargando...</p>
             </div>
           ) : (
             <>
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-slate-700 text-primary shadow-xs group-hover:scale-110 transition-transform">
-                <span className="absolute -inset-1 rounded-2xl bg-primary/20 animate-ping opacity-30" />
-                <Upload className="h-5 w-5 relative z-10" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-xs transition-transform group-hover:scale-105 dark:bg-white/10">
+                <Upload className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                   Subir foto del producto
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Hacé clic o arrastrá desde tu celular o computadora
+                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="sm:hidden">Tocá para elegir una imagen</span>
+                  <span className="hidden sm:inline">Hacé clic o arrastrá una imagen · PNG, JPG o WebP</span>
                 </p>
               </div>
             </>
@@ -320,7 +328,7 @@ export default function ProductImageUploader({
               <button
                 type="button"
                 onClick={() => setShowCompare((prev) => !prev)}
-                className="text-[11px] font-bold text-primary hover:underline px-2 py-0.5 rounded-md hover:bg-primary/10 transition cursor-pointer"
+                className="text-[11px] font-semibold text-primary hover:underline px-2 py-0.5 rounded-md hover:bg-primary/10 transition cursor-pointer"
               >
                 {showCompare ? "Ver solo recorte" : "Comparar con original"}
               </button>
@@ -376,7 +384,7 @@ export default function ProductImageUploader({
                     <Loader2 className="h-7 w-7 animate-spin text-white" />
                     <span className="absolute -inset-2 rounded-full border border-white/30 animate-ping" />
                   </div>
-                  <p className="text-xs font-bold tracking-wide">Procesando recorte con IA...</p>
+                  <p className="text-xs font-semibold tracking-wide">Procesando recorte con IA...</p>
                 </div>
               )}
             </div>
@@ -411,7 +419,7 @@ export default function ProductImageUploader({
                     <Loader2 className="h-7 w-7 animate-spin text-white" />
                     <span className="absolute -inset-2 rounded-full border border-white/30 animate-ping" />
                   </div>
-                  <p className="text-xs font-bold tracking-wide">Cargando...</p>
+                  <p className="text-xs font-semibold tracking-wide">Cargando...</p>
                 </div>
               )}
             </div>
@@ -424,7 +432,7 @@ export default function ProductImageUploader({
                 type="button"
                 disabled={isLoading}
                 onClick={handleRemoveBackground}
-                className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2.5 px-3 text-xs font-bold shadow-sm hover:opacity-90 active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2.5 px-3 text-xs font-semibold shadow-sm hover:opacity-90 active:scale-98 transition disabled:opacity-50 cursor-pointer"
               >
                 <Scissors className="h-4 w-4" />
                 <span>Quitar fondo</span>
@@ -434,7 +442,7 @@ export default function ProductImageUploader({
                 type="button"
                 disabled={isLoading}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-2.5 px-3 text-xs font-bold shadow-xs hover:border-primary active:scale-98 transition disabled:opacity-50 cursor-pointer"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-2.5 px-3 text-xs font-semibold shadow-xs hover:border-primary active:scale-98 transition disabled:opacity-50 cursor-pointer"
               >
                 <Upload className="h-4 w-4" />
                 <span>Cambiar foto</span>

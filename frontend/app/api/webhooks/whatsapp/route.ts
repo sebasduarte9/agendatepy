@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { geminiPool } from "@/lib/ai/gemini-pool";
 import { processCustomerMessageWithAI } from "@/lib/ai/whatsapp-agent";
 import { processAgendatePlatformMessage } from "@/lib/ai/agendate-platform-agent";
-import { sendWhatsAppMessage, sendWhatsAppPresence } from "@/lib/evolution";
+import { sendWhatsAppMessage } from "@/lib/evolution";
 import { conversationState } from "@/lib/ai/conversation-state";
 import { recordCrmMessage } from "@/lib/crm/crm-store";
 import { recordAiInteraction, markInteractionHumanIntervened } from "@/lib/ai/ai-learning-store";
@@ -11,11 +11,11 @@ import { recordAiInteraction, markInteractionHumanIntervened } from "@/lib/ai/ai
 /**
  * Helper para descargar Base64 de audios/imágenes desde Evolution API si no viene en el webhook
  */
-async function getMediaBase64FromEvolution(data: any): Promise<string | null> {
+async function getMediaBase64FromEvolution(data: any, instanceOverride?: string): Promise<string | null> {
   try {
     const baseUrl = process.env.EVOLUTION_API_URL || "http://localhost:8081";
     const apiKey = process.env.EVOLUTION_API_KEY || "agendatepy_whatsapp_secure_key_2026";
-    const instance = process.env.EVOLUTION_INSTANCE || "agendatepy";
+    const instance = instanceOverride || process.env.EVOLUTION_INSTANCE || "agendatepy";
 
     // Formato requerido por Evolution API v2
     const payload = {
@@ -76,6 +76,42 @@ function isDuplicateMessage(messageId?: string): boolean {
 
   processedMessageIds.set(messageId, now);
   return false;
+}
+
+function isWithinTenantBusinessHours(
+  settings: Record<string, any>,
+  timezone: string,
+  now = new Date(),
+) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const weekday = values.weekday;
+  if (weekday === "Sun" && !settings.sundayOpen) return false;
+
+  const openingTime = String(settings.openingTime || "08:00");
+  const closingTime = String(
+    weekday === "Sat" || weekday === "Sun"
+      ? settings.weekendClosing || settings.closingTime || "20:00"
+      : settings.closingTime || "20:00",
+  );
+  const toMinutes = (time: string) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return Number.isFinite(hours) && Number.isFinite(minutes) ? hours * 60 + minutes : null;
+  };
+  const opensAt = toMinutes(openingTime);
+  const closesAt = toMinutes(closingTime);
+  const currentTime = Number(values.hour) * 60 + Number(values.minute);
+  if (opensAt === null || closesAt === null) return true;
+
+  return closesAt > opensAt
+    ? currentTime >= opensAt && currentTime < closesAt
+    : currentTime >= opensAt || currentTime < closesAt;
 }
 
 export async function POST(req: NextRequest) {
@@ -139,6 +175,12 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      const tenantSettings = (tenant?.settings as Record<string, any>) || {};
+      const tenantEvolutionConfig = tenantSettings.evolutionConfig || {};
+      const tenantWhatsAppInstance =
+        (typeof tenantEvolutionConfig.instance === "string" && tenantEvolutionConfig.instance) ||
+        (tenant ? incomingInstance || undefined : undefined);
+
       // Si no es un tenant particular, usar el identificador de la plataforma
       const sessionTenantKey = tenant ? tenant.id : "agendatepy-official";
 
@@ -189,7 +231,7 @@ export async function POST(req: NextRequest) {
         console.log(`[WhatsApp Webhook] Nota de voz recibida de ${senderPhone}. Procesando...`);
         let base64Audio = (data.base64 && typeof data.base64 === "string" && data.base64.length > 50) ? data.base64 : null;
         if (!base64Audio) {
-          base64Audio = await getMediaBase64FromEvolution(data);
+          base64Audio = await getMediaBase64FromEvolution(data, incomingInstance);
         }
 
         if (base64Audio) {
@@ -220,7 +262,7 @@ export async function POST(req: NextRequest) {
         mediaType = "image";
         let base64Image = messageObj.imageMessage?.jpegThumbnail || data.base64;
         if (!base64Image) {
-          base64Image = await getMediaBase64FromEvolution(data);
+          base64Image = await getMediaBase64FromEvolution(data, incomingInstance);
         }
         if (base64Image) {
           const cleanBase64 = base64Image.replace(/^data:image\/[a-zA-Z0-9.\-_+]+;base64,/, "");
@@ -253,6 +295,24 @@ export async function POST(req: NextRequest) {
           status: "saved_to_crm_bot_paused",
           senderPhone,
           minutesRemaining: pauseCheck.minutesRemaining,
+        });
+      }
+
+      if (tenant && tenantEvolutionConfig.autoBotEnabled === false) {
+        return NextResponse.json({
+          status: "saved_to_crm_assistant_paused",
+          senderPhone,
+        });
+      }
+
+      if (
+        tenant &&
+        tenantEvolutionConfig.serviceScheduleMode === "business_hours" &&
+        !isWithinTenantBusinessHours(tenantSettings, tenant.timezone || "America/Asuncion")
+      ) {
+        return NextResponse.json({
+          status: "saved_to_crm_outside_business_hours",
+          senderPhone,
         });
       }
 
@@ -353,15 +413,15 @@ export async function POST(req: NextRequest) {
 
             // Alerta inmediata al dueño por WhatsApp
             const settings = (tenant.settings as any) || {};
-            const notifyPhone = settings.evolutionConfig?.personalPhone || settings.whatsappPhone;
-            if (notifyPhone) {
+            const notifyPhone = settings.evolutionConfig?.personalPhone;
+            if (settings.evolutionConfig?.notifyPersonalPhoneOnBooking === true && notifyPhone) {
               const alertMsg = `🔔 *¡Nuevo Turno Confirmado!*\n\n` +
                 `• *Cliente:* ${pendingApp.clientName} (${senderPhone})\n` +
                 `• *Servicio:* ${pendingApp.service?.name}\n` +
                 `• *Fecha/Hora:* ${date} a las ${time} hs\n` +
                 `• *Profesional:* ${pendingApp.staff?.name || "Asignado"}\n\n` +
                 `Confirmado automáticamente por WhatsApp.`;
-              sendWhatsAppMessage(notifyPhone.replace(/\D/g, ""), alertMsg, false).catch(() => {});
+              sendWhatsAppMessage(notifyPhone.replace(/\D/g, ""), alertMsg, false, tenantWhatsAppInstance).catch(() => {});
             }
           }
         }
@@ -411,7 +471,7 @@ export async function POST(req: NextRequest) {
       // 7. RESPONDER AL CLIENTE CON "ESCRIBIENDO..." Y ENVÍO POR EVOLUTION API
       if (replyText && rawDigits) {
         try {
-          await sendWhatsAppMessage(rawDigits, replyText, true);
+          await sendWhatsAppMessage(rawDigits, replyText, true, tenantWhatsAppInstance);
           console.log(`[WhatsApp Webhook] Respuesta enviada exitosamente a ${rawDigits}`);
         } catch (evoError: any) {
           console.warn(`[WhatsApp Webhook] No se pudo enviar por Evolution API:`, evoError?.message);

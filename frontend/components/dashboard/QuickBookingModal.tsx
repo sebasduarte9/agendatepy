@@ -411,7 +411,7 @@ export default function QuickBookingModal({
 
                 {matchingClients.length > 0 && (
                   <div className="solid-popover glass-dropdown absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl p-1 space-y-0.5 max-h-40 overflow-y-auto">
-                    <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-medium">Sugerencias:</span>
+                    <span className="text-[11px] text-slate-400 px-2 py-0.5 block font-medium">Sugerencias:</span>
                     {matchingClients.map((c) => (
                       <button
                         key={c.id}
@@ -435,8 +435,8 @@ export default function QuickBookingModal({
                         }}
                         className="w-full flex items-center justify-between p-1.5 rounded-lg text-left hover:bg-primary/10 transition cursor-pointer"
                       >
-                        <span className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</span>
-                        <span className="text-[11px] text-slate-400 font-mono">{c.phone || ""}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white text-xs">{c.name}</span>
+                        <span className="text-[11px] text-slate-400 tabular-nums">{c.phone || ""}</span>
                       </button>
                     ))}
                   </div>
@@ -458,11 +458,11 @@ export default function QuickBookingModal({
                         setStaffDropdownOpen(false);
                         setTimeDropdownOpen(false);
                       }}
-                      className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.05] px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
+                      className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.05] px-3 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
                       title="Seleccionar país"
                     >
                       <span className="text-sm leading-none">{activeCountry.flag}</span>
-                      <span className="font-mono text-xs">{activeCountry.dialCode}</span>
+                      <span className="tabular-nums text-xs">{activeCountry.dialCode}</span>
                       <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${countryDropdownOpen ? "rotate-180" : ""}`} />
                     </button>
 
@@ -492,7 +492,7 @@ export default function QuickBookingModal({
                               }}
                               className={`w-full flex items-center justify-between p-1.5 rounded-lg text-left text-xs transition cursor-pointer ${
                                 selectedCountryCode === c.code
-                                  ? "bg-primary/10 text-primary font-bold"
+                                  ? "bg-primary/10 text-primary font-semibold"
                                   : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
                               }`}
                             >
@@ -500,7 +500,7 @@ export default function QuickBookingModal({
                                 <span className="text-base leading-none">{c.flag}</span>
                                 <span className="truncate">{c.name}</span>
                               </div>
-                              <span className="font-mono text-[11px] text-slate-400 shrink-0">{c.dialCode}</span>
+                              <span className="tabular-nums text-[11px] text-slate-400 shrink-0">{c.dialCode}</span>
                             </button>
                           ))}
                         </div>
@@ -515,14 +515,14 @@ export default function QuickBookingModal({
                       placeholder={activeCountry.placeholder}
                       value={clientPhone}
                       onChange={(e) => setClientPhone(formatPhoneInput(e.target.value, activeCountry))}
-                      className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 font-mono"
+                      className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 tabular-nums"
                     />
                   </div>
                 </div>
 
                 {/* Subtle Real Phone Validation Hint */}
                 {clientPhone.trim().length > 0 && (
-                  <div className="flex items-center gap-1 mt-1 text-[10.5px] font-normal">
+                  <div className="flex items-center gap-1 mt-1 text-[11px] font-normal">
                     {isPhoneValid ? (
                       <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                         <Check className="h-3 w-3 shrink-0" />
@@ -557,7 +557,7 @@ export default function QuickBookingModal({
                   className="min-h-11 w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] px-3 py-2.5 text-sm text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   <div className="min-w-0 flex-1 truncate pr-2">
-                    <span className="font-bold text-slate-900 dark:text-white">{currentService?.name}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{currentService?.name}</span>
                     <span className="text-slate-400 ml-1.5 font-medium">({currentService?.durationMin}m · {formatGs(currentService?.price || 0)})</span>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${serviceDropdownOpen ? "rotate-180" : ""}`} />
@@ -574,11 +574,11 @@ export default function QuickBookingModal({
                           setServiceDropdownOpen(false);
                         }}
                         className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition cursor-pointer ${
-                          serviceId === s.id ? "bg-primary/10 text-primary font-bold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                          serviceId === s.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                         }`}
                       >
                         <span className="truncate pr-2">{s.name}</span>
-                        <span className="text-[11px] font-mono shrink-0 text-slate-500 dark:text-slate-400">{formatGs(s.price)} · {s.durationMin}m</span>
+                        <span className="text-[11px] tabular-nums shrink-0 text-slate-500 dark:text-slate-400">{formatGs(s.price)} · {s.durationMin}m</span>
                       </button>
                     ))}
                   </div>
@@ -605,12 +605,12 @@ export default function QuickBookingModal({
                     return (
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <span
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-xs shrink-0"
                           style={{ background: assigned?.color || "#6366f1" }}
                         >
                           {assigned?.avatar || "P"}
                         </span>
-                        <span className="font-bold text-slate-900 dark:text-white truncate">{assigned?.name}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white truncate">{assigned?.name}</span>
                         <span className="text-slate-400 text-[11px]">({assigned?.role})</span>
                       </div>
                     );
@@ -629,11 +629,11 @@ export default function QuickBookingModal({
                           setStaffDropdownOpen(false);
                         }}
                         className={`w-full flex items-center gap-2 p-2 rounded-lg text-left transition cursor-pointer ${
-                          slotStaffId === p.id ? "bg-primary/10 text-primary font-bold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                          slotStaffId === p.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                         }`}
                       >
                         <span
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shrink-0"
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shrink-0"
                           style={{ background: p.color }}
                         >
                           {p.avatar}
@@ -668,7 +668,7 @@ export default function QuickBookingModal({
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <span className="min-w-0 flex-1 truncate px-1 text-center text-xs font-bold capitalize text-slate-900 dark:text-white">
+                  <span className="min-w-0 flex-1 truncate px-1 text-center text-xs font-semibold capitalize text-slate-900 dark:text-white">
                     {formattedSlotDate}
                   </span>
                   <button
@@ -685,7 +685,7 @@ export default function QuickBookingModal({
                     onClick={() =>
                       setSlotDate(formatInTimeZone(new Date(), business.timezone || "America/Asuncion", "yyyy-MM-dd"))
                     }
-                    className="flex h-10 shrink-0 items-center rounded-xl px-2 text-xs font-bold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="flex h-10 shrink-0 items-center rounded-xl px-2 text-xs font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     Hoy
                   </button>
@@ -709,7 +709,7 @@ export default function QuickBookingModal({
                       setStaffDropdownOpen(false);
                       setCountryDropdownOpen(false);
                     }}
-                    className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 font-mono text-xs font-bold text-slate-900 shadow-xs transition hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+                    className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 tabular-nums text-xs font-semibold text-slate-900 shadow-xs transition hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
                     aria-label={`Elegir horario, ${slotTime}`}
                     aria-expanded={timeDropdownOpen}
                   >
@@ -737,7 +737,7 @@ export default function QuickBookingModal({
                             setSlotTime(t);
                             setTimeDropdownOpen(false);
                           }}
-                          className={`min-h-10 rounded-lg px-2 text-center font-mono text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                          className={`min-h-10 rounded-lg px-2 text-center tabular-nums text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                             slotTime === t
                               ? "bg-primary text-white shadow-xs"
                               : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
@@ -790,8 +790,8 @@ export default function QuickBookingModal({
           {/* FOOTER ACTIONS & TOTAL */}
           <div className="sticky bottom-[-24px] z-20 -mx-5 mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white/95 px-5 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#151416]/95 sm:static sm:mx-0 sm:gap-4 sm:bg-transparent sm:px-0 sm:pb-0 sm:shadow-none sm:backdrop-blur-none">
             <div>
-              <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
-              <span className="text-sm font-black text-primary">
+              <span className="text-[11px] text-slate-400 block font-medium">Total:</span>
+              <span className="text-sm font-semibold text-primary">
                 {formatGs(currentService?.price || 0)}
               </span>
             </div>
@@ -807,7 +807,7 @@ export default function QuickBookingModal({
               <button
                 type="submit"
                 disabled={isSubmitting || !clientName.trim()}
-                className="min-h-11 whitespace-nowrap rounded-xl bg-primary px-4 sm:px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 transition hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#151416]"
+                className="min-h-11 whitespace-nowrap rounded-xl bg-primary px-4 sm:px-5 py-2 text-xs font-semibold text-white shadow-md shadow-primary/25 transition hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#151416]"
               >
                 {isSubmitting ? "Guardando..." : "Confirmar Turno"}
               </button>
@@ -830,7 +830,7 @@ export default function QuickBookingModal({
                 <button
                   type="button"
                   onClick={() => setBlockStaffId("all")}
-                  className={`min-h-11 px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                  className={`min-h-11 px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
                     blockStaffId === "all"
                       ? "border-amber-500 bg-amber-500 text-white shadow-xs"
                       : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -843,14 +843,14 @@ export default function QuickBookingModal({
                     key={p.id}
                     type="button"
                     onClick={() => setBlockStaffId(p.id)}
-                    className={`min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                    className={`min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
                       blockStaffId === p.id
                         ? "border-amber-500 bg-amber-500 text-white shadow-xs"
                         : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
                     }`}
                   >
                     <span
-                      className="flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                      className="flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold text-white"
                       style={{ background: p.color }}
                     >
                       {p.avatar}
@@ -872,7 +872,7 @@ export default function QuickBookingModal({
                     type="time"
                     value={blockStart}
                     onChange={(e) => setBlockStart(e.target.value)}
-                    className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] pl-9 pr-3 py-2.5 text-sm font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30"
+                    className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] pl-9 pr-3 py-2.5 text-sm tabular-nums font-semibold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30"
                   />
                 </div>
               </div>
@@ -886,7 +886,7 @@ export default function QuickBookingModal({
                     type="time"
                     value={blockEnd}
                     onChange={(e) => setBlockEnd(e.target.value)}
-                    className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] pl-9 pr-3 py-2.5 text-sm font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30"
+                    className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] pl-9 pr-3 py-2.5 text-sm tabular-nums font-semibold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30"
                   />
                 </div>
               </div>
@@ -917,7 +917,7 @@ export default function QuickBookingModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="min-h-11 whitespace-nowrap rounded-xl bg-amber-500 px-5 py-2 text-xs font-bold text-white shadow-md shadow-amber-500/25 transition hover:bg-amber-600 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#151416]"
+              className="min-h-11 whitespace-nowrap rounded-xl bg-amber-500 px-5 py-2 text-xs font-semibold text-white shadow-md shadow-amber-500/25 transition hover:bg-amber-600 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#151416]"
             >
               {isSubmitting ? "Guardando..." : "Confirmar Bloqueo"}
             </button>

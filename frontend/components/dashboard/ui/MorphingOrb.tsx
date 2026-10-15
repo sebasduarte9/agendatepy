@@ -21,20 +21,20 @@ export default function MorphingOrb({
     sm: {
       outer: "h-20 w-20",
       center: "h-16 w-16",
-      valueText: "text-xs font-bold",
-      labelText: "text-[8px]",
+      valueText: "text-xs font-semibold",
+      labelText: "text-[11px]",
     },
     md: {
       outer: "h-26 w-26",
       center: "h-20 w-20",
-      valueText: "text-sm font-extrabold tracking-tight",
-      labelText: "text-[9px]",
+      valueText: "text-sm font-semibold tracking-tight",
+      labelText: "text-[11px]",
     },
     lg: {
       outer: "h-32 w-32",
       center: "h-26 w-26",
-      valueText: "text-lg font-black tracking-tight",
-      labelText: "text-[10px]",
+      valueText: "text-lg font-semibold tracking-tight",
+      labelText: "text-[11px]",
     },
   };
 
@@ -47,7 +47,7 @@ export default function MorphingOrb({
         {/* Núcleo central de cristal */}
         <div className={`glass-morph-center ${currentSize.center} p-1 text-center`}>
           {label && (
-            <span className={`block uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 ${currentSize.labelText}`}>
+            <span className={`block uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400 ${currentSize.labelText}`}>
               {label}
             </span>
           )}
@@ -57,7 +57,7 @@ export default function MorphingOrb({
             </div>
           )}
           {sublabel && (
-            <span className="block text-[8px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+            <span className="block text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
               {sublabel}
             </span>
           )}

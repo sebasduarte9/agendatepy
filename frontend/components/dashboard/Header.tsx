@@ -178,7 +178,7 @@ export default function Header() {
 
         {/* On desktop, executive workspace eyebrow lockup from Glassy */}
         <div className="hidden lg:flex items-center gap-2.5">
-          <span className="text-[10px] font-extrabold tracking-widest uppercase text-slate-500 dark:text-zinc-400 font-mono">
+          <span className="text-[11px] font-semibold tracking-widest uppercase text-slate-500 dark:text-zinc-400 tabular-nums">
             {business.name || "AGENDATEPY"}
           </span>
           <span className="text-slate-300 dark:text-zinc-700">/</span>

@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         timezone: true,
         plan: true,
         settings: true,
+        themeSettings: true,
       },
     });
 
@@ -48,6 +49,8 @@ export async function GET(request: NextRequest) {
         weekendClosing: settings.weekendClosing || "21:00",
         sundayOpen: Boolean(settings.sundayOpen),
         openingCash: settings.openingCash ?? 300000,
+        primaryColor: settings.dashboardColor || "#ff4f2b",
+        logoUrl: ((tenant.themeSettings as Record<string, unknown> | null)?.logoUrl as string) || "",
         acceptedPaymentMethods: settings.acceptedPaymentMethods || [
           "efectivo",
           "pos",
@@ -99,9 +102,40 @@ export async function PATCH(request: NextRequest) {
       settings: customSettings,
     } = body;
 
+    // Business identity and policies are owner-only; staff may still update operational settings (loyalty, templates, cash)
+    const OWNER_ONLY_FIELDS = ["name", "phone", "whatsappNumber", "address", "timezone", "primaryColor", "openingTime", "closingTime", "weekendClosing", "sundayOpen", "acceptedPaymentMethods"];
+    if (auth.session.role === "STAFF" && OWNER_ONLY_FIELDS.some((key) => body[key] !== undefined)) {
+      return NextResponse.json(
+        { ok: false, error: "FORBIDDEN", message: "Solo el dueño puede cambiar los datos del negocio." },
+        { status: 403 }
+      );
+    }
+
+    const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+    for (const key of ["openingTime", "closingTime", "weekendClosing"] as const) {
+      if (body[key] !== undefined && !HHMM.test(String(body[key]))) {
+        return NextResponse.json(
+          { ok: false, error: "VALIDATION_ERROR", message: "Los horarios deben tener el formato HH:MM." },
+          { status: 400 }
+        );
+      }
+    }
+
     const updateData: any = {};
     if (name && typeof name === "string" && name.trim().length >= 2) {
       updateData.name = name.trim();
+    }
+
+    if (typeof body.timezone === "string" && body.timezone.trim()) {
+      try {
+        new Intl.DateTimeFormat("es-PY", { timeZone: body.timezone.trim() });
+        updateData.timezone = body.timezone.trim();
+      } catch {
+        return NextResponse.json(
+          { ok: false, error: "VALIDATION_ERROR", message: "Zona horaria inválida." },
+          { status: 400 }
+        );
+      }
     }
 
     const existingSettings = (currentTenant.settings as Record<string, any>) || {};
@@ -109,6 +143,12 @@ export async function PATCH(request: NextRequest) {
       ...existingSettings,
       ...(customSettings || {}),
     };
+    if (customSettings?.evolutionConfig && typeof customSettings.evolutionConfig === "object") {
+      mergedSettings.evolutionConfig = {
+        ...(existingSettings.evolutionConfig || {}),
+        ...customSettings.evolutionConfig,
+      };
+    }
 
     if (phone !== undefined) mergedSettings.phone = String(phone).trim();
     if (whatsappNumber !== undefined) mergedSettings.whatsappPhone = String(whatsappNumber).replace(/\D/g, "");
@@ -118,6 +158,10 @@ export async function PATCH(request: NextRequest) {
     if (weekendClosing !== undefined) mergedSettings.weekendClosing = String(weekendClosing).trim();
     if (sundayOpen !== undefined) mergedSettings.sundayOpen = Boolean(sundayOpen);
     if (openingCash !== undefined) mergedSettings.openingCash = Number(openingCash);
+    // Dashboard accent color (the public page color lives in themeSettings)
+    if (typeof body.primaryColor === "string" && /^#[0-9a-f]{6}$/i.test(body.primaryColor)) {
+      mergedSettings.dashboardColor = body.primaryColor.toLowerCase();
+    }
     if (acceptedPaymentMethods !== undefined && Array.isArray(acceptedPaymentMethods)) {
       mergedSettings.acceptedPaymentMethods = acceptedPaymentMethods;
     }

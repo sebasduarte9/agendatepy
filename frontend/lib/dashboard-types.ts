@@ -308,6 +308,7 @@ export type EvolutionApiConfig = {
   autoSendOnBooking: boolean;
   autoSendOnCancel: boolean;
   connected: boolean;
+  instance?: string;
   phoneNumber?: string;
   autoBotEnabled?: boolean;
   botMode?: BotEngineMode;

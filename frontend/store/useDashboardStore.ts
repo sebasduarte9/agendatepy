@@ -494,11 +494,11 @@ export const initialEvolutionApi: EvolutionApiConfig = {
   instanceName: "agendatepy-central",
   autoSendOnBooking: true,
   autoSendOnCancel: true,
-  connected: true,
-  phoneNumber: "+595 981 765 432",
+  connected: false,
+  phoneNumber: "",
   phoneType: "business",
-  personalPhone: "+595 981 700 800",
-  notifyPersonalPhoneOnBooking: true,
+  personalPhone: "",
+  notifyPersonalPhoneOnBooking: false,
   allowEmojis: false,
   askStaffPreference: true,
   handoffOnUnknownTopic: true,
@@ -1521,7 +1521,10 @@ type DashboardState = {
   deleteStaff: (id: string) => Promise<any> | void;
   updateStaffCommission: (id: string, percentage: number, productPercentage?: number) => Promise<any> | void;
   commissionPayouts: CommissionPayoutRecord[];
-  addCommissionPayout: (payout: Omit<CommissionPayoutRecord, "id" | "paidAt">) => CommissionPayoutRecord;
+  addCommissionPayout: (
+    payout: Omit<CommissionPayoutRecord, "id" | "paidAt">,
+    options?: { registerCashExpense?: boolean }
+  ) => CommissionPayoutRecord;
   addService: (item: Omit<ServiceItem, "id">) => Promise<any> | void;
   updateService: (id: string, patch: Partial<ServiceItem>) => Promise<any> | void;
   removeService: (id: string) => Promise<any> | void;
@@ -1533,8 +1536,8 @@ type DashboardState = {
   updateClient: (id: string, patch: Partial<Client>) => Promise<any> | void;
   deleteClient: (id: string) => Promise<any> | void;
   updateLoyalty: (patch: Partial<LoyaltySettings>) => Promise<boolean> | void;
-  addClientLoyaltyPoint: (clientId: string) => void;
-  redeemClientReward: (clientId: string, pointsToDeduct?: number) => void;
+  addClientLoyaltyPoint: (clientId: string, amount?: number) => void;
+  redeemClientReward: (clientId: string, pointsToDeduct?: number, rewardDescription?: string) => Promise<boolean>;
   updateSipap: (patch: Partial<SipapConfig>) => void;
   updateEvolutionApi: (patch: Partial<EvolutionApiConfig>) => void;
   addCashMovement: (item: Omit<CashMovement, "id">) => Promise<any> | void;
@@ -1552,7 +1555,7 @@ type DashboardState = {
   dismissToast: (id: string) => void;
   crmConversations: CrmConversation[];
   evolutionConfig: EvolutionApiConfig;
-  updateEvolutionConfig: (config: Partial<EvolutionApiConfig>) => void;
+  updateEvolutionConfig: (config: Partial<EvolutionApiConfig>) => Promise<boolean>;
   loadDemoConversation: () => void;
   clearCrmConversations: () => void;
   restoreCrmConversations: (conversations: CrmConversation[]) => void;
@@ -1692,6 +1695,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             address: t.address || state.business.address,
             openingCash: t.openingCash ?? state.business.openingCash,
             acceptedPaymentMethods: t.settings?.acceptedPaymentMethods || state.business.acceptedPaymentMethods,
+            primaryColor: t.primaryColor || state.business.primaryColor,
+            logoUrl: t.logoUrl ?? state.business.logoUrl,
+            plan: t.plan || state.business.plan,
+            usedBookings: typeof t.usedBookings === "number" ? t.usedBookings : state.business.usedBookings,
+            freeBookingLimit:
+              t.plan === "gratis" ? 20 : t.plan === "basico" ? 100 : t.plan ? 9999 : state.business.freeBookingLimit,
           };
         }
 
@@ -2187,7 +2196,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
     return get().updateStaff(id, patch);
   },
-  addCommissionPayout: (payoutData) => {
+  addCommissionPayout: (payoutData, options) => {
+    const registerCashExpense = options?.registerCashExpense ?? true;
     const id = "payout-" + Date.now();
     const paidAt = new Date().toISOString();
     const receiptNumber =
@@ -2203,7 +2213,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     // 1. Add to payouts list
     const updatedPayouts = [newPayout, ...get().commissionPayouts];
 
-    // 2. Automatically register an EGRESO in Caja Diaria
+    // 2. Register an EGRESO in Caja Diaria when requested
     const cashExpense: CashMovement = {
       id: "cm-" + Date.now(),
       type: "egreso",
@@ -2216,7 +2226,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
     set({
       commissionPayouts: updatedPayouts,
-      cashMovements: [cashExpense, ...get().cashMovements],
+      cashMovements: registerCashExpense ? [cashExpense, ...get().cashMovements] : get().cashMovements,
     });
 
     // 3. Deduct advanceBalance from staff member if advance was deducted
@@ -2238,6 +2248,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         periodEnd: newPayout.periodEnd,
         paymentMethod: newPayout.paymentMethod,
         notes: newPayout.notes,
+        registerCashExpense,
       }),
     }).catch(() => {});
 
@@ -2549,11 +2560,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return false;
     }
   },
-  addClientLoyaltyPoint: (clientId) => {
+  addClientLoyaltyPoint: (clientId, amount = 1) => {
     const prev = get().clients;
     const target = prev.find((c) => c.id === clientId);
     if (!target) return;
-    const newPoints = (target.loyaltyPoints || 0) + 1;
+    const newPoints = (target.loyaltyPoints || 0) + Math.max(1, Math.round(amount));
     set({
       clients: prev.map((c) =>
         c.id === clientId ? { ...c, loyaltyPoints: newPoints } : c
@@ -2565,30 +2576,37 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       body: JSON.stringify({ points: newPoints }),
     }).catch((err) => console.warn("Error actualizando puntos de cliente:", err));
   },
-  redeemClientReward: (clientId, pointsToDeduct) => {
+  redeemClientReward: async (clientId, pointsToDeduct, rewardDescription) => {
     const defaultThreshold = get().loyalty.rewardThreshold || 5;
     const threshold = typeof pointsToDeduct === "number" && pointsToDeduct > 0 ? pointsToDeduct : defaultThreshold;
-    const prev = get().clients;
-    const target = prev.find((c) => c.id === clientId);
-    if (!target) return;
-    const newPoints = Math.max(0, (target.loyaltyPoints || 0) - threshold);
-    const newRedeemed = (target.loyaltyRedeemed || 0) + 1;
-    set({
-      clients: prev.map((c) =>
-        c.id === clientId
-          ? {
-              ...c,
-              loyaltyPoints: newPoints,
-              loyaltyRedeemed: newRedeemed,
-            }
-          : c
-      ),
+    const target = get().clients.find((c) => c.id === clientId);
+    if (!target) return false;
+    const before = { loyaltyPoints: target.loyaltyPoints, loyaltyRedeemed: target.loyaltyRedeemed };
+    const patchClient = (patch: Partial<Client>) =>
+      set({ clients: get().clients.map((c) => (c.id === clientId ? { ...c, ...patch } : c)) });
+
+    patchClient({
+      loyaltyPoints: Math.max(0, (target.loyaltyPoints || 0) - threshold),
+      loyaltyRedeemed: (target.loyaltyRedeemed || 0) + 1,
     });
-    fetch(`/api/clients/${clientId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ points: newPoints }),
-    }).catch((err) => console.warn("Error canjeando puntos de cliente:", err));
+    try {
+      const res = await fetch(`/api/clients/${clientId}/redemptions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pointsUsed: threshold,
+          rewardDescription: rewardDescription?.trim() || "Premio de fidelización",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.message || "No se pudo registrar el canje.");
+      patchClient({ loyaltyPoints: data.loyaltyPoints, loyaltyRedeemed: data.loyaltyRedeemed });
+      return true;
+    } catch (err) {
+      console.warn("Error canjeando premio de cliente:", err);
+      patchClient(before);
+      return false;
+    }
   },
 
   updateSipap: (patch) =>
@@ -2687,18 +2705,24 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   crmConversations: initialCrmConversations,
   evolutionConfig: initialEvolutionApi,
-  updateEvolutionConfig: (config) => {
+  updateEvolutionConfig: async (config) => {
     const next = { ...get().evolutionConfig, ...config };
-    set({
-      evolutionConfig: next,
-    });
-    fetch("/api/tenant/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        settings: { evolutionConfig: next },
-      }),
-    }).catch((err) => console.warn("Error guardando evolutionConfig en BD:", err));
+    try {
+      const response = await fetch("/api/tenant/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settings: { evolutionConfig: config },
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.ok !== true) return false;
+      set({ evolutionConfig: next });
+      return true;
+    } catch (err) {
+      console.warn("Error guardando evolutionConfig en BD:", err);
+      return false;
+    }
   },
   loadDemoConversation: () => {
     set({
@@ -2711,7 +2735,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     get().pushToast("success", "Bandeja limpiada.");
   },
   restoreCrmConversations: (conversations) => {
-    set({ crmConversations: conversations });
+    set((state) => {
+      const currentIds = new Set(state.crmConversations.map((conversation) => conversation.id));
+      return {
+        crmConversations: [
+          ...state.crmConversations,
+          ...conversations.filter((conversation) => !currentIds.has(conversation.id)),
+        ],
+      };
+    });
   },
   ensureClientCrmConversation: (client) => {
     const phoneDigits = client.phone.replace(/\D/g, "");

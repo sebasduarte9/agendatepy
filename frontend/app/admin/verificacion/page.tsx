@@ -108,13 +108,13 @@ export default function WhatsAppVerificationPage() {
                 role="switch"
                 aria-checked={enabled}
                 onClick={() => setEnabled((v) => !v)}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
                   enabled ? "bg-[#FF4F2B]" : "bg-slate-200"
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                    enabled ? "translate-x-[22px]" : "translate-x-0.5"
+                  className={`pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-[#ffffff] shadow-[0_1px_3px_rgba(0,0,0,0.28)] transition-transform ${
+                    enabled ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
               </button>

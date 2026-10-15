@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { staffId, periodStart, periodEnd, paymentMethod = "Efectivo", appointmentIds, notes } = body;
+    const registerCashExpense = body.registerCashExpense !== false;
 
     if (!staffId || !UUID_REGEX.test(staffId)) {
       return NextResponse.json(
@@ -220,18 +221,20 @@ export async function POST(request: NextRequest) {
     const endRange = periodEnd ? new Date(periodEnd) : appsWithCash[appsWithCash.length - 1].startTime;
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Crear movimiento de egreso en caja
-      const cashExpense = await tx.cashMovement.create({
-        data: {
-          tenantId: auth.tenantId,
-          type: CashMovementType.EXPENSE,
-          amount: totalGrossCommission,
-          category: "Comisiones",
-          description: `Liquidación de comisiones a ${staff.name}`,
-          paymentMethod,
-          createdBy: auth.session.email,
-        },
-      });
+      // 1. Crear movimiento de egreso en caja (solo si se pidió registrar la salida)
+      const cashExpense = registerCashExpense
+        ? await tx.cashMovement.create({
+            data: {
+              tenantId: auth.tenantId,
+              type: CashMovementType.EXPENSE,
+              amount: totalGrossCommission,
+              category: "Comisiones",
+              description: `Liquidación de comisiones a ${staff.name}`,
+              paymentMethod,
+              createdBy: auth.session.email,
+            },
+          })
+        : null;
 
       // 2. Crear CommissionPayout
       const payout = await tx.commissionPayout.create({
@@ -243,7 +246,7 @@ export async function POST(request: NextRequest) {
           grossCommission: totalGrossCommission,
           amountPaid: totalGrossCommission,
           paymentMethod,
-          cashMovementId: cashExpense.id,
+          cashMovementId: cashExpense?.id ?? null,
           status: PayoutStatus.PAID,
           paidAt: new Date(),
           paidBy: auth.session.email,

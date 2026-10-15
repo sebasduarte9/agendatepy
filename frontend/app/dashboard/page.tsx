@@ -208,7 +208,7 @@ export default function DashboardHomePage() {
                 Horario: {startTimeDisplay} - {endTimeDisplay} hs
               </span>
               {a.clientPhone && (
-                <span className="text-slate-500 font-mono">
+                <span className="text-slate-500 tabular-nums">
                   Tel: {a.clientPhone}
                 </span>
               )}
@@ -381,7 +381,7 @@ export default function DashboardHomePage() {
         className="rise-in flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
             Bienvenido, {userName}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:flex items-center gap-2">
@@ -402,7 +402,7 @@ export default function DashboardHomePage() {
           <button
             type="button"
             onClick={() => setQuickBookingOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
             style={{
               backgroundColor: business.primaryColor || "#FF4F2B",
             }}
@@ -444,10 +444,10 @@ export default function DashboardHomePage() {
       {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD WITH 7-DAY MINI SPARKLINE ═══ */}
       <div data-tour="kpi-cards" className="glass-panel kpi-rise block md:hidden p-4 rounded-3xl space-y-3.5">
         <div>
-          <span className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block whitespace-nowrap truncate">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block whitespace-nowrap truncate">
             Citas para hoy — {todayFormattedDisplay}
           </span>
-          <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+          <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
             {appointmentsToday.length} <span className="text-xs font-normal text-slate-400">turnos</span>
           </span>
         </div>
@@ -456,7 +456,7 @@ export default function DashboardHomePage() {
         <div className="glass-panel-subtle p-3 rounded-2xl space-y-2">
           <div className="flex items-center justify-between text-[11px]">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 truncate">
+              <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 truncate">
                 {selectedSnapshotDay !== null ? (
                   <>
                     <span
@@ -464,7 +464,7 @@ export default function DashboardHomePage() {
                       style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
                     />
                     <span className="truncate">{weeklySnapshot[selectedSnapshotDay].fullDay}</span>
-                    <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                    <span className="text-[11px] text-slate-400 font-normal shrink-0">
                       {weeklySnapshot[selectedSnapshotDay].isToday ? "(Hoy)" : ""}
                     </span>
                   </>
@@ -477,7 +477,7 @@ export default function DashboardHomePage() {
               </span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+              <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
                 <AnimatedValue
                   value={formatGs(
                     selectedSnapshotDay !== null
@@ -494,7 +494,7 @@ export default function DashboardHomePage() {
                     triggerHaptic("selection");
                     setSelectedSnapshotDay(null);
                   }}
-                  className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-white shadow-xs active:scale-95 transition-all cursor-pointer"
                   style={{ backgroundColor: business.primaryColor || "#FF4F2B" }}
                 >
                   Ver total
@@ -502,7 +502,7 @@ export default function DashboardHomePage() {
               ) : (
                 <Link
                   href="/dashboard/estadisticas"
-                  className="text-[10px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-0.5 ml-1 transition"
+                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-0.5 ml-1 transition"
                 >
                   <span>Reportes</span>
                   <ArrowRight className="h-2.5 w-2.5" />
@@ -542,9 +542,9 @@ export default function DashboardHomePage() {
                     title={`${d.day}: ${formatGs(d.amount)}`}
                   />
                   <span
-                    className={`text-[9px] font-bold transition-colors ${
+                    className={`text-[11px] font-semibold transition-colors ${
                       isSelected
-                        ? "text-[var(--primary)] font-black"
+                        ? "text-[var(--primary)] font-semibold"
                         : d.isToday
                         ? "text-slate-900 dark:text-white"
                         : "text-slate-400 dark:text-slate-500"
@@ -557,29 +557,29 @@ export default function DashboardHomePage() {
             })}
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 px-0.5 pt-0.5">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 px-0.5 pt-0.5">
             <span>Promedio diario: {formatGs(averageWeeklyAmount)}</span>
-            <span className="font-mono">7 días</span>
+            <span className="tabular-nums">7 días</span>
           </div>
         </div>
 
         {/* Métricas del día protegidas contra desbordamiento */}
         <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-1 text-center text-xs text-slate-500 dark:text-slate-400">
           <div className="min-w-0 px-0.5">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">Cobrado</span>
-            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 truncate block text-xs">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate">Cobrado</span>
+            <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 truncate block text-xs">
               {formatGs(revenueToday)}
             </span>
           </div>
           <div className="min-w-0 px-0.5 border-x border-slate-100 dark:border-white/5">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">Confirmados</span>
-            <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block text-xs">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate">Confirmados</span>
+            <span className="tabular-nums font-semibold text-slate-800 dark:text-slate-200 truncate block text-xs">
               {confirmedToday.length}
             </span>
           </div>
           <div className="min-w-0 px-0.5">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">Ocupación</span>
-            <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block text-xs">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate">Ocupación</span>
+            <span className="tabular-nums font-semibold text-slate-800 dark:text-slate-200 truncate block text-xs">
               {occupancyRate}%
             </span>
           </div>
@@ -591,7 +591,7 @@ export default function DashboardHomePage() {
         {/* KPI 1: Recaudación del Día */}
         <GlassTiltCard className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Recaudación de Hoy
             </span>
             <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -599,7 +599,7 @@ export default function DashboardHomePage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-bold font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               <AnimatedValue value={formatGs(revenueToday)} />
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -617,7 +617,7 @@ export default function DashboardHomePage() {
         {/* KPI 2: Citas de Hoy */}
         <GlassTiltCard className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Agenda de Hoy
             </span>
             <div
@@ -628,7 +628,7 @@ export default function DashboardHomePage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-bold font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               {appointmentsToday.length} <span className="text-sm font-semibold text-slate-400">turnos</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -646,7 +646,7 @@ export default function DashboardHomePage() {
         {/* KPI 3: Ocupación de Sillas */}
         <GlassTiltCard className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Ocupación de Sillas
             </span>
             <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center shadow-2xs">
@@ -654,7 +654,7 @@ export default function DashboardHomePage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-bold font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               {occupancyRate}%
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -667,7 +667,7 @@ export default function DashboardHomePage() {
         {/* KPI 4: Asistencia & Cumplimiento */}
         <GlassTiltCard className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Tasa de Asistencia
             </span>
             <div className="relative h-8 w-8 flex items-center justify-center">
@@ -697,7 +697,7 @@ export default function DashboardHomePage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="text-2xl font-black font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
+            <div className="text-2xl font-bold font-sans text-slate-900 dark:text-white tabular-nums tracking-tight">
               {attendanceRate}%
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -717,7 +717,7 @@ export default function DashboardHomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
         {/* Left Column (2/3 width): Today's Agenda Feed */}
         <div data-tour="agenda-operativa" className="lg:col-span-2 space-y-4 w-full max-w-full min-w-0">
-          <GlassTiltCard maxTilt={2} className="w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
+          <div className="glass-panel relative rounded-2xl p-5 w-full max-w-full min-w-0 overflow-hidden shadow-2xs">
             {/* Header with Title and Filtering Controls */}
             <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -726,7 +726,7 @@ export default function DashboardHomePage() {
                     <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-base">
                       Agenda Operativa
                     </h2>
-                    <span className="hidden sm:inline-flex rounded-full px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                    <span className="hidden sm:inline-flex rounded-full px-2 py-0.5 text-[11px] tabular-nums font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
                       {displayAppointments.length} turnos
                     </span>
                   </div>
@@ -852,10 +852,10 @@ export default function DashboardHomePage() {
                         <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                           {/* Chronological Time Badge */}
                           <div className="flex flex-col items-center justify-center h-12 w-14 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200/60 dark:border-slate-700/50 shrink-0">
-                            <span className="font-bold text-xs text-slate-900 dark:text-white tabular-nums">
+                            <span className="font-semibold text-xs text-slate-900 dark:text-white tabular-nums">
                               {timeFormatted.replace(" hs", "")}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-mono">
+                            <span className="text-[11px] text-slate-400 tabular-nums">
                               {dateFormatted}
                             </span>
                           </div>
@@ -868,13 +868,13 @@ export default function DashboardHomePage() {
                               </span>
 
                               {isVip && (
-                                <span className="rounded px-1.5 py-0.2 text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 shrink-0">
+                                <span className="rounded px-1.5 py-0.2 text-[11px] tabular-nums font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 shrink-0">
                                   VIP
                                 </span>
                               )}
 
                               <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${
+                                className={`rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0 ${
                                   item.status === "completed"
                                     ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/40"
                                     : item.status === "confirmed"
@@ -943,14 +943,14 @@ export default function DashboardHomePage() {
                             <button
                               type="button"
                               onClick={() => handleCompleteAndPay(item)}
-                              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-95 text-xs font-bold transition shadow-xs shrink-0 cursor-pointer active:scale-98"
+                              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-95 text-xs font-semibold transition shadow-xs shrink-0 cursor-pointer active:scale-98"
                               title="Marcar como atendido y registrar ingreso en caja"
                             >
                               <Banknote className="h-3.5 w-3.5 text-emerald-400 dark:text-emerald-600 shrink-0" />
                               <span>Cobrar</span>
                             </button>
                           ) : (
-                            <span className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-8.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            <span className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-8.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                               <CheckCircle2 className="h-3.5 w-3.5" />
                               <span>Pagado</span>
                             </span>
@@ -979,7 +979,7 @@ export default function DashboardHomePage() {
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-          </GlassTiltCard>
+          </div>
         </div>
 
         {/* Right Column (1/3 width): Live Spotlight, CRM Inbox, Weekly Trajectory & Quick Tools */}
@@ -998,7 +998,7 @@ export default function DashboardHomePage() {
                   <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2.5">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
                         Inspección de Turno
                       </span>
                     </div>
@@ -1021,7 +1021,7 @@ export default function DashboardHomePage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Horario:</span>
-                      <span className="font-mono font-medium text-slate-900 dark:text-white">
+                      <span className="tabular-nums font-medium text-slate-900 dark:text-white">
                         {formatInTimeZone(selectedAppointment.start, business.timezone || "America/Asuncion", "HH:mm 'hs' (dd/MM)")}
                       </span>
                     </div>
@@ -1033,7 +1033,7 @@ export default function DashboardHomePage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Monto:</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         {formatGs(services.find((s) => s.id === selectedAppointment.serviceId)?.price ?? 80000)}
                       </span>
                     </div>
@@ -1077,18 +1077,18 @@ export default function DashboardHomePage() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                       </span>
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Próximo Turno
                       </span>
                     </div>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 tabular-nums">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 tabular-nums">
                       {formatInTimeZone(nextUpcomingAppointment.start, business.timezone || "America/Asuncion", "HH:mm 'hs'")}
                     </span>
                   </div>
 
                   <div className="mt-3 flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                      <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">
                         {nextUpcomingAppointment.clientName}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
@@ -1096,11 +1096,11 @@ export default function DashboardHomePage() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
                         {formatGs(services.find((s) => s.id === nextUpcomingAppointment.serviceId)?.price ?? 80000)}
                       </p>
                       {staff.find((st) => st.id === nextUpcomingAppointment.staffId) && (
-                        <p className="text-[10px] text-slate-400 flex items-center justify-end gap-1 mt-0.5">
+                        <p className="text-[11px] text-slate-400 flex items-center justify-end gap-1 mt-0.5">
                           <Scissors className="h-2.5 w-2.5" />
                           <span>{staff.find((st) => st.id === nextUpcomingAppointment.staffId)?.name}</span>
                         </p>
@@ -1152,7 +1152,7 @@ export default function DashboardHomePage() {
             <div className="mt-3">
               <div className="flex items-baseline justify-between">
                 <div>
-                  <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
+                  <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
                     {formatGs(weeklySnapshot.reduce((sum, d) => sum + d.amount, 0))}
                   </span>
                   <span className="text-[11px] text-slate-400 block mt-0.5">
@@ -1171,7 +1171,7 @@ export default function DashboardHomePage() {
                   return (
                     <div key={d.day} className="flex flex-col items-center gap-1.5 h-full justify-end group/bar relative">
                       {/* Tooltip on hover */}
-                      <div className="absolute -top-7 opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] tabular-nums px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-10">
+                      <div className="absolute -top-7 opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[11px] tabular-nums px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-10">
                         {formatGs(d.amount)}
                       </div>
                       <div
@@ -1188,7 +1188,7 @@ export default function DashboardHomePage() {
                         }}
                       />
                       <span
-                        className={`text-[10px] font-bold ${
+                        className={`text-[11px] font-semibold ${
                           d.isToday
                             ? "text-slate-900 dark:text-white"
                             : "text-slate-400 dark:text-slate-500"
@@ -1212,7 +1212,7 @@ export default function DashboardHomePage() {
                   Mensajes Recientes
                 </h3>
                 {unreadMessagesCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
+                  <span className="px-1.5 py-0.2 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 tabular-nums">
                     {unreadMessagesCount}
                   </span>
                 )}
@@ -1258,7 +1258,7 @@ export default function DashboardHomePage() {
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase shrink-0 ml-2 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-semibold">
+                      <span className="text-[11px] tabular-nums text-slate-500 dark:text-slate-400 uppercase shrink-0 ml-2 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-semibold">
                         {conv.channel}
                       </span>
                     </Link>
@@ -1286,7 +1286,7 @@ export default function DashboardHomePage() {
                   <Ban className="h-3.5 w-3.5" />
                 </div>
                 <span className="font-semibold text-slate-900 dark:text-white leading-tight">Bloquear Horario</span>
-                <span className="text-[10px] text-slate-400 mt-0.5">Descansos o pausas</span>
+                <span className="text-[11px] text-slate-400 mt-0.5">Descansos o pausas</span>
               </Link>
 
               <Link
@@ -1297,7 +1297,7 @@ export default function DashboardHomePage() {
                   <Receipt className="h-3.5 w-3.5" />
                 </div>
                 <span className="font-semibold text-slate-900 dark:text-white leading-tight">Transferencias</span>
-                <span className="text-[10px] text-slate-400 mt-0.5">Validar comprobantes</span>
+                <span className="text-[11px] text-slate-400 mt-0.5">Validar comprobantes</span>
               </Link>
 
               <Link
@@ -1308,7 +1308,7 @@ export default function DashboardHomePage() {
                   <Coins className="h-3.5 w-3.5" />
                 </div>
                 <span className="font-semibold text-slate-900 dark:text-white leading-tight">Comisiones</span>
-                <span className="text-[10px] text-slate-400 mt-0.5">Cálculo al personal</span>
+                <span className="text-[11px] text-slate-400 mt-0.5">Cálculo al personal</span>
               </Link>
 
               <Link
@@ -1319,7 +1319,7 @@ export default function DashboardHomePage() {
                   <Palette className="h-3.5 w-3.5" />
                 </div>
                 <span className="font-semibold text-slate-900 dark:text-white leading-tight">Diseño Web</span>
-                <span className="text-[10px] text-slate-400 mt-0.5">Página pública</span>
+                <span className="text-[11px] text-slate-400 mt-0.5">Página pública</span>
               </Link>
             </div>
           </GlassTiltCard>

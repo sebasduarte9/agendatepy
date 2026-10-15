@@ -546,7 +546,7 @@ export default function ServiciosPage() {
         data-tour="servicios-header"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Servicios & Precios
         </h1>
 
@@ -556,7 +556,7 @@ export default function ServiciosPage() {
             type="button"
             data-tour="servicios-new-btn"
             onClick={handleOpenCreateService}
-            className="inline-flex min-h-11 sm:min-h-0 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition-all duration-150 ease-out hover:brightness-110 active:scale-[0.98] cursor-pointer"
+            className="inline-flex min-h-11 sm:min-h-0 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-150 ease-out hover:brightness-110 active:scale-[0.98] cursor-pointer"
             style={{
               backgroundColor: business.primaryColor || "#FF4F2B",
             }}
@@ -608,7 +608,7 @@ export default function ServiciosPage() {
               <div className="mt-1 truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white tabular-nums sm:text-xl">
                 {metric.value}
               </div>
-              <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">{metric.note}</div>
+              <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{metric.note}</div>
             </div>
           ))}
         </div>
@@ -702,7 +702,7 @@ export default function ServiciosPage() {
               <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Las categorías aparecerán al crear servicios.</p>
             )}
             {allCategories.length > categoryStats.length && (
-              <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+              <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
                 Mostrando las 6 categorías con más servicios.
               </p>
             )}
@@ -723,7 +723,7 @@ export default function ServiciosPage() {
             return (
               <div
                 key={cat}
-                className={`group inline-flex min-h-10 sm:min-h-8 items-center gap-1 rounded-2xl border px-2.5 text-xs font-bold transition shrink-0 ${
+                className={`group inline-flex min-h-10 sm:min-h-8 items-center gap-1 rounded-2xl border px-2.5 text-xs font-semibold transition shrink-0 ${
                   isSelected
                     ? "border-primary bg-primary/10 text-primary shadow-xs"
                     : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -793,7 +793,7 @@ export default function ServiciosPage() {
             <button
               type="button"
               onClick={() => setIsAddingCategory(true)}
-              className="inline-flex min-h-10 sm:min-h-8 items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-800/50 px-3.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition shrink-0 cursor-pointer"
+              className="inline-flex min-h-10 sm:min-h-8 items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-800/50 px-3.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition shrink-0 cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Nueva Categoría</span>
@@ -819,7 +819,7 @@ export default function ServiciosPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3">
             <Scissors className="h-6 w-6" />
           </div>
-          <h3 className="font-bold text-slate-900 dark:text-white text-base">
+          <h3 className="font-semibold text-slate-900 dark:text-white text-base">
             {services.length === 0 ? "No tenés servicios todavía" : "No hay servicios en esta categoría"}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
@@ -830,7 +830,7 @@ export default function ServiciosPage() {
           <button
             type="button"
             onClick={handleOpenCreateService}
-            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer"
+            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:opacity-95 transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Crear primer servicio</span>
@@ -850,21 +850,21 @@ export default function ServiciosPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         {/* Apple Squircle Icon with Brand Accent */}
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-semibold">
                           <Scissors className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                               {item.category || "General"}
                             </span>
                             {item.hasPromo && (
-                              <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                              <span className="text-[11px] font-semibold px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
                                 PROMO
                               </span>
                             )}
                           </div>
-                          <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                          <h4 className="font-semibold text-slate-900 dark:text-white text-xs truncate">
                             {item.name}
                           </h4>
                           <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
@@ -873,7 +873,7 @@ export default function ServiciosPage() {
                               {item.durationMin} min
                             </span>
                             <span>•</span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">
+                            <span className="tabular-nums font-semibold text-slate-900 dark:text-white">
                               {formatGs(currentPrice)}
                             </span>
                           </div>
@@ -916,7 +916,7 @@ export default function ServiciosPage() {
                           handleOpenPromoModal(item);
                         }}
                         data-tour={index === 0 ? "servicios-promo-btn" : undefined}
-                        className={`inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-[11px] font-bold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer ${
+                        className={`inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-[11px] font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer ${
                           item.hasPromo
                             ? "border-amber-500/40 bg-amber-500/15 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300"
                             : "border-amber-500/30 bg-amber-500/10 text-amber-700 hover:border-amber-500/50 hover:bg-amber-500/15 dark:text-amber-300"
@@ -1000,7 +1000,7 @@ export default function ServiciosPage() {
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="rounded-full glass-panel-subtle px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-300 border border-white/5">
+                      <span className="rounded-full glass-panel-subtle px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-zinc-300 border border-white/5">
                         {item.category || "General"}
                       </span>
 
@@ -1032,7 +1032,7 @@ export default function ServiciosPage() {
                     </div>
                   </div>
 
-                  <h3 className="mt-3 font-bold text-slate-900 dark:text-white text-base group-hover:text-primary transition">
+                  <h3 className="mt-3 font-semibold text-slate-900 dark:text-white text-base group-hover:text-primary transition">
                     {item.name}
                   </h3>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
@@ -1041,11 +1041,11 @@ export default function ServiciosPage() {
 
                   {/* Price Section */}
                   <div className="mt-4 flex items-baseline gap-2">
-                    <span className="font-mono font-black text-xl text-slate-900 dark:text-white">
+                    <span className="tabular-nums font-bold text-xl text-slate-900 dark:text-white">
                       {formatGs(currentPrice)}
                     </span>
                     {hasActivePromo && (
-                      <span className="text-xs text-slate-400 line-through font-mono">
+                      <span className="text-xs text-slate-400 line-through tabular-nums">
                         {formatGs(item.price)}
                       </span>
                     )}
@@ -1065,19 +1065,19 @@ export default function ServiciosPage() {
                   {hasActivePromo && (
                     <div className="mt-2.5 flex flex-wrap gap-1.5">
                       {(item.promoType === "time" || item.promoType === "both" || !item.promoType) && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
                           <Clock className="h-2.5 w-2.5 text-amber-500" />
                           <span>Cronómetro {item.promoLimitHours || 24}h</span>
                         </span>
                       )}
                       {(item.promoType === "quantity" || item.promoType === "both") && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-700 dark:text-orange-300">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 text-[11px] font-semibold text-orange-700 dark:text-orange-300">
                           <Flame className="h-2.5 w-2.5 text-orange-500 fill-orange-500" />
                           <span>{item.promoLimitQuantity || 5} cupos</span>
                         </span>
                       )}
                       {item.requirePrepayment && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                           <CreditCard className="h-2.5 w-2.5 text-emerald-500" />
                           <span>
                             {item.prepaymentType === "full"
@@ -1097,7 +1097,7 @@ export default function ServiciosPage() {
                     type="button"
                     data-tour={index === 0 ? "servicios-promo-btn" : undefined}
                     onClick={() => handleOpenPromoModal(item)}
-                    className={`w-full flex items-center justify-between rounded-xl py-1.5 px-3 text-xs font-bold transition cursor-pointer ${
+                    className={`w-full flex items-center justify-between rounded-xl py-1.5 px-3 text-xs font-semibold transition cursor-pointer ${
                       item.hasPromo
                         ? "border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
                         : "border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-amber-600 hover:border-amber-400/40"
@@ -1115,7 +1115,7 @@ export default function ServiciosPage() {
                           : "Activar promo flash"}
                       </span>
                     </span>
-                    <span className="text-[10px] opacity-75 font-bold">
+                    <span className="text-[11px] opacity-75 font-semibold">
                       {item.hasPromo ? "Modificar" : "Configurar"}
                     </span>
                   </button>
@@ -1126,7 +1126,7 @@ export default function ServiciosPage() {
                       type="button"
                       data-tour={index === 0 ? "servicios-share-btn" : undefined}
                       onClick={() => handleCopyServiceLink(item.id, item.name)}
-                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border py-2 px-3 text-xs font-bold transition cursor-pointer ${
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border py-2 px-3 text-xs font-semibold transition cursor-pointer ${
                         isCopied
                           ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                           : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white hover:border-primary"
@@ -1192,7 +1192,7 @@ export default function ServiciosPage() {
               type="submit"
               form="service-catalog-form"
               disabled={isSavingService || isUploadingServiceCover}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-2.5 font-bold text-white shadow-md transition hover:opacity-95 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-2.5 font-semibold text-white shadow-md transition hover:opacity-95 disabled:cursor-wait disabled:opacity-60"
             >
               {isSavingService ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {isSavingService ? "Guardando…" : editingService ? "Guardar Cambios" : "Crear Servicio"}
@@ -1217,7 +1217,7 @@ export default function ServiciosPage() {
           {/* Service Name & Visibility Switch */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex-1">
-              <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
                 Nombre del Servicio *
               </label>
               <input
@@ -1251,7 +1251,7 @@ export default function ServiciosPage() {
                   <EyeOff className="h-4 w-4" aria-hidden="true" />
                 )}
               </button>
-              <span className="font-bold text-[11px] text-slate-700 dark:text-slate-300">
+              <span className="font-semibold text-[11px] text-slate-700 dark:text-slate-300">
                 {serviceForm.active ? "Visible Online" : "Oculto"}
               </span>
             </div>
@@ -1260,13 +1260,13 @@ export default function ServiciosPage() {
           {/* Category Custom Selector */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="font-bold text-slate-700 dark:text-slate-200">
+              <label className="font-semibold text-slate-700 dark:text-slate-200">
                 Categoría del Servicio
               </label>
               <button
                 type="button"
                 onClick={() => setIsAddingCategory(!isAddingCategory)}
-                className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="h-3 w-3" />
                 <span>Nueva Categoría</span>
@@ -1282,7 +1282,7 @@ export default function ServiciosPage() {
                     key={cat}
                     type="button"
                     onClick={() => setServiceForm({ ...serviceForm, category: cat })}
-                    className={`inline-flex min-h-10 sm:min-h-0 items-center rounded-xl border px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                    className={`inline-flex min-h-10 sm:min-h-0 items-center rounded-xl border px-3 py-2 text-xs font-semibold transition cursor-pointer ${
                       isSelected
                         ? "border-primary bg-primary text-white shadow-xs"
                         : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-400"
@@ -1313,7 +1313,7 @@ export default function ServiciosPage() {
                 <button
                   type="button"
                   onClick={handleCreateCategory}
-                  className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:opacity-95 cursor-pointer"
+                  className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:opacity-95 cursor-pointer"
                 >
                   Agregar categoría
                 </button>
@@ -1325,7 +1325,7 @@ export default function ServiciosPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Custom Duration Selector */}
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 Duración del Turno ({serviceForm.durationMin} min)
               </label>
               <div className="grid grid-cols-3 gap-1.5 mb-2">
@@ -1334,7 +1334,7 @@ export default function ServiciosPage() {
                     key={dur}
                     type="button"
                     onClick={() => setServiceForm({ ...serviceForm, durationMin: dur })}
-                    className={`min-h-10 sm:min-h-0 rounded-xl border px-1 py-1.5 text-xs font-bold transition cursor-pointer ${
+                    className={`min-h-10 sm:min-h-0 rounded-xl border px-1 py-1.5 text-xs font-semibold transition cursor-pointer ${
                       serviceForm.durationMin === dur
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
@@ -1354,11 +1354,11 @@ export default function ServiciosPage() {
                     })
                   }
                   aria-label="Reducir duración 5 minutos"
-                  className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 transition active:scale-[0.98] cursor-pointer"
+                  className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-semibold text-slate-700 dark:text-slate-200 transition active:scale-[0.98] cursor-pointer"
                 >
                   -5
                 </button>
-                <div className="flex-1 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 py-1.5 rounded-xl">
+                <div className="flex-1 text-center tabular-nums font-semibold text-xs bg-slate-100 dark:bg-slate-800 py-1.5 rounded-xl">
                   {serviceForm.durationMin} minutos
                 </div>
                 <button
@@ -1370,7 +1370,7 @@ export default function ServiciosPage() {
                     })
                   }
                   aria-label="Aumentar duración 5 minutos"
-                  className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-black text-slate-700 dark:text-slate-200 transition active:scale-[0.98] cursor-pointer"
+                  className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-semibold text-slate-700 dark:text-slate-200 transition active:scale-[0.98] cursor-pointer"
                 >
                   +5
                 </button>
@@ -1379,7 +1379,7 @@ export default function ServiciosPage() {
 
             {/* Base Price Input with helper pills */}
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 Precio Estándar (Gs.) *
               </label>
               <div className="relative mb-2">
@@ -1390,7 +1390,7 @@ export default function ServiciosPage() {
                   required
                   value={serviceForm.price}
                   onChange={(e) => setServiceForm({ ...serviceForm, price: Math.max(0, Number(e.target.value)) })}
-                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white font-mono font-black text-base focus:border-primary focus:outline-none"
+                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-slate-900 dark:text-white tabular-nums font-semibold text-base focus:border-primary focus:outline-none"
                 />
               </div>
               <div className="flex items-center gap-1.5">
@@ -1399,7 +1399,7 @@ export default function ServiciosPage() {
                     key={quick}
                     type="button"
                     onClick={() => setServiceForm({ ...serviceForm, price: quick })}
-                    className="min-h-10 sm:min-h-0 flex-1 rounded-xl border border-slate-200/60 dark:border-white/10 py-1 text-[10px] font-bold text-slate-500 hover:text-primary hover:border-primary transition cursor-pointer"
+                    className="min-h-10 sm:min-h-0 flex-1 rounded-xl border border-slate-200/60 dark:border-white/10 py-1 text-[11px] font-semibold text-slate-500 hover:text-primary hover:border-primary transition cursor-pointer"
                   >
                     {quick / 1000}k
                   </button>
@@ -1412,7 +1412,7 @@ export default function ServiciosPage() {
           <div className="rounded-2xl border border-slate-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="mb-2 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-bold text-slate-800 dark:text-slate-100">Portada del servicio <span className="font-medium text-slate-400">(opcional)</span></p>
+                <p className="font-semibold text-slate-800 dark:text-slate-100">Portada del servicio <span className="font-medium text-slate-400">(opcional)</span></p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Se muestra al elegir el servicio en tu página de reservas.</p>
               </div>
               {serviceForm.imageUrl && (
@@ -1441,7 +1441,7 @@ export default function ServiciosPage() {
                 type="button"
                 disabled={isUploadingServiceCover}
                 onClick={() => serviceCoverInputRef.current?.click()}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-primary/40 hover:text-primary disabled:cursor-wait disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary disabled:cursor-wait disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
               >
                 {isUploadingServiceCover ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
                 {isUploadingServiceCover ? "Optimizando…" : serviceForm.imageUrl ? "Cambiar imagen" : "Subir imagen"}
@@ -1451,7 +1451,7 @@ export default function ServiciosPage() {
 
           {/* Description */}
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+            <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
               Descripción o Detalle (opcional)
             </label>
             <textarea
@@ -1466,13 +1466,13 @@ export default function ServiciosPage() {
           {/* Staff Assignment: Multi-select */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="font-bold text-slate-700 dark:text-slate-200">
+              <label className="font-semibold text-slate-700 dark:text-slate-200">
                 ¿Quiénes realizan este servicio?
               </label>
               <button
                 type="button"
                 onClick={handleSelectAllStaff}
-                className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+                className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
               >
                 Seleccionar todos
               </button>
@@ -1488,12 +1488,12 @@ export default function ServiciosPage() {
                     onClick={() => handleToggleStaff(st.id)}
                     className={`min-h-11 sm:min-h-0 flex items-center gap-2 p-2 rounded-2xl border text-left transition cursor-pointer ${
                       isAssigned
-                        ? "border-primary bg-primary/10 text-primary font-bold shadow-xs"
+                        ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
                         : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 opacity-60"
                     }`}
                   >
                     <div
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
                         isAssigned
                           ? "bg-primary text-white"
                           : "bg-slate-200 dark:bg-slate-800 text-slate-600"
@@ -1526,7 +1526,7 @@ export default function ServiciosPage() {
                 <button
                   type="button"
                   onClick={handleRemovePromo}
-                  className="min-h-10 rounded-xl px-3 text-xs font-bold text-rose-600 transition hover:bg-rose-500/10 dark:text-rose-300"
+                  className="min-h-10 rounded-xl px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-500/10 dark:text-rose-300"
                 >
                   Quitar Promoción
                 </button>
@@ -1542,7 +1542,7 @@ export default function ServiciosPage() {
                 <button
                   type="submit"
                   form="service-promo-form"
-                  className="min-h-11 rounded-2xl bg-amber-500 px-3 py-2 font-bold text-white shadow-md transition hover:bg-amber-600 sm:px-5"
+                  className="min-h-11 rounded-2xl bg-amber-500 px-3 py-2 font-semibold text-white shadow-md transition hover:bg-amber-600 sm:px-5"
                 >
                   Guardar Promoción
                 </button>
@@ -1554,15 +1554,15 @@ export default function ServiciosPage() {
             {/* Promo Header & Switch */}
             <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white font-bold">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white font-semibold">
                   <Flame className="h-4 w-4 fill-white" />
                 </div>
                 <div>
-                  <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
+                  <span className="font-semibold text-xs text-slate-900 dark:text-white block">
                     {promoModalService.name}
                   </span>
                   <span className="text-[11px] text-slate-500">
-                    Precio estándar: <strong className="text-slate-700 dark:text-slate-300 font-mono">{formatGs(promoModalService.price)}</strong>
+                    Precio estándar: <strong className="text-slate-700 dark:text-slate-300 tabular-nums">{formatGs(promoModalService.price)}</strong>
                   </span>
                 </div>
               </div>
@@ -1572,13 +1572,14 @@ export default function ServiciosPage() {
                 type="button"
                 role="switch"
                 aria-checked={promoForm.hasPromo}
+                aria-label="Activar promoción"
                 onClick={() => setPromoForm({ ...promoForm, hasPromo: !promoForm.hasPromo })}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
                   promoForm.hasPromo ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-[#ffffff] shadow-[0_1px_3px_rgba(0,0,0,0.28)] transition-transform duration-200 ease-in-out ${
                     promoForm.hasPromo ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
@@ -1590,7 +1591,7 @@ export default function ServiciosPage() {
                 {/* Dual Inputs: % vs Monto sync */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
                       Porcentaje de Descuento (%)
                     </label>
                     <div className="relative">
@@ -1600,19 +1601,19 @@ export default function ServiciosPage() {
                         max="99"
                         value={promoForm.promoPercent}
                         onChange={(e) => handlePromoPercentChange(Number(e.target.value))}
-                        className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 pl-3 pr-8 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                        className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 pl-3 pr-8 text-xs tabular-nums font-semibold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-amber-600">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 font-semibold text-amber-600">
                         %
                       </span>
                     </div>
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[11px] text-slate-400">
                       Calcula el monto final automáticamente.
                     </p>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
                       Precio Promocional (Gs.)
                     </label>
                     <input
@@ -1621,9 +1622,9 @@ export default function ServiciosPage() {
                       step="1000"
                       value={promoForm.promoPrice}
                       onChange={(e) => handlePromoPriceChange(Number(e.target.value))}
-                      className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+                      className="w-full rounded-2xl border border-amber-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs tabular-nums font-semibold text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                     />
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[11px] text-slate-400">
                       Calcula el % de descuento automáticamente.
                     </p>
                   </div>
@@ -1631,7 +1632,7 @@ export default function ServiciosPage() {
 
                 {/* Badge Style Selector */}
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                  <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                     ¿Cómo mostrar el descuento en tu portal?
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -1640,12 +1641,12 @@ export default function ServiciosPage() {
                       onClick={() => handlePromoDisplayTypeChange("percentage")}
                       className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
                         promoForm.promoDisplayType === "percentage"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-semibold"
                           : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
                       }`}
                     >
-                      <span className="block text-xs font-black">Mostrar Porcentaje</span>
-                      <span className="text-[10px] opacity-75">
+                      <span className="block text-xs font-semibold">Mostrar Porcentaje</span>
+                      <span className="text-[11px] opacity-75">
                         Ej: -{promoForm.promoPercent}% OFF
                       </span>
                     </button>
@@ -1655,12 +1656,12 @@ export default function ServiciosPage() {
                       onClick={() => handlePromoDisplayTypeChange("amount")}
                       className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
                         promoForm.promoDisplayType === "amount"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-semibold"
                           : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
                       }`}
                     >
-                      <span className="block text-xs font-black">Mostrar Monto Ahorrado</span>
-                      <span className="text-[10px] opacity-75">
+                      <span className="block text-xs font-semibold">Mostrar Monto Ahorrado</span>
+                      <span className="text-[11px] opacity-75">
                         Ej: Ahorrá {formatGs(Math.max(0, promoModalService.price - promoForm.promoPrice))}
                       </span>
                     </button>
@@ -1670,10 +1671,10 @@ export default function ServiciosPage() {
                 {/* 2. Modalidad de Urgencia & Límite (Cronómetro / Cupos) */}
                 <div className="pt-2 border-t border-slate-100 dark:border-white/5 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="block font-bold text-slate-700 dark:text-slate-200">
+                    <label className="block font-semibold text-slate-700 dark:text-slate-200">
                       Regla de Urgencia para Agendar
                     </label>
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                    <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
                       Incentiva reserva inmediata
                     </span>
                   </div>
@@ -1684,13 +1685,13 @@ export default function ServiciosPage() {
                       onClick={() => setPromoForm({ ...promoForm, promoType: "time" })}
                       className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
                         promoForm.promoType === "time"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold shadow-xs"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-semibold shadow-xs"
                           : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       <Timer className="h-4 w-4 mx-auto mb-1 text-amber-500" />
-                      <span className="block text-[11px] font-black leading-tight">Cronómetro</span>
-                      <span className="text-[9px] opacity-75">Tiempo límite</span>
+                      <span className="block text-[11px] font-semibold leading-tight">Cronómetro</span>
+                      <span className="text-[11px] opacity-75">Tiempo límite</span>
                     </button>
 
                     <button
@@ -1698,13 +1699,13 @@ export default function ServiciosPage() {
                       onClick={() => setPromoForm({ ...promoForm, promoType: "quantity" })}
                       className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
                         promoForm.promoType === "quantity"
-                          ? "border-orange-500 bg-orange-500/20 text-orange-800 dark:text-orange-200 font-bold shadow-xs"
+                          ? "border-orange-500 bg-orange-500/20 text-orange-800 dark:text-orange-200 font-semibold shadow-xs"
                           : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       <Flame className="h-4 w-4 mx-auto mb-1 text-orange-500" />
-                      <span className="block text-[11px] font-black leading-tight">Por Cupos</span>
-                      <span className="text-[9px] opacity-75">Cantidad fija</span>
+                      <span className="block text-[11px] font-semibold leading-tight">Por Cupos</span>
+                      <span className="text-[11px] opacity-75">Cantidad fija</span>
                     </button>
 
                     <button
@@ -1712,13 +1713,13 @@ export default function ServiciosPage() {
                       onClick={() => setPromoForm({ ...promoForm, promoType: "both" })}
                       className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
                         promoForm.promoType === "both"
-                          ? "border-indigo-500 bg-indigo-500/20 text-indigo-800 dark:text-indigo-200 font-bold shadow-xs"
+                          ? "border-indigo-500 bg-indigo-500/20 text-indigo-800 dark:text-indigo-200 font-semibold shadow-xs"
                           : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       <Hourglass className="h-4 w-4 mx-auto mb-1 text-indigo-500" />
-                      <span className="block text-[11px] font-black leading-tight">Ambos</span>
-                      <span className="text-[9px] opacity-75">Tiempo + Cupos</span>
+                      <span className="block text-[11px] font-semibold leading-tight">Ambos</span>
+                      <span className="text-[11px] opacity-75">Tiempo + Cupos</span>
                     </button>
                   </div>
 
@@ -1726,11 +1727,11 @@ export default function ServiciosPage() {
                   {(promoForm.promoType === "time" || promoForm.promoType === "both") && (
                     <div className="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5 text-amber-600" />
                           <span>Duración del Cronómetro Regresivo:</span>
                         </span>
-                        <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
+                        <span className="tabular-nums font-semibold text-amber-700 dark:text-amber-300">
                           {promoForm.promoLimitHours} horas
                         </span>
                       </div>
@@ -1740,7 +1741,7 @@ export default function ServiciosPage() {
                             key={hours}
                             type="button"
                             onClick={() => setPromoForm({ ...promoForm, promoLimitHours: hours })}
-                            className={`flex-1 py-1 px-2 rounded-xl text-[11px] font-bold transition cursor-pointer ${
+                            className={`flex-1 py-1 px-2 rounded-xl text-[11px] font-semibold transition cursor-pointer ${
                               promoForm.promoLimitHours === hours
                                 ? "bg-amber-500 text-white shadow-xs"
                                 : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100"
@@ -1757,11 +1758,11 @@ export default function ServiciosPage() {
                   {(promoForm.promoType === "quantity" || promoForm.promoType === "both") && (
                     <div className="p-3 rounded-2xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/30 space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                           <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500" />
                           <span>Cupos Disponibles para esta Promo:</span>
                         </span>
-                        <span className="font-mono font-bold text-orange-700 dark:text-orange-300">
+                        <span className="tabular-nums font-semibold text-orange-700 dark:text-orange-300">
                           {promoForm.promoLimitQuantity} cupos
                         </span>
                       </div>
@@ -1771,7 +1772,7 @@ export default function ServiciosPage() {
                             key={qty}
                             type="button"
                             onClick={() => setPromoForm({ ...promoForm, promoLimitQuantity: qty })}
-                            className={`flex-1 py-1 px-2 rounded-xl text-[11px] font-bold transition cursor-pointer ${
+                            className={`flex-1 py-1 px-2 rounded-xl text-[11px] font-semibold transition cursor-pointer ${
                               promoForm.promoLimitQuantity === qty
                                 ? "bg-orange-500 text-white shadow-xs"
                                 : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100"
@@ -1789,11 +1790,11 @@ export default function ServiciosPage() {
                 <div className="pt-2 border-t border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white font-semibold">
                         <CreditCard className="h-4 w-4" />
                       </div>
                       <div>
-                        <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
+                        <span className="font-semibold text-xs text-slate-900 dark:text-white block">
                           Exigir Seña o Pago por Transferencia
                         </span>
                         <span className="text-[11px] text-slate-500">
@@ -1806,20 +1807,21 @@ export default function ServiciosPage() {
                       type="button"
                       role="switch"
                       aria-checked={promoForm.requirePrepayment}
+                      aria-label="Requerir seña o pago previo"
                       onClick={() =>
                         setPromoForm({
                           ...promoForm,
                           requirePrepayment: !promoForm.requirePrepayment,
                         })
                       }
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
                         promoForm.requirePrepayment
                           ? "bg-emerald-600"
                           : "bg-slate-300 dark:bg-slate-700"
                       }`}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        className={`pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-[#ffffff] shadow-[0_1px_3px_rgba(0,0,0,0.28)] transition-transform duration-200 ease-in-out ${
                           promoForm.requirePrepayment ? "translate-x-5" : "translate-x-0"
                         }`}
                       />
@@ -1830,7 +1832,7 @@ export default function ServiciosPage() {
                     <div className="space-y-3 p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/30">
                       {/* Modalidad de seña */}
                       <div>
-                        <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                        <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                           Tipo de Pago Previo Requerido
                         </label>
                         <div className="grid grid-cols-2 gap-2">
@@ -1841,12 +1843,12 @@ export default function ServiciosPage() {
                             }
                             className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
                               promoForm.prepaymentType === "deposit"
-                                ? "border-emerald-500 bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-bold"
+                                ? "border-emerald-500 bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-semibold"
                                 : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
                             }`}
                           >
-                            <span className="block text-xs font-black">Seña Parcial</span>
-                            <span className="text-[10px] opacity-75">
+                            <span className="block text-xs font-semibold">Seña Parcial</span>
+                            <span className="text-[11px] opacity-75">
                               Monto fijo de reserva
                             </span>
                           </button>
@@ -1858,12 +1860,12 @@ export default function ServiciosPage() {
                             }
                             className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
                               promoForm.prepaymentType === "full"
-                                ? "border-emerald-500 bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-bold"
+                                ? "border-emerald-500 bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-semibold"
                                 : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
                             }`}
                           >
-                            <span className="block text-xs font-black">Pago 100% Total</span>
-                            <span className="text-[10px] opacity-75">
+                            <span className="block text-xs font-semibold">Pago 100% Total</span>
+                            <span className="text-[11px] opacity-75">
                               {formatGs(promoForm.promoPrice)}
                             </span>
                           </button>
@@ -1873,7 +1875,7 @@ export default function ServiciosPage() {
                       {/* Monto de seña si es parcial */}
                       {promoForm.prepaymentType === "deposit" && (
                         <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                          <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
                             Monto de la Seña Requerida (Gs.)
                           </label>
                           <div className="flex items-center gap-2">
@@ -1888,7 +1890,7 @@ export default function ServiciosPage() {
                                   prepaymentAmount: Number(e.target.value),
                                 })
                               }
-                              className="w-full rounded-2xl border border-emerald-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs font-mono font-bold text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
+                              className="w-full rounded-2xl border border-emerald-500/40 bg-white dark:bg-slate-900 py-2 px-3 text-xs tabular-nums font-semibold text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
                             />
                             <div className="flex items-center gap-1 shrink-0">
                               {[20000, 30000, 50000].map((preset) => (
@@ -1898,7 +1900,7 @@ export default function ServiciosPage() {
                                   onClick={() =>
                                     setPromoForm({ ...promoForm, prepaymentAmount: preset })
                                   }
-                                  className={`py-1.5 px-2 rounded-xl text-[10px] font-bold border transition cursor-pointer ${
+                                  className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border transition cursor-pointer ${
                                     promoForm.prepaymentAmount === preset
                                       ? "bg-emerald-600 text-white border-emerald-600"
                                       : "bg-white dark:bg-slate-900 border-slate-200 text-slate-600 dark:text-slate-300"
@@ -1914,7 +1916,7 @@ export default function ServiciosPage() {
 
                       {/* Canal de pago preferido */}
                       <div>
-                        <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                        <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                           Medio de Pago Aceptado
                         </label>
                         <div className="grid grid-cols-3 gap-2 text-center">
@@ -1923,7 +1925,7 @@ export default function ServiciosPage() {
                             onClick={() =>
                               setPromoForm({ ...promoForm, prepaymentMethod: "transferencia" })
                             }
-                            className={`p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                            className={`p-2 rounded-xl border text-[11px] font-semibold transition cursor-pointer ${
                               promoForm.prepaymentMethod === "transferencia" || promoForm.prepaymentMethod === "sipap"
                                 ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
                                 : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -1938,7 +1940,7 @@ export default function ServiciosPage() {
                             onClick={() =>
                               setPromoForm({ ...promoForm, prepaymentMethod: "qr" })
                             }
-                            className={`p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                            className={`p-2 rounded-xl border text-[11px] font-semibold transition cursor-pointer ${
                               promoForm.prepaymentMethod === "qr"
                                 ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
                                 : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -1953,7 +1955,7 @@ export default function ServiciosPage() {
                             onClick={() =>
                               setPromoForm({ ...promoForm, prepaymentMethod: "cualquiera" })
                             }
-                            className={`p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                            className={`p-2 rounded-xl border text-[11px] font-semibold transition cursor-pointer ${
                               promoForm.prepaymentMethod === "cualquiera"
                                 ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
                                 : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -1967,7 +1969,7 @@ export default function ServiciosPage() {
 
                       {/* Instrucción breve */}
                       <div>
-                        <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                        <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
                           Instrucción para el Cliente
                         </label>
                         <input
@@ -1989,14 +1991,14 @@ export default function ServiciosPage() {
 
                 {/* LIVE PREVIEW DEMO CARD */}
                 <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-xs space-y-2.5">
-                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400">
+                  <div className="flex items-center justify-between text-[11px] uppercase font-semibold text-slate-400">
                     <span>Vista previa en vivo para el cliente:</span>
-                    <span className="text-amber-500 font-black">DEMO EN RESERVA</span>
+                    <span className="text-amber-500 font-semibold">DEMO EN RESERVA</span>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                      <h4 className="font-semibold text-sm text-slate-900 dark:text-white">
                         {promoModalService.name}
                       </h4>
                       <p className="text-[11px] text-slate-400 mt-0.5">
@@ -2006,15 +2008,15 @@ export default function ServiciosPage() {
 
                     <div className="text-right">
                       <div className="flex items-center gap-1.5 justify-end">
-                        <span className="text-xs text-slate-400 line-through font-mono">
+                        <span className="text-xs text-slate-400 line-through tabular-nums">
                           {formatGs(promoModalService.price)}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-700 dark:text-amber-300">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
                           <Flame className="h-3 w-3 fill-amber-500 text-amber-500" />
                           {promoForm.promoBadge}
                         </span>
                       </div>
-                      <div className="font-mono font-black text-lg text-emerald-600 dark:text-emerald-400 mt-0.5">
+                      <div className="tabular-nums font-bold text-lg text-emerald-600 dark:text-emerald-400 mt-0.5">
                         {formatGs(promoForm.promoPrice)}
                       </div>
                     </div>
@@ -2023,21 +2025,21 @@ export default function ServiciosPage() {
                   {/* Urgency indicators in preview */}
                   <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
                     {(promoForm.promoType === "time" || promoForm.promoType === "both") && (
-                      <div className="flex items-center gap-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300/60 dark:border-amber-700/40 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-200">
+                      <div className="flex items-center gap-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300/60 dark:border-amber-700/40 px-2.5 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-200">
                         <Timer className="h-3.5 w-3.5 text-amber-600 animate-pulse" />
                         <span>Termina en: <strong>{promoForm.promoLimitHours}h 00m</strong></span>
                       </div>
                     )}
 
                     {(promoForm.promoType === "quantity" || promoForm.promoType === "both") && (
-                      <div className="flex items-center gap-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-300/60 dark:border-orange-700/40 px-2.5 py-1 text-[11px] font-bold text-orange-800 dark:text-orange-200">
+                      <div className="flex items-center gap-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-300/60 dark:border-orange-700/40 px-2.5 py-1 text-[11px] font-semibold text-orange-800 dark:text-orange-200">
                         <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500" />
                         <span>¡Solo quedan <strong>{promoForm.promoLimitQuantity} cupos</strong>!</span>
                       </div>
                     )}
 
                     {promoForm.requirePrepayment && (
-                      <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/60 dark:border-emerald-700/40 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-200">
+                      <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/60 dark:border-emerald-700/40 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                         <span>
                           {promoForm.prepaymentType === "full"
@@ -2064,11 +2066,11 @@ export default function ServiciosPage() {
       >
         <div className="space-y-4 text-xs">
           <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-bold">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-semibold">
               <Trash2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-bold text-sm text-slate-900 dark:text-white">
+              <p className="font-semibold text-sm text-slate-900 dark:text-white">
                 {deleteTarget?.name}
               </p>
               <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5 leading-relaxed">
@@ -2088,7 +2090,7 @@ export default function ServiciosPage() {
             <button
               type="button"
               onClick={handleConfirmDelete}
-              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-semibold text-white shadow-md transition cursor-pointer"
             >
               Eliminar definitivamente
             </button>
@@ -2105,11 +2107,11 @@ export default function ServiciosPage() {
       >
         <div className="space-y-4 text-xs">
           <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-bold">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-semibold">
               <Trash2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-bold text-sm text-slate-900 dark:text-white">
+              <p className="font-semibold text-sm text-slate-900 dark:text-white">
                 Categoría: &quot;{categoryToDelete}&quot;
               </p>
               <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5 leading-relaxed">
@@ -2129,7 +2131,7 @@ export default function ServiciosPage() {
             <button
               type="button"
               onClick={handleConfirmDeleteCategory}
-              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-md transition cursor-pointer"
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-semibold text-white shadow-md transition cursor-pointer"
             >
               Eliminar Categoría
             </button>

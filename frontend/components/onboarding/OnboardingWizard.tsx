@@ -1136,12 +1136,12 @@ export default function OnboardingWizard({ account, verificationRequired }: Onbo
                                 role="switch"
                                 aria-checked={draft.notifyOther}
                                 onClick={() => update({ notifyOther: !draft.notifyOther })}
-                                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                                className={`relative inline-flex h-7 w-12 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 ${
                                   draft.notifyOther ? "bg-brand" : "bg-slate-200"
                                 }`}
                               >
                                 <span
-                                  className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                                  className={`pointer-events-none absolute top-1 left-1 h-5 w-5 rounded-full bg-[#ffffff] shadow-[0_1px_3px_rgba(0,0,0,0.28)] transition-transform duration-200 ${
                                     draft.notifyOther ? "translate-x-5" : ""
                                   }`}
                                 />

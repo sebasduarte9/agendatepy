@@ -620,7 +620,7 @@ export default function CalendarBoard() {
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
             Agenda & Turnos
           </h1>
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 capitalize mt-0.5">
@@ -635,7 +635,7 @@ export default function CalendarBoard() {
             type="button"
             data-tour="calendar-create-btn"
             onClick={openAppointmentModal}
-            className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer hover:brightness-110"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition active:scale-95 cursor-pointer hover:brightness-110"
             style={{
               backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
             }}
@@ -649,7 +649,7 @@ export default function CalendarBoard() {
             type="button"
             data-tour="calendar-block-btn"
             onClick={openBlockModal}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 px-3.5 py-2 text-xs font-bold transition cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 px-3.5 py-2 text-xs font-semibold transition cursor-pointer shadow-xs"
           >
             <Ban className="h-3.5 w-3.5 text-amber-500" />
             <span>Bloquear</span>
@@ -714,13 +714,13 @@ export default function CalendarBoard() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-200/50 dark:border-white/10">
               <div className="flex items-center gap-2.5">
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold shadow-xs"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-semibold shadow-xs"
                   style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <CalendarDays className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
                     Ocupación de Turnos & Citas
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Resumen de la jornada seleccionada</p>
@@ -764,20 +764,20 @@ export default function CalendarBoard() {
             {/* Operational Telemetry Rows */}
             <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-200/50 dark:border-white/10 text-xs">
               <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Turnos agendados</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Turnos agendados</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
                   {dayAppointments.length} citas
                 </span>
               </div>
               <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Horarios bloqueados</span>
-                <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Horarios bloqueados</span>
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
                   {dayBlocks.length} {dayBlocks.length === 1 ? "horario" : "horarios"}
                 </span>
               </div>
               <div className="p-2.5 rounded-xl glass-panel border border-slate-200/60 dark:border-white/10">
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block">Equipo de trabajo</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Equipo de trabajo</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
                   {staff.length} {staff.length === 1 ? "profesional" : "profesionales"}
                 </span>
               </div>
@@ -831,7 +831,7 @@ export default function CalendarBoard() {
           </div>
 
           {/* Formatted Date Badge */}
-          <span className="text-xs font-black text-slate-800 dark:text-slate-100 capitalize font-mono px-1">
+          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 capitalize tabular-nums px-1">
             {shortLabel}
           </span>
 
@@ -860,7 +860,7 @@ export default function CalendarBoard() {
                   type="button"
                   onClick={() => setSelectedStaffId("all")}
                   style={selectedStaffId === "all" ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
+                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer ${
                     selectedStaffId === "all"
                       ? "shadow-2xs"
                       : "border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -878,12 +878,12 @@ export default function CalendarBoard() {
                       style={isSelected ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
                       className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs transition shrink-0 cursor-pointer ${
                         isSelected
-                          ? "shadow-2xs font-bold"
+                          ? "shadow-2xs font-semibold"
                           : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
                       <span
-                        className="flex h-4 w-4 items-center justify-center rounded-full text-[8.5px] font-bold text-white shadow-2xs"
+                        className="flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-2xs"
                         style={{ background: person.color }}
                       >
                         {person.avatar}
@@ -912,13 +912,13 @@ export default function CalendarBoard() {
                   className="min-w-0 flex-1"
                   buttonClassName="min-h-11 rounded-xl bg-white text-sm dark:bg-slate-900"
                   menuClassName="!max-h-80 !bg-white !backdrop-blur-none shadow-2xl dark:!bg-[#19191e]"
-                  selectedOptionClassName="bg-sky-50 text-sky-800 font-bold dark:bg-sky-500/15 dark:text-sky-200"
+                  selectedOptionClassName="bg-sky-50 text-sky-800 font-semibold dark:bg-sky-500/15 dark:text-sky-200"
                 />
               </div>
             </div>
           ) : (
             <div className="min-w-0 flex-1 lg:flex-none">
-              <span className="inline-flex min-h-11 items-center rounded-xl bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              <span className="inline-flex min-h-11 items-center rounded-xl bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 Mi agenda · {staff.find((s) => s.id === currentStaffId)?.name || "Personal"}
               </span>
             </div>
@@ -1004,10 +1004,10 @@ export default function CalendarBoard() {
                       : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200"
                   }`}
                 >
-                  <span className={`text-[10px] font-bold uppercase ${isSelected ? "text-white/80" : "text-slate-400"}`}>
+                  <span className={`text-[11px] font-semibold uppercase ${isSelected ? "text-white/80" : "text-slate-400"}`}>
                     {format(d, "EEE", { locale: es }).slice(0, 3)}
                   </span>
-                  <span className="text-base font-black leading-tight">{format(d, "d")}</span>
+                  <span className="text-base font-semibold leading-tight">{format(d, "d")}</span>
                   <span
                     className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
                       count > 0 ? (isSelected ? "bg-white" : "bg-primary") : "bg-transparent"
@@ -1026,7 +1026,7 @@ export default function CalendarBoard() {
                 triggerHaptic("selection");
                 setMobileAgendaMode("stream");
               }}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+              className={`flex-1 py-1.5 rounded-xl text-xs font-semibold text-center transition cursor-pointer ${
                 mobileAgendaMode === "stream"
                   ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                   : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -1040,7 +1040,7 @@ export default function CalendarBoard() {
                 triggerHaptic("selection");
                 setMobileAgendaMode("grid");
               }}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+              className={`flex-1 py-1.5 rounded-xl text-xs font-semibold text-center transition cursor-pointer ${
                 mobileAgendaMode === "grid"
                   ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                   : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -1058,7 +1058,7 @@ export default function CalendarBoard() {
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2.5">
                     <CalendarIcon className="h-6 w-6" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                     No hay turnos para {shortLabel}
                   </h3>
                   <p className="mt-1 text-xs text-slate-500 max-w-xs mx-auto">
@@ -1083,7 +1083,7 @@ export default function CalendarBoard() {
                         setNewModalMode("appointment");
                         setNewModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
+                      className="inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
                       style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                     >
                       <Plus className="h-4 w-4" />
@@ -1117,10 +1117,10 @@ export default function CalendarBoard() {
                         <div className="flex items-start gap-3 min-w-0">
                           {/* Time Badge */}
                           <div className="flex flex-col items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 shrink-0 border border-slate-200/60 dark:border-white/5">
-                            <span className="text-xs font-black font-mono text-slate-900 dark:text-white leading-none">
+                            <span className="text-xs font-semibold tabular-nums text-slate-900 dark:text-white leading-none">
                               {startTime}
                             </span>
-                            <span className="text-[10px] font-mono text-slate-400 mt-0.5 leading-none">
+                            <span className="text-[11px] tabular-nums text-slate-400 mt-0.5 leading-none">
                               {endTime}
                             </span>
                           </div>
@@ -1128,11 +1128,11 @@ export default function CalendarBoard() {
                           {/* Client & Service */}
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              <h4 className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                                 {app.clientName}
                               </h4>
                               <span
-                                className={`rounded-full px-2 py-0.2 text-[9px] font-bold uppercase tracking-tight shrink-0 ${
+                                className={`rounded-full px-2 py-0.2 text-[11px] font-semibold uppercase tracking-tight shrink-0 ${
                                   app.status === "confirmed"
                                     ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400"
                                     : app.status === "completed"
@@ -1145,19 +1145,19 @@ export default function CalendarBoard() {
                             </div>
 
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                              {srv?.name || "Servicio"} · <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(srv?.price || 0)}</strong>
+                              {srv?.name || "Servicio"} · <strong className="text-slate-800 dark:text-slate-200 tabular-nums">{formatGs(srv?.price || 0)}</strong>
                             </p>
 
                             {/* Specialist chip */}
                             {st && (
                               <div className="flex items-center gap-1.5 mt-1.5">
                                 <span
-                                  className="flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white shadow-2xs"
+                                  className="flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-2xs"
                                   style={{ background: st.color }}
                                 >
                                   {st.avatar}
                                 </span>
-                                <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 truncate">
+                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 truncate">
                                   {st.name}
                                 </span>
                               </div>
@@ -1206,7 +1206,7 @@ export default function CalendarBoard() {
                             triggerHaptic("selection");
                             setSelectedApp(app);
                           }}
-                          className="px-3 py-1 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+                          className="px-3 py-1 rounded-xl text-xs font-semibold text-white shadow-xs active:scale-95 transition cursor-pointer"
                           style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                         >
                           {app.status === "completed" ? "Ver Cobro" : "Cobrar Turno"}
@@ -1376,7 +1376,7 @@ export default function CalendarBoard() {
                   {/* Autocomplete suggestions popover ONLY if matches found and typing */}
                   {matchingClients.length > 0 && (
                     <div className="solid-popover glass-dropdown absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl p-1 space-y-0.5 max-h-40 overflow-y-auto">
-                      <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-medium">Sugerencias:</span>
+                      <span className="text-[11px] text-slate-400 px-2 py-0.5 block font-medium">Sugerencias:</span>
                       {matchingClients.map((c) => (
                         <button
                           key={c.id}
@@ -1388,8 +1388,8 @@ export default function CalendarBoard() {
                           }}
                           className="w-full flex items-center justify-between p-1.5 rounded-lg text-left hover:bg-primary/10 transition cursor-pointer"
                         >
-                          <span className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</span>
-                          <span className="text-[11px] text-slate-400 font-mono">{c.phone || ""}</span>
+                          <span className="font-semibold text-slate-900 dark:text-white text-xs">{c.name}</span>
+                          <span className="text-[11px] text-slate-400 tabular-nums">{c.phone || ""}</span>
                         </button>
                       ))}
                     </div>
@@ -1411,11 +1411,11 @@ export default function CalendarBoard() {
                           setStaffDropdownOpen(false);
                           setTimeDropdownOpen(false);
                         }}
-                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
                         title="Seleccionar país"
                       >
                         <span className="text-sm leading-none">{activeCountry.flag}</span>
-                        <span className="font-mono text-xs">{activeCountry.dialCode}</span>
+                        <span className="tabular-nums text-xs">{activeCountry.dialCode}</span>
                         <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${countryDropdownOpen ? "rotate-180" : ""}`} />
                       </button>
 
@@ -1445,7 +1445,7 @@ export default function CalendarBoard() {
                                 }}
                                 className={`w-full flex items-center justify-between p-1.5 rounded-lg text-left text-xs transition cursor-pointer ${
                                   selectedCountryCode === c.code
-                                    ? "bg-primary/10 text-primary font-bold"
+                                    ? "bg-primary/10 text-primary font-semibold"
                                     : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
                                 }`}
                               >
@@ -1453,7 +1453,7 @@ export default function CalendarBoard() {
                                   <span className="text-base leading-none">{c.flag}</span>
                                   <span className="truncate">{c.name}</span>
                                 </div>
-                                <span className="font-mono text-[11px] text-slate-400 shrink-0">{c.dialCode}</span>
+                                <span className="tabular-nums text-[11px] text-slate-400 shrink-0">{c.dialCode}</span>
                               </button>
                             ))}
                           </div>
@@ -1468,14 +1468,14 @@ export default function CalendarBoard() {
                         placeholder={activeCountry.placeholder}
                         value={newClientPhone}
                         onChange={(e) => setNewClientPhone(formatPhoneInput(e.target.value, activeCountry))}
-                        className="w-full min-h-11 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                        className="w-full min-h-11 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none tabular-nums"
                       />
                     </div>
                   </div>
 
                   {/* Subtle Real Phone Validation Hint */}
                   {newClientPhone.trim().length > 0 && (
-                    <div className="flex items-center gap-1 mt-1 text-[10.5px] font-normal">
+                    <div className="flex items-center gap-1 mt-1 text-[11px] font-normal">
                       {isPhoneValid ? (
                         <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                           <Check className="h-3 w-3 shrink-0" />
@@ -1528,11 +1528,11 @@ export default function CalendarBoard() {
                             setServiceDropdownOpen(false);
                           }}
                           className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition cursor-pointer ${
-                            newServiceId === s.id ? "bg-primary/10 text-primary font-bold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                            newServiceId === s.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                           }`}
                         >
                           <span className="truncate pr-2">{s.name}</span>
-                          <span className="text-[11px] font-mono shrink-0 text-slate-500 dark:text-slate-400">{formatGs(s.price)} · {s.durationMin}m</span>
+                          <span className="text-[11px] tabular-nums shrink-0 text-slate-500 dark:text-slate-400">{formatGs(s.price)} · {s.durationMin}m</span>
                         </button>
                       ))}
                     </div>
@@ -1558,12 +1558,12 @@ export default function CalendarBoard() {
                       return (
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <span
-                            className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
+                            className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-xs shrink-0"
                             style={{ background: assigned?.color || "#6366f1" }}
                           >
                             {assigned?.avatar || "P"}
                           </span>
-                          <span className="font-bold text-slate-900 dark:text-white truncate">{assigned?.name}</span>
+                          <span className="font-semibold text-slate-900 dark:text-white truncate">{assigned?.name}</span>
                           <span className="text-slate-400 text-[11px]">({assigned?.role})</span>
                         </div>
                       );
@@ -1582,11 +1582,11 @@ export default function CalendarBoard() {
                             setStaffDropdownOpen(false);
                           }}
                           className={`w-full flex items-center gap-2 p-2 rounded-lg text-left transition cursor-pointer ${
-                            newSlotData.staffId === p.id ? "bg-primary/10 text-primary font-bold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                            newSlotData.staffId === p.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                           }`}
                         >
                           <span
-                            className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shrink-0"
+                            className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shrink-0"
                             style={{ background: p.color }}
                           >
                             {p.avatar}
@@ -1658,7 +1658,7 @@ export default function CalendarBoard() {
                         setServiceDropdownOpen(false);
                         setStaffDropdownOpen(false);
                       }}
-                      className="flex min-h-9 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 font-mono font-semibold text-sm text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
+                      className="flex min-h-9 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 tabular-nums font-semibold text-sm text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
                     >
                       <Clock className="h-3 w-3 text-primary" />
                       <span>{newSlotData.time} hs</span>
@@ -1688,7 +1688,7 @@ export default function CalendarBoard() {
                               setNewSlotData((prev) => ({ ...prev, time: t }));
                               setTimeDropdownOpen(false);
                             }}
-                            className={`py-1.5 px-2 rounded-lg text-center font-mono text-[11px] font-bold transition cursor-pointer ${
+                            className={`py-1.5 px-2 rounded-lg text-center tabular-nums text-[11px] font-semibold transition cursor-pointer ${
                               newSlotData.time === t
                                 ? "bg-primary text-white shadow-xs"
                                 : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
@@ -1739,8 +1739,8 @@ export default function CalendarBoard() {
             {/* FOOTER ACTIONS & TOTAL */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/10 mt-auto">
                 <div>
-                  <span className="text-[10.5px] text-slate-400 block font-medium">Total:</span>
-                  <span className="text-sm font-black text-primary">
+                  <span className="text-[11px] text-slate-400 block font-medium">Total:</span>
+                  <span className="text-sm font-semibold text-primary">
                     {formatGs(currentService?.price || 0)}
                   </span>
                 </div>
@@ -1795,12 +1795,12 @@ export default function CalendarBoard() {
                       onClick={() => setBlockStaffId(p.id)}
                       className={`flex min-h-10 items-center gap-2 px-4 py-2 rounded-xl border text-sm transition cursor-pointer ${
                         blockStaffId === p.id
-                          ? "border-amber-500 bg-amber-500 text-white font-bold shadow-xs"
+                          ? "border-amber-500 bg-amber-500 text-white font-semibold shadow-xs"
                           : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
                       }`}
                     >
                       <span
-                        className="flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white shrink-0"
+                        className="flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold text-white shrink-0"
                         style={{ background: p.color }}
                       >
                         {p.avatar}
@@ -1854,7 +1854,7 @@ export default function CalendarBoard() {
                     >
                       -
                     </button>
-                    <span className="font-mono font-semibold text-sm px-3 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10">
+                    <span className="tabular-nums font-semibold text-sm px-3 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10">
                       {blockStart}
                     </span>
                     <button
@@ -1875,7 +1875,7 @@ export default function CalendarBoard() {
                     >
                       -
                     </button>
-                    <span className="font-mono font-semibold text-sm px-3 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10">
+                    <span className="tabular-nums font-semibold text-sm px-3 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10">
                       {blockEnd}
                     </span>
                     <button
@@ -1902,7 +1902,7 @@ export default function CalendarBoard() {
                       onClick={() => setBlockReason(chip)}
                       className={`min-h-9 rounded-xl px-3 py-1.5 border text-xs font-medium transition cursor-pointer ${
                         blockReason === chip
-                          ? "bg-amber-500 text-white border-amber-600 font-bold"
+                          ? "bg-amber-500 text-white border-amber-600 font-semibold"
                           : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300"
                       }`}
                     >
@@ -2163,7 +2163,7 @@ function GoogleCalendarDayView({
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3">
           <Users className="h-6 w-6" />
         </div>
-        <h3 className="font-bold text-slate-900 dark:text-white text-base">
+        <h3 className="font-semibold text-slate-900 dark:text-white text-base">
           No hay profesionales en este filtro
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
@@ -2182,7 +2182,7 @@ function GoogleCalendarDayView({
         <div className="relative min-w-[650px] sm:min-w-[700px]">
           {/* Staff Columns Header */}
           <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-950/60 sticky top-0 z-20">
-            <div className="w-16 shrink-0 rounded-tl-3xl border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[10px] font-bold text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-950 z-30">
+            <div className="w-16 shrink-0 rounded-tl-3xl border-r border-slate-200/80 dark:border-white/10 p-2 text-center text-[11px] font-semibold text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-950 z-30">
               HORA
             </div>
             <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${staffList.length}, minmax(180px, 1fr))` }}>
@@ -2192,14 +2192,14 @@ function GoogleCalendarDayView({
                   className="flex items-center gap-2 p-3 border-r border-slate-200/80 dark:border-white/10 last:border-r-0 last:rounded-tr-3xl"
                 >
                   <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-xs"
                     style={{ background: person.color }}
                   >
                     {person.avatar}
                   </span>
                   <div className="truncate">
-                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{person.name}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{person.role}</p>
+                    <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{person.name}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{person.role}</p>
                   </div>
                 </div>
               ))}
@@ -2213,7 +2213,7 @@ function GoogleCalendarDayView({
               style={{ top: redLineTop }}
             >
               <div className="w-16 shrink-0 flex items-center justify-end pr-1 sticky left-0 z-20">
-                <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white font-mono shadow-xs">
+                <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-semibold text-white tabular-nums shadow-xs">
                   {String(currentHours).padStart(2, "0")}:{String(currentMinutes).padStart(2, "0")}
                 </span>
               </div>
@@ -2230,7 +2230,7 @@ function GoogleCalendarDayView({
               style={{ height: HOUR_PX }}
             >
               {/* Sticky Hour Label */}
-              <div className={`w-16 shrink-0 border-r border-slate-100 dark:border-white/10 px-2 pt-1 font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 text-right sticky left-0 bg-white/95 dark:bg-slate-900/95 z-10 ${hour === hours[hours.length - 1] ? "rounded-bl-3xl" : ""}`}>
+              <div className={`w-16 shrink-0 border-r border-slate-100 dark:border-white/10 px-2 pt-1 tabular-nums text-[11px] font-medium text-slate-400 dark:text-slate-500 text-right sticky left-0 bg-white/95 dark:bg-slate-900/95 z-10 ${hour === hours[hours.length - 1] ? "rounded-bl-3xl" : ""}`}>
                 {String(hour).padStart(2, "0")}:00
               </div>
 
@@ -2260,13 +2260,13 @@ function GoogleCalendarDayView({
                   >
                     {dropHint && dropHint.staffId === person.id && dropHint.hour === hour ? (
                       <span
-                        className="absolute left-1 right-1 rounded-lg border-2 border-dashed border-primary/60 bg-primary/10 px-2 text-[10px] font-bold text-primary"
+                        className="absolute left-1 right-1 rounded-lg border-2 border-dashed border-primary/60 bg-primary/10 px-2 text-[11px] font-semibold text-primary"
                         style={{ top: `${(dropHint.minute / 60) * 100}%` }}
                       >
                         {String(hour).padStart(2, "0")}:{String(dropHint.minute).padStart(2, "0")}
                       </span>
                     ) : (
-                      <span className="opacity-0 group-hover:opacity-100 text-[10px] text-primary font-bold pl-2">
+                      <span className="opacity-0 group-hover:opacity-100 text-[11px] text-primary font-semibold pl-2">
                         + Agendar
                       </span>
                     )}
@@ -2314,15 +2314,15 @@ function GoogleCalendarDayView({
                   }}
                 >
                   <div className="flex items-center justify-between gap-1">
-                    <span className="inline-flex items-center gap-1 font-black text-xs text-amber-900 dark:text-amber-200 truncate">
+                    <span className="inline-flex items-center gap-1 font-semibold text-xs text-amber-900 dark:text-amber-200 truncate">
                       <Ban className="h-3 w-3 shrink-0 text-amber-600" />
                       {b.reason || "Bloqueo operativo"}
                     </span>
-                    <span className="font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400 shrink-0">
+                    <span className="tabular-nums text-[11px] font-semibold text-amber-700 dark:text-amber-400 shrink-0">
                       {b.start} - {b.end}
                     </span>
                   </div>
-                  <span className="text-[10px] text-amber-800/80 dark:text-amber-300/80 font-medium truncate">
+                  <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-medium truncate">
                     {isAllStaff ? "Todo el equipo" : staffList[targetStaffIndex]?.name}
                   </span>
                 </div>
@@ -2385,10 +2385,10 @@ function GoogleCalendarDayView({
                   }}
                 >
                   <div className="flex items-center justify-between gap-1">
-                    <strong className="block truncate font-black text-xs text-slate-900 dark:text-white">
+                    <strong className="block truncate font-semibold text-xs text-slate-900 dark:text-white">
                       {item.clientName}
                     </strong>
-                    <span className="font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                    <span className="tabular-nums text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                       {formatInTimeZone(item.start, timezone, "HH:mm")}
                     </span>
                   </div>
@@ -2548,7 +2548,7 @@ function GoogleCalendarWeekView({
             >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-2.5">
                 <p
-                  className={`text-xs font-black capitalize ${
+                  className={`text-xs font-semibold capitalize ${
                     isToday ? "text-primary" : "text-slate-800 dark:text-slate-200"
                   }`}
                 >
@@ -2557,7 +2557,7 @@ function GoogleCalendarWeekView({
                 <button
                   type="button"
                   onClick={() => onEmptySlotClick(day, 10, staff[0]?.id || "")}
-                  className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-primary hover:text-white transition"
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-primary hover:text-white transition"
                   title="Nueva cita este día"
                 >
                   +
@@ -2573,11 +2573,11 @@ function GoogleCalendarWeekView({
                         key={b.id}
                         className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50/90 dark:bg-amber-950/70 p-1.5 text-slate-800 dark:text-slate-200 shadow-2xs flex items-center justify-between gap-1"
                       >
-                        <span className="flex items-center gap-1 font-bold text-[10px] text-amber-900 dark:text-amber-200 truncate">
+                        <span className="flex items-center gap-1 font-semibold text-[11px] text-amber-900 dark:text-amber-200 truncate">
                           <Ban className="h-3 w-3 shrink-0 text-amber-600" />
                           {b.reason || "Bloqueo"}
                         </span>
-                        <span className="font-mono text-[9px] font-bold text-amber-700 dark:text-amber-400 shrink-0">
+                        <span className="tabular-nums text-[11px] font-semibold text-amber-700 dark:text-amber-400 shrink-0">
                           {b.start}-{b.end}
                         </span>
                       </div>
@@ -2605,18 +2605,18 @@ function GoogleCalendarWeekView({
                           borderLeftColor: person?.color || "#6366f1",
                         }}
                       >
-                        <div className="flex items-center justify-between text-[10.5px]">
-                          <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="tabular-nums font-semibold text-slate-700 dark:text-slate-300">
                             {formatInTimeZone(item.start, timezone, "HH:mm")}
                           </span>
-                          <span className="text-[9px] font-bold uppercase text-slate-500">
+                          <span className="text-[11px] font-semibold uppercase text-slate-500">
                             {item.status}
                           </span>
                         </div>
-                        <p className="mt-1 truncate font-black text-slate-900 dark:text-white text-xs">
+                        <p className="mt-1 truncate font-semibold text-slate-900 dark:text-white text-xs">
                           {item.clientName}
                         </p>
-                        <p className="truncate text-[10px] text-slate-500">
+                        <p className="truncate text-[11px] text-slate-500">
                           {person?.name.split(" ")[0]}
                         </p>
                       </button>
@@ -2703,7 +2703,7 @@ function GoogleCalendarMonthView({
               >
                 <span>{day}</span>
                 {itemCount > 0 ? (
-                  <span className={`text-[9px] leading-none ${isSelected ? "text-white/80" : "text-primary"}`}>
+                  <span className={`text-[11px] leading-none ${isSelected ? "text-white/80" : "text-primary"}`}>
                     {itemCount}
                   </span>
                 ) : (
@@ -2716,7 +2716,7 @@ function GoogleCalendarMonthView({
       </section>
 
     <Card className="hidden border border-slate-200/80 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/90 md:block">
-      <div className="grid min-w-[700px] grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 pb-2 border-b border-slate-100 dark:border-white/10">
+      <div className="grid min-w-[700px] grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-400 pb-2 border-b border-slate-100 dark:border-white/10">
         {["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map((d) => (
           <span key={d}>
             <span className="hidden sm:inline">{d}</span>
@@ -2740,12 +2740,12 @@ function GoogleCalendarMonthView({
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{day}</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{day}</span>
                   {onEmptySlotClick && (
                     <button
                       type="button"
                       onClick={() => onEmptySlotClick(iso, 10, "")}
-                      className="opacity-0 group-hover:opacity-100 h-5 w-5 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-white flex items-center justify-center text-[10px] font-bold transition"
+                      className="opacity-0 group-hover:opacity-100 h-5 w-5 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-white flex items-center justify-center text-[11px] font-semibold transition"
                       title="Agendar turno en este día"
                     >
                       +
@@ -2758,13 +2758,13 @@ function GoogleCalendarMonthView({
                     key={item.id}
                     type="button"
                     onClick={() => onSelectAppointment(item)}
-                    className="w-full truncate rounded-lg bg-primary/10 border border-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary block text-left hover:bg-primary/20 transition"
+                    className="w-full truncate rounded-lg bg-primary/10 border border-primary/20 px-1.5 py-0.5 text-[11px] font-semibold text-primary block text-left hover:bg-primary/20 transition"
                   >
                     {formatInTimeZone(item.start, timezone, "HH:mm")} {item.clientName}
                   </button>
                 ))}
                 {extra > 0 && (
-                  <span className="block text-center rounded-md bg-slate-200 dark:bg-slate-800 text-[9px] font-bold text-slate-500 py-0.5">
+                  <span className="block text-center rounded-md bg-slate-200 dark:bg-slate-800 text-[11px] font-semibold text-slate-500 py-0.5">
                     +{extra} más
                   </span>
                 )}
@@ -2916,53 +2916,53 @@ function RescheduleEditModal({
         {/* Client Header Info */}
         <div className="flex items-center justify-between rounded-2xl bg-slate-50 dark:bg-slate-800/80 p-3.5 border border-slate-200/80 dark:border-white/10">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-black text-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-semibold text-sm">
               {appointment.clientName.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <p className="font-black text-sm text-slate-900 dark:text-white">
+              <p className="font-semibold text-sm text-slate-900 dark:text-white">
                 {appointment.clientName}
               </p>
               <p className="text-[11px] text-slate-500">{appointment.clientPhone}</p>
             </div>
           </div>
 
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 capitalize">
+          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 capitalize">
             {status}
           </span>
         </div>
 
         {/* Quick 1-Tap Reschedule Buttons */}
         <div>
-          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block mb-1.5">
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1.5">
             Reprogramación rápida con 1 toque:
           </span>
           <div className="grid grid-cols-4 gap-2">
             <button
               type="button"
               onClick={() => addMinutesToAppointment(15)}
-              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-bold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
+              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-semibold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
             >
               +15 min
             </button>
             <button
               type="button"
               onClick={() => addMinutesToAppointment(30)}
-              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-bold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
+              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-semibold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
             >
               +30 min
             </button>
             <button
               type="button"
               onClick={() => addMinutesToAppointment(60)}
-              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-bold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
+              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-semibold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
             >
               +1 hora
             </button>
             <button
               type="button"
               onClick={moveToTomorrow}
-              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-bold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
+              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 py-1.5 text-center font-semibold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition"
             >
               Mañana
             </button>
@@ -3041,7 +3041,7 @@ function RescheduleEditModal({
             onChange={(val) => setStatus(val as AppointmentStatus)}
             options={allowedNextStatuses.map((opt) => ({ value: opt.value, label: opt.label }))}
             className="w-full"
-            buttonClassName="w-full py-2.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 font-bold"
+            buttonClassName="w-full py-2.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 font-semibold"
           />
         </div>
 
@@ -3060,7 +3060,7 @@ function RescheduleEditModal({
                   status: "no_show",
                 });
               }}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 transition"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-1.5 transition"
             >
               <AlertCircle className="h-3.5 w-3.5" />
               <span>Marcar Ausente</span>
@@ -3071,16 +3071,16 @@ function RescheduleEditModal({
         {/* Cobrar en Caja Section */}
         <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-3 bg-slate-50/70 dark:bg-slate-800/50 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
               <DollarSign className="h-4 w-4 text-emerald-500" />
               Cobrar Turno en Caja
             </span>
             {isAlreadyCharged ? (
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1">
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" /> Cobrado en Caja
               </span>
             ) : (
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[11px] text-slate-500">
                 Sugerido: {formatGs(assignedService?.price || 0)}
               </span>
             )}
@@ -3094,7 +3094,7 @@ function RescheduleEditModal({
             <div className="space-y-2 pt-1 border-t border-slate-200/60 dark:border-white/5">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">
+                  <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">
                     Importe (Gs.)
                   </label>
                   <input
@@ -3102,11 +3102,11 @@ function RescheduleEditModal({
                     min={1}
                     value={chargeAmount}
                     onChange={(e) => setChargeAmount(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 font-bold text-slate-900 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-1.5 font-semibold text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">
+                  <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">
                     Método de Pago
                   </label>
                   <CustomSelect
@@ -3128,7 +3128,7 @@ function RescheduleEditModal({
                 type="button"
                 disabled={isCharging || chargeAmount <= 0}
                 onClick={handleChargeNow}
-                className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-2 shadow-sm transition flex items-center justify-center gap-1.5"
+                className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold py-2 shadow-sm transition flex items-center justify-center gap-1.5"
               >
                 <DollarSign className="h-4 w-4" />
                 <span>{isCharging ? "Procesando cobro..." : `Cobrar ${formatGs(chargeAmount)} e Ingresar a Caja`}</span>
@@ -3142,7 +3142,7 @@ function RescheduleEditModal({
         {/* WhatsApp Notification Trigger */}
         <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="font-bold text-emerald-700 dark:text-emerald-400 block">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400 block">
               Avisar al cliente del cambio:
             </span>
             <p className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3154,7 +3154,7 @@ function RescheduleEditModal({
             href={waLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition shrink-0"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition shrink-0"
           >
             <MessageCircle className="h-4 w-4" />
             <span>WhatsApp</span>
@@ -3182,7 +3182,7 @@ function RescheduleEditModal({
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-md shadow-primary/25 hover:opacity-95"
+              className="rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-white shadow-md shadow-primary/25 hover:opacity-95"
             >
               Guardar Cambios
             </button>

@@ -115,7 +115,7 @@ export default function ExtrasPage() {
 
       {/* Header */}
       <div className="kpi-rise flex flex-col gap-1 py-1">
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Kit de marketing
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -127,10 +127,10 @@ export default function ExtrasPage() {
       <div className="kpi-rise rounded-3xl glass-panel p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
               <Sparkles className="h-3 w-3" /> Tu link de reservas
             </span>
-            <p className="mt-3 truncate font-mono text-lg sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <p className="mt-3 truncate tabular-nums text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {tenantHost(slug)}
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Abierto 24/7. Tus clientes reservan sin descargar nada.</p>
@@ -139,7 +139,7 @@ export default function ExtrasPage() {
             <button
               type="button"
               onClick={handleCopy}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold text-white shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold text-white shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
               {copiedUrl ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -171,7 +171,7 @@ export default function ExtrasPage() {
                 <Icon className="h-5 w-5" />
               </span>
               <span className="min-w-0 text-left">
-                <span className="block text-sm font-bold text-slate-900 dark:text-white">{c.name}</span>
+                <span className="block text-sm font-semibold text-slate-900 dark:text-white">{c.name}</span>
                 <span className="block text-[11px] text-slate-500 dark:text-slate-400">{c.hint}</span>
               </span>
             </>
@@ -194,7 +194,7 @@ export default function ExtrasPage() {
         {/* Poster */}
         <Card className="kpi-rise md:col-span-3 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
+            <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
               <QrCode className="h-5 w-5 text-primary shrink-0" />
               <h2>Cartel para mostrador</h2>
             </div>
@@ -207,7 +207,7 @@ export default function ExtrasPage() {
                     triggerHaptic("selection");
                     setPosterStyle(s.id);
                   }}
-                  className={`rounded-lg px-3 py-1 text-[11px] font-bold transition cursor-pointer ${
+                  className={`rounded-lg px-3 py-1 text-[11px] font-semibold transition cursor-pointer ${
                     posterStyle === s.id
                       ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-xs"
                       : "text-slate-500"
@@ -230,14 +230,14 @@ export default function ExtrasPage() {
                 <img src={business.logoUrl} alt="" className="mx-auto h-14 w-14 rounded-2xl object-cover" />
               ) : (
                 <div
-                  className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-black text-white"
+                  className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-semibold text-white"
                   style={{ backgroundColor: posterStyle === "marca" ? "rgba(255,255,255,0.2)" : brandColor }}
                 >
                   {business.name.slice(0, 2).toUpperCase()}
                 </div>
               )}
-              <h3 className="mt-3 text-lg font-black leading-tight">{business.name}</h3>
-              <p className="mt-1 text-xs font-bold opacity-80">Escaneá y reservá tu turno</p>
+              <h3 className="mt-3 text-lg font-semibold leading-tight">{business.name}</h3>
+              <p className="mt-1 text-xs font-semibold opacity-80">Escaneá y reservá tu turno</p>
 
               <div className="my-5 mx-auto aspect-square w-44 rounded-2xl bg-white p-2.5 shadow-md">
                 {qrDataUrl ? (
@@ -253,7 +253,7 @@ export default function ExtrasPage() {
                 <li>2. Elegí servicio, día y hora</li>
                 <li>3. Recibí la confirmación por WhatsApp</li>
               </ol>
-              <p className="mt-4 border-t border-current/10 pt-3 font-mono text-[10px] opacity-60">{tenantHost(slug)}</p>
+              <p className="mt-4 border-t border-current/10 pt-3 tabular-nums text-[11px] opacity-60">{tenantHost(slug)}</p>
             </div>
           </div>
 
@@ -268,7 +268,7 @@ export default function ExtrasPage() {
             <button
               type="button"
               onClick={handlePrint}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-white py-2.5 text-xs font-bold text-white dark:text-slate-900 transition hover:opacity-90 active:scale-[0.98] cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-white py-2.5 text-xs font-semibold text-white dark:text-slate-900 transition hover:opacity-90 active:scale-[0.98] cursor-pointer"
             >
               <Printer className="h-4 w-4" /> Imprimir cartel
             </button>
@@ -278,7 +278,7 @@ export default function ExtrasPage() {
         {/* Pixels */}
         <Card className="kpi-rise md:col-span-2 space-y-4 self-start">
           <div>
-            <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
+            <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-base">
               <Target className="h-4 w-4 text-primary shrink-0" /> Medí tus anuncios
             </h2>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -295,7 +295,7 @@ export default function ExtrasPage() {
                 <label className="mb-1 flex items-center justify-between font-semibold text-slate-700 dark:text-slate-200">
                   {f.label}
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                       f.active ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                     }`}
                   >
@@ -303,7 +303,7 @@ export default function ExtrasPage() {
                   </span>
                 </label>
                 <input
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 font-mono text-slate-900 dark:text-white placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2.5 tabular-nums text-slate-900 dark:text-white placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   placeholder={f.placeholder}
                   value={business[f.key] ?? ""}
                   onChange={(e) => updateBusiness({ [f.key]: e.target.value })}
@@ -313,7 +313,7 @@ export default function ExtrasPage() {
 
             <button
               type="button"
-              className="w-full rounded-2xl bg-primary py-2.5 text-xs font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
+              className="w-full rounded-2xl bg-primary py-2.5 text-xs font-semibold text-white shadow-md transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
               onClick={() => {
                 triggerHaptic("success");
                 pushToast("success", "Píxeles guardados");

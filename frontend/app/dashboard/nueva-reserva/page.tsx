@@ -396,7 +396,7 @@ function NuevaReservaContent() {
         data-tour="nueva-reserva-header"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Agendar Turno Rápido
         </h1>
 
@@ -420,7 +420,7 @@ function NuevaReservaContent() {
           <button
             type="button"
             onClick={() => setMode(mode === "appointment" ? "block" : "appointment")}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition cursor-pointer ${
               mode === "block"
                 ? "bg-amber-600 hover:bg-amber-500 text-white shadow-md"
                 : "border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -440,19 +440,19 @@ function NuevaReservaContent() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
               <div className="flex items-center gap-2.5">
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-semibold"
                   style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                 >
                   <CalendarPlus className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
                     Capacidad & Especialistas
                   </h3>
                 </div>
               </div>
 
-              <span className="text-xs font-mono font-bold text-slate-400">
+              <span className="text-xs tabular-nums font-semibold text-slate-400">
                 {date}
               </span>
             </div>
@@ -484,15 +484,15 @@ function NuevaReservaContent() {
                       className="transition-all duration-700"
                     />
                   </svg>
-                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                  <span className="absolute text-[11px] font-semibold text-slate-800 dark:text-white tabular-nums">
                     {activeStaffPct}%
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
+                  <span className="text-[11px] font-semibold text-slate-900 dark:text-white block truncate">
                     Equipo Activo
                   </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
+                  <span className="text-[11px] text-slate-400 block truncate">
                     {staff.filter((s) => s.active).length} de {staff.length} disponibles
                   </span>
                 </div>
@@ -523,15 +523,15 @@ function NuevaReservaContent() {
                       className="transition-all duration-700"
                     />
                   </svg>
-                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                  <span className="absolute text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
                     {currentService?.durationMin || 45}m
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block whitespace-nowrap">
+                  <span className="text-[11px] font-semibold text-slate-900 dark:text-white block whitespace-nowrap">
                     Duración Estimada
                   </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
+                  <span className="text-[11px] text-slate-400 block truncate">
                     Bloque de agenda
                   </span>
                 </div>
@@ -541,20 +541,20 @@ function NuevaReservaContent() {
             {/* Operational Telemetry Rows */}
             <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Horario Turno</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono truncate block">
+                <span className="text-[11px] font-medium text-slate-400 block">Horario Turno</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums truncate block">
                   {time} a {appointmentEndTime}
                 </span>
               </div>
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Especialistas</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                <span className="text-[11px] font-medium text-slate-400 block">Especialistas</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
                   {staff.length} activos
                 </span>
               </div>
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Catálogo</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                <span className="text-[11px] font-medium text-slate-400 block">Catálogo</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
                   {services.length} servicios
                 </span>
               </div>
@@ -565,18 +565,18 @@ function NuevaReservaContent() {
           <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-semibold">
                   <Scissors className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
                     Resumen del Turno Seleccionado
                   </h3>
                   <p className="text-[11px] text-slate-400">Detalles en vivo de la reserva</p>
                 </div>
               </div>
 
-              <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400">
+              <span className="text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                 {currentService?.price ? formatGs(currentService.price) : "Gs. 0"}
               </span>
             </div>
@@ -585,10 +585,10 @@ function NuevaReservaContent() {
             <div className="py-3">
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                     {currentService?.name || "Servicio"}
                   </span>
-                  <span className="text-[11px] font-mono text-slate-400">
+                  <span className="text-[11px] tabular-nums text-slate-400">
                     {currentService?.durationMin || 45} min
                   </span>
                 </div>
@@ -620,7 +620,7 @@ function NuevaReservaContent() {
           </div>
 
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               ¡Turno Confirmado con Éxito!
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -632,11 +632,11 @@ function NuevaReservaContent() {
           <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-4 text-xs text-left space-y-2">
             <div className="flex justify-between">
               <span className="text-slate-500">Cliente:</span>
-              <span className="font-bold text-slate-900 dark:text-white">{createdAppointment.clientName}</span>
+              <span className="font-semibold text-slate-900 dark:text-white">{createdAppointment.clientName}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Servicio:</span>
-              <span className="font-bold text-primary">{createdAppointment.serviceName}</span>
+              <span className="font-semibold text-primary">{createdAppointment.serviceName}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Profesional:</span>
@@ -644,7 +644,7 @@ function NuevaReservaContent() {
             </div>
             <div className="flex justify-between border-t border-slate-200/60 dark:border-white/10 pt-2">
               <span className="text-slate-500">Fecha y Hora:</span>
-              <span className="font-black text-slate-900 dark:text-white">
+              <span className="font-semibold text-slate-900 dark:text-white">
                 {createdAppointment.date} · {createdAppointment.time} a {createdAppointment.end} hs
               </span>
             </div>
@@ -656,7 +656,7 @@ function NuevaReservaContent() {
               href={waReminderUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-3 px-4 text-xs font-bold text-white shadow-md shadow-emerald-600/25 transition cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-3 px-4 text-xs font-semibold text-white shadow-md shadow-emerald-600/25 transition cursor-pointer"
             >
               <MessageCircle className="h-4 w-4" />
               <span>Enviar WhatsApp al Cliente</span>
@@ -665,7 +665,7 @@ function NuevaReservaContent() {
               href={googleCalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/80 py-3 px-4 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/80 py-3 px-4 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
             >
               <Calendar className="h-4 w-4 text-primary" />
               <span>Google Calendar</span>
@@ -682,7 +682,7 @@ function NuevaReservaContent() {
                 setClientPhone("");
                 setClientNotes("");
               }}
-              className="text-xs font-bold text-primary hover:underline cursor-pointer"
+              className="text-xs font-semibold text-primary hover:underline cursor-pointer"
             >
               + Agendar otro turno
             </button>
@@ -703,7 +703,7 @@ function NuevaReservaContent() {
             <button
               type="button"
               onClick={() => setMode("appointment")}
-              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-2 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 mode === "appointment"
                   ? "bg-white dark:bg-slate-900 text-primary shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -715,7 +715,7 @@ function NuevaReservaContent() {
             <button
               type="button"
               onClick={() => setMode("block")}
-              className={`flex-1 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-2 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
                 mode === "block"
                   ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -731,7 +731,7 @@ function NuevaReservaContent() {
               {/* Mobile step progress */}
               {!isTourOpen && (
                 <div className="lg:hidden space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-bold">
+                  <div className="flex items-center justify-between text-[11px] font-semibold">
                     <span className="text-slate-900 dark:text-white">{MOBILE_STEPS[mobileStep]}</span>
                     <span className="text-slate-400">Paso {mobileStep + 1} de {MOBILE_STEPS.length}</span>
                   </div>
@@ -754,7 +754,7 @@ function NuevaReservaContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Name Input with Autocomplete */}
                   <div className="relative">
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                       Cliente *
                     </label>
                     <div className="relative">
@@ -772,7 +772,7 @@ function NuevaReservaContent() {
                     {/* Autocomplete suggestions */}
                     {matchingClients.length > 0 && (
                       <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-1.5 space-y-0.5 max-h-44 overflow-y-auto">
-                        <span className="text-[10px] text-slate-400 px-2 py-0.5 block font-bold">
+                        <span className="text-[11px] text-slate-400 px-2 py-0.5 block font-semibold">
                           Clientes Registrados:
                         </span>
                         {matchingClients.map((c) => (
@@ -786,8 +786,8 @@ function NuevaReservaContent() {
                             }}
                             className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-primary/10 transition cursor-pointer"
                           >
-                            <span className="font-bold text-slate-900 dark:text-white text-xs">{c.name}</span>
-                            <span className="text-[11px] text-slate-400 font-mono">{c.phone || ""}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white text-xs">{c.name}</span>
+                            <span className="text-[11px] text-slate-400 tabular-nums">{c.phone || ""}</span>
                           </button>
                         ))}
                       </div>
@@ -796,7 +796,7 @@ function NuevaReservaContent() {
 
                   {/* International WhatsApp Input */}
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                       WhatsApp *
                     </label>
                     <div className="flex items-center gap-1.5">
@@ -810,11 +810,11 @@ function NuevaReservaContent() {
                             setStaffDropdownOpen(false);
                             setTimeDropdownOpen(false);
                           }}
-                          className="flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                          className="flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
                           title="Seleccionar país"
                         >
                           <span className="text-sm leading-none">{activeCountry.flag}</span>
-                          <span className="font-mono text-xs">{activeCountry.dialCode}</span>
+                          <span className="tabular-nums text-xs">{activeCountry.dialCode}</span>
                           <ChevronDown
                             className={`h-3 w-3 text-slate-400 transition-transform ${
                               countryDropdownOpen ? "rotate-180" : ""
@@ -848,7 +848,7 @@ function NuevaReservaContent() {
                                   }}
                                   className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
                                     selectedCountryCode === c.code
-                                      ? "bg-primary/10 text-primary font-bold"
+                                      ? "bg-primary/10 text-primary font-semibold"
                                       : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
                                   }`}
                                 >
@@ -856,7 +856,7 @@ function NuevaReservaContent() {
                                     <span className="text-base leading-none">{c.flag}</span>
                                     <span className="truncate">{c.name}</span>
                                   </div>
-                                  <span className="font-mono text-[11px] text-slate-400 shrink-0">
+                                  <span className="tabular-nums text-[11px] text-slate-400 shrink-0">
                                     {c.dialCode}
                                   </span>
                                 </button>
@@ -875,14 +875,14 @@ function NuevaReservaContent() {
                           onChange={(e) =>
                             setClientPhone(formatPhoneInput(e.target.value, activeCountry))
                           }
-                          className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-mono"
+                          className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none tabular-nums"
                         />
                       </div>
                     </div>
 
                     {/* Phone Validation indicator */}
                     {clientPhone.trim().length > 0 && (
-                      <div className="flex items-center gap-1 mt-1 text-[10.5px] font-normal">
+                      <div className="flex items-center gap-1 mt-1 text-[11px] font-normal">
                         {isPhoneValid ? (
                           <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
                             <Check className="h-3 w-3 shrink-0" />
@@ -904,7 +904,7 @@ function NuevaReservaContent() {
               <div data-tour="nueva-reserva-service" className={`${stepHidden(1)} grid grid-cols-1 sm:grid-cols-2 gap-3`}>
                 {/* Custom Service Selector */}
                 <div className={`relative ${serviceDropdownOpen ? "z-40" : ""}`}>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     Servicio *
                   </label>
                   <button
@@ -917,7 +917,7 @@ function NuevaReservaContent() {
                     className="w-full flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
                   >
                     <div className="min-w-0 flex-1 truncate pr-2">
-                      <span className="font-bold text-slate-900 dark:text-white">
+                      <span className="font-semibold text-slate-900 dark:text-white">
                         {currentService?.name}
                       </span>
                       <span className="text-slate-400 ml-1.5 font-medium">
@@ -943,12 +943,12 @@ function NuevaReservaContent() {
                           }}
                           className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer ${
                             serviceId === s.id
-                              ? "bg-primary/10 text-primary font-bold"
+                              ? "bg-primary/10 text-primary font-semibold"
                               : "hover:bg-slate-50 dark:hover:bg-slate-800"
                           }`}
                         >
                           <span className="truncate pr-2">{s.name}</span>
-                          <span className="text-[11px] font-mono shrink-0 text-slate-500 dark:text-slate-400">
+                          <span className="text-[11px] tabular-nums shrink-0 text-slate-500 dark:text-slate-400">
                             {formatGs(s.price)} · {s.durationMin}m
                           </span>
                         </button>
@@ -959,7 +959,7 @@ function NuevaReservaContent() {
 
                 {/* Custom Staff Selector */}
                 <div className={`relative ${staffDropdownOpen ? "z-40" : ""}`}>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     Profesional Asignado *
                   </label>
                   <button
@@ -973,12 +973,12 @@ function NuevaReservaContent() {
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span
-                        className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs shrink-0"
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-xs shrink-0"
                         style={{ background: currentStaff?.color || "#6366f1" }}
                       >
                         {currentStaff?.avatar || "P"}
                       </span>
-                      <span className="font-bold text-slate-900 dark:text-white truncate">
+                      <span className="font-semibold text-slate-900 dark:text-white truncate">
                         {currentStaff?.name}
                       </span>
                       <span className="text-slate-400 text-[11px]">({currentStaff?.role})</span>
@@ -1002,12 +1002,12 @@ function NuevaReservaContent() {
                           }}
                           className={`w-full flex items-center gap-2 p-2 rounded-xl text-left transition cursor-pointer ${
                             staffId === p.id
-                              ? "bg-primary/10 text-primary font-bold"
+                              ? "bg-primary/10 text-primary font-semibold"
                               : "hover:bg-slate-50 dark:hover:bg-slate-800"
                           }`}
                         >
                           <span
-                            className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shrink-0"
+                            className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shrink-0"
                             style={{ background: p.color }}
                           >
                             {p.avatar}
@@ -1023,7 +1023,7 @@ function NuevaReservaContent() {
 
               {/* SECTION 3: FECHA Y HORA (INTERACTIVE BAR) */}
               <div data-tour="nueva-reserva-datetime" className={stepHidden(2)}>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Fecha y Horario *
                 </label>
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3">
@@ -1037,7 +1037,7 @@ function NuevaReservaContent() {
                     >
                       <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                     </button>
-                    <span className="font-bold text-slate-900 dark:text-white capitalize text-xs px-1">
+                    <span className="font-semibold text-slate-900 dark:text-white capitalize text-xs px-1">
                       {formattedDateTitle}
                     </span>
                     <button
@@ -1051,7 +1051,7 @@ function NuevaReservaContent() {
                     <button
                       type="button"
                       onClick={() => setDate(todayStr)}
-                      className="text-[10.5px] font-bold text-primary hover:underline px-2 py-0.5 rounded hover:bg-primary/10 transition cursor-pointer"
+                      className="text-[11px] font-semibold text-primary hover:underline px-2 py-0.5 rounded hover:bg-primary/10 transition cursor-pointer"
                     >
                       Hoy
                     </button>
@@ -1062,7 +1062,7 @@ function NuevaReservaContent() {
                     <button
                       type="button"
                       onClick={() => setTime((t) => stepTime(t, -15))}
-                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
                     >
                       -15m
                     </button>
@@ -1074,7 +1074,7 @@ function NuevaReservaContent() {
                         setServiceDropdownOpen(false);
                         setStaffDropdownOpen(false);
                       }}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 font-mono font-black text-xs text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 tabular-nums font-semibold text-xs text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
                     >
                       <Clock className="h-3.5 w-3.5 text-primary" />
                       <span>{time} hs</span>
@@ -1084,7 +1084,7 @@ function NuevaReservaContent() {
                     <button
                       type="button"
                       onClick={() => setTime((t) => stepTime(t, 15))}
-                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
+                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
                     >
                       +15m
                     </button>
@@ -1104,7 +1104,7 @@ function NuevaReservaContent() {
                               setTime(t);
                               setTimeDropdownOpen(false);
                             }}
-                            className={`py-1.5 px-2 rounded-xl text-center font-mono text-[11px] font-bold transition cursor-pointer ${
+                            className={`py-1.5 px-2 rounded-xl text-center tabular-nums text-[11px] font-semibold transition cursor-pointer ${
                               time === t
                                 ? "bg-primary text-white shadow-xs"
                                 : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
@@ -1121,7 +1121,7 @@ function NuevaReservaContent() {
 
               {/* SECTION 4: MÉTODO DE PAGO */}
               <div data-tour="nueva-reserva-payment" className={stepHidden(3)}>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Método de Pago
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1138,7 +1138,7 @@ function NuevaReservaContent() {
                         type="button"
                         onClick={() => setPaymentMethod(id)}
                         style={isSelected ? { backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)", color: "#ffffff", borderColor: business.primaryColor || "var(--primary, #FF4F2B)" } : undefined}
-                        className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 px-2 text-xs font-bold transition cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 px-2 text-xs font-semibold transition cursor-pointer ${
                           isSelected
                             ? "shadow-xs"
                             : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
@@ -1154,7 +1154,7 @@ function NuevaReservaContent() {
 
               {/* SECTION 5: NOTAS OPCIONALES */}
               <div className={stepHidden(3)}>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Notas / Observaciones (opcional)
                 </label>
                 <input
@@ -1186,7 +1186,7 @@ function NuevaReservaContent() {
                       triggerHaptic("selection");
                       setMobileStep((p) => p + 1);
                     }}
-                    className="flex-1 rounded-2xl bg-primary py-3 text-xs font-bold text-white shadow-lg shadow-primary/25 transition active:scale-[0.98] disabled:opacity-40 cursor-pointer"
+                    className="flex-1 rounded-2xl bg-primary py-3 text-xs font-semibold text-white shadow-lg shadow-primary/25 transition active:scale-[0.98] disabled:opacity-40 cursor-pointer"
                   >
                     {stepValid[mobileStep] ? "Siguiente" : mobileStep === 0 ? "Completá nombre y WhatsApp" : "Completá este paso"}
                   </button>
@@ -1207,9 +1207,9 @@ function NuevaReservaContent() {
                   </button>
                 )}
                 <div>
-                  <span className="text-[10.5px] text-slate-400 block font-medium">Tarifa del Servicio:</span>
+                  <span className="text-[11px] text-slate-400 block font-medium">Tarifa del Servicio:</span>
                   <span
-                    className="text-base font-black font-mono"
+                    className="text-base font-semibold tabular-nums"
                     style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}
                   >
                     {formatGs(currentService?.price || 0)}
@@ -1230,7 +1230,7 @@ function NuevaReservaContent() {
                       backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
                       boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(255, 79, 43, 0.4)"}`,
                     }}
-                    className="rounded-2xl px-6 py-2.5 text-xs font-bold text-white shadow-md hover:brightness-110 disabled:opacity-50 transition cursor-pointer"
+                    className="rounded-2xl px-6 py-2.5 text-xs font-semibold text-white shadow-md hover:brightness-110 disabled:opacity-50 transition cursor-pointer"
                   >
                     {isSubmitting ? "Guardando en SQL..." : "Confirmar Turno"}
                   </button>
@@ -1247,14 +1247,14 @@ function NuevaReservaContent() {
 
               {/* Professional Affected */}
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Profesional Afectado
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
                     onClick={() => setBlockStaffId("all")}
-                    className={`px-3 py-1.5 rounded-2xl border text-xs font-bold transition cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-2xl border text-xs font-semibold transition cursor-pointer ${
                       blockStaffId === "all"
                         ? "border-amber-500 bg-amber-500 text-white shadow-xs"
                         : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -1267,7 +1267,7 @@ function NuevaReservaContent() {
                       key={p.id}
                       type="button"
                       onClick={() => setBlockStaffId(p.id)}
-                      className={`px-3 py-1.5 rounded-2xl border text-xs font-bold transition cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-2xl border text-xs font-semibold transition cursor-pointer ${
                         blockStaffId === p.id
                           ? "border-primary bg-primary text-white shadow-xs"
                           : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
@@ -1282,7 +1282,7 @@ function NuevaReservaContent() {
               {/* Interval & Reason */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     Hora Inicio
                   </label>
                   <input
@@ -1293,7 +1293,7 @@ function NuevaReservaContent() {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     Hora Fin
                   </label>
                   <input
@@ -1306,7 +1306,7 @@ function NuevaReservaContent() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Motivo de Bloqueo
                 </label>
                 <input
@@ -1321,7 +1321,7 @@ function NuevaReservaContent() {
               <div className="flex justify-end pt-3 border-t border-slate-100 dark:border-white/10">
                 <button
                   type="submit"
-                  className="rounded-2xl bg-amber-600 hover:bg-amber-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-600/25 transition cursor-pointer"
+                  className="rounded-2xl bg-amber-600 hover:bg-amber-700 px-6 py-2.5 text-xs font-semibold text-white shadow-md shadow-amber-600/25 transition cursor-pointer"
                 >
                   Guardar Bloqueo
                 </button>

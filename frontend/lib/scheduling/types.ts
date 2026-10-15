@@ -53,6 +53,7 @@ export type PublicTenant = {
   maxAdvanceDays: number;
   logoUrl: string;
   bannerUrl?: string;
+  bannerPosY?: number;
   galleryUrls?: string[];
   bio?: string;
   slogan?: string;

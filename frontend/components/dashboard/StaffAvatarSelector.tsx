@@ -41,7 +41,7 @@ export function StaffAvatarSelector({
 
   return (
     <div className={`flex items-center gap-2.5 py-1 ${className}`}>
-      <span className="text-[11px] font-bold text-slate-400 shrink-0 select-none">
+      <span className="text-[11px] font-semibold text-slate-400 shrink-0 select-none">
         Filtrar:
       </span>
 
@@ -59,7 +59,7 @@ export function StaffAvatarSelector({
             triggerHaptic("selection");
             onSelectStaff("all");
           }}
-          className={`relative inline-flex items-center justify-center h-8 rounded-full text-xs font-bold cursor-pointer select-none outline-none transition-colors shrink-0 ${
+          className={`relative inline-flex items-center justify-center h-8 rounded-full text-xs font-semibold cursor-pointer select-none outline-none transition-colors shrink-0 ${
             isAllSelected
               ? "px-3 gap-1.5 border backdrop-blur-md shadow-2xs"
               : "w-8 px-0 border border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-white/30 shadow-2xs"
@@ -78,7 +78,7 @@ export function StaffAvatarSelector({
                 className="overflow-hidden inline-flex items-center gap-1 leading-none whitespace-nowrap pl-0.5"
               >
                 <span>Todos</span>
-                <span className="text-[10px] font-mono opacity-80">({totalToday})</span>
+                <span className="text-[11px] tabular-nums opacity-80">({totalToday})</span>
               </motion.span>
             )}
           </AnimatePresence>
@@ -104,7 +104,7 @@ export function StaffAvatarSelector({
                 triggerHaptic("selection");
                 onSelectStaff(isSelected ? "all" : st.id);
               }}
-              className={`relative inline-flex items-center justify-center h-8 rounded-full text-xs font-bold cursor-pointer select-none outline-none transition-colors shrink-0 ${
+              className={`relative inline-flex items-center justify-center h-8 rounded-full text-xs font-semibold cursor-pointer select-none outline-none transition-colors shrink-0 ${
                 isSelected
                   ? "pl-1 pr-3 gap-1.5 border backdrop-blur-md shadow-2xs"
                   : "w-8 px-0 border border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-white/30 shadow-2xs"
@@ -116,8 +116,8 @@ export function StaffAvatarSelector({
               <div
                 className={`h-6 w-6 rounded-full overflow-hidden flex items-center justify-center shrink-0 select-none ${
                   isSelected
-                    ? "bg-[var(--primary)]/20 text-[var(--primary)] font-black text-[11px]"
-                    : "bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-slate-100 font-bold text-xs border border-slate-200/90 dark:border-white/15"
+                    ? "bg-[var(--primary)]/20 text-[var(--primary)] font-semibold text-[11px]"
+                    : "bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-slate-100 font-semibold text-xs border border-slate-200/90 dark:border-white/15"
                 }`}
               >
                 {hasAvatar ? (
@@ -145,14 +145,14 @@ export function StaffAvatarSelector({
                     className="overflow-hidden inline-flex items-center gap-1 leading-none whitespace-nowrap pl-0.5"
                   >
                     <span>{st.name}</span>
-                    <span className="text-[10px] font-mono opacity-80">({count})</span>
+                    <span className="text-[11px] tabular-nums opacity-80">({count})</span>
                   </motion.span>
                 )}
               </AnimatePresence>
 
               {/* Count badge when collapsed if > 0 */}
               {!isSelected && count > 0 && (
-                <span className="absolute -top-1 -right-1 h-3.5 min-w-[14px] px-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[8px] font-mono font-black flex items-center justify-center shadow-xs border border-white dark:border-slate-900 pointer-events-none">
+                <span className="absolute -top-1 -right-1 h-3.5 min-w-[14px] px-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] tabular-nums font-semibold flex items-center justify-center shadow-xs border border-white dark:border-slate-900 pointer-events-none">
                   {count}
                 </span>
               )}

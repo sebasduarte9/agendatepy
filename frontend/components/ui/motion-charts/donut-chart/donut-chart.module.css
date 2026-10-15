@@ -90,9 +90,10 @@
 }
 
 .centerValue {
-  font-family: ui-monospace, monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   font-size: 1.125rem;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.03em;
   color: rgb(15 23 42);
   line-height: 1.1;
@@ -196,12 +197,13 @@
 }
 
 .rowMembers {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: rgb(148 163 184);
 }
 
 .rowValue {
-  font-family: ui-monospace, monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: rgb(15 23 42);
 }
@@ -211,7 +213,8 @@
 }
 
 .rowShare {
-  font-family: ui-monospace, monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   font-size: 0.6875rem;
   font-weight: 600;
   color: rgb(100 116 139);
@@ -235,4 +238,9 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* A table's intrinsic width must not expand the clipped screen-reader content. */
+table.srOnly {
+  display: block;
 }

@@ -3,822 +3,808 @@
 import { useMemo, useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import {
-  FileCheck2,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Eye,
-  AlertCircle,
   Building2,
-  User,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Eye,
+  FileCheck2,
   Hash,
-  Download,
-  ExternalLink,
+  ImageOff,
   QrCode,
+  ScanText,
+  Search,
   ShieldCheck,
   Smartphone,
-  Sparkles,
-  Search,
-  ArrowUpRight,
-  Filter,
-  Check,
-  ChevronRight,
+  X,
+  XCircle,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Card from "@/components/dashboard/ui/Card";
-import DataTable from "@/components/dashboard/ui/DataTable";
 import Modal from "@/components/dashboard/ui/Modal";
-import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
 import { formatGs } from "@/lib/dashboard-dates";
 import type { Receipt } from "@/lib/dashboard-types";
 
-const STATUS_FILTERS = ["Todos", "Pendientes", "Aprobados", "Rechazados"] as const;
-const BANK_FILTERS = ["Todos los Bancos", "Banco Itaú", "Ueno Bank", "Banco Continental", "BNF"] as const;
+const STATUS_FILTERS = [
+  { value: "all", label: "Todos" },
+  { value: "pending", label: "Pendientes" },
+  { value: "approved", label: "Aprobados" },
+  { value: "rejected", label: "Rechazados" },
+] as const;
 
-function bankBadgeStyle(bankName?: string) {
+type StatusFilter = (typeof STATUS_FILTERS)[number]["value"];
+
+const PAGE_SIZE = 10;
+
+const STATUS_META: Record<
+  Receipt["status"],
+  { label: string; icon: typeof Clock; badgeClass: string; iconClass: string }
+> = {
+  pending: {
+    label: "Pendiente",
+    icon: Clock,
+    badgeClass: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    iconClass: "text-amber-500",
+  },
+  approved: {
+    label: "Aprobado",
+    icon: CheckCircle2,
+    badgeClass: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    iconClass: "text-emerald-500",
+  },
+  rejected: {
+    label: "Rechazado",
+    icon: XCircle,
+    badgeClass: "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300",
+    iconClass: "text-rose-500",
+  },
+};
+
+function bankDotClass(bankName?: string) {
   const b = (bankName || "").toLowerCase();
-  if (b.includes("itaú") || b.includes("itau")) {
-    return "bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60";
+  if (b.includes("itaú") || b.includes("itau")) return "bg-orange-500";
+  if (b.includes("ueno")) return "bg-emerald-500";
+  if (b.includes("continental")) return "bg-blue-500";
+  if (b.includes("bnf") || b.includes("fomento")) return "bg-amber-500";
+  if (b.includes("sudameris")) return "bg-rose-500";
+  return "bg-slate-400";
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+function StatusBadge({ status }: { status: Receipt["status"] }) {
+  const meta = STATUS_META[status];
+  const Icon = meta.icon;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${meta.badgeClass}`}
+    >
+      <Icon className="h-3 w-3" />
+      {meta.label}
+    </span>
+  );
+}
+
+/** Only shows the automatic checks that actually ran on the receipt. */
+function VerificationBadges({ receipt }: { receipt: Receipt }) {
+  if (!receipt.qrCodeDetected && !receipt.ocrVerified) {
+    return <span className="text-[11px] text-slate-400 dark:text-zinc-500">Revisión manual</span>;
   }
-  if (b.includes("ueno")) {
-    return "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60";
-  }
-  if (b.includes("continental")) {
-    return "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60";
-  }
-  if (b.includes("bnf") || b.includes("fomento")) {
-    return "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60";
-  }
-  return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800";
+  return (
+    <div className="flex items-center gap-1.5 whitespace-nowrap">
+      {receipt.qrCodeDetected && (
+        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+          <QrCode className="h-3 w-3" />
+          QR
+        </span>
+      )}
+      {receipt.ocrVerified && (
+        <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-500/10 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-indigo-700 dark:text-indigo-300">
+          <ScanText className="h-3 w-3" />
+          {typeof receipt.ocrConfidence === "number" ? `OCR ${receipt.ocrConfidence}%` : "OCR"}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function TransferenciasPage() {
   const { receipts, business, setReceiptStatus, pushToast } = useDashboardStore();
   const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
 
-  const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]>("Todos");
-  const [bankFilter, setBankFilter] = useState<(typeof BANK_FILTERS)[number]>("Todos los Bancos");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [bankFilter, setBankFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingReceipt, setViewingReceipt] = useState<Receipt | null>(null);
+  const [receiptToReject, setReceiptToReject] = useState<Receipt | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
+
+  // Pagination resets on its own whenever the filter combination changes
+  const filterKey = `${statusFilter}|${bankFilter}|${searchQuery.trim()}`;
+  const [paging, setPaging] = useState({ key: filterKey, count: PAGE_SIZE });
+  const visibleCount = paging.key === filterKey ? paging.count : PAGE_SIZE;
+
+  const statusCounts = useMemo(
+    () => ({
+      all: receipts.length,
+      pending: receipts.filter((r) => r.status === "pending").length,
+      approved: receipts.filter((r) => r.status === "approved").length,
+      rejected: receipts.filter((r) => r.status === "rejected").length,
+    }),
+    [receipts]
+  );
+
+  // Banks that actually appear in the receipts, most used first
+  const bankOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    receipts.forEach((r) => {
+      const bank = r.bankOrigin?.trim();
+      if (bank) counts.set(bank, (counts.get(bank) ?? 0) + 1);
+    });
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [receipts]);
 
   const filtered = useMemo(() => {
-    return receipts.filter((r) => {
-      // Status filter
-      if (filter === "Pendientes" && r.status !== "pending") return false;
-      if (filter === "Aprobados" && r.status !== "approved") return false;
-      if (filter === "Rechazados" && r.status !== "rejected") return false;
+    const q = searchQuery.trim().toLowerCase();
+    return receipts
+      .filter((r) => {
+        if (statusFilter !== "all" && r.status !== statusFilter) return false;
+        if (bankFilter !== "all" && r.bankOrigin?.trim() !== bankFilter) return false;
+        if (q) {
+          const haystack = [r.clientName, r.clientPhone, r.bankOrigin, r.operationNumber, r.note]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // Pending receipts first, then newest
+        if (a.status === "pending" && b.status !== "pending") return -1;
+        if (b.status === "pending" && a.status !== "pending") return 1;
+        return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+      });
+  }, [receipts, statusFilter, bankFilter, searchQuery]);
 
-      // Bank filter
-      if (bankFilter !== "Todos los Bancos") {
-        if (!r.bankOrigin || !r.bankOrigin.toLowerCase().includes(bankFilter.toLowerCase())) return false;
-      }
-
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const mClient = r.clientName.toLowerCase().includes(q);
-        const mPhone = (r.clientPhone || "").toLowerCase().includes(q);
-        const mBank = (r.bankOrigin || "").toLowerCase().includes(q);
-        const mOp = (r.operationNumber || "").toLowerCase().includes(q);
-        const mNote = (r.note || "").toLowerCase().includes(q);
-        if (!mClient && !mPhone && !mBank && !mOp && !mNote) return false;
-      }
-
-      return true;
-    });
-  }, [receipts, filter, bankFilter, searchQuery]);
+  const visibleReceipts = filtered.slice(0, visibleCount);
+  const hasActiveFilters = statusFilter !== "all" || bankFilter !== "all" || searchQuery.trim() !== "";
 
   // KPIs
-  const totalCount = receipts.length;
-  const pendingCount = receipts.filter((r) => r.status === "pending").length;
-  const approvedCount = receipts.filter((r) => r.status === "approved").length;
-  const approvedTotal = receipts
-    .filter((r) => r.status === "approved")
-    .reduce((sum, r) => sum + r.amount, 0);
-  const pendingTotal = receipts
-    .filter((r) => r.status === "pending")
-    .reduce((sum, r) => sum + r.amount, 0);
-  const ocrDetectedCount = receipts.filter((r) => r.ocrVerified).length;
+  const pendingTotal = receipts.filter((r) => r.status === "pending").reduce((sum, r) => sum + r.amount, 0);
+  const approvedTotal = receipts.filter((r) => r.status === "approved").reduce((sum, r) => sum + r.amount, 0);
+  const rejectedTotal = receipts.filter((r) => r.status === "rejected").reduce((sum, r) => sum + r.amount, 0);
+  const reviewedCount = statusCounts.approved + statusCounts.rejected;
+  const approvalRatePct = reviewedCount > 0 ? Math.round((statusCounts.approved / reviewedCount) * 100) : null;
+  const autoVerifiedCount = receipts.filter((r) => r.qrCodeDetected || r.ocrVerified).length;
 
-  const approvalRatePct = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 100;
-  const ocrRatePct = totalCount > 0 ? Math.round((ocrDetectedCount / totalCount) * 100) : 100;
+  const formatDate = (value: string, pattern: string) => formatInTimeZone(value, business.timezone, pattern);
 
   function handleApprove(receipt: Receipt) {
+    triggerHaptic("success");
     setReceiptStatus(receipt.id, "approved");
-    pushToast("success", `Comprobante de ${receipt.clientName} APROBADO. Turno y cita confirmados automáticamente.`);
+    pushToast("success", `Comprobante de ${receipt.clientName} aprobado. El turno quedó confirmado.`);
     if (viewingReceipt?.id === receipt.id) setViewingReceipt(null);
   }
 
-  function handleReject(receipt: Receipt) {
-    setReceiptStatus(receipt.id, "rejected");
-    pushToast("error", `Comprobante de ${receipt.clientName} RECHAZADO. Turno liberado en agenda.`);
-    if (viewingReceipt?.id === receipt.id) setViewingReceipt(null);
+  function handleConfirmReject() {
+    if (!receiptToReject) return;
+    triggerHaptic("light");
+    setReceiptStatus(receiptToReject.id, "rejected");
+    pushToast("error", `Comprobante de ${receiptToReject.clientName} rechazado. El turno se liberó en la agenda.`);
+    if (viewingReceipt?.id === receiptToReject.id) setViewingReceipt(null);
+    setReceiptToReject(null);
+  }
+
+  function clearFilters() {
+    setStatusFilter("all");
+    setBankFilter("all");
+    setSearchQuery("");
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Auditoría de Transferencias Bancarias
-        </h1>
-
-        {/* Action Dock / Status Filters */}
-        <div className="w-full lg:w-auto">
-          <IosSegmentedControl
-            options={STATUS_FILTERS.map((f) => ({
-              value: f,
-              label: f,
-              badge: f === "Pendientes" && pendingCount > 0 ? pendingCount : undefined,
-            }))}
-            value={filter}
-            onChange={(val) => {
-              setFilter(val as any);
-              triggerHaptic("selection");
-            }}
-            layoutId="transferenciasStatusSegment"
-            className="w-full sm:w-auto"
-          />
+    <div className="w-full max-w-full space-y-5 pb-24 sm:space-y-6 sm:pb-10">
+      {/* ═══ PAGE HEADER ═══ */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Pagos por transferencia</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Transferencias
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
+            Revisá los comprobantes que envían tus clientes y confirmá sus turnos.
+          </p>
         </div>
-      </div>
+      </header>
 
-      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
+      {/* ═══ SUMMARY ═══ */}
+      <section className="rounded-3xl glass-panel p-3 sm:p-5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Por Validar
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">Resumen de comprobantes</h2>
+            <p className="mt-0.5 hidden text-xs text-slate-500 dark:text-zinc-400 sm:block">
+              Montos según el estado de cada transferencia.
+            </p>
+          </div>
+          <span className="hidden text-xs text-slate-500 dark:text-zinc-400 sm:inline">
+            {statusCounts.all} {statusCounts.all === 1 ? "comprobante recibido" : "comprobantes recibidos"}
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-white/10 pt-3 sm:mt-4 sm:grid-cols-4 sm:gap-y-0 sm:pt-4">
+          {[
+            {
+              label: "Por revisar",
+              value: formatGs(pendingTotal),
+              detail: `${statusCounts.pending} ${statusCounts.pending === 1 ? "comprobante" : "comprobantes"}`,
+              tone: statusCounts.pending > 0 ? "text-amber-600 dark:text-amber-400" : undefined,
+            },
+            {
+              label: "Aprobado",
+              value: formatGs(approvedTotal),
+              detail: `${statusCounts.approved} ${statusCounts.approved === 1 ? "comprobante" : "comprobantes"}`,
+              tone: "text-emerald-600 dark:text-emerald-400",
+            },
+            {
+              label: "Rechazado",
+              value: formatGs(rejectedTotal),
+              detail: `${statusCounts.rejected} ${statusCounts.rejected === 1 ? "comprobante" : "comprobantes"}`,
+            },
+            {
+              label: "Tasa de aprobación",
+              value: approvalRatePct === null ? "—" : `${approvalRatePct}%`,
+              detail: `${autoVerifiedCount} con verificación automática`,
+            },
+          ].map((metric) => (
+            <div key={metric.label} className="min-w-0">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">{metric.label}</p>
+              <p
+                className={`mt-1 truncate text-base font-semibold tabular-nums sm:text-xl ${
+                  metric.tone ?? "text-slate-900 dark:text-white"
+                }`}
+              >
+                {metric.value}
+              </p>
+              <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-zinc-500">{metric.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className={`mt-3 flex items-center justify-between gap-2 rounded-2xl border px-2.5 py-2.5 sm:mt-4 sm:px-3.5 sm:py-3 ${
+            statusCounts.pending > 0
+              ? "border-amber-500/20 bg-amber-500/[0.06]"
+              : "border-emerald-500/15 bg-emerald-500/[0.04]"
+          }`}
+        >
+          <div className="flex min-w-0 items-start gap-2.5">
+            <span
+              className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                statusCounts.pending > 0
+                  ? "bg-amber-500/10 text-amber-500 dark:text-amber-400"
+                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              }`}
+            >
+              {statusCounts.pending > 0 ? <Clock className="h-4 w-4" /> : <FileCheck2 className="h-4 w-4" />}
             </span>
-            <span className={`text-2xl font-black font-mono ${pendingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-              {pendingCount} {pendingCount === 1 ? "comprobante" : "comprobantes"}
+            <span className="min-w-0">
+              <span
+                className={`block text-xs font-semibold ${
+                  statusCounts.pending > 0 ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"
+                }`}
+              >
+                {statusCounts.pending > 0
+                  ? `${statusCounts.pending} ${statusCounts.pending === 1 ? "comprobante espera" : "comprobantes esperan"} tu revisión`
+                  : "Todos los comprobantes están revisados"}
+              </span>
+              <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-zinc-400">
+                {statusCounts.pending > 0
+                  ? "Al aprobar se confirma el turno; al rechazar se libera el horario."
+                  : "Los nuevos comprobantes de WhatsApp van a aparecer acá."}
+              </span>
             </span>
           </div>
-          {pendingCount > 0 ? (
-            <span className="px-3 py-1 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20">
-              {formatGs(pendingTotal)}
-            </span>
-          ) : (
-            <span className="px-3 py-1 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20">
-              ✓ Al día
-            </span>
+          {statusCounts.pending > 0 && statusFilter !== "pending" && (
+            <button
+              type="button"
+              onClick={() => setStatusFilter("pending")}
+              className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 px-2.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-300 sm:min-h-10 sm:px-3 sm:text-xs"
+            >
+              Ver pendientes
+            </button>
           )}
         </div>
-        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>Aprobados: <strong className="text-slate-800 dark:text-slate-200 font-mono">{formatGs(approvedTotal)}</strong></span>
-          <span>Aprobación: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{approvalRatePct}%</strong></span>
-        </div>
-      </div>
+      </section>
 
-      {/* ═══ DESKTOP APPLE INSET CONTAINER: BENTO TELEMETRY & GAUGES ═══ */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Card 1: Circular Progress Gauges (Approval & OCR Detection) */}
-          <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <FileCheck2 className="h-4 w-4" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    Telemetría de Comprobantes Bancarios
-                  </span>
-                </div>
-                <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
-                  {totalCount} transferencias auditadas
-                </span>
-              </div>
-
-              {/* Gauges & Summary */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                {/* Gauge 1: Approval Rate */}
-                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
-                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        className="text-slate-200 dark:text-slate-800"
-                        strokeWidth="4"
-                        stroke="currentColor"
-                        fill="transparent"
-                      />
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        strokeWidth="4"
-                        strokeDasharray={113}
-                        strokeDashoffset={113 - (113 * approvalRatePct) / 100}
-                        strokeLinecap="round"
-                        stroke={brandColor}
-                        fill="transparent"
-                        className="transition-all duration-700 ease-out"
-                      />
-                    </svg>
-                    <span className="absolute font-mono font-bold text-xs text-slate-800 dark:text-white">
-                      {approvalRatePct}%
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                      Tasa de Aprobación
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                      {approvedCount} comprobantes verificados
-                    </span>
-                    <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {formatGs(approvedTotal)} acreditados
-                    </span>
-                  </div>
-                </div>
-
-                {/* Gauge 2: OCR QR Detection Rate */}
-                <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                  <div className="relative h-14 w-14 shrink-0 flex items-center justify-center">
-                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 44 44">
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        className="text-emerald-500/20"
-                        strokeWidth="4"
-                        stroke="currentColor"
-                        fill="transparent"
-                      />
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        strokeWidth="4"
-                        strokeDasharray={113}
-                        strokeDashoffset={113 - (113 * ocrRatePct) / 100}
-                        strokeLinecap="round"
-                        stroke="#10b981"
-                        fill="transparent"
-                        className="transition-all duration-700 ease-out"
-                      />
-                    </svg>
-                    <span className="absolute font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
-                      {ocrRatePct}%
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                      Detección OCR & QR
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                      {ocrDetectedCount} con código QR válido
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Lectura Bancard / SPI
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick KPI Bar */}
-            <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Total Cobrado</span>
-                <span className="font-mono font-extrabold text-xs text-emerald-600 dark:text-emerald-400">
-                  {formatGs(approvedTotal)}
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Por Aprobar</span>
-                <span className={`font-mono font-extrabold text-xs ${pendingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-600 dark:text-slate-300"}`}>
-                  {formatGs(pendingTotal)}
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 font-semibold block">Comprobantes</span>
-                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                  {totalCount} recibidos
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Bank Breakdown & Direct Filter Hub */}
-          <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                    <Building2 className="h-4 w-4" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    Bancos de Origen en Paraguay
-                  </span>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
-                  Transferencias
-                </span>
-              </div>
-
-              {/* Bank Filter Chips */}
-              <div className="flex flex-wrap gap-1.5 pt-3">
-                {BANK_FILTERS.map((b) => {
-                  const isActive = bankFilter === b;
-                  return (
-                    <button
-                      key={b}
-                      type="button"
-                      onClick={() => setBankFilter(b)}
-                      className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition cursor-pointer shrink-0 ${
-                        isActive
-                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-xs"
-                          : "bg-slate-50 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      {b}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Status Note */}
-              <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 text-xs space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Validación Criptográfica QR</span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  La cámara de WhatsApp lee el comprobante oficial en segundos para evitar fraudes o comprobantes duplicados.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-slate-400 text-[11px]">
-                {pendingCount > 0 ? `${pendingCount} transferencias por revisar` : "Al día con todos los pagos"}
+      {/* ═══ RECEIPTS LIST ═══ */}
+      <section className="overflow-hidden rounded-3xl glass-panel">
+        <div className="space-y-3 border-b border-white/10 p-3.5 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">Comprobantes</h2>
+              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                {filtered.length} de {receipts.length}
               </span>
-              {pendingCount > 0 && (
+            </div>
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                aria-label="Buscar comprobantes"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cliente, banco u operación"
+                className="min-h-11 w-full rounded-2xl border border-white/10 bg-black/10 pl-10 pr-10 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary/50 focus:ring-2 focus:ring-primary/15 dark:text-white sm:text-sm"
+              />
+              {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setFilter("Pendientes")}
-                  className="font-bold hover:underline cursor-pointer"
-                  style={{ color: brandColor }}
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Borrar búsqueda"
+                  className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/10 hover:text-slate-700 dark:hover:text-white"
                 >
-                  Ver pendientes
+                  <X className="h-4 w-4" />
                 </button>
               )}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* ═══ MAIN TABLE CARD ═══ */}
-      <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800 p-0 overflow-hidden bg-white dark:bg-slate-950 shadow-xs">
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" style={{ color: brandColor }} />
-              <h2 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
-                Registro de Pagos y Transferencias Bancarias
-              </h2>
-            </div>
-            <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
-              Pagos procesados vía Transferencia Bancaria con lectura inteligente de QR y datos del cliente.
-            </p>
-          </div>
-
-          {/* Search Box */}
-          <div className="relative min-w-[220px]">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar cliente, banco o N°..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="hidden md:block">
-          <DataTable<Receipt>
-            rows={filtered}
-            pageSize={8}
-            columns={[
-              {
-                key: "client",
-                header: "Cliente / Emisor",
-                render: (row) => (
-                  <div className="flex items-center gap-2.5 py-1">
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-black text-white text-xs shadow-xs"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {row.clientName.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-900 dark:text-white block">
-                        {row.clientName}
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
-                        <Smartphone className="h-3 w-3 text-emerald-500" />
-                        {row.clientPhone || "+595 981 765 432"}
-                      </span>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: "bank",
-                header: "Banco & Operación",
-                render: (row) => (
-                  <div className="space-y-1">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${bankBadgeStyle(
-                        row.bankOrigin
-                      )}`}
-                    >
-                      <Building2 className="h-3 w-3" />
-                      <span>{row.bankOrigin || "Banco Itaú"}</span>
-                    </span>
-                    <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-mono block">
-                      {row.operationNumber || "TRF-849201"}
-                    </span>
-                  </div>
-                ),
-              },
-              {
-                key: "ocr",
-                header: "Verificación OCR / QR",
-                render: (row) => (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold">
-                      <QrCode className="h-3 w-3 text-emerald-600" />
-                      <span>QR Validado</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 text-[10px] font-bold">
-                      <ShieldCheck className="h-3 w-3 text-indigo-600" />
-                      <span>OCR {row.ocrConfidence || 99.4}%</span>
-                    </span>
-                  </div>
-                ),
-              },
-              {
-                key: "amount",
-                header: "Monto",
-                render: (row) => (
-                  <span className="font-mono font-black text-slate-900 dark:text-white text-sm">
-                    {formatGs(row.amount)}
-                  </span>
-                ),
-              },
-              {
-                key: "when",
-                header: "Fecha de Envío",
-                hideOnMobile: true,
-                render: (row) => (
-                  <div className="text-xs font-mono">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 block">
-                      {formatInTimeZone(row.submittedAt, business.timezone, "dd/MM/yyyy")}
-                    </span>
-                    <span className="text-slate-400 text-[11px]">
-                      {formatInTimeZone(row.submittedAt, business.timezone, "HH:mm 'hs'")}
-                    </span>
-                  </div>
-                ),
-              },
-              {
-                key: "status",
-                header: "Estado",
-                render: (row) => (
+          {/* Status + bank filters */}
+          <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {STATUS_FILTERS.map((option) => {
+              const isActive = statusFilter === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setStatusFilter(option.value);
+                  }}
+                  style={isActive ? { backgroundColor: brandColor } : undefined}
+                  className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-semibold transition ${
+                    isActive
+                      ? "text-white shadow-sm"
+                      : "border border-white/10 bg-white/[0.025] text-slate-600 hover:bg-white/[0.06] dark:text-zinc-300"
+                  }`}
+                >
+                  {option.label}
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                      row.status === "approved"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : row.status === "rejected"
-                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    className={`rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
+                      isActive ? "bg-black/10" : "bg-white/[0.06] text-slate-400"
                     }`}
                   >
-                    {row.status === "approved" ? (
-                      <>
-                        <CheckCircle2 className="h-3 w-3" /> Aprobado
-                      </>
-                    ) : row.status === "rejected" ? (
-                      <>
-                        <XCircle className="h-3 w-3" /> Rechazado
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="h-3 w-3" /> Pendiente
-                      </>
-                    )}
+                    {statusCounts[option.value]}
                   </span>
-                ),
-              },
-              {
-                key: "actions",
-                header: "Acciones",
-                render: (row) => (
-                  <div className="flex items-center gap-1.5 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setViewingReceipt(row)}
-                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                    >
-                      <Eye className="h-3.5 w-3.5 text-slate-400" />
-                      <span>Ver</span>
-                    </button>
+                </button>
+              );
+            })}
 
-                    {row.status === "pending" && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => handleApprove(row)}
-                          className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-500 transition cursor-pointer"
-                        >
-                          Aprobar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleReject(row)}
-                          className="rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 px-2.5 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition cursor-pointer"
-                        >
-                          Rechazar
-                        </button>
-                      </>
-                    )}
-                  </div>
-                ),
-              },
-            ]}
-          />
+            {bankOptions.length > 1 && (
+              <>
+                <span aria-hidden="true" className="mx-1 h-6 w-px shrink-0 bg-white/10" />
+                {bankOptions.map(([bank, count]) => {
+                  const isActive = bankFilter === bank;
+                  return (
+                    <button
+                      key={bank}
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => {
+                        triggerHaptic("selection");
+                        setBankFilter(isActive ? "all" : bank);
+                      }}
+                      className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition ${
+                        isActive
+                          ? "border-primary/40 bg-primary/10 text-primary"
+                          : "border-white/10 bg-white/[0.025] text-slate-600 hover:bg-white/[0.06] dark:text-zinc-300"
+                      }`}
+                    >
+                      <span className={`h-2 w-2 rounded-full ${bankDotClass(bank)}`} />
+                      {bank}
+                      <span className="text-[11px] tabular-nums text-slate-400">{count}</span>
+                      {isActive && <X className="h-3 w-3" />}
+                    </button>
+                  );
+                })}
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Mobile Apple Inset Grouped Transfer List */}
-        <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/80">
-          {filtered.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-400">
-              No hay transferencias registradas con este filtro.
-            </div>
-          ) : (
-            filtered.map((row) => (
-              <div
-                key={row.id}
-                onClick={() => {
-                  triggerHaptic("selection");
-                  setViewingReceipt(row);
-                }}
-                className="p-4 flex flex-col gap-2.5 active:bg-slate-50 dark:active:bg-slate-900/60 transition cursor-pointer"
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-5 py-12 text-center sm:py-16">
+            <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <FileCheck2 className="h-6 w-6" />
+            </span>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              {receipts.length === 0 ? "Todavía no hay comprobantes" : "No encontramos comprobantes"}
+            </h3>
+            <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-zinc-400">
+              {receipts.length === 0
+                ? "Cuando un cliente envíe su comprobante por WhatsApp, lo vas a ver acá para aprobarlo."
+                : "Probá con otra búsqueda o limpiá los filtros aplicados."}
+            </p>
+            {hasActiveFilters && receipts.length > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 px-4 text-sm font-medium text-slate-700 transition hover:bg-white/10 dark:text-zinc-200"
               >
-                {/* Top Row: Client + Bank + Amount */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl font-black text-white text-xs shadow-xs"
-                      style={{ backgroundColor: brandColor }}
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-white/10 text-[11px] text-slate-500 dark:text-zinc-400">
+                    <th className="px-5 py-3 font-medium">Cliente</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-medium">Banco y operación</th>
+                    <th className="px-4 py-3 font-medium">Verificación</th>
+                    <th className="px-4 py-3 text-right font-medium">Monto</th>
+                    <th className="hidden px-4 py-3 font-medium xl:table-cell">Recibido</th>
+                    <th className="px-4 py-3 font-medium">Estado</th>
+                    <th className="px-5 py-3 text-right font-medium">
+                      <span className="sr-only">Acciones</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06]">
+                  {visibleReceipts.map((row) => (
+                    <tr
+                      key={row.id}
+                      className={`transition hover:bg-slate-50/60 dark:hover:bg-white/[0.02] ${
+                        row.status === "pending" ? "bg-amber-500/[0.025]" : ""
+                      }`}
                     >
-                      {row.clientName.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-900 dark:text-white text-sm truncate">
+                      <td className="px-5 py-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[11px] font-semibold text-white"
+                            style={{ backgroundColor: brandColor }}
+                          >
+                            {initials(row.clientName)}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-semibold text-slate-900 dark:text-white">
+                              {row.clientName}
+                            </span>
+                            {row.clientPhone && (
+                              <span className="block whitespace-nowrap text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">
+                                {row.clientPhone}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="flex items-center gap-1.5 whitespace-nowrap font-medium text-slate-800 dark:text-zinc-200">
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${bankDotClass(row.bankOrigin)}`} />
+                          {row.bankOrigin || "Banco no indicado"}
+                        </span>
+                        {row.operationNumber && (
+                          <span className="mt-0.5 block text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">
+                            {row.operationNumber}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <VerificationBadges receipt={row} />
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold tabular-nums text-slate-900 dark:text-white">
+                        {formatGs(row.amount)}
+                        <span className="block text-[11px] font-normal text-slate-500 dark:text-zinc-400 xl:hidden">
+                          {formatDate(row.submittedAt, "dd/MM HH:mm")}
+                        </span>
+                      </td>
+                      <td className="hidden whitespace-nowrap px-4 py-3 tabular-nums text-slate-500 dark:text-zinc-400 xl:table-cell">
+                        <span className="block font-medium text-slate-700 dark:text-zinc-200">
+                          {formatDate(row.submittedAt, "dd/MM/yyyy")}
+                        </span>
+                        <span className="text-[11px]">{formatDate(row.submittedAt, "HH:mm 'hs'")}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={row.status} />
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setViewingReceipt(row)}
+                            aria-label={`Ver comprobante de ${row.clientName}`}
+                            className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-white/10 px-3 text-xs font-semibold text-slate-600 transition hover:bg-white/[0.06] dark:text-zinc-300"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Ver
+                          </button>
+                          {row.status === "pending" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setReceiptToReject(row)}
+                                className="inline-flex min-h-9 items-center rounded-xl border border-rose-500/20 px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-500/10 dark:text-rose-300"
+                              >
+                                Rechazar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(row)}
+                                className="inline-flex min-h-9 items-center rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+                              >
+                                Aprobar
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile list */}
+            <div className="divide-y divide-slate-100 dark:divide-white/[0.06] md:hidden">
+              {visibleReceipts.map((row) => (
+                <div key={row.id} className={row.status === "pending" ? "bg-amber-500/[0.025]" : undefined}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      setViewingReceipt(row);
+                    }}
+                    className="flex w-full items-start justify-between gap-3 px-3.5 py-3 text-left transition active:bg-white/[0.04]"
+                  >
+                    <span className="flex min-w-0 items-start gap-3">
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-[11px] font-semibold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {initials(row.clientName)}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">
                           {row.clientName}
                         </span>
-                        {row.status === "approved" ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                        ) : row.status === "rejected" ? (
-                          <XCircle className="h-3.5 w-3.5 text-rose-500 shrink-0" />
-                        ) : (
-                          <Clock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                        )}
-                      </div>
-                      <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
-                        <Smartphone className="h-3 w-3 text-emerald-500" />
-                        {row.clientPhone || "+595 981 765 432"}
+                        <span className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-slate-500 dark:text-zinc-400">
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${bankDotClass(row.bankOrigin)}`} />
+                          <span className="truncate">
+                            {row.bankOrigin || "Banco no indicado"} · {formatDate(row.submittedAt, "dd/MM HH:mm")}
+                          </span>
+                        </span>
+                        <span className="mt-1.5 block">
+                          <VerificationBadges receipt={row} />
+                        </span>
                       </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="font-mono font-black text-slate-900 dark:text-white text-sm block">
-                      {formatGs(row.amount)}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      {formatInTimeZone(row.submittedAt, business.timezone, "dd/MM HH:mm")}
+                    <span className="flex shrink-0 flex-col items-end gap-1.5">
+                      <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">
+                        {formatGs(row.amount)}
+                      </span>
+                      <StatusBadge status={row.status} />
                     </span>
-                  </div>
-                </div>
-
-                {/* Badges Row */}
-                <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100/60 dark:border-slate-800/60">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${bankBadgeStyle(
-                        row.bankOrigin
-                      )}`}
-                    >
-                      <Building2 className="h-2.5 w-2.5" />
-                      <span>{row.bankOrigin || "Itaú"}</span>
-                    </span>
-
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 text-[9.5px] font-bold">
-                      <QrCode className="h-2.5 w-2.5 text-emerald-600" />
-                      <span>QR OK</span>
-                    </span>
-
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {row.operationNumber || "Transferencia"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                    {row.status === "pending" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            triggerHaptic("success");
-                            handleApprove(row);
-                          }}
-                          className="rounded-xl bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
-                        >
-                          Aprobar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            triggerHaptic("light");
-                            handleReject(row);
-                          }}
-                          className="rounded-xl border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/30 px-2 py-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 active:scale-95 transition cursor-pointer"
-                        >
-                          Rechazar
-                        </button>
-                      </>
-                    ) : (
+                  </button>
+                  {row.status === "pending" && (
+                    <div className="grid grid-cols-2 gap-2 px-3.5 pb-3">
                       <button
                         type="button"
-                        onClick={() => {
-                          triggerHaptic("selection");
-                          setViewingReceipt(row);
-                        }}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                        onClick={() => setReceiptToReject(row)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-rose-500/20 text-xs font-semibold text-rose-600 transition active:scale-[0.98] dark:text-rose-300"
                       >
-                        <span>Detalles</span>
-                        <ChevronRight className="h-3.5 w-3.5" />
+                        Rechazar
                       </button>
-                    )}
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => handleApprove(row)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-600 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98]"
+                      >
+                        Aprobar
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </Card>
+              ))}
+            </div>
 
-      {/* ═══ MODAL: VISUALIZADOR DE COMPROBANTE BANCARIO CON QR ═══ */}
+            {filtered.length > visibleCount && (
+              <div className="border-t border-white/10 p-3 text-center">
+                <button
+                  type="button"
+                  onClick={() => setPaging({ key: filterKey, count: visibleCount + PAGE_SIZE })}
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-white/10 px-4 text-xs font-semibold text-slate-600 transition hover:bg-white/[0.06] dark:text-zinc-300"
+                >
+                  Ver más ({filtered.length - visibleCount} restantes)
+                  <ChevronRight className="h-3.5 w-3.5 rotate-90" />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* ═══ RECEIPT DETAIL MODAL ═══ */}
       <Modal
         open={!!viewingReceipt}
         onClose={() => setViewingReceipt(null)}
-        title="Comprobante Bancario Verificado"
-        maxWidth="max-w-xl"
+        title="Comprobante de transferencia"
+        maxWidth="max-w-lg"
+        footer={
+          viewingReceipt?.status === "pending" ? (
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+              <button
+                type="button"
+                onClick={() => viewingReceipt && setReceiptToReject(viewingReceipt)}
+                className="min-h-11 rounded-xl border border-rose-500/20 px-4 text-xs font-semibold text-rose-600 transition hover:bg-rose-500/10 dark:text-rose-300 sm:min-h-10"
+              >
+                Rechazar
+              </button>
+              <button
+                type="button"
+                onClick={() => viewingReceipt && handleApprove(viewingReceipt)}
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 sm:min-h-10"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Aprobar y confirmar turno
+              </button>
+            </div>
+          ) : undefined
+        }
       >
         {viewingReceipt && (
           <div className="space-y-4 text-xs">
-            {/* Bank Ticket Card */}
-            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-6 shadow-inner space-y-4">
-              {/* Header with Bank & Transfer seal */}
-              <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="flex h-10 w-10 items-center justify-center rounded-2xl text-white font-bold"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    <Building2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <span className="font-black text-slate-900 dark:text-white text-sm block">
-                      {viewingReceipt.bankOrigin || "Banco Itaú Paraguay"}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">
-                      Transferencia Bancaria en Paraguay
-                    </span>
-                  </div>
-                </div>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-extrabold uppercase ${
-                    viewingReceipt.status === "approved"
-                      ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                      : viewingReceipt.status === "rejected"
-                        ? "bg-rose-500/10 text-rose-600 border border-rose-500/20"
-                        : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                  }`}
-                >
-                  {viewingReceipt.status === "approved" ? "Aprobado" : viewingReceipt.status === "rejected" ? "Rechazado" : "Pendiente"}
-                </span>
-              </div>
-
-              {/* Amount Display */}
-              <div className="py-3 text-center bg-slate-100/70 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Monto Acreditado en Cuenta</span>
-                <p className="text-3xl sm:text-4xl font-mono font-black tracking-tight mt-0.5" style={{ color: brandColor }}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Monto transferido</p>
+                <p className="mt-0.5 text-3xl font-semibold tracking-tight tabular-nums text-slate-900 dark:text-white">
                   {formatGs(viewingReceipt.amount)}
                 </p>
               </div>
-
-              {/* Verification Badges */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20">
-                  <QrCode className="h-5 w-5 text-emerald-600 shrink-0" />
-                  <div>
-                    <span className="font-bold text-emerald-800 dark:text-emerald-300 text-[11px] block">Código QR Validado</span>
-                    <span className="text-[9.5px] text-emerald-600/80">Estándar Bancard / BCP</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-500/20">
-                  <ShieldCheck className="h-5 w-5 text-indigo-600 shrink-0" />
-                  <div>
-                    <span className="font-bold text-indigo-800 dark:text-indigo-300 text-[11px] block">Lectura OCR {viewingReceipt.ocrConfidence || 99.4}%</span>
-                    <span className="text-[9.5px] text-indigo-600/80">Reconocimiento Automático</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Transaction Metadata */}
-              <div className="space-y-2.5 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">Cliente / Emisor:</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {viewingReceipt.clientName}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">Teléfono WhatsApp:</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                    <Smartphone className="h-3.5 w-3.5 text-emerald-500" />
-                    {viewingReceipt.clientPhone || "+595 981 765 432"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">Comercio Destino:</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {business.name}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">Fecha y Hora:</span>
-                  <span className="font-mono text-slate-700 dark:text-slate-300">
-                    {formatInTimeZone(viewingReceipt.submittedAt, business.timezone, "dd/MM/yyyy HH:mm 'hs'")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">N° de Operación:</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {viewingReceipt.operationNumber || "TRF-849201"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-medium">Concepto / Nota:</span>
-                  <span className="text-slate-700 dark:text-slate-300 font-medium">
-                    {viewingReceipt.note || "Transferencia Bancaria"}
-                  </span>
-                </div>
-              </div>
+              <StatusBadge status={viewingReceipt.status} />
             </div>
 
-            {/* Actions inside modal */}
-            <div className="flex items-center justify-between gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setViewingReceipt(null)}
-                className="rounded-xl border border-slate-200/80 dark:border-slate-800 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            {viewingReceipt.receiptUrl && !brokenImages[viewingReceipt.id] ? (
+              <a
+                href={viewingReceipt.receiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 dark:border-white/10 dark:bg-black/20"
               >
-                Cerrar
-              </button>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={viewingReceipt.receiptUrl}
+                  alt={`Comprobante de ${viewingReceipt.clientName}`}
+                  onError={() => setBrokenImages((prev) => ({ ...prev, [viewingReceipt.id]: true }))}
+                  className="max-h-72 w-full object-contain transition group-hover:opacity-90"
+                />
+              </a>
+            ) : (
+              <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-slate-200 px-3.5 py-3 text-[11px] text-slate-500 dark:border-white/10 dark:text-zinc-400">
+                <ImageOff className="h-4 w-4 shrink-0" />
+                No hay imagen del comprobante disponible.
+              </div>
+            )}
 
-              {viewingReceipt.status === "pending" && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleReject(viewingReceipt)}
-                    className="rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 px-4 py-2 font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition cursor-pointer"
-                  >
-                    Rechazar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleApprove(viewingReceipt)}
-                    className="rounded-xl bg-emerald-600 px-5 py-2 font-bold text-white shadow-md hover:bg-emerald-500 transition cursor-pointer flex items-center gap-1.5"
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Aprobar Comprobante</span>
-                  </button>
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-2">
+              <div
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${
+                  viewingReceipt.qrCodeDetected
+                    ? "border-emerald-500/20 bg-emerald-500/[0.06]"
+                    : "border-slate-200/80 dark:border-white/10"
+                }`}
+              >
+                <QrCode
+                  className={`h-4 w-4 shrink-0 ${viewingReceipt.qrCodeDetected ? "text-emerald-500" : "text-slate-400"}`}
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-slate-800 dark:text-zinc-200">Código QR</span>
+                  <span className="block text-[11px] text-slate-500 dark:text-zinc-400">
+                    {viewingReceipt.qrCodeDetected ? "Detectado" : "No detectado"}
+                  </span>
+                </span>
+              </div>
+              <div
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${
+                  viewingReceipt.ocrVerified
+                    ? "border-indigo-500/20 bg-indigo-500/[0.06]"
+                    : "border-slate-200/80 dark:border-white/10"
+                }`}
+              >
+                <ScanText
+                  className={`h-4 w-4 shrink-0 ${viewingReceipt.ocrVerified ? "text-indigo-500" : "text-slate-400"}`}
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-slate-800 dark:text-zinc-200">Lectura automática</span>
+                  <span className="block text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">
+                    {viewingReceipt.ocrVerified
+                      ? typeof viewingReceipt.ocrConfidence === "number"
+                        ? `${viewingReceipt.ocrConfidence}% de confianza`
+                        : "Datos leídos"
+                      : "Sin lectura"}
+                  </span>
+                </span>
+              </div>
             </div>
+
+            <dl className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 px-3.5 dark:divide-white/[0.06] dark:border-white/10">
+              {[
+                { icon: Smartphone, label: "Cliente", value: viewingReceipt.clientName, sub: viewingReceipt.clientPhone },
+                { icon: Building2, label: "Banco de origen", value: viewingReceipt.bankOrigin || "No indicado" },
+                { icon: Hash, label: "N° de operación", value: viewingReceipt.operationNumber || "No indicado" },
+                {
+                  icon: Clock,
+                  label: "Recibido",
+                  value: formatDate(viewingReceipt.submittedAt, "dd/MM/yyyy HH:mm 'hs'"),
+                },
+                { icon: ShieldCheck, label: "Destino", value: business.name },
+              ].map((item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <div key={item.label} className="flex items-start justify-between gap-3 py-2.5">
+                    <dt className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
+                      <ItemIcon className="h-3.5 w-3.5 shrink-0" />
+                      {item.label}
+                    </dt>
+                    <dd className="min-w-0 text-right">
+                      <span className="block truncate font-semibold text-slate-800 dark:text-zinc-200">{item.value}</span>
+                      {item.sub && (
+                        <span className="block text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">{item.sub}</span>
+                      )}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+
+            {viewingReceipt.note && (
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/[0.03]">
+                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Nota del cliente</p>
+                <p className="mt-0.5 text-slate-800 dark:text-zinc-200">{viewingReceipt.note}</p>
+              </div>
+            )}
           </div>
+        )}
+      </Modal>
+
+      {/* ═══ REJECT CONFIRMATION ═══ */}
+      <Modal
+        open={!!receiptToReject}
+        onClose={() => setReceiptToReject(null)}
+        title="¿Rechazar comprobante?"
+        maxWidth="max-w-sm"
+        footer={
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setReceiptToReject(null)}
+              className="min-h-11 rounded-xl border border-slate-200/80 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 sm:min-h-10"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmReject}
+              className="min-h-11 rounded-xl bg-rose-600 px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-500 sm:min-h-10"
+            >
+              Rechazar
+            </button>
+          </div>
+        }
+      >
+        {receiptToReject && (
+          <p className="text-sm text-slate-600 dark:text-zinc-300">
+            El comprobante de <strong className="text-slate-900 dark:text-white">{receiptToReject.clientName}</strong> por{" "}
+            <strong className="tabular-nums text-slate-900 dark:text-white">{formatGs(receiptToReject.amount)}</strong> se va a
+            marcar como rechazado y su turno se cancela, liberando el horario en la agenda.
+          </p>
         )}
       </Modal>
     </div>

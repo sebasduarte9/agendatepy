@@ -53,6 +53,22 @@ function InstagramIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+function TikTokIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M19.6 6.7a4.8 4.8 0 0 1-3.8-4.2V2h-3.4v13.4a2.9 2.9 0 1 1-2-2.8V9.1a6.3 6.3 0 1 0 5.4 6.3V8.6a8.2 8.2 0 0 0 3.8 1.2V6.7z" />
+    </svg>
+  );
+}
+
+function FacebookIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M14 8.5V6.6c0-.8.2-1.3 1.4-1.3H17V2.2C16.7 2.1 15.7 2 14.6 2 12.2 2 10.6 3.4 10.6 6.1v2.4H8v3.4h2.6V22H14v-10.1h2.7l.4-3.4H14z" />
+    </svg>
+  );
+}
+
 function renderCustomLinkIcon(iconName: string, className = "h-4 w-4") {
   switch (iconName) {
     case "whatsapp":
@@ -89,9 +105,11 @@ import {
   getCustomButtonClasses,
   getCustomButtonStyles,
 } from "@/lib/theme";
+import { normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import { initialProducts } from "@/store/useDashboardStore";
 import type { ProductItem } from "@/lib/dashboard-types";
 import BookingCalendar from "./BookingCalendar";
+import BackgroundEffect from "./BackgroundEffect";
 
 type BookingWizardProps = {
   tenant: PublicTenant;
@@ -151,7 +169,8 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
     tenant.themePreset === "cyber-noir";
 
   const layout = tenant.layoutStyle || "panoramic";
-  const gallery = tenant.galleryUrls && tenant.galleryUrls.length > 0 ? tenant.galleryUrls : DEFAULT_GALLERY_PHOTOS;
+  // An empty array means the business removed every photo; only a missing gallery falls back to samples
+  const gallery = tenant.galleryUrls ?? DEFAULT_GALLERY_PHOTOS;
 
   // Normalized products list merging tenant DB products or fallback
   const allProducts: ProductItem[] = useMemo(() => {
@@ -373,6 +392,23 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
     : "bg-white/95 border-slate-200 text-slate-900 shadow-xs backdrop-blur-md";
 
   const secondaryTextClass = isDark ? "text-slate-300" : "text-slate-600";
+
+  // Contact & social shortcuts shown in the header (only the ones the business filled in)
+  const whatsappDigits = normalizeParaguayPhone(tenant.whatsapp || "").replace(/\D/g, "");
+  const instagramUser = (tenant.instagram || "").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/[/?#].*$/, "");
+  const tiktokUser = (tenant.tiktok || "").trim().replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/i, "").replace(/^@/, "").replace(/[/?#].*$/, "");
+  const facebookUrl = (tenant.facebook || "").trim()
+    ? /^https?:\/\//i.test(tenant.facebook!.trim())
+      ? tenant.facebook!.trim()
+      : `https://${tenant.facebook!.trim().replace(/^\/+/, "")}`
+    : "";
+  const socialLinks: { label: string; href: string; icon: ReactNode }[] = [
+    ...(instagramUser ? [{ label: "Instagram", href: `https://instagram.com/${instagramUser}`, icon: <InstagramIcon className="h-5 w-5" /> }] : []),
+    ...(tiktokUser ? [{ label: "TikTok", href: `https://tiktok.com/@${tiktokUser}`, icon: <TikTokIcon className="h-5 w-5" /> }] : []),
+    ...(facebookUrl ? [{ label: "Facebook", href: facebookUrl, icon: <FacebookIcon className="h-5 w-5" /> }] : []),
+    ...(tenant.googleMapsUrl ? [{ label: "Google Maps", href: tenant.googleMapsUrl, icon: <MapPin className="h-5 w-5" /> }] : []),
+    ...(whatsappDigits.length >= 11 ? [{ label: "WhatsApp", href: `https://wa.me/${whatsappDigits}`, icon: <MessageCircle className="h-5 w-5" /> }] : []),
+  ];
   const itemBgClass = isDark
     ? "bg-slate-800/90 border-slate-700/90 text-slate-100 hover:border-slate-500"
     : "bg-white border-slate-200 text-slate-900 hover:border-slate-300";
@@ -1241,44 +1277,18 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
 
   return (
     <div
-      className={`relative min-h-dvh w-full px-3.5 sm:px-4 pt-3 sm:pt-4 pb-28 sm:pb-12 transition-colors duration-300 overflow-x-hidden`}
+      className={`relative isolate min-h-dvh w-full px-3.5 sm:px-4 pt-3 sm:pt-4 pb-28 sm:pb-12 transition-colors duration-300 overflow-x-hidden`}
       style={{
         fontFamily: fontStack(tenant.fontFamily || "plus-jakarta-sans"),
         ["--primary" as string]: tenant.primaryColor || "#5b31e6",
       }}
     >
-      {/* Background Effects (UI/UX Pro Max) */}
-      {tenant.backgroundEffect === "mesh" && (
-        <div className="pointer-events-none fixed inset-0 overflow-hidden opacity-20">
-          <div
-            className="absolute -top-32 -left-32 h-80 w-80 rounded-full blur-3xl"
-            style={{ backgroundColor: tenant.primaryColor || "#5b31e6" }}
-          />
-          <div
-            className="absolute top-1/2 -right-32 h-80 w-80 rounded-full blur-3xl"
-            style={{ backgroundColor: tenant.primaryColor || "#5b31e6" }}
-          />
-        </div>
-      )}
-      {tenant.backgroundEffect === "dots" && (
-        <div
-          className="pointer-events-none fixed inset-0 opacity-[0.06] dark:opacity-[0.08]"
-          style={{
-            backgroundImage: "radial-gradient(currentColor 1.5px, transparent 1.5px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
-      )}
-      {tenant.backgroundEffect === "grid" && (
-        <div
-          className="pointer-events-none fixed inset-0 opacity-[0.05] dark:opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-      )}
+      {/* Animated background (shared with the dashboard previews) */}
+      <BackgroundEffect
+        effect={tenant.backgroundEffect}
+        color={tenant.primaryColor || "#5b31e6"}
+        isDark={isDark}
+      />
 
       {/* Lightbox / Quick photo preview modal */}
       {selectedPhoto && (
@@ -1306,7 +1316,12 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                 <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-slate-800">
                   {tenant.bannerUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={tenant.bannerUrl} alt={tenant.name} className="h-full w-full object-cover" />
+                    <img
+                      src={tenant.bannerUrl}
+                      alt={tenant.name}
+                      className="h-full w-full object-cover"
+                      style={{ objectPosition: `center ${tenant.bannerPosY ?? 50}%` }}
+                    />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-r from-primary to-slate-900" />
                   )}
@@ -1495,119 +1510,166 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
         /* ========================================================================= */
         /* LAYOUT 4: PANORAMIC (Clásico con banner ancho y tarjeta centrada) */
         /* ========================================================================= */
-        <main className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col">
-          {/* Header Banner & Profile Branding */}
-          <header className={`overflow-hidden rounded-3xl border ${cardThemeClass} shadow-xs mb-4`}>
-            {/* Panoramic Banner */}
-            {tenant.bannerUrl ? (
-              <div className="relative h-32 w-full overflow-hidden bg-slate-900 sm:h-40">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={tenant.bannerUrl}
-                  alt={tenant.name}
-                  className="h-full w-full object-cover"
+        <main
+          className={`relative mx-auto flex min-h-dvh w-full flex-col ${layout === "bento-grid" ? "max-w-3xl" : "max-w-lg"}`}
+        >
+          {/* Header: panoramic (classic), full-immersive (big hero) or bento-grid (tiles) */}
+          <header
+            className={
+              layout === "bento-grid" ? "mb-4 grid gap-3 sm:grid-cols-5" : `overflow-hidden rounded-3xl border ${cardThemeClass} shadow-xs mb-4`
+            }
+          >
+            <div className={layout === "bento-grid" ? `overflow-hidden rounded-3xl border ${cardThemeClass} shadow-xs sm:col-span-3` : ""}>
+              {/* Banner */}
+              {tenant.bannerUrl ? (
+                <div
+                  className={`relative w-full overflow-hidden bg-slate-900 ${
+                    layout === "full-immersive" ? "h-72 sm:h-96" : "h-32 sm:h-40"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={tenant.bannerUrl}
+                    alt={tenant.name}
+                    className="h-full w-full object-cover"
+                    style={{ objectPosition: `center ${tenant.bannerPosY ?? 50}%` }}
+                  />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t ${
+                      layout === "full-immersive" ? "from-black/90 via-black/40 to-black/10" : "from-black/80 via-black/30 to-transparent"
+                    }`}
+                  />
+                  {layout === "full-immersive" && (
+                    <div className="absolute inset-x-0 bottom-0 flex items-end gap-3.5 p-5 text-white">
+                      <div className={`relative h-16 w-16 shrink-0 overflow-hidden flex items-center justify-center bg-white ${avatarShapeClass} ${avatarBorderClass}`}>
+                        {tenant.logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={tenant.logoUrl} alt={tenant.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <Store className="h-8 w-8 text-primary" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h1 className={`tracking-tight text-white ${titleSizeClass}`}>{tenant.name}</h1>
+                        {tenant.slogan && <p className="mt-0.5 text-sm font-semibold text-white/85">{tenant.slogan}</p>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  className={`w-full bg-gradient-to-r from-primary to-slate-900 ${layout === "full-immersive" ? "h-40" : "h-16"}`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              </div>
-            ) : (
-              <div className="h-16 w-full bg-gradient-to-r from-primary to-slate-900" />
-            )}
+              )}
 
-            {/* Profile Details */}
-            <div className="relative px-5 pb-5 pt-3">
-              <div className="flex items-end justify-between -mt-12 mb-3">
-                <div className={`relative h-20 w-20 overflow-hidden flex items-center justify-center font-bold text-slate-800 text-2xl transition-all ${avatarShapeClass} ${avatarBorderClass} bg-white`}>
-                  {tenant.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={tenant.logoUrl}
-                      alt={tenant.name}
-                      className="h-full w-full object-cover"
-                    />
+              {/* Profile Details */}
+              <div className="relative px-5 pb-5 pt-3">
+                <div
+                  className={`flex items-end justify-between mb-3 ${
+                    layout === "full-immersive" && tenant.bannerUrl ? "" : "-mt-12"
+                  }`}
+                >
+                  {layout === "full-immersive" && tenant.bannerUrl ? (
+                    <span />
                   ) : (
-                    <Store className="h-9 w-9 text-primary" />
+                    <div className={`relative h-20 w-20 overflow-hidden flex items-center justify-center font-bold text-slate-800 text-2xl transition-all ${avatarShapeClass} ${avatarBorderClass} bg-white`}>
+                      {tenant.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={tenant.logoUrl} alt={tenant.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <Store className="h-9 w-9 text-primary" />
+                      )}
+                    </div>
                   )}
+
+                  {/* Social Media Contact Pills */}
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {socialLinks.map((s) => (
+                      <a
+                        key={s.label}
+                        href={s.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={s.label}
+                        className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-xs active:scale-95 transition ${
+                          s.label === "WhatsApp"
+                            ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                            : `border hover:text-primary ${isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-700"}`
+                        }`}
+                      >
+                        {s.icon}
+                      </a>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Social Media Contact Pills */}
-                <div className="flex items-center gap-2">
-                  {tenant.instagram && (
-                    <a
-                      href={`https://instagram.com/${tenant.instagram.replace(/^@/, "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs hover:text-pink-500 active:scale-95 transition ${
-                        isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-700"
-                      }`}
-                      aria-label="Instagram"
-                    >
-                      <InstagramIcon className="h-5 w-5" />
-                    </a>
-                  )}
-                  {tenant.whatsapp && (
-                    <a
-                      href={`https://wa.me/${tenant.whatsapp.replace(/\D/g, "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-xs hover:bg-emerald-500 active:scale-95 transition"
-                      aria-label="WhatsApp"
-                    >
-                      <MessageCircle className="h-5 w-5" />
-                    </a>
-                  )}
-                  {tenant.googleMapsUrl && (
-                    <a
-                      href={tenant.googleMapsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs hover:text-primary active:scale-95 transition ${
-                        isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-700"
-                      }`}
-                      aria-label="Google Maps"
-                    >
-                      <MapPin className="h-5 w-5" />
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h1 className={`tracking-tight ${titleSizeClass}`}>{tenant.name}</h1>
-                {tenant.slogan && (
-                  <p className="mt-0.5 text-xs sm:text-sm font-bold text-primary">{tenant.slogan}</p>
+                {!(layout === "full-immersive" && tenant.bannerUrl) && (
+                  <div>
+                    <h1 className={`tracking-tight ${titleSizeClass}`}>{tenant.name}</h1>
+                    {tenant.slogan && (
+                      <p className="mt-0.5 text-xs sm:text-sm font-bold text-primary">{tenant.slogan}</p>
+                    )}
+                  </div>
                 )}
                 {tenant.bio && (
                   <p className={`mt-1.5 text-xs sm:text-sm leading-relaxed ${secondaryTextClass}`}>{tenant.bio}</p>
                 )}
+
+                {/* Booking Notice / Policy Alert */}
+                {tenant.bookingNotice && (
+                  <div className="mt-3.5 flex items-start gap-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200">
+                    <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-xs leading-relaxed font-medium">{tenant.bookingNotice}</p>
+                  </div>
+                )}
+
+                {/* Linktree / Custom Bio Buttons when links-first */}
+                {tenant.sectionOrder === "links-first" && renderLinktreeCustomLinks()}
+
+                {/* Gallery Mini-Strip (bento shows it as its own tile) */}
+                {layout !== "bento-grid" && gallery.length > 0 && (
+                  <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1">
+                    {gallery.slice(0, layout === "full-immersive" ? 6 : 4).map((url, i) => (
+                      <div
+                        key={i}
+                        onClick={() => setSelectedPhoto(url)}
+                        className={`shrink-0 cursor-pointer overflow-hidden rounded-xl border border-black/5 dark:border-white/5 ${
+                          layout === "full-immersive" ? "h-20 w-20" : "h-14 w-14"
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="Local" className="h-full w-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              {/* Booking Notice / Policy Alert */}
-              {tenant.bookingNotice && (
-                <div className="mt-3.5 flex items-start gap-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200">
-                  <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-xs leading-relaxed font-medium">{tenant.bookingNotice}</p>
-                </div>
-              )}
-
-              {/* Linktree / Custom Bio Buttons when links-first */}
-              {tenant.sectionOrder === "links-first" && renderLinktreeCustomLinks()}
-
-              {/* Gallery Mini-Strip */}
-              {gallery.length > 0 && (
-                <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1">
-                  {gallery.slice(0, 4).map((url, i) => (
-                    <div
-                      key={i}
-                      onClick={() => setSelectedPhoto(url)}
-                      className="h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-black/5 dark:border-white/5"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="Local" className="h-full w-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
+
+            {/* Bento: gallery mosaic tile */}
+            {layout === "bento-grid" && (
+              <div className={`overflow-hidden rounded-3xl border ${cardThemeClass} p-2 shadow-xs sm:col-span-2`}>
+                {gallery.length > 0 ? (
+                  <div className="grid h-full min-h-[220px] grid-cols-2 grid-rows-3 gap-2">
+                    {gallery.slice(0, 4).map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setSelectedPhoto(url)}
+                        className={`overflow-hidden rounded-2xl ${i === 0 ? "col-span-2 row-span-2" : ""}`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="Trabajo" className="h-full w-full object-cover transition duration-300 hover:scale-105" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-full min-h-[160px] items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-transparent">
+                    <Store className="h-8 w-8 text-primary" />
+                  </div>
+                )}
+              </div>
+            )}
           </header>
 
           {/* Body Section: Respects sectionOrder */}
@@ -1634,7 +1696,8 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                 )}
               </div>
             </div>
-          ) : tenant.sectionOrder === "links-first" ? (
+          ) : tenant.sectionOrder === "links-first" || tenant.sectionOrder === "services-only" ? (
+            // links-first already rendered the links in the header; services-only hides them
             renderBookingWizardCard()
           ) : (
             <>

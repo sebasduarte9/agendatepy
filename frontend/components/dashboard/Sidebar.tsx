@@ -163,10 +163,10 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
                 isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3 pointer-events-none"
               }`}
             >
-              <p className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">
+              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate leading-tight">
                 {business.name || "Agendatepy"}
               </p>
-              <span className="text-[8px] font-mono uppercase tracking-[0.22em] text-slate-400 dark:text-zinc-400 block mt-0.5">
+              <span className="text-[11px] tabular-nums uppercase tracking-[0.22em] text-slate-400 dark:text-zinc-400 block mt-0.5">
                 STUDIO
               </span>
             </div>
@@ -192,7 +192,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
                   }}
                   className={`group flex items-center gap-2.5 w-full h-[37px] min-h-[37px] max-h-[37px] px-1 rounded-[14px] transition-all duration-150 ${
                     active
-                      ? "glass-nav-active font-bold"
+                      ? "glass-nav-active font-semibold"
                       : "text-slate-700 dark:text-zinc-300 font-semibold hover:text-slate-950 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.09]"
                   }`}
                   title={label}
@@ -237,7 +237,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
                 <ExternalLink className="h-[17px] w-[17px] group-hover:scale-110 transition-transform" />
               </div>
               <span
-                className={`text-xs font-bold whitespace-nowrap truncate text-emerald-600 dark:text-emerald-400 transition-all duration-200 ${
+                className={`text-xs font-semibold whitespace-nowrap truncate text-emerald-600 dark:text-emerald-400 transition-all duration-200 ${
                   isHovered
                     ? "opacity-100 translate-x-0 max-w-[155px]"
                     : "opacity-0 -translate-x-2 pointer-events-none max-w-0"
@@ -264,7 +264,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
                   }}
                   className={`group flex items-center gap-2.5 w-full h-[36px] min-h-[36px] max-h-[36px] px-1 rounded-[14px] transition-all duration-150 ${
                     active
-                      ? "glass-nav-active font-bold"
+                      ? "glass-nav-active font-semibold"
                       : "text-slate-700 dark:text-zinc-300 font-semibold hover:text-slate-950 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.09]"
                   }`}
                   title={label}
@@ -317,7 +317,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
               title={business.name || "Agendatepy"}
               href="/dashboard"
             />
-            <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
+            <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">
               {business.name || "Agendatepy"}
             </span>
           </div>
@@ -348,7 +348,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
                 }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
                   active
-                    ? "glass-nav-active font-bold text-white"
+                    ? "glass-nav-active font-semibold text-white"
                     : "text-slate-600 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-white/5"
                 }`}
               >
@@ -372,7 +372,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
                   }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
                     active
-                      ? "glass-nav-active font-bold text-white"
+                      ? "glass-nav-active font-semibold text-white"
                       : "text-slate-600 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-white/5"
                   }`}
                 >

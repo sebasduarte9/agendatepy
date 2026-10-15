@@ -86,7 +86,7 @@ export default function DashboardShell({
 
   return (
     <div
-      className="relative min-h-dvh font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-[var(--primary)]/20 overflow-x-hidden"
+      className="relative min-h-dvh font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-[var(--primary)]/20 overflow-x-clip"
       style={{
         ["--primary" as string]: color || "#FF4F2B",
         ["--color-primary" as string]: color || "#FF4F2B",
@@ -117,7 +117,8 @@ export default function DashboardShell({
       </div>
 
       {/* 4. Viewport Móvil (< lg): Shell Glassmorphic Adaptativo con Burbuja Header */}
-      <div className="relative z-10 flex lg:hidden h-dvh min-h-0 min-w-0 flex-col gap-2.5 overflow-hidden pl-[calc(env(safe-area-inset-left,0px)+0.625rem)] pr-[calc(env(safe-area-inset-right,0px)+0.625rem)] pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+      {/* Bottom padding reserves the floating MobileTabBar (66px + 8px gap) so no section ends hidden behind it */}
+      <div className="mobile-dashboard-shell relative z-10 flex lg:hidden h-dvh min-h-0 min-w-0 flex-col gap-2.5 overflow-hidden pl-[calc(env(safe-area-inset-left,0px)+0.625rem)] pr-[calc(env(safe-area-inset-right,0px)+0.625rem)] pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-[calc(4.625rem+env(safe-area-inset-bottom,0px))]">
         <div className="glass-header-bubble w-full shrink-0 z-[60]">
           <Header />
         </div>

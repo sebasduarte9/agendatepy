@@ -310,7 +310,7 @@ export default function CajaPage() {
   }
 
   // Format label for current date view
-  const formattedDayTitle = useMemo(() => {
+  const formattedDayTitle = (() => {
     if (selectedDate === "all") return "Todo el Historial de Movimientos";
     if (selectedDate === todayStr) {
       return `Hoy · ${formatInTimeZone(new Date(), tz, "EEEE d 'de' MMMM", { locale: es })}`;
@@ -321,7 +321,7 @@ export default function CajaPage() {
       return `Ayer · ${formatInTimeZone(yDate, tz, "EEEE d 'de' MMMM", { locale: es })}`;
     }
     return formatInTimeZone(new Date(`${selectedDate}T12:00:00`), tz, "EEEE d 'de' MMMM, yyyy", { locale: es });
-  }, [selectedDate, todayStr, yesterdayStr, tz]);
+  })();
 
   const incomeChannels = [
     { label: "Efectivo", value: stats.efectivoIngresos, color: "bg-emerald-500", dot: "bg-emerald-500" },
@@ -337,7 +337,7 @@ export default function CajaPage() {
         data-tour="caja-header"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Caja Diaria & Arqueo
         </h1>
 
@@ -347,7 +347,7 @@ export default function CajaPage() {
             type="button"
             data-tour="caja-new-btn"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
             style={{
               backgroundColor: business.primaryColor || "#FF4F2B",
             }}
@@ -379,7 +379,7 @@ export default function CajaPage() {
               triggerHaptic("selection");
               setSelectedDate(todayStr);
             }}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+            className={`flex-1 py-1.5 rounded-xl text-xs font-semibold text-center transition cursor-pointer ${
               selectedDate === todayStr
                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -393,7 +393,7 @@ export default function CajaPage() {
               triggerHaptic("selection");
               setSelectedDate(yesterdayStr);
             }}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+            className={`flex-1 py-1.5 rounded-xl text-xs font-semibold text-center transition cursor-pointer ${
               selectedDate === yesterdayStr
                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -407,7 +407,7 @@ export default function CajaPage() {
               triggerHaptic("selection");
               setSelectedDate("all");
             }}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold text-center transition cursor-pointer ${
+            className={`flex-1 py-1.5 rounded-xl text-xs font-semibold text-center transition cursor-pointer ${
               selectedDate === "all"
                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -424,31 +424,31 @@ export default function CajaPage() {
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               Efectivo en Gaveta
             </span>
-            <span className="font-mono text-[11px] text-slate-500 dark:text-zinc-400 capitalize">{formattedDayTitle}</span>
+            <span className="tabular-nums text-[11px] text-slate-500 dark:text-zinc-400 capitalize">{formattedDayTitle}</span>
           </div>
 
           <div className="mt-2 flex items-baseline justify-between">
-            <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+            <div className="text-2xl sm:text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
               <AnimatedValue value={formatGs(stats.efectivoEnCajaEsperado)} />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               {stats.totalIngresos > 0 ? Math.round((stats.efectivoIngresos / stats.totalIngresos) * 100) : 0}% efect.
             </span>
           </div>
 
           {/* Breakdown Mini Strip */}
-          <div data-tour="caja-methods" className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div data-tour="caja-methods" className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 grid grid-cols-3 gap-2 text-center text-[11px]">
             <div>
               <span className="text-slate-400 dark:text-zinc-500 block font-medium">Efectivo</span>
-              <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.efectivoIngresos)}</span>
+              <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{formatGs(stats.efectivoIngresos)}</span>
             </div>
             <div>
               <span className="text-slate-400 dark:text-zinc-500 block font-medium">POS Bancard</span>
-              <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.posIngresos)}</span>
+              <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{formatGs(stats.posIngresos)}</span>
             </div>
             <div>
               <span className="text-slate-400 dark:text-zinc-500 block font-medium">Transferencia</span>
-              <span className="font-bold font-mono text-slate-900 dark:text-white">{formatGs(stats.transferenciaIngresos)}</span>
+              <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{formatGs(stats.transferenciaIngresos)}</span>
             </div>
           </div>
         </div>
@@ -461,7 +461,7 @@ export default function CajaPage() {
               triggerHaptic("medium");
               setModalOpen(true);
             }}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl text-xs font-bold text-white shadow-xs active:scale-95 transition cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl text-xs font-semibold text-white shadow-xs active:scale-95 transition cursor-pointer"
             style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
           >
             <PlusCircle className="h-4 w-4" />
@@ -474,7 +474,7 @@ export default function CajaPage() {
               triggerHaptic("medium");
               setArqueoOpen(true);
             }}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold shadow-xs active:scale-95 transition cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold shadow-xs active:scale-95 transition cursor-pointer"
           >
             <CheckSquare className="h-4 w-4 text-emerald-500" />
             <span>Cierre / Arqueo</span>
@@ -502,7 +502,7 @@ export default function CajaPage() {
             <button
               type="button"
               onClick={() => setSelectedDate(todayStr)}
-              className={`rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
+              className={`rounded-xl px-3 py-1 text-xs font-semibold transition cursor-pointer ${
                 selectedDate === todayStr
                   ? "text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -514,7 +514,7 @@ export default function CajaPage() {
             <button
               type="button"
               onClick={() => setSelectedDate(yesterdayStr)}
-              className={`rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
+              className={`rounded-xl px-3 py-1 text-xs font-semibold transition cursor-pointer ${
                 selectedDate === yesterdayStr
                   ? "text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -541,7 +541,7 @@ export default function CajaPage() {
             <button
               type="button"
               onClick={() => setSelectedDate("all")}
-              className={`rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
+              className={`rounded-xl px-3 py-1 text-xs font-semibold transition cursor-pointer ${
                 selectedDate === "all"
                   ? "text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -559,7 +559,7 @@ export default function CajaPage() {
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
-                <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                <p className="text-xs font-semibold text-emerald-950 dark:text-emerald-200">
                   Arqueo registrado ({formatInTimeZone(new Date(activeClosure.closedAt), tz, "HH:mm")} hs por {activeClosure.closedBy})
                 </p>
                 <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300">
@@ -573,7 +573,7 @@ export default function CajaPage() {
             <div className="flex items-center gap-2">
               <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
               <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-                Fondo inicial: <strong className="font-mono">{formatGs(stats.opening)}</strong>
+                Fondo inicial: <strong className="tabular-nums">{formatGs(stats.opening)}</strong>
               </p>
             </div>
           </div>
@@ -621,7 +621,7 @@ export default function CajaPage() {
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Distribución de ingresos</h3>
                 <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Participación por medio de cobro</p>
               </div>
-              <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{formatGs(stats.totalIngresos)}</span>
+              <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">{formatGs(stats.totalIngresos)}</span>
             </div>
 
             <div
@@ -678,7 +678,7 @@ export default function CajaPage() {
             </div>
             <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/40 px-3.5 py-3 text-xs dark:border-white/5 dark:bg-slate-950/20">
               <span className="text-slate-500 dark:text-slate-400">Resultado del período</span>
-              <span className={`font-bold tabular-nums ${stats.balanceNeto < 0 ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-white"}`}>{formatGs(stats.balanceNeto)}</span>
+              <span className={`font-semibold tabular-nums ${stats.balanceNeto < 0 ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-white"}`}>{formatGs(stats.balanceNeto)}</span>
             </div>
           </section>
         </div>
@@ -688,13 +688,13 @@ export default function CajaPage() {
       <Card data-tour="caja-table">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-black text-slate-900 dark:text-white">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Movimientos
             </h2>
             <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
               {formattedDayTitle} · {filteredMovements.length} {filteredMovements.length === 1 ? "registro" : "registros"}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold">
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
               <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">Entradas {formatGs(filteredMovementTotals.income)}</span>
               <span className="rounded-full bg-rose-500/10 px-2.5 py-1 text-rose-700 dark:text-rose-300">Egresos {formatGs(filteredMovementTotals.expenses)}</span>
             </div>
@@ -704,7 +704,7 @@ export default function CajaPage() {
               type="button"
               onClick={handleExportMovements}
               disabled={filteredMovements.length === 0 || isExportingMovements}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-600/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700 shadow-xs transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400/20 dark:text-emerald-300"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-600/20 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-700 shadow-xs transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400/20 dark:text-emerald-300"
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
               {isExportingMovements ? "Preparando..." : "Exportar Excel"}
@@ -731,14 +731,14 @@ export default function CajaPage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2.5">
               <Banknote className="h-6 w-6" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Sin movimientos registrados
             </h3>
             <div className="mt-4">
               <button
                 type="button"
                 onClick={() => setModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
               >
                 <PlusCircle className="h-4 w-4" />
                 <span>+ Registrar Movimiento</span>
@@ -757,7 +757,7 @@ export default function CajaPage() {
                     key: "time",
                     header: "Fecha / Hora",
                     render: (item) => (
-                      <span className="font-mono text-slate-500 text-xs">
+                      <span className="tabular-nums text-slate-500 text-xs">
                         {formatInTimeZone(item.date, tz, "dd/MM · HH:mm")}
                       </span>
                     ),
@@ -767,7 +767,7 @@ export default function CajaPage() {
                     header: "Tipo",
                     render: (item) => (
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                           item.type === "ingreso"
                             ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                             : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
@@ -808,7 +808,7 @@ export default function CajaPage() {
                     key: "voucher",
                     header: "Comprobante / Ref",
                     render: (item) => (
-                      <span className="text-slate-400 font-mono text-[11px]">
+                      <span className="text-slate-400 tabular-nums text-[11px]">
                         {item.voucherNumber || "—"}
                       </span>
                     ),
@@ -818,7 +818,7 @@ export default function CajaPage() {
                     header: "Monto",
                     render: (item) => (
                       <span
-                        className={`font-black ${
+                        className={`font-semibold ${
                           item.type === "ingreso"
                             ? "text-emerald-600 dark:text-emerald-400"
                             : "text-rose-600 dark:text-rose-400"
@@ -857,21 +857,21 @@ export default function CajaPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                        <span className="font-semibold text-xs text-slate-900 dark:text-white truncate">
                           {item.concept}
                         </span>
-                        <span className="rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-tight bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                        <span className="rounded px-1.5 py-0.2 text-[11px] font-semibold uppercase tracking-tight bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                           {item.method === "pos" ? "POS" : item.method === "transferencia" ? "Transferencia" : "Efectivo"}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums">
                         {formatInTimeZone(item.date, tz, "dd/MM · HH:mm")} hs {item.voucherNumber && `· ${item.voucherNumber}`}
                       </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
                     <span
-                      className={`text-xs font-black font-mono block ${
+                      className={`text-xs font-semibold tabular-nums block ${
                         item.type === "ingreso"
                           ? "text-emerald-600 dark:text-emerald-400"
                           : "text-rose-600 dark:text-rose-400"
@@ -892,7 +892,7 @@ export default function CajaPage() {
       <Card className="p-5 border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Historial de Arqueos & Cierres de Caja
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -911,7 +911,7 @@ export default function CajaPage() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400 uppercase text-[10px] font-bold">
+                  <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400 uppercase text-[11px] font-semibold">
                     <th className="py-2.5">Fecha y Hora</th>
                     <th className="py-2.5">Responsable</th>
                     <th className="py-2.5 text-right">Efectivo Esperado</th>
@@ -923,19 +923,19 @@ export default function CajaPage() {
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                   {closures.map((c) => (
                     <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-white/5 transition">
-                      <td className="py-2.5 font-mono text-slate-700 dark:text-slate-300">
+                      <td className="py-2.5 tabular-nums text-slate-700 dark:text-slate-300">
                         {formatInTimeZone(c.closedAt, tz, "dd/MM/yyyy HH:mm")}
                       </td>
                       <td className="py-2.5 font-medium text-slate-900 dark:text-white">{c.closedBy}</td>
-                      <td className="py-2.5 text-right font-bold text-slate-700 dark:text-slate-300">
+                      <td className="py-2.5 text-right font-semibold text-slate-700 dark:text-slate-300">
                         {formatGs(c.expectedCash)}
                       </td>
-                      <td className="py-2.5 text-right font-bold text-slate-900 dark:text-white">
+                      <td className="py-2.5 text-right font-semibold text-slate-900 dark:text-white">
                         {formatGs(c.countedCash)}
                       </td>
                       <td className="py-2.5 text-right">
                         <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                             c.difference === 0
                               ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                               : c.difference > 0
@@ -958,11 +958,11 @@ export default function CajaPage() {
               {closures.map((c) => (
                 <div key={c.id} className="py-3 px-1 space-y-1.5 active:bg-slate-50 dark:active:bg-slate-800/40 transition">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-900 dark:text-white">
+                    <span className="font-semibold text-slate-900 dark:text-white">
                       {c.closedBy}
                     </span>
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                         c.difference === 0
                           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                           : c.difference > 0
@@ -973,9 +973,9 @@ export default function CajaPage() {
                       {c.difference === 0 ? "Exacto" : c.difference > 0 ? `+${formatGs(c.difference)}` : formatGs(c.difference)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 tabular-nums">
                     <span>{formatInTimeZone(c.closedAt, tz, "dd/MM · HH:mm")} hs</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-300">Contado: {formatGs(c.countedCash)}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">Contado: {formatGs(c.countedCash)}</span>
                   </div>
                   {c.notes && <p className="text-[11px] text-slate-400 italic">{c.notes}</p>}
                 </div>
@@ -1315,7 +1315,7 @@ export default function CajaPage() {
                   Contado {formatGs(countedVal)} <span aria-hidden="true">·</span> esperado {formatGs(stats.efectivoEnCajaEsperado)}
                 </p>
               </div>
-              <span className={`shrink-0 text-sm font-bold tabular-nums ${
+              <span className={`shrink-0 text-sm font-semibold tabular-nums ${
                 diferenciaArqueo === 0
                   ? "text-emerald-800 dark:text-emerald-300"
                   : diferenciaArqueo > 0
@@ -1358,7 +1358,7 @@ export default function CajaPage() {
               disabled={isClosingCash || !physicalCash.trim()}
               aria-busy={isClosingCash}
               onClick={handleFinalizeClose}
-              className="min-h-12 rounded-xl bg-primary px-4 text-sm font-bold text-white shadow-[0_6px_18px_rgba(var(--primary-rgb),0.2)] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-600 disabled:shadow-none dark:focus-visible:ring-offset-[#18151b] dark:disabled:bg-white/10 dark:disabled:text-slate-300"
+              className="min-h-12 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(var(--primary-rgb),0.2)] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-600 disabled:shadow-none dark:focus-visible:ring-offset-[#18151b] dark:disabled:bg-white/10 dark:disabled:text-slate-300"
             >
               {isClosingCash ? "Guardando…" : "Finalizar cierre"}
             </button>

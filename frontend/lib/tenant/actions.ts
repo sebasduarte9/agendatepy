@@ -192,7 +192,7 @@ export async function createTenantOnboardingAction(input: OnboardingInput) {
               aiTone: "amigable",
               allowEmojis: false,
               askStaffPreference: true,
-              notifyPersonalPhoneOnBooking: true,
+              notifyPersonalPhoneOnBooking: Boolean(cleanPersonalPhone),
               minNoticeMinutes: 60,
               serviceScheduleMode: "always",
             },

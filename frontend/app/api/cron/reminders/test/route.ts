@@ -30,9 +30,25 @@ export async function POST(request: NextRequest) {
     });
 
     const settings = (tenant?.settings as Record<string, any>) || {};
+    const evolutionConfig = settings.evolutionConfig || {};
+    const whatsappInstance = typeof evolutionConfig.instance === "string" ? evolutionConfig.instance : "";
+    if (!whatsappInstance || evolutionConfig.connected !== true) {
+      return NextResponse.json(
+        { ok: false, error: "Vinculá WhatsApp y confirmá la conexión antes de enviar una prueba." },
+        { status: 409 },
+      );
+    }
 
-    const cleanPhone = phone.replace(/\D/g, "");
-    const formattedPhone = cleanPhone.startsWith("595") ? cleanPhone : `595${cleanPhone.replace(/^0/, "")}`;
+    const rawPhone = phone.trim();
+    const cleanPhone = rawPhone.replace(/\D/g, "");
+    const explicitlyInternational = rawPhone.startsWith("+") || rawPhone.startsWith("00");
+    const normalizedPhone = cleanPhone.startsWith("00") ? cleanPhone.slice(2) : cleanPhone;
+    if (normalizedPhone.length < 8 || normalizedPhone.length > 15) {
+      return NextResponse.json({ ok: false, error: "Ingresá un número válido, con código de país." }, { status: 400 });
+    }
+    const formattedPhone = explicitlyInternational || normalizedPhone.startsWith("595")
+      ? normalizedPhone
+      : `595${normalizedPhone.replace(/^0/, "")}`;
 
     // Renderizar con datos de muestra
     const sampleLink = `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "agendatepy.com"}/${tenant?.subdomain || tenant?.slug || "mi-local"}`;
@@ -51,7 +67,7 @@ export async function POST(request: NextRequest) {
       `_Así le llegará este recordatorio automático a tus clientes:_\n\n` +
       rendered;
 
-    await sendWhatsAppMessage(formattedPhone, testBanner, false);
+    await sendWhatsAppMessage(formattedPhone, testBanner, false, whatsappInstance);
 
     return NextResponse.json({
       ok: true,

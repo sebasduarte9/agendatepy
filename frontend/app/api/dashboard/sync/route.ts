@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { AppointmentStatus } from "@prisma/client";
 import { normalizeParaguayPhone } from "@/lib/dashboard-dates";
+import { loyaltyIncrementForVisit } from "@/lib/loyalty";
+import { planIdFromDb } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -159,10 +161,31 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Bookings created this calendar month in the business timezone (plan usage)
+    const monthParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tenant.timezone || "America/Asuncion",
+      year: "numeric",
+      month: "2-digit",
+    }).formatToParts(new Date());
+    const year = Number(monthParts.find((p) => p.type === "year")?.value);
+    const month = Number(monthParts.find((p) => p.type === "month")?.value);
+    const utcGuess = new Date(Date.UTC(year, month - 1, 1));
+    const tzAtGuess = new Date(utcGuess.toLocaleString("en-US", { timeZone: tenant.timezone || "America/Asuncion" }));
+    const monthStart = new Date(utcGuess.getTime() + (utcGuess.getTime() - tzAtGuess.getTime()));
+    const usedBookings = await prisma.appointment.count({
+      where: {
+        tenantId: tenant.id,
+        createdAt: { gte: monthStart },
+        status: { notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.EXPIRED] },
+      },
+    });
+
     return NextResponse.json({
       ok: true,
       tenant: {
         id: tenant.id,
+        plan: planIdFromDb(tenant.plan),
+        usedBookings,
         name: tenant.name,
         slug: tenant.slug,
         timezone: tenant.timezone,
@@ -170,6 +193,8 @@ export async function GET(request: NextRequest) {
         whatsappNumber: tenantSettings.whatsappPhone || "",
         address: tenantSettings.address || "",
         openingCash: tenantSettings.openingCash ?? 300000,
+        primaryColor: tenantSettings.dashboardColor || "",
+        logoUrl: ((tenant.themeSettings as Record<string, unknown> | null)?.logoUrl as string) || "",
         settings: tenantSettings,
       },
       appointments: formattedAppointments,
@@ -462,11 +487,12 @@ export async function POST(request: NextRequest) {
 
         // Recompensa automática de fidelización solo si el cliente efectivamente asistió (COMPLETED)
         if (existingApp && existingApp.status !== AppointmentStatus.COMPLETED && prismaStatus === AppointmentStatus.COMPLETED) {
+          const pointsEarned = loyaltyIncrementForVisit(tenant.settings);
           if (existingApp.clientId) {
             await prisma.client.update({
               where: { id: existingApp.clientId },
               data: {
-                points: { increment: 1 },
+                points: { increment: pointsEarned },
                 lastVisit: new Date(),
               },
             });
@@ -477,7 +503,7 @@ export async function POST(request: NextRequest) {
                 phone: existingApp.clientPhone,
               },
               data: {
-                points: { increment: 1 },
+                points: { increment: pointsEarned },
                 lastVisit: new Date(),
               },
             });

@@ -2,521 +2,392 @@
 
 import { useState } from "react";
 import {
+  AlertTriangle,
+  ArrowRight,
+  BadgePercent,
+  Building2,
   Check,
   Crown,
-  ShieldCheck,
-  CreditCard,
-  BadgePercent,
-  ArrowRight,
-  PhoneCall,
+  HelpCircle,
   Lock,
-  Copy,
-  Landmark,
   MessageCircle,
+  Receipt,
+  Sparkles,
+  Wallet,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Modal from "@/components/dashboard/ui/Modal";
 import { formatGs } from "@/lib/dashboard-dates";
-import { triggerHaptic } from "@/lib/haptics";
-import AnimatedValue from "@/components/dashboard/ui/AnimatedValue";
-import type { PlanId } from "@/lib/dashboard-types";
+import { getCommercialWhatsAppUrl } from "@/lib/config/whatsapp";
+import { tenantHost } from "@/lib/tenant/public-url";
+import { PLANS, planById, type PlanInfo } from "@/lib/plans";
 
-const PLANS = [
-  {
-    id: "gratis" as PlanId,
-    name: "Plan Inicial Gratuito",
-    price: 0,
-    period: "/mes",
-    description: "Ideal para dar los primeros pasos y comenzar a agendar citas sin costo.",
-    features: [
-      "1 profesional / agenda personal",
-      "Hasta 20 turnos por mes",
-      "Página web de reservas con tu logo",
-      "Link de reservas para Instagram y Google Maps",
-      "0% de comisión por turno cobrado",
-      "Sin tarjeta de crédito requerida",
-    ],
-  },
-  {
-    id: "basico" as PlanId,
-    name: "Plan Básico",
-    price: 100000,
-    period: "/mes",
-    description: "Para profesionales independientes, barberos y terapeutas autónomos.",
-    features: [
-      "1 profesional / agenda personal",
-      "Hasta 100 turnos por mes",
-      "Página web de reservas con tu logo",
-      "Asistente IA que agenda por WhatsApp",
-      "Confirmaciones automáticas por WhatsApp",
-      "Sincronización con Google Calendar",
-      "0% de comisión por turno cobrado",
-    ],
-  },
-  {
-    id: "pro" as PlanId,
-    name: "Plan Pro",
-    price: 250000,
-    period: "/mes",
-    popular: true,
-    description: "Para salones de belleza, barberías, spas y estudios con equipo de trabajo.",
-    features: [
-      "Hasta 10 profesionales en equipo",
-      "Turnos y reservas 100% ilimitadas",
-      "Cálculo automático de comisiones por profesional",
-      "Módulo de Caja y arqueo diario",
-      "Ficha técnica y CRM de clientes",
-      "Recordatorios automáticos por WhatsApp",
-      "Soporte prioritario por WhatsApp en Paraguay",
-    ],
-  },
-  {
-    id: "empresa" as PlanId,
-    name: "Plan Empresa",
-    price: 650000,
-    period: "/mes",
-    description: "Para franquicias, múltiples sucursales y clínicas de gran escala.",
-    features: [
-      "Profesionales ilimitados",
-      "Múltiples sucursales y sedes",
-      "WhatsApp desde el número propio del local",
-      "Integraciones y flujos a medida",
-      "Capacitación personalizada al equipo",
-      "Gerente de cuenta dedicado",
-    ],
-  },
+type Billing = "mensual" | "anual";
+
+const QUICK_QUESTIONS = [
+  { label: "Dudas con un pago", text: "Tengo una consulta sobre un pago de mi suscripción." },
+  { label: "Quiero factura", text: "Necesito la factura de mi suscripción." },
+  { label: "Ayuda con la configuración", text: "Necesito ayuda para configurar mi cuenta." },
+  { label: "Cancelar mi plan", text: "Quiero consultar cómo cancelar mi plan." },
 ];
 
 export default function SuscripcionPage() {
-  const { business, updateBusiness, pushToast } = useDashboardStore();
-  const brandColor = business.primaryColor || "#FF4F2B";
-  const currentPlan = business.plan || "pro";
+  const business = useDashboardStore((s) => s.business);
+  const [billing, setBilling] = useState<Billing>("mensual");
 
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
-  const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<(typeof PLANS)[number] | null>(null);
-  const [copiedAlias, setCopiedAlias] = useState(false);
+  const currentId = business.plan || "pro";
+  const current = planById(currentId);
+  const currentIndex = current ? PLANS.indexOf(current) : PLANS.length;
+  const isCustomPlan = !current; // Empresa / plans arranged by sales
 
-  const bookingLimit = business.freeBookingLimit || (currentPlan === "gratis" ? 20 : currentPlan === "basico" ? 100 : 9999);
-  const isUnlimited = bookingLimit >= 9999;
-  const pct = isUnlimited
-    ? 100
-    : Math.min(100, Math.round((business.usedBookings / bookingLimit) * 100));
+  const limit = current?.bookingLimit ?? null;
+  const used = business.usedBookings || 0;
+  const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const remaining = limit ? Math.max(0, limit - used) : null;
+  const nearLimit = limit !== null && pct >= 80;
+  const nextPlan = currentIndex < PLANS.length - 1 ? PLANS[currentIndex + 1] : null;
 
-  function handleSelectPlan(plan: (typeof PLANS)[number]) {
-    triggerHaptic("selection");
-    if (plan.id === currentPlan) {
-      pushToast("success", `Ya te encontrás en el ${plan.name}`);
-      return;
-    }
-    setSelectedPlanForUpgrade(plan);
-    setCheckoutModalOpen(true);
+  const host = tenantHost(business.slug || "mi-local");
+
+  function contactUrl(message: string) {
+    const planName = current?.name ?? "Plan Empresa";
+    return getCommercialWhatsAppUrl(
+      `Hola equipo de AgendatePY 👋\n\n${message}\n\n• Negocio: ${business.name}\n• Enlace: ${host}\n• Plan actual: ${planName}`
+    );
   }
 
-  function handleConfirmUpgrade() {
-    if (!selectedPlanForUpgrade) return;
-    triggerHaptic("success");
-    updateBusiness({
-      plan: selectedPlanForUpgrade.id,
-      freeBookingLimit:
-        selectedPlanForUpgrade.id === "gratis"
-          ? 20
-          : selectedPlanForUpgrade.id === "basico"
-            ? 100
-            : 9999,
-    });
-    pushToast("success", `¡Listo! Has cambiado al ${selectedPlanForUpgrade.name}.`);
-    setCheckoutModalOpen(false);
+  function planUrl(plan: PlanInfo) {
+    const isUpgrade = PLANS.indexOf(plan) > currentIndex;
+    if (plan.priceMonthly === 0) return contactUrl(`Quiero pasar al *${plan.name}*.`);
+    const price =
+      billing === "anual"
+        ? `${formatGs(plan.priceAnnualMonthly * 12)} al año`
+        : `${formatGs(plan.priceMonthly)} por mes`;
+    return contactUrl(
+      `${isUpgrade ? "Quiero mejorar" : "Quiero cambiar"} al *${plan.name}* con pago ${billing} (${price}). ¿Cómo sigo?`
+    );
   }
-
-  const currentPlanObj = PLANS.find((p) => p.id === currentPlan) || PLANS[2];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6 pb-24 px-1 sm:px-0">
-      {/* ═══ APPLE APP HEADER ═══ */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Suscripción
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            Planes y gestión de tu cuenta
+    <div className="mx-auto w-full max-w-5xl space-y-5 pb-28 sm:space-y-6 sm:pb-12">
+      {/* ═══ HEADER ═══ */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Tu cuenta</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Suscripción</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
+            Tu plan, el uso del mes y cómo mejorarlo. Los cambios de plan se hacen por WhatsApp con nuestro equipo.
           </p>
         </div>
+        <a
+          href={contactUrl("Tengo una consulta sobre mi suscripción.")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+        >
+          <MessageCircle className="h-4 w-4" />
+          Hablar con un asesor
+        </a>
+      </header>
 
-        {/* Current Plan Badge Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl glass-panel-subtle self-start sm:self-auto">
-          <div
-            className="flex h-6 w-6 items-center justify-center rounded-lg text-white"
-            style={{ backgroundColor: brandColor }}
-          >
-            <Crown className="h-3.5 w-3.5" />
-          </div>
-          <span className="text-xs font-bold text-slate-900 dark:text-white">
-            {currentPlanObj.name}
-          </span>
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-        </div>
-      </div>
-
-      {/* ═══ ACTIVE SUBSCRIPTION PASS ═══ */}
-      <div className="kpi-rise grid gap-3.5 lg:grid-cols-5">
-        <div className="rounded-3xl glass-panel p-5 sm:p-6 shadow-xs lg:col-span-3">
-
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+      {/* ═══ CURRENT PLAN + USAGE ═══ */}
+      <section className="grid gap-3 lg:grid-cols-5">
+        <div className="rounded-3xl glass-panel p-4 sm:p-5 lg:col-span-3">
+          <div className="flex items-start gap-3.5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
+              {isCustomPlan ? <Building2 className="h-5 w-5" /> : <Crown className="h-5 w-5" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Plan activo
               </span>
-              <h2 className="mt-3 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">{currentPlanObj.name}</h2>
-              <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 max-w-sm">{currentPlanObj.description}</p>
-            </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-xs" style={{ backgroundColor: brandColor }}>
-              <Crown className="h-6 w-6" />
-            </div>
-          </div>
-
-          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-white/10 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pagás por mes</p>
-              <p className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
-                {currentPlanObj.price === 0 ? "Gratis" : <AnimatedValue value={formatGs(currentPlanObj.price)} />}
+              <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                {current?.name ?? "Plan Empresa"}
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+                {current?.description ?? "Plan a medida acordado con nuestro equipo comercial."}
               </p>
             </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-white/[0.05] px-3 py-1 text-[11px] font-bold text-slate-700 dark:text-zinc-300">
-              <BadgePercent className="h-3.5 w-3.5 text-amber-500" />
-              0% comisión por turno
-            </span>
           </div>
+
+          <dl className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200/70 pt-4 dark:border-white/10 sm:grid-cols-3">
+            <div>
+              <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Precio</dt>
+              <dd className="mt-0.5 text-base font-semibold tabular-nums text-slate-900 dark:text-white">
+                {current ? (current.priceMonthly === 0 ? "Gratis" : `${formatGs(current.priceMonthly)}/mes`) : "A medida"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Profesionales</dt>
+              <dd className="mt-0.5 text-base font-semibold tabular-nums text-slate-900 dark:text-white">
+                {current?.staffLimit ? `Hasta ${current.staffLimit}` : "Sin límite"}
+              </dd>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Comisión por turno</dt>
+              <dd className="mt-0.5 inline-flex items-center gap-1 text-base font-semibold text-slate-900 dark:text-white">
+                <BadgePercent className="h-4 w-4 text-amber-500" />
+                0%
+              </dd>
+            </div>
+          </dl>
         </div>
 
-        {/* Usage ring */}
-        <div className="rounded-3xl glass-panel p-5 sm:p-6 shadow-xs lg:col-span-2 flex items-center gap-5">
-          <div className="relative h-28 w-28 shrink-0">
-            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-              <circle cx="50" cy="50" r="42" fill="none" strokeWidth="10" className="stroke-slate-100 dark:stroke-white/10" />
-              <circle
-                cx="50"
-                cy="50"
-                r="42"
-                fill="none"
-                strokeWidth="10"
-                strokeLinecap="round"
-                stroke={isUnlimited ? "#10b981" : pct > 80 ? "#f43f5e" : brandColor}
-                strokeDasharray={2 * Math.PI * 42}
-                strokeDashoffset={2 * Math.PI * 42 * (1 - (isUnlimited ? 1 : pct / 100))}
-                className="transition-[stroke-dashoffset] duration-1000 ease-out"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-black font-mono text-slate-900 dark:text-white">
-                {isUnlimited ? "∞" : <AnimatedValue value={`${pct}%`} />}
-              </span>
-              <span className="text-[10px] font-semibold text-slate-400">usado</span>
-            </div>
-          </div>
-          <div className="min-w-0 space-y-1.5">
+        <div className="flex flex-col justify-between rounded-3xl glass-panel p-4 sm:p-5 lg:col-span-2">
+          <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Turnos de este mes</p>
-            <p className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-              <AnimatedValue value={String(business.usedBookings)} />
-              {!isUnlimited && <span className="text-sm text-slate-400"> / {bookingLimit}</span>}
+            <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
+              {used}
+              {limit !== null && <span className="text-base font-medium text-slate-400"> / {limit}</span>}
             </p>
-            <p className={`text-xs font-semibold ${!isUnlimited && pct > 80 ? "text-rose-600" : "text-emerald-600 dark:text-emerald-400"}`}>
-              {isUnlimited
-                ? "Turnos ilimitados"
-                : bookingLimit - business.usedBookings > 0
-                  ? `Te quedan ${bookingLimit - business.usedBookings} turnos`
-                  : "Llegaste al cupo del mes"}
-            </p>
-            {!isUnlimited && pct > 80 && (
-              <button
-                type="button"
-                onClick={() => handleSelectPlan(PLANS[2])}
-                className="inline-flex items-center gap-1 text-xs font-bold hover:underline cursor-pointer"
-                style={{ color: brandColor }}
-              >
-                Pasar a ilimitado <ArrowRight className="h-3 w-3" />
-              </button>
-            )}
           </div>
-        </div>
-      </div>
-
-      {/* ═══ PLANS SELECTION (APPLE INSET CARDS) ═══ */}
-      <div className="space-y-3">
-        <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white px-1">
-          Planes Disponibles
-        </h2>
-
-        <div className="kpi-stagger -mx-1 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-1 pt-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4 [scrollbar-width:none]">
-          {PLANS.map((plan) => {
-            const isActive = currentPlan === plan.id;
-            const isUpgrade = plan.price > currentPlanObj.price;
-
-            return (
+          {limit !== null ? (
+            <div className="mt-3">
               <div
-                key={plan.id}
-                className={`relative flex w-[78vw] max-w-[300px] shrink-0 snap-center flex-col justify-between rounded-3xl p-5 transition-all duration-300 glass-panel shadow-xs hover:-translate-y-1 hover:shadow-lg sm:w-auto sm:max-w-none ${
-                  isActive
-                    ? "border-primary/40 ring-2 ring-primary/20 dark:border-primary/50"
-                    : plan.popular
-                      ? "border-slate-300 dark:border-white/20 lg:scale-[1.02]"
-                      : "border-white/10"
-                }`}
+                className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/[0.06]"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Uso de turnos del mes"
               >
-                {plan.popular && (
-                  <span
-                    className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-xs"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    Más Elegido
-                  </span>
-                )}
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">
-                      {plan.name}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 min-h-[32px] line-clamp-2">
-                      {plan.description}
-                    </p>
-                  </div>
-
-                  <div className="flex items-baseline gap-1 py-1">
-                    <span className="text-2xl font-mono font-black text-slate-900 dark:text-white tracking-tight">
-                      {formatGs(plan.price)}
-                    </span>
-                    <span className="text-xs text-slate-400 dark:text-zinc-500 font-semibold">
-                      {plan.period}
-                    </span>
-                  </div>
-
-                  {/* Feature Checklist */}
-                  <ul className="space-y-2 text-xs text-slate-600 dark:text-zinc-300 pt-3 border-t border-slate-100 dark:border-white/10">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500 mt-0.5" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pt-5 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectPlan(plan)}
-                    disabled={isActive}
-                    className={`w-full rounded-2xl py-2.5 text-xs font-bold transition active:scale-95 cursor-pointer ${
-                      isActive
-                        ? "bg-slate-100 dark:bg-white/[0.04] text-slate-400 dark:text-zinc-500 border border-slate-200/60 dark:border-white/5 cursor-default"
-                        : plan.popular
-                          ? "text-white shadow-xs hover:brightness-110"
-                          : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90"
-                    }`}
-                    style={!isActive && plan.popular ? { backgroundColor: brandColor } : {}}
-                  >
-                    {isActive ? "Tu plan actual" : isUpgrade ? "Mejorar a este plan" : "Cambiar a este plan"}
-                  </button>
-                </div>
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${pct >= 100 ? "bg-rose-500" : nearLimit ? "bg-amber-500" : "bg-primary"}`}
+                  style={{ width: `${Math.max(pct, 2)}%` }}
+                />
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ═══ APPLE GUARANTEES & SUPPORT (INSET GROUPED) ═══ */}
-      <div className="rounded-3xl glass-panel p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="h-4 w-4" />
+              <p className={`mt-1.5 text-xs font-medium ${pct >= 100 ? "text-rose-600 dark:text-rose-400" : nearLimit ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-zinc-400"}`}>
+                {remaining === 0 ? "Llegaste al límite del mes" : `Te quedan ${remaining} turnos · ${pct}% usado`}
+              </p>
             </div>
-            <h2 className="font-bold text-slate-900 dark:text-white text-sm">
-              Garantías de tu Suscripción
-            </h2>
-          </div>
-
-          <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-            Sin Riesgo
-          </span>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-1">
-            <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-xs">
-              <BadgePercent className="h-3.5 w-3.5 text-amber-500" />
-              <span>0% Comisiones</span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-              El 100% de lo que cobrás a tus clientes va directo a tu cuenta o caja.
+          ) : (
+            <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <Check className="h-3.5 w-3.5" />
+              Turnos ilimitados
             </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-1">
-            <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-xs">
-              <Lock className="h-3.5 w-3.5 text-indigo-500" />
-              <span>Sin Permanencia</span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-              Cambiá de plan o cancelá cuando quieras con un solo clic, sin ataduras.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-1">
-            <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-xs">
-              <PhoneCall className="h-3.5 w-3.5 text-emerald-500" />
-              <span>Soporte por WhatsApp</span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-              Atención directa y rápida en Paraguay para ayudarte con cualquier consulta.
-            </p>
-          </div>
+          )}
+          <p className="mt-2 text-[11px] text-slate-400 dark:text-zinc-500">Se reinicia el 1° de cada mes.</p>
         </div>
+      </section>
 
-        <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs border-t border-slate-100 dark:border-white/10">
-          <span className="text-slate-500 dark:text-zinc-400">
-            ¿Tenés dudas sobre qué plan se adapta mejor a tu negocio?
+      {nearLimit && nextPlan && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="flex items-start gap-2.5 text-xs">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <span>
+              <span className="block font-semibold text-amber-800 dark:text-amber-200">
+                {remaining === 0 ? "Llegaste al límite de turnos del mes" : "Estás cerca del límite de turnos"}
+              </span>
+              <span className="mt-0.5 block text-[11px] text-slate-600 dark:text-zinc-400">
+                Con el {nextPlan.name} tenés {nextPlan.bookingLimit ? `hasta ${nextPlan.bookingLimit} turnos` : "turnos ilimitados"} por mes.
+              </span>
+            </span>
           </span>
           <a
-            href="https://wa.me/595981000000?text=Hola,%20tengo%20dudas%20sobre%20los%20planes%20de%20AgendatePY"
+            href={planUrl(nextPlan)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-bold hover:underline cursor-pointer"
-            style={{ color: brandColor }}
+            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3.5 text-xs font-semibold text-white transition hover:bg-amber-400"
           >
-            <span>Chatear con soporte</span>
+            Mejorar al {nextPlan.name}
             <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>
-      </div>
+      )}
 
-      {/* ═══ APPLE CHECKOUT MODAL ═══ */}
-      <Modal
-        open={checkoutModalOpen}
-        onClose={() => setCheckoutModalOpen(false)}
-        title={selectedPlanForUpgrade ? `Activar ${selectedPlanForUpgrade.name}` : "Confirmar Plan"}
-      >
-        {selectedPlanForUpgrade && (
-          <div className="space-y-4 text-xs">
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-slate-900 dark:text-white text-sm">
-                  {selectedPlanForUpgrade.name}
-                </span>
-                <strong className="text-xl font-mono font-black" style={{ color: brandColor }}>
-                  {formatGs(selectedPlanForUpgrade.price)} / mes
-                </strong>
-              </div>
-              <p className="text-slate-500 dark:text-zinc-400">
-                {selectedPlanForUpgrade.description}
-              </p>
-            </div>
-
-            {(() => {
-              const gained = selectedPlanForUpgrade.features.filter((f) => !currentPlanObj.features.includes(f));
-              const lost = currentPlanObj.features.filter((f) => !selectedPlanForUpgrade.features.includes(f));
-              const isUpgrade = selectedPlanForUpgrade.price > currentPlanObj.price;
-              const list = isUpgrade ? gained : lost;
-              if (list.length === 0) return null;
-              return (
-                <div className="space-y-2">
-                  <span className="font-bold text-slate-900 dark:text-white block">
-                    {isUpgrade ? "Lo que ganás" : "Lo que dejarías de tener"}
+      {/* ═══ PLANS ═══ */}
+      <section className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Planes</h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">Sin contratos: cambiás o cancelás cuando quieras.</p>
+          </div>
+          <div role="radiogroup" aria-label="Forma de pago" className="inline-flex self-start rounded-2xl border border-white/10 bg-white/[0.03] p-1 sm:self-auto">
+            {(["mensual", "anual"] as const).map((b) => (
+              <button
+                key={b}
+                type="button"
+                role="radio"
+                aria-checked={billing === b}
+                onClick={() => setBilling(b)}
+                className={`inline-flex min-h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition ${
+                  billing === b ? "bg-white text-slate-900 shadow-sm dark:bg-white/15 dark:text-white" : "text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white"
+                }`}
+              >
+                {b === "mensual" ? "Mensual" : "Anual"}
+                {b === "anual" && (
+                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    2 meses gratis
                   </span>
-                  <ul className="space-y-1.5">
-                    {list.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-slate-600 dark:text-zinc-300">
-                        <Check className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${isUpgrade ? "text-emerald-500" : "text-rose-400"}`} />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          {PLANS.map((plan, index) => {
+            const isCurrent = plan.id === currentId;
+            const isUpgrade = index > currentIndex;
+            const recommended = plan.badge === "Recomendado";
+            const monthly = billing === "anual" ? plan.priceAnnualMonthly : plan.priceMonthly;
+            return (
+              <article
+                key={plan.id}
+                className={`relative flex min-w-0 flex-col rounded-3xl glass-panel p-4 sm:p-5 ${
+                  isCurrent ? "ring-2 ring-primary/50" : recommended ? "ring-1 ring-primary/25" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">{plan.name}</h3>
+                  {isCurrent ? (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">Tu plan</span>
+                  ) : plan.badge ? (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${recommended ? "bg-primary text-white" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}>
+                      {plan.badge}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 md:min-h-8">{plan.description}</p>
+
+                <div className="mt-4">
+                  <p className="flex items-baseline gap-1">
+                    <span className="text-2xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
+                      {monthly === 0 ? "Gratis" : formatGs(monthly)}
+                    </span>
+                    {monthly > 0 && <span className="text-xs text-slate-400">/mes</span>}
+                  </p>
+                  <p className="mt-0.5 min-h-4 text-[11px] text-slate-500 dark:text-zinc-400">
+                    {plan.priceMonthly === 0
+                      ? "Para siempre, sin tarjeta"
+                      : billing === "anual"
+                        ? `${formatGs(plan.priceAnnualMonthly * 12)} al año · ahorrás ${formatGs((plan.priceMonthly - plan.priceAnnualMonthly) * 12)}`
+                        : "Facturado mes a mes"}
+                  </p>
+                </div>
+
+                <div className="mt-4 flex-1 border-t border-slate-200/70 pt-4 dark:border-white/10">
+                  {plan.includes && <p className="mb-2 text-[11px] font-semibold text-slate-700 dark:text-zinc-300">{plan.includes}</p>}
+                  <ul className="space-y-2">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-xs text-slate-600 dark:text-zinc-300">
+                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
                         {f}
                       </li>
                     ))}
                   </ul>
                 </div>
-              );
-            })()}
 
-            {/* PAGO VÍA TRANSFERENCIA Y WHATSAPP */}
-            {selectedPlanForUpgrade.price > 0 ? (
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Landmark className="h-4 w-4 text-emerald-600" />
-                      Datos para Transferencia Bancaria
+                <div className="mt-5">
+                  {isCurrent ? (
+                    <span className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.03] text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                      <Check className="h-4 w-4" />
+                      Tu plan actual
                     </span>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await navigator.clipboard.writeText("pagos@agendate.py");
-                        setCopiedAlias(true);
-                        setTimeout(() => setCopiedAlias(false), 2000);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-2.5 py-1 text-[11px] font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
+                  ) : (
+                    <a
+                      href={planUrl(plan)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl text-xs font-semibold transition ${
+                        isUpgrade
+                          ? "bg-primary text-white shadow-sm hover:brightness-110"
+                          : "border border-white/10 text-slate-700 hover:bg-white/[0.06] dark:text-zinc-200"
+                      }`}
                     >
-                      {copiedAlias ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedAlias ? "Copiado" : "Copiar Alias"}
-                    </button>
-                  </div>
-
-                  <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-white/5 p-3 text-[11px] space-y-1 text-slate-700 dark:text-zinc-300 font-mono">
-                    <p>Banco: <strong className="text-slate-900 dark:text-white">Banco Itaú Paraguay</strong></p>
-                    <p>Titular: <strong className="text-slate-900 dark:text-white">AgendatePY S.A.</strong></p>
-                    <p>Cta Cte: <strong className="text-slate-900 dark:text-white">720045678</strong></p>
-                    <p>RUC: <strong className="text-slate-900 dark:text-white">80099881-2</strong></p>
-                    <p>Alias: <strong className="text-emerald-600 dark:text-emerald-400">pagos@agendate.py</strong></p>
-                  </div>
-
-                  <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    💡 Transferí los <strong>{formatGs(selectedPlanForUpgrade.price)}</strong> y tocá el botón de abajo para enviar el comprobante a nuestro WhatsApp de soporte. Un asesor activará tu plan inmediatamente.
-                  </p>
+                      <MessageCircle className="h-4 w-4" />
+                      {isUpgrade ? `Mejorar al ${plan.name}` : "Consultar cambio"}
+                    </a>
+                  )}
                 </div>
+              </article>
+            );
+          })}
+        </div>
 
-                <div className="flex items-center justify-end gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setCheckoutModalOpen(false)}
-                    className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer text-xs"
-                  >
-                    Cerrar
-                  </button>
+        <a
+          href={contactUrl("Tengo varias sucursales o más de 10 profesionales y quiero un plan a medida.")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-3.5 py-3 transition hover:bg-white/[0.05]"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] text-slate-500 dark:text-zinc-300">
+            <Building2 className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-slate-900 dark:text-white">¿Más de 10 profesionales o varias sucursales?</span>
+            <span className="block text-[11px] text-slate-500 dark:text-zinc-400">Armamos un plan a medida para tu negocio.</span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" />
+        </a>
+      </section>
 
-                  <a
-                    href={`https://wa.me/595974244669?text=${encodeURIComponent(
-                      `¡Hola equipo de AgendatePY! 👋\n\nQuiero activar el *${selectedPlanForUpgrade.name}* (${formatGs(selectedPlanForUpgrade.price)}/mes) para mi local:\n• *Negocio:* ${business.name}\n• *Enlace:* agendatepy.com/${business.slug || "mi-local"}\n\nAdjunto mi comprobante de transferencia bancaria para la activación. ¡Muchas gracias!`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-md bg-emerald-600 hover:bg-emerald-500 transition cursor-pointer"
-                  >
-                    <span>Enviar Comprobante por WhatsApp</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setCheckoutModalOpen(false)}
-                  className="rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmUpgrade}
-                  className="rounded-xl px-5 py-2 font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  Activar Plan Gratuito
-                </button>
-              </div>
-            )}
+      {/* ═══ HOW IT WORKS + SUPPORT ═══ */}
+      <section className="grid gap-3 lg:grid-cols-2">
+        <div className="rounded-3xl glass-panel p-4 sm:p-5">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">Cómo cambiar de plan</h2>
+          <ol className="mt-3 space-y-3">
+            {[
+              { Icon: MessageCircle, title: "Escribinos por WhatsApp", text: "Tocá el plan que querés y te llega el mensaje listo con los datos de tu negocio." },
+              { Icon: Wallet, title: "Pagás como prefieras", text: "Transferencia bancaria, QR o tarjetas paraguayas." },
+              { Icon: Sparkles, title: "Activamos tu plan", text: "Apenas confirmamos el pago, sin perder nada de lo que ya cargaste." },
+            ].map((step, i) => (
+              <li key={step.title} className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-semibold text-primary">{i + 1}</span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-slate-900 dark:text-white">{step.title}</span>
+                  <span className="block text-[11px] text-slate-500 dark:text-zinc-400">{step.text}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200/70 pt-4 dark:border-white/10">
+            <p className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-zinc-300">
+              <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              Sin permanencia
+            </p>
+            <p className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-zinc-300">
+              <Receipt className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              Factura legal
+            </p>
           </div>
-        )}
-      </Modal>
+        </div>
+
+        <div className="rounded-3xl glass-panel p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <HelpCircle className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">¿Tenés alguna consulta?</h2>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">Te respondemos por WhatsApp, desde Paraguay.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {QUICK_QUESTIONS.map((q) => (
+              <a
+                key={q.label}
+                href={contactUrl(q.text)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-11 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 text-xs font-medium text-slate-700 transition hover:bg-white/[0.06] dark:text-zinc-200"
+              >
+                {q.label}
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              </a>
+            ))}
+          </div>
+          <a
+            href={contactUrl("Tengo una consulta.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-xs font-semibold text-white transition hover:bg-emerald-500"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Escribir otra consulta
+          </a>
+        </div>
+      </section>
     </div>
   );
 }

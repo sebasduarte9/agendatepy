@@ -40,8 +40,9 @@
 .value {
   display: inline-flex;
   align-items: baseline;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-weight: 800;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: rgb(15 23 42);
   line-height: 1;

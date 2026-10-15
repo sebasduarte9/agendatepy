@@ -296,7 +296,7 @@ export default function ClientesPage() {
       {/* ═══ APPLE APP HEADER ═══ */}
       <div data-tour="clientes-header" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
             Clientes
           </h1>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
@@ -309,7 +309,7 @@ export default function ClientesPage() {
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
             style={{ backgroundColor: brandColor }}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -501,7 +501,7 @@ export default function ClientesPage() {
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     {/* Avatar Squircle */}
                     <div
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-black shadow-xs ${
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-semibold shadow-xs ${
                         isVip
                           ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                           : "bg-primary/10 text-primary border border-primary/20"
@@ -513,13 +513,13 @@ export default function ClientesPage() {
                     {/* Info */}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                        <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
                           {client.name}
                         </h4>
                         {client.tags?.map((t) => (
                           <span
                             key={t}
-                            className={`rounded-md px-1.5 py-0.2 text-[9px] font-black uppercase tracking-tight shrink-0 ${
+                            className={`rounded-md px-1.5 py-0.2 text-[11px] font-semibold uppercase tracking-tight shrink-0 ${
                               t === "VIP"
                                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                 : t === "Frecuente"
@@ -532,12 +532,12 @@ export default function ClientesPage() {
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-zinc-400 font-mono mt-0.5 truncate">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-zinc-400 tabular-nums mt-0.5 truncate">
                         <span>{client.phone}</span>
                         <span>·</span>
                         <span>{client.totalVisits} visitas</span>
                         <span>·</span>
-                        <span className="font-bold text-slate-900 dark:text-white">
+                        <span className="font-semibold text-slate-900 dark:text-white">
                           {formatGs(client.totalSpent)}
                         </span>
                       </div>
@@ -628,7 +628,7 @@ export default function ClientesPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-black shadow-xs ${
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-semibold shadow-xs ${
                           isVip
                             ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                             : "bg-primary/10 text-primary border border-primary/20"
@@ -637,10 +637,10 @@ export default function ClientesPage() {
                         {initials}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                        <h3 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
                           {client.name}
                         </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono mt-0.5 truncate">
+                        <p className="text-[11px] text-slate-500 dark:text-zinc-400 tabular-nums mt-0.5 truncate">
                           {client.phone}
                         </p>
                       </div>
@@ -650,7 +650,7 @@ export default function ClientesPage() {
                       {client.tags.map((t) => (
                         <span
                           key={t}
-                          className={`rounded-md px-1.5 py-0.2 text-[9px] font-black uppercase tracking-tight ${
+                          className={`rounded-md px-1.5 py-0.2 text-[11px] font-semibold uppercase tracking-tight ${
                             t === "VIP"
                               ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                               : t === "Frecuente"
@@ -667,7 +667,7 @@ export default function ClientesPage() {
                   {/* Formula snippet if present */}
                   {client.formula && (
                     <div className="mt-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 p-2.5 text-xs">
-                      <span className="font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1 text-[11px]">
+                      <span className="font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-1 text-[11px]">
                         <FileText className="h-3 w-3 text-primary" /> Ficha Técnica
                       </span>
                       <p className="mt-0.5 line-clamp-2 text-slate-600 dark:text-zinc-400 text-[11px]">
@@ -702,7 +702,7 @@ export default function ClientesPage() {
                           <span className="truncate">
                             Próximo: <strong>{formatInTimeZone(nextApp.start, business.timezone || "America/Asuncion", "dd/MM HH:mm")} hs</strong>
                           </span>
-                          <Link href={`/dashboard/calendario?appointmentId=${nextApp.id}`} className="font-bold hover:underline shrink-0 ml-1">
+                          <Link href={`/dashboard/calendario?appointmentId=${nextApp.id}`} className="font-semibold hover:underline shrink-0 ml-1">
                             Ver →
                           </Link>
                         </div>
@@ -716,9 +716,9 @@ export default function ClientesPage() {
                 <div className={`shrink-0 border-t border-slate-100 pt-3 dark:border-white/10 ${
                   filteredClients.length === 1 ? "md:w-64 md:border-l md:border-t-0 md:pl-4 md:pt-0" : ""
                 }`}>
-                  <div className="mb-2.5 flex items-center justify-between text-[11px] font-mono">
+                  <div className="mb-2.5 flex items-center justify-between text-[11px] tabular-nums">
                     <span className="text-slate-500 dark:text-zinc-400">{client.totalVisits} visitas</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{formatGs(client.totalSpent)}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{formatGs(client.totalSpent)}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -728,7 +728,7 @@ export default function ClientesPage() {
                         triggerHaptic("selection");
                         setSelectedClient(client);
                       }}
-                      className="flex-1 rounded-xl border border-white/15 py-2 text-xs font-bold text-white transition hover:brightness-110 active:scale-95 cursor-pointer text-center"
+                      className="flex-1 rounded-xl border border-white/15 py-2 text-xs font-semibold text-white transition hover:brightness-110 active:scale-95 cursor-pointer text-center"
                       style={{ backgroundColor: brandColor }}
                     >
                       Ver Ficha
@@ -737,7 +737,7 @@ export default function ClientesPage() {
                     <button
                       type="button"
                       onClick={() => handleOpenQuickBooking(client)}
-                      className="px-2.5 py-2 rounded-xl text-white text-xs font-bold transition hover:brightness-110 active:scale-95 cursor-pointer"
+                      className="px-2.5 py-2 rounded-xl text-white text-xs font-semibold transition hover:brightness-110 active:scale-95 cursor-pointer"
                       style={{ backgroundColor: brandColor }}
                       title="Agendar turno"
                     >
@@ -824,7 +824,7 @@ export default function ClientesPage() {
               <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200">
                 WhatsApp / Teléfono *
               </label>
-              <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
+              <span className="text-[11px] text-slate-400 dark:text-zinc-500 tabular-nums">
                 Prefijo: {activeCountry.dialCode}
               </span>
             </div>
@@ -838,7 +838,7 @@ export default function ClientesPage() {
                   title="Seleccionar país y prefijo"
                 >
                   <span className="text-base leading-none">{activeCountry.flag}</span>
-                  <span className="font-mono text-xs">{activeCountry.dialCode}</span>
+                  <span className="tabular-nums text-xs">{activeCountry.dialCode}</span>
                   <ChevronDown className={`h-3.5 w-3.5 text-slate-400 dark:text-zinc-400 transition-transform ${countryDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
 
@@ -870,7 +870,7 @@ export default function ClientesPage() {
                             }}
                             className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
                               isSelected
-                                ? "bg-primary/10 text-primary font-bold dark:bg-primary/20"
+                                ? "bg-primary/10 text-primary font-semibold dark:bg-primary/20"
                                 : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-zinc-300"
                             }`}
                           >
@@ -878,7 +878,7 @@ export default function ClientesPage() {
                               <span className="text-base leading-none">{c.flag}</span>
                               <span className="truncate">{c.name}</span>
                             </div>
-                            <span className="font-mono text-[11px] text-slate-400 dark:text-zinc-500 shrink-0 font-medium">
+                            <span className="tabular-nums text-[11px] text-slate-400 dark:text-zinc-500 shrink-0 font-medium">
                               {c.dialCode}
                             </span>
                           </button>
@@ -901,7 +901,7 @@ export default function ClientesPage() {
                     const clean = e.target.value.replace(/\D/g, "").slice(0, activeCountry.maxDigits);
                     setPhoneDigits(clean);
                   }}
-                  className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 text-sm font-mono font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition tracking-wide"
+                  className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3.5 text-sm tabular-nums font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-primary focus:bg-white dark:focus:bg-[#121215] focus:outline-none transition tracking-wide"
                 />
               </div>
             </div>
@@ -929,7 +929,7 @@ export default function ClientesPage() {
                     }}
                     className={`h-11 px-2.5 rounded-2xl text-sm font-semibold border transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       isSelected
-                        ? `${cat.activeClass} shadow-xs font-black`
+                        ? `${cat.activeClass} shadow-xs font-semibold`
                         : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-white/20"
                     }`}
                   >
@@ -947,7 +947,7 @@ export default function ClientesPage() {
                 Instagram <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
               </label>
               <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 font-mono text-xs">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 tabular-nums text-xs">
                   @
                 </span>
                 <input
@@ -980,7 +980,7 @@ export default function ClientesPage() {
               <label className="block text-sm font-semibold text-slate-800 dark:text-zinc-200">
                 Ficha Técnica & Preferencias <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span>
               </label>
-              <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+              <span className="text-[11px] text-slate-400 dark:text-zinc-500">
                 Visible para el equipo
               </span>
             </div>
@@ -1024,7 +1024,7 @@ export default function ClientesPage() {
             )}
             <button
               type="submit"
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
               <span>{editingClient ? "Guardar Cambios" : "Crear Cliente"}</span>
@@ -1041,11 +1041,11 @@ export default function ClientesPage() {
       >
         <div className="space-y-4 text-xs">
           <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-bold">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white font-semibold">
               <Trash2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-bold text-sm text-slate-900 dark:text-white">
+              <p className="font-semibold text-sm text-slate-900 dark:text-white">
                 {clientToDelete?.name}
               </p>
               <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5 leading-relaxed">
@@ -1072,7 +1072,7 @@ export default function ClientesPage() {
                   pushToast("success", "Cliente eliminado correctamente.");
                 }
               }}
-              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-bold text-white shadow-xs transition active:scale-95 cursor-pointer"
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 font-semibold text-white shadow-xs transition active:scale-95 cursor-pointer"
             >
               Eliminar Cliente
             </button>

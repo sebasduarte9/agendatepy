@@ -30,12 +30,12 @@ services:
       - agendatepy-postgres
       - agendatepy-redis
     ports:
-      - "8081:8080"
+      - "127.0.0.1:8081:8080"
     environment:
       - SERVER_PORT=8080
       - SERVER_URL=${EVOLUTION_SERVER_URL:-http://localhost:8081}
       - DOCKER_ENV=true
-      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-agendatepy_whatsapp_secure_key_2026}
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:?Definí EVOLUTION_API_KEY en el .env}
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
       
       # Database & Redis aislados
@@ -53,7 +53,7 @@ services:
       
       # Webhook Global hacia AgendatePY
       - WEBHOOK_GLOBAL_ENABLED=true
-      - WEBHOOK_GLOBAL_URL=${EVOLUTION_WEBHOOK_URL:-http://host.docker.internal:3000/api/webhooks/whatsapp}
+      - WEBHOOK_GLOBAL_URL=${EVOLUTION_WEBHOOK_URL:-http://app:3000/api/webhooks/whatsapp}
       - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false
       - WEBHOOK_EVENTS_CONNECTION_UPDATE=true
       - WEBHOOK_EVENTS_QRCODE_UPDATED=true
@@ -81,4 +81,5 @@ volumes:
 
 networks:
   agendatepy_evo_net:
+    name: agendatepy_evo_net
     driver: bridge

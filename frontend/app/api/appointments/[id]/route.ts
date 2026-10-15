@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireTenantSession, isGuardError, UUID_REGEX } from "@/lib/api-guard";
 import { AppointmentStatus, Prisma } from "@prisma/client";
+import { loyaltyIncrementForVisit } from "@/lib/loyalty";
 
 export const dynamic = "force-dynamic";
 
@@ -167,11 +168,16 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
       });
 
       if (existing.status !== AppointmentStatus.COMPLETED && targetStatus === AppointmentStatus.COMPLETED) {
+        const tenantSettings = await prisma.tenant.findUnique({
+          where: { id: auth.tenantId },
+          select: { settings: true },
+        });
+        const pointsEarned = loyaltyIncrementForVisit(tenantSettings?.settings);
         if (existing.clientId) {
           await prisma.client.update({
             where: { id: existing.clientId },
             data: {
-              points: { increment: 1 },
+              points: { increment: pointsEarned },
               lastVisit: new Date(),
             },
           });
@@ -182,7 +188,7 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
               phone: existing.clientPhone,
             },
             data: {
-              points: { increment: 1 },
+              points: { increment: pointsEarned },
               lastVisit: new Date(),
             },
           });

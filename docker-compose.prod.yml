@@ -35,10 +35,33 @@ services:
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
       RESEND_API_KEY: "${RESEND_API_KEY}"
       EMAIL_FROM: "${EMAIL_FROM:-AgendatePY <seguridad@agendatepy.com>}"
+      EVOLUTION_API_URL: "${EVOLUTION_API_CONTAINER_URL:-http://whatsapp-gateway:8080}"
+      EVOLUTION_API_KEY: "${EVOLUTION_API_KEY:?Definí EVOLUTION_API_KEY en el .env del servidor}"
+      EVOLUTION_INSTANCE: "${EVOLUTION_INSTANCE:-agendatepy}"
       SESSION_SECRET: "${SESSION_SECRET:?Definí SESSION_SECRET en el .env del servidor}"
       NODE_ENV: production
     ports:
       - "127.0.0.1:3000:3000"
+    networks:
+      - default
+      - agendatepy_evo_net
+
+  reminder-cron:
+    image: node:20-alpine
+    container_name: agendatepy_reminder_cron
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      APP_URL: http://app:3000
+      CRON_SECRET: "${CRON_SECRET:?Definí CRON_SECRET en el .env del servidor}"
+      INTERVAL_MS: 300000
+    volumes:
+      - ./frontend/scripts/reminder-cron.mjs:/app/reminder-cron.mjs:ro
+    working_dir: /app
+    command: ["node", "reminder-cron.mjs"]
+    networks:
+      - default
 
   nginx:
     image: nginx:alpine
@@ -53,3 +76,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  agendatepy_evo_net:
+    external: true

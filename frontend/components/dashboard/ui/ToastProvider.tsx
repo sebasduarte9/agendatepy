@@ -8,7 +8,7 @@ export default function ToastProvider() {
   const dismissToast = useDashboardStore((s) => s.dismissToast);
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[90] flex w-[min(100%-2rem,22rem)] flex-col gap-2">
+    <div className="pointer-events-none fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] right-4 z-[90] lg:bottom-4 flex w-[min(100%-2rem,22rem)] flex-col gap-2">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.button

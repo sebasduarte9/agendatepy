@@ -1663,7 +1663,7 @@ export default function GuidedTour() {
         <button
           type="button"
           onClick={() => setShowExitConfirm(true)}
-          className="fixed top-4 right-4 sm:bottom-5 sm:right-5 sm:top-auto z-[99999] flex items-center gap-1.5 rounded-full px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer border border-rose-500/50 bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-950/40"
+          className="fixed top-4 right-4 sm:bottom-5 sm:right-5 sm:top-auto z-[99999] flex items-center gap-1.5 rounded-full px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-semibold backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer border border-rose-500/50 bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-950/40"
           title="Salir de la visita guiada"
         >
           <LogOut className="h-3.5 w-3.5" />
@@ -1742,7 +1742,7 @@ export default function GuidedTour() {
                         <button
                           type="button"
                           onClick={() => setShowSectionPicker(!showSectionPicker)}
-                          className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                          className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
                         >
                           <IconComponent className="h-4 w-4 text-primary shrink-0" />
                           <span className="truncate max-w-[190px] sm:max-w-xs">{currentSection.title}</span>
@@ -1767,7 +1767,7 @@ export default function GuidedTour() {
                               />
                             </div>
 
-                            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                               Elegí qué sección querés aprender:
                             </div>
 
@@ -1804,7 +1804,7 @@ export default function GuidedTour() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-primary/10 dark:bg-primary/20 px-2.5 py-0.5 text-xs font-black text-primary">
+                        <span className="rounded-full bg-primary/10 dark:bg-primary/20 px-2.5 py-0.5 text-xs font-semibold text-primary">
                           {currentStepIndex + 1}/{currentSection.steps.length}
                         </span>
                       </div>
@@ -1835,7 +1835,7 @@ export default function GuidedTour() {
                     {/* Task Content Card */}
                     <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-slate-800/50 p-3.5 space-y-2 overflow-visible">
                       <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                        <h4 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
                           {currentStep.taskTitle}
                         </h4>
 
@@ -1855,10 +1855,10 @@ export default function GuidedTour() {
                               <div className="flex items-start gap-2.5">
                                 <Lightbulb className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                                 <div>
-                                  <span className="font-bold text-amber-300 text-[11px] block mb-0.5">
+                                  <span className="font-semibold text-amber-300 text-[11px] block mb-0.5">
                                     Consejo práctico:
                                   </span>
-                                  <p className="text-slate-200 leading-relaxed text-[11.5px] font-medium">
+                                  <p className="text-slate-200 leading-relaxed text-[11px] font-medium">
                                     {currentStep.tip}
                                   </p>
                                 </div>
@@ -1906,7 +1906,7 @@ export default function GuidedTour() {
                                 window.dispatchEvent(new CustomEvent("agendate-open-product-modal"));
                               }
                             }}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-xs font-bold text-primary hover:bg-primary/20 transition cursor-pointer"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-xs font-semibold text-primary hover:bg-primary/20 transition cursor-pointer"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
                             <span>{currentStep.actionLabel}</span>
@@ -1915,7 +1915,7 @@ export default function GuidedTour() {
                         <button
                           type="button"
                           onClick={handleNext}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:brightness-110 active:scale-95 transition cursor-pointer"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-primary/25 hover:brightness-110 active:scale-95 transition cursor-pointer"
                         >
                           <span>
                             {currentStepIndex === currentSection.steps.length - 1
@@ -1954,7 +1954,7 @@ export default function GuidedTour() {
                 <LogOut className="h-6 w-6" />
               </div>
               <div>
-                <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                <h4 className="text-base font-semibold text-slate-900 dark:text-white">
                   ¿Seguro que querés salir de la visita guiada?
                 </h4>
                 <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -1965,7 +1965,7 @@ export default function GuidedTour() {
                 <button
                   type="button"
                   onClick={() => setShowExitConfirm(false)}
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 >
                   Continuar guía
                 </button>
@@ -1975,7 +1975,7 @@ export default function GuidedTour() {
                     setShowExitConfirm(false);
                     handleClose();
                   }}
-                  className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white px-4 py-2.5 text-xs font-bold shadow-md shadow-rose-900/20 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white px-4 py-2.5 text-xs font-semibold shadow-md shadow-rose-900/20 transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Sí, salir</span>

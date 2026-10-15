@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseTheme } from "@/lib/theme";
 import TarjetaClienteView, { TarjetaDataProps } from "@/components/public/TarjetaClienteView";
@@ -61,6 +62,11 @@ export default async function TarjetaDigitalClientePage({ params }: PageProps) {
     }
   } catch (error) {
     console.warn(`[TarjetaPage] DB fetch error for tenant "${slug}":`, error);
+  }
+
+  // The business exists but this client does not: never render a made-up card
+  if (tenantData && !clientData) {
+    notFound();
   }
 
   // Graceful fallback if tenant was not found in DB

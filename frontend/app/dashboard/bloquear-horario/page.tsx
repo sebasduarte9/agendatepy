@@ -235,7 +235,7 @@ export default function BloquearHorarioPage() {
     <div className="w-full space-y-4 sm:space-y-5 pb-20 px-1 sm:px-0">
       {/* ═══ APPLE APP HEADER ═══ */}
       <div className="flex items-center justify-between py-1">
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Bloquear Horarios
         </h1>
 
@@ -260,7 +260,7 @@ export default function BloquearHorarioPage() {
               setFormReason("Almuerzo");
               setIsModalOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
             style={{
               backgroundColor: brandColor,
             }}
@@ -279,12 +279,12 @@ export default function BloquearHorarioPage() {
             <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <CalendarOff className="h-4 w-4" />
             </div>
-            <span className="text-xs font-black tracking-tight text-slate-900 dark:text-white">
+            <span className="text-xs font-semibold tracking-tight text-slate-900 dark:text-white">
               Horarios Protegidos
             </span>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 font-mono">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 tabular-nums">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             <span>{telemetry.upcoming} en agenda</span>
           </span>
@@ -293,20 +293,20 @@ export default function BloquearHorarioPage() {
         {/* 3-Column Mini KPI Metrics */}
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
-            <span className="text-[10px] text-slate-400 font-medium block">Hoy</span>
-            <span className="font-mono font-black text-sm text-slate-900 dark:text-white">
+            <span className="text-[11px] text-slate-400 font-medium block">Hoy</span>
+            <span className="tabular-nums font-semibold text-sm text-slate-900 dark:text-white">
               {telemetry.today}
             </span>
           </div>
           <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
-            <span className="text-[10px] text-slate-400 font-medium block">Próximos</span>
-            <span className="font-mono font-black text-sm text-indigo-600 dark:text-indigo-400">
+            <span className="text-[11px] text-slate-400 font-medium block">Próximos</span>
+            <span className="tabular-nums font-semibold text-sm text-indigo-600 dark:text-indigo-400">
               {telemetry.upcoming}
             </span>
           </div>
           <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
-            <span className="text-[10px] text-slate-400 font-medium block">Personal</span>
-            <span className="font-mono font-black text-sm text-slate-900 dark:text-white">
+            <span className="text-[11px] text-slate-400 font-medium block">Personal</span>
+            <span className="tabular-nums font-semibold text-sm text-slate-900 dark:text-white">
               {telemetry.staffCount}
             </span>
           </div>
@@ -324,11 +324,11 @@ export default function BloquearHorarioPage() {
                   triggerHaptic("medium");
                   handleQuickAdd(preset);
                 }}
-                className="inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition text-[11px] font-bold text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/5 cursor-pointer"
+                className="inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition text-[11px] font-semibold text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/5 cursor-pointer"
               >
                 <Icon className="h-3 w-3 text-slate-400" />
                 <span>{preset.label}</span>
-                <span className="text-[9px] font-mono text-slate-400">
+                <span className="text-[11px] tabular-nums text-slate-400">
                   {preset.defaultStart}
                 </span>
               </button>
@@ -348,11 +348,11 @@ export default function BloquearHorarioPage() {
                   <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     <CalendarOff className="h-4 w-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                     Horarios Protegidos
                   </span>
                 </div>
-                <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] tabular-nums font-semibold text-slate-500 dark:text-slate-400">
                   {telemetry.upcoming} en agenda
                 </span>
               </div>
@@ -385,12 +385,12 @@ export default function BloquearHorarioPage() {
                         className="transition-all duration-700 ease-out"
                       />
                     </svg>
-                    <span className="absolute font-mono font-bold text-xs text-slate-800 dark:text-white">
+                    <span className="absolute tabular-nums font-semibold text-xs text-slate-800 dark:text-white">
                       {telemetry.gaugePct}%
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white block">
                       Carga de Pausas
                     </span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
@@ -405,10 +405,10 @@ export default function BloquearHorarioPage() {
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white block">
                       Bloqueos Hoy
                     </span>
-                    <span className="text-base font-extrabold font-mono text-slate-900 dark:text-white">
+                    <span className="text-base font-semibold tabular-nums text-slate-900 dark:text-white">
                       {telemetry.today} intervalos
                     </span>
                   </div>
@@ -419,20 +419,20 @@ export default function BloquearHorarioPage() {
             {/* Quick KPI Bar */}
             <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-white/10 text-center">
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
-                <span className="text-[10px] text-slate-400 font-semibold block">Total</span>
-                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                <span className="text-[11px] text-slate-400 font-semibold block">Total</span>
+                <span className="tabular-nums font-semibold text-xs text-slate-900 dark:text-white">
                   {telemetry.total}
                 </span>
               </div>
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
-                <span className="text-[10px] text-slate-400 font-semibold block">Próximos</span>
-                <span className="font-mono font-extrabold text-xs text-indigo-600 dark:text-indigo-400">
+                <span className="text-[11px] text-slate-400 font-semibold block">Próximos</span>
+                <span className="tabular-nums font-semibold text-xs text-indigo-600 dark:text-indigo-400">
                   {telemetry.upcoming}
                 </span>
               </div>
               <div className="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/10">
-                <span className="text-[10px] text-slate-400 font-semibold block">Personal</span>
-                <span className="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
+                <span className="text-[11px] text-slate-400 font-semibold block">Personal</span>
+                <span className="tabular-nums font-semibold text-xs text-slate-900 dark:text-white">
                   {telemetry.staffCount}
                 </span>
               </div>
@@ -447,11 +447,11 @@ export default function BloquearHorarioPage() {
                   <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     <Sparkles className="h-4 w-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                     Atajos Rápidos
                   </span>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 font-semibold">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 font-semibold">
                   Hoy
                 </span>
               </div>
@@ -472,14 +472,14 @@ export default function BloquearHorarioPage() {
                     >
                       <div className="flex items-center justify-between">
                         <Icon className="h-4 w-4 text-slate-500 group-hover:text-primary transition" />
-                        <span className="text-[10px] font-mono text-slate-400">
+                        <span className="text-[11px] tabular-nums text-slate-400">
                           {preset.defaultStart}
                         </span>
                       </div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1.5 group-hover:text-primary transition">
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-1.5 group-hover:text-primary transition">
                         {preset.label}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <span className="text-[11px] text-slate-400 tabular-nums">
                         {preset.defaultStart} - {preset.defaultEnd}
                       </span>
                     </button>
@@ -495,7 +495,7 @@ export default function BloquearHorarioPage() {
                   triggerHaptic("selection");
                   setIsModalOpen(true);
                 }}
-                className="text-xs font-bold hover:underline cursor-pointer flex items-center gap-1"
+                className="text-xs font-semibold hover:underline cursor-pointer flex items-center gap-1"
                 style={{ color: brandColor }}
               >
                 <span>Personalizar horario</span>
@@ -572,7 +572,7 @@ export default function BloquearHorarioPage() {
             <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
               <CalendarOff className="h-6 w-6" />
             </div>
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
               Sin bloqueos registrados
             </h3>
             <button
@@ -581,7 +581,7 @@ export default function BloquearHorarioPage() {
                 triggerHaptic("selection");
                 setIsModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition active:scale-95 cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
               <Plus className="h-3.5 w-3.5" />
@@ -609,7 +609,7 @@ export default function BloquearHorarioPage() {
                       </div>
                     ) : (
                       <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xs shadow-xs"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white font-semibold text-xs shadow-xs"
                         style={{ backgroundColor: st?.color || brandColor }}
                       >
                         {st?.avatar || (st?.name ? st.name.slice(0, 2).toUpperCase() : "ST")}
@@ -619,15 +619,15 @@ export default function BloquearHorarioPage() {
                     {/* Meta info */}
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                        <span className="font-semibold text-xs text-slate-900 dark:text-white truncate">
                           {block.reason || "Pausa operativa"}
                         </span>
                         {isToday ? (
-                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                          <span className="px-1.5 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
                             HOY
                           </span>
                         ) : (
-                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 font-mono shrink-0">
+                          <span className="px-1.5 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
                             {formatDisplayDate(block.date)}
                           </span>
                         )}
@@ -637,9 +637,9 @@ export default function BloquearHorarioPage() {
                         {isAllStaff ? "Todo el equipo" : st?.name || "Colaborador"}
                       </p>
 
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-1">
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 tabular-nums mt-1">
                         <Clock className="h-3 w-3 text-slate-400" />
-                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">
                           {block.start} - {block.end} hs
                         </span>
                       </div>
@@ -677,7 +677,7 @@ export default function BloquearHorarioPage() {
             <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
               <CalendarOff className="h-6 w-6" />
             </div>
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
               Sin bloqueos registrados
             </h3>
             <button
@@ -686,7 +686,7 @@ export default function BloquearHorarioPage() {
                 triggerHaptic("selection");
                 setIsModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition hover:brightness-110 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition hover:brightness-110 cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
               <Plus className="h-3.5 w-3.5" />
@@ -709,18 +709,18 @@ export default function BloquearHorarioPage() {
                     {/* Top: Date & Today badge */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-black text-slate-900 dark:text-white">
+                        <span className="tabular-nums text-xs font-semibold text-slate-900 dark:text-white">
                           {formatDisplayDate(block.date)}
                         </span>
                         {isToday && (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                             HOY
                           </span>
                         )}
                       </div>
 
                       {/* Time Interval Pill */}
-                      <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-white/5 text-xs font-mono font-extrabold text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-white/10">
+                      <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-white/5 text-xs tabular-nums font-semibold text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-white/10">
                         {block.start} - {block.end} hs
                       </span>
                     </div>
@@ -733,7 +733,7 @@ export default function BloquearHorarioPage() {
                         </div>
                       ) : (
                         <div
-                          className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-black text-xs shrink-0"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-semibold text-xs shrink-0"
                           style={{ backgroundColor: st?.color || brandColor }}
                         >
                           {st?.avatar || (st?.name ? st.name.slice(0, 2).toUpperCase() : "ST")}
@@ -741,10 +741,10 @@ export default function BloquearHorarioPage() {
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate block">
+                        <span className="font-semibold text-xs text-slate-900 dark:text-white truncate block">
                           {isAllStaff ? "Todo el equipo" : st?.name || "Colaborador"}
                         </span>
-                        <span className="text-[10px] text-slate-400 truncate block">
+                        <span className="text-[11px] text-slate-400 truncate block">
                           {block.reason || "Pausa operativa"}
                         </span>
                       </div>
@@ -764,7 +764,7 @@ export default function BloquearHorarioPage() {
                           pushToast("error", "No se pudo eliminar el bloqueo.");
                         }
                       }}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-2.5 py-1 rounded-xl transition cursor-pointer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-2.5 py-1 rounded-xl transition cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       <span>Liberar</span>
@@ -787,7 +787,7 @@ export default function BloquearHorarioPage() {
         <form onSubmit={handleCreateBlock} className="space-y-4 text-xs">
           {/* Specialist */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
               Colaborador *
             </label>
             <CustomSelect
@@ -804,7 +804,7 @@ export default function BloquearHorarioPage() {
 
           {/* Date Picker */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
               Fecha *
             </label>
             <input
@@ -819,26 +819,26 @@ export default function BloquearHorarioPage() {
           {/* Time Range */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
                 Inicio *
               </label>
               <input
                 type="time"
                 value={formStart}
                 onChange={(e) => setFormStart(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-primary"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2.5 text-xs tabular-nums font-semibold text-slate-900 dark:text-white outline-none focus:border-primary"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
                 Fin *
               </label>
               <input
                 type="time"
                 value={formEnd}
                 onChange={(e) => setFormEnd(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-primary"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2.5 text-xs tabular-nums font-semibold text-slate-900 dark:text-white outline-none focus:border-primary"
                 required
               />
             </div>
@@ -846,7 +846,7 @@ export default function BloquearHorarioPage() {
 
           {/* Preset Reason Chips */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
               Motivo
             </label>
             <div className="flex flex-wrap gap-1.5 mb-2">
@@ -893,7 +893,7 @@ export default function BloquearHorarioPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl px-5 py-2.5 font-black text-white shadow-md transition hover:brightness-110 disabled:opacity-50 cursor-pointer"
+              className="rounded-xl px-5 py-2.5 font-semibold text-white shadow-md transition hover:brightness-110 disabled:opacity-50 cursor-pointer"
               style={{ backgroundColor: brandColor }}
             >
               {isSubmitting ? "Guardando..." : "Guardar Bloqueo"}

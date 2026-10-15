@@ -5,6 +5,7 @@ import { AlertCircle, Store, Calendar, Phone } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { maxAdvanceDaysFromSettings } from "@/lib/scheduling/tenant-settings";
 import { parseTheme } from "@/lib/theme";
+import { themeToPublicTenant } from "@/lib/theme-public";
 import BookingWizard from "@/components/booking/BookingWizard";
 import WebAnalyticsTracker from "@/components/analytics/WebAnalyticsTracker";
 
@@ -23,18 +24,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     });
     if (tenant) {
       const theme = parseTheme(tenant.themeSettings);
+      const title = theme.seoTitle.trim() || `Reservar turno · ${tenant.name}`;
+      const description =
+        theme.seoDescription.trim() ||
+        theme.bio ||
+        theme.slogan ||
+        `Agendá tu turno online en ${tenant.name} en 30 segundos.`;
+      const image = theme.shareImageUrl || theme.bannerUrl || theme.logoUrl;
       return {
-        title: `Reservar Turno · ${tenant.name}`,
-        description:
-          theme.bio ||
-          theme.slogan ||
-          `Agendá tu turno online en ${tenant.name} en 30 segundos.`,
+        title,
+        description,
         openGraph: {
-          title: `Reservar en ${tenant.name}`,
-          description:
-            theme.bio ||
-            theme.slogan ||
-            `Turnos online 24/7 en ${tenant.name}`,
+          title,
+          description,
+          siteName: tenant.name,
+          type: "website",
+          ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: tenant.name }] } : {}),
+        },
+        twitter: {
+          card: image ? "summary_large_image" : "summary",
+          title,
+          description,
+          ...(image ? { images: [image] } : {}),
         },
       };
     }
@@ -240,48 +251,12 @@ export default async function ReservarPage({ params }: PageProps) {
   return (
     <>
     <BookingWizard
-      tenant={{
+      tenant={themeToPublicTenant(theme, {
         slug: tenant.subdomain,
         name: tenant.name,
         timezone: tenant.timezone,
         maxAdvanceDays: maxAdvanceDaysFromSettings(tenant.settings),
-        logoUrl: theme.logoUrl,
-        bannerUrl: theme.bannerUrl,
-        galleryUrls: theme.galleryUrls,
-        bio: theme.bio,
-        slogan: theme.slogan,
-        instagram: theme.instagram,
-        whatsapp: theme.whatsapp,
-        tiktok: theme.tiktok,
-        facebook: theme.facebook,
-        googleMapsUrl: theme.googleMapsUrl,
-        bookingNotice: theme.bookingNotice,
-        themePreset: theme.themePreset,
-        buttonRadius: theme.buttonRadius,
-        buttonStyle: theme.buttonStyle,
-        buttonShadow: theme.buttonShadow,
-        buttonTextSize: theme.buttonTextSize,
-        buttonFontFamily: theme.buttonFontFamily,
-        titleSize: theme.titleSize,
-        backgroundEffect: theme.backgroundEffect,
-        customLinks: theme.customLinks,
-        primaryColor: theme.primaryColor,
-        backgroundColor: theme.backgroundColor,
-        fontFamily: theme.fontFamily,
-        layoutStyle: theme.layoutStyle,
-        themeMode: theme.themeMode,
-        buttonCustomBg: theme.buttonCustomBg,
-        buttonCustomText: theme.buttonCustomText,
-        buttonCustomBorder: theme.buttonCustomBorder,
-        buttonBorderWidth: theme.buttonBorderWidth,
-        buttonHeight: theme.buttonHeight,
-        buttonAlignment: theme.buttonAlignment,
-        buttonTextTransform: theme.buttonTextTransform,
-        buttonFontWeight: theme.buttonFontWeight,
-        sectionOrder: theme.sectionOrder,
-        avatarShape: theme.avatarShape,
-        avatarBorder: theme.avatarBorder,
-      }}
+      })}
       services={enrichedServices}
       products={tenant.products}
     />

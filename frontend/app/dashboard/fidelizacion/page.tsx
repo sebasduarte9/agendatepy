@@ -1,73 +1,108 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   Award,
-  Crown,
-  Gift,
-  CheckCircle2,
-  Globe,
-  Link2,
-  SlidersHorizontal,
-  Coins,
-  Settings,
-  Flame,
-  Search,
-  MessageCircle,
-  ExternalLink,
-  Copy,
+  BarChart3,
   Check,
-  Smartphone,
-  ShieldCheck,
+  CheckCircle2,
+  Copy,
+  Crown,
+  ExternalLink,
+  Gift,
+  MessageCircle,
   Plus,
-  Trash2,
-  Info,
-  Sparkles,
   QrCode,
-  Share2,
-  ArrowUpRight,
-  Zap,
-  Filter,
+  Search,
+  Settings,
+  Trash2,
+  UserMinus,
+  X,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Card from "@/components/dashboard/ui/Card";
-import StatCard from "@/components/dashboard/ui/StatCard";
 import Modal from "@/components/dashboard/ui/Modal";
-import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { triggerHaptic } from "@/lib/haptics";
-import { formatGs } from "@/lib/dashboard-dates";
+import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import type { Client, LoyaltyRewardTier } from "@/lib/dashboard-types";
 import { tenantHost } from "@/lib/tenant/public-url";
 
 const REWARD_PRESETS = [
   "50% OFF en tu próximo corte o servicio",
-  "Corte o Perfilado de Barba de regalo",
-  "Tratamiento de Nutrición Capilar Gratis",
-  "Cera Capilar Efecto Mate de Regalo",
-  "Servicio Completo Gratis (Corte + Barba)",
+  "Corte o perfilado de barba de regalo",
+  "Tratamiento de nutrición capilar gratis",
+  "Cera capilar de regalo",
+  "Servicio completo gratis (corte + barba)",
 ];
+
+const PAGE_SIZE = 12;
+const INACTIVE_DAYS = 30;
+
+const FILTERS = [
+  { value: "todos", label: "Todos" },
+  { value: "con_premio", label: "Premio listo" },
+  { value: "inactivos", label: `Sin venir +${INACTIVE_DAYS} días` },
+  { value: "vips", label: "VIP" },
+] as const;
+
+type FilterValue = (typeof FILTERS)[number]["value"];
+
+const INPUT_CLASS =
+  "min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-slate-800 dark:text-white sm:min-h-10 sm:text-sm";
+const LABEL_CLASS = "mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300";
+
+const chartTooltipStyle = {
+  backgroundColor: "rgba(22, 19, 24, 0.92)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  borderRadius: "14px",
+  border: "1px solid rgba(255, 255, 255, 0.12)",
+  boxShadow: "0 16px 40px rgba(0, 0, 0, 0.55)",
+  color: "#f6f3ef",
+  fontSize: "12px",
+  padding: "10px 14px",
+};
+
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+function isInactive(client: Client, now: number) {
+  if (!client.lastVisit) return false;
+  return now - new Date(client.lastVisit).getTime() > INACTIVE_DAYS * 24 * 60 * 60 * 1000;
+}
 
 export default function FidelizacionPage() {
   const {
     loyalty,
     clients,
     business,
-    userName,
     updateLoyalty,
     addClientLoyaltyPoint,
     redeemClientReward,
     pushToast,
   } = useDashboardStore();
+  const brandColor = business.primaryColor || "#FF4F2B";
 
   const [search, setSearch] = useState("");
-  const [filterTab, setFilterTab] = useState<"todos" | "con_premio" | "vips">("todos");
-  const [editingSettings, setEditingSettings] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [filterTab, setFilterTab] = useState<FilterValue>("todos");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [selectedClientForQr, setSelectedClientForQr] = useState<Client | null>(null);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [qrClient, setQrClient] = useState<Client | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
+  const [redeemClient, setRedeemClient] = useState<Client | null>(null);
+  const [redeemTierId, setRedeemTierId] = useState<string | null>(null);
+  const [now] = useState(() => Date.now());
+
+  const isPoints = loyalty.mode === "points";
+  const perVisit = isPoints ? Math.max(1, loyalty.pointsPerVisit || 1) : 1;
+  const unitShort = isPoints ? "pts" : "sellos";
+  const unitLabel = (n: number) => (isPoints ? `${n} ${n === 1 ? "punto" : "puntos"}` : `${n} ${n === 1 ? "sello" : "sellos"}`);
 
   // Normalize active reward tiers
   const activeRewards: LoyaltyRewardTier[] = useMemo(() => {
@@ -83,93 +118,190 @@ export default function FidelizacionPage() {
     ];
   }, [loyalty.rewards, loyalty.rewardThreshold, loyalty.rewardDescription]);
 
+  const minThreshold = activeRewards[0]?.threshold || 5;
+  const maxThreshold = activeRewards[activeRewards.length - 1]?.threshold || minThreshold;
+
   const [formSettings, setFormSettings] = useState({
     enabled: loyalty.enabled,
-    mode: loyalty.mode || "stamps",
-    pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
+    mode: (loyalty.mode || "stamps") as "stamps" | "points",
+    pointsPerVisit: loyalty.pointsPerVisit || 10,
     rewards: activeRewards,
   });
 
-  // Keep form in sync if store updates and user is not actively editing
-  useEffect(() => {
-    if (!editingSettings) {
-      setFormSettings({
-        enabled: loyalty.enabled,
-        mode: loyalty.mode || "stamps",
-        pointsPerVisit: loyalty.pointsPerVisit || (loyalty.mode === "points" ? 10 : 1),
-        rewards: activeRewards,
-      });
-    }
-  }, [loyalty, activeRewards, editingSettings]);
-
-  // Generate QR when client is selected
-  useEffect(() => {
-    if (selectedClientForQr) {
-      const url = getCardUrl(selectedClientForQr.id);
-      QRCode.toDataURL(url, {
-        width: 256,
-        margin: 1,
-        color: {
-          dark: "#0f172a",
-          light: "#ffffff",
-        },
-      }).then(setQrCodeDataUrl).catch((err) => console.error("Error generating QR:", err));
-    } else {
-      setQrCodeDataUrl("");
-    }
-  }, [selectedClientForQr]);
-
-  const totalPointsAwarded = clients.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
+  // KPIs
+  const totalInCirculation = clients.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
   const totalRewardsRedeemed = clients.reduce((sum, c) => sum + (c.loyaltyRedeemed || 0), 0);
+  const eligibleClients = clients.filter((c) => (c.loyaltyPoints || 0) >= minThreshold);
+  const activeMembers = clients.filter((c) => (c.loyaltyPoints || 0) > 0);
+  const inactiveWithProgress = clients.filter((c) => (c.loyaltyPoints || 0) > 0 && isInactive(c, now));
 
-  // A client is eligible if they have reached at least the lowest reward threshold
-  const minRewardThreshold = activeRewards[0]?.threshold || loyalty.rewardThreshold || 5;
-  const eligibleClients = clients.filter(
-    (c) => (c.loyaltyPoints || 0) >= minRewardThreshold
-  );
+  const stages = [
+    {
+      key: "none",
+      label: `Sin ${unitShort}`,
+      count: clients.length - activeMembers.length,
+      color: "#71717a",
+    },
+    {
+      key: "progress",
+      label: "En camino",
+      count: activeMembers.length - eligibleClients.length,
+      color: brandColor,
+    },
+    { key: "ready", label: "Premio listo", count: eligibleClients.length, color: "#10b981" },
+  ];
+
+  // Distribution of clients by accumulated stamps/points
+  const distribution = useMemo(() => {
+    const buckets: Array<{ label: string; min: number; max: number }> = [];
+    if (!isPoints && maxThreshold <= 15) {
+      for (let i = 0; i < maxThreshold; i++) buckets.push({ label: String(i), min: i, max: i });
+      buckets.push({ label: `${maxThreshold}+`, min: maxThreshold, max: Infinity });
+    } else {
+      const size = Math.max(1, Math.ceil(maxThreshold / 5));
+      for (let i = 0; i < 5; i++) {
+        buckets.push({ label: `${i * size}–${(i + 1) * size - 1}`, min: i * size, max: (i + 1) * size - 1 });
+      }
+      buckets.push({ label: `${5 * size}+`, min: 5 * size, max: Infinity });
+    }
+    return buckets.map((b) => ({
+      label: b.label,
+      count: clients.filter((c) => {
+        const p = c.loyaltyPoints || 0;
+        return p >= b.min && p <= b.max;
+      }).length,
+      ready: b.min >= minThreshold,
+    }));
+  }, [clients, isPoints, maxThreshold, minThreshold]);
 
   const filteredClients = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return clients
       .filter((c) => {
-        const matchesSearch =
-          c.name.toLowerCase().includes(search.toLowerCase()) ||
-          c.phone.includes(search) ||
-          (c.instagram && c.instagram.toLowerCase().includes(search.toLowerCase()));
-
-        if (!matchesSearch) return false;
-
-        if (filterTab === "con_premio") {
-          return (c.loyaltyPoints || 0) >= minRewardThreshold;
+        if (q) {
+          const matches =
+            c.name.toLowerCase().includes(q) ||
+            c.phone.includes(q) ||
+            (c.instagram && c.instagram.toLowerCase().includes(q));
+          if (!matches) return false;
         }
-        if (filterTab === "vips") {
-          return c.tags.includes("VIP");
-        }
-
+        if (filterTab === "con_premio") return (c.loyaltyPoints || 0) >= minThreshold;
+        if (filterTab === "vips") return c.tags.includes("VIP");
+        if (filterTab === "inactivos") return (c.loyaltyPoints || 0) > 0 && isInactive(c, now);
         return true;
       })
       .sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0));
-  }, [clients, search, filterTab, minRewardThreshold]);
+  }, [clients, search, filterTab, minThreshold, now]);
+
+  // Pagination resets on its own whenever the filter combination changes
+  const filterKey = `${filterTab}|${search.trim()}`;
+  const [paging, setPaging] = useState({ key: filterKey, count: PAGE_SIZE });
+  const visibleCount = paging.key === filterKey ? paging.count : PAGE_SIZE;
+  const visibleClients = filteredClients.slice(0, visibleCount);
+
+  const filterCounts: Record<FilterValue, number> = {
+    todos: clients.length,
+    con_premio: eligibleClients.length,
+    inactivos: inactiveWithProgress.length,
+    vips: clients.filter((c) => c.tags.includes("VIP")).length,
+  };
+
+  // Real client for the card preview: the one closest to (or past) a reward
+  const previewClient = useMemo(
+    () => [...clients].sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0))[0] ?? null,
+    [clients]
+  );
+  const previewPoints = previewClient?.loyaltyPoints ?? Math.max(0, minThreshold - 1);
+
+  function getCardUrl(clientId: string) {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://agendate.py";
+    return `${origin}/${business.slug || "barberia"}/tarjeta/${clientId}`;
+  }
+
+  function getWhatsAppShareUrl(client: Client) {
+    const msg = encodeURIComponent(
+      `¡Hola ${client.name}! Acá tenés tu tarjeta de fidelidad de *${business.name}*:\n\n${getCardUrl(client.id)}\n\nAbrila cuando quieras para ver tus ${unitShort} y tus premios disponibles.`
+    );
+    return `https://wa.me/${normalizeParaguayPhone(client.phone).replace(/\D/g, "")}?text=${msg}`;
+  }
+
+  async function handleCopyCardLink(clientId: string) {
+    try {
+      await navigator.clipboard.writeText(getCardUrl(clientId));
+      setCopiedId(clientId);
+      pushToast("success", "Enlace de la tarjeta copiado.");
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      pushToast("error", "No se pudo copiar el enlace.");
+    }
+  }
+
+  async function openQr(client: Client) {
+    triggerHaptic("selection");
+    setQrClient(client);
+    setQrCodeDataUrl("");
+    try {
+      const url = await QRCode.toDataURL(getCardUrl(client.id), {
+        width: 256,
+        margin: 1,
+        color: { dark: "#0f172a", light: "#ffffff" },
+      });
+      setQrCodeDataUrl(url);
+    } catch (err) {
+      console.error("Error generando QR:", err);
+    }
+  }
+
+  function handleAddPoint(client: Client) {
+    triggerHaptic("medium");
+    addClientLoyaltyPoint(client.id, perVisit);
+    pushToast("success", `+${unitLabel(perVisit)} para ${client.name}`);
+  }
+
+  function openRedeem(client: Client) {
+    const unlocked = activeRewards.filter((r) => (client.loyaltyPoints || 0) >= r.threshold);
+    setRedeemClient(client);
+    setRedeemTierId(unlocked[unlocked.length - 1]?.id ?? null);
+  }
+
+  async function handleConfirmRedeem() {
+    if (!redeemClient) return;
+    const tier = activeRewards.find((r) => r.id === redeemTierId);
+    if (!tier) return;
+    const client = redeemClient;
+    triggerHaptic("success");
+    setRedeemClient(null);
+    const ok = await redeemClientReward(client.id, tier.threshold, tier.description);
+    if (ok) {
+      pushToast("success", `Premio canjeado para ${client.name}: ${tier.description}`);
+    } else {
+      pushToast("error", `No se pudo registrar el canje de ${client.name}. Probá de nuevo.`);
+    }
+  }
+
+  function openSettings() {
+    setFormSettings({
+      enabled: loyalty.enabled,
+      mode: (loyalty.mode || "stamps") as "stamps" | "points",
+      pointsPerVisit: loyalty.pointsPerVisit && loyalty.mode === "points" ? loyalty.pointsPerVisit : 10,
+      rewards: activeRewards,
+    });
+    setIsSettingsOpen(true);
+  }
 
   function handleAddRewardTier() {
     const lastTier = formSettings.rewards[formSettings.rewards.length - 1];
     const nextStep = formSettings.mode === "points" ? 50 : 5;
-    const nextThreshold = lastTier ? lastTier.threshold + nextStep : 5;
-    const newTier: LoyaltyRewardTier = {
-      id: `rew-${Date.now()}`,
-      threshold: nextThreshold,
-      description: "Servicio o Beneficio Especial de Regalo",
-    };
     setFormSettings({
       ...formSettings,
-      rewards: [...formSettings.rewards, newTier],
-    });
-  }
-
-  function handleRemoveRewardTier(id: string) {
-    if (formSettings.rewards.length <= 1) return;
-    setFormSettings({
-      ...formSettings,
-      rewards: formSettings.rewards.filter((r) => r.id !== id),
+      rewards: [
+        ...formSettings.rewards,
+        {
+          id: `rew-${Date.now()}`,
+          threshold: lastTier ? lastTier.threshold + nextStep : 5,
+          description: "",
+        },
+      ],
     });
   }
 
@@ -180,6 +312,11 @@ export default function FidelizacionPage() {
     });
   }
 
+  function handleRemoveRewardTier(id: string) {
+    if (formSettings.rewards.length <= 1) return;
+    setFormSettings({ ...formSettings, rewards: formSettings.rewards.filter((r) => r.id !== id) });
+  }
+
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
     setIsSavingSettings(true);
@@ -187,26 +324,24 @@ export default function FidelizacionPage() {
       const validTiers = formSettings.rewards
         .map((r, index) => ({
           id: r.id || `rew-${Date.now()}-${index + 1}`,
-          threshold: Math.max(1, Number(r.threshold) || 1),
+          threshold: Math.max(1, Math.round(Number(r.threshold) || 1)),
           description: r.description.trim() || `Premio #${index + 1}`,
         }))
         .sort((a, b) => a.threshold - b.threshold);
 
-      const patch = {
+      const ok = await updateLoyalty({
         enabled: formSettings.enabled,
-        mode: formSettings.mode as "stamps" | "points",
+        mode: formSettings.mode,
         rewardThreshold: validTiers[0]?.threshold || 5,
         rewardDescription: validTiers[0]?.description || "Premio de fidelidad",
-        pointsPerVisit: Number(formSettings.pointsPerVisit) || 1,
+        pointsPerVisit: formSettings.mode === "points" ? Math.max(1, Number(formSettings.pointsPerVisit) || 1) : 1,
         rewards: validTiers,
-      };
-
-      const ok = await updateLoyalty(patch);
-      setEditingSettings(false);
+      });
+      setIsSettingsOpen(false);
       if (ok !== false) {
-        pushToast("success", "Premios y reglas actualizados y guardados en la base de datos.");
+        pushToast("success", "Programa de fidelidad actualizado.");
       } else {
-        pushToast("error", "Se actualizaron localmente pero hubo un detalle al sincronizar con el servidor.");
+        pushToast("error", "Se guardó en este dispositivo, pero no se pudo sincronizar con el servidor.");
       }
     } catch (err) {
       console.error("Error guardando reglas de fidelización:", err);
@@ -216,955 +351,913 @@ export default function FidelizacionPage() {
     }
   }
 
-  function handleAddPoint(clientId: string, clientName: string) {
-    addClientLoyaltyPoint(clientId);
-    pushToast("success", `+1 sello otorgado a ${clientName}`);
-  }
-
-  function handleRedeem(clientId: string, clientName: string, tierThreshold?: number) {
-    const pts = tierThreshold || minRewardThreshold;
-    redeemClientReward(clientId, pts);
-    pushToast("success", `¡Premio canjeado con éxito para ${clientName}! (-${pts} ${loyalty.mode === "points" ? "pts" : "sellos"})`);
-  }
-
-  function getCardUrl(clientId: string) {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://agendate.py";
-    return `${origin}/${business.slug || "barberia"}/tarjeta/${clientId}`;
-  }
-
-  async function handleCopyCardLink(clientId: string) {
-    const url = getCardUrl(clientId);
-    await navigator.clipboard.writeText(url);
-    setCopiedId(clientId);
-    pushToast("success", "Enlace de tarjeta digital copiado.");
-    setTimeout(() => setCopiedId(null), 2000);
-  }
-
-  function getWhatsAppShareUrl(clientName: string, clientPhone: string, clientId: string) {
-    const cardUrl = getCardUrl(clientId);
-    const cleanPhone = clientPhone.replace(/[^0-9]/g, "");
-    const msg = encodeURIComponent(
-      `¡Hola ${clientName}!  Acá tenés tu Tarjeta Digital VIP de *${business.name}*:\n\n ${cardUrl}\n\nPodés abrir tu enlace en cualquier momento para consultar tus sellos acumulados y premios. ¡Acumulás sellos en cada visita para canjear tus premios en *${business.name}*!`
-    );
-    return `https://wa.me/${cleanPhone}?text=${msg}`;
-  }
-
-  const displayName = userName || "Sebas Duarte";
-
-  const eligiblePct = clients.length > 0 ? Math.round((eligibleClients.length / clients.length) * 100) : 0;
-  const vipPct = clients.length > 0 ? Math.round((clients.filter((c) => c.tags.includes("VIP")).length / clients.length) * 100) : 0;
+  const redeemUnlocked = redeemClient
+    ? activeRewards.filter((r) => (redeemClient.loyaltyPoints || 0) >= r.threshold)
+    : [];
 
   return (
-    <div className="space-y-6">
-      {/* ═══ CLEAN NATIVE PAGE HEADER ═══ */}
-      <div
+    <div className="w-full max-w-full space-y-5 pb-24 sm:space-y-6 sm:pb-10">
+      {/* ═══ PAGE HEADER ═══ */}
+      <header
         data-tour="fidelizacion-header"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
       >
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Fidelización & Clientes VIP
-        </h1>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold border transition ${
-              loyalty.enabled
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700"
-            }`}
-          >
-            <Crown className="h-3.5 w-3.5 text-emerald-500" />
-            <span>{loyalty.enabled ? "Club VIP Activo" : "Club en Pausa"}</span>
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setEditingSettings(!editingSettings)}
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer hover:brightness-110"
-            style={{
-              backgroundColor: business.primaryColor || "#FF4F2B",
-            }}
-          >
-            <Settings className="h-3.5 w-3.5" />
-            <span>{editingSettings ? "Cerrar" : "Configurar"}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ═══ MOBILE APPLE GLANCEABLE STAT CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Socios VIP Activos
-            </span>
-            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-              {clients.length} <span className="text-xs font-normal text-slate-400">clientes</span>
-            </span>
-          </div>
-          <span className="px-3 py-1 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20">
-            {loyalty.enabled ? " Programa Activo" : "Pausado"}
-          </span>
-        </div>
-        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>Sellos Entregados: <strong className="text-slate-800 dark:text-slate-200 font-mono">{totalPointsAwarded}</strong></span>
-          <span>Canjes Reclamados: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{totalRewardsRedeemed}</strong></span>
-        </div>
-      </div>
-
-      {/* ═══ DESKTOP APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER ═══ */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card 1: Adhesión & Retención */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-bold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                >
-                  <Award className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Retención & Beneficios Acumulados
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Progreso de la base de clientes</p>
-                </div>
-              </div>
-
-              <span className="text-xs font-mono font-bold text-slate-400">
-                {clients.length} clientes totales
-              </span>
-            </div>
-
-            {/* Circular Gauges */}
-            <div className="py-4 grid grid-cols-2 gap-4">
-              {/* Gauge 1: Clients with ready reward */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, eligiblePct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
-                    {eligiblePct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Premio Listo
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    {eligibleClients.length} de {clients.length} listos
-                  </span>
-                </div>
-              </div>
-
-              {/* Gauge 2: VIP Segment Share */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke="#10b981"
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, vipPct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                    {vipPct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 dark:text-white block truncate">
-                    Segmento VIP
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    Clientes recurrentes
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Operational Telemetry Rows */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Sellos Otorgados</span>
-                <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
-                  {totalPointsAwarded} {loyalty.mode === "points" ? "pts" : "sellos"}
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Premios Canjeados</span>
-                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                  {totalRewardsRedeemed} premios
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[10px] font-medium text-slate-400 block">Listos p/ Canje</span>
-                <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono">
-                  {eligibleClients.length} clientes
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Reglas & Escala de Premios */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 font-bold">
-                  <Gift className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Escala de Premios & Enlace Web
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Modalidad: {loyalty.mode === "points" ? "Puntos" : "Sellos por visita"}</p>
-                </div>
-              </div>
-
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                +{loyalty.mode === "points" ? `${loyalty.pointsPerVisit} pts` : "1 sello"} / visita
-              </span>
-            </div>
-
-            {/* URL Box */}
-            <div className="py-2.5">
-              <span className="text-[10px] text-slate-400 block font-medium mb-1">
-                Estructura de Tarjeta Digital Móvil:
-              </span>
-              <div className="font-mono text-xs text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 rounded-xl px-3 py-2 select-all">
-                {tenantHost(business.slug || "salon")}/tarjeta/<span className="text-emerald-600 dark:text-emerald-400 font-bold">[id-cliente]</span>
-              </div>
-            </div>
-
-            {/* Tiers List */}
-            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-700/60">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Premios Configurados ({activeRewards.length})
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {activeRewards.map((tier, idx) => (
-                  <span
-                    key={tier.id || idx}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700"
-                  >
-                    <span className="font-bold text-amber-600 dark:text-amber-400">
-                      {tier.threshold} {loyalty.mode === "points" ? "pts" : "sellos"}:
-                    </span>
-                    <span className="truncate max-w-[150px]">{tier.description}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ 2. COMPACT SUMMARY & CLIENT WEB CARD PREVIEW (LIGHT & DARK THEMED) ═══ */}
-      <div
-        data-tour="fidelizacion-wallet-banner"
-        className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-4 sm:p-5 shadow-xs transition"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-          {/* Left Column: Compact Rule & Custom Link Info */}
-          <div className="md:col-span-7 space-y-2.5">
-            <div className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-              <Globe className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-              <span>Formato de Enlace Web Exclusivo</span>
-            </div>
-
-            <div>
-              <div className="font-mono text-xs text-emerald-700 dark:text-emerald-400 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 inline-block select-all">
-                {tenantHost(business.slug || "salon")}/tarjeta/<span className="text-slate-400 dark:text-white/60">[id-cliente]</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-lg">
-              Regla activa: cada cliente suma <strong>{loyalty.mode === "points" ? `${loyalty.pointsPerVisit} pts` : "1 sello"}</strong> por turno asistido.
-              {activeRewards.length > 1 ? (
-                <span> Tenés <strong>{activeRewards.length} premios escalonados</strong> configurados para premiar la recurrencia.</span>
-              ) : (
-                <span> Al alcanzar <strong>{loyalty.rewardThreshold} {loyalty.mode === "points" ? "puntos" : "sellos"}</strong>, desbloquea: <span className="text-emerald-600 dark:text-emerald-300 font-semibold">{loyalty.rewardDescription}</span>.</span>
-              )}
-            </p>
-
-            {/* Configured Rewards Chips */}
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {activeRewards.map((tier, idx) => (
-                <span
-                  key={tier.id || idx}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200"
-                >
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                    {tier.threshold} {loyalty.mode === "points" ? "pts" : "sellos"}:
-                  </span>
-                  <span className="truncate max-w-[170px]">{tier.description}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Column: Sleek Mini Web Card Preview (Themed) */}
-          <div className="md:col-span-5 flex justify-center md:justify-end">
-            <div className="w-full max-w-xs rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 p-3.5 space-y-2.5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-white/10 pb-2">
-                <div className="min-w-0">
-                  <h4 className="font-bold text-xs truncate text-slate-900 dark:text-white">{business.name}</h4>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Tarjeta Digital VIP</span>
-                </div>
-                <span className="text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">
-                  ACTIVO
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block">Titular:</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-xs">{displayName}</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block">Progreso:</span>
-                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
-                    {Math.min(4, activeRewards[0]?.threshold || 5)} / {activeRewards[0]?.threshold || 5} sellos
-                  </span>
-                </div>
-              </div>
-
-              {/* Compact Stamp Dots */}
-              <div className="flex items-center gap-1.5 pt-0.5">
-                {Array.from({ length: Math.min(activeRewards[0]?.threshold || 5, 8) }).map((_, i) => {
-                  const filled = i < 4;
-                  return (
-                    <div
-                      key={i}
-                      className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold transition ${
-                        filled
-                          ? "bg-emerald-500 text-white font-black shadow-2xs"
-                          : "border border-slate-300 dark:border-white/20 text-slate-400"
-                      }`}
-                    >
-                      {filled ? "✓" : i + 1}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="rounded-lg bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 px-2.5 py-1 text-[10px] text-slate-700 dark:text-slate-300 truncate">
-                 1° Premio: <strong className="text-slate-900 dark:text-white">{activeRewards[0]?.description || loyalty.rewardDescription}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ 3. CONFIGURATION PANEL & MULTI-REWARDS BUILDER (ALWAYS IN DOM FOR TOUR STEP 4) ═══ */}
-      <Card data-tour="fidelizacion-config-card" className="border border-slate-200/80 dark:border-white/10 p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-white/5 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <SlidersHorizontal className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>Reglas & Premios del Programa</span>
-                <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  {formSettings.rewards.length} {formSettings.rewards.length === 1 ? "Premio" : "Premios"}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Personalizá la acumulación por visita y configurá uno o múltiples premios escalonados.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setEditingSettings(!editingSettings)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Programa de fidelidad</p>
+          <h1 className="mt-1 flex flex-wrap items-center gap-2.5 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Fidelización
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-normal ${
+                loyalty.enabled
+                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : "border-slate-300/60 bg-slate-500/10 text-slate-600 dark:border-white/10 dark:text-zinc-400"
+              }`}
             >
-              {editingSettings ? "Ocultar Editor" : "Editar Premios & Reglas"}
-            </button>
+              <span className={`h-1.5 w-1.5 rounded-full ${loyalty.enabled ? "bg-emerald-500" : "bg-slate-400"}`} />
+              {loyalty.enabled ? "Activo" : "En pausa"}
+            </span>
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
+            Premiá a tus clientes frecuentes con {isPoints ? "puntos" : "sellos"} por visita y premios escalonados.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={openSettings}
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-[0.98] sm:w-auto"
+          style={{ backgroundColor: brandColor }}
+        >
+          <Settings className="h-4 w-4" />
+          Configurar programa
+        </button>
+      </header>
+
+      {/* ═══ SUMMARY + CHARTS ═══ */}
+      <section data-tour="fidelizacion-kpis" className="rounded-3xl glass-panel p-3 sm:p-5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">Resumen del programa</h2>
+            <p className="mt-0.5 hidden text-xs text-slate-500 dark:text-zinc-400 sm:block">
+              Cada turno completado suma {unitLabel(perVisit)} automáticamente.
+            </p>
           </div>
+          <span className="hidden text-xs text-slate-500 dark:text-zinc-400 sm:inline">
+            {clients.length} {clients.length === 1 ? "cliente" : "clientes"} en tu base
+          </span>
         </div>
 
-        {/* If collapsed: Clean summary view */}
-        {!editingSettings ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
-            {activeRewards.map((tier, idx) => (
-              <div
-                key={tier.id || idx}
-                className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/60 space-y-1.5"
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-white/10 pt-3 sm:mt-4 sm:grid-cols-4 sm:gap-y-0 sm:pt-4">
+          {[
+            {
+              label: "Clientes participando",
+              value: activeMembers.length.toLocaleString("es-PY"),
+              detail: `con al menos 1 ${isPoints ? "punto" : "sello"}`,
+            },
+            {
+              label: "Premio listo",
+              value: eligibleClients.length.toLocaleString("es-PY"),
+              detail: "pueden canjear hoy",
+              tone: eligibleClients.length > 0 ? "text-emerald-600 dark:text-emerald-400" : undefined,
+            },
+            {
+              label: `${isPoints ? "Puntos" : "Sellos"} acumulados`,
+              value: totalInCirculation.toLocaleString("es-PY"),
+              detail: "sin canjear todavía",
+            },
+            {
+              label: "Premios canjeados",
+              value: totalRewardsRedeemed.toLocaleString("es-PY"),
+              detail: `meta inicial: ${unitLabel(minThreshold)}`,
+            },
+          ].map((metric) => (
+            <div key={metric.label} className="min-w-0">
+              <p className="truncate text-[11px] font-medium text-slate-500 dark:text-zinc-400">{metric.label}</p>
+              <p
+                className={`mt-1 truncate text-base font-semibold tabular-nums sm:text-xl ${
+                  metric.tone ?? "text-slate-900 dark:text-white"
+                }`}
               >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-extrabold text-primary">Premio #{idx + 1}</span>
-                  <span className="font-mono text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-white/10">
-                    {tier.threshold} {loyalty.mode === "points" ? "puntos" : "visitas"}
-                  </span>
-                </div>
-                <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                  {tier.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* If expanded: Full multi-rewards interactive form */
-          <form onSubmit={handleSaveSettings} className="space-y-5 text-xs pt-1">
-            {/* Mode selection & Active status */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10">
-              <div>
-                <span className="font-bold text-slate-900 dark:text-white block">Modalidad del Programa</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {formSettings.mode === "stamps"
-                    ? "Tarjeta de Sellos: 1 sello por cada visita o servicio asistido."
-                    : "Tarjeta de Puntos: acumulación de puntos por cita o consumo."}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setFormSettings({ ...formSettings, mode: "stamps" })}
-                  className={`px-3 py-1.5 rounded-xl font-bold text-xs border transition cursor-pointer ${
-                    formSettings.mode === "stamps"
-                      ? "bg-primary text-white border-primary shadow-xs"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10"
-                  }`}
-                >
-                  Sellos por Visita
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormSettings({ ...formSettings, mode: "points" })}
-                  className={`px-3 py-1.5 rounded-xl font-bold text-xs border transition cursor-pointer ${
-                    formSettings.mode === "points"
-                      ? "bg-primary text-white border-primary shadow-xs"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10"
-                  }`}
-                >
-                  Puntos
-                </button>
-
-                <label className="flex items-center gap-2 ml-2 pl-3 border-l border-slate-200 dark:border-white/10 cursor-pointer font-bold text-slate-700 dark:text-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={formSettings.enabled}
-                    onChange={(e) => setFormSettings({ ...formSettings, enabled: e.target.checked })}
-                    className="h-4 w-4 rounded text-primary focus:ring-primary cursor-pointer"
-                  />
-                  <span>Activo</span>
-                </label>
-              </div>
+                {metric.value}
+              </p>
+              <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-zinc-500">{metric.detail}</p>
             </div>
+          ))}
+        </div>
 
-            {/* Multiple Rewards Tier Builder */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+        {clients.length > 0 && (
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-4 lg:grid-cols-5">
+            {/* Chart 1: distribution */}
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3 sm:p-4 lg:col-span-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-xs">
-                    Premios Escalonados Configurables
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Definí los premios que se desbloquean a medida que el cliente acumula visitas o puntos.
+                  <h3 className="text-xs font-semibold text-slate-800 dark:text-zinc-200">Avance de tus clientes</h3>
+                  <p className="mt-0.5 text-[11px] text-slate-500 dark:text-zinc-400">
+                    Clientes según los {unitShort} que tienen acumulados
                   </p>
                 </div>
+                <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-zinc-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: brandColor }} />
+                    En camino
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-sm bg-emerald-500" />
+                    Premio listo
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={distribution} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                    <XAxis dataKey="label" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis allowDecimals={false} stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={chartTooltipStyle}
+                      cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                      labelFormatter={(label) => `${label} ${unitShort}`}
+                      formatter={(val) => [`${val} ${Number(val) === 1 ? "cliente" : "clientes"}`, "Clientes"]}
+                    />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={700}>
+                      {distribution.map((d) => (
+                        <Cell key={d.label} fill={d.ready ? "#10b981" : brandColor} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
+            {/* Chart 2: stages */}
+            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-3 sm:p-4 lg:col-span-2">
+              <h3 className="text-xs font-semibold text-slate-800 dark:text-zinc-200">Etapas del programa</h3>
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-zinc-400">Dónde está cada cliente hoy</p>
+              <div className="mt-4 flex h-3 w-full gap-0.5 overflow-hidden rounded-full">
+                {stages
+                  .filter((s) => s.count > 0)
+                  .map((s) => (
+                    <div
+                      key={s.key}
+                      className="h-full first:rounded-l-full last:rounded-r-full"
+                      style={{ width: `${(s.count / clients.length) * 100}%`, backgroundColor: s.color }}
+                      title={`${s.label}: ${s.count}`}
+                    />
+                  ))}
+              </div>
+              <ul className="mt-4 space-y-2.5">
+                {stages.map((s) => (
+                  <li key={s.key} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="flex items-center gap-2 text-slate-600 dark:text-zinc-300">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: s.color }} />
+                      {s.label}
+                    </span>
+                    <span className="tabular-nums text-slate-500 dark:text-zinc-400">
+                      <span className="font-semibold text-slate-900 dark:text-white">{s.count}</span>
+                      <span className="ml-1.5 inline-block w-9 text-right">
+                        {Math.round((s.count / clients.length) * 100)}%
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {inactiveWithProgress.length > 0 && (
                 <button
                   type="button"
-                  onClick={handleAddRewardTier}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-primary text-primary font-bold text-xs hover:bg-primary/5 transition cursor-pointer"
+                  onClick={() => setFilterTab("inactivos")}
+                  className="mt-auto flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2 text-left text-[11px] text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-300"
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Agregar Premio</span>
+                  <UserMinus className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    <strong className="font-semibold">{inactiveWithProgress.length}</strong> con {unitShort} no vienen hace
+                    más de {INACTIVE_DAYS} días
+                  </span>
                 </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!loyalty.enabled ? (
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl border border-slate-300/40 bg-slate-500/[0.06] px-2.5 py-2.5 dark:border-white/10 sm:mt-4 sm:px-3.5 sm:py-3">
+            <span className="min-w-0 text-xs">
+              <span className="block font-semibold text-slate-800 dark:text-zinc-200">El programa está en pausa</span>
+              <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-zinc-400">
+                Tus clientes no ven la tarjeta como activa hasta que lo reactives.
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={openSettings}
+              className="inline-flex min-h-9 shrink-0 items-center rounded-xl border border-white/10 px-3 text-xs font-semibold text-slate-700 transition hover:bg-white/10 dark:text-zinc-200"
+            >
+              Reactivar
+            </button>
+          </div>
+        ) : (
+          eligibleClients.length > 0 && (
+            <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.04] px-2.5 py-2.5 sm:mt-4 sm:px-3.5 sm:py-3">
+              <div className="flex min-w-0 items-start gap-2.5">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Gift className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    {eligibleClients.length} {eligibleClients.length === 1 ? "cliente tiene" : "clientes tienen"} su premio listo
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-zinc-400">
+                    Avisales por WhatsApp para que reserven en tus días más tranquilos.
+                  </span>
+                </span>
               </div>
+              {filterTab !== "con_premio" && (
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("con_premio")}
+                  className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 px-2.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-500/10 dark:text-emerald-300 sm:min-h-10 sm:px-3 sm:text-xs"
+                >
+                  Ver clientes
+                </button>
+              )}
+            </div>
+          )
+        )}
+      </section>
 
-              <div className="space-y-2.5">
-                {formSettings.rewards.map((tier, idx) => (
-                  <div
-                    key={tier.id || idx}
-                    className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 space-y-2 shadow-2xs"
+      {/* ═══ REWARDS + DIGITAL CARD ═══ */}
+      <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-5">
+        <section data-tour="fidelizacion-config-card" className="rounded-3xl glass-panel p-3.5 sm:p-5 lg:col-span-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">Premios y reglas</h2>
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                  {activeRewards.length}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+                {isPoints ? "Tarjeta de puntos" : "Tarjeta de sellos"} · +{unitLabel(perVisit)} por turno completado
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={openSettings}
+              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 px-3 text-xs font-semibold text-slate-600 transition hover:bg-white/[0.06] dark:text-zinc-300"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Editar
+            </button>
+          </div>
+
+          <ol className="relative mt-4 space-y-2.5">
+            {activeRewards.map((tier, idx) => {
+              const reached = clients.filter((c) => (c.loyaltyPoints || 0) >= tier.threshold).length;
+              return (
+                <li
+                  key={tier.id || idx}
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3"
+                >
+                  <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <span className="text-sm font-semibold leading-none tabular-nums">{tier.threshold}</span>
+                    <span className="mt-0.5 text-[11px] font-medium leading-none">{unitShort}</span>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">
+                      {tier.description}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-zinc-400">
+                      Premio {idx + 1} · {reached} {reached === 1 ? "cliente lo alcanzó" : "clientes lo alcanzaron"}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
+        <section data-tour="fidelizacion-wallet-banner" className="rounded-3xl glass-panel p-3.5 sm:p-5 lg:col-span-2">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Tarjeta digital</h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+            Cada cliente tiene un enlace propio para ver su avance, sin instalar nada.
+          </p>
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.01] p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">{business.name}</span>
+                <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                  {previewClient ? "Vista previa con un cliente real" : "Vista previa de ejemplo"}
+                </span>
+              </span>
+              <Crown className="h-4 w-4 shrink-0 text-amber-400" />
+            </div>
+            <div className="mt-3 flex items-end justify-between gap-2">
+              <span className="min-w-0">
+                <span className="block text-[11px] text-slate-500 dark:text-zinc-400">Titular</span>
+                <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">
+                  {previewClient?.name ?? "Cliente de ejemplo"}
+                </span>
+              </span>
+              <span className="shrink-0 text-right text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                {Math.min(previewPoints, minThreshold)} / {minThreshold} {unitShort}
+              </span>
+            </div>
+            {!isPoints && minThreshold <= 12 ? (
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {Array.from({ length: minThreshold }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${
+                      i < previewPoints
+                        ? "bg-emerald-500 text-white"
+                        : "border border-slate-300 text-slate-400 dark:border-white/20"
+                    }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-xs text-primary flex items-center gap-1.5">
-                        <Gift className="h-3.5 w-3.5" />
-                        <span>Premio #{idx + 1}</span>
-                      </span>
-
-                      {formSettings.rewards.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRewardTier(tier.id)}
-                          className="text-slate-400 hover:text-rose-600 transition p-1"
-                          title="Eliminar este escalón de premio"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                      <div className="sm:col-span-4">
-                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
-                          {formSettings.mode === "points" ? "Puntos requeridos:" : "Visitas / Sellos requeridos:"}
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max={formSettings.mode === "points" ? 5000 : 50}
-                          value={tier.threshold}
-                          onChange={(e) =>
-                            handleUpdateTier(tier.id, { threshold: Number(e.target.value) || 1 })
-                          }
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-3 py-2 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-8">
-                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
-                          Descripción del Beneficio:
-                        </label>
-                        <input
-                          type="text"
-                          value={tier.description}
-                          onChange={(e) =>
-                            handleUpdateTier(tier.id, { description: e.target.value })
-                          }
-                          placeholder="Ej. 50% OFF en próximo servicio, Producto gratis..."
-                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-3 py-2 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Quick suggestion presets chips */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-[10px] text-slate-400 font-semibold mr-1">Sugerir:</span>
-                      {REWARD_PRESETS.map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => handleUpdateTier(tier.id, { description: preset })}
-                          className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer"
-                        >
-                          {preset}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                    {i < previewPoints ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
+                  </span>
                 ))}
               </div>
-            </div>
-
-            {/* Form actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-white/10">
-              <button
-                type="button"
-                onClick={() => setEditingSettings(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSavingSettings}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary hover:opacity-90 px-5 py-2 font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50"
-              >
-                {isSavingSettings ? (
-                  <>
-                    <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    <span>Guardando en BD...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Guardar Reglas & Premios en BD</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        )}
-      </Card>
-
-      {/* ═══ 4. KPI METRICS CARDS ═══ */}
-      <div data-tour="fidelizacion-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Meta Actual del Club"
-          value={`${loyalty.rewardThreshold} visitas`}
-          icon={Award}
-        />
-        <StatCard
-          label="Sellos Activos en Circulación"
-          value={`${totalPointsAwarded} sellos`}
-          icon={ShieldCheck}
-        />
-        <StatCard
-          label="Clientes con Premio Listo"
-          value={`${eligibleClients.length} clientes`}
-          icon={Gift}
-          delta={eligibleClients.length > 0 ? eligibleClients.length : undefined}
-        />
-        <StatCard
-          label="Premios Canjeados"
-          value={`${totalRewardsRedeemed} canjes`}
-          icon={CheckCircle2}
-        />
-      </div>
-
-      {/* ═══ 5. CLIENTS & DIGITAL PASSES DIRECTORY ═══ */}
-      <Card data-tour="fidelizacion-clients-table" className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 dark:border-white/5 pb-3">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Tarjetas Digitales & Sellos de Clientes
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Otorgá sellos por visita, canjeá beneficios al instante y enviá el pase por WhatsApp.
+            ) : (
+              <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/[0.08]">
+                <div
+                  className="h-full rounded-full bg-emerald-500"
+                  style={{ width: `${Math.min(100, (previewPoints / minThreshold) * 100)}%` }}
+                />
+              </div>
+            )}
+            <p className="mt-3 truncate rounded-lg bg-black/5 px-2.5 py-1.5 text-[11px] text-slate-600 dark:bg-white/[0.04] dark:text-zinc-300">
+              Premio: <strong className="font-semibold">{activeRewards[0]?.description}</strong>
             </p>
           </div>
 
-          {/* Filters & Search */}
-          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-            {/* Filter Tabs */}
-            <div className="w-full sm:w-auto">
-              <IosSegmentedControl
-                options={[
-                  { value: "todos", label: `Todos (${clients.length})` },
-                  {
-                    value: "con_premio",
-                    label: "Premio Listo",
-                    badge: eligibleClients.length > 0 ? eligibleClients.length : undefined,
-                  },
-                  { value: "vips", label: "VIPs" },
-                ]}
-                value={filterTab}
-                onChange={(val) => {
-                  setFilterTab(val as any);
-                  triggerHaptic("selection");
-                }}
-                layoutId="fidelizacionTabSegment"
-                className="w-full sm:w-auto"
-              />
-            </div>
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <code className="min-w-0 truncate text-[11px] text-slate-500 dark:text-zinc-400">
+              {tenantHost(business.slug || "salon")}/tarjeta/…
+            </code>
+            {previewClient && (
+              <Link
+                href={getCardUrl(previewClient.id)}
+                target="_blank"
+                className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 px-3 text-xs font-semibold text-slate-600 transition hover:bg-white/[0.06] dark:text-zinc-300"
+              >
+                Ver tarjeta
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            )}
+          </div>
+        </section>
+      </div>
 
-            {/* Search Input */}
-            <div className="relative w-full sm:w-64">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+      {/* ═══ CLIENTS ═══ */}
+      <section data-tour="fidelizacion-clients-table" className="overflow-hidden rounded-3xl glass-panel">
+        <div className="space-y-3 border-b border-white/10 p-3.5 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">Clientes</h2>
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                  {filteredClients.length} de {clients.length}
+                </span>
+              </div>
+              <p className="mt-0.5 hidden text-xs text-slate-500 dark:text-zinc-400 sm:block">
+                Sumá {unitShort}, canjeá premios y enviá la tarjeta por WhatsApp.
+              </p>
+            </div>
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
-                type="text"
-                placeholder="Buscar cliente..."
+                type="search"
+                aria-label="Buscar clientes"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary/40"
+                placeholder="Nombre, teléfono o Instagram"
+                className="min-h-11 w-full rounded-2xl border border-white/10 bg-black/10 pl-10 pr-10 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary/50 focus:ring-2 focus:ring-primary/15 dark:text-white sm:text-sm"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Borrar búsqueda"
+                  className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/10 hover:text-slate-700 dark:hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
+          </div>
+
+          <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {FILTERS.map((option) => {
+              const isActive = filterTab === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setFilterTab(option.value);
+                  }}
+                  style={isActive ? { backgroundColor: brandColor } : undefined}
+                  className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-semibold transition ${
+                    isActive
+                      ? "text-white shadow-sm"
+                      : "border border-white/10 bg-white/[0.025] text-slate-600 hover:bg-white/[0.06] dark:text-zinc-300"
+                  }`}
+                >
+                  {option.label}
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
+                      isActive ? "bg-black/10" : "bg-white/[0.06] text-slate-400"
+                    }`}
+                  >
+                    {filterCounts[option.value]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Client Rows */}
-        <div className="divide-y divide-slate-100 dark:divide-white/5">
-          {filteredClients.length === 0 ? (
-            <div className="py-12 text-center space-y-2">
-              <Award className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                No se encontraron clientes con este filtro
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Probá buscando por otro nombre o restablecé los filtros.
-              </p>
-            </div>
-          ) : (
-            filteredClients.map((client) => {
-              const points = client.loyaltyPoints || 0;
-              const threshold = activeRewards[0]?.threshold || loyalty.rewardThreshold || 5;
-              const maxThreshold = activeRewards[activeRewards.length - 1]?.threshold || threshold;
-              const unlockedTiers = activeRewards.filter((r) => points >= r.threshold);
-              const highestUnlocked = unlockedTiers[unlockedTiers.length - 1];
-              const canRedeem = unlockedTiers.length > 0;
-              const isCopied = copiedId === client.id;
-              const initials = client.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase();
+        {filteredClients.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-5 py-12 text-center sm:py-16">
+            <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Award className="h-6 w-6" />
+            </span>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              {clients.length === 0 ? "Todavía no hay clientes" : "No encontramos clientes"}
+            </h3>
+            <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-zinc-400">
+              {clients.length === 0
+                ? "Cuando tus clientes reserven y completen turnos, van a sumar sellos acá."
+                : "Probá con otra búsqueda o cambiá el filtro."}
+            </p>
+          </div>
+        ) : (
+          <>
+            <ul className="divide-y divide-slate-100 dark:divide-white/[0.06]">
+              {visibleClients.map((client) => {
+                const points = client.loyaltyPoints || 0;
+                const unlocked = activeRewards.filter((r) => points >= r.threshold);
+                const nextTier = activeRewards.find((r) => r.threshold > points);
+                const canRedeem = unlocked.length > 0;
+                const target = nextTier?.threshold ?? maxThreshold;
+                const progressPct = Math.min(100, (points / target) * 100);
+                const inactive = points > 0 && isInactive(client, now);
 
-              return (
-                <div
-                  key={client.id}
-                  className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-2xl transition"
-                >
-                  {/* Client Info */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 font-black text-white text-xs shadow-xs">
-                      {initials}
-                    </div>
-
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                          {client.name}
-                        </span>
-                        {client.tags.includes("VIP") && (
-                          <span className="rounded-md bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center gap-0.5">
-                            <Crown className="h-3 w-3" /> VIP
-                          </span>
-                        )}
-                        {canRedeem && (
-                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[9.5px] font-black text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
-                            <Gift className="h-3 w-3" />
-                            <span>{unlockedTiers.length > 1 ? `${unlockedTiers.length} Premios: ` : "Premio: "}</span>
-                            <span className="truncate max-w-[130px]">{highestUnlocked?.description}</span>
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                        <span>{client.phone}</span>
-                        <span>•</span>
-                        <span className="font-sans">Consumo: <strong className="text-slate-700 dark:text-slate-200">{formatGs(client.totalSpent)}</strong></span>
-                        <span>•</span>
-                        <span className="font-sans text-emerald-600 dark:text-emerald-400 font-bold">{client.loyaltyRedeemed || 0} canjes históricos</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stamps Row & Actions */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
-                    {/* Digital Stamps Progress (Glassy Stamp Card System) */}
-                    <div className="w-full sm:w-auto overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
-                      <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-white/[0.03] p-1.5 rounded-2xl border border-slate-200/60 dark:border-white/10 w-max backdrop-blur-md">
-                        {Array.from({ length: Math.min(maxThreshold, 10) }).map((_, i) => {
-                          const filled = i < points;
-                          return (
-                            <span
-                              key={i}
-                              className={`stamp ${filled ? "filled" : ""} !h-7 !w-7 shrink-0 text-[10px]`}
-                              title={`Sello ${i + 1} de ${maxThreshold}`}
-                            >
-                              {filled ? (
-                                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
-                              ) : (
-                                String(i + 1).padStart(2, "0")
-                              )}
+                return (
+                  <li
+                    key={client.id}
+                    className="flex flex-col gap-3 px-3.5 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:gap-5"
+                  >
+                    {/* Identity */}
+                    <div className="flex min-w-0 items-center gap-3 lg:w-64 lg:shrink-0">
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-[11px] font-semibold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {initialsOf(client.name)}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-1.5">
+                          <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">{client.name}</span>
+                          {client.tags.includes("VIP") && (
+                            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                              <Crown className="h-3 w-3" />
+                              VIP
                             </span>
-                          );
-                        })}
-                      </div>
+                          )}
+                        </span>
+                        <span className="mt-0.5 block truncate text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">
+                          {client.phone}
+                          {client.totalSpent > 0 && ` · ${formatGs(client.totalSpent)}`}
+                        </span>
+                      </span>
                     </div>
 
-                    {/* Actions Buttons */}
-                    <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
-                      {/* Add Point (+1 Sello) */}
+                    {/* Progress */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2 text-[11px]">
+                        <span className="min-w-0 truncate text-slate-500 dark:text-zinc-400">
+                          {canRedeem ? (
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                              Premio listo: {unlocked[unlocked.length - 1].description}
+                            </span>
+                          ) : nextTier ? (
+                            <>
+                              Faltan {unitLabel(nextTier.threshold - points)} para{" "}
+                              <span className="text-slate-700 dark:text-zinc-200">{nextTier.description}</span>
+                            </>
+                          ) : null}
+                        </span>
+                        <span className="shrink-0 font-semibold tabular-nums text-slate-900 dark:text-white">
+                          {points}
+                          <span className="font-normal text-slate-400"> / {target}</span>
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/[0.06]">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${progressPct}%`,
+                            backgroundColor: canRedeem ? "#10b981" : brandColor,
+                          }}
+                        />
+                      </div>
+                      {(inactive || (client.loyaltyRedeemed || 0) > 0) && (
+                        <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-slate-500 dark:text-zinc-500">
+                          {inactive && (
+                            <span className="text-amber-600 dark:text-amber-400">
+                              Sin venir hace +{INACTIVE_DAYS} días
+                            </span>
+                          )}
+                          {(client.loyaltyRedeemed || 0) > 0 && (
+                            <span>
+                              {client.loyaltyRedeemed} {client.loyaltyRedeemed === 1 ? "canje" : "canjes"}
+                            </span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1.5 lg:shrink-0">
                       <button
                         type="button"
-                        onClick={() => {
-                          triggerHaptic("medium");
-                          handleAddPoint(client.id, client.name);
-                        }}
-                        className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
-                        title="Sumar +1 sello tras la visita"
+                        onClick={() => handleAddPoint(client)}
+                        className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-white/10 px-3 text-xs font-semibold text-slate-700 transition hover:bg-white/[0.06] active:scale-[0.98] dark:text-zinc-200 lg:flex-none"
+                        title={`Sumar ${unitLabel(perVisit)} manualmente`}
                       >
-                        +1 Sello
+                        <Plus className="h-3.5 w-3.5" />
+                        {perVisit} {isPoints ? "pts" : perVisit === 1 ? "sello" : "sellos"}
                       </button>
-
-                      {/* Redeem Button (if eligible) */}
-                      {canRedeem ? (
+                      {canRedeem && (
                         <button
                           type="button"
-                          onClick={() => {
-                            triggerHaptic("success");
-                            handleRedeem(
-                              client.id,
-                              client.name,
-                              highestUnlocked ? highestUnlocked.threshold : threshold
-                            );
-                          }}
-                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                          onClick={() => openRedeem(client)}
+                          className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] lg:flex-none"
                         >
                           <Gift className="h-3.5 w-3.5" />
-                          <span>Canjear</span>
+                          Canjear
                         </button>
-                      ) : (
-                        <span className="text-[11px] font-semibold text-slate-400 px-1 font-mono shrink-0">
-                          Faltan {threshold - points}
-                        </span>
                       )}
-
-                      {/* WhatsApp Share Card Link */}
                       <a
-                        href={getWhatsAppShareUrl(client.name, client.phone, client.id)}
+                        href={getWhatsAppShareUrl(client)}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => triggerHaptic("light")}
-                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
-                        title="Enviar tarjeta al WhatsApp del cliente"
+                        aria-label={`Enviar tarjeta a ${client.name} por WhatsApp`}
+                        title="Enviar tarjeta por WhatsApp"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 text-emerald-600 transition hover:bg-emerald-500/10 dark:text-emerald-400"
                       >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Enviar Tarjeta</span>
+                        <MessageCircle className="h-4 w-4" />
                       </a>
-
-                      {/* Show QR Modal */}
                       <button
                         type="button"
-                        onClick={() => {
-                          triggerHaptic("selection");
-                          setSelectedClientForQr(client);
-                        }}
-                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition active:scale-95 cursor-pointer shrink-0"
-                        title="Mostrar código QR del pase"
+                        onClick={() => openQr(client)}
+                        aria-label={`Ver QR de la tarjeta de ${client.name}`}
+                        title="Ver QR de la tarjeta"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white"
                       >
                         <QrCode className="h-4 w-4" />
                       </button>
-
-                      {/* Copy Direct Card Link */}
                       <button
                         type="button"
                         onClick={() => handleCopyCardLink(client.id)}
-                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer shrink-0"
-                        title="Copiar enlace de tarjeta digital"
+                        aria-label={`Copiar enlace de la tarjeta de ${client.name}`}
+                        title="Copiar enlace de la tarjeta"
+                        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white sm:flex"
                       >
-                        {isCopied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        {copiedId === client.id ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                       </button>
-
-                      {/* Open Card View in New Tab */}
-                      <Link
-                        href={getCardUrl(client.id)}
-                        target="_blank"
-                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-primary transition cursor-pointer shrink-0"
-                        title="Abrir tarjeta web en una nueva pestaña"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
                     </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </Card>
+                  </li>
+                );
+              })}
+            </ul>
 
-      {/* ═══ 6. QR SCAN & WEB LINK MODAL ═══ */}
+            {filteredClients.length > visibleCount && (
+              <div className="border-t border-white/10 p-3 text-center">
+                <button
+                  type="button"
+                  onClick={() => setPaging({ key: filterKey, count: visibleCount + PAGE_SIZE })}
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-white/10 px-4 text-xs font-semibold text-slate-600 transition hover:bg-white/[0.06] dark:text-zinc-300"
+                >
+                  Ver más ({filteredClients.length - visibleCount} restantes)
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* ═══ SETTINGS MODAL ═══ */}
       <Modal
-        open={Boolean(selectedClientForQr)}
-        onClose={() => setSelectedClientForQr(null)}
-        title="Tarjeta Web Digital · Link Exclusivo"
-        maxWidth="max-w-md"
-      >
-        {selectedClientForQr && (
-          <div className="space-y-4 text-center text-xs">
-            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-2xl bg-amber-400 text-amber-950 font-black text-sm shadow-xs">
-              <Crown className="h-6 w-6" />
-            </div>
-
-            <div>
-              <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
-                {selectedClientForQr.name}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                {selectedClientForQr.phone}
-              </p>
-            </div>
-
-            {/* QR Code Container */}
-            <div className="mx-auto w-56 h-56 p-3 bg-white rounded-3xl border border-slate-200 shadow-inner flex items-center justify-center">
-              {qrCodeDataUrl ? (
-                <img
-                  src={qrCodeDataUrl}
-                  alt={`QR de ${selectedClientForQr.name}`}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
-                  <span className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                  <span className="text-[10px]">Generando código...</span>
-                </div>
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title="Configurar programa"
+        maxWidth="max-w-xl"
+        footer={
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen(false)}
+              className="min-h-11 rounded-xl border border-slate-200/80 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 sm:min-h-10"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="loyalty-settings-form"
+              disabled={isSavingSettings}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-xs font-semibold text-white shadow-sm transition hover:brightness-110 disabled:opacity-60 sm:min-h-10"
+              style={{ backgroundColor: brandColor }}
+            >
+              {isSavingSettings && (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
               )}
-            </div>
-
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-left">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Enlace web del cliente:
+              {isSavingSettings ? "Guardando…" : "Guardar cambios"}
+            </button>
+          </div>
+        }
+      >
+        <form id="loyalty-settings-form" onSubmit={handleSaveSettings} className="space-y-5 text-xs">
+          <label className="flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/[0.03]">
+            <span className="min-w-0">
+              <span className="block text-xs font-semibold text-slate-900 dark:text-white">Programa activo</span>
+              <span className="block text-[11px] text-slate-500 dark:text-zinc-400">
+                Si lo pausás, la tarjeta del cliente se muestra como inactiva.
               </span>
-              <span className="font-mono text-[11px] text-slate-800 dark:text-slate-200 break-all select-all block">
-                {getCardUrl(selectedClientForQr.id)}
-              </span>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={formSettings.enabled}
+              onChange={(e) => setFormSettings({ ...formSettings, enabled: e.target.checked })}
+              className="peer sr-only"
+            />
+            <span
+              aria-hidden="true"
+              className="relative h-6 w-10 shrink-0 rounded-full bg-slate-300 transition after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 dark:bg-white/15"
+            />
+          </label>
+
+          <fieldset>
+            <legend className={LABEL_CLASS}>Tipo de tarjeta</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { value: "stamps", title: "Sellos", desc: "1 sello por turno" },
+                { value: "points", title: "Puntos", desc: "Puntos por turno" },
+              ] as const).map((opt) => {
+                const isSelected = formSettings.mode === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setFormSettings({ ...formSettings, mode: opt.value })}
+                    className={`flex min-h-14 flex-col items-start justify-center rounded-2xl border px-3.5 text-left transition ${
+                      isSelected
+                        ? "border-primary bg-primary/10"
+                        : "border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    <span className={`text-xs font-semibold ${isSelected ? "text-primary" : "text-slate-900 dark:text-white"}`}>
+                      {opt.title}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-zinc-400">{opt.desc}</span>
+                  </button>
+                );
+              })}
             </div>
+          </fieldset>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xs mx-auto leading-relaxed">
-              El cliente puede escanear este código QR con la cámara de su celular para abrir directamente su link personalizado y ver sus sellos acumulados en tiempo real.
-            </p>
+          {formSettings.mode === "points" && (
+            <div>
+              <label htmlFor="points-per-visit" className={LABEL_CLASS}>
+                Puntos por turno completado
+              </label>
+              <input
+                id="points-per-visit"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={1000}
+                value={formSettings.pointsPerVisit}
+                onChange={(e) => setFormSettings({ ...formSettings, pointsPerVisit: Number(e.target.value) })}
+                className={`${INPUT_CLASS} tabular-nums`}
+              />
+            </div>
+          )}
 
-            <div className="pt-2 flex items-center justify-center gap-2">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Premios</span>
               <button
                 type="button"
-                onClick={() => handleCopyCardLink(selectedClientForQr.id)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 px-4 py-2 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition cursor-pointer"
+                onClick={handleAddRewardTier}
+                className="-my-1 inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-primary transition hover:bg-primary/10"
               >
-                {copiedId === selectedClientForQr.id ? (
-                  <>
-                    <Check className="h-4 w-4 text-emerald-500" />
-                    <span>Copiado</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4" />
-                    <span>Copiar Enlace</span>
-                  </>
-                )}
+                <Plus className="h-3.5 w-3.5" />
+                Agregar premio
               </button>
+            </div>
 
-              <a
-                href={getWhatsAppShareUrl(selectedClientForQr.name, selectedClientForQr.phone, selectedClientForQr.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 font-bold text-white shadow-xs transition cursor-pointer"
+            {formSettings.rewards.map((tier, idx) => (
+              <div
+                key={tier.id || idx}
+                className="space-y-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/[0.02]"
               >
-                <MessageCircle className="h-4 w-4" />
-                <span>Enviar por WhatsApp</span>
-              </a>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-primary">Premio {idx + 1}</span>
+                  {formSettings.rewards.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveRewardTier(tier.id)}
+                      aria-label={`Eliminar premio ${idx + 1}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-500"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-[96px_1fr] gap-2">
+                  <div>
+                    <label htmlFor={`tier-threshold-${tier.id}`} className="mb-1 block text-[11px] text-slate-500 dark:text-zinc-400">
+                      {formSettings.mode === "points" ? "Puntos" : "Sellos"}
+                    </label>
+                    <input
+                      id={`tier-threshold-${tier.id}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={formSettings.mode === "points" ? 5000 : 50}
+                      value={tier.threshold}
+                      onChange={(e) => handleUpdateTier(tier.id, { threshold: Number(e.target.value) || 1 })}
+                      className={`${INPUT_CLASS} font-semibold tabular-nums`}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <label htmlFor={`tier-desc-${tier.id}`} className="mb-1 block text-[11px] text-slate-500 dark:text-zinc-400">
+                      Premio
+                    </label>
+                    <input
+                      id={`tier-desc-${tier.id}`}
+                      type="text"
+                      value={tier.description}
+                      onChange={(e) => handleUpdateTier(tier.id, { description: e.target.value })}
+                      placeholder="Ej. 50% OFF en el próximo servicio"
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+                </div>
+                <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {REWARD_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => handleUpdateTier(tier.id, { description: preset })}
+                      className="shrink-0 rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.06]"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </form>
+      </Modal>
+
+      {/* ═══ REDEEM MODAL ═══ */}
+      <Modal
+        open={!!redeemClient}
+        onClose={() => setRedeemClient(null)}
+        title="Canjear premio"
+        maxWidth="max-w-md"
+        footer={
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setRedeemClient(null)}
+              className="min-h-11 rounded-xl border border-slate-200/80 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 sm:min-h-10"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmRedeem}
+              disabled={!redeemTierId}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50 sm:min-h-10"
+            >
+              <Gift className="h-4 w-4" />
+              Confirmar canje
+            </button>
+          </div>
+        }
+      >
+        {redeemClient && (
+          <div className="space-y-3 text-xs">
+            <p className="text-slate-600 dark:text-zinc-300">
+              <strong className="text-slate-900 dark:text-white">{redeemClient.name}</strong> tiene{" "}
+              <strong className="tabular-nums text-slate-900 dark:text-white">{unitLabel(redeemClient.loyaltyPoints || 0)}</strong>.
+              Elegí qué premio canjea; se le descuentan los {unitShort} de ese premio.
+            </p>
+            <div className="space-y-2">
+              {redeemUnlocked.map((tier) => {
+                const isSelected = redeemTierId === tier.id;
+                return (
+                  <button
+                    key={tier.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setRedeemTierId(tier.id)}
+                    className={`flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition ${
+                      isSelected
+                        ? "border-emerald-500/60 bg-emerald-500/10"
+                        : "border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-slate-900 dark:text-white">{tier.description}</span>
+                      <span className="text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">
+                        Usa {unitLabel(tier.threshold)} · le quedan {unitLabel((redeemClient.loyaltyPoints || 0) - tier.threshold)}
+                      </span>
+                    </span>
+                    {isSelected && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
       </Modal>
+
+      {/* ═══ QR MODAL ═══ */}
+      <Modal
+        open={Boolean(qrClient)}
+        onClose={() => setQrClient(null)}
+        title="Tarjeta del cliente"
+        maxWidth="max-w-sm"
+        footer={
+          qrClient ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleCopyCardLink(qrClient.id)}
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 sm:min-h-10"
+              >
+                {copiedId === qrClient.id ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                {copiedId === qrClient.id ? "Copiado" : "Copiar enlace"}
+              </button>
+              <a
+                href={getWhatsAppShareUrl(qrClient)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 sm:min-h-10"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
+            </div>
+          ) : undefined
+        }
+      >
+        {qrClient && (
+          <div className="space-y-4 text-center text-xs">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">{qrClient.name}</h3>
+              <p className="mt-0.5 tabular-nums text-slate-500 dark:text-zinc-400">
+                {unitLabel(qrClient.loyaltyPoints || 0)} acumulados
+              </p>
+            </div>
+            <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-3xl border border-slate-200 bg-white p-3">
+              {qrCodeDataUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={qrCodeDataUrl} alt={`QR de la tarjeta de ${qrClient.name}`} className="h-full w-full object-contain" />
+              ) : (
+                <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              )}
+            </div>
+            <p className="mx-auto max-w-xs text-slate-500 dark:text-zinc-400">
+              El cliente escanea el código con la cámara del celular y abre su tarjeta.
+            </p>
+            <Link
+              href={getCardUrl(qrClient.id)}
+              target="_blank"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+            >
+              Abrir tarjeta
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
+        )}
+      </Modal>
+
+      {clients.length === 0 && (
+        <p className="flex items-center justify-center gap-2 text-center text-[11px] text-slate-500 dark:text-zinc-400">
+          <BarChart3 className="h-3.5 w-3.5" />
+          Los gráficos aparecen cuando tengas clientes registrados.
+        </p>
+      )}
     </div>
   );
 }

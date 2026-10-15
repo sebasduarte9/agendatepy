@@ -107,7 +107,7 @@ export default function IosSegmentedControl<T extends string = string>({
                 onChange(opt.value);
               }
             }}
-            className={`relative z-10 flex ${fitContent ? "flex-initial whitespace-nowrap" : "flex-1 sm:flex-initial"} items-center justify-center gap-1.5 font-bold transition-colors duration-150 cursor-pointer rounded-xl select-none outline-none ${sizeClasses[size]} ${
+            className={`relative z-10 flex ${fitContent ? "flex-initial whitespace-nowrap" : "flex-1 sm:flex-initial"} items-center justify-center gap-1.5 font-semibold transition-colors duration-150 cursor-pointer rounded-xl select-none outline-none ${sizeClasses[size]} ${
               isActive
                 ? accentColor ? "text-[var(--segment-accent)]" : "text-slate-900 dark:text-white"
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
@@ -119,7 +119,7 @@ export default function IosSegmentedControl<T extends string = string>({
               <span className="truncate">{opt.label}</span>
               {opt.badge !== undefined && (
                 <span
-                  className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-tight ${
+                  className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[11px] font-semibold tracking-tight ${
                     isActive
                       ? "bg-slate-100 dark:bg-white/15 text-slate-900 dark:text-white"
                       : "bg-slate-300/60 dark:bg-zinc-700/60 text-slate-600 dark:text-zinc-400"

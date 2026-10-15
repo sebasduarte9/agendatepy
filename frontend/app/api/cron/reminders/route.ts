@@ -35,11 +35,11 @@ async function handleCronReminders(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  // Validación de seguridad si CRON_SECRET está configurado en producción
-  if (process.env.NODE_ENV === "production" && cronSecret) {
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
+  if (process.env.NODE_ENV === "production" && !cronSecret) {
+    return NextResponse.json({ ok: false, error: "CRON_SECRET no está configurado." }, { status: 503 });
+  }
+  if (process.env.NODE_ENV === "production" && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
   const now = new Date();
@@ -70,6 +70,8 @@ async function handleCronReminders(request: NextRequest) {
     // 2. Procesar cada negocio
     for (const tenant of tenants) {
       const settings = (tenant.settings as Record<string, any>) || {};
+      const evolutionConfig = settings.evolutionConfig || {};
+      const whatsappInstance = typeof evolutionConfig.instance === "string" ? evolutionConfig.instance : "";
       const rawTemplates = settings.whatsappTemplates as ConfiguredTemplate[] | undefined;
 
       // Plantillas activas del negocio (o fallbacks estándar si no personalizó aún)
@@ -98,6 +100,8 @@ async function handleCronReminders(request: NextRequest) {
       const activeReminderTemplates = templates.filter(
         (t) =>
           t.enabled &&
+          t.trigger !== "confirmacion" &&
+          t.trigger !== "cancelacion" &&
           (t.timingMinutesBefore !== undefined ||
             t.trigger === "recordatorio_24h" ||
             t.trigger === "recordatorio_2h")
@@ -109,7 +113,7 @@ async function handleCronReminders(request: NextRequest) {
           tpl.timingMinutesBefore ??
           (tpl.trigger === "recordatorio_24h" ? 1440 : tpl.trigger === "recordatorio_2h" ? 120 : 0);
 
-        if (timingMinutes <= 0) continue;
+        if (timingMinutes < 0 || !whatsappInstance || evolutionConfig.connected !== true) continue;
 
         // Ventana de tolerancia: citas cuyo inicio cae dentro de [timing - 35 min, timing + 35 min]
         const targetDate = new Date(now.getTime() + timingMinutes * 60 * 1000);
@@ -172,7 +176,7 @@ async function handleCronReminders(request: NextRequest) {
           const cleanPhone = (app.clientPhone || "").replace(/\D/g, "");
           if (cleanPhone.length >= 8) {
             try {
-              await sendWhatsAppMessage(cleanPhone, renderedBody, false);
+              await sendWhatsAppMessage(cleanPhone, renderedBody, false, whatsappInstance);
 
               // Registrar evento atómico de envío exitoso
               await prisma.platformEvent.create({

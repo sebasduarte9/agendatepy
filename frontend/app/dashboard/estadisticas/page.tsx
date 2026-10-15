@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, Cell } from "recharts";
 import {
   CalendarDays,
@@ -92,7 +93,7 @@ const darkGlassTooltipStyle = {
 function DeltaBadge({ value, compact = false, dense = false }: { value: number | null; compact?: boolean; dense?: boolean }) {
   if (value === null) {
     return (
-      <span className={`inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] font-medium text-zinc-400 ${compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[10px]"}`}>
+      <span className={`inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] font-medium text-zinc-400 ${compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-1.5 text-[11px]"}`}>
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-500" aria-hidden="true" />
         <span>Sin período anterior</span>
       </span>
@@ -110,14 +111,14 @@ function DeltaBadge({ value, compact = false, dense = false }: { value: number |
     <span
       role="group"
       aria-label={`Variación ${up ? "positiva" : "negativa"} de ${Math.abs(value)} por ciento frente al período anterior`}
-      className={`inline-flex max-w-full shrink-0 items-center rounded-full border font-semibold leading-none transition-colors ${dense ? "gap-1 px-1.5 py-1 text-[9px] sm:gap-2 sm:px-2 sm:py-1.5 sm:text-[11px]" : compact ? "gap-1 px-1.5 py-1 text-[9px]" : "gap-2 px-2 py-1.5 text-[10px] sm:text-[11px]"} ${tone}`}
+      className={`inline-flex max-w-full shrink-0 items-center rounded-full border font-semibold leading-none transition-colors ${dense ? "gap-1 px-1.5 py-1 text-[11px] sm:gap-2 sm:px-2 sm:py-1.5 sm:text-[11px]" : compact ? "gap-1 px-1.5 py-1 text-[11px]" : "gap-2 px-2 py-1.5 text-[11px] sm:text-[11px]"} ${tone}`}
     >
       <span className={`flex shrink-0 items-center justify-center rounded-full ${dense ? "h-[18px] w-[18px] sm:h-6 sm:w-6" : compact ? "h-4 w-4" : "h-6 w-6"} ${iconTone}`} aria-hidden="true">
         <Icon className={dense ? "h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" : compact ? "h-2.5 w-2.5" : "h-3.5 w-3.5"} strokeWidth={2.5} />
       </span>
       <span className={`flex min-w-0 items-baseline pr-0.5 ${dense ? "gap-1 sm:gap-1.5 sm:pr-1" : compact ? "gap-1" : "gap-1.5 pr-1"}`}>
-        <strong className={`shrink-0 font-extrabold tabular-nums ${compact ? "delta-value text-[11px]" : dense ? "text-[11px] sm:text-xs" : "text-[11px] sm:text-xs"}`}>{up ? "+" : "−"}{Math.abs(value)}%</strong>
-        <span className={`truncate font-medium opacity-75 ${compact ? "text-[8px]" : dense ? "text-[8px] sm:text-[11px]" : "text-[10px] sm:text-[11px]"}`}>vs. anterior</span>
+        <strong className={`shrink-0 font-semibold tabular-nums ${compact ? "delta-value text-[11px]" : dense ? "text-[11px] sm:text-xs" : "text-[11px] sm:text-xs"}`}>{up ? "+" : "−"}{Math.abs(value)}%</strong>
+        <span className={`truncate font-medium opacity-75 ${compact ? "text-[11px]" : dense ? "text-[11px] sm:text-[11px]" : "text-[11px] sm:text-[11px]"}`}>vs. anterior</span>
       </span>
     </span>
   );
@@ -164,166 +165,6 @@ function MobileInsightToggle({
   );
 }
 
-const DEMO_STATS_BY_RANGE: Record<Range, Stats> = {
-  hoy: {
-    totalRevenue: 1115000,
-    revenueDelta: 18,
-    totalAppointments: 8,
-    appointmentsDelta: 14,
-    confirmedAppointments: 7,
-    cancelledAppointments: 1,
-    noShowAppointments: 0,
-    attendanceRate: 88,
-    avgTicket: 139375,
-    totalClients: 8,
-    retentionRate: 75,
-    returnCycleDays: 18,
-    lifetimeValue: 1280000,
-    areaData: [
-      { name: "09:00", ingresos: 80000, turnos: 1 },
-      { name: "10:00", ingresos: 250000, turnos: 1 },
-      { name: "11:00", ingresos: 130000, turnos: 1 },
-      { name: "13:30", ingresos: 80000, turnos: 1 },
-      { name: "14:30", ingresos: 320000, turnos: 1 },
-      { name: "16:00", ingresos: 130000, turnos: 1 },
-      { name: "17:30", ingresos: 45000, turnos: 1 },
-      { name: "18:30", ingresos: 80000, turnos: 1 },
-    ],
-    paymentMethodsData: [
-      { name: "POS Bancard", value: 450000 },
-      { name: "Efectivo", value: 380000 },
-      { name: "SIPAP / Transferencia", value: 210000 },
-      { name: "QR Pix / Bancario", value: 75000 },
-    ],
-    hourlyDistribution: [
-      { hour: "09:00", citas: 1 },
-      { hour: "10:00", citas: 2 },
-      { hour: "11:00", citas: 1 },
-      { hour: "13:00", citas: 1 },
-      { hour: "14:00", citas: 1 },
-      { hour: "15:00", citas: 0 },
-      { hour: "16:00", citas: 2 },
-      { hour: "17:00", citas: 1 },
-      { hour: "18:00", citas: 1 },
-    ],
-  },
-  semana: {
-    totalRevenue: 6840000,
-    revenueDelta: 22,
-    totalAppointments: 46,
-    appointmentsDelta: 15,
-    confirmedAppointments: 42,
-    cancelledAppointments: 3,
-    noShowAppointments: 1,
-    attendanceRate: 91,
-    avgTicket: 148695,
-    totalClients: 38,
-    retentionRate: 72,
-    returnCycleDays: 19,
-    lifetimeValue: 1420000,
-    areaData: [
-      { name: "Lun", ingresos: 720000, turnos: 5 },
-      { name: "Mar", ingresos: 890000, turnos: 6 },
-      { name: "Mié", ingresos: 950000, turnos: 7 },
-      { name: "Jue", ingresos: 1100000, turnos: 8 },
-      { name: "Vie", ingresos: 1480000, turnos: 10 },
-      { name: "Sáb", ingresos: 1700000, turnos: 10 },
-      { name: "Dom", ingresos: 0, turnos: 0 },
-    ],
-    paymentMethodsData: [
-      { name: "POS Bancard", value: 3120000 },
-      { name: "Efectivo", value: 2100000 },
-      { name: "SIPAP / Transferencia", value: 1240000 },
-      { name: "QR Bancario", value: 380000 },
-    ],
-    hourlyDistribution: [
-      { hour: "09:00", citas: 4 },
-      { hour: "10:00", citas: 6 },
-      { hour: "11:00", citas: 5 },
-      { hour: "13:00", citas: 4 },
-      { hour: "14:00", citas: 6 },
-      { hour: "15:00", citas: 7 },
-      { hour: "16:00", citas: 8 },
-      { hour: "17:00", citas: 7 },
-      { hour: "18:00", citas: 6 },
-    ],
-  },
-  mes: {
-    totalRevenue: 26500000,
-    revenueDelta: 19,
-    totalAppointments: 184,
-    appointmentsDelta: 12,
-    confirmedAppointments: 171,
-    cancelledAppointments: 10,
-    noShowAppointments: 3,
-    attendanceRate: 93,
-    avgTicket: 144021,
-    totalClients: 142,
-    retentionRate: 68,
-    returnCycleDays: 21,
-    lifetimeValue: 1550000,
-    areaData: [
-      { name: "Sem 1", ingresos: 6100000, turnos: 42 },
-      { name: "Sem 2", ingresos: 6750000, turnos: 46 },
-      { name: "Sem 3", ingresos: 6810000, turnos: 47 },
-      { name: "Sem 4", ingresos: 6840000, turnos: 49 },
-    ],
-    paymentMethodsData: [
-      { name: "POS Bancard", value: 12200000 },
-      { name: "Efectivo", value: 8100000 },
-      { name: "SIPAP / Transferencia", value: 4800000 },
-      { name: "QR Bancario", value: 1400000 },
-    ],
-    hourlyDistribution: [
-      { hour: "09:00", citas: 16 },
-      { hour: "10:00", citas: 24 },
-      { hour: "11:00", citas: 22 },
-      { hour: "13:00", citas: 15 },
-      { hour: "14:00", citas: 26 },
-      { hour: "15:00", citas: 28 },
-      { hour: "16:00", citas: 32 },
-      { hour: "17:00", citas: 29 },
-      { hour: "18:00", citas: 21 },
-    ],
-  },
-  "90": {
-    totalRevenue: 74800000,
-    revenueDelta: 25,
-    totalAppointments: 520,
-    appointmentsDelta: 18,
-    confirmedAppointments: 488,
-    cancelledAppointments: 24,
-    noShowAppointments: 8,
-    attendanceRate: 94,
-    avgTicket: 143846,
-    totalClients: 320,
-    retentionRate: 66,
-    returnCycleDays: 22,
-    lifetimeValue: 1680000,
-    areaData: [
-      { name: "Mes -2", ingresos: 23100000, turnos: 162 },
-      { name: "Mes -1", ingresos: 25200000, turnos: 174 },
-      { name: "Mes Actual", ingresos: 26500000, turnos: 184 },
-    ],
-    paymentMethodsData: [
-      { name: "POS Bancard", value: 34500000 },
-      { name: "Efectivo", value: 23200000 },
-      { name: "SIPAP / Transferencia", value: 13500000 },
-      { name: "QR Bancario", value: 3600000 },
-    ],
-    hourlyDistribution: [
-      { hour: "09:00", citas: 48 },
-      { hour: "10:00", citas: 72 },
-      { hour: "11:00", citas: 65 },
-      { hour: "13:00", citas: 45 },
-      { hour: "14:00", citas: 78 },
-      { hour: "15:00", citas: 84 },
-      { hour: "16:00", citas: 96 },
-      { hour: "17:00", citas: 87 },
-      { hour: "18:00", citas: 62 },
-    ],
-  },
-};
 
 export default function EstadisticasPage() {
   const { business, services, appointments } = useDashboardStore();
@@ -333,33 +174,47 @@ export default function EstadisticasPage() {
   const [chartMetric, setChartMetric] = useState<"ingresos" | "turnos">("ingresos");
   const [activeHeatCell, setActiveHeatCell] = useState<{ day: string; hour: number; count: number } | null>(null);
   const [expandedMobileInsights, setExpandedMobileInsights] = useState({ payments: false, services: false, loyalty: false });
-  const [stats, setStats] = useState<Stats | null>(DEMO_STATS_BY_RANGE.semana);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadStats = useCallback((r: Range) => {
+  const requestRef = useRef<AbortController | null>(null);
+  const loadStats = useCallback(async (r: Range) => {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
     setLoading(true);
+    setStats(null);
     setError(null);
-    fetch(`/api/dashboard/stats?range=${r}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Fallback demo");
-        const data = await res.json();
-        if (!data.ok || !data.stats) throw new Error("Fallback demo");
-        if (data.stats.totalRevenue === 0 && data.stats.totalAppointments === 0) {
-          setStats(DEMO_STATS_BY_RANGE[r]);
-        } else {
-          setStats(data.stats);
-        }
-      })
-      .catch(() => {
-        setStats(DEMO_STATS_BY_RANGE[r]);
-      })
-      .finally(() => setLoading(false));
+    try {
+      const res = await fetch(`/api/dashboard/stats?range=${r}`, { signal: controller.signal });
+      if (!res.ok) throw new Error("No se pudieron cargar las estadísticas.");
+      const data = await res.json();
+      if (!data.ok || !data.stats) throw new Error("No se pudieron cargar las estadísticas.");
+      if (!controller.signal.aborted) setStats(data.stats);
+    } catch {
+      if (!controller.signal.aborted) setError("No se pudieron cargar las estadísticas. Intentá de nuevo.");
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     loadStats(range);
+    return () => requestRef.current?.abort();
   }, [range, loadStats]);
+
+  const periodAppointments = useMemo(() => {
+    const tz = business.timezone || "America/Asuncion";
+    const today = fromZonedTime(`${formatInTimeZone(new Date(), tz, "yyyy-MM-dd")}T00:00:00`, tz);
+    const days = { hoy: 1, semana: 7, mes: 30, "90": 90 }[range];
+    const start = today.getTime() - (days - 1) * 86400000;
+    const end = today.getTime() + 86400000;
+    return appointments.filter(a => {
+      const time = new Date(a.start).getTime();
+      return time >= start && time < end;
+    });
+  }, [appointments, business.timezone, range]);
 
   // Top services ranking from catalogo-elementos / interfas glassy
   const topServices = useMemo(() => {
@@ -368,7 +223,7 @@ export default function EstadisticasPage() {
     services.forEach((s) => {
       serviceMap[s.id] = { name: s.name, total: 0, count: 0 };
     });
-    appointments.forEach((a) => {
+    periodAppointments.forEach((a) => {
       if (a.status !== "cancelled" && serviceMap[a.serviceId]) {
         const s = services.find((srv) => srv.id === a.serviceId);
         const price = s?.price ?? 80000;
@@ -377,14 +232,6 @@ export default function EstadisticasPage() {
       }
     });
     const list = Object.values(serviceMap).filter((item) => item.total > 0 || item.count > 0);
-    if (list.length === 0) {
-      return [
-        { name: services[0]?.name || "Corte Degradé / Fade", total: 480000, pct: 100 },
-        { name: services[1]?.name || "Perfilado de Barba & Ritual", total: 320000, pct: 67 },
-        { name: services[2]?.name || "Tratamiento Capilar Nutritivo", total: 210000, pct: 44 },
-        { name: services[3]?.name || "Corte Clásico a Tijera", total: 160000, pct: 33 },
-      ];
-    }
     const maxTotal = Math.max(...list.map((i) => i.total), 1);
     return list
       .sort((a, b) => b.total - a.total)
@@ -394,7 +241,7 @@ export default function EstadisticasPage() {
         total: item.total,
         pct: Math.round((item.total / maxTotal) * 100),
       }));
-  }, [services, appointments]);
+  }, [services, periodAppointments]);
 
   // Heatmap matrix: 7 days (Lun..Dom) x [9, 11, 13, 15, 17]
   const heatmapMatrix = useMemo(() => {
@@ -402,12 +249,12 @@ export default function EstadisticasPage() {
     for (let d = 0; d < 7; d++) {
       matrix[d] = { 9: 0, 11: 0, 13: 0, 15: 0, 17: 0 };
     }
-    appointments.forEach((a) => {
+    periodAppointments.forEach((a) => {
       if (a.status === "cancelled") return;
       try {
         const date = new Date(a.start);
-        const dayOfWeek = (date.getDay() + 6) % 7;
-        const hour = date.getHours();
+        const dayOfWeek = Number(formatInTimeZone(date, business.timezone, "i")) - 1;
+        const hour = Number(formatInTimeZone(date, business.timezone, "H"));
         const bucket = [9, 11, 13, 15, 17].find((h) => hour >= h && hour < h + 2) || (hour < 9 ? 9 : 17);
         if (matrix[dayOfWeek] && matrix[dayOfWeek][bucket] !== undefined) {
           matrix[dayOfWeek][bucket] += 1;
@@ -417,21 +264,8 @@ export default function EstadisticasPage() {
       }
     });
 
-    const totalCount = Object.values(matrix).reduce(
-      (acc, row) => acc + Object.values(row).reduce((s, v) => s + v, 0),
-      0
-    );
-    if (totalCount === 0) {
-      matrix[0] = { 9: 1, 11: 2, 13: 0, 15: 2, 17: 3 };
-      matrix[1] = { 9: 2, 11: 1, 13: 1, 15: 3, 17: 4 };
-      matrix[2] = { 9: 1, 11: 3, 13: 2, 15: 4, 17: 3 };
-      matrix[3] = { 9: 3, 11: 4, 13: 1, 15: 3, 17: 5 };
-      matrix[4] = { 9: 4, 11: 5, 13: 3, 15: 5, 17: 6 };
-      matrix[5] = { 9: 5, 11: 6, 13: 4, 15: 6, 17: 7 };
-      matrix[6] = { 9: 1, 11: 2, 13: 0, 15: 1, 17: 1 };
-    }
     return matrix;
-  }, [appointments]);
+  }, [periodAppointments, business.timezone]);
 
   const areaData = stats?.areaData ?? [];
   const hasTrend = areaData.some((d) => d.turnos > 0 || d.ingresos > 0);
@@ -523,7 +357,7 @@ export default function EstadisticasPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <div>
           <span className="eyebrow">TELEMETRÍA & RENDIMIENTO</span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
             Estadísticas
           </h1>
           <p className="text-xs text-zinc-400 mt-1">Resumen · {RANGE_LABELS[range]}</p>
@@ -563,11 +397,11 @@ export default function EstadisticasPage() {
 
       {error && (
         <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 flex items-center justify-between gap-3 backdrop-blur-md">
-          <p className="text-xs font-semibold text-rose-300">{error}</p>
+          <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">{error}</p>
           <button
             type="button"
             onClick={() => loadStats(range)}
-            className="shrink-0 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 text-xs transition cursor-pointer"
+            className="shrink-0 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold px-3 py-1.5 text-xs transition cursor-pointer"
           >
             Reintentar
           </button>
@@ -603,7 +437,7 @@ export default function EstadisticasPage() {
             />
             <MetricCard
               label="Tasa de Asistencia"
-              value={stats.attendanceRate ?? 100}
+              value={stats.attendanceRate ?? 0}
               suffix="%"
               context={`${stats.confirmedAppointments} atendidos de ${stats.totalAppointments}`}
             />
@@ -620,8 +454,8 @@ export default function EstadisticasPage() {
             <div className="space-y-3 sm:space-y-4">
               <div>
                 <span className="eyebrow">FLUJO & OPERACIONES</span>
-                <h3 className="text-[15px] sm:text-lg font-bold text-slate-900 dark:text-white">Evolución de Rendimiento</h3>
-                <p className="subtitle text-[13px] leading-[1.4] sm:text-base">
+                <h3 className="text-[15px] sm:text-lg font-semibold text-slate-900 dark:text-white">Evolución de Rendimiento</h3>
+                <p className="subtitle text-sm leading-[1.4] sm:text-base">
                   {`${chartMetric === "ingresos" ? "Facturación registrada" : "Turnos atendidos"} en el período seleccionado`}
                 </p>
               </div>
@@ -633,8 +467,8 @@ export default function EstadisticasPage() {
                       <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-amber-400/15 text-amber-700 dark:text-amber-300 sm:h-6 sm:w-6" aria-hidden="true">
                         <TrendingUp className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
                       </span>
-                      <span className="text-[8px] font-bold uppercase tracking-[0.08em] text-amber-700/70 dark:text-amber-200/65 sm:text-[9px] sm:tracking-[0.1em]">Pico</span>
-                      <span className="text-[10px] font-bold text-amber-800 dark:text-amber-100 sm:text-[11px]">{peakDay}</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-700/70 dark:text-amber-200/65 sm:text-[11px] sm:tracking-[0.1em]">Pico</span>
+                      <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-100 sm:text-[11px]">{peakDay}</span>
                     </span>
                   )}
                   <DeltaBadge value={chartMetric === "ingresos" ? stats.revenueDelta : stats.appointmentsDelta} dense />
@@ -691,7 +525,7 @@ export default function EstadisticasPage() {
 
           {/* 3. Goals & Savings Row (Interfas Glassy architecture) */}
           <div className="section-head mb-3 mt-5">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-wide">
+            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white tracking-wide">
               Metas, Fidelización & Volumen
             </h2>
           </div>
@@ -701,14 +535,14 @@ export default function EstadisticasPage() {
             <div className="panel goal-card">
               <div className="goal-top">
                 <span className="value text-emerald-400">
-                  {stats.attendanceRate === null ? "100%" : `${stats.attendanceRate}%`}
+                  {stats.attendanceRate === null ? "Sin datos" : `${stats.attendanceRate}%`}
                 </span>
                 <CheckCircle2 className="text-emerald-400/40" />
               </div>
               <div className="progress mt-3 mb-2">
                 <span
                   style={{
-                    width: `${Math.min(100, stats.attendanceRate ?? 100)}%`,
+                    width: `${Math.min(100, stats.attendanceRate ?? 0)}%`,
                     background: "var(--green, #10b981)",
                   }}
                 />
@@ -720,14 +554,14 @@ export default function EstadisticasPage() {
             <div className="panel goal-card">
               <div className="goal-top">
                 <span className="value text-primary">
-                  {stats.retentionRate === null ? "75%" : `${stats.retentionRate}%`}
+                  {stats.retentionRate === null ? "Sin datos" : `${stats.retentionRate}%`}
                 </span>
                 <Users className="text-primary/40" />
               </div>
               <div className="progress mt-3 mb-2">
                 <span
                   style={{
-                    width: `${Math.min(100, stats.retentionRate ?? 75)}%`,
+                    width: `${Math.min(100, stats.retentionRate ?? 0)}%`,
                     background: "var(--primary, #FF4F2B)",
                   }}
                 />
@@ -800,7 +634,7 @@ export default function EstadisticasPage() {
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                   </div>
-                  <span className="stats-pod-value mt-2 block text-2xl font-black font-mono text-slate-900 dark:text-white">
+                  <span className="stats-pod-value mt-2 block text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
                     <AnimatedValue value={p.value} />
                   </span>
                 </div>
@@ -826,7 +660,7 @@ export default function EstadisticasPage() {
             <div className="panel glass-panel p-4 sm:p-6 space-y-4">
               <div className="panel-head border-b border-white/10 pb-3 mb-2">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Métodos de Cobro</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Métodos de Cobro</h3>
                   <p className="subtitle">Desglose según cobros registrados en caja</p>
                 </div>
               </div>
@@ -854,7 +688,7 @@ export default function EstadisticasPage() {
             <div className="panel glass-panel p-4 sm:p-6 space-y-4">
               <div className="panel-head flex flex-wrap items-start justify-between gap-2 border-b border-white/10 pb-3 mb-2">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Distribución por Hora</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Distribución por Hora</h3>
                   <p className="subtitle">Horarios de mayor concentración de citas</p>
                 </div>
                 {peakHour && (
@@ -890,7 +724,7 @@ export default function EstadisticasPage() {
                 )}
               </div>
               {peakHour && (
-                <p className="rounded-xl glass-panel-subtle p-3 text-xs text-zinc-300">
+                <p className="rounded-xl glass-panel-subtle p-3 text-xs text-slate-600 dark:text-zinc-300">
                   Pico de actividad: <strong className="text-slate-900 dark:text-white">{peakHour} hs</strong>. Recomendamos asegurar cobertura completa en ese tramo.
                 </p>
               )}
@@ -917,7 +751,7 @@ export default function EstadisticasPage() {
             <div className="panel glass-panel min-w-0 p-4 sm:p-6 space-y-4">
               <div className="panel-head border-b border-white/10 pb-3 mb-2">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Servicios que Destacan</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Servicios que Destacan</h3>
                   <p className="subtitle">Demanda y facturación de servicios líderes</p>
                 </div>
               </div>
@@ -927,7 +761,7 @@ export default function EstadisticasPage() {
                   <div key={srv.name} className="space-y-1.5">
                     <div className="flex min-w-0 flex-row items-start justify-between gap-2">
                       <span className="min-w-0 break-words text-xs font-semibold text-slate-700 dark:text-zinc-200">{srv.name}</span>
-                      <b className="shrink-0 whitespace-nowrap font-mono text-[10px] sm:text-xs text-slate-900 dark:text-white">{formatGs(srv.total)}</b>
+                      <b className="shrink-0 whitespace-nowrap tabular-nums text-[11px] sm:text-xs text-slate-900 dark:text-white">{formatGs(srv.total)}</b>
                     </div>
                     <div className="progress">
                       <span style={{ width: `${srv.pct}%`, background: brandColor }} />
@@ -941,7 +775,7 @@ export default function EstadisticasPage() {
             <div className="panel glass-panel min-w-0 p-4 sm:p-6 space-y-4">
               <div className="panel-head border-b border-white/10 pb-3 mb-2">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Horas con más Movimiento</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Horas con más Movimiento</h3>
                   <p className="subtitle">Intensidad de citas registradas por día de la semana</p>
                 </div>
               </div>
@@ -950,13 +784,13 @@ export default function EstadisticasPage() {
                 <div className="heatmap w-full min-w-0">
                   <span></span>
                   {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
-                    <span key={d} className="font-bold text-[11px] text-zinc-400">
+                    <span key={d} className="font-semibold text-[11px] text-zinc-400">
                       {d}
                     </span>
                   ))}
                   {[9, 11, 13, 15, 17].map((h) => (
                     <div key={h} className="contents">
-                      <span className="font-mono text-[10px] text-zinc-400">{h}h</span>
+                      <span className="tabular-nums text-[11px] text-zinc-400">{h}h</span>
                       {Array.from({ length: 7 }, (_, dayIdx) => {
                         const count = heatmapMatrix[dayIdx]?.[h] || 0;
                         const heatOpacity = Math.min(0.85, 0.05 + count * 0.16);
@@ -1036,11 +870,11 @@ export default function EstadisticasPage() {
                     <div className="flex items-center justify-between text-zinc-400 mb-2">
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4 text-primary" />
-                        <span className="text-[11px] font-bold uppercase tracking-wider">{m.label}</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider">{m.label}</span>
                       </div>
                       <span className="badge purple">{m.badge}</span>
                     </div>
-                    <p className="mt-2 text-2xl font-black font-mono text-slate-900 dark:text-white">
+                    <p className="mt-2 text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
                       {m.value ? <AnimatedValue value={m.value} /> : <span className="text-zinc-500">—</span>}
                     </p>
                   </div>

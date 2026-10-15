@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -47,6 +47,16 @@ import CustomSelect, { CustomSelectOption } from "@/components/dashboard/ui/Cust
 import { formatGs } from "@/lib/dashboard-dates";
 import type { CrmChannel, CrmConversation, ProductOrderStatus } from "@/lib/dashboard-types";
 import { tenantPublicUrl } from "@/lib/tenant/public-url";
+
+// Demo timestamps are created separately on the server and browser. Render them
+// after hydration, using the business timezone rather than the device timezone.
+const subscribeToHydration = () => () => {};
+function ConversationTime({ value, timezone }: { value: string; timezone: string }) {
+  const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
+  return <time>{hydrated ? new Date(value).toLocaleTimeString("es-PY", {
+    hour: "2-digit", minute: "2-digit", timeZone: timezone,
+  }) : "—"}</time>;
+}
 
 /* ── Channel SVG Icons ── */
 function ChannelIcon({ channel, size = "md" }: { channel: CrmChannel; size?: "sm" | "md" | "lg" }) {
@@ -348,26 +358,42 @@ export default function CrmOmnichannelPage() {
 
   useEffect(() => {
     const viewport = window.visualViewport;
+    const mobileShell = workspaceRef.current?.closest<HTMLElement>(".mobile-dashboard-shell");
     const syncVisualViewport = () => {
       const height = viewport?.height ?? window.innerHeight;
-      workspaceRef.current?.style.setProperty("--crm-visual-viewport-height", `${height}px`);
+      const workspace = workspaceRef.current;
+      const main = workspace?.closest("main");
+      const shell = workspace?.closest<HTMLElement>(".mobile-dashboard-shell");
+      if (shell) shell.style.height = `${height}px`;
+      if (workspace && main && window.innerWidth < 1024 && workspace.getClientRects().length) {
+        const bottom = Math.min(main.getBoundingClientRect().bottom, height);
+        const padding = parseFloat(getComputedStyle(main).paddingBottom);
+        const available = bottom - workspace.getBoundingClientRect().top - padding;
+        workspace.style.setProperty("--crm-workspace-height", `${Math.max(0, available)}px`);
+      }
       window.dispatchEvent(new CustomEvent("agendate-crm-keyboard-state", {
         detail: { open: window.innerWidth < 1024 && replyInputFocused },
       }));
     };
 
+    const main = workspaceRef.current?.closest("main");
+    if (window.innerWidth < 1024 && main) main.scrollTop = 0;
+    const observer = new ResizeObserver(syncVisualViewport);
+    if (main) observer.observe(main);
     syncVisualViewport();
     viewport?.addEventListener("resize", syncVisualViewport);
     viewport?.addEventListener("scroll", syncVisualViewport);
     window.addEventListener("resize", syncVisualViewport);
 
     return () => {
+      observer.disconnect();
+      mobileShell?.style.removeProperty("height");
       viewport?.removeEventListener("resize", syncVisualViewport);
       viewport?.removeEventListener("scroll", syncVisualViewport);
       window.removeEventListener("resize", syncVisualViewport);
       window.dispatchEvent(new CustomEvent("agendate-crm-keyboard-state", { detail: { open: false } }));
     };
-  }, [replyInputFocused]);
+  }, [replyInputFocused, mobileActiveView, mainSection, crmConversations.length]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("agendate-crm-mobile-view-state", {
@@ -565,19 +591,19 @@ export default function CrmOmnichannelPage() {
           mobileActiveView !== "list" ? "hidden lg:flex" : "flex"
         }`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white font-black text-sm shadow-xs"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white font-semibold text-sm shadow-xs"
             style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
           >
             <MessageSquare className="h-5 w-5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
                 CRM & Mensajería
               </h1>
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>{evolutionConfig.connected ? "En línea" : "Desconectado"}</span>
               </span>
@@ -590,7 +616,7 @@ export default function CrmOmnichannelPage() {
 
         {/* Center / Right: App Navigation Pills + Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div data-tour="crm-switcher" className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-white/5">
+          <div data-tour="crm-switcher" className="crm-switcher flex min-w-0 max-w-full items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-white/5">
             <button
               type="button"
               onClick={() => setMainSection("mensajes")}
@@ -599,7 +625,7 @@ export default function CrmOmnichannelPage() {
                   ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
                   : undefined
               }
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 mainSection === "mensajes"
                   ? "shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -608,7 +634,7 @@ export default function CrmOmnichannelPage() {
               <MessageSquare className="h-3.5 w-3.5" />
               <span>Chats</span>
               {unreadTotal > 0 && (
-                <span className="bg-rose-500 text-white text-[9.5px] px-1.5 rounded-full font-black">
+                <span className="bg-rose-500 text-white text-[11px] px-1.5 rounded-full font-semibold">
                   {unreadTotal}
                 </span>
               )}
@@ -622,7 +648,7 @@ export default function CrmOmnichannelPage() {
                   ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
                   : undefined
               }
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 mainSection === "pedidos"
                   ? "shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -631,7 +657,7 @@ export default function CrmOmnichannelPage() {
               <ShoppingBag className="h-3.5 w-3.5" />
               <span>Pedidos</span>
               {pendingOrdersCount > 0 && (
-                <span className="bg-amber-500 text-white text-[9.5px] px-1.5 rounded-full font-black">
+                <span className="bg-amber-500 text-white text-[11px] px-1.5 rounded-full font-semibold">
                   {pendingOrdersCount}
                 </span>
               )}
@@ -645,7 +671,7 @@ export default function CrmOmnichannelPage() {
                   ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
                   : undefined
               }
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 mainSection === "metricas"
                   ? "shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -662,7 +688,7 @@ export default function CrmOmnichannelPage() {
               onClick={() => setChannelsModalOpen(true)}
               aria-label="Conectar canales por QR"
               title="Conectar canales por QR"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-500 sm:min-h-10 sm:min-w-0 cursor-pointer"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-500 sm:min-h-10 sm:min-w-0 cursor-pointer"
             >
               <QrCode aria-hidden="true" className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Conectar QR</span>
@@ -701,13 +727,13 @@ export default function CrmOmnichannelPage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200 dark:border-emerald-800/40 mb-4 shadow-xs">
               <QrCode className="h-8 w-8" />
             </div>
-            <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-bold text-primary mb-2">Bandeja Vacía</span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight max-w-xl mx-auto">Conectá tus redes y recibí mensajes</h2>
+            <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-semibold text-primary mb-2">Bandeja Vacía</span>
+            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white tracking-tight max-w-xl mx-auto">Conectá tus redes y recibí mensajes</h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto mt-2 leading-relaxed">
               Vinculá tu WhatsApp escaneando el código QR, recibí consultas de clientes y gestioná turnos y pedidos de forma centralizada.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button type="button" onClick={() => setChannelsModalOpen(true)} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 text-xs font-bold shadow-md transition cursor-pointer">
+              <button type="button" onClick={() => setChannelsModalOpen(true)} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 text-xs font-semibold shadow-md transition cursor-pointer">
                 <QrCode className="h-4 w-4" /><span>Conectar WhatsApp QR</span>
               </button>
               <button type="button" onClick={loadDemoConversation} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-white px-4 py-3 text-xs font-semibold border border-slate-200/80 dark:border-white/10 transition cursor-pointer">
@@ -719,7 +745,8 @@ export default function CrmOmnichannelPage() {
           /* ═══ 3-PANE NATIVE MESSENGER WORKSPACE ═══ */
           <div
             ref={workspaceRef}
-            className={`w-full rounded-3xl glass-panel-subtle overflow-hidden flex flex-col lg:flex-row ${
+            data-crm-view={mobileActiveView}
+            className={`crm-workspace w-full rounded-3xl glass-panel-subtle overflow-hidden flex flex-col lg:flex-row ${
               mobileActiveView !== "list"
               ? "h-[calc(var(--crm-visual-viewport-height,100dvh)-7.75rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(var(--crm-visual-viewport-height,100dvh)-7.75rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
               : "h-[calc(var(--crm-visual-viewport-height,100dvh)-14.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(var(--crm-visual-viewport-height,100dvh)-11rem)] lg:h-[calc(100dvh-13.25rem)] min-h-0 sm:min-h-[560px] lg:min-h-[420px]"
@@ -764,7 +791,7 @@ export default function CrmOmnichannelPage() {
                 </div>
 
                 {/* Channel Filter Tabs */}
-                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-200/60 dark:bg-slate-800/80 rounded-xl text-[10.5px]">
+                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-200/60 dark:bg-slate-800/80 rounded-xl text-[11px]">
                   {(["todos", "whatsapp", "instagram", "messenger"] as const).map((ch) => {
                     const counts: Record<string, number> = {
                       todos: crmConversations.length,
@@ -784,7 +811,7 @@ export default function CrmOmnichannelPage() {
                         aria-label={`${channelNames[ch]}${unreads[ch] > 0 ? `, ${unreads[ch]} sin leer` : ""}`}
                         aria-pressed={active}
                         title={channelNames[ch]}
-                        className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold transition relative cursor-pointer ${
+                        className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-semibold transition relative cursor-pointer ${
                           active
                             ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
                             : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -809,7 +836,7 @@ export default function CrmOmnichannelPage() {
                         onClick={() => setStatusFilter(st)}
                         className={`font-semibold transition cursor-pointer ${
                           statusFilter === st
-                            ? "text-primary font-bold border-b-2 border-primary pb-0.5"
+                            ? "text-primary font-semibold border-b-2 border-primary pb-0.5"
                             : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                       >
@@ -818,7 +845,7 @@ export default function CrmOmnichannelPage() {
                     ))}
                   </div>
                   {unreadTotal > 0 && (
-                    <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                    <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
                       {unreadTotal} sin leer
                     </span>
                   )}
@@ -865,7 +892,7 @@ export default function CrmOmnichannelPage() {
                             channel={c.channel}
                             tenantSlug={business.slug || "workspace"}
                             color={business.primaryColor || "#0f172a"}
-                            className="h-11 w-11 rounded-2xl font-black text-xs shadow-2xs"
+                            className="h-11 w-11 rounded-2xl font-semibold text-xs shadow-2xs"
                           />
                           <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-[#1f1c21] shadow-xs border border-slate-200/60 dark:border-white/10">
                             <ChannelIcon channel={c.channel} size="sm" />
@@ -875,14 +902,11 @@ export default function CrmOmnichannelPage() {
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1 mb-0.5">
-                            <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            <h4 className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                               {c.clientName}
                             </h4>
-                            <span className="text-[10px] text-slate-400 shrink-0 font-medium">
-                              {new Date(c.lastMessageTime).toLocaleTimeString("es-PY", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                            <span className="text-[11px] text-slate-400 shrink-0 font-medium">
+                              <ConversationTime value={c.lastMessageTime} timezone={business.timezone} />
                             </span>
                           </div>
 
@@ -891,16 +915,16 @@ export default function CrmOmnichannelPage() {
                               {c.lastMessage}
                             </p>
                             {c.unreadCount > 0 && (
-                              <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[9.5px] font-extrabold text-white shrink-0">
+                              <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[11px] font-semibold text-white shrink-0">
                                 {c.unreadCount}
                               </span>
                             )}
                           </div>
 
-                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-400 tabular-nums">
                             <span className="truncate">{c.channelIdentifier}</span>
                             {c.status === "resolved" && (
-                              <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-1 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">
+                              <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                                 Resuelto
                               </span>
                             )}
@@ -941,7 +965,7 @@ export default function CrmOmnichannelPage() {
                           channel={activeConversation.channel}
                           tenantSlug={business.slug || "workspace"}
                           color={business.primaryColor || "#0f172a"}
-                          className="h-8 w-8 rounded-xl font-bold text-[11px] shadow-xs sm:h-9 sm:w-9 sm:text-xs"
+                          className="h-8 w-8 rounded-xl font-semibold text-[11px] shadow-xs sm:h-9 sm:w-9 sm:text-xs"
                         />
                         <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-2xs">
                           <ChannelIcon channel={activeConversation.channel} size="sm" />
@@ -949,13 +973,13 @@ export default function CrmOmnichannelPage() {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-[13px] font-bold leading-tight text-slate-900 dark:text-white sm:text-sm">
+                        <h3 className="truncate text-sm font-semibold leading-tight text-slate-900 dark:text-white sm:text-sm">
                           {activeConversation.clientName}
                         </h3>
-                        <div className="mt-1 flex min-w-0 items-center gap-1.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400 sm:text-[11px]">
+                        <div className="mt-1 flex min-w-0 items-center gap-1.5 truncate tabular-nums text-[11px] text-slate-500 dark:text-slate-400 sm:text-[11px]">
                           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
                           <span className="sr-only">En línea</span>
-                          <span className="hidden shrink-0 font-bold text-emerald-600 dark:text-emerald-400 sm:inline" aria-hidden="true">En línea</span>
+                          <span className="hidden shrink-0 font-semibold text-emerald-600 dark:text-emerald-400 sm:inline" aria-hidden="true">En línea</span>
                           <span className="hidden sm:inline" aria-hidden="true">·</span>
                           <span className="min-w-0 truncate">{activeConversation.channelIdentifier}</span>
                         </div>
@@ -985,7 +1009,7 @@ export default function CrmOmnichannelPage() {
                           onClick={() => reopenCrmConversation(activeConversation.id)}
                           aria-label="Reabrir conversación"
                           title="Reabrir conversación"
-                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-white cursor-pointer sm:h-auto sm:w-auto sm:px-2.5 sm:py-1.5 sm:text-[11px] sm:font-bold"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-white cursor-pointer sm:h-auto sm:w-auto sm:px-2.5 sm:py-1.5 sm:text-[11px] sm:font-semibold"
                         >
                           <RefreshCw className="h-4 w-4 sm:hidden" />
                           <span className="hidden sm:inline">Reabrir</span>
@@ -996,7 +1020,7 @@ export default function CrmOmnichannelPage() {
                           onClick={() => resolveCrmConversation(activeConversation.id)}
                           aria-label="Marcar conversación como resuelta"
                           title="Marcar conversación como resuelta"
-                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800/60 dark:bg-emerald-950/60 dark:text-emerald-300 cursor-pointer sm:h-auto sm:w-auto sm:px-2.5 sm:py-1.5 sm:text-[11px] sm:font-bold"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800/60 dark:bg-emerald-950/60 dark:text-emerald-300 cursor-pointer sm:h-auto sm:w-auto sm:px-2.5 sm:py-1.5 sm:text-[11px] sm:font-semibold"
                         >
                           <CheckCircle2 className="h-4 w-4 sm:hidden" />
                           <span className="hidden sm:inline">Resuelto</span>
@@ -1033,7 +1057,7 @@ export default function CrmOmnichannelPage() {
                   >
                     {/* Security Notice */}
                     <div className="text-center">
-                      <span className="rounded-full bg-slate-200/60 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
+                      <span className="rounded-full bg-slate-200/60 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-3 py-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
                         <Shield className="h-3 w-3 text-emerald-500" />
                         <span>Conversación cifrada vía {activeConversation.channel}</span>
                       </span>
@@ -1056,28 +1080,28 @@ export default function CrmOmnichannelPage() {
 
                         <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-200/70 pt-4 dark:border-white/10">
                           <div className="min-w-0">
-                            <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Cliente</dt>
+                            <dt className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Cliente</dt>
                             <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-200">{activeConversation.clientName}</dd>
                           </div>
                           <div className="min-w-0">
-                            <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">WhatsApp</dt>
+                            <dt className="text-[11px] font-medium text-slate-500 dark:text-slate-400">WhatsApp</dt>
                             <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-200">{activeConversation.channelIdentifier}</dd>
                           </div>
                           {linkedClient && (
                             <>
                               <div>
-                                <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Visitas</dt>
+                                <dt className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Visitas</dt>
                                 <dd className="mt-0.5 text-xs font-semibold text-slate-800 dark:text-slate-200">{linkedClient.totalVisits}</dd>
                               </div>
                               <div>
-                                <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Consumo total</dt>
+                                <dt className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Consumo total</dt>
                                 <dd className="mt-0.5 text-xs font-semibold text-slate-800 dark:text-slate-200">{formatGs(linkedClient.totalSpent)}</dd>
                               </div>
                             </>
                           )}
                           {linkedClient?.notes && (
                             <div className="col-span-2">
-                              <dt className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Notas del cliente</dt>
+                              <dt className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Notas del cliente</dt>
                               <dd className="mt-0.5 text-xs leading-relaxed text-slate-700 dark:text-slate-300">{linkedClient.notes}</dd>
                             </div>
                           )}
@@ -1109,30 +1133,30 @@ export default function CrmOmnichannelPage() {
                             {m.receiptAttachment && (
                               <div className="mt-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-50/90 dark:bg-emerald-950/50 p-3 text-slate-800 dark:text-slate-100 space-y-2">
                                 <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5">
-                                  <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-800 dark:text-emerald-300">
+                                  <div className="flex items-center gap-1.5 font-semibold text-xs text-emerald-800 dark:text-emerald-300">
                                     <Building2 className="h-4 w-4 text-emerald-600" />
                                     <span>{m.receiptAttachment.bankOrigin}</span>
                                   </div>
-                                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9.5px] font-extrabold text-emerald-700 dark:text-emerald-300">
+                                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                                     Transferencia
                                   </span>
                                 </div>
 
                                 <div className="flex items-baseline justify-between">
                                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Monto Acreditado:</span>
-                                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
                                     {formatGs(m.receiptAttachment.amount)}
                                   </span>
                                 </div>
 
-                                <div className="flex items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400 font-mono">
+                                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
                                   <span>Operación:</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200">
                                     {m.receiptAttachment.operationNumber}
                                   </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px]">
+                                <div className="grid grid-cols-2 gap-1.5 pt-1 text-[11px]">
                                   <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold bg-white/80 dark:bg-slate-900/60 rounded-lg p-1 border border-emerald-500/20">
                                     <QrCode className="h-3.5 w-3.5 text-emerald-600" />
                                     <span>QR Validado</span>
@@ -1154,13 +1178,13 @@ export default function CrmOmnichannelPage() {
                                           `Comprobante ${m.receiptAttachment!.operationNumber} de ${activeConversation.clientName} APROBADO.`
                                         );
                                       }}
-                                      className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 text-[11px] transition shadow-xs cursor-pointer"
+                                      className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 text-[11px] transition shadow-xs cursor-pointer"
                                     >
                                       <CheckCircle2 className="h-3.5 w-3.5" />
                                       <span>Aprobar Transferencia</span>
                                     </button>
                                   ) : (
-                                    <div className="w-full py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5">
+                                    <div className="w-full py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-semibold text-[11px] flex items-center justify-center gap-1.5">
                                       <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                                       <span>Comprobante Aprobado & Turno Confirmado</span>
                                     </div>
@@ -1170,15 +1194,12 @@ export default function CrmOmnichannelPage() {
                             )}
 
                             <div
-                              className={`mt-1 flex items-center justify-end gap-1 text-[9.5px] ${
+                              className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${
                                 isAgent ? "text-white/80" : "text-slate-400"
                               }`}
                             >
                               <span>
-                                {new Date(m.timestamp).toLocaleTimeString("es-PY", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                                <ConversationTime value={m.timestamp} timezone={business.timezone} />
                               </span>
                               {isAgent && <CheckCheck className="h-3.5 w-3.5 text-sky-200" />}
                             </div>
@@ -1207,7 +1228,7 @@ export default function CrmOmnichannelPage() {
 
                   {/* Quick Replies Carousel */}
                   <div className="px-3.5 py-1.5 border-t border-slate-200/70 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1 mr-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1 mr-1">
                       <Zap className="h-3 w-3 text-amber-500" />
                       <span>Rápidas:</span>
                     </span>
@@ -1261,7 +1282,7 @@ export default function CrmOmnichannelPage() {
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                   <MessageSquare className="h-12 w-12 text-slate-300 dark:text-slate-700 mb-3" />
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Seleccioná una conversación para chatear
                   </p>
                 </div>
@@ -1287,11 +1308,12 @@ export default function CrmOmnichannelPage() {
                       <button
                         type="button"
                         onClick={() => setMobileActiveView("chat")}
+                        aria-label="Volver al chat"
                         className="lg:hidden p-1.5 rounded-xl text-slate-600 hover:bg-slate-100"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
-                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-white">
                         Ficha del Contacto
                       </h4>
                     </div>
@@ -1315,18 +1337,18 @@ export default function CrmOmnichannelPage() {
                         channel={activeConversation.channel}
                         tenantSlug={business.slug || "workspace"}
                         color={business.primaryColor || "#0f172a"}
-                        className="mx-auto mb-2 h-14 w-14 rounded-3xl font-black text-lg shadow-xs"
+                        className="mx-auto mb-2 h-14 w-14 rounded-3xl font-semibold text-lg shadow-xs"
                       />
-                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                      <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                         {activeConversation.clientName}
                       </h3>
-                      <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                      <p className="text-[11px] text-slate-400 tabular-nums mt-0.5">
                         {activeConversation.channelIdentifier}
                       </p>
                       {linkedClient?.tags && (
                         <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
                           {linkedClient.tags.map((t) => (
-                            <span key={t} className="rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5">
+                            <span key={t} className="rounded-full bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5">
                               {t}
                             </span>
                           ))}
@@ -1336,7 +1358,7 @@ export default function CrmOmnichannelPage() {
 
                     {/* Action Buttons */}
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                         Acciones Operativas:
                       </p>
                       <button
@@ -1346,7 +1368,7 @@ export default function CrmOmnichannelPage() {
                           pushToast("success", `Abriendo calendario para agendar a ${activeConversation.clientName}`);
                         }}
                         style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-2.5 text-xs font-bold shadow-xs transition cursor-pointer hover:brightness-110 active:scale-98"
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-2.5 text-xs font-semibold shadow-xs transition cursor-pointer hover:brightness-110 active:scale-98"
                       >
                         <Calendar className="h-4 w-4" />
                         <span>Agendar Turno</span>
@@ -1355,7 +1377,7 @@ export default function CrmOmnichannelPage() {
                       <button
                         type="button"
                         onClick={() => setOrderModalOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white py-2.5 text-xs font-bold shadow-xs transition cursor-pointer active:scale-98"
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:text-white text-white py-2.5 text-xs font-semibold shadow-xs transition cursor-pointer active:scale-98"
                       >
                         <ShoppingBag className="h-4 w-4" />
                         <span>Crear Pedido de Producto</span>
@@ -1373,7 +1395,7 @@ export default function CrmOmnichannelPage() {
 
                     {/* Active Channel Card */}
                     <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Canal Activo:</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Canal Activo:</p>
                       <div className="flex items-center justify-between text-xs p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
                         <div className="flex items-center gap-2">
                           <ChannelIcon channel={activeConversation.channel} size="sm" />
@@ -1381,7 +1403,7 @@ export default function CrmOmnichannelPage() {
                             {activeConversation.channel}
                           </span>
                         </div>
-                        <span className="text-[10px] text-emerald-600 font-bold">Conectado</span>
+                        <span className="text-[11px] text-emerald-600 font-semibold">Conectado</span>
                       </div>
                     </div>
 
@@ -1389,16 +1411,16 @@ export default function CrmOmnichannelPage() {
                     {linkedClient && (
                       <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
+                          <span className="font-semibold text-amber-900 dark:text-amber-300 flex items-center gap-1">
                             <Award className="h-3.5 w-3.5 text-amber-500" /> Fidelización:
                           </span>
-                          <span className="font-mono font-black text-amber-800 dark:text-amber-200">
+                          <span className="tabular-nums font-semibold text-amber-800 dark:text-amber-200">
                             {linkedClient.loyaltyPoints} / 5 sellos
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
                           <span>Consumo total:</span>
-                          <span className="font-bold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-slate-900 dark:text-white">
                             {formatGs(linkedClient.totalSpent)}
                           </span>
                         </div>
@@ -1408,16 +1430,16 @@ export default function CrmOmnichannelPage() {
                     {/* Order History */}
                     {clientOrderHistory.length > 0 && (
                       <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                           <History className="h-3 w-3" /> Últimos Pedidos:
                         </p>
                         {clientOrderHistory.slice(0, 3).map((o) => (
                           <div key={o.id} className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
                             <div>
-                              <span className="font-bold text-slate-800 dark:text-slate-200">{o.orderNumber}</span>
-                              <span className="ml-1.5 text-[9.5px] font-semibold text-slate-400 capitalize">{o.status}</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">{o.orderNumber}</span>
+                              <span className="ml-1.5 text-[11px] font-semibold text-slate-400 capitalize">{o.status}</span>
                             </div>
-                            <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{formatGs(o.totalAmount)}</span>
+                            <span className="tabular-nums font-semibold text-slate-700 dark:text-slate-300">{formatGs(o.totalAmount)}</span>
                           </div>
                         ))}
                       </div>
@@ -1426,18 +1448,18 @@ export default function CrmOmnichannelPage() {
                     {/* Transfers History */}
                     {clientReceipts.length > 0 && (
                       <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                           <Building2 className="h-3 w-3 text-emerald-500" /> Transferencias Bancarias:
                         </p>
                         {clientReceipts.map((r) => (
                           <div key={r.id} className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-500/20">
                             <div>
-                              <span className="font-bold text-slate-800 dark:text-slate-200 block">{r.bankOrigin || "Banco Itaú"}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">{r.operationNumber || "Transferencia"}</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 block">{r.bankOrigin || "Banco Itaú"}</span>
+                              <span className="text-[11px] text-slate-400 tabular-nums">{r.operationNumber || "Transferencia"}</span>
                             </div>
                             <div className="text-right">
-                              <span className="font-mono font-bold text-slate-900 dark:text-white block">{formatGs(r.amount)}</span>
-                              <span className={`text-[9.5px] font-bold ${r.status === "approved" ? "text-emerald-600" : "text-amber-600"}`}>
+                              <span className="tabular-nums font-semibold text-slate-900 dark:text-white block">{formatGs(r.amount)}</span>
+                              <span className={`text-[11px] font-semibold ${r.status === "approved" ? "text-emerald-600" : "text-amber-600"}`}>
                                 {r.status === "approved" ? "Aprobado" : "Pendiente"}
                               </span>
                             </div>
@@ -1466,23 +1488,23 @@ export default function CrmOmnichannelPage() {
               <div className="flex flex-col gap-3 pb-3 border-b border-slate-100 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white font-bold"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white font-semibold"
                     style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
                   >
                     <MessageSquare className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-[13px] sm:text-sm font-extrabold leading-snug text-slate-900 dark:text-white">
+                    <h3 className="text-sm sm:text-sm font-semibold leading-snug text-slate-900 dark:text-white">
                       Telemetría de mensajería y eficiencia
                     </h3>
-                    <p className="mt-1 text-[10px] sm:text-[11px] leading-snug text-slate-400">Bandeja centralizada y tiempos de respuesta</p>
+                    <p className="mt-1 text-[11px] sm:text-[11px] leading-snug text-slate-400">Bandeja centralizada y tiempos de respuesta</p>
                   </div>
                 </div>
 
                 <div className="flex items-baseline justify-between gap-3 sm:shrink-0 sm:flex-col sm:items-end sm:gap-0">
-                  <span className="text-[11px] font-bold text-slate-400">Total Chats</span>
+                  <span className="text-[11px] font-semibold text-slate-400">Total Chats</span>
                   <span className="inline-flex items-baseline gap-1 whitespace-nowrap text-slate-900 dark:text-white">
-                    <span className="text-sm font-black font-mono">{crmConversations.length}</span>
+                    <span className="text-sm font-semibold tabular-nums">{crmConversations.length}</span>
                     <span className="text-[11px] font-semibold">conversaciones</span>
                   </span>
                 </div>
@@ -1515,15 +1537,15 @@ export default function CrmOmnichannelPage() {
                         className="transition-all duration-700"
                       />
                     </svg>
-                    <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    <span className="absolute text-[11px] font-semibold text-slate-800 dark:text-white tabular-nums">
                       {resolutionPct}%
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <span className="text-[11px] font-bold leading-tight text-slate-900 dark:text-white block">
+                    <span className="text-[11px] font-semibold leading-tight text-slate-900 dark:text-white block">
                       Resolución
                     </span>
-                    <span className="text-[10px] text-slate-400 block">
+                    <span className="text-[11px] text-slate-400 block">
                       {resolvedCount} de {crmConversations.length} cerradas
                     </span>
                   </div>
@@ -1554,15 +1576,15 @@ export default function CrmOmnichannelPage() {
                         className="transition-all duration-700"
                       />
                     </svg>
-                    <span className="absolute text-[10px] font-black text-slate-800 dark:text-white font-mono">
+                    <span className="absolute text-[11px] font-semibold text-slate-800 dark:text-white tabular-nums">
                       {waSharePct}%
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <span className="text-[11px] font-bold leading-tight text-slate-900 dark:text-white block">
+                    <span className="text-[11px] font-semibold leading-tight text-slate-900 dark:text-white block">
                       Vía WhatsApp
                     </span>
-                    <span className="text-[10px] text-slate-400 block">
+                    <span className="text-[11px] text-slate-400 block">
                       {waCount} {waCount === 1 ? "conversación" : "conversaciones"}
                     </span>
                   </div>
@@ -1572,20 +1594,20 @@ export default function CrmOmnichannelPage() {
               {/* Telemetry Rows */}
               <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-white/10 text-xs min-[440px]:grid-cols-3">
                 <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
-                  <span className="text-[10px] font-medium text-slate-400 block">En Espera</span>
-                  <span className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                  <span className="text-[11px] font-medium text-slate-400 block">En Espera</span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
                     {openCount} abiertos
                   </span>
                 </div>
                 <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
-                  <span className="text-[10px] font-medium text-slate-400 block">Sin Leer</span>
-                  <span className={`text-xs font-black font-mono ${unreadTotal > 0 ? "text-rose-500" : "text-slate-900 dark:text-white"}`}>
+                  <span className="text-[11px] font-medium text-slate-400 block">Sin Leer</span>
+                  <span className={`text-xs font-semibold tabular-nums ${unreadTotal > 0 ? "text-rose-500" : "text-slate-900 dark:text-white"}`}>
                     {unreadTotal} mensajes
                   </span>
                 </div>
                 <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 min-[440px]:col-span-1">
-                  <span className="text-[10px] font-medium text-slate-400 block">Tiempo Medio</span>
-                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono truncate block">
+                  <span className="text-[11px] font-medium text-slate-400 block">Tiempo Medio</span>
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums truncate block">
                     ~3 minutos
                   </span>
                 </div>
@@ -1596,19 +1618,19 @@ export default function CrmOmnichannelPage() {
             <div className="rounded-3xl glass-panel p-4 sm:p-5 shadow-xs flex flex-col justify-between">
               <div className="flex flex-col gap-2 pb-3 border-b border-slate-100 dark:border-white/10 min-[440px]:flex-row min-[440px]:items-center min-[440px]:justify-between">
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-semibold">
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-[13px] sm:text-sm font-extrabold leading-snug text-slate-900 dark:text-white">
+                    <h3 className="text-sm sm:text-sm font-semibold leading-snug text-slate-900 dark:text-white">
                       Protección anti-baneo y seguridad
                     </h3>
-                    <p className="mt-1 text-[10px] sm:text-[11px] leading-snug text-slate-400">Cadencia humana y protección de cuenta</p>
+                    <p className="mt-1 text-[11px] sm:text-[11px] leading-snug text-slate-400">Cadencia humana y protección de cuenta</p>
                   </div>
                 </div>
 
                 {pendingOrdersCount > 0 && (
-                  <span className="inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  <span className="inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     <ShoppingBag className="h-3 w-3" />
                     <span>{pendingOrdersCount} pedidos</span>
                   </span>
@@ -1620,10 +1642,10 @@ export default function CrmOmnichannelPage() {
                 <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                   <div className="min-w-0">
-                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 block truncate">
+                    <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 block truncate">
                       Cadencia Humana Anti-Baneo Activa (10s - 20s)
                     </span>
-                    <span className="text-[10px] leading-relaxed text-emerald-600/90 dark:text-emerald-400/90 block">
+                    <span className="text-[11px] leading-relaxed text-emerald-600/90 dark:text-emerald-400/90 block">
                       Simulación de lectura y escritura automática para proteger tu línea de suspensiones.
                     </span>
                   </div>
@@ -1634,8 +1656,8 @@ export default function CrmOmnichannelPage() {
               <div className="grid grid-cols-1 gap-2 pt-2 border-t border-slate-100 dark:border-white/10 text-xs min-[440px]:grid-cols-2">
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-white/5 dark:bg-slate-900/50">
                   <div className="min-w-0">
-                    <span className="text-[10px] font-medium text-slate-400 block">Bot Asistente</span>
-                    <span className="text-xs font-bold leading-snug text-slate-800 dark:text-slate-200 break-words">
+                    <span className="text-[11px] font-medium text-slate-400 block">Bot Asistente</span>
+                    <span className="text-xs font-semibold leading-snug text-slate-800 dark:text-slate-200 break-words">
                       {evolutionConfig.autoBotEnabled ? "Respuesta IA activa" : "Modo Manual"}
                     </span>
                   </div>
@@ -1644,8 +1666,8 @@ export default function CrmOmnichannelPage() {
 
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-white/5 dark:bg-slate-900/50">
                   <div className="min-w-0">
-                    <span className="text-[10px] font-medium text-slate-400 block">Estado de Red</span>
-                    <span className="text-xs font-bold leading-snug text-slate-800 dark:text-slate-200 break-words">
+                    <span className="text-[11px] font-medium text-slate-400 block">Estado de Red</span>
+                    <span className="text-xs font-semibold leading-snug text-slate-800 dark:text-slate-200 break-words">
                       {evolutionConfig.connected ? "En línea" : "Desconectado"}
                     </span>
                   </div>
@@ -1662,23 +1684,23 @@ export default function CrmOmnichannelPage() {
         <div className="space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:space-y-6 lg:pb-0">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-              <div className="min-w-0"><p className="truncate text-[10px] font-semibold text-slate-500 sm:text-xs">Pedidos</p><p className="mt-0.5 text-lg font-black text-slate-900 dark:text-white sm:mt-1 sm:text-2xl">{productOrders.length}</p></div>
+              <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-slate-500 sm:text-xs">Pedidos</p><p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white sm:mt-1 sm:text-2xl">{productOrders.length}</p></div>
               <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:flex"><ShoppingBag className="h-5 w-5" /></div>
             </Card>
             <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-              <div className="min-w-0"><p className="truncate text-[10px] font-semibold text-slate-500 sm:text-xs">Pendientes</p><p className="mt-0.5 text-lg font-black text-amber-600 sm:mt-1 sm:text-2xl">{pendingOrdersCount}</p></div>
+              <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-slate-500 sm:text-xs">Pendientes</p><p className="mt-0.5 text-lg font-semibold text-amber-600 sm:mt-1 sm:text-2xl">{pendingOrdersCount}</p></div>
               <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 sm:flex"><Clock className="h-5 w-5" /></div>
             </Card>
             <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-              <div className="min-w-0"><p className="truncate text-[10px] font-semibold text-slate-500 sm:text-xs">Facturado</p><p className="mt-0.5 whitespace-nowrap text-[10px] font-black font-mono text-emerald-600 sm:mt-1 sm:text-2xl">{formatGs(totalOrderRevenue)}</p></div>
+              <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-slate-500 sm:text-xs">Facturado</p><p className="mt-0.5 whitespace-nowrap text-[11px] font-bold tabular-nums text-emerald-600 sm:mt-1 sm:text-2xl">{formatGs(totalOrderRevenue)}</p></div>
               <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 sm:flex"><CreditCard className="h-5 w-5" /></div>
             </Card>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div role="group" aria-label="Filtros por estado de pedido" className="order-2 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:order-1">
               {([ { id: "all", label: "Todos", count: productOrders.length }, { id: "pending", label: "Pendientes", count: pendingOrdersCount }, { id: "confirmed", label: "Confirmados", count: productOrders.filter((o) => o.status === "confirmed").length }, { id: "delivered", label: "Entregados", count: productOrders.filter((o) => o.status === "delivered").length }, { id: "cancelled", label: "Cancelados", count: productOrders.filter((o) => o.status === "cancelled").length } ] as const).map((tab) => (
-                <button key={tab.id} type="button" aria-pressed={orderStatusFilter === tab.id} onClick={() => setOrderStatusFilter(tab.id as any)} className={`flex min-h-11 items-center gap-1.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${orderStatusFilter === tab.id ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200/60 dark:border-white/5"}`}>
-                  <span>{tab.label}</span><span className="text-[10px] opacity-75">({tab.count})</span>
+                <button key={tab.id} type="button" aria-pressed={orderStatusFilter === tab.id} onClick={() => setOrderStatusFilter(tab.id as any)} className={`flex min-h-11 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${orderStatusFilter === tab.id ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200/60 dark:border-white/5"}`}>
+                  <span>{tab.label}</span><span className="text-[11px] opacity-75">({tab.count})</span>
                 </button>
               ))}
             </div>
@@ -1695,7 +1717,7 @@ export default function CrmOmnichannelPage() {
             </div>
           </div>
           {filteredOrders.length === 0 ? (
-            <Card className="p-12 text-center"><ShoppingBag className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-3" /><h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Sin pedidos</h3></Card>
+            <Card className="p-12 text-center"><ShoppingBag className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-3" /><h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">Sin pedidos</h3></Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredOrders.map((ord) => {
@@ -1704,10 +1726,10 @@ export default function CrmOmnichannelPage() {
                   <Card key={ord.id} className="flex flex-col justify-between space-y-3.5 p-3.5 sm:space-y-4 sm:p-4">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-black text-slate-900 dark:text-white">{ord.orderNumber}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold capitalize ${isPending ? "bg-amber-100 text-amber-800" : isConfirmed ? "bg-blue-100 text-blue-800" : isDelivered ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>{ord.status === "delivered" ? "Entregado" : ord.status === "pending" ? "Pendiente" : ord.status === "confirmed" ? "Confirmado" : "Cancelado"}</span>
+                        <span className="tabular-nums text-xs font-semibold text-slate-900 dark:text-white">{ord.orderNumber}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${isPending ? "bg-amber-100 text-amber-800" : isConfirmed ? "bg-blue-100 text-blue-800" : isDelivered ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>{ord.status === "delivered" ? "Entregado" : ord.status === "pending" ? "Pendiente" : ord.status === "confirmed" ? "Confirmado" : "Cancelado"}</span>
                       </div>
-                      <div className="mt-2"><p className="text-sm font-bold text-slate-900 dark:text-white">{ord.clientName}</p><p className="text-xs text-slate-500 font-mono">{ord.clientPhone}</p></div>
+                      <div className="mt-2"><p className="text-sm font-semibold text-slate-900 dark:text-white">{ord.clientName}</p><p className="text-xs text-slate-500 tabular-nums">{ord.clientPhone}</p></div>
                       <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
                         {ord.deliveryType === "retirar_en_local" ? <span className="flex items-center gap-1"><Store className="h-3.5 w-3.5 text-emerald-500" /> Retiro</span> : <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5 text-indigo-500" /> Delivery</span>}
                         <span>·</span><span className="capitalize">{ord.paymentMethod}</span>
@@ -1715,20 +1737,20 @@ export default function CrmOmnichannelPage() {
                       <div className="mt-3 divide-y divide-slate-100 dark:divide-white/5 border-t border-slate-100 dark:border-white/5 pt-2 text-xs space-y-1.5">
                         {ord.items.map((item, idx) => (
                           <div key={idx} className="flex items-start justify-between gap-3 pt-1">
-                            <span className="min-w-0 break-words font-bold text-slate-800 dark:text-slate-200">{item.qty}x {item.productName}</span>
-                            <span className="shrink-0 whitespace-nowrap font-mono font-semibold text-slate-600 dark:text-slate-400">{formatGs(item.unitPrice * item.qty)}</span>
+                            <span className="min-w-0 break-words font-semibold text-slate-800 dark:text-slate-200">{item.qty}x {item.productName}</span>
+                            <span className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-slate-600 dark:text-slate-400">{formatGs(item.unitPrice * item.qty)}</span>
                           </div>
                         ))}
                       </div>
                       {ord.notes && <p className="mt-2 text-[11px] text-slate-500 italic bg-amber-500/5 border border-amber-500/10 p-2 rounded-lg">{ord.notes}</p>}
                     </div>
                     <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-2.5">
-                      <div className="flex items-baseline justify-between gap-3"><span className="text-xs text-slate-500">Total:</span><span className="shrink-0 whitespace-nowrap text-base font-black text-slate-900 dark:text-white font-mono">{formatGs(ord.totalAmount)}</span></div>
+                      <div className="flex items-baseline justify-between gap-3"><span className="text-xs text-slate-500">Total:</span><span className="shrink-0 whitespace-nowrap text-base font-semibold text-slate-900 dark:text-white tabular-nums">{formatGs(ord.totalAmount)}</span></div>
                       <div className="flex items-center gap-1.5">
-                        {isPending && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "confirmed"); pushToast("success", `${ord.orderNumber} confirmado`); }} className="min-h-11 flex-1 rounded-xl bg-blue-600 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500 cursor-pointer">Confirmar</button>}
-                        {(isPending || isConfirmed) && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "delivered"); pushToast("success", `${ord.orderNumber} entregado y registrado en caja`); }} className="min-h-11 flex-1 rounded-xl bg-emerald-600 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-500 cursor-pointer flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /><span>Entregado</span></button>}
+                        {isPending && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "confirmed"); pushToast("success", `${ord.orderNumber} confirmado`); }} className="min-h-11 flex-1 rounded-xl bg-blue-600 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500 cursor-pointer">Confirmar</button>}
+                        {(isPending || isConfirmed) && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "delivered"); pushToast("success", `${ord.orderNumber} entregado y registrado en caja`); }} className="min-h-11 flex-1 rounded-xl bg-emerald-600 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 cursor-pointer flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /><span>Entregado</span></button>}
                         {!isCancelled && !isDelivered && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "cancelled"); pushToast("error", `${ord.orderNumber} cancelado`); }} className="min-h-11 whitespace-nowrap rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-slate-500 transition hover:text-rose-500 dark:border-white/10 cursor-pointer">Cancelar</button>}
-                        {isDelivered && <span className="min-h-10 w-full rounded-xl bg-emerald-500/10 py-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1"><CheckCircle2 className="h-4 w-4" /><span>Completado y en Caja</span></span>}
+                        {isDelivered && <span className="min-h-10 w-full rounded-xl bg-emerald-500/10 py-2 text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1"><CheckCircle2 className="h-4 w-4" /><span>Completado y en Caja</span></span>}
                       </div>
                     </div>
                   </Card>
@@ -1751,7 +1773,7 @@ export default function CrmOmnichannelPage() {
           <button
             type="button"
             onClick={undoClearConversations}
-            className="shrink-0 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            className="shrink-0 rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           >
             Deshacer
           </button>
@@ -1780,14 +1802,14 @@ export default function CrmOmnichannelPage() {
             <button
               type="button"
               onClick={() => setClearConfirmOpen(false)}
-              className="rounded-xl border border-slate-200/80 px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+              className="rounded-xl border border-slate-200/80 px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={confirmClearConversations}
-              className="rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+              className="rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
             >
               Limpiar {crmConversations.length} {crmConversations.length === 1 ? "conversación" : "conversaciones"}
             </button>
@@ -1818,7 +1840,7 @@ export default function CrmOmnichannelPage() {
                 key={ch.key}
                 type="button"
                 onClick={() => setChannelsTab(ch.key)}
-                className={`py-2.5 text-center rounded-xl font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
+                className={`py-2.5 text-center rounded-xl font-semibold transition cursor-pointer flex items-center justify-center gap-2 ${
                   channelsTab === ch.key
                     ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -1832,7 +1854,7 @@ export default function CrmOmnichannelPage() {
                 </div>
                 <span className="text-xs">{ch.label}</span>
                 {ch.isConnected && (
-                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-extrabold px-1.5 py-0.5 rounded-full hidden sm:inline-block">
+                  <span className="text-[11px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-semibold px-1.5 py-0.5 rounded-full hidden sm:inline-block">
                     Conectado
                   </span>
                 )}
@@ -1857,7 +1879,7 @@ export default function CrmOmnichannelPage() {
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
                           <RefreshCw className="h-6 w-6 animate-spin text-emerald-500" />
-                          <span className="text-[10px] font-medium">Generando QR...</span>
+                          <span className="text-[11px] font-medium">Generando QR...</span>
                         </div>
                       )}
                       {/* WhatsApp center badge */}
@@ -1868,7 +1890,7 @@ export default function CrmOmnichannelPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                  <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
                     <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-500" />
                     <span>Actualiza en {qrCounter}s</span>
                   </div>
@@ -1877,7 +1899,7 @@ export default function CrmOmnichannelPage() {
                 {/* Right: Instructions & Action */}
                 <div className="md:col-span-7 flex flex-col justify-between space-y-4">
                   <div>
-                    <h5 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <h5 className="font-semibold text-base text-slate-900 dark:text-white flex items-center gap-2">
                       <Smartphone className="h-4 w-4 text-emerald-600" />
                       <span>Vincular WhatsApp de tu Negocio</span>
                     </h5>
@@ -1888,15 +1910,15 @@ export default function CrmOmnichannelPage() {
 
                   <ol className="space-y-2.5 text-slate-600 dark:text-slate-300 text-xs">
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">1</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px]">1</span>
                       <span>Abrí <strong>WhatsApp</strong> en tu teléfono celular.</span>
                     </li>
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">2</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px]">2</span>
                       <span>Andá a <strong>Ajustes → Dispositivos Vinculados</strong>.</span>
                     </li>
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">3</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px]">3</span>
                       <span>Tocá <strong>Vincular un dispositivo</strong> y apuntá al código QR.</span>
                     </li>
                   </ol>
@@ -1905,7 +1927,7 @@ export default function CrmOmnichannelPage() {
                     <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        <span className="font-bold text-emerald-800 dark:text-emerald-300 text-xs">
+                        <span className="font-semibold text-emerald-800 dark:text-emerald-300 text-xs">
                           Línea vinculada: {evolutionConfig.phoneNumber || business.phone || "+595 981 765 432"}
                         </span>
                       </div>
@@ -1915,7 +1937,7 @@ export default function CrmOmnichannelPage() {
                           updateEvolutionConfig({ connected: false, phoneNumber: "" });
                           pushToast("error", "WhatsApp desconectado.");
                         }}
-                        className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                        className="text-xs font-semibold text-rose-600 hover:underline cursor-pointer"
                       >
                         Desconectar
                       </button>
@@ -1935,7 +1957,7 @@ export default function CrmOmnichannelPage() {
                           });
                           pushToast("success", "WhatsApp vinculado correctamente.");
                         }}
-                        className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 text-xs transition cursor-pointer shrink-0 shadow-xs"
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 text-xs transition cursor-pointer shrink-0 shadow-xs"
                       >
                         Simular Vinculación
                       </button>
@@ -1951,12 +1973,12 @@ export default function CrmOmnichannelPage() {
                 <div className="md:col-span-5 flex flex-col items-center justify-center">
                   <div className="w-48 h-48 rounded-2xl bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 p-5 flex flex-col items-center justify-center text-white text-center shadow-sm">
                     <ChannelIcon channel="instagram" size="lg" />
-                    <span className="font-extrabold text-sm mt-3">Instagram Direct</span>
-                    <span className="text-[10px] text-white/80 font-medium">Bandeja Profesional</span>
+                    <span className="font-semibold text-sm mt-3">Instagram Direct</span>
+                    <span className="text-[11px] text-white/80 font-medium">Bandeja Profesional</span>
                   </div>
                   <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium">
                     <span className={`h-2 w-2 rounded-full ${evolutionConfig.instagramConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-slate-600"}`} />
-                    <span className={evolutionConfig.instagramConnected ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-500 dark:text-slate-400"}>
+                    <span className={evolutionConfig.instagramConnected ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-500 dark:text-slate-400"}>
                       {evolutionConfig.instagramConnected ? `Conectado (${evolutionConfig.instagramHandle || "@barberia_central"})` : "Listo para conectar"}
                     </span>
                   </div>
@@ -1965,7 +1987,7 @@ export default function CrmOmnichannelPage() {
                 {/* Right: Instructions & Action */}
                 <div className="md:col-span-7 flex flex-col justify-between space-y-4">
                   <div>
-                    <h5 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <h5 className="font-semibold text-base text-slate-900 dark:text-white flex items-center gap-2">
                       <ChannelIcon channel="instagram" size="sm" />
                       <span>Conectar Instagram Direct</span>
                     </h5>
@@ -1976,15 +1998,15 @@ export default function CrmOmnichannelPage() {
 
                   <ol className="space-y-2.5 text-slate-600 dark:text-slate-300 text-xs">
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 font-bold text-[10px]">1</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 font-semibold text-[11px]">1</span>
                       <span>Convertí tu cuenta a <strong>Cuenta Profesional</strong> en Instagram.</span>
                     </li>
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 font-bold text-[10px]">2</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 font-semibold text-[11px]">2</span>
                       <span>Vinculá tu cuenta a la <strong>Página de Facebook</strong> del negocio.</span>
                     </li>
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 font-bold text-[10px]">3</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 font-semibold text-[11px]">3</span>
                       <span>Autorizá el acceso para recibir mensajes directamente en AgendatePY.</span>
                     </li>
                   </ol>
@@ -1993,7 +2015,7 @@ export default function CrmOmnichannelPage() {
                     <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        <span className="font-bold text-emerald-800 dark:text-emerald-300 text-xs">
+                        <span className="font-semibold text-emerald-800 dark:text-emerald-300 text-xs">
                           Cuenta vinculada: {evolutionConfig.instagramHandle || "@barberia_central"}
                         </span>
                       </div>
@@ -2003,7 +2025,7 @@ export default function CrmOmnichannelPage() {
                           updateEvolutionConfig({ instagramConnected: false });
                           pushToast("error", "Instagram Direct desconectado.");
                         }}
-                        className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                        className="text-xs font-semibold text-rose-600 hover:underline cursor-pointer"
                       >
                         Desconectar
                       </button>
@@ -2019,7 +2041,7 @@ export default function CrmOmnichannelPage() {
                           });
                           pushToast("success", "Instagram Direct vinculado exitosamente.");
                         }}
-                        className="w-full rounded-xl bg-[#E1306C] hover:bg-[#d02560] text-white font-bold py-3 text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full rounded-xl bg-[#E1306C] hover:bg-[#d02560] text-white font-semibold py-3 text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-2"
                       >
                         <ChannelIcon channel="instagram" size="sm" />
                         <span>Autorizar Instagram Direct (@barberia_central)</span>
@@ -2036,12 +2058,12 @@ export default function CrmOmnichannelPage() {
                 <div className="md:col-span-5 flex flex-col items-center justify-center">
                   <div className="w-48 h-48 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-5 flex flex-col items-center justify-center text-white text-center shadow-sm">
                     <ChannelIcon channel="messenger" size="lg" />
-                    <span className="font-extrabold text-sm mt-3">Facebook Messenger</span>
-                    <span className="text-[10px] text-white/80 font-medium">Página Comercial</span>
+                    <span className="font-semibold text-sm mt-3">Facebook Messenger</span>
+                    <span className="text-[11px] text-white/80 font-medium">Página Comercial</span>
                   </div>
                   <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium">
                     <span className={`h-2 w-2 rounded-full ${evolutionConfig.messengerConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-slate-600"}`} />
-                    <span className={evolutionConfig.messengerConnected ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-500 dark:text-slate-400"}>
+                    <span className={evolutionConfig.messengerConnected ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-500 dark:text-slate-400"}>
                       {evolutionConfig.messengerConnected ? `Conectado (${evolutionConfig.messengerPage || "Barbería & Studio Central"})` : "Listo para conectar"}
                     </span>
                   </div>
@@ -2050,7 +2072,7 @@ export default function CrmOmnichannelPage() {
                 {/* Right: Instructions & Action */}
                 <div className="md:col-span-7 flex flex-col justify-between space-y-4">
                   <div>
-                    <h5 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <h5 className="font-semibold text-base text-slate-900 dark:text-white flex items-center gap-2">
                       <ChannelIcon channel="messenger" size="sm" />
                       <span>Conectar Facebook Messenger</span>
                     </h5>
@@ -2061,15 +2083,15 @@ export default function CrmOmnichannelPage() {
 
                   <ol className="space-y-2.5 text-slate-600 dark:text-slate-300 text-xs">
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-[10px]">1</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-semibold text-[11px]">1</span>
                       <span>Asegurate de ser <strong>administrador</strong> de la Página de Facebook.</span>
                     </li>
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-[10px]">2</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-semibold text-[11px]">2</span>
                       <span>Hacé clic en Conectar y seleccioná tu Página de Facebook.</span>
                     </li>
                     <li className="flex items-start gap-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-[10px]">3</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-semibold text-[11px]">3</span>
                       <span>Otorgá permisos de mensajería y la vinculación quedará lista.</span>
                     </li>
                   </ol>
@@ -2078,7 +2100,7 @@ export default function CrmOmnichannelPage() {
                     <div className="flex items-center justify-between p-3.5 rounded-2xl bg-blue-100/80 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-800">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                        <span className="font-bold text-blue-800 dark:text-blue-300 text-xs">
+                        <span className="font-semibold text-blue-800 dark:text-blue-300 text-xs">
                           Página vinculada: {evolutionConfig.messengerPage || "Barbería & Studio Central"}
                         </span>
                       </div>
@@ -2088,7 +2110,7 @@ export default function CrmOmnichannelPage() {
                           updateEvolutionConfig({ messengerConnected: false });
                           pushToast("error", "Facebook Messenger desconectado.");
                         }}
-                        className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                        className="text-xs font-semibold text-rose-600 hover:underline cursor-pointer"
                       >
                         Desconectar
                       </button>
@@ -2104,7 +2126,7 @@ export default function CrmOmnichannelPage() {
                           });
                           pushToast("success", "Facebook Messenger vinculado exitosamente.");
                         }}
-                        className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
                       >
                         <ChannelIcon channel="messenger" size="sm" />
                         <span>Conectar Facebook Messenger</span>
@@ -2120,7 +2142,7 @@ export default function CrmOmnichannelPage() {
             <button
               type="button"
               onClick={() => setChannelsModalOpen(false)}
-              className="rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold px-5 py-2 hover:opacity-90 transition cursor-pointer text-xs"
+              className="rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold px-5 py-2 hover:opacity-90 transition cursor-pointer text-xs"
             >
               Listo
             </button>
@@ -2140,14 +2162,14 @@ export default function CrmOmnichannelPage() {
                   channel={activeConversation.channel}
                   tenantSlug={business.slug || "workspace"}
                   color={business.primaryColor || "var(--primary, #FF4F2B)"}
-                  className="mx-auto mb-3 h-16 w-16 rounded-3xl font-black text-xl shadow-md"
+                  className="mx-auto mb-3 h-16 w-16 rounded-3xl font-semibold text-xl shadow-md"
                 />
-                <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">{activeConversation.clientName}</h3>
-                <p className="text-sm text-slate-500 font-mono">{activeConversation.channelIdentifier}</p>
+                <h3 className="font-semibold text-lg text-slate-900 dark:text-white">{activeConversation.clientName}</h3>
+                <p className="text-sm text-slate-500 tabular-nums">{activeConversation.channelIdentifier}</p>
                 {linkedClient && (
                   <div className="mt-2 space-y-1">
                     {linkedClient.email && <p className="text-xs text-slate-400">{linkedClient.email}</p>}
-                    {linkedClient.tags.length > 0 && <div className="flex flex-wrap items-center justify-center gap-1 mt-2">{linkedClient.tags.map((t) => <span key={t} className="rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5">{t}</span>)}</div>}
+                    {linkedClient.tags.length > 0 && <div className="flex flex-wrap items-center justify-center gap-1 mt-2">{linkedClient.tags.map((t) => <span key={t} className="rounded-full bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5">{t}</span>)}</div>}
                   </div>
                 )}
               </div>
@@ -2155,29 +2177,29 @@ export default function CrmOmnichannelPage() {
               {/* Stats */}
               {linkedClient && (
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-black text-slate-900 dark:text-white">{linkedClient.totalVisits}</p><p className="text-[10px] text-slate-500 font-bold">Visitas</p></div>
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-black text-emerald-600 font-mono">{formatGs(linkedClient.totalSpent)}</p><p className="text-[10px] text-slate-500 font-bold">Consumo Total</p></div>
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-black text-amber-600">{linkedClient.loyaltyPoints}</p><p className="text-[10px] text-slate-500 font-bold">Sellos</p></div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-semibold text-slate-900 dark:text-white">{linkedClient.totalVisits}</p><p className="text-[11px] text-slate-500 font-semibold">Visitas</p></div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-bold text-emerald-600 tabular-nums">{formatGs(linkedClient.totalSpent)}</p><p className="text-[11px] text-slate-500 font-bold">Consumo Total</p></div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-semibold text-amber-600">{linkedClient.loyaltyPoints}</p><p className="text-[11px] text-slate-500 font-semibold">Sellos</p></div>
                 </div>
               )}
 
               {/* Notes / Formula */}
               {linkedClient?.formula && (
                 <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-primary mb-1">Ficha Técnica / Preferencias:</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-primary mb-1">Ficha Técnica / Preferencias:</p>
                   <p className="text-xs text-slate-900 dark:text-slate-200">{linkedClient.formula}</p>
                 </div>
               )}
               {linkedClient?.notes && (
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-white/5">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Notas:</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Notas:</p>
                   <p className="text-xs text-slate-700 dark:text-slate-300">{linkedClient.notes}</p>
                 </div>
               )}
 
               {/* Order History */}
               <div className="space-y-2">
-                <p className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5"><History className="h-4 w-4 text-primary" /> Historial de Pedidos</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5"><History className="h-4 w-4 text-primary" /> Historial de Pedidos</p>
                 {clientOrderHistory.length === 0 ? (
                   <p className="text-xs text-slate-400 p-3 text-center bg-slate-50 dark:bg-slate-800/40 rounded-xl">Este cliente no tiene pedidos registrados aún.</p>
                 ) : (
@@ -2186,15 +2208,15 @@ export default function CrmOmnichannelPage() {
                       <div key={o.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5 space-y-1.5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">{o.orderNumber}</span>
-                            <span className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold capitalize ${o.status === "delivered" ? "bg-emerald-100 text-emerald-700" : o.status === "pending" ? "bg-amber-100 text-amber-700" : o.status === "confirmed" ? "bg-blue-100 text-blue-700" : "bg-rose-100 text-rose-700"}`}>{o.status === "delivered" ? "Entregado" : o.status === "pending" ? "Pendiente" : o.status === "confirmed" ? "Confirmado" : "Cancelado"}</span>
+                            <span className="tabular-nums font-semibold text-slate-900 dark:text-white">{o.orderNumber}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${o.status === "delivered" ? "bg-emerald-100 text-emerald-700" : o.status === "pending" ? "bg-amber-100 text-amber-700" : o.status === "confirmed" ? "bg-blue-100 text-blue-700" : "bg-rose-100 text-rose-700"}`}>{o.status === "delivered" ? "Entregado" : o.status === "pending" ? "Pendiente" : o.status === "confirmed" ? "Confirmado" : "Cancelado"}</span>
                           </div>
-                          <span className="font-mono font-black text-sm text-slate-900 dark:text-white">{formatGs(o.totalAmount)}</span>
+                          <span className="tabular-nums font-semibold text-sm text-slate-900 dark:text-white">{formatGs(o.totalAmount)}</span>
                         </div>
                         <div className="text-[11px] text-slate-500 space-y-0.5">
                           {o.items.map((item, i) => <p key={i}>{item.qty}x {item.productName} · {formatGs(item.unitPrice * item.qty)}</p>)}
                         </div>
-                        <p className="text-[10px] text-slate-400">{new Date(o.createdAt).toLocaleDateString("es-PY", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                        <p className="text-[11px] text-slate-400">{new Date(o.createdAt).toLocaleDateString("es-PY", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                       </div>
                     ))}
                   </div>
@@ -2203,7 +2225,7 @@ export default function CrmOmnichannelPage() {
             </>
           )}
           <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex justify-end">
-            <button type="button" onClick={() => setClientProfileModalOpen(false)} className="rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold px-4 py-2 hover:opacity-90 transition cursor-pointer">Cerrar</button>
+            <button type="button" onClick={() => setClientProfileModalOpen(false)} className="rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold px-4 py-2 hover:opacity-90 transition cursor-pointer">Cerrar</button>
           </div>
         </div>
       </Modal>
@@ -2214,27 +2236,27 @@ export default function CrmOmnichannelPage() {
           <div className="rounded-2xl bg-primary/10 border border-primary/20 p-3.5">
             <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-medium">El pedido se vincula a <strong>{activeConversation?.clientName}</strong> y se enviará una confirmación automática por chat.</p>
           </div>
-          <div><label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Producto:</label><CustomSelect value={orderProductId} onChange={(val) => setOrderProductId(val)} options={productOptions} /></div>
+          <div><label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Producto:</label><CustomSelect value={orderProductId} onChange={(val) => setOrderProductId(val)} options={productOptions} /></div>
           <div className="grid grid-cols-2 gap-3 items-center">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Cantidad:</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Cantidad:</label>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setOrderQty((q) => Math.max(1, q - 1))} className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 font-bold hover:bg-slate-200 transition cursor-pointer">-</button>
-                <span className="w-10 text-center font-mono font-bold text-sm">{orderQty}</span>
-                <button type="button" onClick={() => setOrderQty((q) => q + 1)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 font-bold hover:bg-slate-200 transition cursor-pointer">+</button>
+                <button type="button" onClick={() => setOrderQty((q) => Math.max(1, q - 1))} className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold hover:bg-slate-200 transition cursor-pointer">-</button>
+                <span className="w-10 text-center tabular-nums font-semibold text-sm">{orderQty}</span>
+                <button type="button" onClick={() => setOrderQty((q) => q + 1)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold hover:bg-slate-200 transition cursor-pointer">+</button>
               </div>
             </div>
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-white/5 text-right">
-              <span className="text-[10px] text-slate-400 block font-bold">Total:</span>
-              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">{formatGs(orderTotal)}</span>
+              <span className="text-[11px] text-slate-400 block font-semibold">Total:</span>
+              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatGs(orderTotal)}</span>
             </div>
           </div>
-          <div><label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Entrega:</label><CustomSelect value={orderDelivery} onChange={(val) => setOrderDelivery(val as any)} options={deliveryOptions} /></div>
-          <div><label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pago:</label><CustomSelect value={orderPayment} onChange={(val) => setOrderPayment(val as any)} options={paymentOptions} /></div>
-          <div><label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Notas (Opcional):</label><textarea rows={2} value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Ej: Retira el jueves con Marcos..." className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
+          <div><label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Entrega:</label><CustomSelect value={orderDelivery} onChange={(val) => setOrderDelivery(val as any)} options={deliveryOptions} /></div>
+          <div><label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Pago:</label><CustomSelect value={orderPayment} onChange={(val) => setOrderPayment(val as any)} options={paymentOptions} /></div>
+          <div><label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notas (Opcional):</label><textarea rows={2} value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Ej: Retira el jueves con Marcos..." className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
           <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-2">
             <button type="button" onClick={() => setOrderModalOpen(false)} className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer">Cancelar</button>
-            <button type="button" onClick={handleCreateOrderSubmit} className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 shadow-sm transition cursor-pointer flex items-center gap-1.5"><Check className="h-4 w-4" /><span>Confirmar Pedido</span></button>
+            <button type="button" onClick={handleCreateOrderSubmit} className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 shadow-sm transition cursor-pointer flex items-center gap-1.5"><Check className="h-4 w-4" /><span>Confirmar Pedido</span></button>
           </div>
         </div>
       </Modal>

@@ -119,7 +119,7 @@ export default function CustomSelect({
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           {selectedOption?.badge && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary shrink-0">
+            <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary shrink-0">
               {selectedOption.badge}
             </span>
           )}
@@ -151,7 +151,7 @@ export default function CustomSelect({
                 onClick={() => handleSelect(opt.value)}
                 className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-left transition cursor-pointer select-none mb-0.5 last:mb-0 ${
                   isSelected
-                    ? selectedOptionClassName || "bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-primary-foreground"
+                    ? selectedOptionClassName || "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary-foreground"
                     : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium"
                 }`}
               >
@@ -170,7 +170,7 @@ export default function CustomSelect({
                   <div className="truncate">
                     <span className="block truncate">{opt.label}</span>
                     {opt.subtitle && (
-                      <span className="block text-[10px] text-slate-400 dark:text-slate-500 font-normal truncate">
+                      <span className="block text-[11px] text-slate-400 dark:text-slate-500 font-normal truncate">
                         {opt.subtitle}
                       </span>
                     )}
@@ -179,7 +179,7 @@ export default function CustomSelect({
 
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
                   {opt.badge && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                       {opt.badge}
                     </span>
                   )}

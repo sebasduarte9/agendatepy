@@ -91,7 +91,7 @@
   border-radius: inherit;
   background: linear-gradient(135deg, var(--primary, #FF4F2B) 0%, color-mix(in srgb, var(--primary, #FF4F2B) 80%, #fff) 100%);
   color: #ffffff;
-  font-weight: 800;
+  font-weight: 600;
   font-size: 14px;
   letter-spacing: -0.02em;
   border: 1.5px solid rgba(255, 255, 255, 0.7);
@@ -194,9 +194,10 @@
 }
 
 .plan {
-  font-size: 9px;
-  font-family: ui-monospace, monospace;
-  font-weight: 800;
+  font-size: 11px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
   text-transform: uppercase;
   padding: 2px 6px;
   border-radius: 6px;
@@ -304,8 +305,9 @@
 }
 
 .key {
-  font-size: 10px;
-  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   padding: 2px 5px;
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.08);
@@ -419,4 +421,68 @@
   background: rgba(255, 255, 255, 0.28);
   margin: 0 auto 14px;
   display: block;
+}
+
+/* ── Light mode (the base styles above are the dark theme) ── */
+:global(html:not(.dark)) .trigger[data-name] {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+:global(html:not(.dark)) .triggerName,
+:global(html:not(.dark)) .name,
+:global(html:not(.dark)) .item:hover,
+:global(html:not(.dark)) .segment[aria-checked="true"] {
+  color: #0f172a;
+}
+:global(html:not(.dark)) .chevron,
+:global(html:not(.dark)) .email,
+:global(html:not(.dark)) .icon,
+:global(html:not(.dark)) .rowLabel,
+:global(html:not(.dark)) .segment {
+  color: #64748b;
+}
+:global(html:not(.dark)) .panel,
+:global(html:not(.dark)) .sheet {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+:global(html:not(.dark)) .scrim {
+  background: rgba(15, 23, 42, 0.35);
+}
+:global(html:not(.dark)) .handle {
+  background: rgba(15, 23, 42, 0.18);
+}
+:global(html:not(.dark)) .highlight {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.06);
+}
+:global(html:not(.dark)) .highlight[data-tone="danger"] {
+  background: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.2);
+}
+:global(html:not(.dark)) .separator {
+  background: rgba(15, 23, 42, 0.08);
+}
+:global(html:not(.dark)) .item {
+  color: #334155;
+}
+:global(html:not(.dark)) .item[data-tone="danger"],
+:global(html:not(.dark)) .item[data-tone="danger"] .icon {
+  color: #e11d48;
+}
+:global(html:not(.dark)) .item[data-tone="danger"]:hover {
+  color: #be123c;
+}
+:global(html:not(.dark)) .key {
+  background: rgba(15, 23, 42, 0.06);
+  color: #64748b;
+}
+:global(html:not(.dark)) .segments {
+  background: rgba(15, 23, 42, 0.06);
+}
+:global(html:not(.dark)) .thumb {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
 }
