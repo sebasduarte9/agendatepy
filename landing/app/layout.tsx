@@ -20,8 +20,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#131115",
-  colorScheme: "dark",
+  themeColor: "#ffffff",
+  colorScheme: "light",
 };
 
 export const metadata: Metadata = {
@@ -150,13 +150,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${jakarta.variable} ${coolvetica.variable} dark h-full scroll-smooth`} data-theme="dark" data-scroll-behavior="smooth">
+    <html lang="es" suppressHydrationWarning className={`${jakarta.variable} ${coolvetica.variable} light h-full scroll-smooth`} data-theme="light" data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{localStorage.setItem("agendate_theme_mode","dark");localStorage.setItem("theme","dark");document.documentElement.classList.add("dark");document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();`,
+            __html: `(function(){try{var saved=localStorage.getItem("agendate_theme_mode")||localStorage.getItem("theme")||"light";if(saved==="dark"){document.documentElement.classList.remove("light");document.documentElement.classList.add("dark");document.documentElement.setAttribute("data-theme","dark");}else{document.documentElement.classList.remove("dark");document.documentElement.classList.add("light");document.documentElement.setAttribute("data-theme","light");}}catch(e){}})();`,
           }}
         />
         <script
@@ -164,7 +164,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans antialiased bg-[#131115] text-[#f3f0ed]">{children}</body>
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans antialiased bg-slate-50 text-slate-900 dark:bg-[#131115] dark:text-[#f3f0ed] overflow-x-hidden transition-colors duration-300">{children}</body>
     </html>
   );
 }
