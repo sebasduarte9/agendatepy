@@ -22,6 +22,8 @@ export interface DonutChartProps {
   /** Unit after values, such as "visits". */
   unit?: string;
   formatValue?: (value: number) => string;
+  /** Shorter value used only inside the ring. */
+  formatCenterValue?: (value: number) => string;
   /** Center label at rest, above the total. */
   totalLabel?: string;
   /** Diameter in pixels. The chart scales down to fit narrower containers. */
@@ -191,6 +193,7 @@ export function DonutChart({
   label,
   unit = "",
   formatValue = value => grouped.format(value),
+  formatCenterValue,
   totalLabel = "Total",
   size = 208,
   thickness = 24,
@@ -506,7 +509,7 @@ export function DonutChart({
           {readouts.map((item, index) => (
             <motion.span key={item.key} className={styles.readout} initial={false} {...drum(index - activeIndex, reduced)}>
               <span className={styles.centerLabel}>{item.label}</span>
-              <span className={styles.centerValue}>{item.value || item.meta ? <Count value={item.value} format={formatValue} reduced={reduced} /> : " "}</span>
+              <span className={styles.centerValue}>{item.value || item.meta ? <Count value={item.value} format={formatCenterValue ?? formatValue} reduced={reduced} /> : " "}</span>
               <span className={styles.centerMeta}>
                 {item.meta ? (
                   <>

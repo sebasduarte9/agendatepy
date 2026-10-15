@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, Cell } from "recharts";
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, Cell } from "recharts";
 import {
   CalendarDays,
   Wallet,
@@ -18,6 +18,7 @@ import {
   Repeat,
   HeartHandshake,
   BarChart3,
+  ChevronDown,
   Zap,
   TrendingUp,
   type LucideIcon,
@@ -88,21 +89,36 @@ const darkGlassTooltipStyle = {
   padding: "10px 14px",
 };
 
-function DeltaBadge({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-[11px] text-zinc-400 font-medium">Sin período anterior</span>;
+function DeltaBadge({ value, compact = false, dense = false }: { value: number | null; compact?: boolean; dense?: boolean }) {
+  if (value === null) {
+    return (
+      <span className={`inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] font-medium text-zinc-400 ${compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[10px]"}`}>
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-500" aria-hidden="true" />
+        <span>Sin período anterior</span>
+      </span>
+    );
+  }
   const up = value >= 0;
   const Icon = up ? ArrowUpRight : ArrowDownRight;
+  const tone = up
+    ? "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-700 dark:text-emerald-300"
+    : "border-rose-400/20 bg-rose-400/[0.07] text-rose-700 dark:text-rose-300";
+  const iconTone = up
+    ? "bg-emerald-400/15 text-emerald-700 dark:text-emerald-300"
+    : "bg-rose-400/15 text-rose-700 dark:text-rose-300";
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition ${
-        up
-          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-          : "bg-rose-500/15 text-rose-400 border-rose-500/25 shadow-[0_0_12px_rgba(244,63,94,0.15)]"
-      }`}
+      role="group"
+      aria-label={`Variación ${up ? "positiva" : "negativa"} de ${Math.abs(value)} por ciento frente al período anterior`}
+      className={`inline-flex max-w-full shrink-0 items-center rounded-full border font-semibold leading-none transition-colors ${dense ? "gap-1 px-1.5 py-1 text-[9px] sm:gap-2 sm:px-2 sm:py-1.5 sm:text-[11px]" : compact ? "gap-1 px-1.5 py-1 text-[9px]" : "gap-2 px-2 py-1.5 text-[10px] sm:text-[11px]"} ${tone}`}
     >
-      <Icon className="h-3 w-3" />
-      {up ? "+" : ""}
-      {value}% vs anterior
+      <span className={`flex shrink-0 items-center justify-center rounded-full ${dense ? "h-[18px] w-[18px] sm:h-6 sm:w-6" : compact ? "h-4 w-4" : "h-6 w-6"} ${iconTone}`} aria-hidden="true">
+        <Icon className={dense ? "h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" : compact ? "h-2.5 w-2.5" : "h-3.5 w-3.5"} strokeWidth={2.5} />
+      </span>
+      <span className={`flex min-w-0 items-baseline pr-0.5 ${dense ? "gap-1 sm:gap-1.5 sm:pr-1" : compact ? "gap-1" : "gap-1.5 pr-1"}`}>
+        <strong className={`shrink-0 font-extrabold tabular-nums ${compact ? "delta-value text-[11px]" : dense ? "text-[11px] sm:text-xs" : "text-[11px] sm:text-xs"}`}>{up ? "+" : "−"}{Math.abs(value)}%</strong>
+        <span className={`truncate font-medium opacity-75 ${compact ? "text-[8px]" : dense ? "text-[8px] sm:text-[11px]" : "text-[10px] sm:text-[11px]"}`}>vs. anterior</span>
+      </span>
     </span>
   );
 }
@@ -115,6 +131,36 @@ function EmptyChart({ text }: { text: string }) {
       </div>
       <p className="max-w-[240px] text-xs text-zinc-400 leading-relaxed">{text}</p>
     </div>
+  );
+}
+
+function MobileInsightToggle({
+  id,
+  title,
+  summary,
+  expanded,
+  onToggle,
+}: {
+  id: string;
+  title: string;
+  summary: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="stats-mobile-insight-toggle"
+      aria-controls={id}
+      aria-expanded={expanded}
+      onClick={onToggle}
+    >
+      <span className="stats-mobile-insight-copy">
+        <span className="stats-mobile-insight-title">{title}</span>
+        <span className="stats-mobile-insight-summary">{summary}</span>
+      </span>
+      <ChevronDown className="stats-mobile-insight-chevron h-4 w-4 shrink-0" aria-hidden="true" />
+    </button>
   );
 }
 
@@ -285,6 +331,8 @@ export default function EstadisticasPage() {
 
   const [range, setRange] = useState<Range>("semana");
   const [chartMetric, setChartMetric] = useState<"ingresos" | "turnos">("ingresos");
+  const [activeHeatCell, setActiveHeatCell] = useState<{ day: string; hour: number; count: number } | null>(null);
+  const [expandedMobileInsights, setExpandedMobileInsights] = useState({ payments: false, services: false, loyalty: false });
   const [stats, setStats] = useState<Stats | null>(DEMO_STATS_BY_RANGE.semana);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -387,6 +435,7 @@ export default function EstadisticasPage() {
 
   const areaData = stats?.areaData ?? [];
   const hasTrend = areaData.some((d) => d.turnos > 0 || d.ingresos > 0);
+  const hasInactivePeriod = range !== "hoy" && areaData.some((d) => d.turnos === 0 && d.ingresos === 0);
   const hourly = stats?.hourlyDistribution ?? [];
 
   const peakDay = useMemo(() => {
@@ -469,18 +518,18 @@ export default function EstadisticasPage() {
     : [];
 
   return (
-    <div className="w-full space-y-5 sm:space-y-6 pb-28 px-1 sm:px-0 page-enter">
+    <div className="stats-page w-full space-y-5 sm:space-y-6 pb-20 sm:pb-28 px-1 sm:px-0 page-enter">
       {/* Header Glassy */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <div>
           <span className="eyebrow">TELEMETRÍA & RENDIMIENTO</span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            Estadísticas <span className="text-primary text-base font-normal">▰</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Estadísticas
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">{RANGE_LABELS[range]}</p>
+          <p className="text-xs text-zinc-400 mt-1">Resumen · {RANGE_LABELS[range]}</p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex w-full items-center gap-2 max-[359px]:flex-wrap sm:w-auto">
           <IosSegmentedControl
             value={range}
             onChange={(val) => {
@@ -488,7 +537,8 @@ export default function EstadisticasPage() {
               setRange(val as Range);
             }}
             layoutId="statsPeriodFilter"
-            size="sm"
+            size="lg"
+            className="min-w-0 max-[359px]:flex-none max-[359px]:w-full [&>button]:!px-2 sm:[&>button]:!px-4"
             options={[
               { value: "hoy", label: "Hoy" },
               { value: "semana", label: "7 días" },
@@ -504,7 +554,7 @@ export default function EstadisticasPage() {
             }}
             disabled={loading}
             aria-label="Actualizar estadísticas"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 glass-panel-subtle text-zinc-300 shadow-sm hover:bg-white/10 hover:border-white/20 active:scale-95 transition disabled:opacity-50 cursor-pointer"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 glass-panel-subtle text-zinc-300 hover:bg-white/10 hover:border-white/20 active:scale-95 transition disabled:opacity-50 cursor-pointer max-[359px]:ml-auto"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-primary" : ""}`} />
           </button>
@@ -537,18 +587,18 @@ export default function EstadisticasPage() {
       ) : stats ? (
         <div className={`space-y-5 sm:space-y-6 transition-opacity duration-300 ${loading ? "opacity-60" : "opacity-100"}`}>
           {/* 1. Motion Glassy Metric Cards with Morphing Springs on Date Changes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div className="stats-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
             <MetricCard
               label="Facturación Total"
               value={stats.totalRevenue}
-              suffix=" Gs."
+              prefix="Gs. "
               context={RANGE_LABELS[range]}
               change={stats.revenueDelta !== null ? `${stats.revenueDelta >= 0 ? "+" : ""}${stats.revenueDelta}%` : undefined}
             />
             <MetricCard
               label="Ticket Promedio"
               value={stats.avgTicket}
-              suffix=" Gs."
+              prefix="Gs. "
               context="Por servicio atendido"
             />
             <MetricCard
@@ -566,23 +616,29 @@ export default function EstadisticasPage() {
           </div>
 
           {/* 2. Main Trend & Performance Glass Motion Chart */}
-          <div className="panel dashboard-chart glass-panel p-5 sm:p-6 shadow-xl space-y-4">
-            <div className="panel-head flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="panel dashboard-chart glass-panel p-4 sm:p-6 space-y-3 sm:space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <span className="eyebrow">FLUJO & OPERACIONES</span>
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Evolución de Rendimiento</h3>
-                <p className="subtitle">
-                  {chartMetric === "ingresos" ? "Facturación registrada" : "Turnos atendidos"} en el período seleccionado
+                <h3 className="text-[15px] sm:text-lg font-bold text-slate-900 dark:text-white">Evolución de Rendimiento</h3>
+                <p className="subtitle text-[13px] leading-[1.4] sm:text-base">
+                  {`${chartMetric === "ingresos" ? "Facturación registrada" : "Turnos atendidos"} en el período seleccionado`}
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                {peakDay && (
-                  <span className="badge orange">
-                    Pico: {peakDay}
-                  </span>
-                )}
-                <DeltaBadge value={chartMetric === "ingresos" ? stats.revenueDelta : stats.appointmentsDelta} />
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex min-w-0 flex-nowrap items-center gap-1.5 sm:flex-wrap sm:gap-2">
+                  {peakDay && (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/20 bg-amber-400/[0.06] py-1 pl-1 pr-2 sm:gap-2 sm:py-1.5 sm:pl-1.5 sm:pr-3">
+                      <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-amber-400/15 text-amber-700 dark:text-amber-300 sm:h-6 sm:w-6" aria-hidden="true">
+                        <TrendingUp className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
+                      </span>
+                      <span className="text-[8px] font-bold uppercase tracking-[0.08em] text-amber-700/70 dark:text-amber-200/65 sm:text-[9px] sm:tracking-[0.1em]">Pico</span>
+                      <span className="text-[10px] font-bold text-amber-800 dark:text-amber-100 sm:text-[11px]">{peakDay}</span>
+                    </span>
+                  )}
+                  <DeltaBadge value={chartMetric === "ingresos" ? stats.revenueDelta : stats.appointmentsDelta} dense />
+                </div>
                 <IosSegmentedControl
                   value={chartMetric}
                   onChange={(val) => {
@@ -590,7 +646,8 @@ export default function EstadisticasPage() {
                     setChartMetric(val as "ingresos" | "turnos");
                   }}
                   layoutId="chartMetricToggle"
-                  size="sm"
+                  size="lg"
+                  className="[&>button]:!px-3 sm:[&>button]:!px-4"
                   options={[
                     { value: "ingresos", label: "Facturación" },
                     { value: "turnos", label: "Turnos" },
@@ -609,9 +666,9 @@ export default function EstadisticasPage() {
                     { key: "ingresos", label: "Facturación", color: brandColor, area: true },
                   ]}
                   label="Evolución de Facturación"
-                  height={240}
+                  height={180}
                   formatValue={(val) => formatGs(val)}
-                  formatTick={(val) => `${Math.round(val / 1000)}k`}
+                  formatTick={(val) => val >= 1_000_000 ? `${(val / 1_000_000).toLocaleString("es-PY", { maximumFractionDigits: 1 })} M` : val >= 1_000 ? `${Math.round(val / 1_000)} mil` : `${val}`}
                 />
               ) : (
                 <MotionBarChart
@@ -619,19 +676,24 @@ export default function EstadisticasPage() {
                   label="Turnos Atendidos"
                   period={RANGE_LABELS[range]}
                   unit="turnos"
-                  height={190}
+                  height={170}
+                  showAverageLabel={false}
                   formatValue={(val) => `${val}`}
                 />
+              )}
+              {hasTrend && hasInactivePeriod && (
+                <p className="stats-chart-note mt-2 text-[11px] leading-relaxed text-slate-600 dark:text-zinc-300">
+                  Los períodos sin turnos atendidos se muestran con valor 0.
+                </p>
               )}
             </div>
           </div>
 
           {/* 3. Goals & Savings Row (Interfas Glassy architecture) */}
-          <div className="section-head flex items-center justify-between mb-3 mt-6">
+          <div className="section-head mb-3 mt-5">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-wide">
               Metas, Fidelización & Volumen
             </h2>
-            <span className="text-[11px] font-medium text-zinc-400">Objetivos del negocio</span>
           </div>
 
           <div className="dashboard-bottom">
@@ -680,7 +742,7 @@ export default function EstadisticasPage() {
                 <strong>
                   <em>Gs.</em> {formatGs(stats.totalRevenue).replace("Gs. ", "")}
                 </strong>
-                <DeltaBadge value={stats.revenueDelta} />
+                <DeltaBadge value={stats.revenueDelta} compact />
               </div>
               <div className="bar-chart">
                 {miniBarData.map((bar, i) => (
@@ -699,37 +761,46 @@ export default function EstadisticasPage() {
           </div>
 
           {/* 4. Activity Strip Telemetry Notice */}
-          <div className="panel activity-strip">
+          <div className="panel activity-strip stats-activity-strip">
             <Zap className="h-4 w-4" />
             <span>
               {peakHour
-                ? `Horario con mayor volumen de reservas: ${peakHour} hs. Asegurate de tener equipo listo.`
+              ? `Mayor volumen de reservas: ${peakHour} hs. Considerá reforzar la cobertura en ese horario.`
                 : stats.totalRevenue > 0
                 ? `El ticket promedio operativo se sitúa en ${formatGs(stats.avgTicket)}.`
                 : "Agendá y atendé turnos para comenzar a ver insights predictivos de rendimiento."}
             </span>
-            <span className="badge orange">En curso</span>
+            <span className={`activity-state-pill ${peakHour ? "activity-state-pill--peak" : stats.totalRevenue > 0 ? "activity-state-pill--summary" : "activity-state-pill--empty"}`}>
+              {peakHour && <span aria-hidden="true" />}
+              {peakHour ? "Hora pico" : stats.totalRevenue > 0 ? "Resumen" : "Sin datos"}
+            </span>
           </div>
 
           {/* 5. Telemetry Pods Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="stats-pods-grid grid grid-cols-2 md:grid-cols-4 gap-3">
             {pods.map((p) => {
               const Icon = p.icon;
               return (
                 <div
                   key={p.label}
-                  className="rounded-2xl glass-panel-subtle p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20"
+                  className="stats-pod rounded-2xl glass-panel-subtle p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20"
+                  aria-label={`${p.label}: ${p.value}`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-zinc-400">{p.label}</span>
+                  <div className="stats-pod-head flex items-center justify-between">
+                    <span className="stats-pod-label text-[11px] font-semibold text-zinc-400">
+                      {p.label === "Cancelados / No Show" ? (
+                        <>Cancelados <span className="stats-pod-label-detail">No Show</span></>
+                      ) : p.label}
+                    </span>
                     <span
-                      className="flex h-7 w-7 items-center justify-center rounded-lg"
+                      className="stats-pod-icon flex h-7 w-7 items-center justify-center rounded-lg"
                       style={{ backgroundColor: `${p.color}1a`, color: p.color }}
+                      aria-hidden="true"
                     >
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                   </div>
-                  <span className="mt-2 block text-2xl font-black font-mono text-slate-900 dark:text-white">
+                  <span className="stats-pod-value mt-2 block text-2xl font-black font-mono text-slate-900 dark:text-white">
                     <AnimatedValue value={p.value} />
                   </span>
                 </div>
@@ -738,15 +809,26 @@ export default function EstadisticasPage() {
           </div>
 
           {/* 6. Payment Breakdown & Hours */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <section className="stats-insight-group" aria-label="Cobros y horarios">
+            <MobileInsightToggle
+              id="stats-payments-content"
+              title="Cobros y horarios"
+              summary={`${payments.length} ${payments.length === 1 ? "método" : "métodos"} de cobro${peakHour ? ` · hora pico ${peakHour}` : ""}`}
+              expanded={expandedMobileInsights.payments}
+              onToggle={() => setExpandedMobileInsights((current) => ({ ...current, payments: !current.payments }))}
+            />
+            <div
+              id="stats-payments-content"
+              className={`stats-insight-content ${!expandedMobileInsights.payments ? "stats-insight-content-collapsed" : ""}`}
+            >
+          <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
             {/* Payments breakdown */}
-            <div className="panel glass-panel p-5 sm:p-6 shadow-md space-y-4">
-              <div className="panel-head flex items-center justify-between border-b border-white/10 pb-3 mb-2">
+            <div className="panel glass-panel p-4 sm:p-6 space-y-4">
+              <div className="panel-head border-b border-white/10 pb-3 mb-2">
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-sm">Métodos de Cobro</h3>
                   <p className="subtitle">Desglose según cobros registrados en caja</p>
                 </div>
-                <span className="badge green">Caja Activa</span>
               </div>
 
               {payments.length === 0 ? (
@@ -759,18 +841,18 @@ export default function EstadisticasPage() {
                     data={donutData}
                     label="Métodos de Cobro"
                     totalLabel="Total Cobrado"
-                    unit="Gs."
-                    size={190}
+                    size={176}
                     thickness={22}
                     formatValue={(v) => formatGs(v)}
+                    formatCenterValue={(v) => v >= 1_000_000 ? `Gs. ${(v / 1_000_000).toLocaleString("es-PY", { maximumFractionDigits: 2 })} M` : v >= 1_000 ? `Gs. ${Math.round(v / 1_000)} mil` : formatGs(v)}
                   />
                 </div>
               )}
             </div>
 
             {/* Hourly Distribution */}
-            <div className="panel glass-panel p-5 sm:p-6 shadow-md space-y-4">
-              <div className="panel-head flex items-center justify-between border-b border-white/10 pb-3 mb-2">
+            <div className="panel glass-panel p-4 sm:p-6 space-y-4">
+              <div className="panel-head flex flex-wrap items-start justify-between gap-2 border-b border-white/10 pb-3 mb-2">
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-sm">Distribución por Hora</h3>
                   <p className="subtitle">Horarios de mayor concentración de citas</p>
@@ -788,8 +870,8 @@ export default function EstadisticasPage() {
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsBarChart data={hourly} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
-                      <XAxis dataKey="hour" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
-                      <YAxis allowDecimals={false} stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="hour" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis allowDecimals={false} stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip
                         formatter={(val: unknown) => [`${val} turnos`, "Turnos"]}
                         contentStyle={darkGlassTooltipStyle}
@@ -814,25 +896,38 @@ export default function EstadisticasPage() {
               )}
             </div>
           </div>
+            </div>
+          </section>
 
           {/* 7. Servicios que Destacan & Heatmap Semanal (Glassy Catalogo Elements) */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <section className="stats-insight-group" aria-label="Servicios y actividad semanal">
+            <MobileInsightToggle
+              id="stats-services-content"
+              title="Servicios y actividad semanal"
+              summary={`${topServices.length} ${topServices.length === 1 ? "servicio destacado" : "servicios destacados"} · distribución de citas por día y hora`}
+              expanded={expandedMobileInsights.services}
+              onToggle={() => setExpandedMobileInsights((current) => ({ ...current, services: !current.services }))}
+            />
+            <div
+              id="stats-services-content"
+              className={`stats-insight-content ${!expandedMobileInsights.services ? "stats-insight-content-collapsed" : ""}`}
+            >
+          <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
             {/* Servicios que destacan */}
-            <div className="panel glass-panel p-5 sm:p-6 shadow-md space-y-4">
-              <div className="panel-head flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3 mb-2">
+            <div className="panel glass-panel min-w-0 p-4 sm:p-6 space-y-4">
+              <div className="panel-head border-b border-white/10 pb-3 mb-2">
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-sm">Servicios que Destacan</h3>
                   <p className="subtitle">Demanda y facturación de servicios líderes</p>
                 </div>
-                <span className="badge orange">Top Servicios</span>
               </div>
 
               <div className="space-y-4 pt-1">
                 {topServices.map((srv) => (
                   <div key={srv.name} className="space-y-1.5">
-                    <div className="progress-label">
-                      <span className="font-semibold text-zinc-200 text-xs">{srv.name}</span>
-                      <b className="font-mono text-slate-900 dark:text-white text-xs">{formatGs(srv.total)}</b>
+                    <div className="flex min-w-0 flex-row items-start justify-between gap-2">
+                      <span className="min-w-0 break-words text-xs font-semibold text-slate-700 dark:text-zinc-200">{srv.name}</span>
+                      <b className="shrink-0 whitespace-nowrap font-mono text-[10px] sm:text-xs text-slate-900 dark:text-white">{formatGs(srv.total)}</b>
                     </div>
                     <div className="progress">
                       <span style={{ width: `${srv.pct}%`, background: brandColor }} />
@@ -843,17 +938,16 @@ export default function EstadisticasPage() {
             </div>
 
             {/* Horas con más Movimiento (Heatmap Semanal) */}
-            <div className="panel glass-panel p-5 sm:p-6 shadow-md space-y-4">
-              <div className="panel-head flex items-center justify-between border-b border-white/10 dark:border-white/10 pb-3 mb-2">
+            <div className="panel glass-panel min-w-0 p-4 sm:p-6 space-y-4">
+              <div className="panel-head border-b border-white/10 pb-3 mb-2">
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-sm">Horas con más Movimiento</h3>
                   <p className="subtitle">Intensidad de citas registradas por día de la semana</p>
                 </div>
-                <span className="badge purple">Heatmap</span>
               </div>
 
-              <div className="overflow-x-auto pb-1">
-                <div className="heatmap min-w-[320px]">
+              <div className="min-w-0 w-full">
+                <div className="heatmap w-full min-w-0">
                   <span></span>
                   {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
                     <span key={d} className="font-bold text-[11px] text-zinc-400">
@@ -871,10 +965,12 @@ export default function EstadisticasPage() {
                           <button
                             key={dayIdx}
                             type="button"
-                            className="heat-cell"
+                            className={`heat-cell ${activeHeatCell?.day === dayName && activeHeatCell.hour === h ? "!border-primary ring-1 ring-primary/50" : ""}`}
                             style={{ "--heat": heatOpacity } as React.CSSProperties}
                             title={`${count} cita(s) · ${dayName}, ${h}:00 a ${h + 2}:00 hs`}
                             aria-label={`${count} citas ${dayName} ${h} a ${h + 2} hs`}
+                            aria-pressed={activeHeatCell?.day === dayName && activeHeatCell.hour === h}
+                            onClick={() => setActiveHeatCell({ day: dayName, hour: h, count })}
                           >
                             {count > 0 ? count : ""}
                           </button>
@@ -884,14 +980,32 @@ export default function EstadisticasPage() {
                   ))}
                 </div>
               </div>
-              <p className="text-[11px] text-zinc-400">
-                Pasa el cursor por cada celda para ver el volumen específico de reservas en cada tramo.
-              </p>
+              <p className="text-xs text-zinc-400 sm:hidden">Tocá una celda para consultar las citas de ese horario.</p>
+              <p className="hidden text-xs text-zinc-400 sm:block">Seleccioná una celda para consultar las citas del tramo.</p>
+              {activeHeatCell && (
+                <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-700 dark:text-zinc-200" role="status">
+                  {activeHeatCell.day}, {activeHeatCell.hour}:00 a {activeHeatCell.hour + 2}:00 · {activeHeatCell.count} {activeHeatCell.count === 1 ? "cita" : "citas"}
+                </p>
+              )}
             </div>
           </div>
+            </div>
+          </section>
 
           {/* 8. Loyalty Metrics */}
-          <div className="grid gap-3 sm:grid-cols-3">
+          <section className="stats-insight-group" aria-label="Fidelización de clientes">
+            <MobileInsightToggle
+              id="stats-loyalty-content"
+              title="Fidelización"
+              summary={`${stats.retentionRate === null ? "Sin datos" : `${stats.retentionRate}% recurrentes`}${stats.returnCycleDays === null ? "" : ` · retorno ${stats.returnCycleDays} días`}`}
+              expanded={expandedMobileInsights.loyalty}
+              onToggle={() => setExpandedMobileInsights((current) => ({ ...current, loyalty: !current.loyalty }))}
+            />
+            <div
+              id="stats-loyalty-content"
+              className={`stats-insight-content ${!expandedMobileInsights.loyalty ? "stats-insight-content-collapsed" : ""}`}
+            >
+          <div className="stats-loyalty-grid grid gap-3 sm:grid-cols-3">
             {[
               {
                 label: "Clientes Recurrentes",
@@ -917,7 +1031,7 @@ export default function EstadisticasPage() {
             ].map((m) => {
               const Icon = m.icon;
               return (
-                <div key={m.label} className="panel glass-panel p-5 shadow-md flex flex-col justify-between">
+                <div key={m.label} className="stats-loyalty-card panel glass-panel p-5 shadow-md flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between text-zinc-400 mb-2">
                       <div className="flex items-center gap-2">
@@ -935,6 +1049,8 @@ export default function EstadisticasPage() {
               );
             })}
           </div>
+            </div>
+          </section>
         </div>
       ) : null}
     </div>

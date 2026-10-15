@@ -32,6 +32,8 @@ export interface BarChartProps {
   categoryLabel?: string;
   /** Draws the average as a reference line that springs to each new range. */
   showAverage?: boolean;
+  /** Shows the average label beside the reference line. */
+  showAverageLabel?: boolean;
   /** Plot height in pixels. */
   height?: number;
   formatValue?: (value: number) => string;
@@ -311,6 +313,7 @@ export function BarChart({
   valueLabel = "Total",
   categoryLabel = "Día",
   showAverage = true,
+  showAverageLabel = true,
   height = 176,
   formatValue = value => grouped.format(value),
 }: BarChartProps) {
@@ -463,13 +466,11 @@ export function BarChart({
   };
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== "mouse") event.currentTarget.setPointerCapture?.(event.pointerId);
-    setActive(pointAt(event.clientX));
+    const next = pointAt(event.clientX);
+    setActive(current => event.pointerType !== "mouse" && current === next ? null : next);
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" || event.buttons) setActive(pointAt(event.clientX));
-  };
-  const release = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== "mouse") setActive(null);
   };
 
   const scrubbed = scrubbing ? data[index] : null;
@@ -481,7 +482,7 @@ export function BarChart({
     highest ? ` Máximo ${highest.label}, ${formatValue(highest.value)}${suffix}.` : ""
   }${lowest && lowest !== highest ? ` Mínimo ${lowest.label}, ${formatValue(lowest.value)}${suffix}.` : ""}`;
   const shown = inView || reduced;
-  const avoid = showAverage ? meanY : null;
+  const avoid = showAverage && showAverageLabel ? meanY : null;
 
   return (
     <figure ref={figure} className={styles.figure} aria-labelledby={titleId}>
@@ -547,7 +548,7 @@ export function BarChart({
               <TickLabel key={value} value={value} scale={scale} height={height} avoid={avoid} format={formatValue} />
             ))}
           </AnimatePresence>
-          {showAverage && (
+          {showAverage && showAverageLabel && (
             <motion.span className={styles.meanLabel} style={{ y: meanY }} initial={false} animate={{ opacity: shown ? 1 : 0 }} transition={reduced ? { duration: 0 } : { duration: duration.standard, delay: 0.12 }}>
               <motion.span className={styles.tickText}>{meanText}</motion.span>
             </motion.span>
@@ -584,7 +585,6 @@ export function BarChart({
           aria-valuetext={valueText}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
-          onPointerUp={release}
           onPointerCancel={() => setActive(null)}
           onPointerLeave={event => {
             if (event.pointerType === "mouse") setActive(null);

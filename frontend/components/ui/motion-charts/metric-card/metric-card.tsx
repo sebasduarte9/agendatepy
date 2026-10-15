@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, type Variants } from "motion/react";
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { motionTokens } from "@/lib/motion-tokens";
 import { AnimatedCounter } from "../animated-counter/animated-counter";
 import styles from "./metric-card.module.css";
@@ -68,6 +69,8 @@ function Swap({ text, morph = false, block = false }: { text: string; morph?: bo
 
 export function MetricCard({ label, value, suffix, prefix, context, change }: MetricCardProps) {
   const reduceMotion = !!useReducedMotion();
+  const trend = change?.startsWith("+") ? "up" : change && /^[-−]/.test(change) ? "down" : "neutral";
+  const TrendIcon = trend === "down" ? ArrowDownRight : trend === "up" ? ArrowUpRight : Minus;
   return (
     <article className={styles.card}>
       <div className={styles.top}>
@@ -78,13 +81,15 @@ export function MetricCard({ label, value, suffix, prefix, context, change }: Me
           {change && (
             <motion.small
               key="change"
-              data-trend={/^[+]/.test(change) ? "up" : /^[-−]/.test(change) ? "down" : undefined}
+              data-trend={trend}
+              aria-label={`Variación ${change} respecto al período anterior`}
               initial={{ opacity: 0, scale: reduceMotion ? 1 : 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: reduceMotion ? 1 : 0.96, transition: { duration: motionTokens.duration.fast, ease: [...motionTokens.ease.standard] } }}
               transition={reduceMotion ? { duration: 0 } : motionTokens.spring.snappy}
             >
-              <Swap text={change} morph />
+              <TrendIcon className={styles.trendIcon} aria-hidden="true" />
+              <span className={styles.trendValue}>{change}</span>
             </motion.small>
           )}
         </AnimatePresence>

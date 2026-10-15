@@ -56,6 +56,10 @@
   opacity: 0.85;
 }
 
+.value > .symbol:first-child {
+  margin-right: 0.24em;
+}
+
 .column {
   position: relative;
   display: inline-block;

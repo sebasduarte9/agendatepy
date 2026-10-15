@@ -145,6 +145,12 @@
   stroke: var(--series, var(--primary, #FF4F2B));
   stroke-width: 3;
   box-shadow: 0 0 10px var(--series, var(--primary, #FF4F2B));
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.dot[data-active] {
+  opacity: 1;
 }
 
 .dot[data-hidden] {
@@ -247,7 +253,7 @@
 }
 
 :global(.dark) .tickText {
-  color: rgb(100 116 139);
+  color: rgb(148 163 184);
 }
 
 /* Bottom Axis */
@@ -268,7 +274,7 @@
 }
 
 :global(.dark) .axisLabel {
-  color: rgb(100 116 139);
+  color: rgb(148 163 184);
 }
 
 .srOnly {
@@ -292,6 +298,58 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: rgb(148 163 184);
+}
+
+@media (max-width: 639px) {
+  .figure {
+    gap: 0.7rem;
+  }
+
+  .chart {
+    gap: 0.4rem;
+  }
+
+  .plot {
+    touch-action: pan-y;
+  }
+
+  .gutter {
+    width: 52px;
+  }
+
+  .tickText {
+    font-size: 0.6875rem;
+  }
+
+  .axis {
+    height: 18px;
+  }
+
+  .axisLabel {
+    top: 3px;
+    font-size: 0.6875rem;
+  }
+
+  .tooltip {
+    min-width: 132px;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.85rem;
+  }
+
+  .tipTitle {
+    margin-bottom: 0.25rem;
+    font-size: 0.625rem;
+  }
+
+  .tipRow {
+    gap: 0.5rem;
+    font-size: 0.6875rem;
+  }
+
+  .tipValue {
+    font-size: 0.6875rem;
+    white-space: nowrap;
+  }
 }
 
 .skeleton {

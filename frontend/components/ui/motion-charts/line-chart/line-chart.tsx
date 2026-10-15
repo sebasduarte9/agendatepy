@@ -219,7 +219,8 @@ function TickLabel({ value, scale, height, format }: { value: number; scale: Sca
 function axisPicks(data: LineChartDatum[], width: number) {
   const labeled = data.flatMap((item, index) => (item.axisLabel ? [index] : []));
   if (!width || !labeled.length) return [];
-  const room = Math.max(2, Math.floor(width / 76));
+  const longestLabel = Math.max(...labeled.map(index => data[index]!.axisLabel!.length));
+  const room = Math.max(2, Math.floor(width / Math.max(30, longestLabel * 6 + 12)));
   const stride = Math.ceil(labeled.length / room);
   return labeled.reverse().filter((_, rank) => rank % stride === 0).reverse();
 }
@@ -510,8 +511,10 @@ export function LineChart({
   };
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (empty) return;
-    if (event.pointerType !== "mouse") event.currentTarget.setPointerCapture?.(event.pointerId);
-    setActive(pointAt(event.clientX));
+    const isTouch = event.pointerType !== "mouse";
+    if (isTouch) event.currentTarget.setPointerCapture?.(event.pointerId);
+    const next = pointAt(event.clientX);
+    setActive(current => isTouch && current === next ? null : next);
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!empty && (event.pointerType === "mouse" || event.buttons)) setActive(pointAt(event.clientX));
@@ -566,9 +569,6 @@ export function LineChart({
           aria-valuetext={valueText}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
-          onPointerUp={event => {
-            if (event.pointerType !== "mouse") setActive(null);
-          }}
           onPointerCancel={() => setActive(null)}
           onPointerLeave={event => {
             if (event.pointerType === "mouse") setActive(null);
@@ -591,7 +591,15 @@ export function LineChart({
               ))}
             </AnimatePresence>
             <line className={styles.baseline} x1={0} x2="100%" y1={height - 0.5} y2={height - 0.5} />
-            <line ref={crosshair} className={styles.crosshair} y1={TOP - 4} y2={height} />
+            <motion.line
+              ref={crosshair}
+              className={styles.crosshair}
+              y1={TOP - 4}
+              y2={height}
+              initial={false}
+              animate={{ opacity: scrubbing ? 0.7 : 0 }}
+              transition={reduced ? { duration: 0 } : { duration: duration.fast, ease: [...ease.standard] }}
+            />
             <g className={styles.series} clipPath={`url(#${uid}-draw)`}>
               {series.map((line, at) => (
                 <g
@@ -631,12 +639,21 @@ export function LineChart({
                 }}
                 className={styles.dot}
                 r={4}
+                data-active={scrubbing || undefined}
                 data-hidden={hidden.includes(line.key) || undefined}
                 style={{ "--series": colorOf(line, at) } as CSSProperties}
               />
             ))}
           </svg>
-          <motion.div ref={tip} className={styles.tooltip} style={{ x: tipX, y: tipY }} aria-hidden="true">
+          <motion.div
+            ref={tip}
+            className={styles.tooltip}
+            style={{ x: tipX, y: tipY }}
+            initial={false}
+            animate={{ opacity: scrubbing ? 1 : 0, scale: scrubbing ? 1 : 0.98 }}
+            transition={reduced ? { duration: 0 } : { duration: duration.fast, ease: [...ease.standard] }}
+            aria-hidden="true"
+          >
             <p className={styles.tipTitle}>{(reading ?? data[last])?.label ?? ""}</p>
             {visible.map(line => (
               <p key={line.key} className={styles.tipRow} style={{ "--series": colorOf(line, series.indexOf(line)) } as CSSProperties}>

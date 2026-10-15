@@ -91,11 +91,12 @@
 
 .centerValue {
   font-family: ui-monospace, monospace;
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 900;
   letter-spacing: -0.03em;
   color: rgb(15 23 42);
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 :global(.dark) .centerValue {

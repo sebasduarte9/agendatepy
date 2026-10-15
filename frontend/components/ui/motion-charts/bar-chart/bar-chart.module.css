@@ -181,7 +181,7 @@
 }
 
 :global(.dark) .tickText {
-  color: rgb(100 116 139);
+  color: rgb(148 163 184);
 }
 
 .meanLabel {
@@ -221,7 +221,7 @@
 }
 
 :global(.dark) .axisLabel {
-  color: rgb(100 116 139);
+  color: rgb(148 163 184);
 }
 
 .measure {
@@ -239,6 +239,61 @@
   cursor: ew-resize;
   z-index: 10;
   outline: none;
+}
+
+@media (max-width: 639px) {
+  .figure {
+    gap: 0.75rem;
+  }
+
+  .header {
+    gap: 0.15rem;
+  }
+
+  .kind,
+  .when {
+    font-size: 0.6875rem;
+  }
+
+  .value {
+    font-size: 1.625rem;
+  }
+
+  .unit {
+    font-size: 0.875rem;
+  }
+
+  .chart {
+    gap: 0.4rem;
+  }
+
+  .scrubber {
+    touch-action: pan-y;
+  }
+
+  .gutter {
+    width: 42px;
+  }
+
+  .tickText {
+    font-size: 0.6875rem;
+  }
+
+  .axis {
+    height: 20px;
+  }
+
+  .axisLabel {
+    font-size: 0.6875rem;
+  }
+
+  .meanLabel {
+    padding: 0.08rem 0.25rem;
+  }
+
+  .meanLabel .tickText {
+    font-size: 0.625rem;
+  }
 }
 
 .srOnly {
