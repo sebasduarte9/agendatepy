@@ -18,7 +18,6 @@ import {
   Award,
   Settings,
   RefreshCw,
-  Phone,
   CreditCard,
   X,
   CheckCircle2,
@@ -38,19 +37,64 @@ import {
   FileText,
   History,
   ChevronLeft,
+  BarChart3,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import Card from "@/components/dashboard/ui/Card";
 import Modal from "@/components/dashboard/ui/Modal";
 import CustomSelect, { CustomSelectOption } from "@/components/dashboard/ui/CustomSelect";
+import IosSegmentedControl from "@/components/dashboard/ui/IosSegmentedControl";
 import { formatGs } from "@/lib/dashboard-dates";
-import type { CrmChannel, CrmConversation, ProductOrderStatus } from "@/lib/dashboard-types";
+import type { AppointmentStatus, CrmChannel, CrmConversation, ProductOrderStatus } from "@/lib/dashboard-types";
 import { tenantPublicUrl } from "@/lib/tenant/public-url";
 
 // Demo timestamps are created separately on the server and browser. Render them
 // after hydration, using the business timezone rather than the device timezone.
 const subscribeToHydration = () => () => {};
+const phoneSuffix = (value: string | undefined | null) => (value || "").replace(/\D/g, "").slice(-8);
+
+function formatProfileDate(iso: string, timezone: string, withTime = false) {
+  return new Date(iso).toLocaleDateString("es-PY", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: timezone,
+    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+  });
+}
+
+const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, { label: string; className: string }> = {
+  completed: { label: "Asistió", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" },
+  confirmed: { label: "Confirmado", className: "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" },
+  pending: { label: "Pendiente", className: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" },
+  no_show: { label: "No asistió", className: "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300" },
+  cancelled: { label: "Cancelado", className: "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-zinc-300" },
+  expired: { label: "Expirado", className: "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-zinc-300" },
+};
+
+const ORDER_FILTERS: { id: "all" | ProductOrderStatus; label: string }[] = [
+  { id: "all", label: "Todos" },
+  { id: "pending", label: "Pendientes" },
+  { id: "confirmed", label: "Confirmados" },
+  { id: "delivered", label: "Entregados" },
+  { id: "cancelled", label: "Cancelados" },
+];
+
+const ORDER_STATUS_LABELS: Record<ProductOrderStatus, { label: string; className: string }> = {
+  pending: { label: "Pendiente", className: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" },
+  confirmed: { label: "Confirmado", className: "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" },
+  delivered: { label: "Entregado", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" },
+  cancelled: { label: "Cancelado", className: "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-zinc-300" },
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  efectivo: "Efectivo",
+  transferencia: "Transferencia",
+  pos: "Tarjeta (POS)",
+  sipap: "SIPAP",
+};
+
 function ConversationTime({ value, timezone }: { value: string; timezone: string }) {
   const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   return <time>{hydrated ? new Date(value).toLocaleTimeString("es-PY", {
@@ -85,6 +129,7 @@ function ContactAvatar({
   phone,
   channel,
   tenantSlug,
+  whatsappConnected,
   color,
   className,
   initialsClassName = "",
@@ -93,13 +138,14 @@ function ContactAvatar({
   phone: string;
   channel: CrmChannel;
   tenantSlug: string;
+  whatsappConnected: boolean;
   color: string;
   className: string;
   initialsClassName?: string;
 }) {
   const initials = name.split(" ").filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const digits = phone.replace(/\D/g, "");
-  const avatarUrl = channel === "whatsapp" && digits.length >= 8
+  const avatarUrl = channel === "whatsapp" && whatsappConnected && digits.length >= 8
     ? `/api/crm/whatsapp-avatar?phone=${encodeURIComponent(digits)}&workspace=${encodeURIComponent(tenantSlug)}`
     : null;
 
@@ -138,6 +184,7 @@ export default function CrmOmnichannelPage() {
     sendCrmMessage, resolveCrmConversation, reopenCrmConversation,
     pushToast, productOrders, updateProductOrderStatus,
     receipts, setReceiptStatus,
+    appointments, services, staff, loyalty, sipap,
   } = useDashboardStore();
 
   const router = useRouter();
@@ -145,7 +192,6 @@ export default function CrmOmnichannelPage() {
   const [desktopProfileOpen, setDesktopProfileOpen] = useState(true);
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | ProductOrderStatus>("all");
   const [orderSearch, setOrderSearch] = useState("");
-  const [channelFilter, setChannelFilter] = useState<"todos" | CrmChannel>("todos");
   const [statusFilter, setStatusFilter] = useState<"open" | "resolved" | "all">("open");
   const [search, setSearch] = useState("");
   const [deepLinkPhone, setDeepLinkPhone] = useState("");
@@ -163,6 +209,8 @@ export default function CrmOmnichannelPage() {
   const [channelsModalOpen, setChannelsModalOpen] = useState(false);
   const [channelsTab, setChannelsTab] = useState<"whatsapp" | "instagram" | "facebook">("whatsapp");
   const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [clientProfileModalOpen, setClientProfileModalOpen] = useState(false);
 
   // Order modal
@@ -191,7 +239,6 @@ export default function CrmOmnichannelPage() {
       if (phone) {
         setDeepLinkPhone(phone);
         setSearch(phone);
-        setChannelFilter("todos");
         setStatusFilter("all");
       }
     }
@@ -277,22 +324,56 @@ export default function CrmOmnichannelPage() {
   const pendingOrdersCount = productOrders.filter((o) => o.status === "pending").length;
   const totalOrderRevenue = productOrders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + o.totalAmount, 0);
 
-  const quickReplies = [
-    { title: "Enlace de Turnos", text: `¡Hola! Podés reservar tu turno en nuestra web: ${tenantPublicUrl(business.slug || "barberia")}` },
-    { title: "Precios", text: "Nuestros servicios van desde Gs. 50.000 hasta Gs. 120.000 (Combo Corte + Barba VIP). ¿Te gustaría agendar?" },
-    { title: "Ubicación", text: `Estamos en ${business.address}, ${business.city}. Contamos con estacionamiento exclusivo.` },
-    { title: "Datos Transferencia", text: "Transferencias: Banco Itaú · Titular: AgendatePY · RUC: 80012345-6 · Cta: 0123456789. Enviar comprobante." },
-  ];
+  // Respuestas rápidas armadas con los datos reales del negocio
+  const quickReplies = useMemo(() => {
+    const priced = services.filter((s) => s.active !== false && s.price > 0);
+    const cheapest = priced.reduce<(typeof priced)[number] | null>((min, s) => (!min || s.price < min.price ? s : min), null);
+    const priciest = priced.reduce<(typeof priced)[number] | null>((max, s) => (!max || s.price > max.price ? s : max), null);
+    const replies: { title: string; text: string }[] = [
+      { title: "Enlace de turnos", text: `¡Hola! Podés reservar tu turno en nuestra web: ${tenantPublicUrl(business.slug || "barberia")}` },
+    ];
+    if (cheapest && priciest) {
+      replies.push({
+        title: "Precios",
+        text: cheapest.id === priciest.id
+          ? `${cheapest.name}: ${formatGs(cheapest.price)}. ¿Te gustaría agendar?`
+          : `Nuestros servicios van desde ${formatGs(cheapest.price)} (${cheapest.name}) hasta ${formatGs(priciest.price)} (${priciest.name}). ¿Te gustaría agendar?`,
+      });
+    }
+    if (business.address) {
+      replies.push({ title: "Ubicación", text: `Estamos en ${[business.address, business.city].filter(Boolean).join(", ")}.` });
+    }
+    if (sipap.accountNumber || sipap.aliasSipap) {
+      replies.push({
+        title: "Datos de transferencia",
+        text: [
+          "Datos para transferencia:",
+          sipap.bankName && `Banco: ${sipap.bankName}`,
+          sipap.accountHolder && `Titular: ${sipap.accountHolder}`,
+          sipap.rucOrCi && `RUC/CI: ${sipap.rucOrCi}`,
+          sipap.accountNumber && `Cuenta: ${sipap.accountNumber}`,
+          sipap.aliasSipap && `Alias SIPAP: ${sipap.aliasSipap}`,
+          "Cuando transfieras, enviame el comprobante por acá.",
+        ].filter(Boolean).join("\n"),
+      });
+    }
+    return replies;
+  }, [services, business.slug, business.address, business.city, sipap]);
 
-  const filteredConversations = useMemo(() => crmConversations.filter((c) => {
-    const chMatch = channelFilter === "todos" || c.channel === channelFilter;
+  // Por ahora la bandeja es solo WhatsApp; Instagram y Messenger quedan como "Próximamente".
+  const whatsappConversations = useMemo(
+    () => crmConversations.filter((c) => c.channel === "whatsapp"),
+    [crmConversations],
+  );
+
+  const filteredConversations = useMemo(() => whatsappConversations.filter((c) => {
     const stMatch = statusFilter === "all" || (statusFilter === "open" && (c.status === "open" || c.status === "pending")) || (statusFilter === "resolved" && c.status === "resolved");
     const normalizedSearch = search.trim().toLowerCase();
     const searchDigits = search.replace(/\D/g, "");
     const phoneMatch = searchDigits.length >= 4 && c.channelIdentifier.replace(/\D/g, "").endsWith(searchDigits.slice(-8));
     const seMatch = !normalizedSearch || c.clientName.toLowerCase().includes(normalizedSearch) || c.channelIdentifier.toLowerCase().includes(normalizedSearch) || c.lastMessage.toLowerCase().includes(normalizedSearch) || phoneMatch;
-    return chMatch && stMatch && seMatch;
-  }), [crmConversations, channelFilter, statusFilter, search]);
+    return stMatch && seMatch;
+  }), [whatsappConversations, statusFilter, search]);
 
   const activeConversation = useMemo(() => {
     if (deepLinkPhone) {
@@ -316,9 +397,58 @@ export default function CrmOmnichannelPage() {
   }, [activeConversation, deepLinkPhone, filteredConversations, mobileActiveView, selectedId]);
 
   const linkedClient = useMemo(() => {
-    if (!activeConversation?.clientId) return null;
-    return clients.find((cl) => cl.id === activeConversation.clientId) || null;
+    if (!activeConversation) return null;
+    const byId = activeConversation.clientId ? clients.find((cl) => cl.id === activeConversation.clientId) : undefined;
+    if (byId) return byId;
+    if (activeConversation.channel !== "whatsapp") return null;
+    const suffix = phoneSuffix(activeConversation.channelIdentifier);
+    return suffix.length === 8 ? clients.find((cl) => phoneSuffix(cl.phone) === suffix) || null : null;
   }, [activeConversation, clients]);
+  // Turnos del cliente (por id vinculado o, si no hay, por teléfono)
+  const clientAppointments = useMemo(() => {
+    if (!activeConversation) return [];
+    const suffix = phoneSuffix(linkedClient?.phone || activeConversation.channelIdentifier);
+    return appointments
+      .filter((a) =>
+        (linkedClient && a.clientId === linkedClient.id) ||
+        (suffix.length === 8 && phoneSuffix(a.clientPhone) === suffix)
+      )
+      .sort((a, b) => b.start.localeCompare(a.start));
+  }, [activeConversation, linkedClient, appointments]);
+
+  const clientStats = useMemo(() => {
+    const now = Date.now();
+    const completed = clientAppointments.filter((a) => a.status === "completed");
+    const mostFrequent = (ids: string[]) => {
+      const counts = new Map<string, number>();
+      for (const id of ids) counts.set(id, (counts.get(id) || 0) + 1);
+      return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    };
+    const attended = completed.length > 0 ? completed : clientAppointments.filter((a) => a.status !== "cancelled" && a.status !== "expired");
+    const favoriteServiceId = mostFrequent(attended.map((a) => a.serviceId));
+    const favoriteStaffId = mostFrequent(attended.map((a) => a.staffId));
+    const visits = Math.max(linkedClient?.totalVisits ?? 0, completed.length);
+    const totalSpent = Math.max(
+      linkedClient?.totalSpent ?? 0,
+      completed.reduce((sum, a) => sum + (services.find((s) => s.id === a.serviceId)?.price || 0), 0),
+    );
+    const lastCompleted = completed.find((a) => Date.parse(a.start) <= now)?.start;
+    const nextAppointment = [...clientAppointments]
+      .reverse()
+      .find((a) => Date.parse(a.start) > now && (a.status === "confirmed" || a.status === "pending"));
+    return {
+      visits,
+      totalSpent,
+      avgTicket: visits > 0 ? Math.round(totalSpent / visits) : 0,
+      lastVisit: [lastCompleted, linkedClient?.lastVisit].filter(Boolean).sort().pop() || null,
+      nextAppointment,
+      noShows: clientAppointments.filter((a) => a.status === "no_show").length,
+      cancellations: clientAppointments.filter((a) => a.status === "cancelled").length,
+      favoriteService: services.find((s) => s.id === favoriteServiceId)?.name,
+      favoriteStaff: staff.find((p) => p.id === favoriteStaffId)?.name,
+    };
+  }, [clientAppointments, linkedClient, services, staff]);
+
 
   // Order history for active conversation client
   const clientOrderHistory = useMemo(() => {
@@ -342,10 +472,7 @@ export default function CrmOmnichannelPage() {
   const unitPrice = selectedProduct?.isOnSale && selectedProduct?.salePrice ? selectedProduct.salePrice : selectedProduct?.price || 0;
   const orderTotal = unitPrice * orderQty;
 
-  const unreadTotal = crmConversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
-  const waUnread = crmConversations.filter((c) => c.channel === "whatsapp").reduce((s, c) => s + (c.unreadCount || 0), 0);
-  const igUnread = crmConversations.filter((c) => c.channel === "instagram").reduce((s, c) => s + (c.unreadCount || 0), 0);
-  const msUnread = crmConversations.filter((c) => c.channel === "messenger").reduce((s, c) => s + (c.unreadCount || 0), 0);
+  const unreadTotal = whatsappConversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
 
   /* ── Auto-scroll & Viewport Management ── */
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -543,9 +670,10 @@ export default function CrmOmnichannelPage() {
     pushToast("success", "Conversaciones restauradas.");
   }
 
-  function handleCreateOrderSubmit() {
-    if (!activeConversation || !selectedProduct) return;
-    createOrderFromCrm({
+  async function handleCreateOrderSubmit() {
+    if (!activeConversation || !selectedProduct || savingOrder) return;
+    setSavingOrder(true);
+    const created = await createOrderFromCrm({
       clientName: activeConversation.clientName,
       clientPhone: activeConversation.channelIdentifier,
       items: [{ productId: selectedProduct.id, productName: selectedProduct.name, qty: orderQty, unitPrice, isOnSale: selectedProduct.isOnSale }],
@@ -553,6 +681,9 @@ export default function CrmOmnichannelPage() {
       paymentMethod: orderPayment,
       notes: orderNotes.trim() || `Pedido tomado por chat (${activeConversation.channel})`,
     });
+    setSavingOrder(false);
+    // Solo avisamos al cliente si el pedido quedó guardado
+    if (!created) return;
     const autoMsg = `¡Pedido registrado! ${orderQty}x ${selectedProduct.name} por ${formatGs(orderTotal)}. ${orderDelivery === "retirar_en_local" ? "Retiro en local" : "Delivery"}.`;
     sendCrmMessage(activeConversation.id, autoMsg);
     setOrderModalOpen(false);
@@ -576,168 +707,179 @@ export default function CrmOmnichannelPage() {
     { value: "pos", label: "Tarjeta / POS Bancard", icon: <CheckCircle2 className="h-4 w-4 text-blue-500" /> },
   ];
 
-  const openCount = crmConversations.filter((c) => c.status === "open").length;
-  const resolvedCount = crmConversations.filter((c) => c.status === "resolved").length;
-  const resolutionPct = crmConversations.length > 0 ? Math.round((resolvedCount / crmConversations.length) * 100) : 100;
-  const waCount = crmConversations.filter((c) => c.channel === "whatsapp").length;
-  const waSharePct = crmConversations.length > 0 ? Math.round((waCount / crmConversations.length) * 100) : 0;
+  const openCount = whatsappConversations.filter((c) => c.status === "open").length;
+  const resolvedCount = whatsappConversations.filter((c) => c.status === "resolved").length;
+  const resolutionPct = whatsappConversations.length > 0 ? Math.round((resolvedCount / whatsappConversations.length) * 100) : 100;
+  const unreadChatsCount = whatsappConversations.filter((c) => (c.unreadCount || 0) > 0).length;
+
+  // Tiempo de respuesta real: desde cada mensaje del cliente hasta la primera respuesta (agente o bot)
+  const avgResponseMinutes = (() => {
+    const waits: number[] = [];
+    for (const conv of whatsappConversations) {
+      let pendingSince: number | null = null;
+      for (const m of conv.messages) {
+        const t = Date.parse(m.timestamp);
+        if (Number.isNaN(t)) continue;
+        if (m.sender === "client") {
+          if (pendingSince === null) pendingSince = t;
+        } else if (pendingSince !== null) {
+          waits.push(Math.max(0, t - pendingSince));
+          pendingSince = null;
+        }
+      }
+    }
+    return waits.length > 0 ? waits.reduce((a, b) => a + b, 0) / waits.length / 60_000 : null;
+  })();
+  const avgResponseLabel = avgResponseMinutes === null
+    ? "Sin datos"
+    : avgResponseMinutes < 1
+    ? "< 1 min"
+    : avgResponseMinutes < 60
+    ? `${Math.round(avgResponseMinutes)} min`
+    : `${(avgResponseMinutes / 60).toFixed(1).replace(".", ",")} h`;
+
+  const activeOrders = productOrders.filter((o) => o.status !== "cancelled");
+  const avgOrderTicket = activeOrders.length > 0 ? Math.round(totalOrderRevenue / activeOrders.length) : 0;
+  const deliveredOrdersCount = productOrders.filter((o) => o.status === "delivered").length;
+  const cadenceSeconds = evolutionConfig.autoBotCadenceSeconds ?? 12;
+
+  async function changeOrderStatus(orderId: string, status: ProductOrderStatus, successMessage: string) {
+    if (updatingOrderId) return;
+    setUpdatingOrderId(orderId);
+    const ok = await updateProductOrderStatus(orderId, status);
+    setUpdatingOrderId(null);
+    if (ok) pushToast(status === "cancelled" ? "error" : "success", successMessage);
+  }
+
+  function openChatForPhone(phone: string) {
+    const suffix = phoneSuffix(phone);
+    const conv = whatsappConversations.find((c) => phoneSuffix(c.channelIdentifier) === suffix);
+    if (!conv || suffix.length < 8) {
+      pushToast("error", "Este cliente todavía no tiene un chat de WhatsApp.");
+      return;
+    }
+    setDeepLinkPhone("");
+    setSearch("");
+    setStatusFilter("all");
+    setSelectedId(conv.id);
+    setMainSection("mensajes");
+    setMobileActiveView("chat");
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  const headerActions = (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setChannelsTab("whatsapp");
+          setChannelsModalOpen(true);
+        }}
+        aria-label="Conectar WhatsApp por QR"
+        title="Conectar WhatsApp por QR"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+        style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+      >
+        <QrCode aria-hidden="true" className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">{evolutionConfig.connected ? "Canales" : "Conectar WhatsApp"}</span>
+      </button>
+
+      {whatsappConversations.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setClearConfirmOpen(true)}
+          aria-label="Limpiar bandeja de mensajes"
+          title="Limpiar bandeja de mensajes"
+          className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-white/10 hover:text-rose-600 dark:text-zinc-300 dark:hover:text-rose-400 cursor-pointer"
+        >
+          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Limpiar</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={loadDemoConversation}
+          className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-white/10 dark:text-zinc-300 cursor-pointer"
+        >
+          <MessageSquare aria-hidden="true" className="h-3.5 w-3.5 text-emerald-500" />
+          <span>Demo</span>
+        </button>
+      )}
+    </>
+  );
 
   return (
     <div className={mobileActiveView !== "list" ? "space-y-0 lg:space-y-4" : "space-y-4"}>
-      {/* ═══ APP FORMAT TOP NAVIGATION BAR ═══ */}
+      {/* ═══ HEADER (mismo patrón que Agenda / Clientes) ═══ */}
       <div
         data-tour="crm-header"
-        className={`flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-white/10 shrink-0 ${
+        className={`flex-col gap-3 py-1 lg:flex-row lg:items-center lg:justify-between ${
           mobileActiveView !== "list" ? "hidden lg:flex" : "flex"
         }`}
       >
-        <div className="flex min-w-0 items-center gap-3">
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white font-semibold text-sm shadow-xs"
-            style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-          >
-            <MessageSquare className="h-5 w-5" />
-          </div>
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                CRM & Mensajería
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                Mensajes
               </h1>
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{evolutionConfig.connected ? "En línea" : "Desconectado"}</span>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                  evolutionConfig.connected
+                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : "border-slate-300/60 bg-slate-100 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400"
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${evolutionConfig.connected ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                <span>{evolutionConfig.connected ? "WhatsApp en línea" : "WhatsApp desconectado"}</span>
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              WhatsApp, Instagram y Messenger en una sola bandeja
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+              {whatsappConversations.length} {whatsappConversations.length === 1 ? "conversación" : "conversaciones"}
+              {unreadTotal > 0 && <> · <span className="font-semibold text-rose-600 dark:text-rose-400">{unreadTotal} sin leer</span></>}
+              {pendingOrdersCount > 0 && <> · {pendingOrdersCount} {pendingOrdersCount === 1 ? "pedido pendiente" : "pedidos pendientes"}</>}
             </p>
           </div>
+          <div className="flex shrink-0 items-center gap-2 lg:hidden">{headerActions}</div>
         </div>
 
-        {/* Center / Right: App Navigation Pills + Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div data-tour="crm-switcher" className="crm-switcher flex min-w-0 max-w-full items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-white/5">
-            <button
-              type="button"
-              onClick={() => setMainSection("mensajes")}
-              style={
-                mainSection === "mensajes"
-                  ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
-                  : undefined
-              }
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                mainSection === "mensajes"
-                  ? "shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              <span>Chats</span>
-              {unreadTotal > 0 && (
-                <span className="bg-rose-500 text-white text-[11px] px-1.5 rounded-full font-semibold">
-                  {unreadTotal}
-                </span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMainSection("pedidos")}
-              style={
-                mainSection === "pedidos"
-                  ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
-                  : undefined
-              }
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                mainSection === "pedidos"
-                  ? "shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <ShoppingBag className="h-3.5 w-3.5" />
-              <span>Pedidos</span>
-              {pendingOrdersCount > 0 && (
-                <span className="bg-amber-500 text-white text-[11px] px-1.5 rounded-full font-semibold">
-                  {pendingOrdersCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMainSection("metricas")}
-              style={
-                mainSection === "metricas"
-                  ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" }
-                  : undefined
-              }
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                mainSection === "metricas"
-                  ? "shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Métricas</span>
-            </button>
+        <div className="flex items-center gap-2">
+          <div data-tour="crm-switcher" className="crm-switcher min-w-0 flex-1 lg:flex-none">
+            <IosSegmentedControl
+              options={[
+                { value: "mensajes", label: "Chats", icon: MessageSquare, badge: unreadTotal > 0 ? unreadTotal : undefined },
+                { value: "pedidos", label: "Pedidos", icon: ShoppingBag, badge: pendingOrdersCount > 0 ? pendingOrdersCount : undefined },
+                { value: "metricas", label: "Métricas", icon: BarChart3 },
+              ]}
+              value={mainSection}
+              onChange={setMainSection}
+              size="sm"
+              className="w-full lg:w-auto"
+            />
           </div>
-
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setChannelsModalOpen(true)}
-              aria-label="Conectar canales por QR"
-              title="Conectar canales por QR"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-500 sm:min-h-10 sm:min-w-0 cursor-pointer"
-            >
-              <QrCode aria-hidden="true" className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Conectar QR</span>
-            </button>
-
-            {crmConversations.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setClearConfirmOpen(true)}
-                aria-label="Limpiar bandeja de mensajes"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:text-rose-600 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-rose-400 sm:min-h-10 sm:min-w-0 cursor-pointer"
-                title="Limpiar bandeja de mensajes"
-              >
-                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Limpiar</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={loadDemoConversation}
-                className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:min-w-0 cursor-pointer"
-              >
-                <MessageSquare aria-hidden="true" className="h-3.5 w-3.5 text-emerald-500" />
-                <span>Demo</span>
-              </button>
-            )}
-          </div>
+          <div className="hidden shrink-0 items-center gap-2 lg:flex">{headerActions}</div>
         </div>
       </div>
 
       {/* ═══ VIEW 1: CHATS WORKSPACE (FORMATO APP NATIVO) ═══ */}
       {mainSection === "mensajes" && (
-        crmConversations.length === 0 ? (
+        whatsappConversations.length === 0 ? (
           /* ═══ EMPTY STATE ═══ */
           <div className="rounded-3xl glass-panel p-8 sm:p-12 text-center shadow-xs">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200 dark:border-emerald-800/40 mb-4 shadow-xs">
               <QrCode className="h-8 w-8" />
             </div>
-            <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-semibold text-primary mb-2">Bandeja Vacía</span>
-            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white tracking-tight max-w-xl mx-auto">Conectá tus redes y recibí mensajes</h2>
+            <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-semibold text-primary mb-2">Bandeja vacía</span>
+            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white tracking-tight max-w-xl mx-auto">Conectá tu WhatsApp y recibí mensajes</h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto mt-2 leading-relaxed">
-              Vinculá tu WhatsApp escaneando el código QR, recibí consultas de clientes y gestioná turnos y pedidos de forma centralizada.
+              Vinculá tu WhatsApp escaneando el código QR, recibí consultas de clientes y gestioná turnos y pedidos desde un solo lugar. Instagram y Messenger llegan pronto.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button type="button" onClick={() => setChannelsModalOpen(true)} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 text-xs font-semibold shadow-md transition cursor-pointer">
                 <QrCode className="h-4 w-4" /><span>Conectar WhatsApp QR</span>
               </button>
               <button type="button" onClick={loadDemoConversation} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-white px-4 py-3 text-xs font-semibold border border-slate-200/80 dark:border-white/10 transition cursor-pointer">
-                <MessageSquare className="h-4 w-4 text-emerald-500" /><span>Cargar Chat de Ejemplo</span>
+                <MessageSquare className="h-4 w-4 text-emerald-500" /><span>Cargar chat de ejemplo</span>
               </button>
             </div>
           </div>
@@ -763,7 +905,7 @@ export default function CrmOmnichannelPage() {
               <div className="p-3 border-b border-slate-200/70 dark:border-white/10 space-y-2.5 shrink-0 bg-white/60 dark:bg-white/[0.02] backdrop-blur-md">
                 {/* Search Input */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <Search className="pointer-events-none absolute z-10 left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
                     aria-label="Buscar cliente o conversación"
@@ -790,40 +932,23 @@ export default function CrmOmnichannelPage() {
                   )}
                 </div>
 
-                {/* Channel Filter Tabs */}
-                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-200/60 dark:bg-slate-800/80 rounded-xl text-[11px]">
-                  {(["todos", "whatsapp", "instagram", "messenger"] as const).map((ch) => {
-                    const counts: Record<string, number> = {
-                      todos: crmConversations.length,
-                      whatsapp: crmConversations.filter((c) => c.channel === "whatsapp").length,
-                      instagram: crmConversations.filter((c) => c.channel === "instagram").length,
-                      messenger: crmConversations.filter((c) => c.channel === "messenger").length,
-                    };
-                    const unreads: Record<string, number> = { todos: unreadTotal, whatsapp: waUnread, instagram: igUnread, messenger: msUnread };
-                    const channelNames: Record<string, string> = { todos: "Todos los canales", whatsapp: "WhatsApp", instagram: "Instagram", messenger: "Messenger" };
-                    const active = channelFilter === ch;
-
-                    return (
-                      <button
-                        key={ch}
-                        type="button"
-                        onClick={() => setChannelFilter(ch)}
-                        aria-label={`${channelNames[ch]}${unreads[ch] > 0 ? `, ${unreads[ch]} sin leer` : ""}`}
-                        aria-pressed={active}
-                        title={channelNames[ch]}
-                        className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-semibold transition relative cursor-pointer ${
-                          active
-                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
-                        }`}
-                      >
-                        {ch === "todos" ? <span>Todos</span> : <ChannelIcon channel={ch} size="md" />}
-                        {unreads[ch] > 0 && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
+                {/* Canales: WhatsApp activo; Instagram y Messenger próximamente */}
+                <div className="flex items-center gap-1.5 text-[11px]">
+                  <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1.5 font-semibold text-emerald-700 dark:text-emerald-300">
+                    <ChannelIcon channel="whatsapp" size="sm" />
+                    <span>WhatsApp</span>
+                  </span>
+                  {(["instagram", "messenger"] as const).map((ch) => (
+                    <span
+                      key={ch}
+                      title={`${ch === "instagram" ? "Instagram" : "Messenger"}: próximamente`}
+                      aria-label={`${ch === "instagram" ? "Instagram" : "Messenger"}, próximamente`}
+                      className="inline-flex cursor-not-allowed items-center gap-1 rounded-xl border border-slate-200/70 px-2 py-1.5 font-semibold text-slate-400 dark:border-white/10 dark:text-zinc-500"
+                    >
+                      <span className="opacity-50 grayscale"><ChannelIcon channel={ch} size="sm" /></span>
+                      <span>Pronto</span>
+                    </span>
+                  ))}
                 </div>
 
                 {/* Sub-Filter: Abiertos / Resueltos */}
@@ -834,9 +959,9 @@ export default function CrmOmnichannelPage() {
                         key={st}
                         type="button"
                         onClick={() => setStatusFilter(st)}
-                        className={`font-semibold transition cursor-pointer ${
+                        className={`inline-flex min-h-9 items-center font-semibold transition cursor-pointer ${
                           statusFilter === st
-                            ? "text-primary font-semibold border-b-2 border-primary pb-0.5"
+                            ? "text-primary font-semibold border-b-2 border-primary"
                             : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                       >
@@ -891,6 +1016,7 @@ export default function CrmOmnichannelPage() {
                             phone={c.channelIdentifier}
                             channel={c.channel}
                             tenantSlug={business.slug || "workspace"}
+                            whatsappConnected={evolutionConfig.connected}
                             color={business.primaryColor || "#0f172a"}
                             className="h-11 w-11 rounded-2xl font-semibold text-xs shadow-2xs"
                           />
@@ -948,7 +1074,7 @@ export default function CrmOmnichannelPage() {
                 <>
                   {/* Chat Top Header */}
                   <div className="min-h-14 px-2 py-2 sm:px-4 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl flex flex-wrap items-center justify-between gap-x-2 gap-y-1 shrink-0">
-                    <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2.5 max-[380px]:w-full max-[380px]:flex-none">
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2.5">
                       <button
                         type="button"
                         onClick={returnToConversationList}
@@ -964,6 +1090,7 @@ export default function CrmOmnichannelPage() {
                           phone={activeConversation.channelIdentifier}
                           channel={activeConversation.channel}
                           tenantSlug={business.slug || "workspace"}
+                          whatsappConnected={evolutionConfig.connected}
                           color={business.primaryColor || "#0f172a"}
                           className="h-8 w-8 rounded-xl font-semibold text-[11px] shadow-xs sm:h-9 sm:w-9 sm:text-xs"
                         />
@@ -987,21 +1114,7 @@ export default function CrmOmnichannelPage() {
                     </div>
 
                     {/* Right Action Icons in Chat Header */}
-                    <div className="flex shrink-0 items-center gap-1 max-[380px]:ml-auto sm:gap-1.5">
-                      <a
-                        href={
-                          activeConversation.channel === "whatsapp"
-                            ? `https://wa.me/${activeConversation.channelIdentifier.replace(/[^0-9]/g, "")}`
-                            : `tel:${activeConversation.channelIdentifier.replace(/[^0-9+]/g, "")}`
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Contactar directamente por ${activeConversation.channel}`}
-                        className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-emerald-500/10 hover:text-emerald-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-emerald-400 cursor-pointer"
-                        title={`Contactar directamente por ${activeConversation.channel}`}
-                      >
-                        <Phone className="h-4 w-4" />
-                      </a>
+                    <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
 
                       {activeConversation.status === "resolved" ? (
                         <button
@@ -1059,7 +1172,7 @@ export default function CrmOmnichannelPage() {
                     <div className="text-center">
                       <span className="rounded-full bg-slate-200/60 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-3 py-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
                         <Shield className="h-3 w-3 text-emerald-500" />
-                        <span>Conversación cifrada vía {activeConversation.channel}</span>
+                        <span>Conversación cifrada vía WhatsApp</span>
                       </span>
                     </div>
 
@@ -1313,8 +1426,8 @@ export default function CrmOmnichannelPage() {
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-white">
-                        Ficha del Contacto
+                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                        Ficha del contacto
                       </h4>
                     </div>
                     <button
@@ -1336,6 +1449,7 @@ export default function CrmOmnichannelPage() {
                         phone={activeConversation.channelIdentifier}
                         channel={activeConversation.channel}
                         tenantSlug={business.slug || "workspace"}
+                      whatsappConnected={evolutionConfig.connected}
                         color={business.primaryColor || "#0f172a"}
                         className="mx-auto mb-2 h-14 w-14 rounded-3xl font-semibold text-lg shadow-xs"
                       />
@@ -1358,9 +1472,7 @@ export default function CrmOmnichannelPage() {
 
                     {/* Action Buttons */}
                     <div className="space-y-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                        Acciones Operativas:
-                      </p>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Acciones</p>
                       <button
                         type="button"
                         onClick={() => {
@@ -1371,16 +1483,16 @@ export default function CrmOmnichannelPage() {
                         className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-2.5 text-xs font-semibold shadow-xs transition cursor-pointer hover:brightness-110 active:scale-98"
                       >
                         <Calendar className="h-4 w-4" />
-                        <span>Agendar Turno</span>
+                        <span>Agendar turno</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setOrderModalOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:text-white text-white py-2.5 text-xs font-semibold shadow-xs transition cursor-pointer active:scale-98"
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-slate-800 dark:text-zinc-100 py-2.5 text-xs font-semibold shadow-xs transition cursor-pointer active:scale-98"
                       >
                         <ShoppingBag className="h-4 w-4" />
-                        <span>Crear Pedido de Producto</span>
+                        <span>Crear pedido</span>
                       </button>
 
                       <button
@@ -1389,21 +1501,19 @@ export default function CrmOmnichannelPage() {
                         className="w-full flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer"
                       >
                         <User className="h-3.5 w-3.5" />
-                        <span>Ver Ficha Completa</span>
+                        <span>Ver ficha completa</span>
                       </button>
                     </div>
 
                     {/* Active Channel Card */}
                     <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Canal Activo:</p>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Canal</p>
                       <div className="flex items-center justify-between text-xs p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5">
                         <div className="flex items-center gap-2">
                           <ChannelIcon channel={activeConversation.channel} size="sm" />
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
-                            {activeConversation.channel}
-                          </span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">WhatsApp</span>
                         </div>
-                        <span className="text-[11px] text-emerald-600 font-semibold">Conectado</span>
+                        <span className={`text-[11px] font-semibold ${evolutionConfig.connected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>{evolutionConfig.connected ? "Conectado" : "Desconectado"}</span>
                       </div>
                     </div>
 
@@ -1412,7 +1522,7 @@ export default function CrmOmnichannelPage() {
                       <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-semibold text-amber-900 dark:text-amber-300 flex items-center gap-1">
-                            <Award className="h-3.5 w-3.5 text-amber-500" /> Fidelización:
+                            <Award className="h-3.5 w-3.5 text-amber-500" /> Fidelización
                           </span>
                           <span className="tabular-nums font-semibold text-amber-800 dark:text-amber-200">
                             {linkedClient.loyaltyPoints} / 5 sellos
@@ -1430,14 +1540,14 @@ export default function CrmOmnichannelPage() {
                     {/* Order History */}
                     {clientOrderHistory.length > 0 && (
                       <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                          <History className="h-3 w-3" /> Últimos Pedidos:
+                        <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                          <History className="h-3 w-3" /> Últimos pedidos
                         </p>
                         {clientOrderHistory.slice(0, 3).map((o) => (
                           <div key={o.id} className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
                             <div>
                               <span className="font-semibold text-slate-800 dark:text-slate-200">{o.orderNumber}</span>
-                              <span className="ml-1.5 text-[11px] font-semibold text-slate-400 capitalize">{o.status}</span>
+                              <span className="ml-1.5 text-[11px] font-semibold text-slate-400">{ORDER_STATUS_LABELS[o.status].label}</span>
                             </div>
                             <span className="tabular-nums font-semibold text-slate-700 dark:text-slate-300">{formatGs(o.totalAmount)}</span>
                           </div>
@@ -1448,8 +1558,8 @@ export default function CrmOmnichannelPage() {
                     {/* Transfers History */}
                     {clientReceipts.length > 0 && (
                       <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                          <Building2 className="h-3 w-3 text-emerald-500" /> Transferencias Bancarias:
+                        <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                          <Building2 className="h-3 w-3 text-emerald-500" /> Transferencias
                         </p>
                         {clientReceipts.map((r) => (
                           <div key={r.id} className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-500/20">
@@ -1479,279 +1589,301 @@ export default function CrmOmnichannelPage() {
         )
       )}
 
-      {/* ═══ VIEW 2: TELEMETRY & METRICS TAB ═══ */}
+      {/* ═══ VIEW 2: MÉTRICAS ═══ */}
       {mainSection === "metricas" && (
-        <div className="space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] animate-in fade-in-50 duration-150 lg:pb-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Card 1: Eficiencia de Respuesta & Canales */}
-            <div className="rounded-3xl glass-panel p-4 sm:p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex flex-col gap-3 pb-3 border-b border-slate-100 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white font-semibold"
-                    style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                  >
-                    <MessageSquare className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm sm:text-sm font-semibold leading-snug text-slate-900 dark:text-white">
-                      Telemetría de mensajería y eficiencia
-                    </h3>
-                    <p className="mt-1 text-[11px] sm:text-[11px] leading-snug text-slate-400">Bandeja centralizada y tiempos de respuesta</p>
-                  </div>
-                </div>
-
-                <div className="flex items-baseline justify-between gap-3 sm:shrink-0 sm:flex-col sm:items-end sm:gap-0">
-                  <span className="text-[11px] font-semibold text-slate-400">Total Chats</span>
-                  <span className="inline-flex items-baseline gap-1 whitespace-nowrap text-slate-900 dark:text-white">
-                    <span className="text-sm font-semibold tabular-nums">{crmConversations.length}</span>
-                    <span className="text-[11px] font-semibold">conversaciones</span>
+        <div className="space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:space-y-5 lg:pb-0">
+          {/* KPIs de la bandeja */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+            {[
+              { label: "Conversaciones", value: String(whatsappConversations.length), hint: `${openCount} ${openCount === 1 ? "abierta" : "abiertas"}`, icon: MessageSquare, tone: "text-slate-900 dark:text-white", iconTone: "bg-primary/10 text-primary" },
+              { label: "Sin leer", value: String(unreadTotal), hint: `${unreadChatsCount} ${unreadChatsCount === 1 ? "chat por responder" : "chats por responder"}`, icon: Clock, tone: unreadTotal > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white", iconTone: "bg-rose-500/10 text-rose-500" },
+              { label: "Resolución", value: `${resolutionPct}%`, hint: `${resolvedCount} de ${whatsappConversations.length} resueltas`, icon: CheckCircle2, tone: "text-slate-900 dark:text-white", iconTone: "bg-emerald-500/10 text-emerald-600" },
+              { label: "Tiempo de respuesta", value: avgResponseLabel, hint: "Promedio por consulta", icon: Zap, tone: "text-slate-900 dark:text-white", iconTone: "bg-amber-500/10 text-amber-600" },
+            ].map((k) => (
+              <Card key={k.label} className="min-w-0 p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="truncate text-[11px] font-semibold text-slate-500 dark:text-zinc-400 sm:text-xs">{k.label}</p>
+                  <span className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:flex ${k.iconTone}`}>
+                    <k.icon className="h-4 w-4" />
                   </span>
                 </div>
+                <p className={`mt-1 truncate text-xl font-semibold tabular-nums sm:text-2xl ${k.tone}`}>{k.value}</p>
+                <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-zinc-500">{k.hint}</p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {/* Pedidos generados desde el chat */}
+            <div className="rounded-3xl glass-panel p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Pedidos de productos</h2>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400">Ventas cerradas por chat</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMainSection("pedidos")}
+                  className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white/10 dark:text-zinc-300 cursor-pointer"
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>Ver pedidos</span>
+                </button>
               </div>
 
-              {/* Circular Gauges */}
-              <div className="grid grid-cols-1 gap-3 py-4 min-[440px]:grid-cols-2 sm:gap-4">
-                {/* Gauge 1: Resolution Rate */}
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5">
-                  <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                    <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        className="stroke-slate-200 dark:stroke-slate-700"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
-                        strokeWidth="4"
-                        fill="none"
-                        strokeDasharray={113}
-                        strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, resolutionPct))) / 100}
-                        strokeLinecap="round"
-                        className="transition-all duration-700"
-                      />
-                    </svg>
-                    <span className="absolute text-[11px] font-semibold text-slate-800 dark:text-white tabular-nums">
-                      {resolutionPct}%
-                    </span>
+              <dl className="mt-4 grid grid-cols-2 gap-2">
+                {[
+                  { label: "Facturado", value: formatGs(totalOrderRevenue), tone: "text-emerald-600 dark:text-emerald-400" },
+                  { label: "Ticket promedio", value: activeOrders.length > 0 ? formatGs(avgOrderTicket) : "—", tone: "text-slate-900 dark:text-white" },
+                  { label: "Pendientes", value: String(pendingOrdersCount), tone: pendingOrdersCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-white" },
+                  { label: "Entregados", value: String(deliveredOrdersCount), tone: "text-slate-900 dark:text-white" },
+                ].map((r) => (
+                  <div key={r.label} className="min-w-0 rounded-2xl border border-slate-200/60 bg-slate-50 p-3 dark:border-white/5 dark:bg-slate-900/50">
+                    <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">{r.label}</dt>
+                    <dd className={`mt-0.5 truncate text-sm font-semibold tabular-nums ${r.tone}`}>{r.value}</dd>
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] font-semibold leading-tight text-slate-900 dark:text-white block">
-                      Resolución
-                    </span>
-                    <span className="text-[11px] text-slate-400 block">
-                      {resolvedCount} de {crmConversations.length} cerradas
-                    </span>
-                  </div>
-                </div>
-
-                {/* Gauge 2: WhatsApp Share */}
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5">
-                  <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                    <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        className="stroke-slate-200 dark:stroke-slate-700"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        stroke="#10b981"
-                        strokeWidth="4"
-                        fill="none"
-                        strokeDasharray={113}
-                        strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, waSharePct))) / 100}
-                        strokeLinecap="round"
-                        className="transition-all duration-700"
-                      />
-                    </svg>
-                    <span className="absolute text-[11px] font-semibold text-slate-800 dark:text-white tabular-nums">
-                      {waSharePct}%
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] font-semibold leading-tight text-slate-900 dark:text-white block">
-                      Vía WhatsApp
-                    </span>
-                    <span className="text-[11px] text-slate-400 block">
-                      {waCount} {waCount === 1 ? "conversación" : "conversaciones"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Telemetry Rows */}
-              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-white/10 text-xs min-[440px]:grid-cols-3">
-                <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
-                  <span className="text-[11px] font-medium text-slate-400 block">En Espera</span>
-                  <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
-                    {openCount} abiertos
-                  </span>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5">
-                  <span className="text-[11px] font-medium text-slate-400 block">Sin Leer</span>
-                  <span className={`text-xs font-semibold tabular-nums ${unreadTotal > 0 ? "text-rose-500" : "text-slate-900 dark:text-white"}`}>
-                    {unreadTotal} mensajes
-                  </span>
-                </div>
-                <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 min-[440px]:col-span-1">
-                  <span className="text-[11px] font-medium text-slate-400 block">Tiempo Medio</span>
-                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums truncate block">
-                    ~3 minutos
-                  </span>
-                </div>
-              </div>
+                ))}
+              </dl>
             </div>
 
-            {/* Card 2: Seguridad, Conexión & Pedidos */}
-            <div className="rounded-3xl glass-panel p-4 sm:p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex flex-col gap-2 pb-3 border-b border-slate-100 dark:border-white/10 min-[440px]:flex-row min-[440px]:items-center min-[440px]:justify-between">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-semibold">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm sm:text-sm font-semibold leading-snug text-slate-900 dark:text-white">
-                      Protección anti-baneo y seguridad
-                    </h3>
-                    <p className="mt-1 text-[11px] sm:text-[11px] leading-snug text-slate-400">Cadencia humana y protección de cuenta</p>
-                  </div>
+            {/* Estado del canal de WhatsApp */}
+            <div className="rounded-3xl glass-panel p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">WhatsApp</h2>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400">Conexión y asistente automático</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard/whatsapp")}
+                  className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 glass-panel-subtle px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white/10 dark:text-zinc-300 cursor-pointer"
+                >
+                  <Bot className="h-3.5 w-3.5" />
+                  <span>Configurar</span>
+                </button>
+              </div>
 
-                {pendingOrdersCount > 0 && (
-                  <span className="inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                    <ShoppingBag className="h-3 w-3" />
-                    <span>{pendingOrdersCount} pedidos</span>
+              <ul className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200/60 dark:divide-white/5 dark:border-white/5">
+                <li className="flex items-center justify-between gap-3 p-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <ChannelIcon channel="whatsapp" size="md" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-800 dark:text-zinc-200">Línea</p>
+                      <p className="truncate text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">{evolutionConfig.phoneNumber || "Sin número vinculado"}</p>
+                    </div>
+                  </div>
+                  <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${evolutionConfig.connected ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-zinc-400"}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${evolutionConfig.connected ? "bg-emerald-500" : "bg-slate-400"}`} />
+                    {evolutionConfig.connected ? "En línea" : "Desconectado"}
                   </span>
-                )}
-              </div>
-
-              {/* Anti-Ban Banner */}
-              <div className="py-3">
-                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5">
-                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 block truncate">
-                      Cadencia Humana Anti-Baneo Activa (10s - 20s)
-                    </span>
-                    <span className="text-[11px] leading-relaxed text-emerald-600/90 dark:text-emerald-400/90 block">
-                      Simulación de lectura y escritura automática para proteger tu línea de suspensiones.
-                    </span>
+                </li>
+                <li className="flex items-center justify-between gap-3 p-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Bot className={`h-4 w-4 shrink-0 ${evolutionConfig.autoBotEnabled ? "text-emerald-500" : "text-slate-400"}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-800 dark:text-zinc-200">Asistente automático</p>
+                      <p className="truncate text-[11px] text-slate-500 dark:text-zinc-400">
+                        {evolutionConfig.autoBotEnabled ? "Responde consultas y agenda turnos" : "Respondés vos manualmente"}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Operational Status Rows */}
-              <div className="grid grid-cols-1 gap-2 pt-2 border-t border-slate-100 dark:border-white/10 text-xs min-[440px]:grid-cols-2">
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-white/5 dark:bg-slate-900/50">
-                  <div className="min-w-0">
-                    <span className="text-[11px] font-medium text-slate-400 block">Bot Asistente</span>
-                    <span className="text-xs font-semibold leading-snug text-slate-800 dark:text-slate-200 break-words">
-                      {evolutionConfig.autoBotEnabled ? "Respuesta IA activa" : "Modo Manual"}
-                    </span>
+                  <span className="shrink-0 text-[11px] font-semibold text-slate-600 dark:text-zinc-300">
+                    {evolutionConfig.autoBotEnabled ? "Activo" : "Apagado"}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-3 p-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <ShieldCheck className={`h-4 w-4 shrink-0 ${evolutionConfig.autoBotEnabled ? "text-emerald-500" : "text-slate-400"}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-800 dark:text-zinc-200">Cadencia anti-bloqueo</p>
+                      <p className="truncate text-[11px] text-slate-500 dark:text-zinc-400">Pausa humana antes de cada respuesta automática</p>
+                    </div>
                   </div>
-                  <Bot className={`h-4 w-4 shrink-0 ${evolutionConfig.autoBotEnabled ? "text-emerald-500" : "text-slate-400"}`} />
-                </div>
-
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-white/5 dark:bg-slate-900/50">
-                  <div className="min-w-0">
-                    <span className="text-[11px] font-medium text-slate-400 block">Estado de Red</span>
-                    <span className="text-xs font-semibold leading-snug text-slate-800 dark:text-slate-200 break-words">
-                      {evolutionConfig.connected ? "En línea" : "Desconectado"}
-                    </span>
-                  </div>
-                  <ShieldCheck className={`h-4 w-4 shrink-0 ${evolutionConfig.connected ? "text-emerald-500" : "text-slate-400"}`} />
-                </div>
-              </div>
+                  <span className="shrink-0 text-[11px] font-semibold tabular-nums text-slate-600 dark:text-zinc-300">
+                    {evolutionConfig.autoBotEnabled ? `~${cadenceSeconds} s` : "—"}
+                  </span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       )}
 
-      {/* ═══ VIEW 3: ORDERS TAB ═══ */}
+      {/* ═══ VIEW 3: PEDIDOS ═══ */}
       {mainSection === "pedidos" && (
-        <div className="space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:space-y-6 lg:pb-0">
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-            <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-              <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-slate-500 sm:text-xs">Pedidos</p><p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white sm:mt-1 sm:text-2xl">{productOrders.length}</p></div>
-              <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:flex"><ShoppingBag className="h-5 w-5" /></div>
-            </Card>
-            <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-              <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-slate-500 sm:text-xs">Pendientes</p><p className="mt-0.5 text-lg font-semibold text-amber-600 sm:mt-1 sm:text-2xl">{pendingOrdersCount}</p></div>
-              <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 sm:flex"><Clock className="h-5 w-5" /></div>
-            </Card>
-            <Card className="min-w-0 flex flex-col justify-center gap-1 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-              <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-slate-500 sm:text-xs">Facturado</p><p className="mt-0.5 whitespace-nowrap text-[11px] font-bold tabular-nums text-emerald-600 sm:mt-1 sm:text-2xl">{formatGs(totalOrderRevenue)}</p></div>
-              <div className="hidden h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 sm:flex"><CreditCard className="h-5 w-5" /></div>
-            </Card>
+        <div className="space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:space-y-5 lg:pb-0">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+            {[
+              { label: "Pedidos", value: String(productOrders.length), icon: ShoppingBag, tone: "text-slate-900 dark:text-white", iconTone: "bg-primary/10 text-primary" },
+              { label: "Pendientes", value: String(pendingOrdersCount), icon: Clock, tone: pendingOrdersCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-white", iconTone: "bg-amber-500/10 text-amber-600" },
+              { label: "Facturado", value: formatGs(totalOrderRevenue), icon: CreditCard, tone: "text-emerald-600 dark:text-emerald-400", iconTone: "bg-emerald-500/10 text-emerald-600" },
+            ].map((k) => (
+              <Card key={k.label} className={`min-w-0 p-3 sm:p-4 ${k.label === "Facturado" ? "col-span-2 sm:col-span-1" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="truncate text-[11px] font-semibold text-slate-500 dark:text-zinc-400 sm:text-xs">{k.label}</p>
+                  <span className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:flex ${k.iconTone}`}>
+                    <k.icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className={`mt-1 truncate text-xl font-semibold tabular-nums sm:text-2xl ${k.tone}`}>{k.value}</p>
+              </Card>
+            ))}
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div role="group" aria-label="Filtros por estado de pedido" className="order-2 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:order-1">
-              {([ { id: "all", label: "Todos", count: productOrders.length }, { id: "pending", label: "Pendientes", count: pendingOrdersCount }, { id: "confirmed", label: "Confirmados", count: productOrders.filter((o) => o.status === "confirmed").length }, { id: "delivered", label: "Entregados", count: productOrders.filter((o) => o.status === "delivered").length }, { id: "cancelled", label: "Cancelados", count: productOrders.filter((o) => o.status === "cancelled").length } ] as const).map((tab) => (
-                <button key={tab.id} type="button" aria-pressed={orderStatusFilter === tab.id} onClick={() => setOrderStatusFilter(tab.id as any)} className={`flex min-h-11 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${orderStatusFilter === tab.id ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200/60 dark:border-white/5"}`}>
-                  <span>{tab.label}</span><span className="text-[11px] opacity-75">({tab.count})</span>
-                </button>
-              ))}
-            </div>
-            <div className="relative order-1 w-full sm:order-2 sm:w-60 sm:shrink-0 lg:w-56">
+
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:order-2 lg:w-64 lg:shrink-0">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 aria-label="Buscar pedido"
-                placeholder="Buscar pedido..."
+                placeholder="Buscar por cliente o número..."
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
-                className="h-10 w-full rounded-2xl border border-slate-200/80 bg-white/70 pl-9 pr-3 text-xs text-slate-800 shadow-inner transition placeholder:text-slate-400 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/25 dark:border-white/10 dark:bg-slate-800/70 dark:text-white"
+                className="h-10 w-full rounded-xl border border-slate-200/80 bg-white/70 pl-9 pr-3 text-xs text-slate-800 transition placeholder:text-slate-400 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/25 dark:border-white/10 dark:bg-slate-800/70 dark:text-white"
               />
             </div>
-          </div>
-          {filteredOrders.length === 0 ? (
-            <Card className="p-12 text-center"><ShoppingBag className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-3" /><h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">Sin pedidos</h3></Card>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredOrders.map((ord) => {
-                const isPending = ord.status === "pending"; const isConfirmed = ord.status === "confirmed"; const isDelivered = ord.status === "delivered"; const isCancelled = ord.status === "cancelled";
+            <div role="group" aria-label="Filtrar por estado" className="-mx-1 flex min-w-0 items-center gap-1.5 overflow-x-auto px-1 pb-1 no-scrollbar lg:order-1 lg:mx-0 lg:px-0 lg:pb-0">
+              {ORDER_FILTERS.map((tab) => {
+                const count = tab.id === "all" ? productOrders.length : productOrders.filter((o) => o.status === tab.id).length;
+                const active = orderStatusFilter === tab.id;
                 return (
-                  <Card key={ord.id} className="flex flex-col justify-between space-y-3.5 p-3.5 sm:space-y-4 sm:p-4">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="tabular-nums text-xs font-semibold text-slate-900 dark:text-white">{ord.orderNumber}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${isPending ? "bg-amber-100 text-amber-800" : isConfirmed ? "bg-blue-100 text-blue-800" : isDelivered ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>{ord.status === "delivered" ? "Entregado" : ord.status === "pending" ? "Pendiente" : ord.status === "confirmed" ? "Confirmado" : "Cancelado"}</span>
+                  <button
+                    key={tab.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setOrderStatusFilter(tab.id)}
+                    style={active ? { backgroundColor: business.primaryColor || "#0f172a", color: "#ffffff" } : undefined}
+                    className={`flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition cursor-pointer ${
+                      active
+                        ? "shadow-2xs"
+                        : "border border-slate-200/80 text-slate-600 hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span className={`tabular-nums text-[11px] ${active ? "text-white/80" : "text-slate-400"}`}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {filteredOrders.length === 0 ? (
+            <div className="rounded-3xl glass-panel p-8 text-center sm:p-12">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <ShoppingBag className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                {productOrders.length === 0 ? "Todavía no hay pedidos" : "No hay pedidos con estos filtros"}
+              </h3>
+              <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500 dark:text-zinc-400">
+                {productOrders.length === 0
+                  ? "Creá un pedido desde la ficha de un chat con “Crear pedido”."
+                  : "Probá con otro estado o buscá por otro nombre."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+              {filteredOrders.map((ord) => {
+                const isPending = ord.status === "pending";
+                const isConfirmed = ord.status === "confirmed";
+                const isDelivered = ord.status === "delivered";
+                const isCancelled = ord.status === "cancelled";
+                const st = ORDER_STATUS_LABELS[ord.status];
+                return (
+                  <Card key={ord.id} className={`flex min-w-0 flex-col p-4 ${isCancelled ? "opacity-70" : ""}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="tabular-nums text-xs font-semibold text-slate-900 dark:text-white">{ord.orderNumber}</p>
+                        <p className="text-[11px] text-slate-400">{formatProfileDate(ord.createdAt, business.timezone, true)}</p>
                       </div>
-                      <div className="mt-2"><p className="text-sm font-semibold text-slate-900 dark:text-white">{ord.clientName}</p><p className="text-xs text-slate-500 tabular-nums">{ord.clientPhone}</p></div>
-                      <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
-                        {ord.deliveryType === "retirar_en_local" ? <span className="flex items-center gap-1"><Store className="h-3.5 w-3.5 text-emerald-500" /> Retiro</span> : <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5 text-indigo-500" /> Delivery</span>}
-                        <span>·</span><span className="capitalize">{ord.paymentMethod}</span>
-                      </div>
-                      <div className="mt-3 divide-y divide-slate-100 dark:divide-white/5 border-t border-slate-100 dark:border-white/5 pt-2 text-xs space-y-1.5">
-                        {ord.items.map((item, idx) => (
-                          <div key={idx} className="flex items-start justify-between gap-3 pt-1">
-                            <span className="min-w-0 break-words font-semibold text-slate-800 dark:text-slate-200">{item.qty}x {item.productName}</span>
-                            <span className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-slate-600 dark:text-slate-400">{formatGs(item.unitPrice * item.qty)}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {ord.notes && <p className="mt-2 text-[11px] text-slate-500 italic bg-amber-500/5 border border-amber-500/10 p-2 rounded-lg">{ord.notes}</p>}
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.className}`}>{st.label}</span>
                     </div>
-                    <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-2.5">
-                      <div className="flex items-baseline justify-between gap-3"><span className="text-xs text-slate-500">Total:</span><span className="shrink-0 whitespace-nowrap text-base font-semibold text-slate-900 dark:text-white tabular-nums">{formatGs(ord.totalAmount)}</span></div>
-                      <div className="flex items-center gap-1.5">
-                        {isPending && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "confirmed"); pushToast("success", `${ord.orderNumber} confirmado`); }} className="min-h-11 flex-1 rounded-xl bg-blue-600 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500 cursor-pointer">Confirmar</button>}
-                        {(isPending || isConfirmed) && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "delivered"); pushToast("success", `${ord.orderNumber} entregado y registrado en caja`); }} className="min-h-11 flex-1 rounded-xl bg-emerald-600 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 cursor-pointer flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /><span>Entregado</span></button>}
-                        {!isCancelled && !isDelivered && <button type="button" onClick={() => { updateProductOrderStatus(ord.id, "cancelled"); pushToast("error", `${ord.orderNumber} cancelado`); }} className="min-h-11 whitespace-nowrap rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-slate-500 transition hover:text-rose-500 dark:border-white/10 cursor-pointer">Cancelar</button>}
-                        {isDelivered && <span className="min-h-10 w-full rounded-xl bg-emerald-500/10 py-2 text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1"><CheckCircle2 className="h-4 w-4" /><span>Completado y en Caja</span></span>}
+
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{ord.clientName}</p>
+                        <p className="truncate text-xs tabular-nums text-slate-500 dark:text-zinc-400">{ord.clientPhone}</p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => openChatForPhone(ord.clientPhone)}
+                        aria-label={`Abrir chat con ${ord.clientName}`}
+                        title="Abrir chat"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 text-slate-600 transition hover:bg-emerald-500/10 hover:text-emerald-600 dark:border-white/10 dark:text-zinc-300 cursor-pointer"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-400">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 dark:bg-white/5">
+                        {ord.deliveryType === "retirar_en_local" ? <Store className="h-3 w-3 text-emerald-500" /> : <Truck className="h-3 w-3 text-indigo-500" />}
+                        {ord.deliveryType === "retirar_en_local" ? "Retiro en local" : "Delivery"}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 dark:bg-white/5">
+                        <CreditCard className="h-3 w-3" />
+                        {PAYMENT_LABELS[ord.paymentMethod] || ord.paymentMethod}
+                      </span>
+                    </div>
+
+                    <ul className="mt-3 space-y-1 border-t border-slate-100 pt-2.5 text-xs dark:border-white/5">
+                      {ord.items.map((item, idx) => (
+                        <li key={idx} className="flex items-start justify-between gap-3">
+                          <span className="min-w-0 break-words text-slate-700 dark:text-zinc-300">
+                            <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{item.qty}×</span> {item.productName}
+                          </span>
+                          <span className="shrink-0 whitespace-nowrap tabular-nums text-slate-500 dark:text-zinc-400">{formatGs(item.unitPrice * item.qty)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {ord.notes && (
+                      <p className="mt-2 rounded-lg border border-amber-500/15 bg-amber-500/5 p-2 text-[11px] text-slate-600 dark:text-zinc-400">{ord.notes}</p>
+                    )}
+
+                    <div className="mt-auto space-y-2.5 pt-3">
+                      <div className="flex items-baseline justify-between gap-3 border-t border-slate-100 pt-3 dark:border-white/5">
+                        <span className="text-xs text-slate-500 dark:text-zinc-400">Total</span>
+                        <span className="whitespace-nowrap text-base font-semibold tabular-nums text-slate-900 dark:text-white">{formatGs(ord.totalAmount)}</span>
+                      </div>
+                      {isDelivered ? (
+                        <p className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-emerald-500/10 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-4 w-4" /> Entregado y registrado en caja
+                        </p>
+                      ) : isCancelled ? null : (
+                        <div className="flex items-center gap-1.5">
+                          {isPending && (
+                            <button
+                              type="button"
+                              onClick={() => changeOrderStatus(ord.id, "confirmed", `${ord.orderNumber} confirmado`)}
+                              disabled={updatingOrderId === ord.id}
+                              className="min-h-10 flex-1 rounded-xl border border-slate-200/80 bg-white text-xs font-semibold text-slate-800 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-100 dark:hover:bg-white/[0.08] cursor-pointer"
+                            >
+                              Confirmar
+                            </button>
+                          )}
+                          {(isPending || isConfirmed) && (
+                            <button
+                              type="button"
+                              onClick={() => changeOrderStatus(ord.id, "delivered", `${ord.orderNumber} entregado: stock descontado e ingreso en caja`)}
+                              disabled={updatingOrderId === ord.id}
+                              style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
+                              className="flex min-h-10 flex-1 items-center justify-center gap-1 rounded-xl text-xs font-semibold text-white transition hover:brightness-110 cursor-pointer"
+                            >
+                              <Check className="h-3.5 w-3.5" /> Entregado
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => changeOrderStatus(ord.id, "cancelled", `${ord.orderNumber} cancelado`)}
+                            disabled={updatingOrderId === ord.id}
+                            aria-label={`Cancelar ${ord.orderNumber}`}
+                            title="Cancelar pedido"
+                            className="flex min-h-10 min-w-10 items-center justify-center rounded-xl border border-slate-200/80 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-600 dark:border-white/10 cursor-pointer"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </Card>
                 );
@@ -1826,33 +1958,42 @@ export default function CrmOmnichannelPage() {
         </div>
       </Modal>
 
-      {/* ═══ CHANNELS CONNECTION MODAL (WhatsApp + Instagram + Facebook) ═══ */}
-      <Modal open={channelsModalOpen} onClose={() => setChannelsModalOpen(false)} title="Conectar Canales de Mensajería" maxWidth="max-w-3xl">
+      {/* ═══ CHANNELS CONNECTION MODAL (WhatsApp; Instagram y Messenger próximamente) ═══ */}
+      <Modal open={channelsModalOpen} onClose={() => setChannelsModalOpen(false)} title="Canales de mensajería" maxWidth="max-w-3xl">
         <div className="space-y-5 text-xs">
           {/* 3 Channel Tabs */}
           <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
             {([
-              { key: "whatsapp" as const, label: "WhatsApp", channel: "whatsapp" as const, isConnected: evolutionConfig.connected },
-              { key: "instagram" as const, label: "Instagram", channel: "instagram" as const, isConnected: Boolean(evolutionConfig.instagramConnected) },
-              { key: "facebook" as const, label: "Facebook", channel: "messenger" as const, isConnected: Boolean(evolutionConfig.messengerConnected) },
+              { key: "whatsapp" as const, label: "WhatsApp", channel: "whatsapp" as const, isConnected: evolutionConfig.connected, comingSoon: false },
+              { key: "instagram" as const, label: "Instagram", channel: "instagram" as const, isConnected: false, comingSoon: true },
+              { key: "facebook" as const, label: "Messenger", channel: "messenger" as const, isConnected: false, comingSoon: true },
             ]).map((ch) => (
               <button
                 key={ch.key}
                 type="button"
+                disabled={ch.comingSoon}
                 onClick={() => setChannelsTab(ch.key)}
-                className={`py-2.5 text-center rounded-xl font-semibold transition cursor-pointer flex items-center justify-center gap-2 ${
-                  channelsTab === ch.key
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                title={ch.comingSoon ? `${ch.label}: próximamente` : undefined}
+                className={`py-2.5 text-center rounded-xl font-semibold transition flex items-center justify-center gap-2 ${
+                  ch.comingSoon
+                    ? "cursor-not-allowed text-slate-400 dark:text-zinc-500"
+                    : channelsTab === ch.key
+                    ? "cursor-pointer bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                    : "cursor-pointer text-slate-500 hover:text-slate-800 dark:hover:text-white"
                 }`}
               >
-                <div className="relative flex items-center justify-center">
+                <div className={`relative flex items-center justify-center ${ch.comingSoon ? "opacity-50 grayscale" : ""}`}>
                   <ChannelIcon channel={ch.channel} size="sm" />
                   {ch.isConnected && (
                     <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-500 border border-white dark:border-slate-800" />
                   )}
                 </div>
                 <span className="text-xs">{ch.label}</span>
+                {ch.comingSoon && (
+                  <span className="rounded-full border border-slate-300/60 bg-slate-200/60 px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400">
+                    Próximamente
+                  </span>
+                )}
                 {ch.isConnected && (
                   <span className="text-[11px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-semibold px-1.5 py-0.5 rounded-full hidden sm:inline-block">
                     Conectado
@@ -2151,7 +2292,7 @@ export default function CrmOmnichannelPage() {
       </Modal>
 
       {/* ═══ CLIENT PROFILE MODAL ═══ */}
-      <Modal open={clientProfileModalOpen} onClose={() => setClientProfileModalOpen(false)} title={`Ficha de ${activeConversation?.clientName || "Cliente"}`}>
+      <Modal open={clientProfileModalOpen} onClose={() => setClientProfileModalOpen(false)} title={`Ficha de ${activeConversation?.clientName || "Cliente"}`} maxWidth="max-w-xl">
         <div className="space-y-4 text-xs">
           {activeConversation && (
             <>
@@ -2161,6 +2302,7 @@ export default function CrmOmnichannelPage() {
                   phone={activeConversation.channelIdentifier}
                   channel={activeConversation.channel}
                   tenantSlug={business.slug || "workspace"}
+                  whatsappConnected={evolutionConfig.connected}
                   color={business.primaryColor || "var(--primary, #FF4F2B)"}
                   className="mx-auto mb-3 h-16 w-16 rounded-3xl font-semibold text-xl shadow-md"
                 />
@@ -2174,32 +2316,102 @@ export default function CrmOmnichannelPage() {
                 )}
               </div>
 
-              {/* Stats */}
-              {linkedClient && (
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-semibold text-slate-900 dark:text-white">{linkedClient.totalVisits}</p><p className="text-[11px] text-slate-500 font-semibold">Visitas</p></div>
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-bold text-emerald-600 tabular-nums">{formatGs(linkedClient.totalSpent)}</p><p className="text-[11px] text-slate-500 font-bold">Consumo Total</p></div>
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center"><p className="text-lg font-semibold text-amber-600">{linkedClient.loyaltyPoints}</p><p className="text-[11px] text-slate-500 font-semibold">Sellos</p></div>
+              {/* Resumen de asistencia y consumo */}
+              {(linkedClient || clientAppointments.length > 0) && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    { label: "Visitas", value: String(clientStats.visits), tone: "text-slate-900 dark:text-white" },
+                    { label: "Consumo total", value: formatGs(clientStats.totalSpent), tone: "text-emerald-600 dark:text-emerald-400" },
+                    { label: "Ticket promedio", value: clientStats.visits > 0 ? formatGs(clientStats.avgTicket) : "—", tone: "text-slate-900 dark:text-white" },
+                    { label: "Sellos", value: `${linkedClient?.loyaltyPoints ?? 0} / ${loyalty.rewardThreshold}`, tone: "text-amber-600 dark:text-amber-400" },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded-2xl border border-slate-200/60 bg-slate-50 p-3 text-center dark:border-white/5 dark:bg-slate-800/50">
+                      <p className={`truncate text-base font-semibold tabular-nums ${s.tone}`}>{s.value}</p>
+                      <p className="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-zinc-400">{s.label}</p>
+                    </div>
+                  ))}
                 </div>
+              )}
+
+              {(linkedClient || clientAppointments.length > 0) && (
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl border border-slate-200/60 p-3.5 dark:border-white/5">
+                  <div className="min-w-0">
+                    <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Última visita</dt>
+                    <dd className="mt-0.5 truncate font-semibold text-slate-800 dark:text-zinc-200">
+                      {clientStats.lastVisit ? formatProfileDate(clientStats.lastVisit, business.timezone) : "Sin visitas aún"}
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Próximo turno</dt>
+                    <dd className="mt-0.5 truncate font-semibold text-slate-800 dark:text-zinc-200">
+                      {clientStats.nextAppointment
+                        ? formatProfileDate(clientStats.nextAppointment.start, business.timezone, true)
+                        : "Sin turnos agendados"}
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Servicio favorito</dt>
+                    <dd className="mt-0.5 truncate font-semibold text-slate-800 dark:text-zinc-200">{clientStats.favoriteService || "—"}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Profesional habitual</dt>
+                    <dd className="mt-0.5 truncate font-semibold text-slate-800 dark:text-zinc-200">{clientStats.favoriteStaff || "—"}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Inasistencias</dt>
+                    <dd className={`mt-0.5 font-semibold tabular-nums ${clientStats.noShows > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-zinc-200"}`}>
+                      {clientStats.noShows}
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Cancelaciones</dt>
+                    <dd className="mt-0.5 font-semibold tabular-nums text-slate-800 dark:text-zinc-200">{clientStats.cancellations}</dd>
+                  </div>
+                </dl>
               )}
 
               {/* Notes / Formula */}
               {linkedClient?.formula && (
                 <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-primary mb-1">Ficha Técnica / Preferencias:</p>
+                  <p className="text-xs font-semibold text-primary mb-1">Ficha técnica / preferencias</p>
                   <p className="text-xs text-slate-900 dark:text-slate-200">{linkedClient.formula}</p>
                 </div>
               )}
               {linkedClient?.notes && (
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-white/5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Notas:</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1">Notas</p>
                   <p className="text-xs text-slate-700 dark:text-slate-300">{linkedClient.notes}</p>
                 </div>
               )}
 
+              {/* Historial de turnos */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5"><Calendar className="h-4 w-4 text-primary" /> Historial de turnos</p>
+                {clientAppointments.length === 0 ? (
+                  <p className="text-xs text-slate-400 p-3 text-center bg-slate-50 dark:bg-slate-800/40 rounded-xl">Este cliente no tiene turnos registrados aún.</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                    {clientAppointments.slice(0, 8).map((a) => {
+                      const st = APPOINTMENT_STATUS_LABELS[a.status];
+                      return (
+                        <div key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-slate-50 p-2.5 dark:border-white/5 dark:bg-slate-800/40">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-900 dark:text-white">{services.find((s) => s.id === a.serviceId)?.name || "Servicio"}</p>
+                            <p className="truncate text-[11px] text-slate-500 dark:text-zinc-400">
+                              {formatProfileDate(a.start, business.timezone, true)} · {staff.find((p) => p.id === a.staffId)?.name || "Profesional"}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.className}`}>{st.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               {/* Order History */}
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5"><History className="h-4 w-4 text-primary" /> Historial de Pedidos</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5"><History className="h-4 w-4 text-primary" /> Historial de pedidos</p>
                 {clientOrderHistory.length === 0 ? (
                   <p className="text-xs text-slate-400 p-3 text-center bg-slate-50 dark:bg-slate-800/40 rounded-xl">Este cliente no tiene pedidos registrados aún.</p>
                 ) : (
@@ -2256,7 +2468,7 @@ export default function CrmOmnichannelPage() {
           <div><label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notas (Opcional):</label><textarea rows={2} value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Ej: Retira el jueves con Marcos..." className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
           <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-2">
             <button type="button" onClick={() => setOrderModalOpen(false)} className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer">Cancelar</button>
-            <button type="button" onClick={handleCreateOrderSubmit} className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 shadow-sm transition cursor-pointer flex items-center gap-1.5"><Check className="h-4 w-4" /><span>Confirmar Pedido</span></button>
+            <button type="button" onClick={handleCreateOrderSubmit} disabled={savingOrder} className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 shadow-sm transition cursor-pointer flex items-center gap-1.5 disabled:cursor-wait disabled:opacity-60"><Check className="h-4 w-4" /><span>{savingOrder ? "Guardando..." : "Confirmar pedido"}</span></button>
           </div>
         </div>
       </Modal>

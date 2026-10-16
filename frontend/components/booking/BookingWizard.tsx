@@ -149,6 +149,7 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
   const [contactNotes, setContactNotes] = useState("");
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
   const [selectedProductCategory, setSelectedProductCategory] = useState("Todas");
   const [productSearch, setProductSearch] = useState("");
 
@@ -288,8 +289,9 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
     e.preventDefault();
     if (!contactPhone.trim() || contactPhone.replace(/\D/g, "").length < 8) return;
     setIsSubmittingContact(true);
+    setContactError(null);
     try {
-      await fetch("/api/leads/order", {
+      const res = await fetch("/api/leads/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -297,17 +299,21 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
           customerName: contactName.trim() || name.trim() || "Cliente Tienda",
           customerPhone: contactPhone.trim() || phone.trim(),
           notes: contactNotes.trim(),
-          items: cartItems.map((i) => ({
-            name: i.product.name,
-            qty: i.qty,
-            price: i.product.price,
-          })),
-          total: totalCartPrice,
+          // El precio lo calcula el servidor (lista u oferta vigente)
+          items: cartItems.map((i) => ({ productId: i.product.id, qty: i.qty })),
         }),
-      }).catch(() => {});
-    } catch {}
-    setIsSubmittingContact(false);
-    setContactSubmitted(true);
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        setContactError(data?.message || "No pudimos registrar tu pedido. Probá de nuevo o escribinos por WhatsApp.");
+        return;
+      }
+      setContactSubmitted(true);
+    } catch {
+      setContactError("No pudimos conectarnos. Revisá tu conexión o escribinos por WhatsApp.");
+    } finally {
+      setIsSubmittingContact(false);
+    }
   }
 
   function handleSelectDate(civilDate: string) {
@@ -1249,6 +1255,12 @@ export default function BookingWizard({ tenant, services, products }: BookingWiz
                     className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs outline-none focus:border-primary resize-none"
                   />
                 </div>
+
+                {contactError && (
+                  <p role="alert" className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400">
+                    {contactError}
+                  </p>
+                )}
 
                 <div className="pt-2 flex items-center justify-end gap-2">
                   <button

@@ -354,7 +354,7 @@ export default function EstadisticasPage() {
   return (
     <div className="stats-page w-full space-y-5 sm:space-y-6 pb-20 sm:pb-28 px-1 sm:px-0 page-enter">
       {/* Header Glassy */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
+      <div data-tour="stats-header" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
         <div>
           <span className="eyebrow">TELEMETRÍA & RENDIMIENTO</span>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
@@ -363,7 +363,7 @@ export default function EstadisticasPage() {
           <p className="text-xs text-zinc-400 mt-1">Resumen · {RANGE_LABELS[range]}</p>
         </div>
 
-        <div className="flex w-full items-center gap-2 max-[359px]:flex-wrap sm:w-auto">
+        <div data-tour="stats-period" className="flex w-full items-center gap-2 max-[359px]:flex-wrap sm:w-auto">
           <IosSegmentedControl
             value={range}
             onChange={(val) => {
@@ -421,7 +421,7 @@ export default function EstadisticasPage() {
       ) : stats ? (
         <div className={`space-y-5 sm:space-y-6 transition-opacity duration-300 ${loading ? "opacity-60" : "opacity-100"}`}>
           {/* 1. Motion Glassy Metric Cards with Morphing Springs on Date Changes */}
-          <div className="stats-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+          <div data-tour="stats-kpis" className="stats-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
             <MetricCard
               label="Facturación Total"
               value={stats.totalRevenue}
@@ -450,7 +450,7 @@ export default function EstadisticasPage() {
           </div>
 
           {/* 2. Main Trend & Performance Glass Motion Chart */}
-          <div className="panel dashboard-chart glass-panel p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div data-tour="stats-chart" className="panel dashboard-chart glass-panel p-4 sm:p-6 space-y-3 sm:space-y-4">
             <div className="space-y-3 sm:space-y-4">
               <div>
                 <span className="eyebrow">FLUJO & OPERACIONES</span>
@@ -611,7 +611,7 @@ export default function EstadisticasPage() {
           </div>
 
           {/* 5. Telemetry Pods Grid */}
-          <div className="stats-pods-grid grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div data-tour="stats-pods" className="stats-pods-grid grid grid-cols-2 md:grid-cols-4 gap-3">
             {pods.map((p) => {
               const Icon = p.icon;
               return (
@@ -643,7 +643,7 @@ export default function EstadisticasPage() {
           </div>
 
           {/* 6. Payment Breakdown & Hours */}
-          <section className="stats-insight-group" aria-label="Cobros y horarios">
+          <section data-tour="stats-insights" className="stats-insight-group" aria-label="Cobros y horarios">
             <MobileInsightToggle
               id="stats-payments-content"
               title="Cobros y horarios"

@@ -27,7 +27,7 @@ import Modal from "@/components/dashboard/ui/Modal";
 import { triggerHaptic } from "@/lib/haptics";
 import { formatGs, normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import type { Client, LoyaltyRewardTier } from "@/lib/dashboard-types";
-import { tenantHost } from "@/lib/tenant/public-url";
+import { ROOT_DOMAIN, tenantRouteUrl } from "@/lib/tenant/public-url";
 
 const REWARD_PRESETS = [
   "50% OFF en tu próximo corte o servicio",
@@ -214,8 +214,7 @@ export default function FidelizacionPage() {
   const previewPoints = previewClient?.loyaltyPoints ?? Math.max(0, minThreshold - 1);
 
   function getCardUrl(clientId: string) {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://agendate.py";
-    return `${origin}/${business.slug || "barberia"}/tarjeta/${clientId}`;
+    return tenantRouteUrl(business.slug || "barberia", `/tarjeta/${encodeURIComponent(clientId)}`);
   }
 
   function getWhatsAppShareUrl(client: Client) {
@@ -690,7 +689,7 @@ export default function FidelizacionPage() {
 
           <div className="mt-3 flex items-center justify-between gap-2">
             <code className="min-w-0 truncate text-[11px] text-slate-500 dark:text-zinc-400">
-              {tenantHost(business.slug || "salon")}/tarjeta/…
+              {ROOT_DOMAIN}/{business.slug || "barberia"}/tarjeta/…
             </code>
             {previewClient && (
               <Link

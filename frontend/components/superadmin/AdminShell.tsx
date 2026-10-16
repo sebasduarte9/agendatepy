@@ -140,7 +140,13 @@ export default function AdminShell({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 flex flex-col md:flex-row antialiased selection:bg-orange-100 selection:text-[#FF4F2B]">
+    <div data-admin-theme className="relative min-h-dvh overflow-x-hidden bg-[#090d16] text-slate-100 flex flex-col md:flex-row antialiased selection:bg-orange-400/25 selection:text-orange-100">
+      <div className="glass-room" aria-hidden="true" />
+      <div className="ambient-scene" aria-hidden="true">
+        <div className="ambient-orb ambient-orb-1" />
+        <div className="ambient-orb ambient-orb-2" />
+        <div className="ambient-orb ambient-orb-3" />
+      </div>
       {/* Mobile Sticky Header */}
       <header className="sticky top-0 z-30 flex h-14 md:hidden items-center justify-between border-b border-slate-200/80 bg-white/95 backdrop-blur-md px-4 shrink-0 shadow-xs">
         <div className="flex items-center gap-3 min-w-0">
@@ -323,7 +329,7 @@ export default function AdminShell({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden bg-[#F8F9FA] text-slate-900">
+      <main className="relative z-10 flex-1 flex flex-col min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden bg-transparent text-slate-100">
         {children}
       </main>
     </div>

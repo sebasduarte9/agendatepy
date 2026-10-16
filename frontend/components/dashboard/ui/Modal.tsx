@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, type ReactNode } from "react";
+import React, { useState, useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
@@ -38,6 +38,15 @@ export default function Modal({
   const [isDesktop, setIsDesktop] = useState(false);
   const dragControls = useDragControls();
   const prefersReducedMotion = useReducedMotion();
+  const titleId = `dashboard-modal-title-${useId()}`;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     setMounted(true);
@@ -60,15 +69,50 @@ export default function Modal({
     };
   }, [open]);
 
-  // Close on Escape key press
+  // Keep focus inside the dialog, close it on Escape, and restore the opener on dismissal.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !mounted) return;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusFrame = window.requestAnimationFrame(() => {
+      (closeButtonRef.current ?? dialogRef.current)?.focus();
+    });
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => element.getAttribute("aria-hidden") !== "true");
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialogRef.current.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleKeyDown);
+      const previousFocus = previousFocusRef.current;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [open, mounted]);
 
   const isSide = variant === "side" && isDesktop;
 
@@ -93,7 +137,12 @@ export default function Modal({
           onClick={onClose}
         >
           <motion.div
+            ref={dialogRef}
             key="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             layout={animateContentSize ? "size" : undefined}
             drag={isMobile ? "y" : false}
             dragListener={false}
@@ -188,19 +237,19 @@ export default function Modal({
               onPointerDown={isMobile ? (event) => dragControls.start(event) : undefined}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-base sm:text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+                <h3 id={titleId} className="text-base sm:text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
                   {title}
                 </h3>
-                {!isMobile && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Cerrar"
-                    className="h-8 w-8 rounded-full bg-slate-200/60 dark:bg-white/10 hover:bg-slate-300/60 dark:hover:bg-white/20 flex items-center justify-center text-slate-600 dark:text-slate-300 transition active:scale-90 cursor-pointer shrink-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+                <button
+                  ref={closeButtonRef}
+                  type="button"
+                  onClick={onClose}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  aria-label="Cerrar"
+                  className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full bg-slate-200/60 text-slate-600 transition hover:bg-slate-300/60 active:scale-90 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20 sm:h-8 sm:w-8"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
 

@@ -89,7 +89,10 @@ export function StaffAvatarSelector({
           const count = appointmentsToday.filter((a) => a.staffId === st.id).length;
           const isSelected = selectedStaffFilter === st.id;
           const initial = (st.name || "S").trim().slice(0, 1).toUpperCase();
-          const hasAvatar = Boolean(st.avatar && !brokenAvatars[st.id]);
+          const avatarSrc = st.avatar?.trim() || "";
+          const hasAvatar =
+            /^(https?:\/\/|\/|\.\/|data:image\/|blob:)/i.test(avatarSrc) &&
+            !brokenAvatars[st.id];
 
           return (
             <motion.button
@@ -122,7 +125,7 @@ export function StaffAvatarSelector({
               >
                 {hasAvatar ? (
                   <img
-                    src={st.avatar}
+                    src={avatarSrc}
                     alt={st.name}
                     onError={() =>
                       setBrokenAvatars((prev) => ({ ...prev, [st.id]: true }))

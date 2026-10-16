@@ -114,17 +114,16 @@ export default function ExtrasPage() {
       <style>{`@media print { body * { visibility: hidden !important; } #printable-card, #printable-card * { visibility: visible !important; } #printable-card { position: fixed; inset: 0; margin: auto; width: 100mm; height: fit-content; box-shadow: none !important; } }`}</style>
 
       {/* Header */}
-      <div className="kpi-rise flex flex-col gap-1 py-1">
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          Kit de marketing
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+      <div className="kpi-rise min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Difusión</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Kit de marketing</h1>
+        <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
           Tu link, tu QR y tus carteles para que te reserven desde cualquier lado.
         </p>
       </div>
 
       {/* Link hero */}
-      <div className="kpi-rise rounded-3xl glass-panel p-5 sm:p-6 shadow-xs">
+      <div data-tour="extras-link" className="kpi-rise rounded-3xl glass-panel p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
@@ -192,7 +191,7 @@ export default function ExtrasPage() {
 
       <div className="grid gap-5 md:grid-cols-5">
         {/* Poster */}
-        <Card className="kpi-rise md:col-span-3 space-y-4">
+        <Card data-tour="extras-poster" className="kpi-rise md:col-span-3 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
               <QrCode className="h-5 w-5 text-primary shrink-0" />
@@ -207,7 +206,7 @@ export default function ExtrasPage() {
                     triggerHaptic("selection");
                     setPosterStyle(s.id);
                   }}
-                  className={`rounded-lg px-3 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                  className={`inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-semibold transition cursor-pointer ${
                     posterStyle === s.id
                       ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-xs"
                       : "text-slate-500"
@@ -276,7 +275,7 @@ export default function ExtrasPage() {
         </Card>
 
         {/* Pixels */}
-        <Card className="kpi-rise md:col-span-2 space-y-4 self-start">
+        <Card data-tour="extras-pixels" className="kpi-rise md:col-span-2 space-y-4 self-start">
           <div>
             <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-base">
               <Target className="h-4 w-4 text-primary shrink-0" /> Medí tus anuncios

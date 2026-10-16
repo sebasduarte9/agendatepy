@@ -33,6 +33,8 @@ import type {
   CommissionPayoutRecord,
 } from "@/lib/dashboard-types";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const TIMEZONE_NOTE =
   "Normalización TZ: interpretar start/end con formatInTimeZone(business.timezone).";
 
@@ -52,6 +54,9 @@ export const defaultCivilDate = (() => {
     return "2026-09-25";
   }
 })();
+
+// Demo timestamps are fixed to the app's civil date so SSR and hydration render identical values.
+const demoSeedBaseMs = Date.parse(`${defaultCivilDate}T18:00:00.000Z`);
 
 export const initialStaff: StaffMember[] = [
   {
@@ -315,7 +320,7 @@ export const initialProductOrders: ProductOrder[] = [
     status: "delivered",
     paymentMethod: "transferencia",
     deliveryType: "retirar_en_local",
-    createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    createdAt: new Date(demoSeedBaseMs - 35 * 60 * 1000).toISOString(),
     notes: "Vendido por Marcos Benítez en sillón tras corte.",
   },
   {
@@ -337,7 +342,7 @@ export const initialProductOrders: ProductOrder[] = [
     status: "delivered",
     paymentMethod: "pos",
     deliveryType: "retirar_en_local",
-    createdAt: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
+    createdAt: new Date(demoSeedBaseMs - 120 * 60 * 1000).toISOString(),
     notes: "Recomendado y vendido por Sofía en peinado.",
   },
   {
@@ -359,7 +364,7 @@ export const initialProductOrders: ProductOrder[] = [
     status: "delivered",
     paymentMethod: "efectivo",
     deliveryType: "retirar_en_local",
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(demoSeedBaseMs - 24 * 60 * 60 * 1000).toISOString(),
     notes: "Vendido en caja por Leticia Romero.",
   },
   {
@@ -381,7 +386,7 @@ export const initialProductOrders: ProductOrder[] = [
     status: "delivered",
     paymentMethod: "efectivo",
     deliveryType: "retirar_en_local",
-    createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(demoSeedBaseMs - 48 * 60 * 60 * 1000).toISOString(),
     notes: "Vendido por Diego Franco.",
   },
 ];
@@ -531,7 +536,7 @@ export const initialClients: Client[] = [
     formula: "Degradé skin fade medio, tijera superior 3cm, barba contorno marcado.",
     totalVisits: 6,
     totalSpent: 480000,
-    lastVisit: new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 14 * 24 * 3600 * 1000).toISOString(),
     tags: ["Frecuente", "VIP"],
     loyaltyPoints: 4,
     loyaltyRedeemed: 0,
@@ -546,7 +551,7 @@ export const initialClients: Client[] = [
     formula: "Balayage tono 8.3 miel + matizador 9.02 con oxidante 20 vol.",
     totalVisits: 3,
     totalSpent: 540000,
-    lastVisit: new Date(Date.now() - 28 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 28 * 24 * 3600 * 1000).toISOString(),
     tags: ["Nuevo"],
     loyaltyPoints: 3,
     loyaltyRedeemed: 0,
@@ -561,7 +566,7 @@ export const initialClients: Client[] = [
     formula: "Clásico ejecutivo, tijera pulida, pomada brillante.",
     totalVisits: 8,
     totalSpent: 640000,
-    lastVisit: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 7 * 24 * 3600 * 1000).toISOString(),
     tags: ["VIP", "Frecuente"],
     loyaltyPoints: 5,
     loyaltyRedeemed: 1,
@@ -576,7 +581,7 @@ export const initialClients: Client[] = [
     formula: "Balayage miel: Tono 8.3 con oxidante 20 vol + matizador plata.",
     totalVisits: 4,
     totalSpent: 600000,
-    lastVisit: new Date(Date.now() - 20 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 20 * 24 * 3600 * 1000).toISOString(),
     tags: ["Frecuente"],
     loyaltyPoints: 4,
     loyaltyRedeemed: 0,
@@ -591,7 +596,7 @@ export const initialClients: Client[] = [
     formula: "Low fade navajeado, barba cuadrada con línea limpia.",
     totalVisits: 7,
     totalSpent: 520000,
-    lastVisit: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 2 * 24 * 3600 * 1000).toISOString(),
     tags: ["VIP", "Frecuente"],
     loyaltyPoints: 5,
     loyaltyRedeemed: 0,
@@ -605,7 +610,7 @@ export const initialClients: Client[] = [
     formula: "Corte clásico tijera con raya al costado texturada.",
     totalVisits: 5,
     totalSpent: 380000,
-    lastVisit: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 5 * 24 * 3600 * 1000).toISOString(),
     tags: ["Frecuente"],
     loyaltyPoints: 3,
     loyaltyRedeemed: 0,
@@ -620,7 +625,7 @@ export const initialClients: Client[] = [
     formula: "Ritual completo de barba y rebajado de pómulos.",
     totalVisits: 6,
     totalSpent: 490000,
-    lastVisit: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 1 * 24 * 3600 * 1000).toISOString(),
     tags: ["Frecuente"],
     loyaltyPoints: 4,
     loyaltyRedeemed: 0,
@@ -635,12 +640,15 @@ export const initialClients: Client[] = [
     formula: "Tono 9.1 rubio ceniza muy claro con matizador violeta suave.",
     totalVisits: 8,
     totalSpent: 890000,
-    lastVisit: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString(),
+    lastVisit: new Date(demoSeedBaseMs - 12 * 24 * 3600 * 1000).toISOString(),
     tags: ["VIP"],
     loyaltyPoints: 6,
     loyaltyRedeemed: 1,
   },
 ];
+
+// Keep demo timestamps stable across server rendering and browser hydration.
+const demoReceiptBaseMs = demoSeedBaseMs;
 
 export const initialReceipts: Receipt[] = [
   {
@@ -649,7 +657,7 @@ export const initialReceipts: Receipt[] = [
     clientName: "Martín Benítez",
     clientPhone: "+595 981 765 432",
     amount: 130000,
-    submittedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    submittedAt: new Date(demoReceiptBaseMs - 15 * 60 * 1000).toISOString(),
     status: "pending",
     note: "Transferencia Bancaria - Seña turno corte y cera capilar",
     bankOrigin: "Banco Itaú",
@@ -666,7 +674,7 @@ export const initialReceipts: Receipt[] = [
     clientName: "Camila González",
     clientPhone: "+595 972 345 678",
     amount: 180000,
-    submittedAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    submittedAt: new Date(demoReceiptBaseMs - 3 * 3600 * 1000).toISOString(),
     status: "approved",
     note: "Pago total Balayage Miel y Nutrición Capilar",
     bankOrigin: "Ueno Bank",
@@ -682,7 +690,7 @@ export const initialReceipts: Receipt[] = [
     clientName: "Rodrigo Duarte",
     clientPhone: "+595 983 912 345",
     amount: 80000,
-    submittedAt: new Date(Date.now() - 26 * 3600 * 1000).toISOString(),
+    submittedAt: new Date(demoReceiptBaseMs - 26 * 3600 * 1000).toISOString(),
     status: "approved",
     note: "Corte Degradé y Perfilado de Barba",
     bankOrigin: "Banco Continental",
@@ -698,7 +706,7 @@ export const initialReceipts: Receipt[] = [
     clientName: "María Ferreira",
     clientPhone: "+595 981 111 222",
     amount: 150000,
-    submittedAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+    submittedAt: new Date(demoReceiptBaseMs - 48 * 3600 * 1000).toISOString(),
     status: "approved",
     note: "Tratamiento y Tintura",
     bankOrigin: "BNF",
@@ -719,7 +727,7 @@ export const initialCrmConversations: CrmConversation[] = [
     channel: "whatsapp",
     channelIdentifier: "+595 981 765 432",
     lastMessage: "Comprobante de Transferencia Bancaria (Itaú - Gs. 130.000)",
-    lastMessageTime: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    lastMessageTime: new Date(demoSeedBaseMs - 5 * 60 * 1000).toISOString(),
     unreadCount: 1,
     status: "open",
     messages: [
@@ -727,35 +735,35 @@ export const initialCrmConversations: CrmConversation[] = [
         id: "m-demo-1",
         sender: "client",
         text: "¡Hola! Buenas tardes. Quería consultar si tienen turno disponible para corte y perfilado de barba para este jueves a las 16:00 hs aprox.",
-        timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 25 * 60 * 1000).toISOString(),
         status: "read",
       },
       {
         id: "m-demo-2",
         sender: "client",
         text: "Y también quería saber si tienen en stock la cera capilar efecto mate que vi en sus publicaciones.",
-        timestamp: new Date(Date.now() - 24 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 24 * 60 * 1000).toISOString(),
         status: "read",
       },
       {
         id: "m-demo-3",
         sender: "agent",
         text: "¡Hola Martín! Qué tal. Sí, tenemos disponibilidad este jueves a las 16:00 con nuestro estilista Marcos. Y la cera capilar mate la tenemos en stock con descuento promocional en Gs. 50.000. El corte y barba son Gs. 80.000. Total Gs. 130.000.",
-        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 15 * 60 * 1000).toISOString(),
         status: "delivered",
       },
       {
         id: "m-demo-4",
         sender: "client",
         text: "¡Genial! Ya te transferí desde Itaú para señar el turno y asegurar el pote de cera.",
-        timestamp: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 6 * 60 * 1000).toISOString(),
         status: "delivered",
       },
       {
         id: "m-demo-5",
         sender: "client",
         text: "Comprobante de Transferencia Bancaria",
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 5 * 60 * 1000).toISOString(),
         status: "delivered",
         receiptAttachment: {
           receiptId: "rec-trf-1",
@@ -778,7 +786,7 @@ export const initialCrmConversations: CrmConversation[] = [
     channel: "instagram",
     channelIdentifier: "@camila_gonzalezpy",
     lastMessage: "¡Muchísimas gracias! Nos vemos el sábado entonces.",
-    lastMessageTime: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+    lastMessageTime: new Date(demoSeedBaseMs - 40 * 60 * 1000).toISOString(),
     unreadCount: 0,
     status: "resolved",
     messages: [
@@ -786,21 +794,21 @@ export const initialCrmConversations: CrmConversation[] = [
         id: "m-demo-ig-1",
         sender: "client",
         text: "¡Hola chicos! ¿Qué precio tiene el balayage miel con hidratación profunda?",
-        timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 90 * 60 * 1000).toISOString(),
         status: "read",
       },
       {
         id: "m-demo-ig-2",
         sender: "agent",
         text: "¡Hola Camila! Está en promo este mes por Gs. 180.000 incluye nutrición capilar y peinado. Te podemos agendar para este sábado a las 10:00 con Sofía.",
-        timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 60 * 60 * 1000).toISOString(),
         status: "delivered",
       },
       {
         id: "m-demo-ig-3",
         sender: "client",
         text: "¡Muchísimas gracias! Nos vemos el sábado entonces.",
-        timestamp: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 40 * 60 * 1000).toISOString(),
         status: "read",
       },
     ],
@@ -813,7 +821,7 @@ export const initialCrmConversations: CrmConversation[] = [
     channel: "messenger",
     channelIdentifier: "Rodrigo Duarte (Facebook)",
     lastMessage: "¿Hasta qué hora tienen abierto hoy?",
-    lastMessageTime: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    lastMessageTime: new Date(demoSeedBaseMs - 2 * 3600 * 1000).toISOString(),
     unreadCount: 1,
     status: "open",
     messages: [
@@ -821,7 +829,7 @@ export const initialCrmConversations: CrmConversation[] = [
         id: "m-demo-fb-1",
         sender: "client",
         text: "Buenas tardes, ¿hasta qué hora atienden hoy en el local de Villa Morra?",
-        timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+        timestamp: new Date(demoSeedBaseMs - 2 * 3600 * 1000).toISOString(),
         status: "read",
       },
     ],
@@ -1486,7 +1494,8 @@ type DashboardState = {
   services: ServiceItem[];
   products: ProductItem[];
   productOrders: ProductOrder[];
-  updateProductOrderStatus: (orderId: string, status: ProductOrderStatus) => void;
+  loadProductOrders: () => Promise<void>;
+  updateProductOrderStatus: (orderId: string, status: ProductOrderStatus) => Promise<boolean>;
   createProductOrder: (order: Omit<ProductOrder, "id" | "orderNumber" | "createdAt">) => void;
   appointments: Appointment[];
   blocks: TimeBlock[];
@@ -1508,13 +1517,14 @@ type DashboardState = {
   setCalendarDate: (isoDate: string) => void;
   setCalendarView: (view: CalendarView) => void;
   setSelectedStaffId: (id: string | "all") => void;
+  setBusinessLocal: (patch: Partial<BusinessProfile>) => void;
   updateBusiness: (patch: Partial<BusinessProfile>) => Promise<any> | void;
   addAppointment: (item: Appointment) => Promise<any> | void;
   updateAppointment: (id: string, patch: Partial<Appointment>) => Promise<boolean>;
   cancelAppointment: (id: string) => Promise<any> | void;
   addBlock: (block: Omit<TimeBlock, "id">) => Promise<any> | void;
   removeBlock: (id: string) => Promise<any> | void;
-  setReceiptStatus: (id: string, status: Receipt["status"]) => void;
+  setReceiptStatus: (id: string, status: Receipt["status"]) => Promise<boolean>;
   toggleStaff: (id: string) => Promise<any> | void;
   addStaff: (item: Omit<StaffMember, "id">) => Promise<any> | void;
   updateStaff: (id: string, patch: Partial<StaffMember>) => Promise<any> | void;
@@ -1524,19 +1534,19 @@ type DashboardState = {
   addCommissionPayout: (
     payout: Omit<CommissionPayoutRecord, "id" | "paidAt">,
     options?: { registerCashExpense?: boolean }
-  ) => CommissionPayoutRecord;
+  ) => Promise<CommissionPayoutRecord | null>;
   addService: (item: Omit<ServiceItem, "id">) => Promise<any> | void;
   updateService: (id: string, patch: Partial<ServiceItem>) => Promise<any> | void;
   removeService: (id: string) => Promise<any> | void;
-  addProduct: (item: Omit<ProductItem, "id">) => void;
-  updateProduct: (id: string, patch: Partial<ProductItem>) => void;
-  deleteProduct: (id: string) => void;
-  updateProductStock: (id: string, delta: number) => void;
+  addProduct: (item: Omit<ProductItem, "id">) => Promise<boolean>;
+  updateProduct: (id: string, patch: Partial<ProductItem>) => Promise<boolean>;
+  deleteProduct: (id: string) => Promise<boolean>;
+  updateProductStock: (id: string, delta: number) => Promise<boolean>;
   addClient: (client: Omit<Client, "id">) => Promise<any> | void;
   updateClient: (id: string, patch: Partial<Client>) => Promise<any> | void;
   deleteClient: (id: string) => Promise<any> | void;
   updateLoyalty: (patch: Partial<LoyaltySettings>) => Promise<boolean> | void;
-  addClientLoyaltyPoint: (clientId: string, amount?: number) => void;
+  addClientLoyaltyPoint: (clientId: string, amount?: number) => Promise<void>;
   redeemClientReward: (clientId: string, pointsToDeduct?: number, rewardDescription?: string) => Promise<boolean>;
   updateSipap: (patch: Partial<SipapConfig>) => void;
   updateEvolutionApi: (patch: Partial<EvolutionApiConfig>) => void;
@@ -1567,7 +1577,7 @@ type DashboardState = {
     notes?: string;
     deliveryType: "retirar_en_local" | "delivery";
     paymentMethod: "efectivo" | "pos" | "transferencia";
-  }) => void;
+  }) => Promise<ProductOrder | null>;
   sendCrmMessage: (conversationId: string, text: string) => void;
   resolveCrmConversation: (conversationId: string) => void;
   reopenCrmConversation: (conversationId: string) => void;
@@ -1596,6 +1606,11 @@ function splitOvernightBlock(block: Omit<TimeBlock, "id">): Omit<TimeBlock, "id"
     { ...block, date: nextDate, start: "00:00" },
   ];
 }
+
+// Requests de suma de puntos en vuelo por cliente (ver addClientLoyaltyPoint)
+const pendingPointRequests = new Map<string, number>();
+// Requests de ajuste de stock en vuelo por producto (ver updateProductStock)
+const pendingStockRequests = new Map<string, number>();
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   timezoneNote: TIMEZONE_NOTE,
@@ -1655,6 +1670,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setCalendarDate: (isoDate) => set({ calendarDate: isoDate }),
   setCalendarView: (view) => set({ calendarView: view }),
   setSelectedStaffId: (id) => set({ selectedStaffId: id }),
+  setBusinessLocal: (patch) => set((state) => ({ business: { ...state.business, ...patch } })),
   updateBusiness: async (patch) => {
     set({ business: { ...get().business, ...patch } });
     try {
@@ -1715,6 +1731,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           };
         }
 
+        if (Array.isArray(data.tenant?.settings?.whatsappTemplates) && data.tenant.settings.whatsappTemplates.length > 0) {
+          nextState.whatsappTemplates = data.tenant.settings.whatsappTemplates;
+        }
+
         if (data.tenant?.settings?.evolutionConfig) {
           nextState.evolutionConfig = {
             ...state.evolutionConfig,
@@ -1767,7 +1787,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           }));
         }
 
-        if (Array.isArray(data.clients) && data.clients.length > 0) {
+        if (Array.isArray(data.clients)) {
           nextState.clients = data.clients.map((c: any) => ({
             id: c.id,
             name: c.name,
@@ -1781,11 +1801,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             totalSpent: c.totalSpent ?? 0,
             lastVisit: c.lastVisit || null,
             loyaltyPoints: c.loyaltyPoints ?? 0,
-            loyaltyRedeemed: 0,
+            loyaltyRedeemed: c.loyaltyRedeemed ?? 0,
           }));
         }
 
-        if (Array.isArray(data.cashMovements) && data.cashMovements.length > 0) {
+        if (Array.isArray(data.cashMovements)) {
           const mappedCash = data.cashMovements.map((cm: any) => ({
             id: cm.id,
             type: cm.type,
@@ -1796,11 +1816,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             category: cm.category,
             appointmentId: cm.appointmentId,
           }));
-          const hasTodayCash = mappedCash.some((cm: any) => (cm.date || "").slice(0, 10) === defaultCivilDate);
-          nextState.cashMovements = hasTodayCash ? mappedCash : [...mappedCash, ...initialCashMovements];
+          nextState.cashMovements = mappedCash;
         }
 
-        if (Array.isArray(data.scheduleBlocks) && data.scheduleBlocks.length > 0) {
+        if (Array.isArray(data.scheduleBlocks)) {
           const tz = (nextState.business?.timezone || state.business.timezone || "America/Asuncion");
           nextState.blocks = data.scheduleBlocks.map((b: any) => {
             const bDate = formatInTimeZone(b.startTime, tz, "yyyy-MM-dd");
@@ -1817,20 +1836,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           });
         }
 
-        if (Array.isArray(data.appointments) && data.appointments.length > 0) {
-          const hasTodayApp = data.appointments.some((a: any) => {
-            const d = (a.start || a.startTime || "").slice(0, 10);
-            return d === defaultCivilDate;
-          });
-          nextState.appointments = hasTodayApp ? data.appointments : [...data.appointments, ...initialAppointments];
+        if (Array.isArray(data.appointments)) {
+          nextState.appointments = data.appointments;
         }
 
-        if (Array.isArray(data.products) && data.products.length > 0) {
+        if (Array.isArray(data.receipts)) {
+          nextState.receipts = data.receipts;
+        }
+
+        if (Array.isArray(data.products)) {
           nextState.products = data.products;
         }
 
         return nextState;
       });
+      await get().loadProductOrders();
     } catch (err) {
       console.error("Error al sincronizar con PostgreSQL:", err);
     } finally {
@@ -2069,34 +2089,53 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return false;
     }
   },
-  setReceiptStatus: (id, status) => {
-    const receipts = get().receipts.map((item) =>
-      item.id === id ? { ...item, status } : item,
-    );
-    const receipt = receipts.find((item) => item.id === id);
-    const appointments = get().appointments.map((item) => {
-      if (item.id !== receipt?.appointmentId) return item;
-      return {
-        ...item,
-        status: status === "approved" ? "confirmed" : status === "rejected" ? "cancelled" : item.status,
-      };
-    });
-    const crmConversations = get().crmConversations.map((c) => ({
-      ...c,
-      messages: c.messages.map((m) => {
-        if (m.receiptAttachment?.receiptId === id) {
-          return {
-            ...m,
-            receiptAttachment: {
-              ...m.receiptAttachment,
-              status,
-            },
-          };
-        }
-        return m;
-      }),
-    }));
-    set({ receipts, appointments, crmConversations });
+  setReceiptStatus: async (id, status) => {
+    const prev = {
+      receipts: get().receipts,
+      appointments: get().appointments,
+      crmConversations: get().crmConversations,
+    };
+    const applyStatus = (appointmentStatus: Appointment["status"] | null) => {
+      const receipts = get().receipts.map((item) =>
+        item.id === id ? { ...item, status } : item,
+      );
+      const receipt = receipts.find((item) => item.id === id);
+      const appointments = appointmentStatus
+        ? get().appointments.map((item) =>
+            item.id === receipt?.appointmentId ? { ...item, status: appointmentStatus } : item,
+          )
+        : get().appointments;
+      const crmConversations = get().crmConversations.map((c) => ({
+        ...c,
+        messages: c.messages.map((m) =>
+          m.receiptAttachment?.receiptId === id
+            ? { ...m, receiptAttachment: { ...m.receiptAttachment, status } }
+            : m,
+        ),
+      }));
+      set({ receipts, appointments, crmConversations });
+    };
+
+    // Optimista; el servidor decide si el turno cambia (solo si esperaba pago)
+    applyStatus(status === "approved" ? "confirmed" : status === "rejected" ? "cancelled" : null);
+    if (!UUID_REGEX.test(id)) return true; // comprobantes de ejemplo (modo demo)
+    try {
+      const res = await fetch(`/api/receipts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.message || "No se pudo actualizar el comprobante.");
+      set(prev);
+      applyStatus((data.appointmentStatus as Appointment["status"] | null) ?? null);
+      return true;
+    } catch (err) {
+      console.error("Error actualizando comprobante:", err);
+      set(prev);
+      get().pushToast("error", err instanceof Error ? err.message : "No se pudo actualizar el comprobante.");
+      return false;
+    }
   },
   toggleStaff: async (id) => {
     const target = get().staff.find((s) => s.id === id);
@@ -2196,63 +2235,73 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
     return get().updateStaff(id, patch);
   },
-  addCommissionPayout: (payoutData, options) => {
+  addCommissionPayout: async (payoutData, options) => {
     const registerCashExpense = options?.registerCashExpense ?? true;
-    const id = "payout-" + Date.now();
-    const paidAt = new Date().toISOString();
-    const receiptNumber =
-      payoutData.receiptNumber ||
-      `LIQ-${new Date().getFullYear()}-${String(get().commissionPayouts.length + 1).padStart(3, "0")}`;
-    const newPayout: CommissionPayoutRecord = {
-      ...payoutData,
-      id,
-      paidAt,
-      receiptNumber,
-    };
-
-    // 1. Add to payouts list
-    const updatedPayouts = [newPayout, ...get().commissionPayouts];
-
-    // 2. Register an EGRESO in Caja Diaria when requested
-    const cashExpense: CashMovement = {
-      id: "cm-" + Date.now(),
-      type: "egreso",
-      amount: newPayout.amountPaid,
-      method: (newPayout.paymentMethod.toLowerCase().includes("transfer") || newPayout.paymentMethod.toLowerCase().includes("sipap") ? "transferencia" : "efectivo") as any,
-      concept: `Liquidación de comisiones: ${newPayout.staffName} (${receiptNumber})`,
-      category: "Comisiones",
-      date: paidAt,
-    };
-
-    set({
-      commissionPayouts: updatedPayouts,
-      cashMovements: registerCashExpense ? [cashExpense, ...get().cashMovements] : get().cashMovements,
-    });
-
-    // 3. Deduct advanceBalance from staff member if advance was deducted
-    if (newPayout.advancesDeducted && newPayout.advancesDeducted > 0) {
-      const currentStaff = get().staff.find((s) => s.id === newPayout.staffId);
-      if (currentStaff && (currentStaff.advanceBalance ?? 0) > 0) {
-        const remaining = Math.max(0, (currentStaff.advanceBalance || 0) - newPayout.advancesDeducted);
-        get().updateStaff(newPayout.staffId, { advanceBalance: remaining });
+    try {
+      // Primero se registra en la base; recién con su respuesta se muestra el pago (evita recibos de pagos no guardados)
+      const res = await fetch("/api/commission-payouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staffId: payoutData.staffId,
+          periodStart: payoutData.periodStart,
+          periodEnd: payoutData.periodEnd,
+          paymentMethod: payoutData.paymentMethod,
+          notes: payoutData.notes,
+          registerCashExpense,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok || !data.payout?.id) {
+        get().pushToast("error", data?.message || "No se pudo registrar el pago de comisiones.");
+        return null;
       }
+
+      const saved = data.payout;
+      const paidAt = saved.paidAt ? new Date(saved.paidAt).toISOString() : new Date().toISOString();
+      const receiptNumber =
+        payoutData.receiptNumber ||
+        `LIQ-${new Date().getFullYear()}-${String(get().commissionPayouts.length + 1).padStart(3, "0")}`;
+      const newPayout: CommissionPayoutRecord = {
+        ...payoutData,
+        id: saved.id,
+        paidAt,
+        receiptNumber,
+      };
+
+      const cashExpense: CashMovement | null =
+        registerCashExpense && saved.cashMovementId
+          ? {
+              id: saved.cashMovementId,
+              type: "egreso",
+              amount: saved.cashMovement?.amount ?? newPayout.amountPaid,
+              method: (newPayout.paymentMethod.toLowerCase().includes("transfer") || newPayout.paymentMethod.toLowerCase().includes("sipap") ? "transferencia" : "efectivo") as any,
+              concept: saved.cashMovement?.description || `Liquidación de comisiones: ${newPayout.staffName} (${receiptNumber})`,
+              category: "Comisiones",
+              date: paidAt,
+            }
+          : null;
+
+      set({
+        commissionPayouts: [newPayout, ...get().commissionPayouts],
+        cashMovements: cashExpense ? [cashExpense, ...get().cashMovements] : get().cashMovements,
+      });
+
+      // Descontar adelantos del saldo del profesional
+      if (newPayout.advancesDeducted && newPayout.advancesDeducted > 0) {
+        const currentStaff = get().staff.find((s) => s.id === newPayout.staffId);
+        if (currentStaff && (currentStaff.advanceBalance ?? 0) > 0) {
+          const remaining = Math.max(0, (currentStaff.advanceBalance || 0) - newPayout.advancesDeducted);
+          get().updateStaff(newPayout.staffId, { advanceBalance: remaining });
+        }
+      }
+
+      return newPayout;
+    } catch (err) {
+      console.error("Error registrando pago de comisiones:", err);
+      get().pushToast("error", "No se pudo conectar con el servidor para registrar el pago.");
+      return null;
     }
-
-    // Also attempt POST to backend if running with Postgres
-    fetch("/api/commission-payouts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        staffId: newPayout.staffId,
-        periodStart: newPayout.periodStart,
-        periodEnd: newPayout.periodEnd,
-        paymentMethod: newPayout.paymentMethod,
-        notes: newPayout.notes,
-        registerCashExpense,
-      }),
-    }).catch(() => {});
-
-    return newPayout;
   },
   addService: async (item) => {
     try {
@@ -2369,80 +2418,195 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  addProduct: (item) => {
-    const id = `pr-${Date.now()}`;
-    set({ products: [{ ...item, id }, ...get().products] });
-    fetch("/api/dashboard/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "create_product",
-        tenantSlug: get().business.slug || "barberia",
-        data: item,
-      }),
-    }).catch((e) => console.error("Error creating product in DB:", e));
+  addProduct: async (item) => {
+    const tempId = `pr-${Date.now()}`;
+    set({ products: [{ ...item, id: tempId }, ...get().products] });
+    try {
+      const res = await fetch("/api/dashboard/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create_product",
+          tenantSlug: get().business.slug || "barberia",
+          data: item,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok || !data.product?.id) throw new Error(data?.error || "No se pudo crear el producto.");
+      // Reemplazar el id temporal por el real para que editar/borrar impacte en la base
+      set({
+        products: get().products.map((p) => (p.id === tempId ? { ...p, id: data.product.id } : p)),
+      });
+      return true;
+    } catch (e) {
+      console.error("Error creating product in DB:", e);
+      set({ products: get().products.filter((p) => p.id !== tempId) });
+      get().pushToast("error", `No se pudo guardar el producto "${item.name}".`);
+      return false;
+    }
   },
-  updateProduct: (id, patch) => {
+  updateProduct: async (id, patch) => {
+    const before = get().products.find((p) => p.id === id);
+    if (!before) return false;
     set({
       products: get().products.map((p) => (p.id === id ? { ...p, ...patch } : p)),
     });
-    fetch("/api/dashboard/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "update_product",
-        tenantSlug: get().business.slug || "barberia",
-        data: { id, patch },
-      }),
-    }).catch((e) => console.error("Error updating product in DB:", e));
-  },
-  deleteProduct: (id) => {
-    set({ products: get().products.filter((p) => p.id !== id) });
-    fetch("/api/dashboard/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "delete_product",
-        tenantSlug: get().business.slug || "barberia",
-        data: { id },
-      }),
-    }).catch((e) => console.error("Error deleting product in DB:", e));
-  },
-  updateProductStock: (id, delta) => {
-    const updated = get().products.map((p) =>
-      p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p,
-    );
-    set({ products: updated });
-    const target = updated.find((p) => p.id === id);
-    if (target) {
-      fetch("/api/dashboard/sync", {
+    try {
+      const res = await fetch("/api/dashboard/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "update_product",
           tenantSlug: get().business.slug || "barberia",
-          data: { id, patch: { price: target.price, active: target.active } },
+          data: { id, patch },
         }),
-      }).catch((e) => console.error("Error syncing stock update in DB:", e));
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "No se pudo actualizar el producto.");
+      return true;
+    } catch (e) {
+      console.error("Error updating product in DB:", e);
+      set({ products: get().products.map((p) => (p.id === id ? before : p)) });
+      get().pushToast("error", `No se pudieron guardar los cambios de "${before.name}".`);
+      return false;
     }
   },
-  updateProductOrderStatus: (orderId, status) => {
-    const order = get().productOrders.find((o) => o.id === orderId);
-    set({
-      productOrders: get().productOrders.map((o) =>
-        o.id === orderId ? { ...o, status } : o
-      ),
-    });
-    // When delivered, auto-register cash ingress
-    if (status === "delivered" && order) {
-      get().addCashMovement({
-        type: "ingreso",
-        amount: order.totalAmount,
-        method: (order.paymentMethod || "efectivo") as any,
-        concept: `Venta de producto: ${order.items.map((i) => `${i.qty}x ${i.productName}`).join(", ")} · ${order.orderNumber}`,
-        date: new Date().toISOString(),
-        category: "Venta Producto",
+  deleteProduct: async (id) => {
+    const prev = get().products;
+    const target = prev.find((p) => p.id === id);
+    if (!target) return false;
+    set({ products: prev.filter((p) => p.id !== id) });
+    try {
+      const res = await fetch("/api/dashboard/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete_product",
+          tenantSlug: get().business.slug || "barberia",
+          data: { id },
+        }),
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "No se pudo eliminar el producto.");
+      return true;
+    } catch (e) {
+      console.error("Error deleting product in DB:", e);
+      set({ products: [target, ...get().products.filter((p) => p.id !== id)] });
+      get().pushToast("error", `No se pudo eliminar "${target.name}".`);
+      return false;
+    }
+  },
+  updateProductStock: async (id, delta) => {
+    const step = Math.round(delta);
+    const target = get().products.find((p) => p.id === id);
+    if (!target || step === 0 || target.stock + step < 0) return false;
+    const setStock = (fn: (current: number) => number) =>
+      set({
+        products: get().products.map((p) => (p.id === id ? { ...p, stock: fn(p.stock) } : p)),
+      });
+
+    // Optimista con delta (no total absoluto) para que clics rápidos no se pisen
+    setStock((current) => Math.max(0, current + step));
+    pendingStockRequests.set(id, (pendingStockRequests.get(id) || 0) + 1);
+    let serverStock: number | null = null;
+    let ok = false;
+    try {
+      const res = await fetch("/api/dashboard/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_product",
+          tenantSlug: get().business.slug || "barberia",
+          data: { id, patch: { stockDelta: step } },
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "No se pudo actualizar el stock.");
+      serverStock = typeof data.stock === "number" ? data.stock : null;
+      ok = true;
+    } catch (e) {
+      console.error("Error syncing stock update in DB:", e);
+      setStock((current) => Math.max(0, current - step));
+      get().pushToast("error", `No se pudo actualizar el stock de "${target.name}".`);
+    } finally {
+      const pending = (pendingStockRequests.get(id) || 1) - 1;
+      if (pending > 0) {
+        pendingStockRequests.set(id, pending);
+      } else {
+        pendingStockRequests.delete(id);
+        if (serverStock !== null) {
+          const finalStock = serverStock;
+          setStock(() => finalStock);
+        }
+      }
+    }
+    return ok;
+  },
+  loadProductOrders: async () => {
+    try {
+      const res = await fetch("/api/dashboard/orders");
+      if (!res.ok) return; // sin sesión (demo) → quedan los pedidos de ejemplo
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.orders)) {
+        set({ productOrders: data.orders });
+      }
+    } catch (err) {
+      console.error("Error cargando pedidos:", err);
+    }
+  },
+  updateProductOrderStatus: async (orderId, status) => {
+    const previous = get().productOrders;
+    const order = previous.find((o) => o.id === orderId);
+    if (!order) return false;
+
+    // Pedidos de ejemplo (sin id de base): se resuelven en memoria como antes
+    if (!UUID_REGEX.test(orderId)) {
+      set({ productOrders: previous.map((o) => (o.id === orderId ? { ...o, status } : o)) });
+      if (status === "delivered" && order.status !== "delivered") {
+        for (const item of order.items) {
+          if (get().products.some((p) => p.id === item.productId)) get().updateProductStock(item.productId, -item.qty);
+        }
+        get().addCashMovement({
+          type: "ingreso",
+          amount: order.totalAmount,
+          method: (order.paymentMethod || "efectivo") as any,
+          concept: `Venta de producto: ${order.items.map((i) => `${i.qty}x ${i.productName}`).join(", ")} · ${order.orderNumber}`,
+          date: new Date().toISOString(),
+          category: "Venta Producto",
+        });
+      }
+      return true;
+    }
+
+    set({ productOrders: previous.map((o) => (o.id === orderId ? { ...o, status } : o)) });
+    try {
+      const res = await fetch(`/api/dashboard/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        set({ productOrders: previous });
+        get().pushToast("error", data?.message || "No se pudo actualizar el pedido.");
+        if (res.status === 409) await get().loadProductOrders();
+        return false;
+      }
+      // El servidor descuenta stock y registra la caja; acá solo reflejamos su respuesta
+      const stockById = new Map<string, number>((data.stock || []).map((s: { id: string; stock: number }) => [s.id, s.stock]));
+      set({
+        productOrders: get().productOrders.map((o) => (o.id === orderId ? data.order : o)),
+        products: stockById.size > 0
+          ? get().products.map((p) => (stockById.has(p.id) ? { ...p, stock: stockById.get(p.id)! } : p))
+          : get().products,
+        cashMovements: data.cashMovement ? [data.cashMovement, ...get().cashMovements] : get().cashMovements,
+      });
+      return true;
+    } catch (err) {
+      console.error("Error actualizando pedido:", err);
+      set({ productOrders: previous });
+      get().pushToast("error", "Error de conexión al actualizar el pedido.");
+      return false;
     }
   },
   createProductOrder: (orderData) => {
@@ -2560,21 +2724,45 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return false;
     }
   },
-  addClientLoyaltyPoint: (clientId, amount = 1) => {
-    const prev = get().clients;
-    const target = prev.find((c) => c.id === clientId);
-    if (!target) return;
-    const newPoints = (target.loyaltyPoints || 0) + Math.max(1, Math.round(amount));
-    set({
-      clients: prev.map((c) =>
-        c.id === clientId ? { ...c, loyaltyPoints: newPoints } : c
-      ),
-    });
-    fetch(`/api/clients/${clientId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ points: newPoints }),
-    }).catch((err) => console.warn("Error actualizando puntos de cliente:", err));
+  addClientLoyaltyPoint: async (clientId, amount = 1) => {
+    if (!get().clients.some((c) => c.id === clientId)) return;
+    const delta = Math.max(1, Math.round(amount));
+    const setPoints = (fn: (current: number) => number) =>
+      set({
+        clients: get().clients.map((c) =>
+          c.id === clientId ? { ...c, loyaltyPoints: fn(c.loyaltyPoints || 0) } : c
+        ),
+      });
+
+    // Optimista: se suma el delta (no un total absoluto) para que clics rápidos no se pisen
+    setPoints((current) => current + delta);
+    pendingPointRequests.set(clientId, (pendingPointRequests.get(clientId) || 0) + 1);
+    let serverPoints: number | null = null;
+    try {
+      const res = await fetch(`/api/clients/${clientId}/points`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delta }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.message || "No se pudieron sumar los puntos.");
+      serverPoints = data.loyaltyPoints;
+    } catch (err) {
+      console.warn("Error actualizando puntos de cliente:", err);
+      setPoints((current) => Math.max(0, current - delta));
+    } finally {
+      const pending = (pendingPointRequests.get(clientId) || 1) - 1;
+      if (pending > 0) {
+        pendingPointRequests.set(clientId, pending);
+      } else {
+        pendingPointRequests.delete(clientId);
+        // Recién con todo resuelto se toma el valor del servidor (las respuestas pueden llegar desordenadas)
+        if (typeof serverPoints === "number") {
+          const finalPoints = serverPoints;
+          setPoints(() => finalPoints);
+        }
+      }
+    }
   },
   redeemClientReward: async (clientId, pointsToDeduct, rewardDescription) => {
     const defaultThreshold = get().loyalty.rewardThreshold || 5;
@@ -2790,26 +2978,27 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({ crmConversations: [conversation, ...get().crmConversations] });
     return id;
   },
-  createOrderFromCrm: (data) => {
-    const total = data.items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
-    const orderNumber = `#PED-${Math.floor(100 + Math.random() * 900)}`;
-    const newOrder: ProductOrder = {
-      id: `ord-${Date.now()}`,
-      orderNumber,
-      clientName: data.clientName,
-      clientPhone: data.clientPhone,
-      items: data.items,
-      totalAmount: total,
-      status: "pending",
-      paymentMethod: data.paymentMethod,
-      deliveryType: data.deliveryType,
-      createdAt: new Date().toISOString(),
-      notes: data.notes || "Generado desde chat de CRM",
-    };
-    set({
-      productOrders: [newOrder, ...get().productOrders],
-    });
-    get().pushToast("success", `Pedido ${orderNumber} creado exitosamente desde CRM`);
+  createOrderFromCrm: async (data) => {
+    try {
+      const res = await fetch("/api/dashboard/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, source: "crm" }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.ok || !body.order) {
+        get().pushToast("error", body?.message || "No se pudo guardar el pedido.");
+        return null;
+      }
+      const order: ProductOrder = body.order;
+      set({ productOrders: [order, ...get().productOrders.filter((o) => o.id !== order.id)] });
+      get().pushToast("success", `Pedido ${order.orderNumber} creado desde el chat`);
+      return order;
+    } catch (err) {
+      console.error("Error creando pedido:", err);
+      get().pushToast("error", "Error de conexión al guardar el pedido.");
+      return null;
+    }
   },
 
   sendCrmMessage: (conversationId, text) => {
@@ -2892,12 +3081,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   dismissToast: (id) =>
     set({ toasts: get().toasts.filter((item) => item.id !== id) }),
   isTourOpen: false,
-  tourSectionKey: "inicio",
+  // Empty = the guide follows the page you are on
+  tourSectionKey: "",
   openTour: (sectionKey?: string) => {
-    set({
-      isTourOpen: true,
-      ...(sectionKey ? { tourSectionKey: sectionKey } : {}),
-    });
+    set({ isTourOpen: true, tourSectionKey: sectionKey ?? "" });
   },
-  closeTour: () => set({ isTourOpen: false }),
+  closeTour: () => set({ isTourOpen: false, tourSectionKey: "" }),
 }));

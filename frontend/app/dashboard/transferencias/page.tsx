@@ -184,20 +184,21 @@ export default function TransferenciasPage() {
 
   const formatDate = (value: string, pattern: string) => formatInTimeZone(value, business.timezone, pattern);
 
-  function handleApprove(receipt: Receipt) {
+  async function handleApprove(receipt: Receipt) {
     triggerHaptic("success");
-    setReceiptStatus(receipt.id, "approved");
+    if (!(await setReceiptStatus(receipt.id, "approved"))) return;
     pushToast("success", `Comprobante de ${receipt.clientName} aprobado. El turno quedó confirmado.`);
     if (viewingReceipt?.id === receipt.id) setViewingReceipt(null);
   }
 
-  function handleConfirmReject() {
+  async function handleConfirmReject() {
     if (!receiptToReject) return;
+    const receipt = receiptToReject;
     triggerHaptic("light");
-    setReceiptStatus(receiptToReject.id, "rejected");
-    pushToast("error", `Comprobante de ${receiptToReject.clientName} rechazado. El turno se liberó en la agenda.`);
-    if (viewingReceipt?.id === receiptToReject.id) setViewingReceipt(null);
     setReceiptToReject(null);
+    if (!(await setReceiptStatus(receipt.id, "rejected"))) return;
+    pushToast("error", `Comprobante de ${receipt.clientName} rechazado. El turno se liberó en la agenda.`);
+    if (viewingReceipt?.id === receipt.id) setViewingReceipt(null);
   }
 
   function clearFilters() {
@@ -209,7 +210,7 @@ export default function TransferenciasPage() {
   return (
     <div className="w-full max-w-full space-y-5 pb-24 sm:space-y-6 sm:pb-10">
       {/* ═══ PAGE HEADER ═══ */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header data-tour="transferencias-header" className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Pagos por transferencia</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
@@ -222,7 +223,7 @@ export default function TransferenciasPage() {
       </header>
 
       {/* ═══ SUMMARY ═══ */}
-      <section className="rounded-3xl glass-panel p-3 sm:p-5">
+      <section data-tour="transferencias-summary" className="rounded-3xl glass-panel p-3 sm:p-5">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
           <div>
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">Resumen de comprobantes</h2>
@@ -321,7 +322,7 @@ export default function TransferenciasPage() {
       </section>
 
       {/* ═══ RECEIPTS LIST ═══ */}
-      <section className="overflow-hidden rounded-3xl glass-panel">
+      <section data-tour="transferencias-list" className="overflow-hidden rounded-3xl glass-panel">
         <div className="space-y-3 border-b border-white/10 p-3.5 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">

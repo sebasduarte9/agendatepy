@@ -130,7 +130,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
       <>
         {/* Soft atmospheric focus scrim when rail expands (resolves background text bleed and lighting clash) */}
         <div
-          className={`fixed inset-0 bg-slate-950/20 dark:bg-black/55 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none z-[65] ${
+          className={`fixed inset-0 bg-slate-950/20 dark:bg-black/55 backdrop-blur-[2px] max-lg:hidden transition-opacity duration-200 pointer-events-none z-[65] ${
             isHovered ? "opacity-100" : "opacity-0"
           }`}
           aria-hidden="true"
@@ -139,7 +139,7 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
         <aside
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`glass-rail-fixed select-none ${isHovered ? "is-hovered" : ""}`}
+          className={`glass-rail-fixed select-none max-lg:hidden! ${isHovered ? "is-hovered" : ""}`}
           style={{
             height: "calc(100vh - 36px)",
             maxHeight: "calc(100vh - 36px)",
@@ -166,14 +166,11 @@ export default function Sidebar({ variant = "rail" }: SidebarProps) {
               <p className="text-xs font-semibold text-slate-900 dark:text-white truncate leading-tight">
                 {business.name || "Agendatepy"}
               </p>
-              <span className="text-[11px] tabular-nums uppercase tracking-[0.22em] text-slate-400 dark:text-zinc-400 block mt-0.5">
-                STUDIO
-              </span>
             </div>
           </div>
 
           {/* Lista de enlaces: Altura optimizada h-[37px] para que los 14 enlaces entren perfectamente */}
-          <nav className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1 space-y-0.5">
+          <nav data-tour="sidebar-nav" className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1 space-y-0.5">
             {visibleLinks.map(({ href, label, icon: Icon }) => {
               const active =
                 href === "/dashboard"

@@ -8,6 +8,7 @@ import { parseTheme } from "@/lib/theme";
 import { themeToPublicTenant } from "@/lib/theme-public";
 import BookingWizard from "@/components/booking/BookingWizard";
 import WebAnalyticsTracker from "@/components/analytics/WebAnalyticsTracker";
+import { saleUnitsSoldByProduct, serializeSale } from "@/lib/product-sales";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,12 @@ export default async function ReservarPage({ params }: PageProps) {
             description: true,
             imageUrl: true,
             isActive: true,
+            isOnSale: true,
+            salePrice: true,
+            saleType: true,
+            saleExpiresAt: true,
+            saleMaxUnits: true,
+            saleStartedAt: true,
           },
         },
       },
@@ -248,6 +255,17 @@ export default async function ReservarPage({ params }: PageProps) {
     };
   });
 
+  // Ofertas: se mandan ya serializadas (fechas ISO) con las unidades vendidas para respetar el tope
+  let publicProducts = tenant.products;
+  if (tenant.id && Array.isArray(tenant.products)) {
+    const saleUnits = await saleUnitsSoldByProduct(tenant.id, tenant.products).catch(() => new Map<string, number>());
+    publicProducts = tenant.products.map((p: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { saleStartedAt, saleExpiresAt, ...rest } = p;
+      return { ...rest, ...serializeSale(p, saleUnits.get(p.id) || 0) };
+    });
+  }
+
   return (
     <>
     <BookingWizard
@@ -258,7 +276,7 @@ export default async function ReservarPage({ params }: PageProps) {
         maxAdvanceDays: maxAdvanceDaysFromSettings(tenant.settings),
       })}
       services={enrichedServices}
-      products={tenant.products}
+      products={publicProducts}
     />
     <WebAnalyticsTracker tenantSlug={tenant.subdomain || tenant.slug} pagePath={`/${tenant.subdomain || tenant.slug}/reservar`} />
     </>

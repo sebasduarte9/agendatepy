@@ -546,9 +546,11 @@ export default function ServiciosPage() {
         data-tour="servicios-header"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          Servicios & Precios
-        </h1>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Catálogo</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Servicios & Precios</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">Precios, duración y quién hace cada servicio.</p>
+        </div>
 
         {/* Quick Action Dock */}
         <div className="flex flex-wrap items-center gap-2">
@@ -802,7 +804,7 @@ export default function ServiciosPage() {
         </div>
 
         <div className="relative w-full shrink-0 lg:w-44">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute z-10 left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
             placeholder="Buscar servicio..."

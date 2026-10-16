@@ -128,19 +128,12 @@ export default function DashboardHomePage() {
     return upcoming;
   }, [appointmentsToday]);
 
-  // Revenue today (from confirmed/completed appointments + income cash movements)
+  // Cash actually collected today; appointments are not revenue until paid.
   const revenueToday = useMemo(() => {
-    const fromAppointments = confirmedToday.reduce((sum, item) => {
-      const s = services.find((sv) => sv.id === item.serviceId);
-      return sum + (s?.price ?? 0);
-    }, 0);
-
-    const fromCash = cashMovements
+    return cashMovements
       .filter((m) => m.type === "ingreso" && m.date.slice(0, 10) === todayStr)
       .reduce((sum, m) => sum + m.amount, 0);
-
-    return fromAppointments + fromCash;
-  }, [confirmedToday, services, cashMovements, todayStr]);
+  }, [cashMovements, todayStr]);
 
   // Estimated chair occupancy rate today
   const occupancyRate = useMemo(() => {
@@ -267,17 +260,16 @@ export default function DashboardHomePage() {
   const weeklySnapshot = useMemo(() => {
     const days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
     const fullDays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-    const now = new Date();
-    const currentDayOfWeek = (now.getDay() + 6) % 7; // 0 = Lun, 6 = Dom
+    const today = new Date(`${todayStr}T12:00:00Z`);
+    const currentDayOfWeek = (today.getUTCDay() + 6) % 7; // 0 = Lun, 6 = Dom
     return days.map((dayName, index) => {
-      const isToday = index === currentDayOfWeek;
-      let amount = 0;
-      if (isToday) {
-        amount = revenueToday || 450000;
-      } else {
-        const factors = [0.75, 0.95, 1.15, 1.35, 1.9, 2.3, 0.45];
-        amount = Math.round(((revenueToday || 450000) * factors[index]) / 10000) * 10000;
-      }
+      const date = new Date(today);
+      date.setUTCDate(today.getUTCDate() + index - currentDayOfWeek);
+      const dateStr = date.toISOString().slice(0, 10);
+      const isToday = dateStr === todayStr;
+      const amount = cashMovements
+        .filter((m) => m.type === "ingreso" && m.date.slice(0, 10) === dateStr)
+        .reduce((sum, m) => sum + m.amount, 0);
       return {
         day: dayName,
         fullDay: fullDays[index],
@@ -285,10 +277,10 @@ export default function DashboardHomePage() {
         isToday,
       };
     });
-  }, [revenueToday]);
+  }, [cashMovements, todayStr]);
 
   const maxWeeklyAmount = useMemo(() => {
-    return Math.max(...weeklySnapshot.map((d) => d.amount), 500000);
+    return Math.max(...weeklySnapshot.map((d) => d.amount), 1);
   }, [weeklySnapshot]);
 
   const averageWeeklyAmount = useMemo(() => {
@@ -297,7 +289,7 @@ export default function DashboardHomePage() {
   }, [weeklySnapshot]);
 
   const attendanceRate = useMemo(() => {
-    if (appointmentsToday.length === 0) return 100;
+    if (appointmentsToday.length === 0) return 0;
     const attendedOrConfirmed = appointmentsToday.filter((a) => a.status === "completed" || a.status === "confirmed").length;
     return Math.round((attendedOrConfirmed / appointmentsToday.length) * 100);
   }, [appointmentsToday]);
@@ -514,7 +506,7 @@ export default function DashboardHomePage() {
           <div className="grid grid-cols-7 gap-1.5 items-end h-16 pt-1">
             {weeklySnapshot.map((d, idx) => {
               const isSelected = selectedSnapshotDay === idx;
-              const heightPct = Math.max(15, Math.min(100, Math.round((d.amount / maxWeeklyAmount) * 100)));
+              const heightPct = d.amount === 0 ? 0 : Math.max(8, Math.min(100, Math.round((d.amount / maxWeeklyAmount) * 100)));
               return (
                 <button
                   key={d.day}
@@ -664,11 +656,11 @@ export default function DashboardHomePage() {
           </div>
         </GlassTiltCard>
 
-        {/* KPI 4: Asistencia & Cumplimiento */}
+        {/* KPI 4: Confirmación de turnos */}
         <GlassTiltCard className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Tasa de Asistencia
+              Turnos Confirmados
             </span>
             <div className="relative h-8 w-8 flex items-center justify-center">
               <svg className="h-8 w-8 -rotate-90 transform" viewBox="0 0 36 36">
@@ -701,8 +693,7 @@ export default function DashboardHomePage() {
               {attendanceRate}%
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>0 ausentismo hoy</span>
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">WhatsApp OK</span>
+              <span>{pendingToday.length} {pendingToday.length === 1 ? "pendiente" : "pendientes"} hoy</span>
             </div>
           </div>
         </GlassTiltCard>
@@ -1167,7 +1158,7 @@ export default function DashboardHomePage() {
               {/* 7-day Bar Chart */}
               <div className="grid grid-cols-7 gap-1.5 items-end h-24 pt-4 pb-1">
                 {weeklySnapshot.map((d) => {
-                  const heightPct = Math.max(16, Math.min(100, Math.round((d.amount / maxWeeklyAmount) * 100)));
+                  const heightPct = d.amount === 0 ? 0 : Math.max(8, Math.min(100, Math.round((d.amount / maxWeeklyAmount) * 100)));
                   return (
                     <div key={d.day} className="flex flex-col items-center gap-1.5 h-full justify-end group/bar relative">
                       {/* Tooltip on hover */}

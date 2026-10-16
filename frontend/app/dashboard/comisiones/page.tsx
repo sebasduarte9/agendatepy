@@ -440,7 +440,7 @@ export default function ComisionesPage() {
   }, [liquidationData.grossCommission, liqAdvancesDeducted]);
 
   // Handle saving liquidation
-  const handleConfirmLiquidation = (e: React.FormEvent) => {
+  const handleConfirmLiquidation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLiquidationStaff) return;
 
@@ -449,7 +449,7 @@ export default function ComisionesPage() {
       return;
     }
 
-    const newPayout = addCommissionPayout({
+    const newPayout = await addCommissionPayout({
       staffId: selectedLiquidationStaff.id,
       staffName: selectedLiquidationStaff.name,
       staffRole: selectedLiquidationStaff.role,
@@ -470,6 +470,7 @@ export default function ComisionesPage() {
       notes: liqNotes.trim() || undefined,
       itemsCount: liquidationData.itemsCount,
     }, { registerCashExpense: liqAutoCashExpense });
+    if (!newPayout) return; // el store ya avisó el error
 
     pushToast("success", `Pago #${newPayout.receiptNumber} emitido a ${selectedLiquidationStaff.name}`);
     setIsLiquidarModalOpen(false);

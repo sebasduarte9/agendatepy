@@ -234,10 +234,12 @@ export default function BloquearHorarioPage() {
   return (
     <div className="w-full space-y-4 sm:space-y-5 pb-20 px-1 sm:px-0">
       {/* ═══ APPLE APP HEADER ═══ */}
-      <div className="flex items-center justify-between py-1">
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          Bloquear Horarios
-        </h1>
+      <div data-tour="bloqueo-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Agenda</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Bloquear horarios</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">Cortá rangos de la agenda para que nadie pueda reservar.</p>
+        </div>
 
         {/* Action Dock */}
         <div className="flex items-center gap-2">
@@ -251,6 +253,7 @@ export default function BloquearHorarioPage() {
 
           <button
             type="button"
+            data-tour="bloqueo-new-btn"
             onClick={() => {
               triggerHaptic("selection");
               setFormStaffId(selectedStaffFilter !== "ALL" ? selectedStaffFilter : "all");
@@ -272,7 +275,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ MOBILE APPLE GLANCEABLE HERO CARD ═══ */}
-      <div className="block md:hidden p-4 rounded-3xl glass-panel space-y-3">
+      <div data-tour="bloqueo-summary" className="block md:hidden p-4 rounded-3xl glass-panel space-y-3">
         {/* Top bar with status and live badge */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -338,7 +341,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ DESKTOP APPLE INSET CONTAINER: TELEMETRY & PRESET DOCK ═══ */}
-      <div className="hidden md:block rounded-3xl glass-panel p-4 sm:p-5 shadow-xs space-y-4">
+      <div data-tour="bloqueo-summary" className="hidden md:block rounded-3xl glass-panel p-4 sm:p-5 shadow-xs space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Card 1: Telemetry Gauges & Counter Cards */}
           <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-950 p-5 border border-slate-200/70 dark:border-white/10 shadow-xs flex flex-col justify-between">
@@ -507,7 +510,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ FILTER DOCK & SEARCH ═══ */}
-      <div className="flex flex-col gap-3 glass-panel p-3.5 sm:p-4 rounded-3xl shadow-xs">
+      <div data-tour="bloqueo-filters" className="flex flex-col gap-3 glass-panel p-3.5 sm:p-4 rounded-3xl shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Timeframe Filter with IosSegmentedControl */}
           <div className="w-full sm:w-auto">
@@ -543,7 +546,7 @@ export default function BloquearHorarioPage() {
 
             {/* Search Input */}
             <div className="relative min-w-[200px]">
-              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <Search className="pointer-events-none absolute z-10 left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
                 placeholder="Buscar por motivo o nombre..."
@@ -566,7 +569,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ MOBILE APPLE INSET GROUPED LIST ═══ */}
-      <div className="md:hidden">
+      <div data-tour="bloqueo-list" className="md:hidden">
         {filteredBlocks.length === 0 ? (
           <div className="p-8 text-center rounded-3xl glass-panel space-y-3">
             <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
@@ -671,7 +674,7 @@ export default function BloquearHorarioPage() {
       </div>
 
       {/* ═══ DESKTOP GRID VIEW ═══ */}
-      <div className="hidden md:block space-y-3">
+      <div data-tour="bloqueo-list" className="hidden md:block space-y-3">
         {filteredBlocks.length === 0 ? (
           <div className="p-12 text-center rounded-3xl glass-panel space-y-3">
             <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">

@@ -1087,8 +1087,8 @@ div[class*="glass-dropdown"],
 .dark .glass-dropdown[class*="dark:bg-slate-900"],
 .dark .dropdown-menu,
 .dark [data-dropdown],
-.dark div[class*="absolute"][class*="top-full"][class*="rounded"],
-.dark div[class*="absolute"][class*="bottom-full"][class*="rounded"] {
+.dark div[class*="absolute"][class*="top-full"][class*="rounded"]:not([data-floating-tip]),
+.dark div[class*="absolute"][class*="bottom-full"][class*="rounded"]:not([data-floating-tip]) {
   background: #18151b !important;
   background-color: #18151b !important;
   opacity: 1 !important;
@@ -1102,8 +1102,8 @@ div[class*="glass-dropdown"],
 [data-theme="light"] .glass-dropdown,
 :root.light .glass-dropdown,
 :root:not(.dark) .glass-dropdown,
-:root:not(.dark) div[class*="absolute"][class*="top-full"][class*="rounded"],
-:root:not(.dark) div[class*="absolute"][class*="bottom-full"][class*="rounded"] {
+:root:not(.dark) div[class*="absolute"][class*="top-full"][class*="rounded"]:not([data-floating-tip]),
+:root:not(.dark) div[class*="absolute"][class*="bottom-full"][class*="rounded"]:not([data-floating-tip]) {
   background: #ffffff !important;
   background-color: #ffffff !important;
   border: 1px solid rgba(0, 0, 0, 0.12) !important;
@@ -1111,13 +1111,13 @@ div[class*="glass-dropdown"],
 }
 
 .dark .glass-dropdown button:not([class*="bg-primary"]):hover,
-.dark div[class*="absolute"][class*="top-full"][class*="rounded"] button:not([class*="bg-primary"]):hover,
-.dark div[class*="absolute"][class*="bottom-full"][class*="rounded"] button:not([class*="bg-primary"]):hover {
+.dark div[class*="absolute"][class*="top-full"][class*="rounded"]:not([data-floating-tip]) button:not([class*="bg-primary"]):hover,
+.dark div[class*="absolute"][class*="bottom-full"][class*="rounded"]:not([data-floating-tip]) button:not([class*="bg-primary"]):hover {
   background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .dark .glass-dropdown input,
-.dark div[class*="absolute"][class*="top-full"][class*="rounded"] input {
+.dark div[class*="absolute"][class*="top-full"][class*="rounded"]:not([data-floating-tip]) input {
   background-color: rgba(255, 255, 255, 0.07) !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
   color: #ffffff !important;
@@ -2948,4 +2948,113 @@ div[class*="glass-dropdown"],
     flex: 1;
     padding-inline: clamp(0.375rem, 2vw, 0.875rem);
   }
+}
+
+/* SuperAdmin shares the dashboard's dark glass surfaces and contrast scale. */
+[data-admin-theme] {
+  isolation: isolate;
+  color: #f4f4f5;
+  background: #090d16;
+}
+
+:root [data-admin-theme] .glass-room {
+  background:
+    radial-gradient(ellipse at 32% 0%, rgba(var(--primary-rgb, 255, 79, 43), 0.10), transparent 50%),
+    radial-gradient(circle at 82% 78%, rgba(163, 138, 255, 0.10) 0%, transparent 52%),
+    #090d16 !important;
+}
+
+:root [data-admin-theme] > header,
+:root [data-admin-theme] > aside {
+  color: #f4f4f5;
+  background: rgba(20, 19, 24, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+
+:root [data-admin-theme] > aside {
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+}
+
+:root [data-admin-theme] > main {
+  background: transparent !important;
+  color: #f4f4f5 !important;
+}
+
+:root [data-admin-theme] .ambient-scene {
+  opacity: 1;
+}
+
+:root [data-admin-theme] .bg-white,
+:root [data-admin-theme] .bg-slate-50,
+:root [data-admin-theme] .bg-slate-100,
+:root [data-admin-theme] .bg-gray-50,
+:root [data-admin-theme] .bg-gray-100,
+:root [data-admin-theme] .bg-neutral-50,
+:root [data-admin-theme] [class*="bg-white/"] {
+  background: linear-gradient(130deg, rgba(37, 35, 42, 0.92), rgba(20, 19, 24, 0.88)) !important;
+}
+
+:root [data-admin-theme] .bg-orange-50,
+:root [data-admin-theme] .bg-rose-50,
+:root [data-admin-theme] .bg-emerald-50,
+:root [data-admin-theme] .bg-blue-50,
+:root [data-admin-theme] .bg-purple-50,
+:root [data-admin-theme] .bg-amber-50 {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+:root [data-admin-theme] .text-slate-900,
+:root [data-admin-theme] .text-slate-800,
+:root [data-admin-theme] .text-slate-700,
+:root [data-admin-theme] .text-gray-900,
+:root [data-admin-theme] .text-gray-800,
+:root [data-admin-theme] .text-gray-700 {
+  color: #f4f4f5 !important;
+}
+
+:root [data-admin-theme] .text-slate-600,
+:root [data-admin-theme] .text-gray-600 {
+  color: #d4d4d8 !important;
+}
+
+:root [data-admin-theme] .text-slate-500,
+:root [data-admin-theme] .text-slate-400,
+:root [data-admin-theme] .text-gray-500,
+:root [data-admin-theme] .text-gray-400 {
+  color: #a1a1aa !important;
+}
+
+:root [data-admin-theme] .border-slate-100,
+:root [data-admin-theme] .border-slate-200,
+:root [data-admin-theme] .border-slate-200\/80,
+:root [data-admin-theme] .border-gray-100,
+:root [data-admin-theme] .border-gray-200,
+:root [data-admin-theme] .border-orange-200,
+:root [data-admin-theme] .border-rose-200,
+:root [data-admin-theme] .border-emerald-200,
+:root [data-admin-theme] .border-blue-200,
+:root [data-admin-theme] .border-purple-200,
+:root [data-admin-theme] .border-amber-200 {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+:root [data-admin-theme] input,
+:root [data-admin-theme] select,
+:root [data-admin-theme] textarea {
+  color-scheme: dark;
+}
+
+:root [data-admin-theme] input:not([type="checkbox"]):not([type="radio"]),
+:root [data-admin-theme] select,
+:root [data-admin-theme] textarea {
+  background: rgba(9, 9, 11, 0.48) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #f4f4f5 !important;
+}
+
+:root [data-admin-theme] input::placeholder,
+:root [data-admin-theme] textarea::placeholder {
+  color: #a1a1aa;
 }

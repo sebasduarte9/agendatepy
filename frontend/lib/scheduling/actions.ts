@@ -45,25 +45,6 @@ export async function getAvailableSlotsAction(
     const now = Date.now();
     return slots.filter((slot) => new Date(slot.start).getTime() > now);
   } catch (error) {
-    if (tenantSlug === "barberia") {
-      console.warn(`[getAvailableSlotsAction] Generando slots demo para "${tenantSlug}":`, error);
-      const demoTimes = [
-        "09:00", "09:45", "10:30", "11:15", "14:00", "14:45", "15:30", "16:15", "17:00", "17:45", "18:30"
-      ];
-      const now = Date.now();
-      return demoTimes
-        .map((t) => {
-          const start = new Date(`${date}T${t}:00-04:00`);
-          const end = new Date(start.getTime() + 45 * 60_000);
-          return {
-            start: start.toISOString(),
-            end: end.toISOString(),
-            staffIds: ["a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"],
-          };
-        })
-        .filter((slot) => new Date(slot.start).getTime() > now);
-    }
-
     console.error(`[getAvailableSlotsAction] Error al consultar disponibilidad para "${tenantSlug}":`, error);
     throw new SchedulingError(
       "DB_UNAVAILABLE",
@@ -106,10 +87,6 @@ export async function createPendingAppointment(
   } catch (error) {
     if (error instanceof SchedulingError) {
       return { ok: false, message: error.message };
-    }
-    if (input.tenantSlug === "barberia") {
-      console.warn("[createPendingAppointment] Base de datos no disponible para demo, usando confirmación demo");
-      return { ok: true, appointmentId: "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d" };
     }
     console.error("[createPendingAppointment] Error persistiendo cita en DB:", error);
     return {

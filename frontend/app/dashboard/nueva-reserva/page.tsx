@@ -1,46 +1,37 @@
 "use client";
 
-import { useMemo, useState, useEffect, Suspense } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { triggerHaptic } from "@/lib/haptics";
 import { useSearchParams } from "next/navigation";
 import {
-  Search,
-  Scissors,
-  Calendar,
-  Clock,
-  User,
-  Phone,
-  Mail,
-  CheckCircle2,
-  CalendarPlus,
-  Bell,
-  MessageCircle,
-  ExternalLink,
-  ArrowRight,
-  ArrowLeft,
-  ShieldCheck,
-  Landmark,
-  CreditCard,
-  Banknote,
-  Smartphone,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Check,
   AlertCircle,
+  ArrowLeft,
+  ArrowRight,
   Ban,
-  CalendarDays,
+  Banknote,
+  Calendar,
+  CalendarPlus,
+  Check,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Landmark,
+  Loader2,
+  MessageCircle,
+  Search,
+  Smartphone,
+  UserCheck,
 } from "lucide-react";
-import { format, parseISO, addMinutes } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import Card from "@/components/dashboard/ui/Card";
+import CustomSelect from "@/components/dashboard/ui/CustomSelect";
 import { formatGs } from "@/lib/dashboard-dates";
+import { triggerHaptic } from "@/lib/haptics";
 import type { PaymentMethod } from "@/lib/dashboard-types";
 
-export interface CountryOption {
+type CountryOption = {
   code: string;
   name: string;
   flag: string;
@@ -78,13 +69,6 @@ const COUNTRY_LIST: CountryOption[] = [
   { code: "GB", name: "Reino Unido", flag: "🇬🇧", dialCode: "+44", maxDigits: 10, minDigits: 10, placeholder: "7123 456789" },
   { code: "PT", name: "Portugal", flag: "🇵🇹", dialCode: "+351", maxDigits: 9, minDigits: 9, placeholder: "912 345 678" },
 ];
-
-const APPOINTMENT_TIME_SLOTS = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
-];
-
 function formatPhoneInput(val: string, country: CountryOption): string {
   let digits = val.replace(/\D/g, "");
   if (!digits) return "";
@@ -124,1221 +108,787 @@ function validateRealPhone(val: string, country: CountryOption): boolean {
   return digits.length >= country.minDigits && digits.length <= country.maxDigits;
 }
 
+
+const MOBILE_STEPS = ["Cliente", "Servicio", "Día y hora", "Confirmar"];
+
+// Settings ids (Configuración → Medios de pago) → appointment payment method
+const PAYMENT_OPTIONS: { setting: string; method: PaymentMethod; label: string; Icon: typeof Banknote }[] = [
+  { setting: "efectivo", method: "efectivo", label: "Efectivo", Icon: Banknote },
+  { setting: "transferencia", method: "sipap", label: "Transferencia", Icon: Landmark },
+  { setting: "pos", method: "pos_bancard", label: "Tarjeta (POS)", Icon: CreditCard },
+  { setting: "billetera", method: "billetera_py", label: "Billetera", Icon: Smartphone },
+];
+
+const INPUT_CLASS =
+  "min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-slate-800 dark:text-white sm:min-h-10 sm:text-sm";
+const LABEL_CLASS = "mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300";
+const CHIP_BASE = "inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition";
+const CHIP_ON = "border-primary/50 bg-primary/10 text-primary";
+const CHIP_OFF = "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:bg-white/[0.06]";
+
+const toMinutes = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+const fromMinutes = (total: number) =>
+  `${String(Math.floor(total / 60) % 24).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+
+function SectionTitle({ n, title, description }: { n: number; title: string; description?: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">{n}</span>
+      <div className="min-w-0">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">{title}</h2>
+        {description && <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">{description}</p>}
+      </div>
+    </div>
+  );
+}
+
+type Created = {
+  clientName: string;
+  clientPhone: string;
+  serviceName: string;
+  staffName: string;
+  date: string;
+  time: string;
+  end: string;
+};
+
 function NuevaReservaContent() {
   const searchParams = useSearchParams();
   const services = useDashboardStore((s) => s.services);
   const staff = useDashboardStore((s) => s.staff);
   const clients = useDashboardStore((s) => s.clients);
   const business = useDashboardStore((s) => s.business);
+  const isInitialSyncDone = useDashboardStore((s) => s.isInitialSyncDone);
   const addAppointment = useDashboardStore((s) => s.addAppointment);
-  const addBlock = useDashboardStore((s) => s.addBlock);
   const pushToast = useDashboardStore((s) => s.pushToast);
+  const isTourOpen = useDashboardStore((s) => s.isTourOpen);
 
   const tz = business.timezone || "America/Asuncion";
-  const todayStr = useMemo(() => formatInTimeZone(new Date(), tz, "yyyy-MM-dd"), [tz]);
+  const todayStr = formatInTimeZone(new Date(), tz, "yyyy-MM-dd");
 
-  // Mode switcher: "appointment" vs "block"
-  const [mode, setMode] = useState<"appointment" | "block">("appointment");
+  // Client
+  const [clientName, setClientName] = useState(searchParams.get("clientName") ?? "");
+  const [clientPhone, setClientPhone] = useState(searchParams.get("clientPhone") ?? "");
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [countryCode, setCountryCode] = useState("PY");
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [notes, setNotes] = useState("");
 
-  // Client info state
-  const [clientName, setClientName] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientNotes, setClientNotes] = useState("");
-  const [selectedCountryCode, setSelectedCountryCode] = useState("PY");
-  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
-  const [countrySearchQuery, setCountrySearchQuery] = useState("");
+  // Service & schedule
+  const activeServices = useMemo(() => services.filter((s) => s.active !== false), [services]);
+  const [serviceId, setServiceId] = useState(activeServices[0]?.id ?? "");
+  const currentService = activeServices.find((s) => s.id === serviceId) ?? activeServices[0];
 
-  // Appointment configuration state
-  const [serviceId, setServiceId] = useState(services[0]?.id || "");
-  const [staffId, setStaffId] = useState(staff[0]?.id || "");
+  const eligibleStaff = useMemo(() => {
+    const active = staff.filter((m) => m.active);
+    const ids = currentService?.staffIds;
+    return ids && ids.length > 0 ? active.filter((m) => ids.includes(m.id)) : active;
+  }, [staff, currentService]);
+  const [staffId, setStaffId] = useState(eligibleStaff[0]?.id ?? "");
+  // Keep the professional valid when the service changes
+  if (eligibleStaff.length > 0 && !eligibleStaff.some((m) => m.id === staffId)) {
+    setStaffId(eligibleStaff[0].id);
+  }
+  const currentStaff = eligibleStaff.find((m) => m.id === staffId);
+
   const [date, setDate] = useState(todayStr);
-  const [time, setTime] = useState("10:00");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
+  const [time, setTime] = useState("");
+  const [customTime, setCustomTime] = useState(false);
 
-  // Dropdown states
-  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
-  const [staffDropdownOpen, setStaffDropdownOpen] = useState(false);
-  const [timeDropdownOpen, setTimeDropdownOpen] = useState(false);
+  const acceptedPayments = useMemo(() => {
+    const accepted = business.acceptedPaymentMethods;
+    const list = PAYMENT_OPTIONS.filter((p) => !accepted || accepted.length === 0 || accepted.includes(p.setting));
+    return list.length > 0 ? list : PAYMENT_OPTIONS.slice(0, 1);
+  }, [business.acceptedPaymentMethods]);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(acceptedPayments[0].method);
 
-  // Submitting state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdAppointment, setCreatedAppointment] = useState<{
-    clientName: string;
-    clientPhone: string;
-    serviceName: string;
-    staffName: string;
-    date: string;
-    time: string;
-    end: string;
-  } | null>(null);
-
-  // Pasos en el celular (en escritorio se ve todo el formulario)
-  const isTourOpen = useDashboardStore((s) => s.isTourOpen);
-  const [mobileStep, setMobileStep] = useState(0);
-  const stepHidden = (i: number) => (!isTourOpen && mobileStep !== i ? "max-lg:hidden" : "");
-  const stepValid = [
-    clientName.trim().length > 1 && clientPhone.trim().length > 5,
-    Boolean(serviceId && staffId),
-    Boolean(date && time),
-    true,
-  ];
-
-  // Block state
-  const [blockStaffId, setBlockStaffId] = useState<string>("all");
-  const [blockStart, setBlockStart] = useState("13:00");
-  const [blockEnd, setBlockEnd] = useState("14:00");
-  const [blockReason, setBlockReason] = useState("Almuerzo / Descanso");
-
-  // Read URL query params (e.g. from CRM)
+  // Clock for "this time already passed", refreshed every minute
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const qName = searchParams.get("clientName");
-    const qPhone = searchParams.get("clientPhone");
-    if (qName) setClientName(qName);
-    if (qPhone) setClientPhone(qPhone);
-  }, [searchParams]);
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
-  const activeCountry = useMemo(() => {
-    return COUNTRY_LIST.find((c) => c.code === selectedCountryCode) || COUNTRY_LIST[0];
-  }, [selectedCountryCode]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [created, setCreated] = useState<Created | null>(null);
+  const [mobileStep, setMobileStep] = useState(0);
 
-  const filteredCountries = useMemo(() => {
-    if (!countrySearchQuery.trim()) return COUNTRY_LIST;
-    const q = countrySearchQuery.toLowerCase().trim();
-    return COUNTRY_LIST.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.dialCode.includes(q) ||
-        c.code.toLowerCase().includes(q)
-    );
-  }, [countrySearchQuery]);
+  // ── Real availability for the chosen service, day and professional ──
+  const [slots, setSlots] = useState<{ start: string; staffIds: string[] }[]>([]);
+  const [slotsState, setSlotsState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [slotsVersion, setSlotsVersion] = useState(0);
+  const shownServiceId = currentService?.id ?? "";
+  const hasPersistedServiceId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shownServiceId);
+  useEffect(() => {
+    if (!isInitialSyncDone || !hasPersistedServiceId) return;
+    let cancelled = false;
+    queueMicrotask(() => !cancelled && setSlotsState("loading"));
+    fetch(`/api/dashboard/availability?serviceId=${encodeURIComponent(shownServiceId)}&date=${date}`)
+      .then((res) => res.json())
+      .then((data: { ok: boolean; slots?: { start: string; staffIds: string[] }[] }) => {
+        if (!data.ok || !data.slots) throw new Error("availability");
+        const list = data.slots;
+        if (cancelled) return;
+        setSlots(list.map((s) => ({ start: s.start, staffIds: s.staffIds })));
+        setSlotsState("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setSlotsState("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [shownServiceId, date, slotsVersion, isInitialSyncDone, hasPersistedServiceId]);
 
-  const isPhoneValid = useMemo(() => {
-    return validateRealPhone(clientPhone, activeCountry);
-  }, [clientPhone, activeCountry]);
+  const staffSlots = useMemo(
+    () =>
+      !isInitialSyncDone || !hasPersistedServiceId
+        ? []
+        : slots
+        .filter((s) => !staffId || s.staffIds.includes(staffId))
+        .map((s) => formatInTimeZone(new Date(s.start), tz, "HH:mm")),
+    [slots, staffId, tz, isInitialSyncDone, hasPersistedServiceId]
+  );
 
-  // Client autocomplete matches
+  // Drop a picked slot that no longer exists for this professional/day
+  if (!customTime && time && slotsState === "ready" && !staffSlots.includes(time)) {
+    setTime("");
+  }
+
+  const activeCountry = COUNTRY_LIST.find((c) => c.code === countryCode) ?? COUNTRY_LIST[0];
+  const phoneValid = validateRealPhone(clientPhone, activeCountry);
+  const nameValid = clientName.trim().length >= 2;
+  const duration = currentService?.durationMin || 45;
+  const endTime = time ? fromMinutes(toMinutes(time) + duration) : "";
+
+  const startInstant = useMemo(() => (time ? fromZonedTime(`${date}T${time}:00`, tz) : null), [date, time, tz]);
+  const isPast = startInstant ? startInstant.getTime() < now - 5 * 60_000 : false;
+
+  const stepValid = [nameValid && phoneValid, Boolean(currentService && currentStaff), Boolean(time) && !isPast, true];
+  const canSubmit = stepValid.every(Boolean);
+
   const matchingClients = useMemo(() => {
-    if (!clientName.trim() || clientName.trim().length < 2) return [];
     const q = clientName.toLowerCase().trim();
-    return clients.filter(
-      (c) => c.name.toLowerCase().includes(q) || (c.phone && c.phone.includes(q))
-    ).slice(0, 5);
-  }, [clients, clientName]);
+    if (q.length < 2 || clientId) return [];
+    return clients
+      .filter((c) => c.name.toLowerCase().includes(q) || (c.phone && c.phone.replace(/\D/g, "").includes(q.replace(/\D/g, "") || "~")))
+      .slice(0, 5);
+  }, [clients, clientName, clientId]);
 
-  const currentService = useMemo(() => {
-    return services.find((s) => s.id === serviceId) || services[0];
-  }, [services, serviceId]);
+  const dayChips = useMemo(() => {
+    const base = parseISO(`${todayStr}T12:00:00`);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = addDays(base, i);
+      const iso = format(d, "yyyy-MM-dd");
+      const label = i === 0 ? "Hoy" : i === 1 ? "Mañana" : format(d, "EEE d", { locale: es });
+      return { iso, label };
+    });
+  }, [todayStr]);
 
-  const currentStaff = useMemo(() => {
-    return staff.find((s) => s.id === staffId) || staff[0];
-  }, [staff, staffId]);
+  const dateTitle = format(parseISO(`${date}T12:00:00`), "EEEE d 'de' MMMM", { locale: es });
 
-  // Calculated End Time based on Service Duration
-  const appointmentEndTime = useMemo(() => {
-    if (!time || !currentService) return "10:45";
-    try {
-      const [h, m] = time.split(":").map(Number);
-      const startMinutes = h * 60 + m;
-      const endMinutes = startMinutes + (currentService.durationMin || 45);
-      const endH = String(Math.floor(endMinutes / 60)).padStart(2, "0");
-      const endM = String(endMinutes % 60).padStart(2, "0");
-      return `${endH}:${endM}`;
-    } catch {
-      return "10:45";
+  function fullPhone() {
+    const digits = clientPhone.replace(/\D/g, "");
+    if (activeCountry.code === "PY") {
+      let core = digits.startsWith("595") ? digits.slice(3) : digits;
+      if (core.startsWith("0")) core = core.slice(1);
+      return `+595${core}`;
     }
-  }, [time, currentService]);
-
-  // Steppers for Date & Time
-  function stepDate(days: number) {
-    const d = parseISO(`${date}T12:00:00`);
-    const next = addMinutes(d, days * 24 * 60);
-    setDate(format(next, "yyyy-MM-dd"));
+    return `${activeCountry.dialCode}${digits}`;
   }
 
-  function stepTime(currentTime: string, minutes: number): string {
-    const [h, m] = currentTime.split(":").map(Number);
-    let total = h * 60 + m + minutes;
-    if (total < 8 * 60) total = 8 * 60;
-    if (total > 20 * 60) total = 20 * 60;
-    const nextH = String(Math.floor(total / 60)).padStart(2, "0");
-    const nextM = String(total % 60).padStart(2, "0");
-    return `${nextH}:${nextM}`;
+  function pickClient(c: (typeof clients)[number]) {
+    setClientName(c.name);
+    setClientId(c.id);
+    setSuggestOpen(false);
+    const digits = (c.phone || "").replace(/\D/g, "");
+    if (digits.startsWith("595")) {
+      setCountryCode("PY");
+      setClientPhone(formatPhoneInput(`0${digits.slice(3)}`, COUNTRY_LIST[0]));
+    } else {
+      setClientPhone(c.phone || "");
+    }
   }
 
-  const formattedDateTitle = useMemo(() => {
-    try {
-      const parsed = parseISO(`${date}T12:00:00`);
-      return format(parsed, "EEEE d 'de' MMMM", { locale: es });
-    } catch {
-      return date;
+  function goNext() {
+    if (!stepValid[mobileStep]) {
+      pushToast("error", mobileStep === 0 ? "Completá nombre y un WhatsApp válido." : mobileStep === 2 ? "Elegí un horario disponible." : "Completá este paso.");
+      return;
     }
-  }, [date]);
+    triggerHaptic("selection");
+    setMobileStep((s) => Math.min(MOBILE_STEPS.length - 1, s + 1));
+  }
 
-  // Handle appointment creation and SQL sync
-  async function handleCreateAppointment(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!isTourOpen && window.innerWidth < 1024 && mobileStep < MOBILE_STEPS.length - 1) {
-      if (stepValid[mobileStep]) setMobileStep((p) => p + 1);
+    if (!isTourOpen && typeof window !== "undefined" && window.innerWidth < 1024 && mobileStep < MOBILE_STEPS.length - 1) {
+      goNext();
       return;
     }
-    if (!clientName.trim()) {
-      pushToast("error", "Ingresá el nombre del cliente.");
-      return;
-    }
-    if (!serviceId) {
-      pushToast("error", "Seleccioná un servicio para el turno.");
-      return;
-    }
+    if (!nameValid) return pushToast("error", "Ingresá el nombre del cliente.");
+    if (!phoneValid) return pushToast("error", "Revisá el número de WhatsApp.");
+    if (!currentService || !currentStaff) return pushToast("error", "Elegí un servicio y un profesional.");
+    if (!time || !startInstant) return pushToast("error", "Elegí un horario.");
+    if (isPast) return pushToast("error", "Ese horario ya pasó. Elegí otro.");
 
     setIsSubmitting(true);
-    try {
-      const service = currentService;
-      const duration = service?.durationMin || 45;
-      const startDateTime = parseISO(`${date}T${time}:00`);
-      const endDateTime = addMinutes(startDateTime, duration);
-
-      // Clean standardized phone with dial code
-      let formattedFullPhone = clientPhone.trim();
-      if (formattedFullPhone) {
-        const digits = formattedFullPhone.replace(/\D/g, "");
-        if (activeCountry.code === "PY") {
-          let core = digits;
-          if (core.startsWith("595")) core = core.slice(3);
-          if (core.startsWith("0")) core = core.slice(1);
-          formattedFullPhone = `+595${core}`;
-        } else if (!formattedFullPhone.startsWith("+")) {
-          formattedFullPhone = `${activeCountry.dialCode}${digits}`;
-        }
-      }
-
-      await addAppointment({
-        id: `ap-${Date.now()}`,
-        clientName: clientName.trim(),
-        clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, ".")}@cliente.py`,
-        clientPhone: formattedFullPhone || "+595981000000",
-        serviceId: service?.id || "",
-        staffId: staffId || staff[0]?.id || "",
-        start: startDateTime.toISOString(),
-        end: endDateTime.toISOString(),
-        paymentMethod,
-        status: "confirmed",
-        notes: clientNotes.trim() || "Reserva manual desde Dashboard",
-      });
-
-      setMobileStep(0);
-      setCreatedAppointment({
-        clientName: clientName.trim(),
-        clientPhone: formattedFullPhone || clientPhone,
-        serviceName: service?.name || "Servicio",
-        staffName: currentStaff?.name || "Equipo",
-        date,
-        time,
-        end: appointmentEndTime,
-      });
-
-      pushToast("success", `¡Turno para ${clientName} guardado en base de datos!`);
-    } catch (err) {
-      console.error("Error creating appointment:", err);
-      pushToast("error", "Error al guardar turno en base de datos.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  // Handle schedule block creation
-  function handleCreateBlock(e: React.FormEvent) {
-    e.preventDefault();
-    addBlock({
-      staffId: blockStaffId,
-      date,
-      start: blockStart,
-      end: blockEnd,
-      reason: blockReason.trim() || "Bloqueo operativo",
+    const phone = fullPhone();
+    const end = new Date(startInstant.getTime() + duration * 60_000);
+    const id = await addAppointment({
+      id: `ap-${crypto.randomUUID()}`,
+      clientId: clientId ?? undefined,
+      clientName: clientName.trim(),
+      clientEmail: "",
+      clientPhone: phone,
+      serviceId: currentService.id,
+      staffId: currentStaff.id,
+      start: startInstant.toISOString(),
+      end: end.toISOString(),
+      paymentMethod,
+      status: "confirmed",
+      notes: notes.trim() || undefined,
     });
+    setIsSubmitting(false);
 
-    pushToast("success", "Bloqueo horario guardado en la agenda.");
-    setMode("appointment");
+    // The store already shows the server's reason (slot taken, blocked, offline…)
+    if (!id) return;
+
+    setSlotsVersion((v) => v + 1);
+    triggerHaptic("success");
+    setCreated({
+      clientName: clientName.trim(),
+      clientPhone: phone,
+      serviceName: currentService.name,
+      staffName: currentStaff.name,
+      date,
+      time,
+      end: endTime,
+    });
+    pushToast("success", `Turno de ${clientName.trim()} agendado.`);
   }
 
-  // WhatsApp reminder URL for created appointment
-  const waReminderUrl = useMemo(() => {
-    if (!createdAppointment) return "#";
-    const phoneClean = createdAppointment.clientPhone.replace(/[^0-9]/g, "");
-    const msg = encodeURIComponent(
-      `¡Hola ${createdAppointment.clientName}! Tu turno para *${createdAppointment.serviceName}* con *${createdAppointment.staffName}* en *${business.name}* quedó agendado para el *${createdAppointment.date} a las ${createdAppointment.time} hs*.\n\n Ubicación: ${business.address || "Asunción"}\n¡Te esperamos!`
-    );
-    return `https://wa.me/${phoneClean}?text=${msg}`;
-  }, [createdAppointment, business]);
+  function resetForm() {
+    setCreated(null);
+    setClientName("");
+    setClientPhone("");
+    setClientId(null);
+    setNotes("");
+    setTime("");
+    setCustomTime(false);
+    setMobileStep(0);
+  }
 
-  // Google Calendar export link for created appointment
-  const googleCalUrl = useMemo(() => {
-    if (!createdAppointment) return "#";
-    const [hh, mm] = createdAppointment.time.split(":");
-    const startStr = `${createdAppointment.date.replace(/-/g, "")}T${hh}${mm}00`;
-    const [endH, endM] = createdAppointment.end.split(":");
-    const endStr = `${createdAppointment.date.replace(/-/g, "")}T${endH}${endM}00`;
-    const title = encodeURIComponent(`${createdAppointment.serviceName} - ${business.name}`);
-    const details = encodeURIComponent(
-      `Turno agendado con ${createdAppointment.staffName}.\nCliente: ${createdAppointment.clientName}\nTeléfono: ${createdAppointment.clientPhone}`
-    );
-    const location = encodeURIComponent(business.address || "Asunción, Paraguay");
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
-  }, [createdAppointment, business]);
+  const waUrl = useMemo(() => {
+    if (!created) return "#";
+    const when = format(parseISO(`${created.date}T12:00:00`), "EEEE d 'de' MMMM", { locale: es });
+    const msg = `¡Hola ${created.clientName}! Tu turno para *${created.serviceName}* con *${created.staffName}* en *${business.name}* quedó agendado para el *${when} a las ${created.time} hs*.${business.address ? `\n\n📍 ${business.address}` : ""}\n¡Te esperamos!`;
+    return `https://wa.me/${created.clientPhone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`;
+  }, [created, business.name, business.address]);
 
-  const activeStaffPct = Math.round((staff.filter((s) => s.active).length / Math.max(1, staff.length)) * 100);
-  const durationPct = Math.min(100, Math.round(((currentService?.durationMin || 45) / 90) * 100));
+  const calendarUrl = useMemo(() => {
+    if (!created) return "#";
+    const d = created.date.replace(/-/g, "");
+    const start = `${d}T${created.time.replace(":", "")}00`;
+    const end = `${d}T${created.end.replace(":", "")}00`;
+    const params = new URLSearchParams({
+      action: "TEMPLATE",
+      text: `${created.serviceName} - ${business.name}`,
+      dates: `${start}/${end}`,
+      ctz: tz,
+      details: `Turno con ${created.staffName}.`,
+      location: business.address || "",
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }, [created, business.name, business.address, tz]);
+
+  const stepHidden = (i: number) => (!isTourOpen && mobileStep !== i ? "max-lg:hidden" : "");
+  const price = currentService ? (currentService.hasPromo && currentService.promoPrice ? currentService.promoPrice : currentService.price) : 0;
 
   return (
-    <div className="mx-auto w-full max-w-5xl lg:max-w-6xl space-y-6">
-      {/* ═══ NATIVE PAGE HEADER ═══ */}
-      <div
-        data-tour="nueva-reserva-header"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
-      >
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          Agendar Turno Rápido
-        </h1>
-
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="mx-auto w-full max-w-6xl space-y-5 pb-28 sm:space-y-6 lg:pb-12">
+      {/* ═══ HEADER ═══ */}
+      <header data-tour="nueva-reserva-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Agenda</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Nuevo turno</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
+            Agendá un turno para un cliente que te escribió o llamó. Solo se muestran horarios libres.
+          </p>
+        </div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Link
             href="/dashboard/calendario"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 glass-panel-subtle px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-white/10 dark:text-zinc-200"
           >
-            <Calendar className="h-3.5 w-3.5 text-slate-400" />
-            <span>Ver Agenda</span>
+            <Calendar className="h-4 w-4 text-slate-400" />
+            Ver agenda
           </Link>
-
           <Link
-            href="/dashboard/clientes"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+            href="/dashboard/bloquear-horario"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 glass-panel-subtle px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-white/10 dark:text-zinc-200"
           >
-            <User className="h-3.5 w-3.5 text-slate-400" />
-            <span>Clientes</span>
+            <Ban className="h-4 w-4 text-amber-500" />
+            Bloquear horario
           </Link>
-
-          <button
-            type="button"
-            onClick={() => setMode(mode === "appointment" ? "block" : "appointment")}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition cursor-pointer ${
-              mode === "block"
-                ? "bg-amber-600 hover:bg-amber-500 text-white shadow-md"
-                : "border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-          >
-            <Ban className="h-3.5 w-3.5" />
-            <span>{mode === "block" ? "Volver a Turno" : "Bloquear Horario"}</span>
-          </button>
         </div>
-      </div>
+      </header>
 
-      {/* ═══ APPLE INSET TELEMETRY & INTELLIGENCE CONTAINER (DESKTOP) ═══ */}
-      <div className="hidden md:block rounded-[28px] bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card 1: Capacidad Operativa & Especialistas */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white font-semibold"
-                  style={{ backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                >
-                  <CalendarPlus className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Capacidad & Especialistas
-                  </h3>
-                </div>
+      {created ? (
+        /* ═══ CONFIRMATION ═══ */
+        <section className="mx-auto max-w-xl rounded-3xl glass-panel p-5 text-center sm:p-6">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="h-7 w-7" />
+          </span>
+          <h2 className="mt-3 text-xl font-semibold text-slate-900 dark:text-white">Turno agendado</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">Ya aparece en la agenda. Avisale al cliente por WhatsApp.</p>
+
+          <dl className="mt-5 divide-y divide-slate-200/70 rounded-2xl border border-slate-200/70 text-left text-sm dark:divide-white/[0.06] dark:border-white/10">
+            {[
+              ["Cliente", created.clientName],
+              ["Servicio", created.serviceName],
+              ["Profesional", created.staffName],
+              ["Cuándo", `${format(parseISO(`${created.date}T12:00:00`), "EEE d 'de' MMM", { locale: es })} · ${created.time} a ${created.end} hs`],
+            ].map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+                <dt className="text-xs text-slate-500 dark:text-zinc-400">{k}</dt>
+                <dd className="truncate text-right font-semibold text-slate-900 dark:text-white">{v}</dd>
               </div>
+            ))}
+          </dl>
 
-              <span className="text-xs tabular-nums font-semibold text-slate-400">
-                {date}
-              </span>
-            </div>
-
-            {/* Circular Gauges */}
-            <div className="py-4 grid grid-cols-2 gap-4">
-              {/* Gauge 1: Staff Availability */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke={business.primaryColor || "var(--primary, #FF4F2B)"}
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, activeStaffPct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[11px] font-semibold text-slate-800 dark:text-white tabular-nums">
-                    {activeStaffPct}%
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-semibold text-slate-900 dark:text-white block truncate">
-                    Equipo Activo
-                  </span>
-                  <span className="text-[11px] text-slate-400 block truncate">
-                    {staff.filter((s) => s.active).length} de {staff.length} disponibles
-                  </span>
-                </div>
-              </div>
-
-              {/* Gauge 2: Service Duration */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800">
-                <div className="relative h-12 w-12 shrink-0 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      className="stroke-slate-200 dark:stroke-slate-700"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      stroke="#10b981"
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={113}
-                      strokeDashoffset={113 - (113 * Math.min(100, Math.max(0, durationPct))) / 100}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </svg>
-                  <span className="absolute text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                    {currentService?.durationMin || 45}m
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-semibold text-slate-900 dark:text-white block whitespace-nowrap">
-                    Duración Estimada
-                  </span>
-                  <span className="text-[11px] text-slate-400 block truncate">
-                    Bloque de agenda
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Operational Telemetry Rows */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[11px] font-medium text-slate-400 block">Horario Turno</span>
-                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums truncate block">
-                  {time} a {appointmentEndTime}
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[11px] font-medium text-slate-400 block">Especialistas</span>
-                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {staff.length} activos
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <span className="text-[11px] font-medium text-slate-400 block">Catálogo</span>
-                <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
-                  {services.length} servicios
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Resumen del Turno & Recordatorio */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-semibold">
-                  <Scissors className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Resumen del Turno Seleccionado
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Detalles en vivo de la reserva</p>
-                </div>
-              </div>
-
-              <span className="text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                {currentService?.price ? formatGs(currentService.price) : "Gs. 0"}
-              </span>
-            </div>
-
-            {/* Live Service Pill */}
-            <div className="py-3">
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                    {currentService?.name || "Servicio"}
-                  </span>
-                  <span className="text-[11px] tabular-nums text-slate-400">
-                    {currentService?.durationMin || 45} min
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Profesional asignado:</span>
-                  <strong className="text-slate-800 dark:text-slate-200 font-medium">
-                    {currentStaff?.name || "Equipo General"}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            {/* WhatsApp Ready Status */}
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs">
-              <MessageCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-                Recordatorio y link de Google Calendar listos para enviar tras agendar.
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {createdAppointment ? (
-        /* Confirmation Screen */
-        <Card className="p-6 text-center space-y-5 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-8 w-8" />
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-              ¡Turno Confirmado con Éxito!
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Guardado en la base de datos SQL y sincronizado en la agenda del local.
-            </p>
-          </div>
-
-          {/* Details Pill */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-4 text-xs text-left space-y-2">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Cliente:</span>
-              <span className="font-semibold text-slate-900 dark:text-white">{createdAppointment.clientName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Servicio:</span>
-              <span className="font-semibold text-primary">{createdAppointment.serviceName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Profesional:</span>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">{createdAppointment.staffName}</span>
-            </div>
-            <div className="flex justify-between border-t border-slate-200/60 dark:border-white/10 pt-2">
-              <span className="text-slate-500">Fecha y Hora:</span>
-              <span className="font-semibold text-slate-900 dark:text-white">
-                {createdAppointment.date} · {createdAppointment.time} a {createdAppointment.end} hs
-              </span>
-            </div>
-          </div>
-
-          {/* WhatsApp & Google Calendar actions */}
-          <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
             <a
-              href={waReminderUrl}
+              href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-3 px-4 text-xs font-semibold text-white shadow-md shadow-emerald-600/25 transition cursor-pointer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
             >
               <MessageCircle className="h-4 w-4" />
-              <span>Enviar WhatsApp al Cliente</span>
+              Avisar por WhatsApp
             </a>
             <a
-              href={googleCalUrl}
+              href={calendarUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800/80 py-3 px-4 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
             >
               <Calendar className="h-4 w-4 text-primary" />
-              <span>Google Calendar</span>
+              Google Calendar
             </a>
           </div>
-
-          {/* Reset / Return actions */}
-          <div className="flex items-center justify-center gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
+          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200/70 pt-4 dark:border-white/10">
             <button
               type="button"
-              onClick={() => {
-                setCreatedAppointment(null);
-                setClientName("");
-                setClientPhone("");
-                setClientNotes("");
-              }}
-              className="text-xs font-semibold text-primary hover:underline cursor-pointer"
+              onClick={resetForm}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-2xl bg-primary px-4 text-sm font-semibold text-white transition hover:brightness-110"
             >
-              + Agendar otro turno
+              <CalendarPlus className="h-4 w-4" />
+              Agendar otro
             </button>
-            <span className="text-slate-300">·</span>
             <Link
               href="/dashboard/calendario"
-              className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
             >
-              Ver en la Agenda
+              Ver en la agenda
             </Link>
           </div>
-        </Card>
+        </section>
+      ) : activeServices.length === 0 || staff.filter((m) => m.active).length === 0 ? (
+        <section className="rounded-3xl glass-panel px-5 py-12 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-amber-500" />
+          <h2 className="mt-3 text-base font-semibold text-slate-900 dark:text-white">
+            {activeServices.length === 0 ? "Todavía no tenés servicios activos" : "No hay profesionales activos"}
+          </h2>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500 dark:text-zinc-400">
+            Para agendar un turno necesitás al menos un servicio y un profesional.
+          </p>
+          <Link
+            href={activeServices.length === 0 ? "/dashboard/servicios" : "/dashboard/equipo"}
+            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-primary px-4 text-sm font-semibold text-white"
+          >
+            {activeServices.length === 0 ? "Crear un servicio" : "Ir a Equipo"}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </section>
       ) : (
-        /* Main Card Form */
-        <Card className="p-5 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 space-y-4">
-          {/* Segmented Mode Switcher */}
-          <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
-            <button
-              type="button"
-              onClick={() => setMode("appointment")}
-              className={`flex-1 py-2 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                mode === "appointment"
-                  ? "bg-white dark:bg-slate-900 text-primary shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <CalendarPlus className="h-3.5 w-3.5" />
-              <span>Agendar Turno</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("block")}
-              className={`flex-1 py-2 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                mode === "block"
-                  ? "bg-white dark:bg-slate-900 text-amber-600 shadow-xs ring-1 ring-slate-200/50 dark:ring-white/10"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <Ban className="h-3.5 w-3.5 text-amber-500" />
-              <span>Bloquear Horario</span>
-            </button>
-          </div>
-
-          {mode === "appointment" ? (
-            <form onSubmit={handleCreateAppointment} className="space-y-4 text-xs">
-              {/* Mobile step progress */}
-              {!isTourOpen && (
-                <div className="lg:hidden space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span className="text-slate-900 dark:text-white">{MOBILE_STEPS[mobileStep]}</span>
-                    <span className="text-slate-400">Paso {mobileStep + 1} de {MOBILE_STEPS.length}</span>
-                  </div>
-                  <div className="flex gap-1.5">
-                    {MOBILE_STEPS.map((label, i) => (
-                      <button
-                        key={label}
-                        type="button"
-                        aria-label={label}
-                        onClick={() => i < mobileStep && setMobileStep(i)}
-                        className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= mobileStep ? "bg-primary" : "bg-slate-200 dark:bg-white/10"}`}
-                      />
-                    ))}
-                  </div>
+        <form onSubmit={handleSubmit} className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-w-0 space-y-4">
+            {/* Mobile progress */}
+            {!isTourOpen && (
+              <div className="space-y-2 lg:hidden">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-slate-900 dark:text-white">{MOBILE_STEPS[mobileStep]}</span>
+                  <span className="text-slate-400">Paso {mobileStep + 1} de {MOBILE_STEPS.length}</span>
                 </div>
-              )}
-
-              {/* SECTION 1: CLIENTE (NOMBRE Y WHATSAPP CON SELECTOR DE PAÍS) */}
-              <div data-tour="nueva-reserva-client" className={`${stepHidden(0)} space-y-3`}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Name Input with Autocomplete */}
-                  <div className="relative">
-                    <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                      Cliente *
-                    </label>
-                    <div className="relative">
-                      <User className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Nombre y Apellido"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Autocomplete suggestions */}
-                    {matchingClients.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-1.5 space-y-0.5 max-h-44 overflow-y-auto">
-                        <span className="text-[11px] text-slate-400 px-2 py-0.5 block font-semibold">
-                          Clientes Registrados:
-                        </span>
-                        {matchingClients.map((c) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => {
-                              setClientName(c.name);
-                              setClientPhone(c.phone || "");
-                              setClientEmail(c.email || "");
-                            }}
-                            className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-primary/10 transition cursor-pointer"
-                          >
-                            <span className="font-semibold text-slate-900 dark:text-white text-xs">{c.name}</span>
-                            <span className="text-[11px] text-slate-400 tabular-nums">{c.phone || ""}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* International WhatsApp Input */}
-                  <div>
-                    <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                      WhatsApp *
-                    </label>
-                    <div className="flex items-center gap-1.5">
-                      {/* Country Selector Dropdown */}
-                      <div className={`relative ${countryDropdownOpen ? "z-40" : ""}`}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCountryDropdownOpen(!countryDropdownOpen);
-                            setServiceDropdownOpen(false);
-                            setStaffDropdownOpen(false);
-                            setTimeDropdownOpen(false);
-                          }}
-                          className="flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 px-2.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
-                          title="Seleccionar país"
-                        >
-                          <span className="text-sm leading-none">{activeCountry.flag}</span>
-                          <span className="tabular-nums text-xs">{activeCountry.dialCode}</span>
-                          <ChevronDown
-                            className={`h-3 w-3 text-slate-400 transition-transform ${
-                              countryDropdownOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-
-                        {countryDropdownOpen && (
-                          <div className="absolute top-full left-0 mt-1 z-50 w-64 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-2">
-                            <div className="relative mb-1.5">
-                              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                              <input
-                                type="text"
-                                autoFocus
-                                placeholder="Buscar país o código..."
-                                value={countrySearchQuery}
-                                onChange={(e) => setCountrySearchQuery(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-800 pl-8 pr-2.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
-                              />
-                            </div>
-                            <div className="max-h-44 overflow-y-auto space-y-0.5">
-                              {filteredCountries.map((c) => (
-                                <button
-                                  key={c.code}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedCountryCode(c.code);
-                                    setCountryDropdownOpen(false);
-                                    setCountrySearchQuery("");
-                                    setClientPhone((prev) => formatPhoneInput(prev, c));
-                                  }}
-                                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
-                                    selectedCountryCode === c.code
-                                      ? "bg-primary/10 text-primary font-semibold"
-                                      : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2 truncate">
-                                    <span className="text-base leading-none">{c.flag}</span>
-                                    <span className="truncate">{c.name}</span>
-                                  </div>
-                                  <span className="tabular-nums text-[11px] text-slate-400 shrink-0">
-                                    {c.dialCode}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Phone Input with real-time formatting */}
-                      <div className="relative flex-1">
-                        <input
-                          type="tel"
-                          placeholder={activeCountry.placeholder}
-                          value={clientPhone}
-                          onChange={(e) =>
-                            setClientPhone(formatPhoneInput(e.target.value, activeCountry))
-                          }
-                          className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none tabular-nums"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Phone Validation indicator */}
-                    {clientPhone.trim().length > 0 && (
-                      <div className="flex items-center gap-1 mt-1 text-[11px] font-normal">
-                        {isPhoneValid ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                            <Check className="h-3 w-3 shrink-0" />
-                            <span>Número válido para WhatsApp</span>
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1 opacity-75">
-                            <AlertCircle className="h-3 w-3 shrink-0" />
-                            <span>Verificá que el número sea real</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: SERVICIO & ESPECIALISTA */}
-              <div data-tour="nueva-reserva-service" className={`${stepHidden(1)} grid grid-cols-1 sm:grid-cols-2 gap-3`}>
-                {/* Custom Service Selector */}
-                <div className={`relative ${serviceDropdownOpen ? "z-40" : ""}`}>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Servicio *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setServiceDropdownOpen(!serviceDropdownOpen);
-                      setStaffDropdownOpen(false);
-                      setTimeDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
-                  >
-                    <div className="min-w-0 flex-1 truncate pr-2">
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {currentService?.name}
-                      </span>
-                      <span className="text-slate-400 ml-1.5 font-medium">
-                        ({currentService?.durationMin}m · {formatGs(currentService?.price || 0)})
-                      </span>
-                    </div>
-                    <ChevronDown
-                      className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${
-                        serviceDropdownOpen ? "rotate-180" : ""
-                      }`}
+                <div className="flex gap-1.5">
+                  {MOBILE_STEPS.map((label, i) => (
+                    <button
+                      key={label}
+                      type="button"
+                      aria-label={`Ir a ${label}`}
+                      onClick={() => i < mobileStep && setMobileStep(i)}
+                      className={`h-1.5 flex-1 rounded-full transition-colors ${i <= mobileStep ? "bg-primary" : "bg-slate-200 dark:bg-white/10"}`}
                     />
-                  </button>
-
-                  {serviceDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
-                      {services.map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => {
-                            setServiceId(s.id);
-                            setServiceDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer ${
-                            serviceId === s.id
-                              ? "bg-primary/10 text-primary font-semibold"
-                              : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          <span className="truncate pr-2">{s.name}</span>
-                          <span className="text-[11px] tabular-nums shrink-0 text-slate-500 dark:text-slate-400">
-                            {formatGs(s.price)} · {s.durationMin}m
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Custom Staff Selector */}
-                <div className={`relative ${staffDropdownOpen ? "z-40" : ""}`}>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Profesional Asignado *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStaffDropdownOpen(!staffDropdownOpen);
-                      setServiceDropdownOpen(false);
-                      setTimeDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-2.5 text-xs text-left hover:border-slate-300 dark:hover:border-white/20 transition cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span
-                        className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-xs shrink-0"
-                        style={{ background: currentStaff?.color || "#6366f1" }}
-                      >
-                        {currentStaff?.avatar || "P"}
-                      </span>
-                      <span className="font-semibold text-slate-900 dark:text-white truncate">
-                        {currentStaff?.name}
-                      </span>
-                      <span className="text-slate-400 text-[11px]">({currentStaff?.role})</span>
-                    </div>
-                    <ChevronDown
-                      className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${
-                        staffDropdownOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {staffDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-slate-200/80 dark:border-white/10 glass-dropdown shadow-2xl p-1.5 max-h-48 overflow-y-auto space-y-0.5">
-                      {staff.filter((s) => s.active).map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setStaffId(p.id);
-                            setStaffDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2 p-2 rounded-xl text-left transition cursor-pointer ${
-                            staffId === p.id
-                              ? "bg-primary/10 text-primary font-semibold"
-                              : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          <span
-                            className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white shrink-0"
-                            style={{ background: p.color }}
-                          >
-                            {p.avatar}
-                          </span>
-                          <span className="flex-1 truncate">{p.name}</span>
-                          <span className="text-[11px] text-slate-400">{p.role}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* SECTION 3: FECHA Y HORA (INTERACTIVE BAR) */}
-              <div data-tour="nueva-reserva-datetime" className={stepHidden(2)}>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Fecha y Horario *
-                </label>
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-3">
-                  {/* Date Stepper */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => stepDate(-1)}
-                      className="p-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
-                      title="Día anterior"
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
-                    </button>
-                    <span className="font-semibold text-slate-900 dark:text-white capitalize text-xs px-1">
-                      {formattedDateTitle}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => stepDate(1)}
-                      className="p-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
-                      title="Día siguiente"
-                    >
-                      <ChevronRight className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDate(todayStr)}
-                      className="text-[11px] font-semibold text-primary hover:underline px-2 py-0.5 rounded hover:bg-primary/10 transition cursor-pointer"
-                    >
-                      Hoy
-                    </button>
-                  </div>
-
-                  {/* Time Stepper & Popover */}
-                  <div className={`flex items-center gap-1.5 relative ${timeDropdownOpen ? "z-40" : ""}`}>
-                    <button
-                      type="button"
-                      onClick={() => setTime((t) => stepTime(t, -15))}
-                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
-                    >
-                      -15m
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTimeDropdownOpen(!timeDropdownOpen);
-                        setServiceDropdownOpen(false);
-                        setStaffDropdownOpen(false);
-                      }}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 tabular-nums font-semibold text-xs text-slate-900 dark:text-white hover:border-primary transition cursor-pointer shadow-xs"
-                    >
-                      <Clock className="h-3.5 w-3.5 text-primary" />
-                      <span>{time} hs</span>
-                      <ChevronDown className="h-3 w-3 text-slate-400 ml-0.5" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setTime((t) => stepTime(t, 15))}
-                      className="px-2 py-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
-                    >
-                      +15m
-                    </button>
-
-                    <span className="text-[11px] text-slate-400 hidden sm:inline">
-                      hasta <strong>{appointmentEndTime} hs</strong>
-                    </span>
-
-                    {/* Time dropdown popover */}
-                    {timeDropdownOpen && (
-                      <div className="absolute right-0 bottom-full mb-1.5 z-50 rounded-2xl border border-slate-200 dark:border-white/10 glass-dropdown shadow-2xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-2 gap-1.5">
-                        {APPOINTMENT_TIME_SLOTS.map((t) => (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => {
-                              setTime(t);
-                              setTimeDropdownOpen(false);
-                            }}
-                            className={`py-1.5 px-2 rounded-xl text-center tabular-nums text-[11px] font-semibold transition cursor-pointer ${
-                              time === t
-                                ? "bg-primary text-white shadow-xs"
-                                : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-                            }`}
-                          >
-                            {t}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: MÉTODO DE PAGO */}
-              <div data-tour="nueva-reserva-payment" className={stepHidden(3)}>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Método de Pago
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: "efectivo" as const, label: "Efectivo", icon: Banknote },
-                    { id: "sipap" as const, label: "Transferencia bancaria", icon: Landmark },
-                    { id: "pos_bancard" as const, label: "POS Bancard", icon: CreditCard },
-                    { id: "billetera_py" as const, label: "Billetera", icon: Smartphone },
-                  ].map(({ id, label, icon: Icon }) => {
-                    const isSelected = paymentMethod === id;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setPaymentMethod(id)}
-                        style={isSelected ? { backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)", color: "#ffffff", borderColor: business.primaryColor || "var(--primary, #FF4F2B)" } : undefined}
-                        className={`flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 px-2 text-xs font-semibold transition cursor-pointer ${
-                          isSelected
-                            ? "shadow-xs"
-                            : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5" />
-                        <span>{label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* SECTION 5: NOTAS OPCIONALES */}
-              <div className={stepHidden(3)}>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Notas / Observaciones (opcional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Viene con su hijo / Prefiere atención rápida"
-                  value={clientNotes}
-                  onChange={(e) => setClientNotes(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none"
-                />
-              </div>
-
-              {/* FOOTER ACTIONS & CONFIRM BUTTON */}
-              {/* Mobile step navigation */}
-              {!isTourOpen && mobileStep < MOBILE_STEPS.length - 1 && (
-                <div className="lg:hidden sticky bottom-[calc(88px+env(safe-area-inset-bottom,0px))] z-20 flex gap-2 pt-2">
-                  {mobileStep > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setMobileStep((p) => p - 1)}
-                      className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 px-5 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
-                    >
-                      Atrás
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    disabled={!stepValid[mobileStep]}
-                    onClick={() => {
-                      triggerHaptic("selection");
-                      setMobileStep((p) => p + 1);
-                    }}
-                    className="flex-1 rounded-2xl bg-primary py-3 text-xs font-semibold text-white shadow-lg shadow-primary/25 transition active:scale-[0.98] disabled:opacity-40 cursor-pointer"
-                  >
-                    {stepValid[mobileStep] ? "Siguiente" : mobileStep === 0 ? "Completá nombre y WhatsApp" : "Completá este paso"}
-                  </button>
-                </div>
-              )}
-
-              <div
-                data-tour="nueva-reserva-confirm"
-                className={`${stepHidden(3)} flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/10 max-lg:sticky max-lg:bottom-[calc(80px+env(safe-area-inset-bottom,0px))] max-lg:z-20 max-lg:bg-white/95 max-lg:dark:bg-slate-900/95 max-lg:backdrop-blur max-lg:-mx-1 max-lg:px-1 max-lg:pb-2`}
-              >
-                {mobileStep > 0 && !isTourOpen && (
-                  <button
-                    type="button"
-                    onClick={() => setMobileStep((p) => p - 1)}
-                    className="lg:hidden mr-2 rounded-2xl border border-slate-200/80 dark:border-white/10 px-3 py-2.5 text-xs font-semibold text-slate-600 cursor-pointer"
-                  >
-                    Atrás
-                  </button>
-                )}
-                <div>
-                  <span className="text-[11px] text-slate-400 block font-medium">Tarifa del Servicio:</span>
-                  <span
-                    className="text-base font-semibold tabular-nums"
-                    style={{ color: business.primaryColor || "var(--primary, #FF4F2B)" }}
-                  >
-                    {formatGs(currentService?.price || 0)}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Link
-                    href="/dashboard/calendario"
-                    className="rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                  >
-                    Ver Agenda
-                  </Link>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !clientName.trim()}
-                    style={{
-                      backgroundColor: business.primaryColor || "var(--primary, #FF4F2B)",
-                      boxShadow: `0 8px 20px -4px ${business.primaryColor || "rgba(255, 79, 43, 0.4)"}`,
-                    }}
-                    className="rounded-2xl px-6 py-2.5 text-xs font-semibold text-white shadow-md hover:brightness-110 disabled:opacity-50 transition cursor-pointer"
-                  >
-                    {isSubmitting ? "Guardando en SQL..." : "Confirmar Turno"}
-                  </button>
-                </div>
-              </div>
-            </form>
-          ) : (
-            /* Mode 2: Schedule Block Form */
-            <form onSubmit={handleCreateBlock} className="space-y-4 text-xs">
-              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
-                <Ban className="h-4 w-4 shrink-0 text-amber-600" />
-                <span>Bloqueá un intervalo de descanso, almuerzo o reunión para evitar reservas.</span>
-              </div>
-
-              {/* Professional Affected */}
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Profesional Afectado
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setBlockStaffId("all")}
-                    className={`px-3 py-1.5 rounded-2xl border text-xs font-semibold transition cursor-pointer ${
-                      blockStaffId === "all"
-                        ? "border-amber-500 bg-amber-500 text-white shadow-xs"
-                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
-                    }`}
-                  >
-                    Todo el salón
-                  </button>
-                  {staff.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setBlockStaffId(p.id)}
-                      className={`px-3 py-1.5 rounded-2xl border text-xs font-semibold transition cursor-pointer ${
-                        blockStaffId === p.id
-                          ? "border-primary bg-primary text-white shadow-xs"
-                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
-                      }`}
-                    >
-                      {p.name}
-                    </button>
                   ))}
                 </div>
               </div>
+            )}
 
-              {/* Interval & Reason */}
-              <div className="grid grid-cols-2 gap-3">
+            {/* ═══ 1. CLIENT ═══ */}
+            <section data-tour="nueva-reserva-client" className={`${stepHidden(0)} space-y-4 rounded-3xl glass-panel p-4 sm:p-5`}>
+              <SectionTitle n={1} title="Cliente" description="Buscá un cliente existente o cargá uno nuevo." />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="relative">
+                  <label htmlFor="nr-name" className={LABEL_CLASS}>Nombre y apellido</label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="nr-name"
+                      type="text"
+                      autoComplete="off"
+                      value={clientName}
+                      onChange={(e) => {
+                        setClientName(e.target.value);
+                        setClientId(null);
+                        setSuggestOpen(true);
+                      }}
+                      onFocus={() => setSuggestOpen(true)}
+                      onBlur={() => setTimeout(() => setSuggestOpen(false), 150)}
+                      placeholder="Ej: Juan Pérez"
+                      className={`${INPUT_CLASS} pl-10`}
+                    />
+                  </div>
+                  {clientId && (
+                    <p className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                      <UserCheck className="h-3 w-3" />
+                      Cliente existente
+                    </p>
+                  )}
+                  {suggestOpen && matchingClients.length > 0 && (
+                    <ul className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-slate-900">
+                      {matchingClients.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => pickClient(c)}
+                            className="flex min-h-11 w-full items-center justify-between gap-3 px-3.5 py-2 text-left transition hover:bg-slate-50 dark:hover:bg-white/[0.05]"
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">{c.name}</span>
+                              <span className="block truncate text-[11px] text-slate-500 dark:text-zinc-400">{c.phone || "Sin teléfono"}</span>
+                            </span>
+                            <span className="shrink-0 text-[11px] tabular-nums text-slate-400">{c.totalVisits} visitas</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Hora Inicio
-                  </label>
-                  <input
-                    type="time"
-                    value={blockStart}
-                    onChange={(e) => setBlockStart(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  <label htmlFor="nr-phone" className={LABEL_CLASS}>WhatsApp</label>
+                  <div className="flex gap-2">
+                    <CustomSelect
+                      value={countryCode}
+                      onChange={(v) => {
+                        setCountryCode(v);
+                        setClientPhone("");
+                      }}
+                      options={COUNTRY_LIST.map((c) => ({ value: c.code, label: `${c.flag} ${c.dialCode}`, subtitle: c.name }))}
+                      className="w-[7.5rem] shrink-0"
+                      buttonClassName="min-h-11 w-full sm:min-h-10"
+                    />
+                    <input
+                      id="nr-phone"
+                      type="tel"
+                      inputMode="tel"
+                      value={clientPhone}
+                      onChange={(e) => {
+                        setClientPhone(formatPhoneInput(e.target.value, activeCountry));
+                        setClientId(null);
+                      }}
+                      placeholder={activeCountry.placeholder}
+                      className={`${INPUT_CLASS} min-w-0 flex-1`}
+                    />
+                  </div>
+                  {clientPhone && !phoneValid && (
+                    <p className="mt-1 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                      <AlertCircle className="h-3 w-3" />
+                      Revisá el número (ej: {activeCountry.placeholder})
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* ═══ 2. SERVICE & PROFESSIONAL ═══ */}
+            <section data-tour="nueva-reserva-service" className={`${stepHidden(1)} space-y-4 rounded-3xl glass-panel p-4 sm:p-5`}>
+              <SectionTitle n={2} title="Servicio y profesional" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <span className={LABEL_CLASS}>Servicio</span>
+                  <CustomSelect
+                    value={currentService?.id}
+                    onChange={(v) => {
+                      setServiceId(v);
+                      triggerHaptic("selection");
+                    }}
+                    options={activeServices.map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                      subtitle: `${s.durationMin} min · ${formatGs(s.hasPromo && s.promoPrice ? s.promoPrice : s.price)}`,
+                    }))}
+                    className="w-full"
+                    buttonClassName="min-h-11 w-full sm:min-h-10"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Hora Fin
-                  </label>
-                  <input
-                    type="time"
-                    value={blockEnd}
-                    onChange={(e) => setBlockEnd(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  <span className={LABEL_CLASS}>Profesional</span>
+                  <CustomSelect
+                    value={currentStaff?.id}
+                    onChange={(v) => {
+                      setStaffId(v);
+                      triggerHaptic("selection");
+                    }}
+                    options={eligibleStaff.map((m) => ({ value: m.id, label: m.name, subtitle: m.role }))}
+                    className="w-full"
+                    buttonClassName="min-h-11 w-full sm:min-h-10"
                   />
+                  {eligibleStaff.length === 0 && (
+                    <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">Nadie del equipo tiene asignado este servicio.</p>
+                  )}
                 </div>
+              </div>
+            </section>
+
+            {/* ═══ 3. DAY & TIME ═══ */}
+            <section data-tour="nueva-reserva-datetime" className={`${stepHidden(2)} space-y-4 rounded-3xl glass-panel p-4 sm:p-5`}>
+              <SectionTitle n={3} title="Día y horario" description={`${dateTitle.charAt(0).toUpperCase()}${dateTitle.slice(1)}`} />
+
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {dayChips.map((d) => (
+                  <button
+                    key={d.iso}
+                    type="button"
+                    aria-pressed={date === d.iso}
+                    onClick={() => setDate(d.iso)}
+                    className={`${CHIP_BASE} capitalize ${date === d.iso ? CHIP_ON : CHIP_OFF}`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+                <label className={`${CHIP_BASE} relative ${!dayChips.some((d) => d.iso === date) ? CHIP_ON : CHIP_OFF}`}>
+                  <Calendar className="h-3.5 w-3.5" />
+                  Otra fecha
+                  <input
+                    type="date"
+                    min={todayStr}
+                    value={date}
+                    onChange={(e) => e.target.value && setDate(e.target.value)}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    aria-label="Elegir otra fecha"
+                  />
+                </label>
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Motivo de Bloqueo
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Almuerzo / Descanso / Capacitación interna"
-                  value={blockReason}
-                  onChange={(e) => setBlockReason(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Horarios libres{currentStaff ? ` de ${currentStaff.name.split(" ")[0]}` : ""}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomTime((v) => !v);
+                      setTime("");
+                    }}
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    {customTime ? "Ver horarios libres" : "Otro horario"}
+                  </button>
+                </div>
+
+                {customTime ? (
+                  <div className="max-w-[12rem]">
+                    <input
+                      type="time"
+                      step={300}
+                      value={time}
+                      onChange={(e) => setTime(e.target.value)}
+                      className={`${INPUT_CLASS} tabular-nums`}
+                      aria-label="Hora del turno"
+                    />
+                    <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">Si el profesional ya tiene un turno a esa hora, te avisamos al guardar.</p>
+                  </div>
+                ) : !isInitialSyncDone || (hasPersistedServiceId && (slotsState === "loading" || slotsState === "idle")) ? (
+                  <p className="flex items-center gap-2 py-3 text-xs text-slate-500 dark:text-zinc-400">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Buscando horarios libres…
+                  </p>
+                ) : slotsState === "error" ? (
+                  <p className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3 py-2.5 text-xs text-amber-700 dark:text-amber-300">
+                    No pudimos cargar los horarios. Usá “Otro horario” para cargarlo a mano.
+                  </p>
+                ) : staffSlots.length === 0 ? (
+                  <p className="rounded-xl border border-slate-200/70 px-3 py-3 text-xs text-slate-500 dark:border-white/10 dark:text-zinc-400">
+                    No quedan horarios libres este día. Probá otro día, otro profesional u “Otro horario”.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                    {staffSlots.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        aria-pressed={time === t}
+                        onClick={() => {
+                          setTime(t);
+                          triggerHaptic("selection");
+                        }}
+                        className={`${CHIP_BASE} tabular-nums ${time === t ? "border-primary bg-primary text-white" : CHIP_OFF}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {isPast && (
+                  <p className="mt-2 flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400">
+                    <AlertCircle className="h-3 w-3" />
+                    Ese horario ya pasó.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* ═══ 4. PAYMENT & NOTES ═══ */}
+            <section data-tour="nueva-reserva-payment" className={`${stepHidden(3)} space-y-4 rounded-3xl glass-panel p-4 sm:p-5`}>
+              <SectionTitle n={4} title="Pago y notas" description="Cómo piensa pagar el cliente. Se cobra en Caja al terminar." />
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {acceptedPayments.map(({ method, label, Icon }) => (
+                  <button
+                    key={method}
+                    type="button"
+                    aria-pressed={paymentMethod === method}
+                    onClick={() => setPaymentMethod(method)}
+                    className={`${CHIP_BASE} min-h-11 ${paymentMethod === method ? CHIP_ON : CHIP_OFF}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div>
+                <label htmlFor="nr-notes" className={LABEL_CLASS}>Notas (opcional)</label>
+                <textarea
+                  id="nr-notes"
+                  rows={2}
+                  maxLength={300}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Ej: prefiere tijera, viene con su hijo…"
+                  className={`${INPUT_CLASS} resize-none`}
                 />
               </div>
+            </section>
+          </div>
 
-              <div className="flex justify-end pt-3 border-t border-slate-100 dark:border-white/10">
+          {/* ═══ SUMMARY (sticky on desktop, last step on mobile) ═══ */}
+          <aside
+            data-tour="nueva-reserva-confirm"
+            className={`${stepHidden(3)} min-w-0 space-y-4 rounded-3xl glass-panel p-4 sm:p-5 lg:sticky lg:top-[100px]`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">Resumen</h2>
+              <span className="text-base font-semibold tabular-nums text-slate-900 dark:text-white">{formatGs(price)}</span>
+            </div>
+            <dl className="space-y-2.5 text-sm">
+              {[
+                { k: "Cliente", v: clientName.trim() || "—", ok: nameValid && phoneValid },
+                { k: "Servicio", v: currentService ? `${currentService.name} · ${duration} min` : "—", ok: Boolean(currentService) },
+                { k: "Profesional", v: currentStaff?.name || "—", ok: Boolean(currentStaff) },
+                {
+                  k: "Cuándo",
+                  v: time ? `${format(parseISO(`${date}T12:00:00`), "EEE d MMM", { locale: es })} · ${time} a ${endTime}` : "Elegí un horario",
+                  ok: Boolean(time) && !isPast,
+                },
+              ].map((row) => (
+                <div key={row.k} className="flex items-start gap-2.5">
+                  <span
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                      row.ok ? "bg-emerald-500 text-white" : "border border-slate-300 dark:border-white/20"
+                    }`}
+                  >
+                    {row.ok && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <dt className="text-[11px] text-slate-500 dark:text-zinc-400">{row.k}</dt>
+                    <dd className={`truncate font-medium ${row.ok ? "text-slate-900 dark:text-white" : "text-slate-400"}`}>{row.v}</dd>
+                  </span>
+                </div>
+              ))}
+            </dl>
+            <button
+              type="submit"
+              disabled={!canSubmit || isSubmitting}
+              className="hidden min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:opacity-50 lg:inline-flex"
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Agendar turno
+            </button>
+            <p className="flex items-start gap-2 text-[11px] text-slate-500 dark:text-zinc-400">
+              <Clock className="mt-px h-3.5 w-3.5 shrink-0" />
+              Después de agendar podés avisarle al cliente por WhatsApp con un mensaje listo.
+            </p>
+          </aside>
+
+            {/* Mobile navigation */}
+            {!isTourOpen && (
+              <div className="flex gap-2 lg:hidden">
+                {mobileStep > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setMobileStep((s) => s - 1)}
+                    className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-2xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 dark:border-white/10 dark:text-zinc-200"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Atrás
+                  </button>
+                )}
                 <button
                   type="submit"
-                  className="rounded-2xl bg-amber-600 hover:bg-amber-700 px-6 py-2.5 text-xs font-semibold text-white shadow-md shadow-amber-600/25 transition cursor-pointer"
+                  disabled={isSubmitting || (mobileStep === MOBILE_STEPS.length - 1 && !canSubmit)}
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition disabled:opacity-50"
                 >
-                  Guardar Bloqueo
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : mobileStep === MOBILE_STEPS.length - 1 ? (
+                    <Check className="h-4 w-4" />
+                  ) : null}
+                  {mobileStep === MOBILE_STEPS.length - 1 ? "Agendar turno" : "Continuar"}
+                  {mobileStep < MOBILE_STEPS.length - 1 && <ArrowRight className="h-4 w-4" />}
                 </button>
               </div>
-            </form>
-          )}
-        </Card>
+            )}
+        </form>
       )}
     </div>
   );
 }
 
-const MOBILE_STEPS = ["Cliente", "Servicio y profesional", "Día y hora", "Pago y confirmación"];
-
 export default function NuevaReservaPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Cargando reserva...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center gap-2 py-24 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Cargando…
+        </div>
+      }
+    >
       <NuevaReservaContent />
     </Suspense>
   );

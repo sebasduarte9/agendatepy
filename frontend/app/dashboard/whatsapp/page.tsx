@@ -761,11 +761,10 @@ export default function BotWhatsAppPage() {
     <div className="w-full space-y-4 pb-24 sm:space-y-5 sm:pb-20">
       {/* ═══ CABECERA PRINCIPAL ═══ */}
       <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-            <span>Asistente de WhatsApp</span>
-          </h1>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Automatización</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Asistente de WhatsApp</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
             Respuestas y recordatorios para tus clientes.
           </p>
         </div>

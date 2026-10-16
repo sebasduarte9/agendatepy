@@ -90,7 +90,7 @@ export default function SuscripcionPage() {
       </header>
 
       {/* ═══ CURRENT PLAN + USAGE ═══ */}
-      <section className="grid gap-3 lg:grid-cols-5">
+      <section data-tour="suscripcion-plan" className="grid gap-3 lg:grid-cols-5">
         <div className="rounded-3xl glass-panel p-4 sm:p-5 lg:col-span-3">
           <div className="flex items-start gap-3.5">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
@@ -196,7 +196,7 @@ export default function SuscripcionPage() {
       )}
 
       {/* ═══ PLANS ═══ */}
-      <section className="space-y-3">
+      <section data-tour="suscripcion-plans" className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Planes</h2>
@@ -323,7 +323,7 @@ export default function SuscripcionPage() {
       </section>
 
       {/* ═══ HOW IT WORKS + SUPPORT ═══ */}
-      <section className="grid gap-3 lg:grid-cols-2">
+      <section data-tour="suscripcion-help" className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-3xl glass-panel p-4 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">Cómo cambiar de plan</h2>
           <ol className="mt-3 space-y-3">

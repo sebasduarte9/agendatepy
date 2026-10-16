@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
 
     const client = await prisma.client.findFirst({
       where: { id, tenantId: auth.tenantId },
+      include: { _count: { select: { loyaltyRedemptions: true } } },
     });
 
     if (!client) {
@@ -146,7 +147,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
             }
           : null,
         loyaltyPoints: client.points,
-        loyaltyRedeemed: 0,
+        loyaltyRedeemed: client._count.loyaltyRedemptions,
         history,
       },
     });

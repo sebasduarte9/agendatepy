@@ -403,7 +403,7 @@ export default function ConfiguracionPage() {
       {form && (
         <>
           {/* ═══ SETUP CHECKLIST ═══ */}
-          <section className="rounded-3xl glass-panel p-4 sm:p-5">
+          <section data-tour="config-checklist" className="rounded-3xl glass-panel p-4 sm:p-5">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-white sm:text-base">

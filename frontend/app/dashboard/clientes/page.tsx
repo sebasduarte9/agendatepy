@@ -295,11 +295,12 @@ export default function ClientesPage() {
     <div className="w-full space-y-4 sm:space-y-6 pb-24 px-1 sm:px-0">
       {/* ═══ APPLE APP HEADER ═══ */}
       <div data-tour="clientes-header" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Cartera</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             Clientes
           </h1>
-          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">
             {clients.length} {clients.length === 1 ? "cliente registrado" : "clientes registrados"}
           </p>
         </div>
@@ -373,7 +374,7 @@ export default function ClientesPage() {
         <div className="flex items-center gap-2 sm:gap-2.5">
           {/* iOS Search Input */}
           <div data-tour="clientes-search" className="relative min-w-0 flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500" />
+            <Search className="pointer-events-none absolute z-10 left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500" />
             <input
               type="text"
               placeholder="Buscar cliente..."

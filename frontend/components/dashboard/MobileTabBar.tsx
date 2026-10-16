@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
@@ -39,10 +39,20 @@ export default function MobileTabBar() {
   const openTour = useDashboardStore((s) => s.openTour);
   const brandColor = business.primaryColor || "var(--primary, #FF4F2B)";
 
-  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
-  const [crmKeyboardOpen, setCrmKeyboardOpen] = useState(false);
-  const [crmFullScreenView, setCrmFullScreenView] = useState(false);
+  const [moreSheetPath, setMoreSheetPath] = useState<string | null>(null);
+  const isMoreSheetOpen = Boolean(pathname && moreSheetPath === pathname);
+  const [crmMobileState, setCrmMobileState] = useState<{
+    pathname: string | null;
+    keyboardOpen: boolean;
+    fullScreen: boolean;
+  }>({ pathname: null, keyboardOpen: false, fullScreen: false });
+  const crmKeyboardOpen = crmMobileState.pathname === pathname && crmMobileState.keyboardOpen;
+  const crmFullScreenView = crmMobileState.pathname === pathname && crmMobileState.fullScreen;
   const dragControls = useDragControls();
+  const moreButtonRef = React.useRef<HTMLButtonElement>(null);
+  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const closeSheetRef = React.useRef<HTMLButtonElement>(null);
+  const sheetTitleId = `mobile-navigation-title-${useId()}`;
   const sheetContentRef = React.useRef<HTMLDivElement>(null);
   const touchStartY = React.useRef<number | null>(null);
 
@@ -69,25 +79,27 @@ export default function MobileTabBar() {
     const deltaY = currentY - touchStartY.current;
     if (deltaY > 80 && sheetContentRef.current && sheetContentRef.current.scrollTop <= 0) {
       triggerHaptic("light");
-      setIsMoreSheetOpen(false);
+      setMoreSheetPath(null);
     }
     touchStartY.current = null;
   };
 
-  // Close sheet on route change
-  useEffect(() => {
-    setIsMoreSheetOpen(false);
-    setCrmFullScreenView(false);
-  }, [pathname]);
-
   useEffect(() => {
     const handleCrmKeyboardState = (event: Event) => {
       const detail = (event as CustomEvent<{ open?: boolean }>).detail;
-      setCrmKeyboardOpen(Boolean(detail?.open));
+      setCrmMobileState((state) => ({
+        ...state,
+        pathname,
+        keyboardOpen: Boolean(detail?.open),
+      }));
     };
     const handleCrmMobileViewState = (event: Event) => {
       const detail = (event as CustomEvent<{ view?: string }>).detail;
-      setCrmFullScreenView(detail?.view === "chat" || detail?.view === "profile");
+      setCrmMobileState((state) => ({
+        ...state,
+        pathname,
+        fullScreen: detail?.view === "chat" || detail?.view === "profile",
+      }));
     };
     window.addEventListener("agendate-crm-keyboard-state", handleCrmKeyboardState);
     window.addEventListener("agendate-crm-mobile-view-state", handleCrmMobileViewState);
@@ -95,16 +107,12 @@ export default function MobileTabBar() {
       window.removeEventListener("agendate-crm-keyboard-state", handleCrmKeyboardState);
       window.removeEventListener("agendate-crm-mobile-view-state", handleCrmMobileViewState);
     };
-  }, []);
-
-  // Optimistic tab active state for 0ms instantaneous visual feedback
-  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
-
-  useEffect(() => {
-    setOptimisticPath(null);
   }, [pathname]);
 
-  const currentPath = optimisticPath || pathname;
+  // Optimistic tab active state for 0ms instantaneous visual feedback
+  const [optimisticPath, setOptimisticPath] = useState<{ href: string; from: string | null } | null>(null);
+
+  const currentPath = optimisticPath?.from === pathname ? optimisticPath.href : pathname;
   const hideCrmMobileNavigation = pathname.startsWith("/dashboard/crm") && (crmKeyboardOpen || crmFullScreenView);
 
   // Prefetch core routes for 0ms instantaneous section switching
@@ -118,15 +126,48 @@ export default function MobileTabBar() {
     router.prefetch("/dashboard/bloquear-horario");
   }, [router]);
 
-  // Lock body scroll when sheet is open
+  // Lock scrolling and contain keyboard focus while the navigation sheet is open.
   useEffect(() => {
-    if (isMoreSheetOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (!isMoreSheetOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const moreButton = moreButtonRef.current;
+    document.body.style.overflow = "hidden";
+    const focusFrame = window.requestAnimationFrame(() => closeSheetRef.current?.focus());
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMoreSheetPath(null);
+        return;
+      }
+      if (event.key !== "Tab" || !sheetRef.current) return;
+      const focusable = Array.from(
+        sheetRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => element.getAttribute("aria-hidden") !== "true");
+      if (!focusable.length) {
+        event.preventDefault();
+        sheetRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !sheetRef.current.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !sheetRef.current.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = "";
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      const returnFocus = moreButton?.isConnected ? moreButton : previousFocus;
+      if (returnFocus?.isConnected) returnFocus.focus();
     };
   }, [isMoreSheetOpen]);
 
@@ -273,6 +314,7 @@ export default function MobileTabBar() {
   return (
     <>
       <nav
+        data-tour="mobile-tab-bar"
         aria-label="Navegación principal móvil"
         aria-hidden={hideCrmMobileNavigation}
         inert={hideCrmMobileNavigation}
@@ -293,7 +335,7 @@ export default function MobileTabBar() {
                 onPointerDown={() => router.prefetch(tab.href)}
                 onClick={() => {
                   triggerHaptic("selection");
-                  setOptimisticPath(tab.href);
+                  setOptimisticPath({ href: tab.href, from: pathname });
                 }}
                 className="relative flex flex-col items-center justify-center flex-1 h-full py-1 text-center cursor-pointer group"
               >
@@ -340,11 +382,14 @@ export default function MobileTabBar() {
 
           {/* Tab 5: "Más" Button with Apple Spring Physics */}
           <button
+            ref={moreButtonRef}
             type="button"
             onClick={() => {
               triggerHaptic("selection");
-              setIsMoreSheetOpen(!isMoreSheetOpen);
+              setMoreSheetPath(isMoreSheetOpen ? null : pathname || "/dashboard");
             }}
+            aria-haspopup="dialog"
+            aria-expanded={isMoreSheetOpen}
             className="relative flex flex-col items-center justify-center flex-1 h-full py-1 text-center cursor-pointer group"
           >
             {isMoreSheetOpen && (
@@ -400,12 +445,13 @@ export default function MobileTabBar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsMoreSheetOpen(false)}
+              onClick={() => setMoreSheetPath(null)}
               className="fixed inset-0 bg-slate-950/70 backdrop-blur-md"
             />
 
             {/* Bottom Sheet de Cristal */}
             <motion.div
+              ref={sheetRef}
               key="more-sheet"
               initial={{ y: "100%", opacity: 0.8 }}
               animate={{ y: 0, opacity: 1 }}
@@ -419,10 +465,14 @@ export default function MobileTabBar() {
               onDragEnd={(_e, info) => {
                 if (info.offset.y > 100 || info.velocity.y > 500) {
                   triggerHaptic("light");
-                  setIsMoreSheetOpen(false);
+                  setMoreSheetPath(null);
                 }
               }}
-              className="relative z-10 w-full max-h-[90dvh] rounded-t-[32px] glass-modal text-slate-900 dark:text-white border-t border-x border-slate-200/80 dark:border-white/15 shadow-[0_-12px_45px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden pb-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={sheetTitleId}
+              tabIndex={-1}
+              className="relative z-10 w-full max-h-[90dvh] rounded-t-[32px] glass-modal text-slate-900 dark:text-white border-t border-x border-slate-200/80 dark:border-white/15 shadow-[0_-12px_45px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
             >
               {/* Drag Handle */}
               <div 
@@ -454,7 +504,7 @@ export default function MobileTabBar() {
                     </svg>
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white leading-tight truncate">
+                    <h3 id={sheetTitleId} className="font-semibold text-sm text-slate-900 dark:text-white leading-tight truncate">
                       {business.name || "Agendatepy"}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
@@ -464,10 +514,11 @@ export default function MobileTabBar() {
                 </div>
 
                 <motion.button
+                  ref={closeSheetRef}
                   whileTap={{ scale: 0.9 }}
                   type="button"
-                  onClick={() => setIsMoreSheetOpen(false)}
-                  className="p-2 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition cursor-pointer shrink-0"
+                  onClick={() => setMoreSheetPath(null)}
+                  className="grid h-11 w-11 place-items-center rounded-full bg-slate-200/60 text-slate-500 transition hover:text-slate-900 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white cursor-pointer shrink-0"
                   aria-label="Cerrar ventana"
                 >
                   <X className="h-4 w-4" />
@@ -486,7 +537,7 @@ export default function MobileTabBar() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIsMoreSheetOpen(false);
+                    setMoreSheetPath(null);
                     openTour();
                   }}
                   className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/70 hover:border-slate-300 dark:hover:border-white/20 active:scale-[0.98] transition-all text-left group shadow-xs cursor-pointer"
@@ -542,8 +593,8 @@ export default function MobileTabBar() {
                             onPointerDown={() => router.prefetch(item.href)}
                             onClick={() => {
                               triggerHaptic("selection");
-                              setOptimisticPath(item.href);
-                              setIsMoreSheetOpen(false);
+                              setOptimisticPath({ href: item.href, from: pathname });
+                              setMoreSheetPath(null);
                             }}
                             className={`flex items-center justify-between p-3.5 transition-colors active:bg-slate-50 dark:active:bg-white/5 ${
                               isItemActive

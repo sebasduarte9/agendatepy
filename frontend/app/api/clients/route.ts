@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     // 1. Consultar todos los clientes del tenant
     const clients = await prisma.client.findMany({
       where: { tenantId: auth.tenantId },
+      include: { _count: { select: { loyaltyRedemptions: true } } },
       orderBy: { createdAt: "desc" },
     });
 
@@ -119,7 +120,7 @@ export async function GET(request: NextRequest) {
             }
           : null,
         loyaltyPoints: c.points,
-        loyaltyRedeemed: 0,
+        loyaltyRedeemed: c._count.loyaltyRedemptions,
       };
     });
 

@@ -337,9 +337,11 @@ export default function CajaPage() {
         data-tour="caja-header"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          Caja Diaria & Arqueo
-        </h1>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Finanzas</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Caja Diaria & Arqueo</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-400">Cobros, egresos y cierre del día.</p>
+        </div>
 
         {/* Quick Action Dock */}
         <div className="hidden md:flex flex-wrap items-center gap-2">
@@ -457,6 +459,7 @@ export default function CajaPage() {
         <div className="grid grid-cols-2 gap-2 pt-0.5">
           <button
             type="button"
+            data-tour="caja-new-btn"
             onClick={() => {
               triggerHaptic("medium");
               setModalOpen(true);
@@ -470,6 +473,7 @@ export default function CajaPage() {
 
           <button
             type="button"
+            data-tour="caja-close-btn"
             onClick={() => {
               triggerHaptic("medium");
               setArqueoOpen(true);

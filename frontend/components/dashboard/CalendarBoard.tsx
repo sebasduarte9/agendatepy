@@ -619,11 +619,12 @@ export default function CalendarBoard() {
         data-tour="calendar-header"
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-1"
       >
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Agenda</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             Agenda & Turnos
           </h1>
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 capitalize mt-0.5">
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400 first-letter:uppercase">
             {label}
           </p>
         </div>
@@ -796,7 +797,7 @@ export default function CalendarBoard() {
             <CalendarDatePicker date={calendarDate} timezone={business.timezone} onChange={setCalendarDate} />
             <button
               type="button"
-              className="rounded-lg px-2.5 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-95"
+              className="inline-flex min-h-9 items-center rounded-lg px-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-95"
               onClick={() => {
                 triggerHaptic("medium");
                 setCalendarDate(
@@ -808,7 +809,7 @@ export default function CalendarBoard() {
             </button>
             <button
               type="button"
-              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-90"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-90"
               onClick={() => {
                 triggerHaptic("light");
                 shiftCalendarDate(-1);
@@ -819,7 +820,7 @@ export default function CalendarBoard() {
             </button>
             <button
               type="button"
-              className="rounded-lg p-1 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-90"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer active:scale-90"
               onClick={() => {
                 triggerHaptic("light");
                 shiftCalendarDate(1);
@@ -831,7 +832,7 @@ export default function CalendarBoard() {
           </div>
 
           {/* Formatted Date Badge */}
-          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 capitalize tabular-nums px-1">
+          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 first-letter:uppercase tabular-nums px-1">
             {shortLabel}
           </span>
 
@@ -924,7 +925,7 @@ export default function CalendarBoard() {
             </div>
           )}
 
-          <details className="group relative z-50 ml-auto shrink-0 md:hidden">
+          <details data-tour="calendar-actions-mobile" className="group relative z-50 ml-auto shrink-0 md:hidden">
             <summary className="inline-flex min-h-11 list-none cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-semibold text-slate-700 transition active:scale-[0.98] dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 [&::-webkit-details-marker]:hidden">
               Acciones
               <ChevronDown className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" />
@@ -2003,7 +2004,7 @@ function CalendarDatePicker({
     <div className="relative" ref={pickerRef}>
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-white active:scale-95 dark:text-slate-200 dark:hover:bg-slate-700"
+        className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-white active:scale-95 dark:text-slate-200 dark:hover:bg-slate-700"
         aria-label="Elegir fecha"
         aria-haspopup="dialog"
         aria-expanded={isOpen}

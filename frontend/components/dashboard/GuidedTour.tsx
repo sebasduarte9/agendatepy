@@ -37,6 +37,7 @@ import {
   Target,
   BookmarkCheck,
   LogOut,
+  BarChart3,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
@@ -74,6 +75,10 @@ export interface SectionStep {
   targetSelector?: string;
   actionLabel?: string;
   actionPath?: string;
+  /** Text for phones/tablets when the desktop wording doesn't apply (e.g. "pasá el mouse") */
+  mobileInstruction?: string;
+  /** Only shown on desktop: the element doesn't exist in the mobile layout */
+  desktopOnly?: boolean;
 }
 
 export interface SectionTourData {
@@ -108,7 +113,9 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         instruction:
           "Acercá tu mouse a la barra lateral izquierda por un momento: se expandirá automáticamente para darte acceso a tu Agenda, Servicios, Caja, Clientes, Reportes y Ajustes.",
         tip: "Podés fijarlo con el botón de chincheta si preferís tenerlo siempre expandido.",
-        targetSelector: '[data-tour="sidebar-nav"]',
+        targetSelector: '[data-tour="sidebar-nav"] || [data-tour="mobile-tab-bar"]',
+        mobileInstruction:
+          "Desde la barra de abajo vas a Inicio, Agenda, Caja y Clientes. Tocá \"Más\" para ver todas las demás secciones del sistema.",
       },
       {
         stepNumber: 3,
@@ -174,7 +181,8 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         instruction:
           "Hacé clic en '+ Crear Cita' o tocá directamente cualquier horario libre en la cuadrícula. Se abrirá el formulario customizado ultra rápido para registrar al cliente sin recargas.",
         tip: "Podés buscar un cliente frecuente o tipear uno nuevo con su WhatsApp paraguayo en 5 segundos.",
-        targetSelector: '[data-tour="calendar-create-btn"]',
+        targetSelector: '[data-tour="calendar-create-btn"] || [data-tour="calendar-actions-mobile"]',
+        mobileInstruction: "Tocá \"Acciones\" y después \"Nueva cita\" para agendar un turno sin salir de la agenda.",
       },
       {
         stepNumber: 4,
@@ -182,7 +190,8 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         instruction:
           "Si alguien sale a almorzar, tiene un trámite o el salón cierra por feriado, usá '+ Bloquear Horario' para pausar reservas en ese intervalo.",
         tip: "Los clientes no podrán agendar turnos online durante los horarios bloqueados.",
-        targetSelector: '[data-tour="calendar-block-btn"]',
+        targetSelector: '[data-tour="calendar-block-btn"] || [data-tour="calendar-actions-mobile"]',
+        mobileInstruction: "Desde \"Acciones\" → \"Bloquear horario\" marcás almuerzos, descansos o feriados para que nadie reserve en ese rango.",
       },
       {
         stepNumber: 5,
@@ -196,58 +205,91 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
   },
   "nueva-reserva": {
     id: "nueva-reserva",
-    title: "Nueva Reserva Rápida",
-    badge: "Cita Manual",
+    title: "Nuevo Turno Manual",
+    badge: "Agenda",
     icon: CalendarPlus,
     summary:
-      "Formulario ultra veloz para agendar clientes presenciales que llegan al mostrador o te llaman por teléfono en menos de 30 segundos.",
+      "Agendá un turno para un cliente que te escribió o llamó. Solo se ofrecen horarios libres del profesional que elijas.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Panel de Nueva Reserva",
+        taskTitle: "Agendar a mano en segundos",
         instruction:
-          "Agendá citas presenciales o telefónicas en menos de 30 segundos con sincronización inmediata a la base de datos SQL.",
-        tip: "También podés bloquear horarios de descanso o almuerzo con la pestaña 'Bloquear Horario'.",
+          "Desde acá cargás turnos que te llegan por teléfono, WhatsApp o en el local. Si necesitás cortar la agenda, usá 'Bloquear horario'.",
         targetSelector: '[data-tour="nueva-reserva-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Cliente & WhatsApp Internacional",
+        taskTitle: "Cliente y WhatsApp",
         instruction:
-          "Ingresá el nombre y teléfono del cliente. Podés buscarlo entre tus clientes habituales o registrar uno nuevo eligiendo el país y validando su número en vivo.",
-        tip: "El selector incluye Paraguay y más de 20 países con banderas y códigos de área.",
+          "Escribí el nombre: si ya es cliente aparece en la lista y se completa su WhatsApp. Si es nuevo, cargá su número y lo guardamos en Clientes.",
+        tip: "El número se valida al escribir. Elegí el país si el cliente no es de Paraguay.",
         targetSelector: '[data-tour="nueva-reserva-client"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Servicio & Especialista",
+        taskTitle: "Servicio y profesional",
         instruction:
-          "Seleccioná el corte, tratamiento o paquete y a qué profesional de tu equipo asignarle el turno.",
-        tip: "La duración y la tarifa en Guaraníes se calculan automáticamente.",
+          "Elegí el servicio y quién lo atiende. Solo aparecen los profesionales activos que hacen ese servicio.",
         targetSelector: '[data-tour="nueva-reserva-service"]',
       },
       {
         stepNumber: 4,
-        taskTitle: "Fecha & Horario",
+        taskTitle: "Día y horario libre",
         instruction:
-          "Elegí el día y la hora de inicio. Podés ajustar los minutos con los botones rápidos ±15m o seleccionar la hora exacta.",
-        tip: "La hora de finalización se calcula de forma automática según la duración del servicio.",
+          "Tocá el día y uno de los horarios libres de ese profesional. Si querés un horario especial, usá 'Otro horario' y te avisamos si choca con otro turno.",
         targetSelector: '[data-tour="nueva-reserva-datetime"]',
       },
       {
         stepNumber: 5,
-        taskTitle: "Método de Pago",
+        taskTitle: "Forma de pago y notas",
         instruction:
-          "Definí cómo abonará el cliente: Efectivo en caja, Transferencia Bancaria, POS Bancard o Billetera Móvil.",
+          "Marcá cómo piensa pagar el cliente (según los medios que activaste en Configuración) y dejá una nota si hace falta. El cobro se registra en Caja al terminar.",
         targetSelector: '[data-tour="nueva-reserva-payment"]',
       },
       {
         stepNumber: 6,
-        taskTitle: "Confirmar & Disparar WhatsApp",
+        taskTitle: "Revisar y agendar",
         instruction:
-          "Hacé clic en 'Confirmar Turno'. La cita se guarda en la base de datos SQL y te dará el botón listo para avisarle al cliente por WhatsApp con el mensaje ya redactado.",
-        tip: "Podés añadir notas adicionales para el profesional antes de guardar.",
+          "El resumen marca con ✓ lo que ya está completo. Al agendar, te ofrecemos avisarle al cliente por WhatsApp con el mensaje listo.",
         targetSelector: '[data-tour="nueva-reserva-confirm"]',
+      },
+    ],
+  },
+  "bloquear-horario": {
+    id: "bloquear-horario",
+    title: "Bloquear Horarios",
+    badge: "Agenda",
+    icon: Ban,
+    summary:
+      "Cortá rangos de la agenda (almuerzo, trámites, feriados) para que nadie pueda reservar en ese horario.",
+    steps: [
+      {
+        stepNumber: 1,
+        taskTitle: "Crear un bloqueo",
+        instruction:
+          "Tocá el botón para bloquear un rango: elegí profesional (o todo el equipo), día, hora de inicio y fin, y el motivo.",
+        targetSelector: '[data-tour="bloqueo-new-btn"] || [data-tour="bloqueo-header"]',
+      },
+      {
+        stepNumber: 2,
+        taskTitle: "Resumen y atajos",
+        instruction:
+          "Acá ves cuántos bloqueos tenés y atajos para los más comunes, como el almuerzo.",
+        targetSelector: '[data-tour="bloqueo-summary"]',
+      },
+      {
+        stepNumber: 3,
+        taskTitle: "Filtrar por período y profesional",
+        instruction: "Mirá los bloqueos de hoy, de la semana o todos, y filtrá por profesional.",
+        targetSelector: '[data-tour="bloqueo-filters"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Tus bloqueos",
+        instruction:
+          "Cada bloqueo muestra el rango y el motivo. Podés borrarlo cuando ya no haga falta y ese horario vuelve a estar disponible.",
+        targetSelector: '[data-tour="bloqueo-list"]',
       },
     ],
   },
@@ -294,14 +336,14 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
         instruction:
           "Conversá en tiempo real con el cliente y utilizá los botones de respuestas rápidas para enviar enlaces de reserva o datos de transferencia al instante.",
         tip: "Presioná Enter para enviar el mensaje directamente.",
-        targetSelector: '[data-tour="crm-chat-box"]',
+        targetSelector: '[data-tour="crm-chat-box"] || [data-tour="crm-conversations-list"]',
       },
       {
         stepNumber: 6,
         taskTitle: "Ficha 360°, Agendar Cita & Crear Pedido",
         instruction:
           "Desde el panel lateral podés agendar un turno con los datos del cliente ya pre-cargados o crear un pedido de producto solicitado por chat.",
-        targetSelector: '[data-tour="crm-client-profile"]',
+        targetSelector: '[data-tour="crm-client-profile"] || [data-tour="crm-conversations-list"]',
       },
     ],
   },
@@ -861,31 +903,71 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
       },
     ],
   },
+  estadisticas: {
+    id: "estadisticas",
+    title: "Estadísticas del Negocio",
+    badge: "Reportes",
+    icon: BarChart3,
+    summary:
+      "Facturación, ticket promedio, asistencia y los servicios que más venden, con datos reales de tu agenda y tu caja.",
+    steps: [
+      {
+        stepNumber: 1,
+        taskTitle: "Elegí el período",
+        instruction: "Cambiá entre hoy, 7, 30 o 90 días. Todos los números y gráficos se recalculan al instante.",
+        targetSelector: '[data-tour="stats-period"] || [data-tour="stats-header"]',
+      },
+      {
+        stepNumber: 2,
+        taskTitle: "Indicadores principales",
+        instruction:
+          "Facturación total, ticket promedio, tasa de asistencia y turnos atendidos. La etiqueta verde o roja compara con el período anterior.",
+        targetSelector: '[data-tour="stats-kpis"]',
+      },
+      {
+        stepNumber: 3,
+        taskTitle: "Evolución en el tiempo",
+        instruction: "Seguí la facturación o los turnos día a día y detectá cuál es tu día más fuerte.",
+        tip: "Pasá el dedo o el mouse por el gráfico para ver el valor exacto de cada día.",
+        targetSelector: '[data-tour="stats-chart"]',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Métricas de operación",
+        instruction: "Turnos totales, atendidos, cancelados o ausentes y clientes activos del período.",
+        targetSelector: '[data-tour="stats-pods"]',
+      },
+      {
+        stepNumber: 5,
+        taskTitle: "Cobros y horarios pico",
+        instruction:
+          "Cómo te pagan tus clientes y en qué horario se concentra la actividad, para reforzar el equipo cuando más se necesita.",
+        targetSelector: '[data-tour="stats-insights"]',
+      },
+    ],
+  },
   transferencias: {
     id: "transferencias",
     title: "Transferencias Bancarias",
     badge: "Pagos Online",
     icon: Receipt,
     summary:
-      "Verificá comprobantes bancarios que envían tus clientes al señar o pagar sus turnos por transferencia bancaria en Paraguay.",
+      "Revisá los comprobantes que suben tus clientes al señar o pagar un turno por transferencia, y aprobalos o rechazalos.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Configurar tus datos de cuenta bancaria",
+        taskTitle: "Comprobantes por revisar",
         instruction:
-          "Cargá tu banco (Itaú, Continental, Ueno, etc.), número de cuenta, Cédula o RUC y titular para que el cliente reciba tus datos al reservar.",
+          "Cuando un cliente paga por transferencia, su comprobante llega acá. El resumen te muestra cuántos están pendientes y el monto total.",
+        targetSelector: '[data-tour="transferencias-summary"] || [data-tour="transferencias-header"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Revisar comprobantes pendientes de validación",
+        taskTitle: "Revisar y aprobar",
         instruction:
-          "Cuando un cliente sube su comprobante bancario, aparece acá con el número de transacción y monto transferido.",
-      },
-      {
-        stepNumber: 3,
-        taskTitle: "Aprobar y confirmar el turno",
-        instruction:
-          "Al verificar en tu app bancaria que el dinero ingresó, tocá 'Aprobar'. La reserva pasa a confirmada y se envía el comprobante por WhatsApp.",
+          "Abrí un comprobante, verificá en tu app del banco que el dinero entró y tocá 'Aprobar'. El turno queda confirmado. Si no coincide, rechazalo indicando el motivo.",
+        tip: "Filtrá por estado para ver solo los pendientes.",
+        targetSelector: '[data-tour="transferencias-list"]',
       },
     ],
   },
@@ -894,85 +976,119 @@ export const ALL_SECTION_TOURS: Record<string, SectionTourData> = {
     title: "Kit de Marketing & Código QR",
     badge: "Difusión",
     icon: QrCode,
-    summary:
-      "Descargá carteles para imprimir, código QR para tu mostrador y materiales listos para colocar en vidrieras y redes sociales.",
+    summary: "Tu link de reservas, el QR para el mostrador y los píxeles para medir tus anuncios.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Descargar tu Código QR en alta definición",
+        taskTitle: "Tu link de reservas",
         instruction:
-          "Hacé clic en 'Descargar QR'. Viene optimizado en alta resolución para colocar en la recepción, espejos o tarjetas personales.",
+          "Copiá el link o compartilo directo. Pegalo en la biografía de Instagram, en TikTok o en las respuestas rápidas de WhatsApp.",
+        targetSelector: '[data-tour="extras-link"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Imprimir el cartel de mostrador",
+        taskTitle: "Cartel con QR para el local",
         instruction:
-          "El sistema te genera una hoja lista en formato A4 con las instrucciones 'Escaneá y Agendá tu Turno' con los colores de tu marca.",
+          "Elegí el estilo del cartel y descargá solo el QR o imprimí el cartel completo para la recepción, espejos o vidriera.",
+        targetSelector: '[data-tour="extras-poster"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Copiar enlace corto para biografía de Instagram",
+        taskTitle: "Medí tus anuncios",
         instruction:
-          "Usá el botón 'Copiar enlace' para pegarlo directo en el campo 'Sitio Web' de tu perfil de Instagram o en el link de TikTok.",
+          "Conectá los píxeles de Meta o TikTok para saber cuántas reservas trae cada campaña.",
+        targetSelector: '[data-tour="extras-pixels"]',
       },
     ],
   },
   configuracion: {
     id: "configuracion",
-    title: "Configuración General del Negocio",
+    title: "Configuración del Negocio",
     badge: "Ajustes",
     icon: Settings,
-    summary:
-      "Establecé los horarios semanales de atención, número de contacto oficial y reglas de anticipación de reservas.",
+    summary: "Datos del local, horario de atención, medios de pago y el aspecto del panel.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Definir días y horarios de apertura",
+        taskTitle: "Completá tu negocio",
         instruction:
-          "Marcá qué días abrís (Lunes a Sábado) y los turnos de mañana y tarde. Los días desmarcados figurarán como cerrados en la web.",
+          "La lista te muestra qué datos faltan. Tocá cualquier ítem pendiente para ir directo a completarlo.",
+        targetSelector: '[data-tour="config-checklist"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Configurar límite de anticipación",
+        taskTitle: "Perfil del negocio",
         instruction:
-          "Elegí con cuántos días de anticipación pueden reservar tus clientes (ej: máximo 15 días o 30 días) para tener previsibilidad.",
+          "Nombre, WhatsApp y dirección aparecen en tu página de reservas y en los mensajes. Los cambios se guardan con el botón 'Guardar' de abajo.",
+        tip: "También podés guardar con Ctrl/⌘ + S.",
+        targetSelector: '#perfil',
       },
       {
         stepNumber: 3,
-        taskTitle: "Número oficial para notificaciones",
+        taskTitle: "Horario de atención",
         instruction:
-          "Ingresá el número de celular del negocio donde querés recibir las alertas de nuevas reservas y cancelaciones.",
+          "El asistente de WhatsApp usa este horario para avisar cuando el local está cerrado. Los turnos disponibles salen del horario de cada profesional en Equipo.",
+        targetSelector: '#horarios',
+      },
+      {
+        stepNumber: 4,
+        taskTitle: "Medios de pago",
+        instruction: "Activá las formas de cobro que acepta tu local. Son las que aparecen al agendar un turno.",
+        targetSelector: '#pagos',
       },
     ],
   },
   suscripcion: {
     id: "suscripcion",
-    title: "Mi Suscripción & Plan Agendate",
+    title: "Mi Suscripción",
     badge: "Planes & Soporte",
     icon: Crown,
-    summary:
-      "Consultá el estado de tu cuenta, consumo mensual de turnos y contactá a soporte técnico prioritario.",
+    summary: "Tu plan, los turnos que usaste este mes y cómo mejorarlo o consultar por WhatsApp.",
     steps: [
       {
         stepNumber: 1,
-        taskTitle: "Revisar el cupo de reservas del mes",
+        taskTitle: "Tu plan y el uso del mes",
         instruction:
-          "La barra de progreso te muestra cuántas reservas recibiste y cuánto cupo te queda en tu periodo de facturación actual.",
+          "Acá ves tu plan activo y cuántos turnos usaste este mes. El contador se reinicia el 1° de cada mes.",
+        targetSelector: '[data-tour="suscripcion-plan"]',
       },
       {
         stepNumber: 2,
-        taskTitle: "Mejorar tu plan para turnos ilimitados",
+        taskTitle: "Mejorar o cambiar de plan",
         instruction:
-          "Si estás creciendo y necesitás más colaboradores o reservas sin límite, podés pasar al plan PRO o VIP en cualquier momento.",
+          "Compará los planes y elegí pago mensual o anual. Al tocar un plan se abre WhatsApp con el mensaje listo para nuestro equipo.",
+        targetSelector: '[data-tour="suscripcion-plans"]',
       },
       {
         stepNumber: 3,
-        taskTitle: "Contactar a soporte prioritario vía WhatsApp",
-        instruction:
-          "Tocá el botón 'Chatear con Soporte' para recibir ayuda directa de nuestro equipo en Asunción por cualquier consulta.",
+        taskTitle: "Ayuda por WhatsApp",
+        instruction: "Pagos, facturas, configuración o cancelación: elegí la consulta y te respondemos por WhatsApp.",
+        targetSelector: '[data-tour="suscripcion-help"]',
       },
     ],
   },
+};
+/** Page of each guide, so picking a guide also takes you there */
+const SECTION_ROUTES: Record<string, string> = {
+  inicio: "/dashboard",
+  calendario: "/dashboard/calendario",
+  "nueva-reserva": "/dashboard/nueva-reserva",
+  "bloquear-horario": "/dashboard/bloquear-horario",
+  crm: "/dashboard/crm",
+  clientes: "/dashboard/clientes",
+  servicios: "/dashboard/servicios",
+  productos: "/dashboard/productos",
+  caja: "/dashboard/caja",
+  comisiones: "/dashboard/comisiones",
+  fidelizacion: "/dashboard/fidelizacion",
+  whatsapp: "/dashboard/whatsapp",
+  apariencia: "/dashboard/apariencia",
+  equipo: "/dashboard/equipo",
+  estadisticas: "/dashboard/estadisticas",
+  transferencias: "/dashboard/transferencias",
+  extras: "/dashboard/extras",
+  configuracion: "/dashboard/configuracion",
+  suscripcion: "/dashboard/suscripcion",
 };
 
 export default function GuidedTour() {
@@ -997,6 +1113,8 @@ export default function GuidedTour() {
   const detectedSectionKey = useMemo(() => {
     if (!pathname) return "inicio";
     if (pathname.includes("/nueva-reserva")) return "nueva-reserva";
+    if (pathname.includes("/bloquear-horario")) return "bloquear-horario";
+    if (pathname.includes("/estadisticas")) return "estadisticas";
     if (pathname.includes("/calendario")) return "calendario";
     if (pathname.includes("/crm")) return "crm";
     if (pathname.includes("/clientes")) return "clientes";
@@ -1084,16 +1202,35 @@ export default function GuidedTour() {
     }
   }, [pathname, openTour]);
 
-  const currentSection = ALL_SECTION_TOURS[selectedSectionKey]?.steps.length
-    ? ALL_SECTION_TOURS[selectedSectionKey]
-    : ALL_SECTION_TOURS.inicio;
-  const currentStep =
-    currentSection.steps[currentStepIndex] || currentSection.steps[0];
-  const IconComponent = currentSection.icon;
-
   // Window dimensions for dynamic positioning
   const [windowDimensions, setWindowDimensions] = useState({ width: 1200, height: 800 });
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const isCompactViewport = windowDimensions.width < 1024;
+
+  const baseSection = ALL_SECTION_TOURS[selectedSectionKey]?.steps.length
+    ? ALL_SECTION_TOURS[selectedSectionKey]
+    : ALL_SECTION_TOURS.inicio;
+  // Desktop-only steps are left out on phones/tablets so the counter matches what you see
+  const currentSection = useMemo(
+    () =>
+      isCompactViewport
+        ? { ...baseSection, steps: baseSection.steps.filter((s) => !s.desktopOnly) }
+        : baseSection,
+    [baseSection, isCompactViewport]
+  );
+  const currentStep =
+    currentSection.steps[currentStepIndex] || currentSection.steps[0];
+  const stepInstruction =
+    isCompactViewport && currentStep.mobileInstruction ? currentStep.mobileInstruction : currentStep.instruction;
+  const IconComponent = currentSection.icon;
+  const [showTip, setShowTip] = useState(false);
+  // Close the tip when the step or guide changes
+  const tipKey = `${selectedSectionKey}:${currentStepIndex}`;
+  const [tipFor, setTipFor] = useState(tipKey);
+  if (tipFor !== tipKey) {
+    setTipFor(tipKey);
+    setShowTip(false);
+  }
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1107,6 +1244,7 @@ export default function GuidedTour() {
   }, []);
 
   const isTransitioningRef = useRef(false);
+  const lookupRunRef = useRef(0);
 
   // Helper to determine the tab required for any step
   const getTabForStep = useCallback((step?: SectionStep): "estilos" | "fotos" | "botones" | "textos" | "asistente" | "recordatorios" | null => {
@@ -1168,8 +1306,11 @@ export default function GuidedTour() {
       }
     }
 
+    // Each lookup gets a token; a newer step cancels older retries so they can't move the tour
+    const runId = ++lookupRunRef.current;
     let retriesLeft = 40;
     const checkElement = () => {
+      if (runId !== lookupRunRef.current) return;
       try {
         const el = findVisibleTarget(currentStep.targetSelector!);
         if (el) {
@@ -1181,13 +1322,33 @@ export default function GuidedTour() {
               currentStep.targetSelector?.includes("sidebar") ||
               currentStep.targetSelector?.includes("fixed");
 
-            if (isFixedNav) {
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            } else {
-              el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-            }
+            // Instant scroll: smooth scrolling gets interrupted while the overlay re-renders and the
+            // target ended up off screen.
+            const bringIntoView = () => {
+              if (isFixedNav) {
+                window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+                return;
+              }
+              const compact = window.innerWidth < 1024;
+              const headerOffset = compact ? 76 : 100;
+              const prevMargin = el.style.scrollMarginTop;
+              el.style.scrollMarginTop = `${headerOffset}px`;
+              // Always just below the top bar: the room underneath stays free for the guide card
+              el.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start", inline: "nearest" });
+              el.style.scrollMarginTop = prevMargin;
+            };
+            bringIntoView();
+            let rescrolls = 0;
             const syncRect = () => {
-              const fresh = el.getBoundingClientRect();
+              if (runId !== lookupRunRef.current) return;
+              let fresh = el.getBoundingClientRect();
+              // Content that was still animating in (modals, tabs) can push the target away: scroll again
+              const offScreen = fresh.top > window.innerHeight - 60 || fresh.bottom < 60;
+              if (offScreen && rescrolls < 3 && !isFixedNav) {
+                rescrolls++;
+                bringIntoView();
+                fresh = el.getBoundingClientRect();
+              }
               if (fresh.width > 0 && fresh.height > 0) {
                 setTargetRect(fresh);
               }
@@ -1198,6 +1359,8 @@ export default function GuidedTour() {
             setTimeout(syncRect, 300);
             setTimeout(syncRect, 500);
             setTimeout(syncRect, 750);
+            setTimeout(syncRect, 1100);
+            setTimeout(syncRect, 1600);
             return;
           }
         }
@@ -1206,15 +1369,8 @@ export default function GuidedTour() {
           retriesLeft--;
           setTimeout(checkElement, 50);
         } else {
+          // Not on screen: the card stays centered and explains the step without a highlight
           setTargetRect(null);
-          // Bloques que solo existen en escritorio: en móvil se saltan en la dirección de navegación.
-          if (window.innerWidth < 1024) {
-            const dir = stepDirectionRef.current;
-            setCurrentStepIndex((idx) => {
-              const next = idx + dir;
-              return next >= 0 && next < currentSection.steps.length ? next : idx;
-            });
-          }
         }
       } catch {
         setTargetRect(null);
@@ -1252,11 +1408,12 @@ export default function GuidedTour() {
     };
 
     window.addEventListener("resize", handleReposition);
-    window.addEventListener("scroll", handleReposition, { passive: true });
+    // Capture phase: on mobile the page scrolls inside <main>, whose scroll events don't reach window
+    document.addEventListener("scroll", handleReposition, { passive: true, capture: true });
     return () => {
       if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleReposition);
-      window.removeEventListener("scroll", handleReposition);
+      document.removeEventListener("scroll", handleReposition, { capture: true });
     };
   }, [isTourOpen, currentStepIndex, currentStep, updateTargetRect]);
 
@@ -1480,10 +1637,15 @@ export default function GuidedTour() {
     } catch {}
   }, [isTourOpen, currentStepIndex, currentStep, handleNext]);
 
+  // Picking a guide also opens its page, so the highlights point at real elements
   const handleSelectSection = (key: string) => {
-    setSelectedSectionKey(key);
-    setCurrentStepIndex(0);
     setShowSectionPicker(false);
+    setSearchFilter("");
+    setCurrentStepIndex(0);
+    setSelectedSectionKey(key);
+    openTour(key);
+    const route = SECTION_ROUTES[key];
+    if (route && pathname !== route) router.push(route);
   };
 
   const filteredSections = useMemo(() => {
@@ -1541,7 +1703,10 @@ export default function GuidedTour() {
 
     if (isCompactLayout) {
       // La tarjeta va del lado opuesto al elemento resaltado para no taparlo.
-      const targetInLowerHalf = targetRect.top + targetRect.height / 2 > H / 2;
+      // Card goes where there is more free room (above or below the highlight), so tall blocks keep their top visible
+      const spaceAbove = targetRect.top - 68;
+      const spaceBelow = H - 88 - targetRect.bottom;
+      const targetInLowerHalf = spaceAbove > spaceBelow;
       cardStyle = {
         position: "fixed",
         left: 16,
@@ -1745,7 +1910,7 @@ export default function GuidedTour() {
                           className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
                         >
                           <IconComponent className="h-4 w-4 text-primary shrink-0" />
-                          <span className="truncate max-w-[190px] sm:max-w-xs">{currentSection.title}</span>
+                          <span className="truncate max-w-[150px] min-[360px]:max-w-[190px] sm:max-w-xs">{currentSection.title}</span>
                           <ChevronDown
                             className={`h-3.5 w-3.5 text-slate-400 transition-transform ${
                               showSectionPicker ? "rotate-180" : ""
@@ -1755,7 +1920,7 @@ export default function GuidedTour() {
 
                         {/* Dropdown to switch sections across ALL 18 pages */}
                         {showSectionPicker && (
-                          <div className="absolute left-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-2xl z-30 space-y-1">
+                          <div className="absolute left-0 top-full mt-2 w-[min(20rem,calc(100vw-3rem))] max-h-[min(24rem,60vh)] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-2xl z-30 space-y-1">
                             <div className="relative mb-2">
                               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                               <input
@@ -1839,11 +2004,13 @@ export default function GuidedTour() {
                           {currentStep.taskTitle}
                         </h4>
 
-                        {/* Practical Tip Icon with Pure Hover Tooltip (Zero space wasted, strictly on hover) */}
+                        {/* Tip: hover on desktop, tap on touch screens */}
                         {currentStep.tip && (
                           <div className="relative group/tip shrink-0">
                             <button
                               type="button"
+                              onClick={() => setShowTip((v) => !v)}
+                              aria-expanded={showTip}
                               className="flex items-center justify-center h-6 w-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-all cursor-pointer shadow-2xs"
                               aria-label="Ver consejo práctico"
                             >
@@ -1851,7 +2018,7 @@ export default function GuidedTour() {
                             </button>
 
                             {/* Floating Tooltip: ONLY visible on hover */}
-                            <div className="pointer-events-none absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl bg-slate-950 text-white p-3 text-xs shadow-2xl opacity-0 scale-95 group-hover/tip:opacity-100 group-hover/tip:scale-100 transition-all duration-150 ease-out z-[100000] border border-amber-400/50">
+                            <div data-floating-tip className={`pointer-events-none absolute right-0 bottom-full mb-2 w-[min(18rem,calc(100vw-4rem))] sm:w-80 rounded-2xl bg-slate-950 text-white p-3 text-xs shadow-2xl ${showTip ? "opacity-100 scale-100" : "opacity-0 scale-95"} group-hover/tip:opacity-100 group-hover/tip:scale-100 transition-all duration-150 ease-out z-[100000] border border-amber-400/50`}>
                               <div className="flex items-start gap-2.5">
                                 <Lightbulb className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                                 <div>
@@ -1871,12 +2038,12 @@ export default function GuidedTour() {
                       </div>
 
                       <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        {currentStep.instruction}
+                        {stepInstruction}
                       </p>
                     </div>
 
                     {/* Footer navigation */}
-                    <div className="mt-4 flex items-center justify-between pt-1">
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-1">
                       {currentStepIndex > 0 ? (
                         <button
                           type="button"
@@ -1897,7 +2064,7 @@ export default function GuidedTour() {
                         </button>
                       )}
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
                         {currentStep.actionLabel && (
                           <button
                             type="button"
@@ -1958,7 +2125,7 @@ export default function GuidedTour() {
                   ¿Seguro que querés salir de la visita guiada?
                 </h4>
                 <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Podés retomarla en cualquier momento desde el botón inferior derecho.
+                  Podés retomarla cuando quieras desde el botón de la brújula (en el celular, desde “Más”).
                 </p>
               </div>
               <div className="pt-2 flex items-center justify-center gap-2.5">

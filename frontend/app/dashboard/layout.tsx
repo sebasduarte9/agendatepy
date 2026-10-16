@@ -21,7 +21,6 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <DashboardShell
       initialTenantSlug={session.tenantSlug || undefined}
-      initialTenantId={session.tenantId || undefined}
       userName={session.name}
     >
       {children}

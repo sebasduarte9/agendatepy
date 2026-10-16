@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import crypto from "node:crypto";
 import { getGoogleAuthUrl, getAuthBaseUrl } from "@/lib/auth/google";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   const baseUrl = getAuthBaseUrl(request);
   const redirectUri = `${baseUrl}/api/auth/callback/google`;
 
-  const state = Math.random().toString(36).substring(2, 15);
+  const state = crypto.randomBytes(24).toString("base64url");
   const authUrl = getGoogleAuthUrl(redirectUri, state);
 
   const response = NextResponse.redirect(authUrl);

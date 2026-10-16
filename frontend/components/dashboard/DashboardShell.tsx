@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -8,11 +8,11 @@ import MobileTabBar from "./MobileTabBar";
 import ToastProvider from "./ui/ToastProvider";
 import GuidedTour from "./GuidedTour";
 import { useDashboardStore } from "@/store/useDashboardStore";
+import DashboardLoading from "@/app/dashboard/loading";
 
 interface DashboardShellProps {
   children: ReactNode;
   initialTenantSlug?: string;
-  initialTenantId?: string;
   userName?: string;
 }
 
@@ -36,7 +36,6 @@ function hexToRgb(hex: string): string {
 export default function DashboardShell({
   children,
   initialTenantSlug,
-  initialTenantId,
   userName,
 }: DashboardShellProps) {
   const pathname = usePathname();
@@ -44,7 +43,17 @@ export default function DashboardShell({
   const router = useRouter();
   const color = useDashboardStore((s) => s.business.primaryColor);
   const syncFromDatabase = useDashboardStore((s) => s.syncFromDatabase);
-  const updateBusiness = useDashboardStore((s) => s.updateBusiness);
+  // Pages read the store, which starts with demo data: wait for the first sync so nobody sees
+  // invented numbers (e.g. negative balances) flash before the real ones. Fallback after 8s.
+  const isInitialSyncDone = useDashboardStore((s) => s.isInitialSyncDone);
+  const [syncTimedOut, setSyncTimedOut] = useState(false);
+  useEffect(() => {
+    if (isInitialSyncDone) return;
+    const timer = setTimeout(() => setSyncTimedOut(true), 8000);
+    return () => clearTimeout(timer);
+  }, [isInitialSyncDone]);
+  const showContent = isInitialSyncDone || syncTimedOut;
+  const setBusinessLocal = useDashboardStore((s) => s.setBusinessLocal);
   const setUserName = useDashboardStore((s) => s.setUserName);
 
   // Background warm-up and compilation of all core routes into browser router cache
@@ -69,12 +78,12 @@ export default function DashboardShell({
       setUserName(userName);
     }
     if (initialTenantSlug) {
-      updateBusiness({ slug: initialTenantSlug });
+      setBusinessLocal({ slug: initialTenantSlug });
       syncFromDatabase(initialTenantSlug);
     } else {
       syncFromDatabase();
     }
-  }, [initialTenantSlug, syncFromDatabase, updateBusiness, userName, setUserName]);
+  }, [initialTenantSlug, syncFromDatabase, setBusinessLocal, userName, setUserName]);
 
   useEffect(() => {
     if (typeof document !== "undefined" && color) {
@@ -103,34 +112,21 @@ export default function DashboardShell({
         <div className="ambient-orb ambient-orb-3" />
       </div>
 
-      {/* 3. Viewport Desktop: Workspace Flotante con Rail Glass Estático + Burbuja Header Estática + App Shell Envolvente */}
-      <div className="relative z-10 hidden lg:flex glass-workspace w-full pl-[98px] pr-4.5 sm:pr-5 py-[18px] flex-col gap-3.5">
+      {/* One responsive shell keeps the active page mounted exactly once across breakpoints. */}
+      <div className="mobile-dashboard-shell relative z-10 flex h-dvh min-h-0 min-w-0 w-full flex-col gap-2.5 overflow-hidden pl-[calc(env(safe-area-inset-left,0px)+0.625rem)] pr-[calc(env(safe-area-inset-right,0px)+0.625rem)] pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-[calc(4.625rem+env(safe-area-inset-bottom,0px))] lg:h-auto lg:min-h-[calc(100vh-36px)] lg:overflow-visible lg:gap-3.5 lg:pl-[98px] lg:pr-5 lg:py-[18px]">
         <Sidebar variant="rail" />
-        <div className="glass-header-bubble w-full shrink-0 sticky top-[18px] z-[60]">
+        <div className="glass-header-bubble w-full shrink-0 z-[60] lg:sticky lg:top-[18px]">
           <Header />
         </div>
-        <div className={`glass-app-shell ${isCrmRoute ? "crm-contained-shell" : ""} flex-1 min-w-0 w-full`}>
-          <main className="main-content flex-1 w-full max-w-full min-w-0 p-5 lg:p-7 overflow-x-clip">
-            {children}
-          </main>
-        </div>
-      </div>
-
-      {/* 4. Viewport Móvil (< lg): Shell Glassmorphic Adaptativo con Burbuja Header */}
-      {/* Bottom padding reserves the floating MobileTabBar (66px + 8px gap) so no section ends hidden behind it */}
-      <div className="mobile-dashboard-shell relative z-10 flex lg:hidden h-dvh min-h-0 min-w-0 flex-col gap-2.5 overflow-hidden pl-[calc(env(safe-area-inset-left,0px)+0.625rem)] pr-[calc(env(safe-area-inset-right,0px)+0.625rem)] pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-[calc(4.625rem+env(safe-area-inset-bottom,0px))]">
-        <div className="glass-header-bubble w-full shrink-0 z-[60]">
-          <Header />
-        </div>
-        <div className={`glass-app-shell ${isCrmRoute ? "crm-contained-shell" : ""} min-h-0 flex-1 min-w-0 rounded-[22px]`}>
+        <div className={`glass-app-shell ${isCrmRoute ? "crm-contained-shell" : ""} min-h-0 flex-1 min-w-0 w-full rounded-[22px] lg:rounded-[30px] lg:min-h-[calc(100vh-36px)]`}>
           <main
-            className={`main-content min-h-0 flex-1 w-full max-w-full min-w-0 overflow-x-clip overflow-y-auto overscroll-contain p-3.5 sm:p-5 ${
+            className={`main-content min-h-0 flex-1 w-full max-w-full min-w-0 overflow-x-clip overflow-y-auto overscroll-contain p-3.5 sm:p-5 lg:overflow-y-visible lg:p-7 ${
               pathname?.startsWith("/dashboard/caja")
                 ? "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 : ""
             }`}
           >
-            {children}
+            {showContent ? children : <DashboardLoading />}
           </main>
         </div>
         <MobileTabBar />

@@ -938,7 +938,7 @@ export default function AparienciaPage() {
                         key={cat.id}
                         type="button"
                         onClick={() => setFontCategory(cat.id)}
-                        className={`px-2 py-0.5 rounded transition ${
+                        className={`inline-flex min-h-8 items-center px-2.5 rounded-md transition ${
                           fontCategory === cat.id
                             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs"
                             : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
@@ -953,7 +953,7 @@ export default function AparienciaPage() {
                 {/* Search Bar + Quick Dropdown */}
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <Search className="pointer-events-none absolute z-10 left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                     <input
                       type="text"
                       placeholder="Buscar fuente (ej: Outfit, Bodoni, Cinzel)..."
@@ -1247,7 +1247,7 @@ const PhonePreviewPanel = memo(function PhonePreviewPanel({
               <button
                 type="button"
                 onClick={() => setPhoneThemeMode("light")}
-                className={`px-1.5 py-0.5 rounded transition cursor-pointer ${
+                className={`inline-flex min-h-8 items-center px-2 rounded-md transition cursor-pointer ${
                   phoneThemeMode === "light"
                     ? "bg-white text-slate-900 shadow-2xs"
                     : "text-slate-500 hover:text-slate-900"
@@ -1259,7 +1259,7 @@ const PhonePreviewPanel = memo(function PhonePreviewPanel({
               <button
                 type="button"
                 onClick={() => setPhoneThemeMode("dark")}
-                className={`px-1.5 py-0.5 rounded transition cursor-pointer ${
+                className={`inline-flex min-h-8 items-center px-2 rounded-md transition cursor-pointer ${
                   phoneThemeMode === "dark"
                     ? "bg-slate-900 text-white shadow-2xs"
                     : "text-slate-500 hover:text-slate-900"

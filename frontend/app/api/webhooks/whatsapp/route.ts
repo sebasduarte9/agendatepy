@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { geminiPool } from "@/lib/ai/gemini-pool";
 import { processCustomerMessageWithAI } from "@/lib/ai/whatsapp-agent";
@@ -323,18 +324,35 @@ export async function POST(req: NextRequest) {
 
       if (!isPlatformBot && tenant && base64ImageForOcr) {
         detectedIntent = "sipap_ocr";
+        const pendingAppointment = await prisma.appointment.findFirst({
+          where: {
+            tenantId: tenant.id,
+            clientPhone: { contains: rawDigits.slice(-8) },
+            status: "PENDING_ACTION",
+          },
+          orderBy: { createdAt: "desc" },
+        });
+        // Guarda el comprobante para revisarlo en /dashboard/transferencias (la imagen queda en la base)
+        const saveReceipt = ({ clientName, ...fields }: Partial<Prisma.PaymentReceiptUncheckedCreateInput>) =>
+          prisma.paymentReceipt
+            .create({
+              data: {
+                ...fields,
+                tenantId: tenant.id,
+                appointmentId: pendingAppointment?.id ?? null,
+                clientName: pendingAppointment?.clientName || clientName || "Cliente WhatsApp",
+                clientPhone: senderPhone,
+                channel: "whatsapp",
+                imageData: Buffer.from(base64ImageForOcr as string, "base64"),
+                imageMime: "image/jpeg",
+              },
+            })
+            .catch((err) => console.error("[WhatsApp Webhook] No se pudo guardar el comprobante:", err));
+
         try {
           const receiptData = await geminiPool.analyzeSipapReceipt(base64ImageForOcr, "image/jpeg", senderPhone);
           if (receiptData.isSipap && receiptData.amount > 0) {
             actionPerformed = "SIPAP_RECEIPT_VALIDATED";
-            const pendingAppointment = await prisma.appointment.findFirst({
-              where: {
-                tenantId: tenant.id,
-                clientPhone: { contains: rawDigits.slice(-8) },
-                status: "PENDING_ACTION",
-              },
-              orderBy: { createdAt: "desc" },
-            });
 
             if (pendingAppointment) {
               await prisma.appointment.update({
@@ -344,16 +362,38 @@ export async function POST(req: NextRequest) {
               actionPerformed = "SIPAP_APPOINTMENT_CONFIRMED";
             }
 
+            await saveReceipt({
+              clientName: data.pushName || undefined,
+              amount: Math.round(receiptData.amount),
+              bankOrigin: receiptData.bank || null,
+              operationNumber: receiptData.operationNumber || null,
+              ocrVerified: true,
+              ocrConfidence: Number.isFinite(receiptData.confidence) ? receiptData.confidence : null,
+              // Con turno pendiente se confirma solo; sin turno queda para revisión manual
+              status: pendingAppointment ? "APPROVED" : "PENDING",
+              reviewedBy: pendingAppointment ? "Verificación automática" : null,
+              reviewedAt: pendingAppointment ? new Date() : null,
+            });
+
             replyText = `¡Muchas gracias! Recibimos y validamos tu comprobante de transferencia:\n\n` +
               ` *Banco:* ${receiptData.bank}\n` +
               ` *Monto:* ₲ ${receiptData.amount.toLocaleString("es-PY")}\n` +
               ` *N° Operación:* ${receiptData.operationNumber}\n\n` +
-              ` Tu turno ha quedado *CONFIRMADO*. ¡Te esperamos en ${tenant.name}!`;
+              (pendingAppointment
+                ? ` Tu turno ha quedado *CONFIRMADO*. ¡Te esperamos en ${tenant.name}!`
+                : ` Nuestro equipo lo va a revisar y te confirmamos a la brevedad.`);
           } else {
+            // Solo se guarda si espera un pago: evita llenar Transferencias con fotos que no son comprobantes
+            if (pendingAppointment) {
+              await saveReceipt({ clientName: data.pushName || undefined, note: "No se detectó un comprobante automáticamente." });
+            }
             replyText = `Recibimos tu imagen. Nuestro equipo revisará el comprobante a la brevedad para confirmar tu turno. ¡Muchas gracias!`;
           }
         } catch (err: any) {
           console.error("[WhatsApp Webhook] Error en OCR de transferencia bancaria:", err);
+          if (pendingAppointment) {
+            await saveReceipt({ clientName: data.pushName || undefined, note: "No se pudo leer el comprobante automáticamente." });
+          }
           replyText = `Recibimos tu comprobante. Lo verificaremos enseguida para confirmar tu turno.`;
         }
       } else if (isPlatformBot) {

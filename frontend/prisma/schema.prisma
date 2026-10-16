@@ -63,6 +63,7 @@ model Tenant {
   staff          Staff[]
   services       Service[]
   products       Product[]
+  productOrders  ProductOrder[]
   appointments   Appointment[]
   users          User[]
   clients        Client[]
@@ -72,6 +73,7 @@ model Tenant {
   commissionPayouts  CommissionPayout[]
   loyaltyRewards LoyaltyReward[]
   loyaltyRedemptions LoyaltyRedemption[]
+  paymentReceipts PaymentReceipt[]
   scheduleBlocks ScheduleBlock[]
   platformEvents PlatformEvent[]
   webAnalyticsSessions WebAnalyticsSession[]
@@ -142,6 +144,7 @@ model Client {
   tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   appointments       Appointment[]
   loyaltyRedemptions LoyaltyRedemption[]
+  productOrders      ProductOrder[]
 
   @@index([tenantId])
   @@index([tenantId, phone])
@@ -330,6 +333,7 @@ model Appointment {
   service     Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   client      Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
   commissions Commission[]
+  paymentReceipts PaymentReceipt[]
 
   @@index([tenantId, startTime])
   @@index([tenantId, staffId, startTime])
@@ -349,14 +353,60 @@ model Product {
   description String?  @default("")
   imageUrl    String?  @map("image_url")
   isActive    Boolean  @default(true) @map("is_active")
+  /// Oferta: "time" (vence en saleExpiresAt), "quantity" (hasta saleMaxUnits) o "both"
+  isOnSale      Boolean   @default(false) @map("is_on_sale")
+  salePrice     Int?      @map("sale_price")
+  saleType      String?   @map("sale_type")
+  saleExpiresAt DateTime? @map("sale_expires_at") @db.Timestamptz(3)
+  saleMaxUnits  Int?      @map("sale_max_units")
+  saleStartedAt DateTime? @map("sale_started_at") @db.Timestamptz(3)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderItems ProductOrderItem[]
 
   @@index([tenantId])
   @@index([tenantId, isActive])
   @@map("products")
+}
+
+enum PaymentReceiptStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@map("payment_receipt_status")
+}
+
+/// Comprobantes de transferencia (SIPAP) recibidos por WhatsApp, para revisar en el panel.
+/// La imagen se guarda en la base (no en /public) porque contiene datos bancarios.
+model PaymentReceipt {
+  id              String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String               @map("tenant_id") @db.Uuid
+  appointmentId   String?              @map("appointment_id") @db.Uuid
+  clientName      String               @map("client_name")
+  clientPhone     String?              @map("client_phone")
+  amount          Int                  @default(0)
+  status          PaymentReceiptStatus @default(PENDING)
+  note            String               @default("")
+  bankOrigin      String?              @map("bank_origin")
+  operationNumber String?              @map("operation_number")
+  ocrVerified     Boolean              @default(false) @map("ocr_verified")
+  ocrConfidence   Float?               @map("ocr_confidence")
+  channel         String               @default("whatsapp")
+  imageData       Bytes?               @map("image_data")
+  imageMime       String?              @map("image_mime")
+  reviewedBy      String?              @map("reviewed_by")
+  reviewedAt      DateTime?            @map("reviewed_at") @db.Timestamptz(3)
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, createdAt])
+  @@index([appointmentId])
+  @@map("payment_receipts")
 }
 
 model ScheduleBlock {
@@ -507,3 +557,57 @@ model WebAnalyticsEvent {
 
 
 
+
+enum ProductOrderStatus {
+  PENDING
+  CONFIRMED
+  DELIVERED
+  CANCELLED
+
+  @@map("product_order_status")
+}
+
+/// Pedido de productos (venta desde el CRM o el local). Al pasar a DELIVERED se
+/// descuenta stock y se registra el ingreso en caja una sola vez (cash_movement_id).
+model ProductOrder {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String             @map("tenant_id") @db.Uuid
+  orderNumber    String             @map("order_number")
+  clientId       String?            @map("client_id") @db.Uuid
+  clientName     String             @map("client_name")
+  clientPhone    String             @map("client_phone")
+  sellerStaffId  String?            @map("seller_staff_id") @db.Uuid
+  status         ProductOrderStatus @default(PENDING)
+  paymentMethod  String             @default("efectivo") @map("payment_method")
+  deliveryType   String             @default("retirar_en_local") @map("delivery_type")
+  notes          String?
+  totalAmount    Int                @map("total_amount")
+  cashMovementId String?            @unique @map("cash_movement_id") @db.Uuid
+  deliveredAt    DateTime?          @map("delivered_at") @db.Timestamptz(3)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client Client?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  items  ProductOrderItem[]
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+  @@map("product_orders")
+}
+
+model ProductOrderItem {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String  @map("order_id") @db.Uuid
+  productId   String? @map("product_id") @db.Uuid
+  productName String  @map("product_name")
+  qty         Int
+  unitPrice   Int     @map("unit_price")
+
+  order   ProductOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("product_order_items")
+}

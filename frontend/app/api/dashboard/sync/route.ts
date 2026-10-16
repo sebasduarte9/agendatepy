@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
+import { UUID_REGEX } from "@/lib/api-guard";
+import { saleDataFromPatch, saleUnitsSoldByProduct, serializeSale } from "@/lib/product-sales";
+import { receiptListSelect, serializeReceipt } from "@/lib/payment-receipts";
 import { AppointmentStatus } from "@prisma/client";
 import { normalizeParaguayPhone } from "@/lib/dashboard-dates";
 import { loyaltyIncrementForVisit } from "@/lib/loyalty";
@@ -62,7 +65,9 @@ export async function GET(request: NextRequest) {
           },
         },
         staff: true,
-        clients: true,
+        clients: {
+          include: { _count: { select: { loyaltyRedemptions: true } } },
+        },
         products: true,
         scheduleBlocks: {
           orderBy: { startTime: "asc" },
@@ -127,6 +132,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const saleUnits = await saleUnitsSoldByProduct(tenant.id, tenant.products);
+    const receipts = await prisma.paymentReceipt.findMany({
+      where: { tenantId: tenant.id },
+      select: receiptListSelect,
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    });
+
     const clientsList = tenant.clients.map((c) => {
       const clientNormPhone = normalizeParaguayPhone(c.phone) || c.phone;
       const clientApts = tenant.appointments.filter(
@@ -157,7 +170,7 @@ export async function GET(request: NextRequest) {
         totalSpent,
         lastVisit,
         loyaltyPoints: c.points,
-        loyaltyRedeemed: 0,
+        loyaltyRedeemed: c._count.loyaltyRedemptions,
       };
     });
 
@@ -259,7 +272,9 @@ export async function GET(request: NextRequest) {
         category: p.category || "General",
         stock: p.stock ?? 10,
         active: p.isActive,
+        ...serializeSale(p, saleUnits.get(p.id) || 0),
       })),
+      receipts: receipts.map(serializeReceipt),
       cashMovementsCount: tenant.cashMovements.length,
     });
   } catch (error) {
@@ -467,7 +482,6 @@ export async function POST(request: NextRequest) {
       else if (upper === "NO_SHOW" || upper === "NOSHOW" || upper === "AUSENTE") prismaStatus = AppointmentStatus.NO_SHOW;
       else if (upper === "EXPIRED" || upper === "EXPIRADO") prismaStatus = AppointmentStatus.EXPIRED;
 
-      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (UUID_REGEX.test(appointmentId)) {
         const existingApp = await prisma.appointment.findFirst({
           where: { id: appointmentId, tenantId: tenant.id },
@@ -521,44 +535,89 @@ export async function POST(request: NextRequest) {
           name: data.name || "Producto sin nombre",
           price: Number(data.price) || 0,
           cost: Number(data.cost) || 0,
-          stock: Number(data.stock) ?? 10,
+          stock: Number.isFinite(Number(data.stock)) ? Math.max(0, Math.round(Number(data.stock))) : 10,
           category: data.category || "General",
           description: data.description || "",
           imageUrl: data.imageUrl || "",
           isActive: data.active !== false,
+          ...saleDataFromPatch(data, null),
         },
       });
       return NextResponse.json({ ok: true, product: created });
     }
 
     if (action === "update_product") {
-      const { id, patch } = data;
-      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (UUID_REGEX.test(id)) {
+      const { id, patch } = data || {};
+      if (typeof id !== "string" || !UUID_REGEX.test(id) || !patch) {
+        return NextResponse.json({ ok: false, error: "Producto no encontrado." }, { status: 404 });
+      }
+
+      // Ajuste de stock atómico (delta), para que clics rápidos no se pisen
+      if (typeof patch.stockDelta === "number" && Number.isFinite(patch.stockDelta) && patch.stockDelta !== 0) {
+        const delta = Math.round(patch.stockDelta);
         await prisma.product.updateMany({
-          where: { id, tenantId: tenant.id },
-          data: {
-            ...(patch.name ? { name: patch.name } : {}),
-            ...(patch.price !== undefined ? { price: Number(patch.price) } : {}),
-            ...(patch.cost !== undefined ? { cost: Number(patch.cost) } : {}),
-            ...(patch.stock !== undefined ? { stock: Number(patch.stock) } : {}),
-            ...(patch.category ? { category: patch.category } : {}),
-            ...(patch.description !== undefined ? { description: patch.description } : {}),
-            ...(patch.imageUrl !== undefined ? { imageUrl: patch.imageUrl } : {}),
-            ...(patch.active !== undefined ? { isActive: Boolean(patch.active) } : {}),
-          },
+          where: { id, tenantId: tenant.id, stock: null },
+          data: { stock: 10 },
         });
+        const { count } = await prisma.product.updateMany({
+          where: { id, tenantId: tenant.id, ...(delta < 0 ? { stock: { gte: -delta } } : {}) },
+          data: { stock: { increment: delta } },
+        });
+        if (count === 0) {
+          const exists = await prisma.product.count({ where: { id, tenantId: tenant.id } });
+          return exists
+            ? NextResponse.json({ ok: false, error: "No hay stock suficiente." }, { status: 409 })
+            : NextResponse.json({ ok: false, error: "Producto no encontrado." }, { status: 404 });
+        }
+        const updated = await prisma.product.findUnique({ where: { id }, select: { stock: true } });
+        return NextResponse.json({ ok: true, stock: updated?.stock ?? 0 });
+      }
+
+      const current =
+        patch.isOnSale !== undefined
+          ? await prisma.product.findFirst({
+              where: { id, tenantId: tenant.id },
+              select: { isOnSale: true, salePrice: true, price: true },
+            })
+          : null;
+      const saleData = saleDataFromPatch(patch, current);
+      if (saleData.isOnSale && (!saleData.salePrice || (current && saleData.salePrice >= current.price))) {
+        return NextResponse.json(
+          { ok: false, error: "El precio de oferta debe ser menor al precio normal." },
+          { status: 400 }
+        );
+      }
+
+      const { count } = await prisma.product.updateMany({
+        where: { id, tenantId: tenant.id },
+        data: {
+          ...saleData,
+          ...(patch.name ? { name: patch.name } : {}),
+          ...(patch.price !== undefined ? { price: Number(patch.price) } : {}),
+          ...(patch.cost !== undefined ? { cost: Number(patch.cost) } : {}),
+          ...(patch.stock !== undefined ? { stock: Number(patch.stock) } : {}),
+          ...(patch.category ? { category: patch.category } : {}),
+          ...(patch.description !== undefined ? { description: patch.description } : {}),
+          ...(patch.imageUrl !== undefined ? { imageUrl: patch.imageUrl } : {}),
+          ...(patch.active !== undefined ? { isActive: Boolean(patch.active) } : {}),
+        },
+      });
+      if (count === 0) {
+        return NextResponse.json({ ok: false, error: "Producto no encontrado." }, { status: 404 });
       }
       return NextResponse.json({ ok: true });
     }
 
     if (action === "delete_product") {
-      const { id } = data;
-      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (UUID_REGEX.test(id)) {
-        await prisma.product.deleteMany({
-          where: { id, tenantId: tenant.id },
-        });
+      const { id } = data || {};
+      if (typeof id !== "string" || !UUID_REGEX.test(id)) {
+        return NextResponse.json({ ok: false, error: "Producto no encontrado." }, { status: 404 });
+      }
+      const { count } = await prisma.product.deleteMany({
+        where: { id, tenantId: tenant.id },
+      });
+      if (count === 0) {
+        return NextResponse.json({ ok: false, error: "Producto no encontrado." }, { status: 404 });
       }
       return NextResponse.json({ ok: true });
     }

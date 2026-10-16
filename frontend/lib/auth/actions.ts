@@ -1,5 +1,6 @@
 "use server";
 
+import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { setSession, clearSession, getSession } from "./session";
 import type { SessionUser, AuthResponse, UserRole } from "./types";
@@ -14,7 +15,7 @@ export async function requestOtpAction(email: string): Promise<AuthResponse> {
   }
 
   // Generar código de 6 dígitos
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const code = crypto.randomInt(100000, 1000000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
 
   try {
@@ -39,6 +40,9 @@ export async function requestOtpAction(email: string): Promise<AuthResponse> {
 
     if (!emailResult.ok) {
       console.warn("Aviso: Falló envío de correo Resend:", emailResult.error);
+      if (process.env.NODE_ENV === "production") {
+        return { ok: false, error: "No se pudo enviar el código. Intenta nuevamente." };
+      }
     }
 
     // En desarrollo se puede retornar el código para agilidad, en producción va por correo
@@ -143,6 +147,10 @@ export async function googleLoginAction(
   name = "Usuario Google",
   optInMarketing = true
 ): Promise<AuthResponse> {
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, error: "Inicio de sesión de prueba no disponible." };
+  }
+
   const cleanEmail = email.trim().toLowerCase();
 
   try {
@@ -196,6 +204,10 @@ export async function googleLoginAction(
  * Cambiar de rol en caliente para demostraciones (Superadmin / Dueño / Staff).
  */
 export async function switchRoleDemoAction(role: UserRole): Promise<AuthResponse> {
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, error: "Inicio de sesión de prueba no disponible." };
+  }
+
   let targetEmail = "marcos@barberia.py";
   let targetName = "Marcos Benítez";
 

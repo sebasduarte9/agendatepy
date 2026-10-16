@@ -12,13 +12,12 @@ export function tenantPublicUrl(slug: string, path = ""): string {
   return `https://${tenantHost(slug)}${path}`;
 }
 
-/** URL para copiar/compartir. En localhost no hay subdominios, se usa la ruta equivalente. */
+/** Stable path-based tenant URL for routes served from the platform's root domain. */
+export function tenantRouteUrl(slug: string, path = ""): string {
+  return `https://${ROOT_DOMAIN}/${encodeURIComponent(slug)}${path}`;
+}
+
+/** URL pública estable para copiar y compartir, también durante el renderizado en servidor. */
 export function tenantBookingUrl(slug: string): string {
-  if (typeof window !== "undefined") {
-    const { hostname, origin } = window.location;
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return `${origin}/${slug}/reservar`;
-    }
-  }
   return tenantPublicUrl(slug);
 }
