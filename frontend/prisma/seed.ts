@@ -10,6 +10,13 @@ const SHIFT_START = new Date(Date.UTC(1970, 0, 1, 9, 0, 0));
 const SHIFT_END = new Date(Date.UTC(1970, 0, 1, 19, 0, 0));
 
 async function main() {
+  // Este seed BORRA todas las tablas antes de crear la demo. En producción solo corre
+  // si se pide explícitamente (SEED_DEMO=1), para no perder negocios reales en un deploy.
+  if (process.env.NODE_ENV === "production" && process.env.SEED_DEMO !== "1") {
+    console.warn("[seed] Omitido: en producción requiere SEED_DEMO=1 (borra todos los datos).");
+    return;
+  }
+
   const today = civilToday(TIMEZONE);
   const corteStart = zoned(today, "10:00");
   const barbaStart = zoned(today, "15:00");

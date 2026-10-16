@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
   },
+  async rewrites() {
+    // Imágenes subidas después del build (next start no las sirve desde /public): las sirve la API
+    return [{ source: "/uploads/:path*", destination: "/api/uploads/:path*" }];
+  },
   async headers() {
     return [
       {

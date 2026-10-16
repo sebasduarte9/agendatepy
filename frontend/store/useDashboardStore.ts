@@ -1495,6 +1495,7 @@ type DashboardState = {
   products: ProductItem[];
   productOrders: ProductOrder[];
   loadProductOrders: () => Promise<void>;
+  loadCommissionPayouts: () => Promise<void>;
   updateProductOrderStatus: (orderId: string, status: ProductOrderStatus) => Promise<boolean>;
   createProductOrder: (order: Omit<ProductOrder, "id" | "orderNumber" | "createdAt">) => void;
   appointments: Appointment[];
@@ -1606,6 +1607,10 @@ function splitOvernightBlock(block: Omit<TimeBlock, "id">): Omit<TimeBlock, "id"
     { ...block, date: nextDate, start: "00:00" },
   ];
 }
+
+// Número de recibo estable (mismo antes y después de recargar)
+const payoutReceiptNumber = (id: string, paidAt: string) =>
+  `LIQ-${new Date(paidAt).getFullYear()}-${id.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
 
 // Requests de suma de puntos en vuelo por cliente (ver addClientLoyaltyPoint)
 const pendingPointRequests = new Map<string, number>();
@@ -1851,6 +1856,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         return nextState;
       });
       await get().loadProductOrders();
+      await get().loadCommissionPayouts();
     } catch (err) {
       console.error("Error al sincronizar con PostgreSQL:", err);
     } finally {
@@ -2259,9 +2265,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       const saved = data.payout;
       const paidAt = saved.paidAt ? new Date(saved.paidAt).toISOString() : new Date().toISOString();
-      const receiptNumber =
-        payoutData.receiptNumber ||
-        `LIQ-${new Date().getFullYear()}-${String(get().commissionPayouts.length + 1).padStart(3, "0")}`;
+      const receiptNumber = payoutData.receiptNumber || payoutReceiptNumber(saved.id, paidAt);
       const newPayout: CommissionPayoutRecord = {
         ...payoutData,
         id: saved.id,
@@ -2541,6 +2545,47 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       }
     }
     return ok;
+  },
+  loadCommissionPayouts: async () => {
+    try {
+      const res = await fetch("/api/commission-payouts");
+      if (!res.ok) return; // sin sesión (demo) → quedan las liquidaciones de ejemplo
+      const data = await res.json();
+      if (!data.ok || !Array.isArray(data.payouts)) return;
+      set({
+        commissionPayouts: data.payouts
+          .filter((p: any) => p.status !== "CANCELLED")
+          .map((p: any): CommissionPayoutRecord => {
+            const items: any[] = Array.isArray(p.items) ? p.items : [];
+            const servicesAmount = items.reduce((sum, it) => sum + (it.chargedAmount || 0), 0);
+            const servicesCommission = items.reduce((sum, it) => sum + (it.commissionAmount || 0), 0);
+            const paidAt = p.paidAt || p.createdAt;
+            return {
+              id: p.id,
+              staffId: p.staffId,
+              staffName: p.staff?.name || "Colaborador",
+              periodStart: p.periodStart,
+              periodEnd: p.periodEnd,
+              servicesAmount,
+              productsAmount: 0,
+              servicesCommission,
+              productsCommission: 0,
+              grossCommission: p.grossCommission,
+              advancesDeducted: Math.max(0, p.grossCommission - p.amountPaid),
+              amountPaid: p.amountPaid,
+              paymentMethod: p.paymentMethod,
+              status: p.status === "PENDING" ? "PENDING" : "PAID",
+              paidAt,
+              paidBy: p.paidBy || undefined,
+              receiptNumber: payoutReceiptNumber(p.id, paidAt),
+              notes: p.notes || undefined,
+              itemsCount: items.length,
+            };
+          }),
+      });
+    } catch (err) {
+      console.error("Error cargando liquidaciones:", err);
+    }
   },
   loadProductOrders: async () => {
     try {

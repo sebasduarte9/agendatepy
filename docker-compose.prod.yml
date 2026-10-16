@@ -15,10 +15,29 @@ services:
       timeout: 5s
       retries: 5
 
+  # Herramientas de base de datos (migraciones y seed). No queda corriendo: deploy.sh lo usa con
+  # `docker compose run --rm migrate ...` ANTES de levantar la app nueva.
+  migrate:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://agendate:${DB_PASSWORD:-agendatepy2026secure}@postgres:5432/agendatepy?schema=public
+      DIRECT_URL: postgresql://agendate:${DB_PASSWORD:-agendatepy2026secure}@postgres:5432/agendatepy?schema=public
+      NODE_ENV: production
+      SEED_DEMO: "${SEED_DEMO:-0}"
+    command: ["npx", "prisma", "migrate", "deploy"]
+
   app:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: runner
     container_name: agendatepy_app
     restart: unless-stopped
     depends_on:
@@ -40,6 +59,9 @@ services:
       EVOLUTION_INSTANCE: "${EVOLUTION_INSTANCE:-agendatepy}"
       SESSION_SECRET: "${SESSION_SECRET:?Definí SESSION_SECRET en el .env del servidor}"
       NODE_ENV: production
+    volumes:
+      # Imágenes subidas por los negocios (logos, productos): sobreviven a cada deploy
+      - app_uploads:/app/public/uploads
     ports:
       - "127.0.0.1:3000:3000"
     networks:
@@ -76,6 +98,7 @@ services:
 
 volumes:
   pgdata:
+  app_uploads:
 
 networks:
   agendatepy_evo_net:

@@ -1,0 +1,18 @@
+# Se instalan/compilan dentro de la imagen (Linux); las copias locales rompen binarios nativos
+node_modules
+.next
+out
+
+# Secretos: en producción las variables llegan por docker-compose
+.env
+.env.*
+!.env.example
+
+# Imágenes subidas: viven en un volumen, no dentro de la imagen
+public/uploads/*
+!public/uploads/.gitkeep
+
+.git
+*.log
+coverage
+test_calendar.js

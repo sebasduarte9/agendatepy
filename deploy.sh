@@ -59,20 +59,31 @@ fi
 echo "📲 Iniciando la pasarela de WhatsApp..."
 docker compose -f docker-compose.evolution.yml up -d
 
-echo "🏗️ Construyendo e iniciando la aplicación y el programador de recordatorios..."
-docker compose -f docker-compose.prod.yml up -d --build
+COMPOSE="docker compose -f docker-compose.prod.yml"
 
-# 4. Esperar 8 segundos para inicialización de la base de datos
-echo "⏳ Esperando arranque de PostgreSQL y la aplicación..."
-sleep 8
+echo "🏗️ Construyendo las imágenes (app y herramientas de base de datos)..."
+$COMPOSE --profile tools build app migrate
 
-# 5. Ejecutar migraciones de Prisma en la base de datos
+# 4. Base de datos primero: la app nueva no recibe tráfico hasta que el esquema esté migrado
+echo "🐘 Iniciando PostgreSQL..."
+$COMPOSE up -d --wait postgres
+
+# 5. Migraciones ANTES de levantar la app nueva (si fallan, el deploy se corta acá)
 echo "🔄 Aplicando migraciones de base de datos..."
-docker compose -f docker-compose.prod.yml exec -T app npx prisma migrate deploy
+$COMPOSE --profile tools run --rm migrate
 
-# 6. Ejecutar seed para crear tenant inicial
-echo "🌱 Poblando datos iniciales (Barbería Demo)..."
-docker compose -f docker-compose.prod.yml exec -T app npx prisma db seed || true
+# 6. Seed de demo: BORRA todas las tablas. Solo con SEED_DEMO=1 explícito (ej. servidor nuevo):
+#    SEED_DEMO=1 ./deploy.sh
+if [ "${SEED_DEMO:-0}" = "1" ]; then
+    echo "🌱 SEED_DEMO=1: borrando datos y creando la Barbería Demo..."
+    $COMPOSE --profile tools run --rm -e SEED_DEMO=1 migrate npx prisma db seed
+else
+    echo "🌱 Seed de demo omitido (usá SEED_DEMO=1 solo en un servidor nuevo: borra todos los datos)."
+fi
+
+# 7. Levantar (o reemplazar) la app, el programador de recordatorios y nginx
+echo "🚀 Iniciando la aplicación y el programador de recordatorios..."
+$COMPOSE up -d app reminder-cron nginx
 
 echo "========================================================"
 echo "✅ ¡AgendatePY está en vivo!"

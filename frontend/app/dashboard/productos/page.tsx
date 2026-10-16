@@ -34,6 +34,12 @@ const PRODUCT_LABEL_CLASS = "mb-1.5 block text-xs font-semibold text-slate-700 d
 const PRODUCT_INPUT_CLASS =
   "min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-slate-800 dark:text-white sm:min-h-10 sm:text-sm";
 
+// <input type="datetime-local"> trabaja en hora local sin zona ("2026-10-23T01:18")
+function toLocalInputValue(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function ProductImageFallback({ category, name }: { category: string; name: string }) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center">
@@ -238,14 +244,14 @@ export default function ProductosPage() {
 
     const inOneWeek = new Date();
     inOneWeek.setDate(inOneWeek.getDate() + 7);
-    const defaultExpiry = inOneWeek.toISOString().slice(0, 16);
+    const defaultExpiry = toLocalInputValue(inOneWeek);
 
     setPromoForm({
       isOnSale: hasExistingPromo,
       promoPercent: Math.max(1, Math.min(99, defaultPercent)),
       salePrice: defaultPromoPrice,
       saleType: product.saleType || "both",
-      saleExpiresAt: product.saleExpiresAt || defaultExpiry,
+      saleExpiresAt: product.saleExpiresAt ? toLocalInputValue(new Date(product.saleExpiresAt)) : defaultExpiry,
       saleMaxUnits: product.saleMaxUnits || Math.min(10, product.stock || 10),
     });
     setPromoModalProduct(product);
@@ -289,7 +295,7 @@ export default function ProductosPage() {
       salePrice: promoForm.isOnSale ? Number(promoForm.salePrice) : undefined,
       saleType: promoForm.isOnSale ? promoForm.saleType : undefined,
       saleExpiresAt: promoForm.isOnSale && (promoForm.saleType === "time" || promoForm.saleType === "both")
-        ? promoForm.saleExpiresAt
+        ? new Date(promoForm.saleExpiresAt).toISOString()
         : undefined,
       saleMaxUnits: promoForm.isOnSale && (promoForm.saleType === "quantity" || promoForm.saleType === "both")
         ? Number(promoForm.saleMaxUnits)
