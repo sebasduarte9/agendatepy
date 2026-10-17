@@ -120,7 +120,9 @@ export default function LiquidGlass({
     >
       {/* =================================================================== */}
       {/* SVG DISPLACEMENT FILTER (Fórmula óptica visionOS de liquid-glass)     */}
+      {/* Solo se monta si se usa: sin displacement el filtro no se aplica      */}
       {/* =================================================================== */}
+      {useDisplacement && !isFirefox && (
       <svg
         className="absolute pointer-events-none -z-50 opacity-0 overflow-hidden w-0 h-0"
         aria-hidden="true"
@@ -277,6 +279,7 @@ export default function LiquidGlass({
           </filter>
         </defs>
       </svg>
+      )}
 
       {/* =================================================================== */}
       {/* CAPA DE CRISTAL LÍQUIDO MATE APPLE (Backdrop-filter + Refracción)   */}

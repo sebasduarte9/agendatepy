@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { preconnect } from "react-dom";
 import ChatwootWidget from "@/components/public/ChatwootWidget";
 import { prisma } from "@/lib/db";
 import { chatwootWebsiteTokenFromSettings } from "@/lib/scheduling/tenant-settings";
@@ -24,6 +25,9 @@ export default async function ReservarLayout({
   const theme = parseTheme(tenant?.themeSettings);
   const chatwootToken = chatwootWebsiteTokenFromSettings(tenant?.settings);
   const fontLink = googleFontHref(theme.fontFamily);
+  // Solo estas páginas usan Google Fonts: el preconnect va acá y no en el layout raíz
+  preconnect("https://fonts.googleapis.com");
+  preconnect("https://fonts.gstatic.com", { crossOrigin: "anonymous" });
 
   const isDark =
     theme.themeMode === "dark" ||

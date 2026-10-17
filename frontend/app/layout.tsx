@@ -152,8 +152,6 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className={`${jakarta.variable} ${coolvetica.variable} light h-full scroll-smooth`} data-theme="light" data-scroll-behavior="smooth">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var saved=localStorage.getItem("agendate_theme_mode")||localStorage.getItem("theme")||"light";if(saved==="dark"){document.documentElement.classList.remove("light");document.documentElement.classList.add("dark");document.documentElement.setAttribute("data-theme","dark");}else{document.documentElement.classList.remove("dark");document.documentElement.classList.add("light");document.documentElement.setAttribute("data-theme","light");}}catch(e){}})();`,

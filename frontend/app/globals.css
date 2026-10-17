@@ -130,14 +130,6 @@ aside[aria-label="Next.js Dev Tools"] {
   --font-mono: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
-@font-face {
-  font-family: "Coolvetica";
-  src: url("/fonts/coolvetica/coolvetica-rg.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 .font-coolvetica {
   font-family: var(--font-coolvetica), "Coolvetica", sans-serif;
 }
@@ -3057,4 +3049,22 @@ div[class*="glass-dropdown"],
 :root [data-admin-theme] input::placeholder,
 :root [data-admin-theme] textarea::placeholder {
   color: #a1a1aa;
+}
+
+/* Entrada del titular del hero en CSS (antes framer-motion): se anima desde el
+   primer pintado sin esperar la hidratación. Arranca en 0.01 y no en 0 porque
+   Chrome no cuenta para el LCP el texto pintado con opacidad 0 (imperceptible). */
+@keyframes hero-enter-mobile {
+  from { opacity: 0.01; transform: translateY(15px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hero-enter-desktop {
+  from { opacity: 0.01; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+.hero-enter-mobile {
+  animation: hero-enter-mobile 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.hero-enter-desktop {
+  animation: hero-enter-desktop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

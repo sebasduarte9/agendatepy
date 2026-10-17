@@ -64,11 +64,8 @@ export default function Hero() {
             <NotificationStack className="w-full max-w-[330px] mb-5 xs:mb-6" />
 
             {/* Titular móvil centrado y proporcionado con respiración entre líneas */}
-            <motion.h1
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="text-center font-sans text-[clamp(28px,9.6vw,38px)] font-black leading-[1.05] tracking-[-0.03em] text-slate-950 dark:text-white"
+            <h1
+              className="hero-enter-mobile text-center font-sans text-[clamp(28px,9.6vw,38px)] font-black leading-[1.05] tracking-[-0.03em] text-slate-950 dark:text-white"
               aria-label="Gestioná tu agenda y tu negocio con AgendatePY"
             >
               <span className="block whitespace-nowrap">Gestioná tu agenda</span>
@@ -90,7 +87,7 @@ export default function Hero() {
                 </svg>
                 <span>gendatepy</span>
               </span>
-            </motion.h1>
+            </h1>
 
             {/* Subtítulo móvil */}
             <p className="mt-4 text-center text-[15px] xs:text-base font-semibold text-slate-600 dark:text-slate-300 max-w-[320px] xs:max-w-[340px] mx-auto leading-relaxed [text-wrap:balance]">
@@ -165,12 +162,9 @@ export default function Hero() {
             <HorizontalCardOrbit />
 
             {/* Titular Monumental Centrado */}
-            <motion.h1
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            <h1
               aria-label="Gestioná tu agenda y negocio con AgendatePY"
-              className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black tracking-tight text-slate-950 dark:text-white leading-[1.06] mt-24 sm:mt-26 md:mt-28 lg:mt-30"
+              className="hero-enter-desktop text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black tracking-tight text-slate-950 dark:text-white leading-[1.06] mt-24 sm:mt-26 md:mt-28 lg:mt-30"
             >
               <span>Gestioná tu agenda y</span>{" "}
               <span className="block mt-1 sm:mt-2">
@@ -195,7 +189,7 @@ export default function Hero() {
                   <span>gendatepy</span>
                 </span>
               </span>
-            </motion.h1>
+            </h1>
 
             {/* Subtítulo centrado limpio y persuasivo */}
             <motion.div
